@@ -153,6 +153,10 @@ __internal __typedeclable entity TemplateString provides Some {
 __internal __typedeclable entity TemplateCString provides Some {
 }
 
+%** Primitive pair type. **%
+__internal entity Pair<T, U> provides Some {
+}
+
 %** Generic type for all Option<T> to inherit from. **%
 __universal concept IOption provides Some {
 }

@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature } from "./type.js";
+import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature } from "./type.js";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
@@ -313,8 +313,9 @@ class InvokeParameterDecl {
     }
 
     emit(fmt: CodeFormatter): string {
+        const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.tkeystr}`;
         const defv = this.optDefaultValue === undefined ? "" : ` = ${this.optDefaultValue.emit(true, fmt)}`;
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}: ${this.type.tkeystr}${defv}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
     }
 }
 
@@ -365,7 +366,7 @@ class LambdaDecl extends AbstractInvokeDecl {
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
-        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.isRefParam, p.isRestParam));
+        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.type, p.isRefParam, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
     
@@ -1476,24 +1477,6 @@ class NamespaceConstDecl extends AbstractCoreDecl {
     }
 }
 
-class NamespaceTypedef extends AbstractCoreDecl {
-    terms: TypeTemplateTermDecl[] = [];
-    boundType: TypeSignature;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], btype: TypeSignature) {
-        super(file, sinfo, attributes, name);
-
-        this.terms = terms;
-        this.boundType = btype;
-    }
-
-    emit(): string {
-        const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        const tstr = this.terms.length !== 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}> ` : "";
-        return `${attr}type ${this.name}${tstr} = ${this.boundType.tkeystr};`;
-    }
-}
-
 class NamespaceUsing {
     readonly file: string;
 
@@ -1530,7 +1513,6 @@ class NamespaceDeclaration {
 
     subns: NamespaceDeclaration[] = [];
 
-    typeDefs: NamespaceTypedef[] = [];
     consts: NamespaceConstDecl[] = [];
     functions: NamespaceFunctionDecl[] = [];
     typedecls: AbstractNominalTypeDecl[] = [];
@@ -1609,13 +1591,6 @@ class NamespaceDeclaration {
             res += fmt.indent(ns.emit(fmt) + "\n");
         });
         if(this.subns.length !== 0) {
-            res += "\n";
-        }
-
-        this.typeDefs.forEach((td) => {
-            res += fmt.indent(td.emit() + "\n");
-        });
-        if(this.typeDefs.length !== 0) {
             res += "\n";
         }
 
@@ -1717,6 +1692,6 @@ export {
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl,
-    NamespaceConstDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
+    NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
     Assembly
 };

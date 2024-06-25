@@ -55,7 +55,7 @@ class TypeChecker {
     }
 
     private static safeTypePrint(tsig: TypeSignature | undefined): string {
-        return tsig === undefined ? "[undef_type]" : tsig.emit(true);
+        return tsig === undefined ? "[undef_type]" : tsig.tkeystr;
     }
 
     getErrorList(): TypeError[] {
@@ -128,9 +128,13 @@ class TypeChecker {
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
-    private processITest_Literal(env: TypeEnvironment, src: TypeSignature, literaltype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        if(this.relations.isNoneType(literaltype, this.constraints) || this.relations.isNothingType(literaltype, this.constraints)) {
-            const rinfo = this.relations.refineType(src, literaltype, this.constraints);
+    private processITest_Literal(env: TypeEnvironment, src: TypeSignature, literalexp: Expression, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+        if(literalexp.tag === ExpressionTag.LiteralNoneExpression) {
+            const rinfo = this.relations.refineType(src, this.getWellKnownType("None"), this.constraints);
+            return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+        }
+        else if(literalexp.tag === ExpressionTag.LiteralNothingExpression) {
+            const rinfo = this.relations.refineType(src, this.getWellKnownType("Nothing"), this.constraints);
             return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
         }
         else {
@@ -157,7 +161,7 @@ class TypeChecker {
                 const lltype = this.checkExpression(env, tt.literal.exp, undefined);
                 this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isKeyType(lltype, this.constraints), "Literal value must be a key type");
 
-                return this.processITest_Literal(env, src, lltype, tt.isnot);
+                return this.processITest_Literal(env, src, tt.literal.exp, tt.isnot);
             }
         }
         else {
@@ -190,7 +194,7 @@ class TypeChecker {
             const tdecl = decls[i];
             const targ = targs[i];
 
-            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.emit(true)}`)) {
+            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.tkeystr}`)) {
                 return false;
             }
 
@@ -259,7 +263,7 @@ class TypeChecker {
                 return false;
             }
             if(tparsed.resolvedinfo.aliasopt !== undefined) {
-                const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(type);
+                const remapper = TypeCheckerRelations.computeNameMapperFromDirectNominalParserTypeSignatureInfo(type);
                 return this.checkTypeSignature(tparsed.resolvedinfo.aliasopt.boundType.remapTemplateBindings(remapper));
             }
             else {
@@ -341,22 +345,15 @@ class TypeChecker {
                 return false;
             }
 
-            let pnames: Set<string> = new Set<string>();
             let refct = 0;
             for(let i = 0; i < type.params.length; ++i) {
                 const pp = type.params[i];
 
                 refct += pp.isRefParam ? 1 : 0;
                 if(pp.isRestParam && i !== type.params.length - 1) {
-                    this.reportError(type.sinfo, `Rest parameter ${pp.name} must be the last parameter in the lambda`);
+                    this.reportError(type.sinfo, `Rest parameter must be the last parameter in the lambda`);
                     return false;
                 }
-
-                if(pnames.has(pp.name)) {
-                    this.reportError(type.sinfo, `Parameter name ${pp.name} is already defined`)
-                    return false;
-                }
-                pnames.add(pp.name);
             }
 
             return refct <= 1;
@@ -365,7 +362,7 @@ class TypeChecker {
             return this.checkTypeSignature(type.type);
         }
         else if(type instanceof UnionTypeSignature) {
-            return this.checkTypeSignature(type.ltype) && this.checkTypeSignature(type.rtype);
+            return type.types.every((entry) => this.checkTypeSignature(entry));
         }
         else {
             assert(false, "Unknown TypeSignature type");

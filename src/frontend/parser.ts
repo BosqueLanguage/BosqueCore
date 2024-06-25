@@ -6,7 +6,7 @@ import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifi
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
 import { APIDecl, APIResultTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
 
 import { accepts, initializeLexer, lexFront } from "@bosque/jsbrex";
 
@@ -92,7 +92,7 @@ const NAMESPACE_DECL_FIRSTS = [
     KW_function, KW_predicate, 
     KW_namespace, KW_api,
     KW_const,
-    KW_enum, KW_type, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
+    KW_enum, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
     KW_event, KW_status,
     KW_validator,
     KW_errtest, KW_chktest
@@ -1610,15 +1610,10 @@ class Parser {
         }
     }
 
-    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]): [NamespaceTypedef | undefined, AbstractNominalTypeDecl | undefined] | undefined {
-        const tydef = ns.typeDefs.find((t) => t.name === typeTokens[0].tname);
-        if(tydef !== undefined) {
-            return [tydef, undefined];
-        }
-        
+    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]): AbstractNominalTypeDecl | undefined {
         const taskdef = ns.tasks.find((t) => t.name === typeTokens[0].tname);
         if(taskdef !== undefined) {
-            return [undefined, taskdef];
+            return taskdef;
         }
 
         //handle special Core types first
@@ -1927,16 +1922,10 @@ class Parser {
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
         if(isref && isrest) {
-            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a spread");
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
-        const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
-        const pname = idok ? this.parseIdentifierAsStdVariable() : "[error]";
-
-        let ptype = this.env.SpecialAutoSignature;
-        if(this.testAndConsumeTokenIf(SYM_colon)) {
-            ptype = this.parseTypeSignature();
-        }
+        const ptype = this.parseTypeSignature();
 
         if(this.testToken(SYM_eq)) {
             this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
@@ -1944,7 +1933,7 @@ class Parser {
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new LambdaParameterSignature(pname, ptype, isref, isrest);
+        return new LambdaParameterSignature(ptype, isref, isrest);
     }
 
     private parseLambdaSignatureParameters(cinfo: SourceInfo): LambdaParameterSignature[] {
@@ -1968,7 +1957,7 @@ class Parser {
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
         if(isref && isrest) {
-            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a spread");
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
         const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
@@ -2006,11 +1995,11 @@ class Parser {
         
         if(params.length !== 0) {
             if(params.slice(0, -1).some((param) => param.isRestParam)) {
-                this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
+                this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
 
             if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
-                this.recordErrorGeneral(cinfo, "Cannot have more a reference parameter");
+                this.recordErrorGeneral(cinfo, "Cannot have more than one reference parameter");
             }
         }
 
@@ -2051,6 +2040,47 @@ class Parser {
         return terms;
     }
 
+    private parseLambdaDeclParameter(): InvokeParameterDecl {
+        const cinfo = this.peekToken().getSourceInfo();
+
+        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
+
+        if(isref && isrest) {
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
+        }
+
+        const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
+        const pname = idok ? this.parseIdentifierAsStdVariable() : "[error]";
+
+        let ptype = this.env.SpecialAutoSignature;
+        if(this.testAndConsumeTokenIf(SYM_colon)) {
+            ptype = this.parseTypeSignature();
+        }
+
+        if(this.testToken(SYM_eq)) {
+            this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
+            this.consumeToken();
+            this.parseExpression(); //try to eat the expression to recover nicely
+        }
+
+        return new InvokeParameterDecl(pname, ptype, undefined, isref, isrest);
+    }
+
+    private parseLambdaDeclParameters(cinfo: SourceInfo): InvokeParameterDecl[] {
+        const params = this.parseListOf<InvokeParameterDecl>("lambda parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseLambdaDeclParameter()
+        });
+        
+        if(params.length !== 0) {
+            if(params.slice(0, -1).some((param) => param.isRestParam)) {
+                this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
+            }
+        }
+
+        return params;
+    }
+
     private parseLambdaDecl(): LambdaDecl | undefined {
         const cinfo = this.peekToken().getSourceInfo();
 
@@ -2079,7 +2109,7 @@ class Parser {
             return undefined;
         }
 
-        const params: LambdaParameterSignature[] = this.parseLambdaSignatureParameters(cinfo);
+        const params: InvokeParameterDecl[] = this.parseLambdaDeclParameters(cinfo);
 
         const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
         const someTypedParams = params.some((param) => !(param.type instanceof AutoTypeSignature));
@@ -3172,7 +3202,7 @@ class Parser {
         let rootexp = this.parsePrimaryExpression();
 
         let ops: PostfixOperation[] = [];
-        while (true) {
+        while (this.testAndConsumeTokenIf(SYM_dot)) {
             const sinfo = this.peekToken().getSourceInfo();
 
             if(this.testToken(SYM_question)) {
@@ -3256,13 +3286,15 @@ class Parser {
             }
             */
             else {
-                if (ops.length === 0) {
-                    return rootexp;
-                }
-                else {
-                    return new PostfixOp(ops[0].sinfo, rootexp, ops);
-                }
+                assert(false, "Not implemented -- parsePostfixExpression");
             }
+        }
+
+        if (ops.length === 0) {
+            return rootexp;
+        }
+        else {
+            return new PostfixOp(ops[0].sinfo, rootexp, ops);
         }
     }
 
@@ -4585,10 +4617,7 @@ class Parser {
             this.prepStateStackForNested("namespace-member", undefined);
 
             const sinfo = this.peekToken().getSourceInfo();
-            if(this.testToken(KW_type)) {
-                this.parseNamespaceTypedef(attributes);
-            }
-            else if (this.testToken(KW_const)) {
+            if (this.testToken(KW_const)) {
                 this.parseNamespaceConstant(attributes);
             }
             else if(this.testFollows(KW_function) || this.testFollows(KW_recursive, KW_function) || this.testFollows(KW_recursive_q, KW_function)) {
@@ -4676,39 +4705,6 @@ class Parser {
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "nested namespace declaration");
 
             this.env.currentNamespace = ons;
-        }
-    }
-
-    private parseNamespaceTypedef(attributes: DeclarationAttibute[]) {
-        const sinfo = this.peekToken().getSourceInfo();
-        this.ensureAndConsumeTokenAlways(KW_type, "type alias");
-        this.ensureToken(TokenStrings.IdentifierName, "type alias");
-        const tyname = this.parseIdentifierAsNamespaceOrTypeName();
-
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            if (this.env.currentNamespace.checkDeclNameClashType(tyname, this.testToken(SYM_langle))) {
-                this.recordErrorGeneral(sinfo, `Collision between type alias and other names -- ${tyname}`);
-            }
-
-            this.env.currentNamespace.declaredNames.add(tyname);
-            this.env.currentNamespace.declaredTypeNames.push({name: tyname, hasterms: this.testToken(SYM_langle)});
-            
-            this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "type alias");
-        }
-        else {
-            const terms = this.parseTypeTemplateTerms();
-            this.ensureAndConsumeTokenIf(SYM_eq, "type alias");
-
-            const btype = this.parseTypeSignature();
-
-            const nndl = this.env.currentNamespace.typeDefs.find((td) => td.name === tyname);
-            if(nndl !== undefined) {
-                nndl.terms = terms;
-                nndl.boundType = btype;
-            }
-
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "type alias");
         }
     }
 

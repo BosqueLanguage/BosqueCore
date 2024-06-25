@@ -951,8 +951,6 @@ class ParseAsTypeExpression extends Expression {
 enum PostfixOpTag {
     PostfixError = "PostfixError",
 
-    PostfixAccessFromIndex = "PostfixAccessFromIndex",
-    PostfixProjectFromIndecies = "PostfixProjectFromIndecies",
     PostfixAccessFromName = "PostfixAccessFromName",
     PostfixProjectFromNames = "PostfixProjectFromNames",
 
@@ -1031,34 +1029,6 @@ class PostfixError extends PostfixOperation {
     }
 }
 
-class PostfixAccessFromIndex extends PostfixOperation {
-    readonly index: number;
-    readonly isLiteralOp: boolean;
-
-    constructor(sinfo: SourceInfo, index: number, isLiteralOp: boolean) {
-        super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
-        this.index = index;
-        this.isLiteralOp = isLiteralOp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isLiteralOp ? "!" : ""}.${this.index}`;
-    }
-}
-
-class PostfixProjectFromIndecies extends PostfixOperation {
-    readonly indecies: number[];
-
-    constructor(sinfo: SourceInfo, indecies: number[]) {
-        super(sinfo, PostfixOpTag.PostfixProjectFromIndecies);
-        this.indecies = indecies;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `.(${this.indecies.join(", ")})`;
-    }
-}
-
 class PostfixAccessFromName extends PostfixOperation {
     readonly name: string;
     readonly isLiteralOp: boolean;
@@ -1096,7 +1066,7 @@ class PostfixIsTest extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "?" + this.ttest.emit(fmt);
+        return ".?" + this.ttest.emit(fmt);
     }
 }
 
@@ -1109,7 +1079,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "@" + this.ttest.emit(fmt);
+        return ".@" + this.ttest.emit(fmt);
     }
 }
 
@@ -1122,7 +1092,7 @@ class PostfixTypeDeclValue extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return this.opr;
+        return "." + this.opr;
     }
 }
 
@@ -2414,7 +2384,7 @@ export {
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixError, PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
+    PostfixError, PostfixAccessFromName, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert, PostfixTypeDeclValue,
     PostfixAssignFields,
     PostfixInvoke,

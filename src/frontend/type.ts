@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, NamespaceTypedef, TemplateTermDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, TemplateTermDecl } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -111,7 +111,7 @@ class ErrorTypeSignature extends TypeSignature {
 
 class VoidTypeSignature extends TypeSignature {
     constructor(sinfo: SourceInfo) {
-        super(sinfo, "^void^");
+        super(sinfo, "Void");
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
@@ -142,49 +142,7 @@ class TemplateTypeSignature extends TypeSignature {
     }
 }
 
-abstract class NominalTypeSignature extends TypeSignature {
-    constructor(sinfo: SourceInfo, tkeystr: string) {
-        super(sinfo, tkeystr);
-    }
-}
-
-class NominalParsedTypeSignature extends NominalTypeSignature {
-    readonly ns: string[];
-    readonly tscope: {tname: string, tterms: TypeSignature[]}[];
-
-    readonly resolvedinfo: {aliasopt: NamespaceTypedef | undefined, declopt: AbstractNominalTypeDecl | undefined};
-
-    private static computeTKeyStr(ns: string[], tscope: {tname: string, tterms: TypeSignature[]}[]): string {
-        let nscope: string;
-        if(ns[0] === "Core") {
-            nscope = ns.slice(1).join("::");
-        }
-        else {
-            nscope = ns.join("::");
-        }
-
-        const rrtscope = tscope.map((t) => t.tname + (t.tterms.length !== 0 ? ("<" + t.tterms.map((tt) => tt.tkeystr).join(", ") + ">") : ""));
-        return nscope + (nscope !== "" ? "::" : "") + rrtscope.join("::");
-    }
-
-    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, tterms: TypeSignature[]}[], resolvedinfo: {aliasopt: NamespaceTypedef | undefined, declopt: AbstractNominalTypeDecl | undefined}) {
-        super(sinfo, NominalParsedTypeSignature.computeTKeyStr(ns, tscope));
-        this.ns = ns;
-        this.tscope = tscope;
-
-        this.resolvedinfo = resolvedinfo;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rtscope = this.tscope.map((t) => {
-            return { tname: t.tname, tterms: t.tterms.map((tt) => tt.remapTemplateBindings(mapper)) };
-        });
-
-        return new NominalParsedTypeSignature(this.sinfo, this.ns, rtscope, {aliasopt: this.resolvedinfo.aliasopt, declopt: this.resolvedinfo.declopt});
-    }
-}
-
-class NominalResolvedTypeSignature extends NominalTypeSignature {
+class NominalTypeSignature extends TypeSignature {
     readonly decl: AbstractNominalTypeDecl;
     readonly alltermargs: TypeSignature[];
 
@@ -210,7 +168,7 @@ class NominalResolvedTypeSignature extends NominalTypeSignature {
     }
 
     constructor(sinfo: SourceInfo, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]) {
-        super(sinfo, NominalResolvedTypeSignature.computeTKeyStr(decl, alltermargs));
+        super(sinfo, NominalTypeSignature.computeTKeyStr(decl, alltermargs));
         this.decl = decl;
         this.alltermargs = alltermargs;
     }
@@ -218,33 +176,7 @@ class NominalResolvedTypeSignature extends NominalTypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtall = this.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
 
-        return new NominalResolvedTypeSignature(this.sinfo, this.decl, rtall);
-    }
-}
-
-class TupleTypeSignature extends TypeSignature {
-    readonly entries: TypeSignature[];
-
-    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
-        super(sinfo, "[" + entries.map((tt) => tt.tkeystr).join(", ") + "]");
-        this.entries = entries;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new TupleTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
-    }
-}
-
-class RecordTypeSignature extends TypeSignature {
-    readonly entries: [string, TypeSignature][];
-
-    constructor(sinfo: SourceInfo, entries: [string, TypeSignature][]) {
-        super(sinfo, "{" + entries.map((tt) => tt[0] + ": " + tt[1].tkeystr).join(", ") + "}");
-        this.entries = entries;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new RecordTypeSignature(this.sinfo, this.entries.map((tt) => [tt[0], tt[1].remapTemplateBindings(mapper)]));
+        return new NominalTypeSignature(this.sinfo, this.decl, rtall);
     }
 }
 
@@ -279,20 +211,18 @@ class StringTemplateTypeSignature extends TypeSignature {
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
 class LambdaParameterSignature {
-    readonly name: string;
     readonly type: TypeSignature;
     readonly isRefParam: boolean;
     readonly isRestParam: boolean;
 
-    constructor(name: string, type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
-        this.name = name;
+    constructor(type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
         this.type = type;
         this.isRefParam = isRefParam;
         this.isRestParam = isRestParam;
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}: ${this.type.tkeystr}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.tkeystr}`;
     }
 }
 
@@ -311,7 +241,7 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
+        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
     }
 }
@@ -320,7 +250,7 @@ class NoneableTypeSignature extends TypeSignature {
     readonly type: TypeSignature;
 
     constructor(sinfo: SourceInfo, type: TypeSignature) {
-        super(sinfo, type.tkeystr + "?");
+        super(sinfo, `${type.tkeystr}?`);
         this.type = type;
     }
 
@@ -329,23 +259,10 @@ class NoneableTypeSignature extends TypeSignature {
     }
 }
 
-class UnionTypeSignature extends TypeSignature {
-    readonly types: TypeSignature[];
-
-    constructor(sinfo: SourceInfo, types: TypeSignature[]) {
-        super(sinfo, types.map((tt) => tt.tkeystr).join(" | "));
-        this.types = types;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new UnionTypeSignature(this.sinfo, this.types.map((tt) => tt.remapTemplateBindings(mapper)));
-    }
-}
-
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
-    TemplateTypeSignature, NominalTypeSignature, NominalParsedTypeSignature, NominalResolvedTypeSignature,
-    TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature, UnionTypeSignature
+    TemplateTypeSignature, NominalTypeSignature, 
+    EListTypeSignature, StringTemplateTypeSignature,
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature
 };
