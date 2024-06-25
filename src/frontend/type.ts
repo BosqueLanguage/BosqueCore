@@ -166,18 +166,16 @@ abstract class NominalTypeSignature extends TypeSignature {
 
 class NominalParsedTypeSignature extends NominalTypeSignature {
     readonly ns: string[];
-    readonly tscope: {tname: string, terms: TypeSignature[]}[];
+    readonly tscope: {tname: string, tterms: TypeSignature[]}[];
 
-    readonly resolvedTypedef: NamespaceTypedef | undefined;
-    readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
+    readonly resolvedinfo: {aliasopt: NamespaceTypedef | undefined, declopt: AbstractNominalTypeDecl | undefined, alltermargs: TypeSignature[]};
 
-    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTypedef: NamespaceTypedef | undefined, resolvedDeclaration: AbstractNominalTypeDecl | undefined) {
+    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, tterms: TypeSignature[]}[], resolvedinfo: {aliasopt: NamespaceTypedef | undefined, declopt: AbstractNominalTypeDecl | undefined, alltermargs: TypeSignature[]}) {
         super(sinfo);
         this.ns = ns;
         this.tscope = tscope;
 
-        this.resolvedTypedef = resolvedTypedef;
-        this.resolvedDeclaration = resolvedDeclaration;
+        this.resolvedinfo = resolvedinfo;
     }
 
     emit(toplevel: boolean): string {
@@ -189,23 +187,49 @@ class NominalParsedTypeSignature extends NominalTypeSignature {
             nscope = this.ns.join("::") + "::";
         }
 
-        const rrtscope = this.tscope.map((t) => t.tname + (t.terms.length !== 0 ? ("<" + t.terms.map((tt) => tt.emit(true)).join(", ") + ">") : ""));
+        const rrtscope = this.tscope.map((t) => t.tname + (t.tterms.length !== 0 ? ("<" + t.tterms.map((tt) => tt.emit(true)).join(", ") + ">") : ""));
         return nscope + rrtscope.join("::");
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtscope = this.tscope.map((t) => {
-            return { tname: t.tname, terms: t.terms.map((tt) => tt.remapTemplateBindings(mapper)) };
+            return { tname: t.tname, tterms: t.tterms.map((tt) => tt.remapTemplateBindings(mapper)) };
         });
 
-        return new NominalTypeSignature(this.sinfo, this.ns, rtscope, this.resolvedTypedef, this.resolvedDeclaration);
+        const rtall = this.resolvedinfo.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
+
+        return new NominalParsedTypeSignature(this.sinfo, this.ns, rtscope, {aliasopt: this.resolvedinfo.aliasopt, declopt: this.resolvedinfo.declopt, alltermargs: rtall});
     }
 }
 
 class ResolvedNominalTypeSignature extends NominalTypeSignature {
-}
+    readonly decl: AbstractNominalTypeDecl;
+    readonly alltermargs: TypeSignature[];
 
-class ConcreteNominalTypeSignature extends NominalTypeSignature {
+    constructor(sinfo: SourceInfo, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]) {
+        super(sinfo);
+        this.decl = decl;
+        this.alltermargs = alltermargs;
+    }
+
+    emit(toplevel: boolean): string {
+        let nscope: string;
+        if(this.decl.ns.ns[0] === "Core") {
+            nscope = this.decl.ns.ns.slice(1).join("::");
+        }
+        else {
+            nscope = this.decl.ns.ns.join("::") + "::";
+        }
+
+        const rtscope = this.alltermargs.map((tt) => tt.emit(true));
+        return nscope + this.decl.name + (rtscope.length !== 0 ? ("<" + rtscope.join(", ") + ">") : "");
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const rtall = this.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
+
+        return new ResolvedNominalTypeSignature(this.sinfo, this.decl, rtall);
+    }
 }
 
 class TupleTypeSignature extends TypeSignature {
@@ -368,7 +392,7 @@ class UnionTypeSignature extends TypeSignature {
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
-    TemplateTypeSignature, NominalTypeSignature, 
+    TemplateTypeSignature, NominalTypeSignature, NominalParsedTypeSignature, ResolvedNominalTypeSignature,
     TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature, UnionTypeSignature
 };

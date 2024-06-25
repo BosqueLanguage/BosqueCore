@@ -2,7 +2,7 @@
 import assert from "node:assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
 import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
@@ -1463,7 +1463,7 @@ class Parser {
         return undefined;
     }
 
-    private parseIdentifierAccessChainHelperTypeTail(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} {
+    private parseIdentifierAccessChainHelperTypeTail(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} {
         if(leadingscoper) {
             this.consumeToken();
         }
@@ -1474,7 +1474,7 @@ class Parser {
             const terms = this.parseTermList();
 
             if(!this.testToken(SYM_coloncolon)) {
-                return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, terms: terms}]};
+                return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
             }
             else {
                 this.consumeToken();
@@ -1482,13 +1482,13 @@ class Parser {
                 const ttname = (this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]");
 
                 if(tsroot === "Result" && (ttname === "Ok" || ttname === "Err")) {
-                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", terms: terms}, {tname: ttname, terms: []}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
                 else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
-                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", terms: terms}, {tname: ttname, terms: []}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
                 else {
-                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", terms: terms}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", tterms: terms}]};
                 }
             }
         }
@@ -1496,11 +1496,11 @@ class Parser {
             this.consumeToken();
             const terms = this.parseTermList();
 
-            return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, terms: terms}]};
+            return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
         }
     }
 
-    private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
+    private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData(leadingscoper ? 1 : 0);
         const hasterms = this.peekTokenKind(leadingscoper ? 2 : 1) === SYM_langle;
 
@@ -1526,7 +1526,7 @@ class Parser {
         }
     }
 
-    private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
+    private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const nsroot = this.peekTokenData();
@@ -1587,7 +1587,7 @@ class Parser {
         }
     }
 
-    private tryNormalizeCoreType(corens: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): AbstractNominalTypeDecl | undefined {
+    private tryNormalizeCoreType(corens: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]): AbstractNominalTypeDecl | undefined {
         const tname = typeTokens[0].tname;
         const nnt = corens.typedecls.find((t) => t.name === typeTokens[0].tname);
 
@@ -1610,7 +1610,7 @@ class Parser {
         }
     }
 
-    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): [NamespaceTypedef | undefined, AbstractNominalTypeDecl | undefined] | undefined {
+    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]): [NamespaceTypedef | undefined, AbstractNominalTypeDecl | undefined] | undefined {
         const tydef = ns.typeDefs.find((t) => t.name === typeTokens[0].tname);
         if(tydef !== undefined) {
             return [tydef, undefined];
@@ -2398,8 +2398,8 @@ class Parser {
                 return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
             }
             else {
-                xxxx;
-                return new NominalTypeSignature(sinfo, nsr.scopeTokens, nsr.typeTokens, ...resolved);
+                const alltermargs: TypeSignature[] = ([] as TypeSignature[]).concat(...nsr.typeTokens.map((tt) => tt.tterms));
+                return new NominalParsedTypeSignature(sinfo, nsr.scopeTokens, nsr.typeTokens, { aliasopt: resolved[0], declopt: resolved[1], alltermargs: alltermargs });
             }
         }
     }
@@ -2780,7 +2780,7 @@ class Parser {
         }
     }
 
-    private parseTypeScopedFirstExpression(access: {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]}): Expression {
+    private parseTypeScopedFirstExpression(access: {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]}): Expression {
         assert(false, "Not implemented -- parseTypeScopedFirstExpression");
 
         //TODO: make sure to handle the #enum case here
@@ -4799,7 +4799,7 @@ class Parser {
             const corens = this.env.assembly.getCoreNamespace();
             const otype = corens.typedecls.find((td) => td.name === "Object") as AbstractNominalTypeDecl;
 
-            provides.push(new NominalTypeSignature(sinfo, ["Core"], [{tname: "Object", terms: []}], undefined, otype));
+            provides.push(new NominalParsedTypeSignature(sinfo, ["Core"], [{tname: "Object", tterms: []}], { aliasopt: undefined, declopt: otype, alltermargs: [] }));
         }
 
         return provides;
@@ -5888,7 +5888,7 @@ class Parser {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], undefined, tdecl));
+        this.wellknownTypes.set(name, new NominalParsedTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, tterms: []}], { aliasopt: undefined, declopt: tdecl, alltermargs: [] }));
     }
 
     private static _s_lcre = /^%%[^\n]*/y;

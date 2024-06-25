@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, ConstructableTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, ResolvedNominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
@@ -241,77 +241,82 @@ class TypeChecker {
 
     //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(type: TypeSignature): boolean {
-        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
-
-        if(tnorm instanceof ErrorTypeSignature || tnorm instanceof AutoTypeSignature) {
+        if(type instanceof ErrorTypeSignature || type instanceof AutoTypeSignature) {
             return false;
         }
-        else if(tnorm instanceof VoidTypeSignature) {
+        else if(type instanceof VoidTypeSignature) {
             return true;
         }
-        else if(tnorm instanceof TemplateTypeSignature) {
-            return this.constraints.resolveConstraint(tnorm.name) !== undefined;
+        else if(type instanceof TemplateTypeSignature) {
+            return this.constraints.resolveConstraint(type.name) !== undefined;
         }
-        else if(tnorm instanceof NominalTypeSignature) {
-            const typesok = tnorm.tscope.every((entry) => entry.terms.every((ttval) => this.checkTypeSignatureAndStorable(ttval)));
+        else if(type instanceof NominalTypeSignature) {
+            assert(type instanceof NominalParsedTypeSignature, "ParsedNominalType expected -- otherwise this is redundant and probably wrong");
+            const tparsed = type as NominalParsedTypeSignature;
+            const typesok = tparsed.tscope.every((entry) => entry.tterms.every((ttval) => this.checkTypeSignatureAndStorable(ttval)));
 
             if(!typesok) {
                 return false;
             }
-            
-            const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
-            const tterms = tnorm.tscope[0].terms;
-            if(tdecl instanceof ConstructableTypeDecl) {
-                if(tdecl instanceof OkTypeDecl || tdecl instanceof ErrTypeDecl) {
-                    if(tterms.length !== 2) {
-                        this.reportError(type.sinfo, `Result type ${tdecl.name} type expected 2 terms but got ${tterms.length}`);
-                        return false;
+            if(tparsed.resolvedinfo.aliasopt !== undefined) {
+                const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(type);
+                return this.checkTypeSignature(tparsed.resolvedinfo.aliasopt.boundType.remapTemplateBindings(remapper));
+            }
+            else {
+                const tdecl = tparsed.resolvedinfo.declopt as AbstractNominalTypeDecl;
+                const tterms = tparsed.tscope[0].tterms;
+                if(tdecl instanceof ConstructableTypeDecl) {
+                    if(tdecl instanceof OkTypeDecl || tdecl instanceof ErrTypeDecl) {
+                        if(tterms.length !== 2) {
+                            this.reportError(type.sinfo, `Result type ${tdecl.name} type expected 2 terms but got ${tterms.length}`);
+                            return false;
+                        }
+                        return true;
                     }
-                    return true;
+                    else if(tdecl instanceof APIErrorTypeDecl || tdecl instanceof APIFailedTypeDecl || tdecl instanceof APIRejectedTypeDecl || tdecl instanceof APISuccessTypeDecl) {
+                        if(tterms.length !== 1) {
+                            this.reportError(type.sinfo, `APIResult type ${tdecl.name} expected 1 term but got ${tterms.length}`);
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    else {
+                        if(tterms.length !== 2) {
+                            this.reportError(type.sinfo, `MapEntry type expected 2 terms but got ${tterms.length}`);
+                            return false;
+                        }
+                        if(!this.relations.isKeyType(tterms[0], this.constraints)) {
+                            this.reportError(type.sinfo, `MapEntry key is not a key type`);
+                            return false;
+                        }
+                        return true;
+                    }
                 }
-                else if(tdecl instanceof APIErrorTypeDecl || tdecl instanceof APIFailedTypeDecl || tdecl instanceof APIRejectedTypeDecl || tdecl instanceof APISuccessTypeDecl) {
-                    if(tterms.length !== 1) {
-                        this.reportError(type.sinfo, `APIResult type ${tdecl.name} expected 1 term but got ${tterms.length}`);
+                else if(tdecl instanceof ResultTypeDecl || tdecl instanceof APIResultTypeDecl) {
+                    if(tterms.length !== tdecl.terms.length) {
+                        this.reportError(type.sinfo, `(API)Result type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
                         return false;
                     }
 
                     return true;
                 }
                 else {
-                    if(tterms.length !== 2) {
-                        this.reportError(type.sinfo, `MapEntry type expected 2 terms but got ${tterms.length}`);
+                    if(tterms.length !== tdecl.terms.length) {
+                        this.reportError(type.sinfo, `Type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
                         return false;
                     }
-                    if(!this.relations.isKeyType(tterms[0], this.constraints)) {
-                        this.reportError(type.sinfo, `MapEntry key is not a key type`);
-                        return false;
-                    }
-                    return true;
-                }
-            }
-            else if(tdecl instanceof ResultTypeDecl || tdecl instanceof APIResultTypeDecl) {
-                if(tterms.length !== tdecl.terms.length) {
-                    this.reportError(type.sinfo, `(API)Result type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
-                    return false;
-                }
 
-                return true;
-            }
-            else {
-                if(tterms.length !== tdecl.terms.length) {
-                    this.reportError(type.sinfo, `Type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
-                    return false;
+                    return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, tterms, tdecl.terms);
                 }
-
-                return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, tterms, tdecl.terms);
             }
         }
-        else if(tnorm instanceof TupleTypeSignature) {
-            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
+        else if(type instanceof TupleTypeSignature) {
+            return type.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
         }
-        else if(tnorm instanceof RecordTypeSignature) {
+        else if(type instanceof RecordTypeSignature) {
             let pnames: Set<string> = new Set<string>();
-            return tnorm.entries.every((entry) => {
+            return type.entries.every((entry) => {
                 if(pnames.has(entry[0])) {
                     this.reportError(type.sinfo, `Property name ${entry[0]} is already defined`)
                     return false;
@@ -324,25 +329,25 @@ class TypeChecker {
                 return true;
             });
         }
-        else if(tnorm instanceof EListTypeSignature) {
-            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
+        else if(type instanceof EListTypeSignature) {
+            return type.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
         }
-        else if(tnorm instanceof StringTemplateTypeSignature) {
-            return tnorm.argtypes.every((entry) => this.checkTypeSignature(entry));
+        else if(type instanceof StringTemplateTypeSignature) {
+            return type.argtypes.every((entry) => this.checkTypeSignature(entry));
         }
-        else if(tnorm instanceof LambdaTypeSignature) {
-            const oksig = tnorm.params.every((pp) => this.checkTypeSignatureParam(pp)) && this.checkTypeSignature(tnorm.resultType);
+        else if(type instanceof LambdaTypeSignature) {
+            const oksig = type.params.every((pp) => this.checkTypeSignatureParam(pp)) && this.checkTypeSignature(type.resultType);
             if(!oksig) {
                 return false;
             }
 
             let pnames: Set<string> = new Set<string>();
             let refct = 0;
-            for(let i = 0; i < tnorm.params.length; ++i) {
-                const pp = tnorm.params[i];
+            for(let i = 0; i < type.params.length; ++i) {
+                const pp = type.params[i];
 
                 refct += pp.isRefParam ? 1 : 0;
-                if(pp.isRestParam && i !== tnorm.params.length - 1) {
+                if(pp.isRestParam && i !== type.params.length - 1) {
                     this.reportError(type.sinfo, `Rest parameter ${pp.name} must be the last parameter in the lambda`);
                     return false;
                 }
@@ -356,11 +361,11 @@ class TypeChecker {
 
             return refct <= 1;
         }
-        else if(tnorm instanceof NoneableTypeSignature) {
-            return this.checkTypeSignature(tnorm.type);
+        else if(type instanceof NoneableTypeSignature) {
+            return this.checkTypeSignature(type.type);
         }
-        else if(tnorm instanceof UnionTypeSignature) {
-            return this.checkTypeSignature(tnorm.ltype) && this.checkTypeSignature(tnorm.rtype);
+        else if(type instanceof UnionTypeSignature) {
+            return this.checkTypeSignature(type.ltype) && this.checkTypeSignature(type.rtype);
         }
         else {
             assert(false, "Unknown TypeSignature type");
@@ -809,7 +814,7 @@ class TypeChecker {
         }
 
         const rconsttype = this.relations.normalizeTypeSignature(exp.constype, this.constraints);
-        if(!(rconsttype instanceof NominalTypeSignature) || !(rconsttype.resolvedDeclaration instanceof TypedeclTypeDecl)) {
+        if(!(rconsttype instanceof ResolvedNominalTypeSignature) || !(rconsttype.decl instanceof TypedeclTypeDecl)) {
             this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
             return exp.setType(exp.constype);
         }
@@ -4196,7 +4201,7 @@ class TypeChecker {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], undefined, tdecl));
+        wellknownTypes.set(name, new NominalParsedTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, tterms: []}], {aliasopt: undefined, declopt: tdecl, alltermargs: []}));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {

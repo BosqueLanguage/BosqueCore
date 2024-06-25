@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, ResolvedNominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, ExRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
@@ -98,19 +98,19 @@ class TypeCheckerRelations {
         }
 
         //check for complete set of datatype members
-        const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof NominalTypeSignature) && (t.resolvedDeclaration instanceof DatatypeMemberEntityTypeDecl));
+        const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof ResolvedNominalTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl));
         if(dts.length !== 0) {
             for(let i = 0; i < dts.length; ++i) {
-                const ndts = dts[i] as NominalTypeSignature;
-                const pptype = (ndts.resolvedDeclaration as DatatypeMemberEntityTypeDecl).parentTypeDecl;
+                const ndts = dts[i] as ResolvedNominalTypeSignature;
+                const pptype = (ndts.decl as DatatypeMemberEntityTypeDecl).parentTypeDecl;
                 
                 const allmembers = pptype.associatedMemberEntityDecls.every((mem) => {
-                    const tmem = new NominalTypeSignature(mem.sinfo, ndts.ns, [{ tname: mem.name, terms: ndts.tscope[0].terms}], undefined, mem);
+                    const tmem = new ResolvedNominalTypeSignature(mem.sinfo, mem, ndts.alltermargs);
                     return tl.some((t) => this.areSameTypes(t, tmem, tconstrain));  
                 });
 
                 if(allmembers) {
-                    const realptype = new NominalTypeSignature(ndts.sinfo, ndts.ns, [{ tname: pptype.name, terms: ndts.tscope[0].terms}], undefined, pptype);
+                    const realptype = new ResolvedNominalTypeSignature(ndts.sinfo, pptype, ndts.alltermargs);
                     tl.push(realptype);
                 }
             }
@@ -158,7 +158,7 @@ class TypeCheckerRelations {
         }
     }
 
-    private static computeNameMapperFromDirectTypeSignatureInfo(nsig: NominalTypeSignature): TemplateNameMapper {
+    static computeNameMapperFromDirectTypeSignatureInfo(nsig: NominalTypeSignature): TemplateNameMapper {
         let mapping = new Map<string, TypeSignature>();
 
         const sigterms: TypeSignature[] = [];
