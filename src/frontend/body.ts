@@ -1065,7 +1065,7 @@ class PostfixIsTest extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return ".?" + this.ttest.emit(fmt);
+        return "?" + this.ttest.emit(fmt);
     }
 }
 
@@ -1078,7 +1078,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return ".@" + this.ttest.emit(fmt);
+        return "@" + this.ttest.emit(fmt);
     }
 }
 
@@ -1701,7 +1701,8 @@ enum StatementTag {
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
 
-    StandaloneExpressionStatement = "StandaloneExpressionStatement",
+    VoidRefCallStatement = "VoidRefCallStatement",
+    VarUpdateStatement = "VarUpdateStatement",
     ThisUpdateStatement = "ThisUpdateStatement",
     SelfUpdateStatement = "SelfUpdateStatement",
 
@@ -2078,16 +2079,32 @@ class DebugStatement extends Statement {
     }
 }
 
-class StandaloneExpressionStatement extends Statement {
+class VoidRefCallStatement extends Statement {
     readonly exp: Expression;
 
     constructor(sinfo: SourceInfo, exp: Expression) {
-        super(StatementTag.StandaloneExpressionStatement, sinfo);
+        super(StatementTag.VoidRefCallStatement, sinfo);
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
         return `${this.exp.emit(true, fmt)};`;
+    }
+}
+
+class VarUpdateStatement extends Statement {
+    readonly name: string;
+    readonly updates: [string, Expression][];
+
+    constructor(sinfo: SourceInfo, name: string, updates: [string, Expression][]) {
+        super(StatementTag.VarUpdateStatement, sinfo);
+        this.name = name;
+        this.updates = updates;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
+        return `ref ${this.name}[${updates}];`;
     }
 }
 
@@ -2392,7 +2409,7 @@ export {
     VariableRetypeStatement,
     ReturnStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
-    StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
+    VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
     TaskYieldStatement,

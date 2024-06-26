@@ -1070,6 +1070,14 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
         super(file, sinfo, attributes, name);
     }
 
+    getOkType(): OkTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof OkTypeDecl) as OkTypeDecl;
+    }
+
+    getErrType(): ErrTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof ErrTypeDecl) as ErrTypeDecl;
+    }
+
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
@@ -1089,6 +1097,22 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
+    }
+
+    getAPIErrorType(): APIErrorTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIErrorTypeDecl) as APIErrorTypeDecl;
+    }
+
+    getAPIFailedType(): APIFailedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIFailedTypeDecl) as APIFailedTypeDecl;
+    }
+
+    getAPIRejectedType(): APIRejectedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIRejectedTypeDecl) as APIRejectedTypeDecl;
+    }
+
+    getAPISuccessType(): APISuccessTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APISuccessTypeDecl) as APISuccessTypeDecl;
     }
 
     emit(fmt: CodeFormatter): string {
