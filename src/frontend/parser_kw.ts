@@ -220,6 +220,7 @@ const SYM_rangle = ">";
 
 const SYM_at = "@";
 const SYM_atat = "@@";
+const SYM_hash = "#";
 const SYM_bang = "!";
 const SYM_colon = ":";
 const SYM_coloncolon = "::";
@@ -281,6 +282,7 @@ const StandardSymbols = [
     SYM_wildcard,
 
     SYM_atat,
+    SYM_hash,
     SYM_questionquestion
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -412,6 +414,7 @@ export {
 
     SYM_at,
     SYM_atat,
+    SYM_hash,
     SYM_bang,
     SYM_colon,
     SYM_coloncolon,

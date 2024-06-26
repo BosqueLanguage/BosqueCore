@@ -1198,6 +1198,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
 }
 
 class StatusInfoFilter {
+    xxxx;
     readonly standard: TypeSignature | undefined;
     readonly verbose: TypeSignature | undefined;
 
@@ -1378,10 +1379,11 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
+    xxxx;
     eventsInfo: TypeSignature[] | "{}" | "?" | undefined; //undefined means passthrough (or API is defined)
-    statusInfo: StatusInfoFilter | "?" | undefined; //undefined means passthrough
-    envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //undefined means passthrough
-    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //* means any possible resource impact -- undefined means pass through
+    statusInfo: StatusInfoFilter | "?" | undefined; //? means passthrough
+    envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //? means passthrough
+    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //** means any possible resource impact -- ? means passthrough
     
     //If this is defined then the info is all taken from the API
     implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;

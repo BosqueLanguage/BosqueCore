@@ -447,7 +447,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.stype.tkeystr})`;
+        return `${this.value}${this.stype.tkeystr}`;
     }
 }
 
@@ -944,7 +944,7 @@ class ParseAsTypeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `<${this.ttype.tkeystr}>(${this.exp.emit(toplevel, fmt)})`;
+        return `${this.ttype.tkeystr}(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 
@@ -956,7 +956,6 @@ enum PostfixOpTag {
 
     PostfixIsTest = "PostfixIsTest",
     PostfixAsConvert = "PostfixAsConvert",
-    PostfixTypeDeclValue = "PostfixTypeDeclValue",
 
     PostfixAssignFields = "PostfixAssignFields",
 
@@ -1080,19 +1079,6 @@ class PostfixAsConvert extends PostfixOperation {
 
     emit(fmt: CodeFormatter): string {
         return ".@" + this.ttest.emit(fmt);
-    }
-}
-
-class PostfixTypeDeclValue extends PostfixOperation {
-    readonly opr: "value" | "base";
-
-    constructor(sinfo: SourceInfo, opr: "value" | "base") {
-        super(sinfo, PostfixOpTag.PostfixTypeDeclValue);
-        this.opr = opr;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "." + this.opr;
     }
 }
 
@@ -2385,7 +2371,7 @@ export {
     ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixProjectFromNames,
-    PostfixIsTest, PostfixAsConvert, PostfixTypeDeclValue,
+    PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
     PostfixInvoke,
     PostfixLiteralKeyAccess,
