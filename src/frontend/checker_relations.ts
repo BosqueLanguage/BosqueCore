@@ -1,18 +1,16 @@
 import assert from "node:assert";
 
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, NominalResolvedTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, PrimitiveConceptTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
 class TypeLookupInfo {
-    readonly tsig: TypeSignature;
-    readonly ttype: AbstractNominalTypeDecl;
+    readonly tsig: NominalTypeSignature;
     readonly mapping: TemplateNameMapper;
 
-    constructor(tsig: TypeSignature, ttype: AbstractNominalTypeDecl,  mapping: TemplateNameMapper) {
+    constructor(tsig: NominalTypeSignature, mapping: TemplateNameMapper) {
         this.tsig = tsig;
-        this.ttype = ttype;
         this.mapping = mapping;
     }
 }
@@ -27,34 +25,11 @@ class MemberLookupInfo<T> {
     }
 }
 
-abstract class RegexValidatorPack {
-}
-
-class ErrorRegexValidatorPack extends RegexValidatorPack {
-}
-
-class SingleRegexValidatorPack extends RegexValidatorPack {
-    readonly vre: string;
-
-    constructor(vre: string) {
-        super();
-        this.vre = vre;
-    }
-}
-
-class OrRegexValidatorPack extends RegexValidatorPack {
-    readonly validators: RegexValidatorPack[];
-
-    constructor(validators: RegexValidatorPack[]) {
-        super();
-        this.validators = validators;
-    }
-}
-
 class TypeCheckerRelations {
     readonly assembly: Assembly;
     readonly wellknowntypes: Map<string, TypeSignature>;
 
+    readonly memoizedNormalize: Map<string, TypeSignature> = new Map<string, TypeSignature>();
     readonly memoizedTypeEqualRelation: Map<string, boolean> = new Map<string, boolean>();
     readonly memoizedTypeSubtypeRelation: Map<string, boolean> = new Map<string, boolean>();
 
@@ -63,297 +38,131 @@ class TypeCheckerRelations {
         this.wellknowntypes = wellknowntypes;
     }
 
-    static computeNameMapperFromDirectNominalParserTypeSignatureInfo(nsig: NominalParsedTypeSignature): TemplateNameMapper {
-        let mapping = new Map<string, TypeSignature>();
-
-        const sigterms: TypeSignature[] = [];
-        for(let i = 0; i < nsig.tscope.length; ++i) {
-            for(let j = 0; j < nsig.tscope[i].tterms.length; ++j) {
-                sigterms.push(nsig.tscope[i].tterms[j]);
-            }
+    resolveSpecialProvidesDecls(t: NominalTypeSignature, tconstrain: TemplateConstraintScope): TypeSignature[] {
+        if(t.decl instanceof EnumTypeDecl) {
+            return [this.wellknowntypes.get("KeyType") as TypeSignature, this.wellknowntypes.get("Some") as TypeSignature];
         }
-
-        if(nsig.resolvedinfo.aliasopt !== undefined) {
-            const tparams = nsig.resolvedinfo.aliasopt.terms;
-            for(let i = 0; i < tparams.length; ++i) {
-                mapping.set(tparams[i].name, sigterms[i] || new TemplateTypeSignature(nsig.sinfo, tparams[i].name));
-            }
+        else if(t.decl instanceof RegexValidatorTypeDecl) {
+            return [this.wellknowntypes.get("RegexValidator") as TypeSignature];
         }
-        else {
-            if((nsig.resolvedinfo.declopt as AbstractNominalTypeDecl).isSpecialResultEntity()) {
-                mapping.set("T", sigterms[0] || new TemplateTypeSignature(nsig.sinfo, "T"));
-                mapping.set("E", sigterms[1] || new TemplateTypeSignature(nsig.sinfo, "E"));
-            }
-            else if((nsig.resolvedinfo.declopt as AbstractNominalTypeDecl).isSpecialResultEntity()) {
-                mapping.set("T", sigterms[0] || new TemplateTypeSignature(nsig.sinfo, "T"));
-            }
-            else {
-                const tparams = (nsig.resolvedinfo.declopt as AbstractNominalTypeDecl).terms;
-                for(let i = 0; i < tparams.length; ++i) {
-                    mapping.set(tparams[i].name, sigterms[i] || new TemplateTypeSignature(nsig.sinfo, tparams[i].name));
+        else if(t.decl instanceof CRegexValidatorTypeDecl) {
+            return [this.wellknowntypes.get("CRegexValidator") as TypeSignature];
+        }
+        else if(t.decl instanceof PathValidatorTypeDecl) {
+            return [this.wellknowntypes.get("PathValidator") as TypeSignature];
+        }
+        else if(t.decl instanceof DatatypeMemberEntityTypeDecl) {
+            return [new NominalTypeSignature(t.sinfo, t.decl.parentTypeDecl, t.alltermargs)];
+        }
+        else if(t.decl instanceof TypedeclTypeDecl) {
+            let provides: TypeSignature[] = [this.wellknowntypes.get("Some") as TypeSignature];
+            const btype = this.getTypeDeclBasePrimitiveType(t, tconstrain);
+            if(btype !== undefined) {
+                if(this.isSubtypeOf(btype, this.wellknowntypes.get("KeyType") as TypeSignature, tconstrain)) {
+                    provides.push(this.wellknowntypes.get("KeyType") as TypeSignature);
+                }
+                if(this.isSubtypeOf(btype, this.wellknowntypes.get("Numeric") as TypeSignature, tconstrain)) {
+                    provides.push(this.wellknowntypes.get("Numeric") as TypeSignature);
+                }
+                if(this.isSubtypeOf(btype, this.wellknowntypes.get("Comparable") as TypeSignature, tconstrain)) {
+                    provides.push(this.wellknowntypes.get("Comparable") as TypeSignature);
+                }
+                if(this.isSubtypeOf(btype, this.wellknowntypes.get("LinearArithmetic") as TypeSignature, tconstrain)) {
+                    provides.push(this.wellknowntypes.get("LinearArithmetic") as TypeSignature);
                 }
             }
-        }
-
-        return TemplateNameMapper.createInitialMapping(mapping);
-    }
-
-    private aliasResolveTypeSignature(tsig: TypeSignature): TypeSignature {
-        let isig: TypeSignature | undefined = undefined;
-        let nsig: TypeSignature = tsig;
-        while(isig === undefined || isig.tkeystr !== nsig.tkeystr) {
-            isig = nsig;
-
-            if(isig instanceof NominalParsedTypeSignature) {
-                if(isig.resolvedinfo.aliasopt !== undefined) {
-                    const remapper = TypeCheckerRelations.computeNameMapperFromDirectNominalParserTypeSignatureInfo(isig);
-                    nsig = this.aliasResolveTypeSignature(isig.resolvedinfo.aliasopt.boundType.remapTemplateBindings(remapper));
-                }
-                else {
-                    nsig = new NominalResolvedTypeSignature(tsig.sinfo, isig.resolvedinfo.declopt as AbstractNominalTypeDecl, isig.tscope.flatMap((ts) => ts.tterms));
-                }
-            }
-            else {
-                nsig = isig;
-            }  
-        }
-        
-        return nsig;
-    }
-
-    private flattenTypeSignature(tsig: TypeSignature): TypeSignature[] {
-        if(tsig instanceof NoneableTypeSignature) {
-            return [...this.flattenTypeSignature(tsig.type), this.wellknowntypes.get("None") as TypeSignature];
-        }
-        if(tsig instanceof UnionTypeSignature) {
-            return tsig.types.flatMap((t) => this.flattenTypeSignature(t));
+            return provides;
         }
         else {
-            return [tsig];
+            return [];
         }
     }
 
-    private unflattenTypeSignature(sinfo: SourceInfo, tsigl: TypeSignature[]): TypeSignature {
-        if(tsigl.length === 1) {
-            return tsigl[0];
-        }
-        else if(tsigl.length === 2 && tsigl.some((t) => t.tkeystr === "None")) {
-            return new NoneableTypeSignature(sinfo, tsigl.find((t) => t.tkeystr !== "None") as TypeSignature);
-        }
-        else {
-            return new UnionTypeSignature(sinfo, tsigl);
-        }
-    }
-
-    private simplifyUnionType(sinfo: SourceInfo, tl: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
-        assert(!tl.some((t) => t instanceof UnionTypeSignature), "Should be a flat list of types");
-        assert(!tl.some((t) => t instanceof NoneableTypeSignature), "Should be a flat list of types");
-
-        //check for None+Some -> Any
-        if(tl.some((tt) => this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, tt, tconstrain)) && tl.some((tt) => this.isSubtypeOf(this.wellknowntypes.get("Some") as TypeSignature, tt, tconstrain))) {
-            return this.wellknowntypes.get("Any") as TypeSignature;
-        }
-
-        //check for complete set of datatype members
-        const dts = tl.map((t) => this.aliasResolveTypeSignature(t)).filter((t) => (t instanceof NominalResolvedTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl));
-        if(dts.length !== 0) {
-            for(let i = 0; i < dts.length; ++i) {
-                const ndts = dts[i] as NominalResolvedTypeSignature;
-                const pptype = (ndts.decl as DatatypeMemberEntityTypeDecl).parentTypeDecl;
-                
-                const allmembers = pptype.associatedMemberEntityDecls.every((mem) => {
-                    const tmem = new NominalResolvedTypeSignature(mem.sinfo, mem, ndts.alltermargs);
-                    return tl.some((t) => this.areSameTypes(t, tmem, tconstrain));  
-                });
-
-                if(allmembers) {
-                    const realptype = new NominalResolvedTypeSignature(ndts.sinfo, pptype, ndts.alltermargs);
-                    tl.push(realptype);
-                }
+    //get all of the actual concepts + template mappings that are provided by a type
+    resolveAllProvidesDecls(provides: TypeSignature[]): TypeLookupInfo[] {
+        const pdecls: TypeLookupInfo[] = [];
+        for(let i = 0; i < provides.length; ++i) {
+            const ptype = provides[i];
+            if(!(ptype instanceof NominalTypeSignature) || !(ptype.decl instanceof AbstractConceptTypeDecl)) {
+                continue;
             }
-        }
 
-        //check for Nothing+Something -> Option
-        const somethings = tl.map((t) => this.aliasResolveTypeSignature(t)).filter((t) => (t instanceof NominalResolvedTypeSignature) && (t.decl instanceof SomethingTypeDecl));
-        if(this.includesNothingType(tt, tconstrain)) {
-            const somethings = tl.filter((t) => this.isSomethingType(t, tconstrain)).map((t) => this.getOptionTypeForSomethingT(this.normalizeTypeSignature(t, tconstrain), tconstrain));
-            tl.push(...somethings);
-        }
-
-        //check for Ok+Err -> Result
-        if(tl.some((t) => this.isOkType(t, tconstrain)) && tl.some((t) => this.isErrType(t, tconstrain))) {
-            const okts = tl.filter((t) => this.isOkType(t, tconstrain));
-            const errts = tl.filter((t) => this.isErrType(t, tconstrain));
-
-            const okres = okts.map((t) => this.getResultTypeForOkTE(this.normalizeTypeSignature(t, tconstrain), tconstrain));
-            const errres = errts.map((t) => this.getResultTypeForErrorTE(this.normalizeTypeSignature(t, tconstrain), tconstrain));
-
-            const nres = okres.filter((t) => errres.some((et) => this.areSameTypes(t, et, tconstrain)));
-            tl.push(...nres);
-        }
-
-        xxxx;
-
-        let restypel = [tl[0]];
-        for(let i = 1; i < tl.length; ++i) {
-            const ntt = tl[i];
-
-            const findres = restypel.findIndex((rt) => this.isSubtypeOf(ntt, rt, tconstrain));
-            if(findres === -1) {
-                //not a subtype of any of the existing types -- filter any types that are subtypes of ntt and then add ntt
-                restypel = [...restypel.filter((rt) => !this.isSubtypeOf(rt, ntt, tconstrain)), ntt];
+            if(ptype.decl.terms.length !== ptype.alltermargs.length) {
+                continue;
             }
-        }
-        restypel.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));
 
-        if(restypel.length === 1) {
-            return restypel[0];
+            let pmap = new Map<string, TypeSignature>();
+            for(let j = 0; j < ptype.decl.terms.length; ++j) {
+                pmap.set(ptype.decl.terms[j].name, ptype.alltermargs[j]);
+            }
+
+            pdecls.push(new TypeLookupInfo(ptype, TemplateNameMapper.createInitialMapping(pmap)));
         }
-        else if(restypel.length === 2 && restypel.some((t) => t.tkeystr === "None")) {
-            return new NoneableTypeSignature(tt.sinfo, restypel.find((t) => t.tkeystr !== "None") as TypeSignature);
-        }
-        else {
-            return new UnionTypeSignature(tt.sinfo, restypel);
-        }
+
+        return pdecls;
     }
 
-    /**
-     * Given a type signature that is nested just do the simplification steps (don't try and resolve any aliases or templates)
-     */
-    private normalizeTypeSignatureNoResolve(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+    private normalizeTypeSignatureHelper(tsig: TypeSignature, tconstrain: TemplateConstraintScope, toptemplate: boolean, alltemplates: boolean): TypeSignature {
+        const memoval = this.memoizedNormalize.get(tsig.tkeystr);
+        if(memoval !== undefined) {
+            return memoval;
+        }
+
+        let res: TypeSignature;
         if(tsig instanceof ErrorTypeSignature || tsig instanceof VoidTypeSignature || tsig instanceof AutoTypeSignature) {
-            return tsig;
+            res = tsig;
         }
         else if(tsig instanceof TemplateTypeSignature) {
-            return tsig;
+            const rr = toptemplate ? tconstrain.resolveConstraint(tsig.name) : undefined;
+            res = rr === undefined ? tsig : rr.tconstraint;
         }
-        else if(tsig instanceof NominalParsedTypeSignature) {
-            const rttypes = tsig.tscope.map((ts) => {
-                return { tname: ts.tname, tterms: ts.tterms.map((t) => this.normalizeTypeSignatureNoResolve(t, tconstrain)) };
-            });
-
-            return new NominalParsedTypeSignature(tsig.sinfo, tsig.ns, rttypes, tsig.resolvedinfo);
-        }
-        else if(tsig instanceof NominalResolvedTypeSignature) {
-            const rttypes = tsig.alltermargs.map((ts) => {
-                return this.normalizeTypeSignatureNoResolve(ts, tconstrain);
-            });
-
-            return new NominalResolvedTypeSignature(tsig.sinfo, tsig.decl, rttypes);
-        }
-        else if(tsig instanceof TupleTypeSignature) {
-            const rttypes = tsig.entries.map((ts) => {
-                return this.normalizeTypeSignatureNoResolve(ts, tconstrain)
-            });
-
-            return new TupleTypeSignature(tsig.sinfo, rttypes);
-        }
-        else if(tsig instanceof RecordTypeSignature) {
-            const rttypes = tsig.entries.map((ts) => {
-                return [ts[0], this.normalizeTypeSignatureNoResolve(ts[1], tconstrain)] as [string, TypeSignature];
-            }).sort((a, b) => a[0].localeCompare(b[0]));
-
-            return new RecordTypeSignature(tsig.sinfo, rttypes);
+        else if(tsig instanceof NominalTypeSignature) {
+            res = new NominalTypeSignature(tsig.sinfo, tsig.decl, tsig.alltermargs.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
         }
         else if(tsig instanceof EListTypeSignature) {
-            const rttypes = tsig.entries.map((ts) => {
-                return this.normalizeTypeSignatureNoResolve(ts, tconstrain)
-            });
-
-            return new EListTypeSignature(tsig.sinfo, rttypes);
+            res = new EListTypeSignature(tsig.sinfo, tsig.entries.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
         }
         else if(tsig instanceof StringTemplateTypeSignature) {
-            const rttypes = tsig.argtypes.map((ts) => {
-                return this.normalizeTypeSignatureNoResolve(ts, tconstrain)
-            });
-
-            return new StringTemplateTypeSignature(tsig.sinfo, tsig.kind, rttypes);
+            res = new StringTemplateTypeSignature(tsig.sinfo, tsig.kind, tsig.argtypes.map((ts) => this.normalizeTypeSignatureHelper(ts, tconstrain, alltemplates, alltemplates)));
         }
         else if(tsig instanceof LambdaTypeSignature) {
             const rparams = tsig.params.map((pp) => {
-                return new LambdaParameterSignature(this.normalizeTypeSignatureNoResolve(pp.type, tconstrain), pp.isRefParam, pp.isRestParam);
+                return new LambdaParameterSignature(this.normalizeTypeSignatureHelper(pp.type, tconstrain, alltemplates, alltemplates), pp.isRefParam, pp.isRestParam);
             });
 
-            return new LambdaTypeSignature(tsig.sinfo, tsig.recursive, tsig.name, rparams, this.normalizeTypeSignatureNoResolve(tsig.resultType, tconstrain));
+            res = new LambdaTypeSignature(tsig.sinfo, tsig.recursive, tsig.name, rparams, this.normalizeTypeSignatureHelper(tsig.resultType, tconstrain, alltemplates, alltemplates));
         }
         else if(tsig instanceof NoneableTypeSignature) {
-            const ots = this.normalizeTypeSignatureNoResolve(tsig.type, tconstrain);
-            if(ots instanceof UnionTypeSignature) {
-                return this.simplifyUnionType(tsig.sinfo, [...ots.types, this.wellknowntypes.get("None") as TypeSignature], tconstrain);
+            const ots = this.normalizeTypeSignatureHelper(tsig.type, tconstrain, alltemplates, alltemplates);
+            if(ots instanceof NoneableTypeSignature) {
+                res = ots;
             }
             else {
-                return this.simplifyUnionType(tsig.sinfo, [ots, this.wellknowntypes.get("None") as TypeSignature], tconstrain);
+                if(ots instanceof PrimitiveEntityTypeDecl && ots.name === "None") {
+                    res = this.wellknowntypes.get("None") as TypeSignature;
+                }
+                else if(ots instanceof PrimitiveConceptTypeDecl && ots.name === "Some") {
+                    res = this.wellknowntypes.get("Any") as TypeSignature;
+                }
+                else {
+                    res = new NoneableTypeSignature(tsig.sinfo, ots);
+                }
             }
-        }
-        else if(tsig instanceof UnionTypeSignature) {
-            const ntypes = tsig.types.map((ts) => this.normalizeTypeSignatureNoResolve(ts, tconstrain));
-            return this.simplifyUnionType(tsig.sinfo, ntypes, tconstrain);
         }
         else {
             assert(false, "Unknown type signature");
         }
+
+        this.memoizedNormalize.set(tsig.tkeystr, res);
+        return res;
     }
 
-    normalizeTypeSignature(tsig: TypeSignature, tconstrain: TemplateConstraintScope, instantiatetemplate: boolean): TypeSignature {
-        let isig: TypeSignature | undefined = undefined;
-        let nsig = tsig;
-        while(isig === undefined || isig.tkeystr !== nsig.tkeystr) {
-            isig = nsig;
-
-            if(instantiatetemplate && (isig instanceof TemplateTypeSignature)) {
-                const rr = tconstrain.resolveConstraint(isig.name);
-                if(rr === undefined) {
-                    nsig = isig;
-                }
-                else {
-                    nsig = rr.tconstraint;
-                }
-            }
-            else if(isig instanceof NominalParsedTypeSignature) {
-                if(isig.resolvedinfo.aliasopt !== undefined) {
-                    const remapper = TypeCheckerRelations.computeNameMapperFromDirectNominalParserTypeSignatureInfo(isig);
-                    nsig = this.normalizeTypeSignature(isig.resolvedinfo.aliasopt.boundType.remapTemplateBindings(remapper), tconstrain, instantiatetemplate);
-                }
-                else {
-                    nsig = new NominalResolvedTypeSignature(tsig.sinfo, isig.resolvedinfo.declopt as AbstractNominalTypeDecl, isig.tscope.flatMap((ts) => ts.tterms));
-                }
-            }
-            else {
-                nsig = isig;
-            }
-    
-            nsig = this.normalizeTypeSignatureNoResolve(nsig, tconstrain);    
-        }
-        
-        return nsig;
+    normalize(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        return this.normalizeTypeSignatureHelper(tsig, tconstrain, false, false);
     }
 
-    private static areSameNameLists(nl1: string[], nl2: string[]): boolean {
-        if(nl1.length !== nl2.length) {
-            return false;
-        }
-
-        for(let i = 0; i < nl1.length; ++i) {
-            if(nl1[i] !== nl2[i]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private areSameTypeScopeTemplateLists(tscope1: {tname: string, terms: TypeSignature[]}[], tscope2: {tname: string, terms: TypeSignature[]}[], tconstrain: TemplateConstraintScope): boolean {
-        if(tscope1.length !== tscope2.length) {
-            return false;
-        }
-
-        for(let i = 0; i < tscope1.length; ++i) {
-            if(!this.areSameTypeSignatureLists(tscope1[i].terms, tscope2[i].terms, tconstrain)) {
-                return false;
-            }
-        }
-
-        return true;
+    normalizeAndTemplateInstantiate(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        return this.normalizeTypeSignatureHelper(tsig, tconstrain, true, true);
     }
 
     private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[], tconstrain: TemplateConstraintScope): boolean {
@@ -388,48 +197,67 @@ class TypeCheckerRelations {
         return true;
     }
 
+    //Check if t1 and t2 are the same type -- template types are not expanded in this check
+    areSameTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
+        assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking type same on auto");
+
+        const kstr = `(${t1.tkeystr} <> ${t2.tkeystr})`;
+        const memoval = this.memoizedTypeEqualRelation.get(kstr);
+        if(memoval !== undefined) {
+            return memoval;
+        }
+
+        const nt1 = this.normalize(t1, tconstrain);
+        const nt2 = this.normalize(t2, tconstrain);
+
+        let res = false
+        if(nt1 instanceof VoidTypeSignature && nt2 instanceof VoidTypeSignature) {
+            res = true;
+        }
+        else if(nt1 instanceof TemplateTypeSignature && nt2 instanceof TemplateTypeSignature) {
+            res = (nt1.name === nt2.name);
+        }
+        else if(nt1 instanceof NominalTypeSignature && nt2 instanceof NominalTypeSignature) {
+            res = (nt1.decl === nt2.decl) && this.areSameTypeSignatureLists(nt1.alltermargs, nt2.alltermargs, tconstrain);
+        }
+        else if(nt1 instanceof EListTypeSignature && nt2 instanceof EListTypeSignature) {
+            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries, tconstrain);
+        }
+        else if(nt1 instanceof StringTemplateTypeSignature && nt2 instanceof StringTemplateTypeSignature) {
+            res = (nt1.kind === nt2.kind) && this.areSameTypeSignatureLists(nt1.argtypes, nt2.argtypes, tconstrain);
+        }
+        else if(nt1 instanceof LambdaTypeSignature && nt2 instanceof LambdaTypeSignature) {
+            if(nt1.recursive !== nt2.recursive || nt1.name !== nt2.name) {
+                res = false;
+            }
+            else {
+                const okargs = this.areSameFunctionParamLists(nt1.params, nt2.params, tconstrain);
+                const okres = this.areSameTypes(nt1.resultType, nt2.resultType, tconstrain);
+
+                res = okargs && okres;
+            }
+        }
+        else if(nt1 instanceof NoneableTypeSignature && nt2 instanceof NoneableTypeSignature) {
+            res = this.areSameTypes(nt1.type, nt2.type, tconstrain);
+        }
+        else {
+            ; //for all other cases res stays false
+        }
+
+        this.memoizedTypeEqualRelation.set(kstr, res);
+        return res;
+    }
+
     private templateIsSubtypeOf(t1: TemplateTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         const cons = tconstrain.resolveConstraint(t1.name);
         return cons !== undefined && this.isSubtypeOf(cons.tconstraint, t2, tconstrain);
     }
 
     private nominalIsSubtypeOf(t1: NominalTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        const tmapping = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(t1);
+        const providesinfo = this.resolveAllProvidesDecls(t1.decl.provides);
 
-        const specialprovides = this.resolveSpecialProvidesDecls(t1, tconstrain).map((t) => t.remapTemplateBindings(tmapping));
-        const regularprovides = (t1.resolvedDeclaration as AbstractNominalTypeDecl).provides.map((t) => t.remapTemplateBindings(tmapping));
-
-        return [...specialprovides, ...regularprovides].some((t) => this.isSubtypeOf(t, t2, tconstrain));
-    }
-
-    private tupleIsSubtypeOf(t1: TupleTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        if(t2 instanceof NominalTypeSignature) {
-            return this.isSubtypeOf(this.wellknowntypes.get("Some") as NominalTypeSignature, t2, tconstrain);
-        }
-        else if(t2 instanceof NoneableTypeSignature) {
-            return this.isSubtypeOf(t1, t2.type, tconstrain);
-        }
-        else if(t2 instanceof UnionTypeSignature) {
-            return t2.types.some((t) => this.isSubtypeOf(t1, t, tconstrain));
-        }
-        else {
-            return false;
-        }
-    }
-
-    private recordIsSubtypeOf(t1: RecordTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        if(t2 instanceof NominalTypeSignature) {
-            return this.isSubtypeOf(this.wellknowntypes.get("Some") as NominalTypeSignature, t2, tconstrain);
-        }
-        else if(t2 instanceof NoneableTypeSignature) {
-            return this.isSubtypeOf(t1, t2.type, tconstrain);
-        }
-        else if(t2 instanceof UnionTypeSignature) {
-            return t2.types.some((t) => this.isSubtypeOf(t1, t, tconstrain));
-        }
-        else {
-            return false;
-        }
+        return providesinfo.map((pp) => pp.tsig.remapTemplateBindings(pp.mapping)).some((t) => this.isSubtypeOf(t, t2, tconstrain));
     }
 
     private stringTemplateIsSubtypeOf(t1: StringTemplateTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
@@ -439,20 +267,9 @@ class TypeCheckerRelations {
         else if(t2 instanceof NoneableTypeSignature) {
             return this.isSubtypeOf(t1, t2.type, tconstrain);
         }
-        else if(t2 instanceof UnionTypeSignature) {
-            return t2.types.some((t) => this.isSubtypeOf(t1, t, tconstrain));
-        }
         else {
             return false;
         }
-    }
-
-    private noneableIsSubtypeOf(t1: NoneableTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        return this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t2, tconstrain) && this.isSubtypeOf(t1.type, t2, tconstrain);
-    }
-
-    private unionIsSubtypeOf(t1: UnionTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        return t1.types.every((t) => this.isSubtypeOf(t, t2, tconstrain));
     }
 
     //Check is t1 is a subtype of t2 -- template types are expanded when needed in this check
@@ -466,37 +283,28 @@ class TypeCheckerRelations {
             return memoval;
         }
 
+        const nt1 = this.normalize(t1, tconstrain);
+        const nt2 = this.normalize(t2, tconstrain);
+
         let res = false;
-        if(t2.tkeystr === "Any") {
+        if(nt2.tkeystr === "Any") {
             res = true;
         }
-        else if(this.areSameTypes(t1, t2, tconstrain)) {
+        else if(this.areSameTypes(nt1, nt2, tconstrain)) {
             res = true;
         }
         else {
-            if(t1 instanceof TemplateTypeSignature) {
-                res = this.templateIsSubtypeOf(t1, t2, tconstrain);
+            if(nt1 instanceof TemplateTypeSignature) {
+                res = this.templateIsSubtypeOf(nt1, nt2, tconstrain);
             }
-            else if(t1 instanceof NominalParsedTypeSignature) {
-                res = this.nominalParsedIsSubtypeOf(t1, nt2, tconstrain);
+            else if(nt1 instanceof NominalTypeSignature) {
+                res = this.nominalIsSubtypeOf(nt1, nt2, tconstrain);
             }
-            else if(t1 instanceof NominalResolvedTypeSignature) {
-                res = this.nominalResolvedIsSubtypeOf(t1, nt2, tconstrain);
+            else if (nt1 instanceof StringTemplateTypeSignature) {
+                res = this.stringTemplateIsSubtypeOf(nt1, nt2, tconstrain);
             }
-            else if(t1 instanceof TupleTypeSignature) {
-                res = this.tupleIsSubtypeOf(t1, t2, tconstrain);
-            }
-            else if(t1 instanceof RecordTypeSignature) {
-                res = this.recordIsSubtypeOf(t1, t2, tconstrain);
-            }
-            else if (t1 instanceof StringTemplateTypeSignature) {
-                res = this.stringTemplateIsSubtypeOf(t1, t2, tconstrain);
-            }
-            else if(t1 instanceof NoneableTypeSignature) {
-                res = this.noneableIsSubtypeOf(t1, t2, tconstrain);
-            }
-            else if(t1 instanceof UnionTypeSignature) {
-                res = this.unionIsSubtypeOf(t1, t2, tconstrain);
+            else if(nt1 instanceof NoneableTypeSignature) {
+                res = this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, nt2, tconstrain) && this.isSubtypeOf(nt1.type, nt2, tconstrain);
             }
             else {
                 res = false;
@@ -507,95 +315,164 @@ class TypeCheckerRelations {
         return res;
     }
 
-    //Check if t1 and t2 are the same type -- template types are not expanded in this check
-    areSameTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
-        assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking type same on auto");
-
-        const kstr = `(${t1.tkeystr} <> ${t2.tkeystr})`;
-        const memoval = this.memoizedTypeEqualRelation.get(kstr);
-        if(memoval !== undefined) {
-            return memoval;
+    flowTypeLUB(sinfo: SourceInfo, ns: FullyQualifiedNamespace, lubopt: TypeSignature | undefined, tl: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
+        if(tl.some((t) => (t instanceof ErrorTypeSignature) || (t instanceof AutoTypeSignature) || (t instanceof VoidTypeSignature) || (t instanceof LambdaTypeSignature))) {
+            return new ErrorTypeSignature(sinfo, ns);
         }
 
-        let res = false
-        if(t1 instanceof VoidTypeSignature && t2 instanceof VoidTypeSignature) {
-            res = true;
-        }
-        else if(t1 instanceof TemplateTypeSignature && t2 instanceof TemplateTypeSignature) {
-            res = (t1.name === t2.name);
-        }
-        else if(nt1 instanceof NominalTypeSignature && nt2 instanceof NominalTypeSignature) {
-            if(!TypeCheckerRelations.areSameNameLists(nt1.ns, nt2.ns)) {
-                res = false;
+        const ttl = tl.map((t) => this.normalize(t, tconstrain));
+
+        //handle elist case
+        if(ttl.some((t) => t instanceof EListTypeSignature)) {
+            if(!ttl.every((t) => t instanceof EListTypeSignature)) {
+                return new ErrorTypeSignature(sinfo, ns);
             }
-            else {
-                const rd1 = nt1.resolvedDeclaration as AbstractNominalTypeDecl;
-                const rd2 = nt2.resolvedDeclaration as AbstractNominalTypeDecl;
-                res = (rd1.name === rd2.name) && this.areSameTypeScopeTemplateLists(nt1.tscope, nt2.tscope, tconstrain);
+
+            const elts = ttl[0];
+            for(let i = 1; i < tl.length; ++i) {
+                if(!this.areSameTypes(elts, tl[i], tconstrain)) {
+                    return new ErrorTypeSignature(sinfo, ns);
+                }
             }
-        }
-        else if(t1 instanceof TupleTypeSignature && t2 instanceof TupleTypeSignature) {
-            res = this.areSameTypeSignatureLists(t1.entries, t2.entries, tconstrain);
-        }
-        else if(t1 instanceof RecordTypeSignature && t2 instanceof RecordTypeSignature) {
-            const stl1 = [...t1.entries].sort((a, b) => a[0].localeCompare(b[0]));
-            const stl2 = [...t2.entries].sort((a, b) => a[0].localeCompare(b[0]));
 
-            const samenames = TypeCheckerRelations.areSameNameLists(stl1.map((st) => st[0]), stl2.map((st) => st[0]));
-            const sametypes = this.areSameTypeSignatureLists(stl1.map((st) => st[1]), stl2.map((st) => st[1]), tconstrain);
+            return elts;
+        }
 
-            res = samenames && sametypes;
+        //check for None+Some -> Any
+        const hasnone = ttl.some((t) => this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t, tconstrain));
+        const hassome = ttl.some((t) => this.isSubtypeOf(this.wellknowntypes.get("Some") as TypeSignature, t, tconstrain));
+        if(hasnone && hassome) {
+            return this.wellknowntypes.get("Any") as TypeSignature;
         }
-        else if(t1 instanceof EListTypeSignature && t2 instanceof EListTypeSignature) {
-            res = this.areSameTypeSignatureLists(t1.entries, t2.entries, tconstrain);
-        }
-        else if(t1 instanceof StringTemplateTypeSignature && t2 instanceof StringTemplateTypeSignature) {
-            res = (t1.kind === t2.kind) && this.areSameTypeSignatureLists(t1.argtypes, t2.argtypes, tconstrain);
-        }
-        else if(t1 instanceof LambdaTypeSignature && t2 instanceof LambdaTypeSignature) {
-            if(t1.recursive !== t2.recursive || t1.name !== t2.name) {
-                res = false;
-            }
-            else {
-                const okargs = this.areSameFunctionParamLists(t1.params, t2.params, tconstrain);
-                const okres = this.areSameTypes(t1.resultType, t2.resultType, tconstrain);
 
-                res = okargs && okres;
+        //now we know if it has none in some form so simplify the list to non-none types
+        const nttl = ttl.map((t) => (t instanceof NoneableTypeSignature) ? t.type : t).filter((t) => !(t instanceof NominalTypeSignature) || !((t.decl instanceof PrimitiveEntityTypeDecl) && t.decl.name === "None"));
+        if(nttl.length === 0) {
+            return this.wellknowntypes.get("None") as TypeSignature;
+        }
+
+        //eliminate duplicates
+        let restypel = [nttl[0]];
+        for(let i = 1; i < tl.length; ++i) {
+            const ntt = nttl[i];
+
+            const findres = restypel.findIndex((rt) => this.isSubtypeOf(ntt, rt, tconstrain));
+            if(findres === -1) {
+                //not a subtype of any of the existing types -- filter any types that are subtypes of ntt and then add ntt
+                restypel = [...restypel.filter((rt) => !this.isSubtypeOf(rt, ntt, tconstrain)), ntt];
             }
         }
-        else if(t1 instanceof NoneableTypeSignature && t2 instanceof NoneableTypeSignature) {
-            res = this.areSameTypes(t1.type, t2.type, tconstrain);
-        }
-        else if(nt1 instanceof UnionTypeSignature && nt2 instanceof UnionTypeSignature) {
-            const tl1: TypeSignature[] = [];
-            TypeCheckerRelations.flattenUnionType(nt1, tl1);
+        
+        const corens = this.assembly.getCoreNamespace();
+        let resopt: TypeSignature | undefined = undefined; 
 
-            const tl2: TypeSignature[] = [];
-            TypeCheckerRelations.flattenUnionType(nt2, tl2);
+        //only one type left
+        if(restypel.length === 1) {
+            resopt = restypel[0];
+        }
+    
+        //check for special case of Nothing+Something -> Option
+        if(nttl.length === 2 && nttl.every((t) => (t instanceof NominalTypeSignature) && (t.decl instanceof InternalEntityTypeDecl))) {
+            const ptl = nttl as NominalTypeSignature[];
 
-            if(tl1.length !== tl2.length) {
-                res = false;
+            const hasnothing = ptl.some((t) => t.decl.name === "Nothing");
+            const something = ptl.find((t) => t.decl instanceof SomethingTypeDecl);
+            if(hasnothing && something !== undefined) {
+                resopt = new NominalTypeSignature(sinfo, corens.typedecls.find((tdecl) => tdecl.name === "Option") as TypedeclTypeDecl, something.alltermargs);
             }
-            else {
-                res = tl1.every((t1) => tl2.some((t2) => this.areSameTypes(t1, t2, tconstrain)));
+
+            //check for special case of Ok+Err -> Result
+            const okopt = ptl.find((t) => t.decl instanceof OkTypeDecl);
+            const erropt = ptl.find((t) => t.decl instanceof ErrTypeDecl);
+            if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs, tconstrain)) {
+                resopt = new NominalTypeSignature(sinfo, corens.typedecls.find((tdecl) => tdecl.name === "Result") as TypedeclTypeDecl, okopt.alltermargs);
             }
         }
-        else if(t1 instanceof NoneableTypeSignature && t2 instanceof UnionTypeSignature) {
-            res = this.areSameTypes(new UnionTypeSignature(nt2.sinfo, nt1.type, this.wellknowntypes.get("None") as TypeSignature), nt2, tconstrain);
+
+        if(nttl.every((t) => (t instanceof NominalTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl))) {
+            //check for complete set of datatype members
+
+            xxxx;
         }
-        else if(t1 instanceof UnionTypeSignature && t2 instanceof NoneableTypeSignature) {
-            res = this.areSameTypes(nt1, new UnionTypeSignature(nt1.sinfo, nt2.type, this.wellknowntypes.get("None") as TypeSignature), tconstrain);
+        
+        //take these special cases and wrap non-able if needed
+        if(resopt !== undefined) {
+            return hasnone ? new NoneableTypeSignature(sinfo, resopt) : resopt;
+        }
+
+        //ok check for lubopt then Some then Any (with non-able if needed)
+        let reslub: TypeSignature;
+        if(lubopt !== undefined && restypel.every((t) => this.isSubtypeOf(t, lubopt, tconstrain))) {
+            reslub = lubopt;
+        }
+        else if(restypel.every((t) => this.isSubtypeOf(t, this.wellknowntypes.get("Some") as TypeSignature, tconstrain))) {
+            reslub = this.wellknowntypes.get("Some") as TypeSignature;
         }
         else {
-            ; //for all other cases res stays false
+            reslub = this.wellknowntypes.get("Any") as TypeSignature;
         }
 
-        this.memoizedTypeEqualRelation.set(kstr, res);
-        return res;
-    }
+        xxxx;
+        
 
-    
+        //check if it has Nothing+Something -> Option
+        const hasnothing = nttl.some((t) => this.isSubtypeOf(this.wellknowntypes.get("Nothing") as TypeSignature, t, tconstrain));
+        if(hasnothing) {
+            const somethingopts = nttl.filter((t) => (t instanceof NominalTypeSignature) && (t.decl instanceof SomethingTypeDecl));
+            const optiondecl = corens.typedecls.find((tdecl) => tdecl.name === "Option");
+            for(let i = 0; i < somethingopts.length; ++i) {
+                ttl.push(new NominalTypeSignature(sinfo, optiondecl as TypedeclTypeDecl, (somethingopts[i] as NominalTypeSignature).alltermargs));
+            }
+        }
+        
+        //check for Ok+Err -> Result
+        const somethingopts = nttl.filter((t) => (t instanceof NominalTypeSignature) && (t.decl instanceof SomethingTypeDecl));
+        if(tl.some((t) => this.isOkType(t, tconstrain)) && tl.some((t) => this.isErrType(t, tconstrain))) {
+            const okts = tl.filter((t) => this.isOkType(t, tconstrain));
+            const errts = tl.filter((t) => this.isErrType(t, tconstrain));
+
+            const okres = okts.map((t) => this.getResultTypeForOkTE(this.normalizeTypeSignature(t, tconstrain), tconstrain));
+            const errres = errts.map((t) => this.getResultTypeForErrorTE(this.normalizeTypeSignature(t, tconstrain), tconstrain));
+
+            const nres = okres.filter((t) => errres.some((et) => this.areSameTypes(t, et, tconstrain)));
+            tl.push(...nres);
+        }
+
+        //check for complete set of datatype members
+        const dts = tl.map((t) => this.aliasResolveTypeSignature(t)).filter((t) => (t instanceof NominalResolvedTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl));
+        if(dts.length !== 0) {
+            for(let i = 0; i < dts.length; ++i) {
+                const ndts = dts[i] as NominalResolvedTypeSignature;
+                const pptype = (ndts.decl as DatatypeMemberEntityTypeDecl).parentTypeDecl;
+                
+                const allmembers = pptype.associatedMemberEntityDecls.every((mem) => {
+                    const tmem = new NominalResolvedTypeSignature(mem.sinfo, mem, ndts.alltermargs);
+                    return tl.some((t) => this.areSameTypes(t, tmem, tconstrain));  
+                });
+
+                if(allmembers) {
+                    const realptype = new NominalResolvedTypeSignature(ndts.sinfo, pptype, ndts.alltermargs);
+                    tl.push(realptype);
+                }
+            }
+        }
+
+        
+
+        xxxx;
+
+        restypel.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));
+
+        if(restypel.length === 1) {
+            return restypel[0];
+        }
+        else if(restypel.length === 2 && restypel.some((t) => t.tkeystr === "None")) {
+            return new NoneableTypeSignature(tt.sinfo, restypel.find((t) => t.tkeystr !== "None") as TypeSignature);
+        }
+        else {
+            return new UnionTypeSignature(tt.sinfo, restypel);
+        }
+    }
 
     //Check if this type is a KeyType (e.g. a subtype of KeyType)
     isKeyType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
@@ -1278,78 +1155,6 @@ class TypeCheckerRelations {
         else {
             assert(false, "Need to handle inherited constants");
         }
-    }
-
-    resolveSpecialProvidesDecls(t: NominalTypeSignature, tconstrain: TemplateConstraintScope): TypeSignature[] {
-        const tdecl = t.resolvedDeclaration as AbstractNominalTypeDecl;
-
-        if(tdecl instanceof EnumTypeDecl) {
-            return [this.wellknowntypes.get("KeyType") as TypeSignature, this.wellknowntypes.get("Some") as TypeSignature];
-        }
-        else if(tdecl instanceof RegexValidatorTypeDecl) {
-            return [this.wellknowntypes.get("RegexValidator") as TypeSignature];
-        }
-        else if(tdecl instanceof CRegexValidatorTypeDecl) {
-            return [this.wellknowntypes.get("CRegexValidator") as TypeSignature];
-        }
-        else if(tdecl instanceof PathValidatorTypeDecl) {
-            return [this.wellknowntypes.get("PathValidator") as TypeSignature];
-        }
-        else if(tdecl instanceof DatatypeMemberEntityTypeDecl) {
-            return [new NominalTypeSignature(t.sinfo, t.ns, [{tname: tdecl.parentTypeDecl.name, terms: t.tscope[0].terms}], undefined, tdecl.parentTypeDecl)];
-        }
-        else if(tdecl instanceof TypedeclTypeDecl) {
-            let provides: TypeSignature[] = [this.wellknowntypes.get("Some") as TypeSignature];
-            const btype = this.getTypeDeclBasePrimitiveType(t, tconstrain);
-            if(btype !== undefined) {
-                if(this.isSubtypeOf(btype, this.wellknowntypes.get("KeyType") as TypeSignature, tconstrain)) {
-                    provides.push(this.wellknowntypes.get("KeyType") as TypeSignature);
-                }
-                if(this.isSubtypeOf(btype, this.wellknowntypes.get("Numeric") as TypeSignature, tconstrain)) {
-                    provides.push(this.wellknowntypes.get("Numeric") as TypeSignature);
-                }
-                if(this.isSubtypeOf(btype, this.wellknowntypes.get("Comparable") as TypeSignature, tconstrain)) {
-                    provides.push(this.wellknowntypes.get("Comparable") as TypeSignature);
-                }
-                if(this.isSubtypeOf(btype, this.wellknowntypes.get("LinearArithmetic") as TypeSignature, tconstrain)) {
-                    provides.push(this.wellknowntypes.get("LinearArithmetic") as TypeSignature);
-                }
-            }
-            return provides;
-        }
-        else {
-            return [];
-        }
-    }
-
-    //get all of the actual concepts + template mappings that are provided by a type
-    resolveAllProvidesDecls(provides: TypeSignature[], tconstrain: TemplateConstraintScope): TypeLookupInfo[] {
-        const pdecls: TypeLookupInfo[] = [];
-        for(let i = 0; i < provides.length; ++i) {
-            const pnorm = this.normalizeTypeSignature(provides[i], tconstrain);
-            if(!(pnorm instanceof NominalTypeSignature) || !(pnorm.resolvedDeclaration instanceof AbstractConceptTypeDecl)) {
-                continue;
-            }
-
-            const pdecl = pnorm.resolvedDeclaration as ConceptTypeDecl;
-            const pterms = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(pnorm);
-            pdecls.push(new TypeLookupInfo(pnorm, pdecl, pterms));
-
-            //now add all of the inherited concepts
-            for(let j = 0; j < pdecl.provides.length; ++j) {
-                const pdecls2 = this.resolveAllProvidesDecls([pdecl.provides[j]], tconstrain);
-
-                //but filter out any duplicates
-                for(let k = 0; k < pdecls2.length; ++k) {
-                    const dupl = pdecls.find((pd) => this.areSameTypes(pnorm, pdecls2[k].tsig, tconstrain));
-                    if(dupl === undefined) {
-                        pdecls.push(...pdecls2);
-                    }
-                }
-            }
-        }
-
-        return pdecls;
     }
 
     //get all of the actual fields that are provided via inheritance

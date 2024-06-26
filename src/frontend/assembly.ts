@@ -10,8 +10,7 @@ const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
     None,
-    Unique,
-    Atomic
+    Unique
 }
 
 class TemplateTermDecl {
@@ -29,9 +28,6 @@ class TemplateTermDecl {
         let ttgs: string[] = [];
         if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
             ttgs.push("unique");
-        }
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Atomic)) {
-            ttgs.push("atomic");
         }
 
         let tstr = (this.tconstraint.tkeystr !== "Any") ? `: ${this.tconstraint.tkeystr}` : "";
@@ -920,6 +916,22 @@ class SomethingTypeDecl extends ConstructableTypeDecl {
     }
 }
 
+class PairTypeDecl extends ConstructableTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
 class MapEntryTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1682,7 +1694,7 @@ export {
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     RegexValidatorTypeDecl, CRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, PairTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 

@@ -157,38 +157,18 @@ __internal __typedeclable entity TemplateCString provides Some {
 __internal entity Pair<T, U> provides Some {
 }
 
-%** Generic type for all Option<T> to inherit from. **%
-__universal concept IOption provides Some {
-}
-
-%** Generic type for all Something<T> to inherit from. **%
-__universal concept ISomething provides IOption {
+%** Type for representing the nothing option value. **%
+__internal entity Nothing provides Some {
 }
 
 %** Type for representing the nothing option value. **%
-__internal entity Nothing provides IOption {
-}
-
-%** Type for representing the nothing option value. **%
-__internal __constructable entity Something<T> provides ISomething, Option<T> {
+__internal __constructable entity Something<T> provides Some, Option<T> {
     %*
     method value(): T = special_extract;
     *%
 }
 
-__internal concept Option<T> provides IOption {
-}
-
-%** Generic type for all Result<T, E> to inherit from. **%
-__universal concept IResult provides Some {
-}
-
-%** Generic type for all Result<T, E>::Ok to inherit from. **%
-__universal concept IOk provides Some {
-}
-
-%** Generic type for all Result<T, E>::Err to inherit from. **%
-__universal concept IErr provides Some {
+__internal concept Option<T> provides Some {
 }
 
 namespace Interpolate {
