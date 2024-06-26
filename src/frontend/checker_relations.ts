@@ -583,59 +583,103 @@ class TypeCheckerRelations {
             return { overlap: [], remain: [] };
         }
 
-        if(this.isSubtypeOf(src, refine, tconstrain)) {
-            return { overlap: [src], remain: [] };
+        if((src instanceof TemplateTypeSignature) && (refine instanceof TemplateTypeSignature)) {
+            return { overlap: [refine], remain: [src] };
         }
+        else if(src instanceof TemplateTypeSignature) {
+            if(refine instanceof NominalTypeSignature && refine.decl instanceof AbstractEntityTypeDecl) {
+                const cons = tconstrain.resolveConstraint(src.name);
+                if(cons === undefined) {
+                    return { overlap: [refine], remain: [src] };
+                }
 
-        const dct = this.decomposeType(src);
-        let overlap: TypeSignature[] = [];
-        let remain: TypeSignature[] = [];
-
-        for(let i = 0; i < dct.length; ++i) {
-            const tt = dct[i];
-
-            if(this.isSubtypeOf(tt, refine, tconstrain)) {
-                overlap.push(tt);
+                if(!this.isSubtypeOf(refine, cons.tconstraint, tconstrain)) {
+                    return { overlap: [], remain: [src] };
+                }
             }
-            else if(tt instanceof NominalTypeSignature && tt.decl instanceof AbstractEntityTypeDecl) {
+            
+            return { overlap: [refine], remain: [src] };
+        }
+        else if(refine instanceof TemplateTypeSignature) {
+            if(src instanceof NominalTypeSignature && src.decl instanceof AbstractEntityTypeDecl) {
+                const cons = tconstrain.resolveConstraint(refine.name);
+                if(cons === undefined) {
+                    return { overlap: [refine], remain: [src] };
+                }
+
+                if(this.isSubtypeOf(src, cons.tconstraint, tconstrain)) {
+                    return { overlap: [src], remain: [src] };
+                }
+                else {
+                    return { overlap: [], remain: [src] };
+                }
+            }
+            
+            return { overlap: [refine], remain: [src] };
+        }
+        else {
+            if(this.isSubtypeOf(src, refine, tconstrain)) {
+                return { overlap: [src], remain: [] };
+            }
+
+            const dct = this.decomposeType(src);
+            let overlap: TypeSignature[] = [];
+            let remain: TypeSignature[] = [];
+
+            for(let i = 0; i < dct.length; ++i) {
+                const tt = dct[i];
+
                 if(this.isSubtypeOf(tt, refine, tconstrain)) {
                     overlap.push(tt);
                 }
+                else if(tt instanceof NominalTypeSignature && tt.decl instanceof AbstractEntityTypeDecl) {
+                    if(this.isSubtypeOf(tt, refine, tconstrain)) {
+                        overlap.push(tt);
+                    }
+                    else {
+                        remain.push(tt);
+                    }
+                }
+                else if(refine instanceof NominalTypeSignature && refine.decl instanceof AbstractEntityTypeDecl) {
+                    if(this.isSubtypeOf(refine, tt, tconstrain)) {
+                        overlap.push(refine);
+                    }
+                    remain.push(tt);
+                }
                 else {
+                    overlap.push(refine);
                     remain.push(tt);
                 }
             }
-            else if(refine instanceof NominalTypeSignature && refine.decl instanceof AbstractEntityTypeDecl) {
-                if(this.isSubtypeOf(refine, tt, tconstrain)) {
-                    overlap.push(refine);
-                }
-                remain.push(tt);
-            }
-            else {
-                overlap.push(tt);
-                remain.push(tt);
-            }
-        }
         
-        return { overlap: overlap, remain: remain };
+            return { overlap: overlap, remain: remain };
+        }
     }
 
-    splitOnNone(src: TypeSignature): { hasnone: boolean, remain: TypeSignature[] } {
+    splitOnNone(src: TypeSignature, tconstrain: TemplateConstraintScope): { hasnoneoverlap: boolean, remain: TypeSignature[] } {
+        const dcs = this.splitOnType(src, this.wellknowntypes.get("None") as TypeSignature, tconstrain);
+
+        return { hasnoneoverlap: dcs.overlap.length !== 0, remain: dcs.remain };
     }
 
-    splitOnSome(src: TypeSignature): { overlap: TypeSignature[], hasnone: boolean } {
+    splitOnSome(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], hasnoneremain: boolean } {
+        const dcs = this.splitOnType(src, this.wellknowntypes.get("Some") as TypeSignature, tconstrain);
+
+        return { overlap: dcs.overlap, hasnoneremain: dcs.remain.length !== 0 };
     }
 
-    splitOnNothing(rc: TypeSignature): { hasnothing: boolean, remainSomethingT: TypeSignature[] } {
+    splitOnNothing(src: TypeSignature, tconstrain: TemplateConstraintScope): { hasnothing: boolean, remainSomethingT: TypeSignature | undefined } | undefined {
+        
+        xxxx;
     }
 
-    splitOnSomething(rc: TypeSignature): { overlapSomethingT: TypeSignature[], hasnothing: boolean } {
+    splitOnSomething(src: TypeSignature): { overlapSomethingT: TypeSignature | undefined, hasnothing: boolean } {
     }
 
-    splitOnOk(rc: TypeSignature): { overlapOkTE: TypeSignature[], remainErrTE: TypeSignature[] } {
+    splitOnOk(src: TypeSignature): { overlapOkTE: TypeSignature | undefined, remainErrTE: TypeSignature | undefined } {
     }
 
-    splitOnErr(rc: TypeSignature): { overlapErrTE: TypeSignature[], remainOkTE: TypeSignature[] } {
+    splitOnErr(src: TypeSignature): { overlapErrTE: TypeSignature | undefined, remainOkTE: TypeSignature | undefined } {
     }
 
     refineType(src: TypeSignature, refine: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature | undefined, remain: TypeSignature | undefined } {

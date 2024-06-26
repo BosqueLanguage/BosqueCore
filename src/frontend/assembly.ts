@@ -24,15 +24,14 @@ class TemplateTermDecl {
         this.extraTags = extraTags;
     }
 
-    emitHelper(isinferable: boolean): string {
+    emitHelper(): string {
         let ttgs: string[] = [];
         if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
             ttgs.push("unique");
         }
 
-        let tstr = (this.tconstraint.tkeystr !== "Any") ? `: ${this.tconstraint.tkeystr}` : "";
-
-        return `${this.name}${isinferable ? "?" : ""}: ${[...ttgs, tstr].join(" ")}`;
+        const tstr = (this.tconstraint.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.tconstraint.tkeystr].join(" ")}` : "";
+        return `${this.name}${tstr}`;
     }
 }
 
@@ -42,54 +41,39 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
     }
 
     emit(): string {
-        return this.emitHelper(false);
+        return this.emitHelper();
     }
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    readonly isinferable: boolean;
-
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature, isinferable: boolean) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
         super(name, tconstraint, tags);
-        this.isinferable = isinferable;
     }
 
     emit(): string {
-        return this.emitHelper(this.isinferable);
+        return this.emitHelper();
     }
 }
 
 abstract class InvokeTemplateTypeRestrictionClause {
-    abstract emit(): string ;
-}
-
-class InvokeTemplateTypeRestrictionClauseUnify extends InvokeTemplateTypeRestrictionClause {
-    readonly vname: string;
-    readonly unifyinto: TypeSignature;
-
-    constructor(vname: string, unifyinto: TypeSignature) {
-        super();
-        this.vname = vname;
-        this.unifyinto = unifyinto;
-    }
-
-    emit(): string {
-        return `type(${this.vname}) -> ${this.unifyinto.tkeystr}`;
-    }
-}
-
-class InvokeTemplateTypeRestrictionClauseSubtype extends InvokeTemplateTypeRestrictionClause {
     readonly t: TemplateTypeSignature;
     readonly subtype: TypeSignature;
+    readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(t: TemplateTypeSignature, subtype: TypeSignature) {
-        super();
+    constructor(t: TemplateTypeSignature, subtype: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
         this.t = t;
         this.subtype = subtype;
+        this.extraTags = extraTags;
     }
 
     emit(): string {
-        return `${this.t}@${this.subtype.tkeystr}`;
+        let ttgs: string[] = [];
+        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
+            ttgs.push("unique");
+        }
+
+        const tstr = (this.subtype.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.subtype.tkeystr].join(" ")}` : "";
+        return `${this.t}${tstr}`;
     }
 }
 
@@ -1703,7 +1687,7 @@ class Assembly {
 
 export {
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
-    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
+    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     InvokeExampleKind, InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
