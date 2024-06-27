@@ -55,7 +55,7 @@ class InvokeTemplateTermDecl extends TemplateTermDecl {
     }
 }
 
-abstract class InvokeTemplateTypeRestrictionClause {
+class InvokeTemplateTypeRestrictionClause {
     readonly t: TemplateTypeSignature;
     readonly subtype: TypeSignature;
     readonly extraTags: TemplateTermDeclExtraTag[];
@@ -204,7 +204,7 @@ class InvokeExampleDeclInline extends InvokeExample {
     }
 
     emit(fmt: CodeFormatter): string {
-        const estr = this.entries.map((e) => `(${e.args.map((a) => a.emit(true, fmt)).join(", ")}) => ${e.output.emit(true, fmt)}`).join("; ");
+        const estr = this.entries.map((e) => `[${e.args.map((a) => a.emit(true, fmt)).join(", ")}] => ${e.output.emit(true, fmt)}`).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
             return fmt.indent(`spec { ${estr} }`);
@@ -1205,29 +1205,6 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     }
 }
 
-class StatusInfoFilter {
-    xxxx;
-    readonly standard: TypeSignature | undefined;
-    readonly verbose: TypeSignature | undefined;
-
-    constructor(standard: TypeSignature | undefined, verbose: TypeSignature | undefined) {
-        this.standard = standard;
-        this.verbose = verbose;
-    }
-
-    emit(): string {
-        if(this.standard === undefined) {
-            return "status []";
-        }
-
-        if(this.verbose === undefined) {
-            return `status [${this.standard.tkeystr}]`;
-        }
-
-        return `status [${this.standard.tkeystr}, ${this.verbose.tkeystr}]`;
-    }
-}
-
 class EnvironmentVariableInformation {
     readonly evname: string; //cstring
     readonly evtype: TypeSignature;
@@ -1295,13 +1272,13 @@ class APIDecl extends AbstractCoreDecl {
 
     readonly examples: InvokeExample[];
 
-    readonly statusOutputs: StatusInfoFilter;
+    readonly statusOutputs: TypeSignature[];
     readonly envVarRequirements: EnvironmentVariableInformation[];
     readonly resourceImpacts: ResourceInformation[] | "**" | "{}";
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: TypeSignature[], envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
         super(file, sinfo, attributes, name);
         
         this.params = params;
@@ -1338,9 +1315,8 @@ class APIDecl extends AbstractCoreDecl {
         }
 
         let status: string[] = [];
-        const ss = this.statusOutputs.emit();
-        if(ss !== undefined) {
-            status = [ss];
+        if(this.statusOutputs.length !== 0) {
+            status = [`status {${this.statusOutputs.map((so) => so.tkeystr).join(", ")}}`];
         }
 
         let resources: string[] = [];
@@ -1387,10 +1363,9 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    xxxx;
-    eventsInfo: TypeSignature[] | "{}" | "?" | undefined; //undefined means passthrough (or API is defined)
-    statusInfo: StatusInfoFilter | "?" | undefined; //? means passthrough
-    envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //? means passthrough
+    eventsInfo: TypeSignature | undefined; //undefined means no events
+    statusInfo: TypeSignature[] | undefined; //undefined means no status
+    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; 
     resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //** means any possible resource impact -- ? means passthrough
     
     //If this is defined then the info is all taken from the API
@@ -1406,23 +1381,19 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPush();
         const mg: string[][] = [];
         if(this.eventsInfo !== undefined) {
-            if(this.eventsInfo === "{}") {
-                mg.push(["event { }"]);
-            }
-            else if(this.eventsInfo === "?") {
-                mg.push(["event { ? }"]);
-            }
-            else {
-                mg.push([`event { ${this.eventsInfo.map((ei) => ei.tkeystr).join(", ")} }`]);
-            }
+            mg.push([`event ${this.eventsInfo.tkeystr}`]);
         }
         if(this.statusInfo !== undefined) {
-            if(this.statusInfo === "?") {
-                mg.push(["status ?"]);
-            }
-            else {
-                mg.push([this.statusInfo.emit()]);
-            }
+            mg.push([`status {${this.statusInfo.map((so) => so.tkeystr).join(", ")}}`]);
+        }
+        if(this.envVarRequirementInfo !== undefined) {
+            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
+
+            fmt.indentPush();
+            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
+            fmt.indentPop();
+
+            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
         }
         if(this.resourceImpactInfo !== undefined) {
             if(this.resourceImpactInfo === "**") {
@@ -1436,20 +1407,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
             }
             else {
                 mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
-            }
-        }
-        if(this.envVarRequirementInfo !== undefined) {
-            if(this.envVarRequirementInfo === "?") {
-                mg.push(["env { ? }"]);
-            }
-            else {
-                const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
-
-                fmt.indentPush();
-                const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-                fmt.indentPop();
-
-                mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
             }
         }
 
@@ -1712,7 +1669,7 @@ export {
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
-    StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
+    EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl,
     NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
     Assembly

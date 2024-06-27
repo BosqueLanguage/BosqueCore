@@ -4,9 +4,9 @@ import assert from "node:assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
-import { APIDecl, APIResultTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, PairTypeDecl } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, PairTypeDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
 
 import { accepts, initializeLexer, lexFront } from "@bosque/jsbrex";
 
@@ -1747,27 +1747,22 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_when, "template term restiction");
         
         const trl = this.parseListOf<InvokeTemplateTypeRestrictionClause>("template term restiction list", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
-            if(this.testToken(KW_type)) {
+            const ts = this.parseTemplateTypeReference();
+            this.ensureAndConsumeTokenIf(SYM_colon, "template term restiction");
+
+            let tags: TemplateTermDeclExtraTag[] = [];
+            while(this.testToken(TokenStrings.IdentifierName) && this.peekTokenData() === "unique") {
                 this.consumeToken();
-                this.ensureAndConsumeTokenAlways(SYM_lparen, "template term restiction");
+                if(tags.length === 1) {
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have duplicate template tags");
+                }
 
-                this.ensureToken(TokenStrings.IdentifierName, "template term restiction");
-                const vname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsTemplateVariable() : "[error]";
-
-                this.ensureAndConsumeTokenAlways(SYM_rparen, "template term restiction");
-                this.ensureAndConsumeTokenAlways(SYM_arrow, "template term restiction");
-
-                const tunify = this.parseStdTypeSignature();
-
-                return new InvokeTemplateTypeRestrictionClauseUnify(vname, tunify);
+                tags.push(TemplateTermDeclExtraTag.Unique);
             }
-            else {
-                const ts = this.parseTemplateTypeReference();
-                this.ensureAndConsumeTokenAlways(SYM_at, "template term restiction");
-                const subtype = this.parseStdTypeSignature();
 
-                return new InvokeTemplateTypeRestrictionClauseSubtype(ts as TemplateTypeSignature, subtype);
-            }
+            const subtype = this.parseStdTypeSignature();
+
+            return new InvokeTemplateTypeRestrictionClause(ts as TemplateTypeSignature, subtype, tags);
         });
 
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "template term restiction");
@@ -1891,7 +1886,7 @@ class Parser {
                 this.ensureToken(SYM_lbrace, "example");
                 const examples = this.parseListOf<{args: Expression[], output: Expression}>("examples", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
                     this.env.scope = new StandardScopeInfo([], boundtemplates, undefined);
-                    const args = this.parseListOf<Expression>("example args", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseExpression());
+                    const args = this.parseListOf<Expression>("example args", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseExpression());
                     this.env.scope = undefined;
 
                     this.ensureAndConsumeTokenAlways(SYM_bigarrow, "example");
@@ -2007,8 +2002,6 @@ class Parser {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
 
-        const isinferable = this.testAndConsumeTokenIf(SYM_question);
-
         let ttype = this.wellknownTypes.get("Any") as TypeSignature;
         let tags: TemplateTermDeclExtraTag[] = [];
         if(this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2024,7 +2017,7 @@ class Parser {
             ttype = this.parseStdTypeSignature();
         }
 
-        return new InvokeTemplateTermDecl(tname, tags, ttype, isinferable);
+        return new InvokeTemplateTermDecl(tname, tags, ttype);
     }
 
     private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
@@ -5601,49 +5594,22 @@ class Parser {
                 }
             }
 
-            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env)) {
-                while(this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env)) {
-                    if(this.testToken(KW_event)) {
-                        if(tdecl.eventsInfo !== undefined) {
-                            this.recordErrorGeneral(sinfo, "Cannot have multiple event sections");
-                        }
-    
-                        xxxx;
-                        this.consumeToken();
-                        if(this.testFollows(SYM_lbrace, SYM_rbrace)) {
-                            this.consumeToken();
-                            this.consumeToken();
-                            tdecl.eventsInfo = "{}";
-                        }
-                        else if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
-                            this.consumeToken();
-                            tdecl.eventsInfo = this.consumeTokenAndGetValue() as "?";
-                            this.consumeToken();
-                        }
-                        else {
-                            tdecl.eventsInfo = this.parseListOf<TypeSignature>("task event section", SYM_lbrace, SYM_rbrace, SYM_coma, () => this.parseTypeSignature());
-                        }
+            while(this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env) || this.testToken(KW_event)) {
+                if(this.testToken(KW_event)) {
+                    if(tdecl.eventsInfo !== undefined) {
+                        this.recordErrorGeneral(sinfo, "Cannot have multiple event sections");
                     }
-                    else if(this.testToken(KW_status)) {
+    
+                    this.consumeToken();
+                    tdecl.eventsInfo = this.parseNominalType();
+                }
+                else if(this.testToken(KW_status)) {
                     if(tdecl.statusInfo !== undefined) {
                         this.recordErrorGeneral(sinfo, "Cannot have multiple status sections");
                     }
 
                     this.consumeToken();
-                    if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
-                        this.consumeToken();
-                        tdecl.statusInfo = this.consumeTokenAndGetValue() as "?";
-                        this.consumeToken();
-                    }
-                    else {
-                        xxxx;
-                        const ttl = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
-                        if(ttl.length > 2) {
-                            this.recordErrorGeneral(sinfo, "Invalid status section");
-                        }
-
-                        tdecl.statusInfo = new StatusInfoFilter(ttl[0], ttl[1]); //implicit undefined is fine here
-                    }
+                    tdecl.statusInfo = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
                 }
                 else if(this.testToken(KW_resource)) {
                     if(tdecl.resourceImpactInfo !== undefined) {
@@ -5684,33 +5650,23 @@ class Parser {
                     }
 
                     this.consumeToken();
-                    if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
-                        this.consumeToken();
-                        tdecl.envVarRequirementInfo = this.consumeTokenAndGetValue() as "?";
-                        this.consumeToken();
-                    }
-                    else {
-                        tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            this.ensureToken(TokenStrings.CString, "task env section");
-                            const ename = this.consumeTokenAndGetValue();
+                    tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                        this.ensureToken(TokenStrings.CString, "task env section");
+                        const ename = this.consumeTokenAndGetValue();
 
-                            this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
-                            const ttype = this.parseStdTypeSignature();
+                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
+                        const ttype = this.parseStdTypeSignature();
                         
-                            let exp: ConstantExpressionValue | undefined = undefined;
-                            if(this.testAndConsumeTokenIf(SYM_eq)) {
-                                exp = this.parseConstExpression(ttype);
-                            }
+                        let exp: ConstantExpressionValue | undefined = undefined;
+                        if(this.testAndConsumeTokenIf(SYM_eq)) {
+                            exp = this.parseConstExpression(ttype);
+                        }
 
-                            return new EnvironmentVariableInformation(ename, ttype, exp);
-                        });
-                    }
+                        return new EnvironmentVariableInformation(ename, ttype, exp);
+                    });
                 }
             }
 
-            if(tdecl.statusInfo === undefined) {
-                tdecl.statusInfo = new StatusInfoFilter(undefined, undefined);
-            }
             if(tdecl.envVarRequirementInfo === undefined) {
                 tdecl.envVarRequirementInfo = [];
             }
@@ -5748,10 +5704,8 @@ class Parser {
 
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false);
         
-            let resultInfo = this.env.SpecialVoidSignature;
-            if (this.testAndConsumeTokenIf(SYM_colon)) {
-                resultInfo = this.parseTypeSignature();
-            }
+            this.ensureAndConsumeTokenIf(SYM_colon, "api declaration");
+            const resultInfo = this.parseReturnTypeSignature();
 
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
@@ -5760,7 +5714,7 @@ class Parser {
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
             const samples = this.parseSamples(sinfo, boundtemplates);
     
-            let statusinfo: StatusInfoFilter | undefined = undefined;
+            let statusinfo: TypeSignature[] = [];
             let resouceinfo: ResourceInformation[] | "**" | "{}" | undefined = undefined;
             let envinfo: EnvironmentVariableInformation[] | undefined = undefined;
             while(this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_resource) || this.testToken(KW_env)) {
@@ -5770,12 +5724,7 @@ class Parser {
                     }
 
                     this.consumeToken();
-                    const ttl = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseTypeSignature());
-                    if(ttl.length > 2) {
-                        this.recordErrorGeneral(sinfo, "Invalid status section");
-                    }
-
-                    statusinfo = new StatusInfoFilter(ttl[0], ttl[1]); //implicit undefined is fine here
+                    statusinfo = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseNominalType());
                 }
                 else if(this.testToken(KW_resource)) {
                     if(resouceinfo !== undefined) {
@@ -5816,7 +5765,7 @@ class Parser {
                         const ename = this.consumeTokenAndGetValue();
 
                         this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
-                        const ttype = this.parseTypeSignature();
+                        const ttype = this.parseStdTypeSignature();
 
                         let exp: ConstantExpressionValue | undefined = undefined;
                         if(this.testAndConsumeTokenIf(SYM_eq)) {
@@ -5829,7 +5778,7 @@ class Parser {
             }
 
             if(statusinfo === undefined) {
-                statusinfo = new StatusInfoFilter(undefined, undefined);
+                statusinfo = [];
             }
             if(envinfo === undefined) {
                 envinfo = [];

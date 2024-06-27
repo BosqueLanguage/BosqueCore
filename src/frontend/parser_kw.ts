@@ -21,7 +21,6 @@ const KW_fn = "fn";
 const KW_if = "if";
 const KW_implements = "implements";
 const KW_let = "let";
-const KW_literal = "literal";
 const KW_match = "match";
 const KW_none = "none";
 const KW_nothing = "nothing";
@@ -32,7 +31,6 @@ const KW_return = "return";
 const KW_something = "something";
 const KW_some = "some";
 const KW_this = "this";
-const KW_type = "type";
 const KW_self = "self";
 const KW_switch = "switch";
 const KW_then = "then";
@@ -85,6 +83,8 @@ const KW_chktest = "chktest";
 
 //reserved
 const KW_operator = "operator";
+const KW_type = "type";
+const KW_literal = "literal";
 
 const KeywordStrings = [
     KW_recursive_q,
