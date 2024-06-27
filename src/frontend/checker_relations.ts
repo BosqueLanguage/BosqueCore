@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, PrimitiveConceptTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, PrimitiveConceptTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -544,11 +544,16 @@ class TypeCheckerRelations {
     }
 
     //Take a type and decompose it (using out type system rules) into the constituent types that make it up
-    decomposeType(t: TypeSignature): TypeSignature[] {
+    decomposeType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature[] | undefined {
         assert((t instanceof TemplateTypeSignature) || (t instanceof NominalTypeSignature) || (t instanceof NoneableTypeSignature) || (t instanceof StringTemplateTypeSignature));
 
-        if(t instanceof NoneableTypeSignature) {
-            return [...this.decomposeType(t.type), this.wellknowntypes.get("None") as TypeSignature];
+        if(t instanceof TemplateTypeSignature) {
+            const cons = tconstrain.resolveConstraint(t.name);
+            return cons !== undefined ? this.decomposeType(cons.tconstraint, tconstrain) : undefined;
+        }
+        else if(t instanceof NoneableTypeSignature) {
+            const ntdcs = this.decomposeType(t.type, tconstrain);
+            return ntdcs !== undefined ? [...ntdcs, this.wellknowntypes.get("None") as TypeSignature] : undefined;
         }
         else if(t instanceof NominalTypeSignature) {
             const corens = this.assembly.getCoreNamespace();
@@ -580,118 +585,84 @@ class TypeCheckerRelations {
         }
     }
 
-    splitOnTypeDecomposedSet(dcs: TypeSignature[], refine: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], remain: TypeSignature[] } | undefined {
+    private isUniqueSplitCheckType(t: TypeSignature): boolean {
+        return (t instanceof StringTemplateTypeSignature) || (t instanceof NominalTypeSignature && !(t.decl instanceof AbstractConceptTypeDecl));
+    }
+
+    private mustDisjointCheckForSplit(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(this.isUniqueSplitCheckType(t1) && this.isUniqueSplitCheckType(t2)) {
+            return !this.areSameTypes(t1, t2, tconstrain);
+        }
+        else if(this.isUniqueSplitCheckType(t1)) {
+            return !this.isSubtypeOf(t1, t2, tconstrain);
+        }
+        else if(this.isUniqueSplitCheckType(t2)) {
+            return !this.isSubtypeOf(t2, t1, tconstrain);
+        }
+        else {
+            return false;
+        }
+    }
+
+
+    splitOnTypeDecomposedSet(dcs: TypeSignature[], refine: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature | undefined, remain: TypeSignature[] } | undefined {
         assert((refine instanceof ErrorTypeSignature) || (refine instanceof TemplateTypeSignature) || (refine instanceof NominalTypeSignature) || (refine instanceof NoneableTypeSignature) || (refine instanceof StringTemplateTypeSignature));
 
         if(refine instanceof ErrorTypeSignature) {
-            return { overlap: [], remain: [] };
+            return { overlap: undefined, remain: [] };
         }
 
-        let overlap: TypeSignature[] = [];
-        let remain: TypeSignature[] = [];
+        //It is an overlap if there is any type that may overlap (e.g. not definitely disjoint -- consider T as it's restriction for this test)
+        const refineexp = this.normalizeAndTemplateInstantiate(refine, tconstrain);
+        let overlap: boolean = dcs.some((tt) => !this.mustDisjointCheckForSplit(tt, refineexp, tconstrain));
 
-        for(let i = 0; i < dcs.length; ++i) {
-            const tt = dcs[i];
-
-            if(this.isSubtypeOf(tt, refine, tconstrain)) {
-                overlap.push(tt);
-            }
-            else if((tt instanceof TemplateTypeSignature) && (refine instanceof TemplateTypeSignature)) {
-                overlap.push(refine);
-                remain.push(tt);
-            }
-            else if(tt instanceof TemplateTypeSignature) {
-                if(refine instanceof NominalTypeSignature && refine.decl instanceof AbstractEntityTypeDecl) {
-                    const cons = tconstrain.resolveConstraint(tt.name);
-                    if(cons === undefined) {
-                        return undefined;
-                    }
-    
-                    if(this.isSubtypeOf(refine, cons.tconstraint, tconstrain)) {
-                        overlap.push(refine);
-                    }
-                    remain.push(tt);
-                }
-                else {
-                    overlap.push(refine);
-                    remain.push(tt);
-                }
-            }
-            else if(refine instanceof TemplateTypeSignature) {
-                if(tt instanceof NominalTypeSignature && tt.decl instanceof AbstractEntityTypeDecl) {
-                    const cons = tconstrain.resolveConstraint(refine.name);
-                    if(cons === undefined) {
-                        return undefined;
-                    }
-    
-                    if(this.isSubtypeOf(tt, cons.tconstraint, tconstrain)) {
-                        overlap.push(tt);
-                    }
-                    remain.push(tt);
-                }
-                else {
-                    overlap.push(refine);
-                    remain.push(tt);
-                }
-            }
-            else {
-                if(tt instanceof NominalTypeSignature && tt.decl instanceof AbstractEntityTypeDecl) {
-                    if(this.isSubtypeOf(tt, refine, tconstrain)) {
-                        overlap.push(tt);
-                    }
-                    else {
-                        remain.push(tt);
-                    }
-                }
-                else if(refine instanceof NominalTypeSignature && refine.decl instanceof AbstractEntityTypeDecl) {
-                    if(this.isSubtypeOf(refine, tt, tconstrain)) {
-                        overlap.push(refine);
-                    }
-                    remain.push(tt);
-                }
-                else {
-                    overlap.push(refine);
-                    remain.push(tt);
-                }
-            }
-        }
+        //It stays in the remain set unless it is definitely a subtype of the refine type
+        let remain: TypeSignature[] = dcs.filter((tt) => !this.isSubtypeOf(tt, refine, tconstrain));
         
-        return { overlap: overlap, remain: remain };
+        return { overlap: overlap ? refine : undefined, remain: remain };
     }
 
-    splitOnType(src: TypeSignature, refine: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], remain: TypeSignature[] } | undefined {
+    refineType(src: TypeSignature, refine: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature | undefined, remain: TypeSignature[] } | undefined {
         assert((refine instanceof ErrorTypeSignature) || (refine instanceof TemplateTypeSignature) || (refine instanceof NominalTypeSignature) || (refine instanceof NoneableTypeSignature) || (refine instanceof StringTemplateTypeSignature));
 
         if((src instanceof ErrorTypeSignature) || (refine instanceof ErrorTypeSignature)) {
-            return { overlap: [], remain: [] };
+            return { overlap: undefined, remain: [] };
         }
 
         if(this.isSubtypeOf(src, refine, tconstrain)) {
-            return { overlap: [src], remain: [] };
+            return { overlap: refine, remain: [] };
         }
 
-        const dct = this.decomposeType(src);
+        const refineexp = this.normalizeAndTemplateInstantiate(refine, tconstrain);
+        if(this.mustDisjointCheckForSplit(src, refineexp, tconstrain)) {
+            return { overlap: undefined, remain: [src] };
+        }
+
+        const dct = this.decomposeType(src, tconstrain);
+        if(dct === undefined) {
+            return undefined;
+        }
         return this.splitOnTypeDecomposedSet(dct, refine, tconstrain);
     }
 
-    splitOnNoneDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], remain: TypeSignature[] } | undefined {
+    splitOnNoneDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlap: TypeSignature | undefined, remain: TypeSignature[] } | undefined {
         return this.splitOnTypeDecomposedSet(dcs, this.wellknowntypes.get("None") as TypeSignature, tconstrain);
     }
 
     splitOnNone(src: TypeSignature, tconstrain: TemplateConstraintScope): { hasnoneoverlap: boolean, remain: TypeSignature[] } | undefined {
-        const dcs = this.splitOnType(src, this.wellknowntypes.get("None") as TypeSignature, tconstrain);
+        const dcs = this.refineType(src, this.wellknowntypes.get("None") as TypeSignature, tconstrain);
 
-        return dcs !== undefined ? { hasnoneoverlap: dcs.overlap.length !== 0, remain: dcs.remain } : undefined;
+        return dcs !== undefined ? { hasnoneoverlap: dcs.overlap !== undefined, remain: dcs.remain } : undefined;
     }
 
-    splitOnSomeDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], remain: TypeSignature[] } | undefined {
+    splitOnSomeDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlap: TypeSignature | undefined, remain: TypeSignature[] } | undefined {
         return this.splitOnTypeDecomposedSet(dcs, this.wellknowntypes.get("Some") as TypeSignature, tconstrain);
     }
 
-    splitOnSome(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlap: TypeSignature[], hasnoneremain: boolean } | undefined {
-        const dcs = this.splitOnType(src, this.wellknowntypes.get("Some") as TypeSignature, tconstrain);
+    splitOnSome(src: TypeSignature, tconstrain: TemplateConstraintScope): { hassome: boolean, hasnoneremain: boolean } | undefined {
+        const dcs = this.refineType(src, this.wellknowntypes.get("Some") as TypeSignature, tconstrain);
 
-        return dcs !== undefined ? { overlap: dcs.overlap, hasnoneremain: dcs.remain.length !== 0 } : undefined;
+        return dcs !== undefined ? { hassome: dcs.overlap !== undefined , hasnoneremain: dcs.remain.length !== 0 } : undefined;
     }
 
     splitOnNothingDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { hasnothing: boolean, remainSomethingT: TypeSignature | undefined } | undefined {
@@ -723,7 +694,10 @@ class TypeCheckerRelations {
             return { hasnothing: false, remainSomethingT: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
+        if(dct === undefined) {
+            return undefined;
+        }
         return this.splitOnNothingDecomposedSet(dct, tconstrain);
     }
 
@@ -756,18 +730,21 @@ class TypeCheckerRelations {
             return { overlapSomethingT: undefined, hasnothing: false };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
+        if(dct === undefined) {
+            return undefined;
+        }
         return this.splitOnSomethingDecomposedSet(dct, tconstrain);
     }
 
-    splitOnOkDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapOkT: TypeSignature | undefined, remainErr: TypeSignature[] } | undefined {
+    splitOnOkDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapOkT: TypeSignature | undefined, remainErrE: TypeSignature | undefined } | undefined {
         if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof ErrTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
             return undefined;
         }
 
         let typeT: TypeSignature | undefined = undefined;
         let typeE: TypeSignature | undefined = undefined;
-        let remainErr: TypeSignature[] = [];
+        let haserr = false;
         let hasok = false;
         for(let i = 0; i < dcs.length; ++i) {
             const t = dcs[i] as NominalTypeSignature;
@@ -786,36 +763,39 @@ class TypeCheckerRelations {
 
             if(t.decl instanceof ResultTypeDecl) {
                 hasok = true;
-                remainErr.push(new NominalTypeSignature(t.sinfo, t.decl.getErrType(), t.alltermargs));
+                haserr = true;
             }
             if(t.decl instanceof ErrTypeDecl) {
-                remainErr.push(t);
+                haserr = true;
             }
             else {
                 hasok = true;
             }
         }
 
-        return { overlapOkT: hasok ? typeT : undefined, remainErr: remainErr };
+        return { overlapOkT: hasok ? typeT : undefined, remainErrE: haserr ? typeE : undefined};
     }
 
-    splitOnOk(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapOkT: TypeSignature | undefined, remainErr: TypeSignature[] } | undefined {
+    splitOnOk(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapOkT: TypeSignature | undefined, remainErrE: TypeSignature | undefined } | undefined {
         if(src instanceof ErrorTypeSignature) {
-            return { overlapOkT: undefined, remainErr: [] };
+            return { overlapOkT: undefined, remainErrE: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
+        if(dct === undefined) {
+            return undefined;
+        }
         return this.splitOnOkDecomposedSet(dct, tconstrain);
     }
 
-    splitOnErrDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapErrE: TypeSignature | undefined, remainOk: TypeSignature[] } | undefined {
+    splitOnErrDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapErrE: TypeSignature | undefined, remainOkT: TypeSignature | undefined } | undefined {
         if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof ErrTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
             return undefined;
         }
 
         let typeT: TypeSignature | undefined = undefined;
         let typeE: TypeSignature | undefined = undefined;
-        let remainOk: TypeSignature[] = [];
+        let hasok = false;
         let haserr = false;
         for(let i = 0; i < dcs.length; ++i) {
             const t = dcs[i] as NominalTypeSignature;
@@ -834,25 +814,28 @@ class TypeCheckerRelations {
 
             if(t.decl instanceof ResultTypeDecl) {
                 haserr = true;
-                remainOk.push(new NominalTypeSignature(t.sinfo, t.decl.getOkType(), t.alltermargs));
+                hasok = true;
             }
             if(t.decl instanceof OkTypeDecl) {
-                remainOk.push(t);
+                hasok = true;
             }
             else {
                 haserr = true;
             }
         }
 
-        return { overlapErrE: haserr ? typeE : undefined, remainOk: remainOk };
+        return { overlapErrE: haserr ? typeE : undefined, remainOkT: hasok ? typeT : undefined };
     }
 
-    splitOnErr(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapErrE: TypeSignature | undefined, remainOk: TypeSignature[] } | undefined {
+    splitOnErr(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapErrE: TypeSignature | undefined, remainOkT: TypeSignature | undefined } | undefined {
         if(src instanceof ErrorTypeSignature) {
-            return { overlapErrE: undefined, remainOk: [] };
+            return { overlapErrE: undefined, remainOkT: undefined };
         }
 
-        const dct = this.decomposeType(src);
+        const dct = this.decomposeType(src, tconstrain);
+        if(dct === undefined) {
+            return undefined;
+        }
         return this.splitOnErrDecomposedSet(dct, tconstrain);
     }
 
