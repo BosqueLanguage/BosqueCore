@@ -3028,7 +3028,7 @@ class Parser {
             else if(sstr.endsWith("[OF]")) {
                 const vval = sstr.slice(0, sstr.length - "[OF]".length);
                 const oftype = this.parseTypeTagSignature();
-                return new LiteralTypedStringExpression(ExpressionTag.LiteralExTypedStringExpression, sinfo, vval, oftype);
+                return new LiteralTypedStringExpression(ExpressionTag.LiteralTypedCStringExpression, sinfo, vval, oftype);
             }
             else {
                 return new LiteralSimpleExpression(ExpressionTag.LiteralCStringExpression, sinfo, sstr);
@@ -4818,7 +4818,7 @@ class Parser {
         allMemberNames.add(fname);
 
         if(memberFields !== undefined && !memberFields.some((cm) => cm.name === fname)) {
-            memberFields.push(new MemberFieldDecl(this.env.currentFile, sinfo, attributes, fname, ftype, ivalue));
+            memberFields.push(new MemberFieldDecl(this.env.currentFile, sinfo, attributes, fname, ftype, ivalue, false));
         }
 
         this.ensureAndConsumeTokenIf(SYM_semicolon, "member field");
@@ -5433,7 +5433,7 @@ class Parser {
                     this.ensureAndConsumeTokenIf(SYM_colon, "datatype POD member field");
 
                     const ttype = this.parseStdTypeSignature();
-                    return new MemberFieldDecl(this.env.currentFile, mfinfo, [], name, ttype, undefined);
+                    return new MemberFieldDecl(this.env.currentFile, mfinfo, [], name, ttype, undefined, false);
                 });
 
                 (tdecl as DatatypeMemberEntityTypeDecl).fields.push(...fields);
@@ -5492,7 +5492,7 @@ class Parser {
                     this.ensureAndConsumeTokenIf(SYM_colon, "datatype field");
 
                     const ttype = this.parseStdTypeSignature();
-                    return new MemberFieldDecl(this.env.currentFile, sinfo, [], name, ttype, undefined);
+                    return new MemberFieldDecl(this.env.currentFile, sinfo, [], name, ttype, undefined, false);
                 });
 
                 tdecl.fields.push(...cusing);

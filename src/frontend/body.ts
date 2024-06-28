@@ -219,7 +219,7 @@ enum ExpressionTag {
     LiteralCStringExpression = "LiteralCStringExpression",
     
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
-    LiteralExTypedStringExpression = "LiteralExTypedStringExpression",
+    LiteralTypedCStringExpression = "LiteralTypedCStringExpression",
     
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
     LiteralTemplateCStringExpression = "LiteralTemplateCStringExpression",

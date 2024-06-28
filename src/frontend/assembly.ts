@@ -519,12 +519,14 @@ class ConstMemberDecl extends AbstractCoreDecl {
 class MemberFieldDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
     readonly defaultValue: ConstantExpressionValue | undefined;
+    readonly isSpecialAccess: boolean;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined, isSpecialAccess: boolean) {
         super(file, sinfo, attributes, name);
         
         this.declaredType = dtype;
         this.defaultValue = dvalue;
+        this.isSpecialAccess = isSpecialAccess;
     }
 
     emit(fmt: CodeFormatter): string {

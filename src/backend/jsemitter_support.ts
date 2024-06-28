@@ -1,7 +1,6 @@
 import assert from "node:assert";
 
-import { AutoTypeSignature, ErrorTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "../frontend/type.js";
-import { ConstructableTypeDecl } from "../frontend/assembly.js";
+import { NominalTypeSignature } from "../frontend/type.js";
 
 class JSCodeFormatter {
     private level: number;
@@ -25,26 +24,14 @@ class JSCodeFormatter {
 
 class TypeNameResolver {
     emitDeclNameAccess(ttype: NominalTypeSignature): string {
-        assert(ttype.resolvedDeclaration !== undefined);
-        const rdecl = ttype.resolvedDeclaration;
+        const nscope = "$" + ttype.decl.ns.ns.join(".");
+        const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
 
-        const nscope = "$" + rdecl.ns.ns.join(".");
-        if((rdecl instanceof ConstructableTypeDecl) && (rdecl.name === "Ok" || rdecl.name === "Err")) {
-            const termstr = `<${rdecl.terms.map((t) => { return t.emit(); }).join(", ")}>`;
-            return `${nscope}.${rdecl.name}["${termstr}"]`;
-        }
-        else if((rdecl instanceof ConstructableTypeDecl) && (rdecl.name === "Rejected" || rdecl.name === "Failed" || rdecl.name === "Error" || rdecl.name === "Success")) {
-            const termstr = `<${rdecl.terms.map((t) => { return t.emit(); }).join(", ")}>`;
-            return `${nscope}.${rdecl.name}["${termstr}"]`;
+        if(ttype.decl.terms.length === 0) {
+            return nscope + "." + ttype.decl.name;
         }
         else {
-            if(rdecl.terms.length === 0) {
-                return nscope + "." + rdecl.name;
-            }
-            else {
-                const termstr = `<${ttype.tscope.map((t) => { return t.emit(); }).join(", ")}>`;
-                return `${nscope}.${rdecl.name}["${termstr}"]`;
-            }
+            return `${nscope}.${ttype.decl.name}["${termstr}"]`;
         }
     }
 }

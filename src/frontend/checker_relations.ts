@@ -319,9 +319,9 @@ class TypeCheckerRelations {
         return res;
     }
 
-    flowTypeLUB(sinfo: SourceInfo, ns: FullyQualifiedNamespace, lubopt: TypeSignature | undefined, tl: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
+    flowTypeLUB(sinfo: SourceInfo, lubopt: TypeSignature | undefined, tl: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
         if(tl.some((t) => (t instanceof ErrorTypeSignature) || (t instanceof AutoTypeSignature) || (t instanceof VoidTypeSignature) || (t instanceof LambdaTypeSignature))) {
-            return new ErrorTypeSignature(sinfo, ns);
+            return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
         }
 
         const ttl = tl.map((t) => this.normalize(t, tconstrain));
@@ -329,13 +329,13 @@ class TypeCheckerRelations {
         //handle elist case
         if(ttl.some((t) => t instanceof EListTypeSignature)) {
             if(!ttl.every((t) => t instanceof EListTypeSignature)) {
-                return new ErrorTypeSignature(sinfo, ns);
+                return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
             }
 
             const elts = ttl[0];
             for(let i = 1; i < tl.length; ++i) {
                 if(!this.areSameTypes(elts, tl[i], tconstrain)) {
-                    return new ErrorTypeSignature(sinfo, ns);
+                    return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
                 }
             }
 
@@ -693,7 +693,7 @@ class TypeCheckerRelations {
             return undefined;
         }
 
-        const rstype = this.flowTypeLUB(src.sinfo, new FullyQualifiedNamespace(["SPLIT"]), xxxx, snone.remainSome, tconstrain);
+        const rstype = this.flowTypeLUB(src.sinfo, this.wellknowntypes.get("Some") as TypeSignature, snone.remainSome, tconstrain);
         return {hasnone: snone.hasnone, remainSome: rstype};
     }
 
@@ -729,7 +729,7 @@ class TypeCheckerRelations {
             return undefined;
         }
 
-        const rstype = this.flowTypeLUB(src.sinfo, new FullyQualifiedNamespace(["SPLIT"]), xxxx, snone.remainSome, tconstrain);
+        const rstype = this.flowTypeLUB(src.sinfo, this.wellknowntypes.get("Some") as TypeSignature, snone.overlapSome, tconstrain);
         return {overlapSome: rstype, hasnone: snone.hasnone};
     }
 
@@ -1076,55 +1076,55 @@ class TypeCheckerRelations {
                 if(name === "value") {
                     const valuetype = this.getTypeDeclValueType(tn);
                     if(valuetype !== undefined) {
-                        cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", valuetype, undefined);
+                        cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", valuetype, undefined, true);
                     }
                 }
                 if(name === "primitive") {
                     const primtype = this.getTypeDeclBasePrimitiveType(tn);
                     if(primtype !== undefined) {
-                        cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "primitive", primtype, undefined);
+                        cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "primitive", primtype, undefined, true);
                     }
                 }
             }
             else if(tn.decl instanceof StringOfTypeDecl) {
                 if(name === "value") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", this.wellknowntypes.get("String") as TypeSignature, undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", this.wellknowntypes.get("String") as TypeSignature, undefined, true);
                 }
             }
             else if(tn.decl instanceof CStringOfTypeDecl) {
                 if(name === "value") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", this.wellknowntypes.get("CString") as TypeSignature, undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", this.wellknowntypes.get("CString") as TypeSignature, undefined, true);
                 }
             }
             else if(tn.decl instanceof SomethingTypeDecl) {
                 if(name === "value") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined, true);
                 }
             }
             else if(tn.decl instanceof OkTypeDecl) {
                 if(name === "value") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined, true);
                 }
             }
             else if(tn.decl instanceof ErrTypeDecl) {
                 if(name === "error") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined, true);
                 }
             }
             else if(tn.decl instanceof PairTypeDecl) {
                 if(name === "first") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "first", tn.alltermargs[0], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "first", tn.alltermargs[0], undefined, true);
                 }
                 if(name === "second") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "second", tn.alltermargs[1], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "second", tn.alltermargs[1], undefined, true);
                 }
             }
             else if(tn.decl instanceof MapEntryTypeDecl) {
                 if(name === "key") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "key", tn.alltermargs[0], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "key", tn.alltermargs[0], undefined, true);
                 }
                 if(name === "value") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[1], undefined);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[1], undefined, true);
                 }
             }
             else {

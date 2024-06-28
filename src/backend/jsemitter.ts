@@ -220,8 +220,8 @@ class JSEmitter {
         assert(false, "Not implemented -- TypedString");
     }
     
-    private emitLiteralExTypedStringExpression(exp: LiteralTypedStringExpression): string {
-        assert(false, "Not implemented -- ExTypedString");
+    private emitLiteralTypedCStringExpression(exp: LiteralTypedStringExpression): string {
+        assert(false, "Not implemented -- TypedCString");
     }
     
     private emitLiteralTemplateStringExpression(exp: LiteralTemplateStringExpression): string {
@@ -563,8 +563,8 @@ class JSEmitter {
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.emitLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
             }
-            case ExpressionTag.LiteralExTypedStringExpression: {
-                return this.emitLiteralExTypedStringExpression(exp as LiteralTypedStringExpression);
+            case ExpressionTag.LiteralTypedCStringExpression: {
+                return this.emitLiteralTypedCStringExpression(exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.emitLiteralTemplateStringExpression(exp as LiteralTemplateStringExpression);
