@@ -47,19 +47,6 @@ class ITestType extends ITest {
     }
 }
 
-class ITestLiteral extends ITest {
-    readonly literal: LiteralExpressionValue;
-    
-    constructor(isnot: boolean, literal: LiteralExpressionValue) {
-        super(isnot);
-        this.literal = literal;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}[${this.literal.emit(true, fmt)}]`;
-    }
-}
-
 class ITestNone extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
@@ -2370,7 +2357,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,

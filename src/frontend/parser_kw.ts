@@ -218,6 +218,9 @@ const SYM_rbracebar = "|}";
 const SYM_langle = "<";
 const SYM_rangle = ">";
 
+
+const SYM_amp = "&";
+const SYM_bar = "|";
 const SYM_at = "@";
 const SYM_atat = "@@";
 const SYM_hash = "#";
@@ -237,7 +240,6 @@ const SYM_HOLE = "$?_";
 const SYM_positive = " +";
 const SYM_negate = " -";
 
-const SYM_amp = " & ";
 const SYM_ampamp = " && ";
 const SYM_bangeq = " != ";
 const SYM_bangeqeq = " !== ";
@@ -247,7 +249,6 @@ const SYM_bigarrow = " => ";
 const SYM_implies = " ==> ";
 const SYM_iff = " <==> ";
 const SYM_arrow = " -> ";
-const SYM_bar = " | ";
 const SYM_barbar = " || ";
 const SYM_plus = " + ";
 const SYM_lt = " < ";
@@ -266,6 +267,8 @@ const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar, SYM_l
 const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar, SYM_rangle];
 
 const StandardSymbols = [
+    SYM_amp,
+    SYM_bar,
     SYM_at,
     SYM_bang,
     SYM_colon,
@@ -287,7 +290,6 @@ const StandardSymbols = [
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const SpaceRequiredSymbols = [
-    SYM_amp,
     SYM_ampamp,
     SYM_bangeq,
     SYM_bangeqeq,
@@ -297,7 +299,6 @@ const SpaceRequiredSymbols = [
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_bar,
     SYM_barbar,
     SYM_plus,
     SYM_lt,
@@ -412,6 +413,8 @@ export {
     SYM_rangle,
     SYM_rbracebar,
 
+    SYM_amp,
+    SYM_bar,
     SYM_at,
     SYM_atat,
     SYM_hash,
@@ -432,7 +435,6 @@ export {
     SYM_positive,
     SYM_negate,
 
-    SYM_amp,
     SYM_ampamp,
     SYM_bangeq,
     SYM_bangeqeq,
@@ -442,7 +444,6 @@ export {
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_bar,
     SYM_barbar,
     SYM_plus,
     SYM_lt,
