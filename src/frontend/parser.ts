@@ -3489,7 +3489,7 @@ class Parser {
         return [exp, bindername, implicitdef, ispostflow, itest];
     }
 
-    private parseSwitchOrMatchTest(isexp: boolean): [Expression, string | undefined, boolean, boolean] {
+    private parseMatchTest(isexp: boolean): [Expression, string | undefined, boolean, boolean] {
         let exp: Expression;
         let bindername: string | undefined = undefined;
         let implicitdef: boolean = true;
@@ -4261,7 +4261,7 @@ class Parser {
             }
 
             const elssebody = this.parseScopedBlockStatement();
-            return new IfElifElseStatement(sinfo, [{cond: new IfTest(iexp, itest), block: ifbody.block}, ...conds], elssebody);
+            return new IfElifElseStatement(sinfo, [{cond: iexp, block: ifbody.block}, ...conds.map((cc) => { return {cond: cc.cond.exp, block: cc.block}; })], elssebody);
         }
     }
 
@@ -4270,33 +4270,30 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_switch, "switch statement dispatch value");
 
-        const [sexp, binder, implicitdef, ispostflow] = this.parseSwitchOrMatchTest(true);
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "switch statement dispatch value");
+        const sexp = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "switch statement dispatch value");
 
-        let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined }[] = [];
+        let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
-        const svalue = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
+        const svalue = this.parseScopedBlockStatement();
 
-        entries.push({ lval: swlit, value: svalue.block, bindername: svalue.used.length !== 0 ? svalue.used[0].srcname : undefined });
+        entries.push({ lval: swlit, value: svalue });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
-            const svaluex = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
+            const svaluex = this.parseScopedBlockStatement();
 
-            entries.push({ lval: swlitx, value: svaluex.block, bindername: svaluex.used.length !== 0 ? svaluex.used[0].srcname : undefined });
+            entries.push({ lval: swlitx, value: svaluex });
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statement options");
 
-        let bindinfo: BinderInfo | undefined = undefined;
-        if(binder !== undefined && entries.some((cc) => cc.bindername !== undefined)) {
-            bindinfo = new BinderInfo(binder, this.env.getScope().getBinderVarName(binder), implicitdef, ispostflow);
-        }
-
-        return new SwitchStatement(sinfo, [sexp, bindinfo], entries);
+        return new SwitchStatement(sinfo, sexp, entries);
     }
 
     private parseMatchStatement(): Statement {
@@ -4304,7 +4301,7 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
 
-        const [mexp, binder, implicitdef, ispostflow] = this.parseSwitchOrMatchTest(true);
+        const [mexp, binder, implicitdef, ispostflow] = this.parseMatchTest(true);
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined  }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");

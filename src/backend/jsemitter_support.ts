@@ -1,4 +1,3 @@
-import assert from "node:assert";
 
 import { NominalTypeSignature } from "../frontend/type.js";
 

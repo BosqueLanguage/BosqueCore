@@ -1935,17 +1935,17 @@ class IfElseStatement extends Statement {
 }
 
 class IfElifElseStatement extends Statement {
-    readonly condflow: {cond: IfTest, block: BlockStatement}[];
+    readonly condflow: {cond: Expression, block: BlockStatement}[];
     readonly elseflow: BlockStatement;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, block: BlockStatement}[], elseflow: BlockStatement) {
+    constructor(sinfo: SourceInfo, condflow: {cond: Expression, block: BlockStatement}[], elseflow: BlockStatement) {
         super(StatementTag.IfElifElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
+        const ttcond = this.condflow.map((cf) => `$(${cf.cond.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
         const ttelse = this.elseflow.emit(fmt);
 
         const iif = `if${ttcond[0]}`;
@@ -1956,22 +1956,17 @@ class IfElifElseStatement extends Statement {
 }
 
 class SwitchStatement extends Statement {
-    readonly sval: [Expression, BinderInfo | undefined];
-    readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined}[];
+    readonly sval: Expression;
+    readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);
         this.sval = sval;
         this.switchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.sval[1] !== undefined) {
-            bexps = this.sval[1].emit();
-        }
-
-        const mheader = `switch(${bexps[0]}${this.sval[0].emit(true, fmt)})${bexps[1]}`;
+        const mheader = `switch(${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.exp.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();

@@ -1,9 +1,8 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, ITest, ITestErr, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
 import { TypeCheckerRelations } from "../frontend/checker_relations.js";
-import { TemplateConstraintScope, TypeSignature } from "../frontend/type.js";
 
 class JSEmitter {
     readonly fmt: JSCodeFormatter;
@@ -14,6 +13,7 @@ class JSEmitter {
         this.relations = relations;
     }
 
+    /*
     private emitITest_None(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}None()`;
     }
@@ -38,15 +38,8 @@ class JSEmitter {
         return `${val}.$is${isnot ? "Not" : ""}Err()`;
     }
 
-    private emitITest_Literal(val: string, literal: string, isnot: boolean): string{
-        return `${val}.$is${isnot ? "Not" : ""}KeyEqual(${literal})`;
-    }
-
     private emitITest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
-        const ttype = this.relations.normalizeTypeSignatureIncludingTemplate(oftype, this.tconstraints);
-        const nns = ttype.;
-
-        return `${val}.$is${isnot ? "Not" : ""}SubTypeOf(${xxxx})`;
+        assert(false, "Not implemented -- ITest_Type");
     }
     
     private processITest(val: string, tt: ITest, tconstraints: TemplateConstraintScope): string {
@@ -75,6 +68,7 @@ class JSEmitter {
             }
         }
     }
+    */
 
     private emitLiteralNoneExpression(): string {
         return "$Runtime.none";
@@ -341,14 +335,6 @@ class JSEmitter {
         assert(false, "Not implemented -- ParseAsType");
     }
 
-    private emitPostfixAccessFromIndex(exp: PostfixAccessFromIndex): string {
-        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
-    }
-
-    private emitPostfixProjectFromIndecies(exp: PostfixProjectFromIndecies): string {
-        assert(false, "Not Implemented -- checkPostfixProjectFromIndecies");
-    }
-
     private emitPostfixAccessFromName(exp: PostfixAccessFromName): string {
         assert(false, "Not Implemented -- checkPostfixAccessFromName");
     }
@@ -358,32 +344,11 @@ class JSEmitter {
     }
 
     private emitPostfixIsTest(exp: PostfixIsTest): string {
-        const oftype = this.relations.normalizeTypeSignatureIncludingTemplate(exp.ttype, this.tconstraints);
-        
-        const splits = this.processITest(exp.sinfo, env, rcvrtype, exp.ttest);
-        this.checkError(exp.sinfo, splits.ttrue === undefined, "Test is never true");
-        this.checkError(exp.sinfo, splits.tfalse === undefined, "Test is never false");
-
-        return exp.setType(this.getWellKnownType("Bool"));
+        assert(false, "Not Implemented -- checkPostfixIsTest");
     }
 
     private emitPostfixAsConvert(exp: PostfixAsConvert): string {
-        const splits = this.processITest(exp.sinfo, env, rcvrtype, exp.ttest);
-        this.checkError(exp.sinfo, splits.ttrue === undefined, "Convert always fails");
-        //if always true then this is an upcast and OK!
-
-        return exp.setType(splits.ttrue || new ErrorTypeSignature(exp.sinfo, undefined));
-    }
-
-    private emitPostfixTypeDeclValue(exp: PostfixTypeDeclValue): string {
-        if(exp.opr === "value") {
-            const vtype = this.relations.getTypeDeclValueType(rcvrtype, this.constraints);
-            return exp.setType(vtype || new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-        else {
-            const btype = this.relations.getTypeDeclBasePrimitiveType(rcvrtype, this.constraints);
-            return exp.setType(btype || new ErrorTypeSignature(exp.sinfo, undefined));
-        }
+        assert(false, "Not Implemented -- checkPostfixAsConvert");
     }
 
     private emitPostfixAssignFields(exp: PostfixAssignFields): string {
@@ -405,12 +370,6 @@ class JSEmitter {
             const op = exp.ops[i];
             
             switch(op.tag) {
-                case PostfixOpTag.PostfixAccessFromIndex: {
-                    eexp += this.emitPostfixAccessFromIndex(op as PostfixAccessFromIndex);
-                }
-                case PostfixOpTag.PostfixProjectFromIndecies: {
-                    eexp += this.emitPostfixProjectFromIndecies(op as PostfixProjectFromIndecies);
-                }
                 case PostfixOpTag.PostfixAccessFromName: {
                     eexp += this.emitPostfixAccessFromName(op as PostfixAccessFromName);
                 }
@@ -422,9 +381,6 @@ class JSEmitter {
                 }
                 case PostfixOpTag.PostfixAsConvert: {
                     eexp += this.emitPostfixAsConvert(op as PostfixAsConvert);
-                }
-                case PostfixOpTag.PostfixTypeDeclValue: {
-                    eexp += this.emitPostfixTypeDeclValue(op as PostfixTypeDeclValue);
                 }
                 case PostfixOpTag.PostfixAssignFields: {
                     eexp += this.emitPostfixAssignFields(op as PostfixAssignFields);
@@ -654,10 +610,10 @@ class JSEmitter {
                 return this.emitPostfixOp(exp as PostfixOp, toplevel);
             }
             case ExpressionTag.PrefixNotOpExpression: {
-                return this.emitPrefixNotOpExpression(exp as PrefixNotOpExpression, toplevel);
+                return this.emitPrefixNotOpExpression(exp as PrefixNotOpExpression);
             }
             case ExpressionTag.PrefixNegateOrPlusOpExpression: {
-                return this.emitPrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression, toplevel);
+                return this.emitPrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression);
             }
             /*
             case ExpressionTag.BinAddExpression: {
@@ -759,5 +715,5 @@ class JSEmitter {
 }
 
 export {
-    BodyEmitter
+    JSEmitter
 };

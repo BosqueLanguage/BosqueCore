@@ -1012,14 +1012,6 @@ class TypeCheckerRelations {
         return nsdecl.functions.find((c) => c.name === name);
     }
 
-    isAccessToEnum(tsig: TypeSignature, name: string): boolean {
-        if(!(tsig instanceof NominalTypeSignature)) {
-            return false;
-        }
-
-        return (tsig.decl instanceof EnumTypeDecl && tsig.decl.members.includes(name));
-    }
-
     resolveTypeConstant(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<ConstMemberDecl> | undefined {
         const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
 
