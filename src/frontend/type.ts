@@ -54,6 +54,29 @@ class TemplateNameMapper {
         this.mapper = mapper;
     }
 
+    static identicalMappings(m1: TemplateNameMapper, m2: TemplateNameMapper): boolean {
+        if(m1.mapper.length !== m2.mapper.length) {
+            return false;
+        }
+
+        for(let i = 0; i < m1.mapper.length; ++i) {
+            if(m1.mapper[i].size !== m2.mapper[i].size) {
+                return false;
+            }
+
+            const mm1 = [...m1.mapper[i]].sort((a, b) => a[0].localeCompare(b[0]));
+            const mm2 = [...m2.mapper[i]].sort((a, b) => a[0].localeCompare(b[0]));
+
+            for(let j = 0; j < mm1.length; ++j) {
+                if(mm1[j][0] !== mm2[j][0] || mm1[j][1].tkeystr !== mm2[j][1].tkeystr) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     static createEmpty(): TemplateNameMapper {
         return new TemplateNameMapper([]);
     }

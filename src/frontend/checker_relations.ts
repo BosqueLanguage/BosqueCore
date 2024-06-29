@@ -88,7 +88,9 @@ class TypeCheckerRelations {
     }
 
     //get all of the actual concepts + template mappings that are provided by a type
-    resolveAllProvidesDecls(provides: TypeSignature[]): TypeLookupInfo[] {
+    XresolveDirectProvidesDecls(ttype: TypeSignature): TypeLookupInfo[] {
+        xxx; //get regular provides and special provides here!!!
+
         const pdecls: TypeLookupInfo[] = [];
         for(let i = 0; i < provides.length; ++i) {
             const ptype = provides[i];
@@ -259,7 +261,7 @@ class TypeCheckerRelations {
     }
 
     private nominalIsSubtypeOf(t1: NominalTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        const providesinfo = this.resolveAllProvidesDecls(t1.decl.provides);
+        const providesinfo = this.resolveDirectProvidesDecls(t1.decl.provides);
 
         return providesinfo.map((pp) => pp.tsig.remapTemplateBindings(pp.mapping)).some((t) => this.isSubtypeOf(t, t2, tconstrain));
     }
@@ -1025,7 +1027,7 @@ class TypeCheckerRelations {
             return new MemberLookupInfo<ConstMemberDecl>(tlinfo, cci);
         }
         else {
-            const provides = this.resolveAllProvidesDecls(tn.decl.provides);
+            const provides = this.resolveDirectProvidesDecls(tn.decl.provides);
             for(let i = 0; i < provides.length; ++i) {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
@@ -1129,7 +1131,7 @@ class TypeCheckerRelations {
             return new MemberLookupInfo<MemberFieldDecl>(tlinfo, cci);
         }
         else {
-            const provides = this.resolveAllProvidesDecls(tn.decl.provides);
+            const provides = this.resolveDirectProvidesDecls(tn.decl.provides);
             for(let i = 0; i < provides.length; ++i) {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
@@ -1157,7 +1159,7 @@ class TypeCheckerRelations {
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
-            const provides = this.resolveAllProvidesDecls(tn.decl.provides);
+            const provides = this.resolveDirectProvidesDecls(tn.decl.provides);
             for(let i = 0; i < provides.length; ++i) {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
@@ -1185,7 +1187,7 @@ class TypeCheckerRelations {
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
-            const provides = this.resolveAllProvidesDecls(tn.decl.provides);
+            const provides = this.resolveDirectProvidesDecls(tn.decl.provides);
             for(let i = 0; i < provides.length; ++i) {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
@@ -1213,7 +1215,7 @@ class TypeCheckerRelations {
             return new MemberLookupInfo<TypeFunctionDecl>(tlinfo, cci);
         }
         else {
-            const provides = this.resolveAllProvidesDecls(tn.decl.provides);
+            const provides = this.resolveDirectProvidesDecls(tn.decl.provides);
             for(let i = 0; i < provides.length; ++i) {
                 const pdecl = provides[i];
                 const pdtype = pdecl.tsig.remapTemplateBindings(pdecl.mapping);
@@ -1228,9 +1230,47 @@ class TypeCheckerRelations {
         }
     }
 
+    private static addResolvedTLookup(tlookup: TypeLookupInfo, current: TypeLookupInfo[]): void {
+        const found = current.find((c) => c.tsig.decl === tlookup.tsig.decl && TemplateNameMapper.identicalMappings(c.mapping, tlookup.mapping));
+        if(found === undefined) {
+            current.push(tlookup);
+        }
+    }
+
+    //get all of the actual fields that are provided via inheritance
+    resolveTransitiveProvidesDecls(provides: TypeSignature[]): TypeLookupInfo[] {
+        let pdecls: TypeLookupInfo[] = [];
+
+        for(let i = 0; i < provides.length; ++i) {
+            const pdecl = provides[i];
+            
+            if(pdecl.tkeystr === "Any") {
+                TypeCheckerRelations.addResolvedTLookup(new TypeLookupInfo(pdecl as NominalTypeSignature, TemplateNameMapper.createEmpty()), pdecls);
+            }
+            else {
+                const tn = pdecl as NominalTypeSignature;
+
+                const tninfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
+                TypeCheckerRelations.addResolvedTLookup(tninfo, pdecls);
+
+                const rprovides = this.resolveDirectProvidesDecls(tn.decl.provides);
+                for(let j = 0; j < rprovides.length; ++j) {
+                    TypeCheckerRelations.addResolvedTLookup(rprovides[j], pdecls);
+                }
+
+                const tprovides = this.resolveTransitiveProvidesDecls(rprovides.map((p) => p.tsig.remapTemplateBindings(p.mapping)));
+                for(let j = 0; j < tprovides.length; ++j) {
+                    TypeCheckerRelations.addResolvedTLookup(tprovides[j], pdecls);
+                }
+            }
+        }
+
+        return pdecls;
+    }
+
     //get all of the actual fields that are provided via inheritance
     resolveAllInheritedFieldDecls(provides: TypeSignature[]): MemberLookupInfo<MemberFieldDecl>[] {
-        const pdecls = this.resolveAllProvidesDecls(provides);
+        const pdecls = this.resolveTransitiveProvidesDecls(provides);
 
         let allfields: MemberLookupInfo<MemberFieldDecl>[] = [];
         for(let i = 0; i < pdecls.length; ++i) {

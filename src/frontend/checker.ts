@@ -2819,7 +2819,6 @@ class TypeChecker {
             }
         }
 
-        xxx;
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, env);
         const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
@@ -2866,7 +2865,6 @@ class TypeChecker {
             }
         }
         
-        xxx;
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, tfalse);
         const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
@@ -2977,10 +2975,6 @@ class TypeChecker {
                     let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, btype) : env;
                     cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
 
-                    if(stmt.matchflow[i].bindername !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
-
                     ctype = splits.remain || ctype;
                     results.push(cenv);
                 }
@@ -2988,7 +2982,6 @@ class TypeChecker {
         }
         this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
         
-        xxxx;
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.sval[1], ...results);
         const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
@@ -3657,13 +3650,13 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
  
         //Make sure that any provides types are not adding on fields, consts, or functions
-        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides);
+        const providesdecls = this.relations.resolveTransitiveProvidesDecls(tdecl.provides);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.tsig.decl.name}`);
         }
 
         this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
@@ -3695,11 +3688,11 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
 
         //Make sure that any provides types are not adding on fields!
-        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides);
+        const providesdecls = this.relations.resolveTransitiveProvidesDecls(tdecl.provides);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
         }
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
@@ -3829,7 +3822,7 @@ class TypeChecker {
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
         this.file = tdecl.file;
         const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
         this.file = CLEAR_FILENAME;
@@ -3888,7 +3881,7 @@ class TypeChecker {
     private checkConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
         this.file = tdecl.file;
         const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, false);
         this.file = CLEAR_FILENAME;
@@ -3896,7 +3889,7 @@ class TypeChecker {
 
     private checkDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
     }
@@ -3904,7 +3897,7 @@ class TypeChecker {
     private checkDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl) {
         this.file = tdecl.file;
         const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
 
