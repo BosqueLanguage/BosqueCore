@@ -362,7 +362,7 @@ class TypeCheckerRelations {
 
         //eliminate duplicates
         let restypel = [nttl[0]];
-        for(let i = 1; i < tl.length; ++i) {
+        for(let i = 1; i < nttl.length; ++i) {
             const ntt = nttl[i];
 
             const findres = restypel.findIndex((rt) => this.isSubtypeOf(ntt, rt, tconstrain));

@@ -18,7 +18,7 @@ describe ("Checker -- Simple if-expression", () => {
         checkTestFunction("function main(x: Int?): Int { return if(x)@!none then $x else 3i; }");
         checkTestFunction("function main(x: Int): Int? { return if(x < 3i) then none else x; }");
         checkTestFunction("function main(x: Int): Int { return if(if(x < 3i) then none else x)@!none then $_ else 3i; }");
-        checkTestFunction("function main(x: Int?): Int { return if($y = x)@<Some> then $y else 3i; }");
+        checkTestFunction("function main(x: Int?): Int { return if($y = x)@<Int> then $y else 3i; }");
     });
 
     it("should fail not bool test", function () {
@@ -26,7 +26,7 @@ describe ("Checker -- Simple if-expression", () => {
     });
 
     it("should fail bad true", function () {
-        checkTestExpError("if(1n == 2n) then true else 2i", "Int", "Expected a return value of type Int but got Bool | Int");
+        checkTestExpError("if(1n == 2n) then true else 2i", "Int", "Expected a return value of type Int but got Some");
     });
 
     it("should fail bad false", function () {
