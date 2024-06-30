@@ -1,14 +1,74 @@
 import assert from "node:assert";
 
-import { JSCodeFormatter } from "./enitter_support.js";
-import { AccessEnvValueExpression, Expression, ExpressionTag, InterpolateExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../frontend/body.js";
+import { JSCodeFormatter } from "./jsemitter_support.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
+import { TypeCheckerRelations } from "../frontend/checker_relations.js";
 
-class BodyEmitter {
+class JSEmitter {
     readonly fmt: JSCodeFormatter;
+    readonly relations: TypeCheckerRelations;
 
-    constructor(iidnt: number) {
-        this.fmt = new JSCodeFormatter(iidnt);
+    constructor(relations: TypeCheckerRelations) {
+        this.fmt = new JSCodeFormatter(0);
+        this.relations = relations;
     }
+
+    /*
+    private emitITest_None(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}None()`;
+    }
+
+    private emitITest_Some(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}Some()`;
+    }
+
+    private emitITest_Nothing(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}Nothing()`;
+    }
+
+    private emitITest_Something(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}Something()`;
+    }
+
+    private emitITest_Ok(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}Ok()`;
+    }
+
+    private emitITest_Err(val: string, isnot: boolean): string {
+        return `${val}.$is${isnot ? "Not" : ""}Err()`;
+    }
+
+    private emitITest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
+        assert(false, "Not implemented -- ITest_Type");
+    }
+    
+    private processITest(val: string, tt: ITest, tconstraints: TemplateConstraintScope): string {
+        if(tt instanceof ITestType) {
+            return this.emitITest_Type(val, tt.ttype, tt.isnot);
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                return this.emitITest_None(val, tt.isnot);
+            }
+            else if(tt instanceof ITestSome) {
+                return this.emitITest_Some(val, tt.isnot);
+            }
+            else if(tt instanceof ITestNothing) {
+                return this.emitITest_Nothing(val, tt.isnot);
+            }
+            else if(tt instanceof ITestSomething) {
+                return this.emitITest_Something(val, tt.isnot);
+            }
+            else if(tt instanceof ITestOk) {
+                return this.emitITest_Ok(val, tt.isnot);
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                return this.emitITest_Err(val, tt.isnot);
+            }
+        }
+    }
+    */
 
     private emitLiteralNoneExpression(): string {
         return "$Runtime.none";
@@ -39,7 +99,7 @@ class BodyEmitter {
     }
 
     private emitLiteralRationalExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- Rational");
     }
 
     private emitLiteralFloatExpression(exp: LiteralSimpleExpression): string {
@@ -47,98 +107,98 @@ class BodyEmitter {
     }
     
     private emitLiteralDecimalExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- Decimal");
     }
     
     private emitLiteralDecimalDegreeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DecimalDegree");
     }
     
     private emitLiteralLatLongCoordinateExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- LatLongCoordinate");
     }
     
     private emitLiteralComplexNumberExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- ComplexNumber");
     }
     
     private emitLiteralByteBufferExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- ByteBuffer");
     }
     
     private emitLiteralUUIDv4Expression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- UUIDv4");
     }
     
     private emitLiteralUUIDv7Expression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- UUIDv7");
     }
     
     private emitLiteralSHAContentHashExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- SHAContentHash");
     }
     
     private emitLiteralDateTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DateTime");
     }
     
     private emitLiteralUTCDateTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- UTCDateTime");
     }
     
     private emitLiteralPlainDateExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- PlainDate");
     }
     
     private emitLiteralPlainTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- PlainTime");
     }
     
     private emitLiteralLogicalTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- LogicalTime");
     }
     
     private emitLiteralTickTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- TickTime");
     }
     
     private emitLiteralISOTimeStampExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- ISOTimeStamp");
     }
     
     private emitLiteralDeltaDateTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaDateTime");
     }
     
     private emitLiteralDeltaPlainDateExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaPlainDate");
     }
     
     private emitLiteralDeltaPlainTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaPlainTime");
     }
     
     private emitLiteralDeltaISOTimeStampExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaISOTimeStamp");
     }
     
     private emitLiteralDeltaSecondsExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaSeconds");
     }
     
     private emitLiteralDeltaTickExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaTick");
     }
     
     private emitLiteralDeltaLogicalExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- DeltaLogical");
     }
     
     private emitLiteralUnicodeRegexExpression(exp: LiteralRegexExpression): string {
         return `$Runtime.regex(${exp.value})`;
     }
     
-    private emitLiteralExRegexExpression(exp: LiteralRegexExpression): string {
+    private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
         return `$Runtime.regex(${exp.value})`;
     }
     
@@ -146,67 +206,210 @@ class BodyEmitter {
         return `$Runtime.string(${exp.value})`;
     }
     
-    private emitLiteralExStringExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.exstring(${exp.value})`;
+    private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
+        return `$Runtime.cstring(${exp.value})`;
     }
     
     private emitLiteralTypedStringExpression(exp: LiteralTypedStringExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- TypedString");
     }
     
-    private emitLiteralExTypedStringExpression(exp: LiteralTypedStringExpression): string {
-        assert(false, "Not implemented");
+    private emitLiteralTypedCStringExpression(exp: LiteralTypedStringExpression): string {
+        assert(false, "Not implemented -- TypedCString");
     }
     
     private emitLiteralTemplateStringExpression(exp: LiteralTemplateStringExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- TemplateString");
     }
     
-    private emitLiteralTemplateExStringExpression(exp: LiteralTemplateStringExpression): string {
-        assert(false, "Not implemented");
+    private emitLiteralTemplateCStringExpression(exp: LiteralTemplateStringExpression): string {
+        assert(false, "Not implemented -- TemplateCString");
     }
     
     private emitLiteralPathExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- Path");
     }
     
     private emitLiteralPathFragmentExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- PathFragment");
     }
     
     private emitLiteralPathGlobExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- PathGlob");
     }
     
-    private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression): string {
-        assert(false, "Not implemented");
+    private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression, toplevel: boolean): string {
+        assert(false, "Not implemented -- TypeDeclValue");
     }
     
-    private emitLiteralTypeDeclIntegralValueExpression(exp: LiteralTypeDeclIntegralValueExpression): string {
-        assert(false, "Not implemented");
+    private emitLiteralTypeDeclIntegralValueExpression(exp: LiteralTypeDeclIntegralValueExpression, toplevel: boolean): string {
+        assert(false, "Not implemented -- TypeDeclIntegralValue");
     }
     
-    private emitLiteralTypeDeclFloatPointValueExpression(exp: LiteralTypeDeclFloatPointValueExpression): string {
-        assert(false, "Not implemented");
+    private emitLiteralTypeDeclFloatPointValueExpression(exp: LiteralTypeDeclFloatPointValueExpression, toplevel: boolean): string {
+        assert(false, "Not implemented -- TypeDeclFloatPointValue");
     }
 
     private emitInterpolateExpression(exp: InterpolateExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- Interpolate");
     }
         
     private emitHasEnvValueExpression(exp: AccessEnvValueExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- HasEnvValue");
     }
             
     private emitAccessEnvValueExpression(exp: AccessEnvValueExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- AccessEnvValue");
     }
             
     private emitTaskAccessInfoExpression(exp: TaskAccessInfoExpression): string {
-        assert(false, "Not implemented");
+        assert(false, "Not implemented -- TaskAccessInfo");
     }
 
-    emitExpression(exp: Expression): string {
+    private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
+        return `${exp.ns.ns.join(".")}.${exp.name}()`;
+    }
+    
+    private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
+        assert(false, "Not implemented -- AccessStaticField");
+    }
+    
+    private emitAccessVariableExpression(exp: AccessVariableExpression): string {
+        if(!exp.isCaptured) {
+            return exp.scopename;
+        }
+        else {
+            return `$lambda.${exp.scopename}`;
+        }
+    }
+    
+    private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
+        assert(false, "Not implemented -- ConstructorPrimary");
+    }
+    
+    private emitConstructorTupleExpression(exp: ConstructorTupleExpression): string {
+        assert(false, "Not implemented -- ConstructorTuple");
+    }
+    
+    private emitConstructorRecordExpression(exp: ConstructorRecordExpression): string {
+        assert(false, "Not implemented -- ConstructorRecord");
+    }
+    
+    private emitConstructorEListExpression(exp: ConstructorEListExpression): string {
+        assert(false, "Not implemented -- ConstructorEList");
+    }
+    
+    private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
+        assert(false, "Not implemented -- ConstructorLambda");
+    }
+
+    private emitLetExpression(exp: LetExpression): string {
+        assert(false, "Not implemented -- Let");
+    }
+
+    private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
+        assert(false, "Not implemented -- LambdaInvoke");
+    }
+
+    private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {
+        assert(false, "Not implemented -- SpecialConstructor");
+    }
+    
+    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
+        assert(false, "Not implemented -- CallNamespaceFunction");
+    }
+    
+    private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
+        assert(false, "Not implemented -- CallTypeFunction");
+    }
+    
+    private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {
+        assert(false, "Not implemented -- LogicActionAnd");
+    }
+    
+    private emitLogicActionOrExpression(exp: LogicActionOrExpression): string {
+        assert(false, "Not implemented -- LogicActionOr");
+    }
+    
+    private emitParseAsTypeExpression(exp: ParseAsTypeExpression): string {
+        assert(false, "Not implemented -- ParseAsType");
+    }
+
+    private emitPostfixAccessFromName(exp: PostfixAccessFromName): string {
+        assert(false, "Not Implemented -- checkPostfixAccessFromName");
+    }
+
+    private emitPostfixProjectFromNames(exp: PostfixProjectFromNames): string {
+        assert(false, "Not Implemented -- checkPostfixProjectFromNames");
+    }
+
+    private emitPostfixIsTest(exp: PostfixIsTest): string {
+        assert(false, "Not Implemented -- checkPostfixIsTest");
+    }
+
+    private emitPostfixAsConvert(exp: PostfixAsConvert): string {
+        assert(false, "Not Implemented -- checkPostfixAsConvert");
+    }
+
+    private emitPostfixAssignFields(exp: PostfixAssignFields): string {
+        assert(false, "Not Implemented -- checkPostfixAssignFields");
+    }
+
+    private emitPostfixInvoke(exp: PostfixInvoke): string {
+        assert(false, "Not Implemented -- checkPostfixInvoke");
+    }
+
+    private emitPostfixLiteralKeyAccess(exp: PostfixLiteralKeyAccess): string {
+        assert(false, "Not Implemented -- checkPostfixLiteralKeyAccess");
+    }
+
+    private emitPostfixOp(exp: PostfixOp, toplevel: boolean): string {
+        let eexp = this.emitExpression(exp.rootExp, false);
+    
+        for(let i = 0; i < exp.ops.length; ++i) {
+            const op = exp.ops[i];
+            
+            switch(op.tag) {
+                case PostfixOpTag.PostfixAccessFromName: {
+                    eexp += this.emitPostfixAccessFromName(op as PostfixAccessFromName);
+                }
+                case PostfixOpTag.PostfixProjectFromNames: {
+                    eexp += this.emitPostfixProjectFromNames(op as PostfixProjectFromNames);
+                }
+                case PostfixOpTag.PostfixIsTest: {
+                    eexp += this.emitPostfixIsTest(op as PostfixIsTest);
+                }
+                case PostfixOpTag.PostfixAsConvert: {
+                    eexp += this.emitPostfixAsConvert(op as PostfixAsConvert);
+                }
+                case PostfixOpTag.PostfixAssignFields: {
+                    eexp += this.emitPostfixAssignFields(op as PostfixAssignFields);
+                }
+                case PostfixOpTag.PostfixInvoke: {
+                    eexp += this.emitPostfixInvoke(op as PostfixInvoke);
+                }
+                case PostfixOpTag.PostfixLiteralKeyAccess: {
+                    eexp += this.emitPostfixLiteralKeyAccess(op as PostfixLiteralKeyAccess);
+                }
+                default: {
+                    assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
+                    eexp += "[ERROR POSTFIX OP]";
+                }
+            }
+        }
+
+        return eexp;
+    }
+
+    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression): string {
+        return `!${this.emitExpression(exp.exp, false)}`;
+    }
+
+    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression): string {
+        return `${exp.op}${this.emitExpression(exp.exp, false)}`;
+    }
+
+    emitExpression(exp: Expression, toplevel: boolean): string {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
                 return this.emitLiteralNoneExpression();
@@ -304,26 +507,26 @@ class BodyEmitter {
             case ExpressionTag.LiteralUnicodeRegexExpression: {
                 return this.emitLiteralUnicodeRegexExpression(exp as LiteralRegexExpression);
             }
-            case ExpressionTag.LiteralExRegexExpression: {
-                return this.emitLiteralExRegexExpression(exp as LiteralRegexExpression);
+            case ExpressionTag.LiteralCRegexExpression: {
+                return this.emitLiteralCRegexExpression(exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralExStringExpression: {
-                return this.emitLiteralExStringExpression(exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralCStringExpression: {
+                return this.emitLiteralCStringExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.emitLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
             }
-            case ExpressionTag.LiteralExTypedStringExpression: {
-                return this.emitLiteralExTypedStringExpression(exp as LiteralTypedStringExpression);
+            case ExpressionTag.LiteralTypedCStringExpression: {
+                return this.emitLiteralTypedCStringExpression(exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.emitLiteralTemplateStringExpression(exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralTemplateExStringExpression: {
-                return this.emitLiteralTemplateExStringExpression(exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralTemplateCStringExpression: {
+                return this.emitLiteralTemplateCStringExpression(exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.emitLiteralPathExpression(exp as LiteralPathExpression);
@@ -335,13 +538,13 @@ class BodyEmitter {
                 return this.emitLiteralPathGlobExpression(exp as LiteralPathExpression);
             }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
-                return this.emitLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression);
+                return this.emitLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression, toplevel);
             }
             case ExpressionTag.LiteralTypeDeclIntegralValueExpression: {
-                return this.emitLiteralTypeDeclIntegralValueExpression(exp as LiteralTypeDeclIntegralValueExpression);
+                return this.emitLiteralTypeDeclIntegralValueExpression(exp as LiteralTypeDeclIntegralValueExpression, toplevel);
             }
             case ExpressionTag.LiteralTypeDeclFloatPointValueExpression: {
-                return this.emitLiteralTypeDeclFloatPointValueExpression(exp as LiteralTypeDeclFloatPointValueExpression);
+                return this.emitLiteralTypeDeclFloatPointValueExpression(exp as LiteralTypeDeclFloatPointValueExpression, toplevel);
             }
             case ExpressionTag.InterpolateExpression: {
                 return this.emitInterpolateExpression(exp as InterpolateExpression);
@@ -355,64 +558,64 @@ class BodyEmitter {
             case ExpressionTag.TaskAccessInfoExpression: {
                 return this.emitTaskAccessInfoExpression(exp as TaskAccessInfoExpression);
             }
-            /*
             case ExpressionTag.AccessNamespaceConstantExpression: {
-                return this.checkAccessNamespaceConstantExpression(env, exp as AccessNamespaceConstantExpression);
+                return this.emitAccessNamespaceConstantExpression(exp as AccessNamespaceConstantExpression);
             }
             case ExpressionTag.AccessStaticFieldExpression: {
-                return this.checkAccessStaticFieldExpression(env, exp as AccessStaticFieldExpression);
+                return this.emitAccessStaticFieldExpression(exp as AccessStaticFieldExpression);
             }
             case ExpressionTag.AccessVariableExpression: {
-                return this.checkAccessVariableExpression(env, exp as AccessVariableExpression);
+                return this.emitAccessVariableExpression(exp as AccessVariableExpression);
             }
             case ExpressionTag.ConstructorPrimaryExpression: {
-                return this.checkConstructorPrimaryExpression(env, exp as ConstructorPrimaryExpression);
+                return this.emitConstructorPrimaryExpression(exp as ConstructorPrimaryExpression);
             }
             case ExpressionTag.ConstructorTupleExpression: {
-                return this.checkConstructorTupleExpression(env, exp as ConstructorTupleExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.emitConstructorTupleExpression(exp as ConstructorTupleExpression);
             }
             case ExpressionTag.ConstructorRecordExpression: {
-                return this.checkConstructorRecordExpression(env, exp as ConstructorRecordExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.emitConstructorRecordExpression(exp as ConstructorRecordExpression);
             }
             case ExpressionTag.ConstructorEListExpression: {
-                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.emitConstructorEListExpression(exp as ConstructorEListExpression);
             }
             case ExpressionTag.ConstructorLambdaExpression: {
-                return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.emitConstructorLambdaExpression(exp as ConstructorLambdaExpression);
             }
             case ExpressionTag.LetExpression: {
-                return this.checkLetExpression(env, exp as LetExpression);
+                return this.emitLetExpression(exp as LetExpression);
             }
             case ExpressionTag.LambdaInvokeExpression: {
-                return this.checkLambdaInvokeExpression(env, exp as LambdaInvokeExpression);
+                return this.emitLambdaInvokeExpression(exp as LambdaInvokeExpression);
             }
             case ExpressionTag.SpecialConstructorExpression: {
-                return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression);
+                return this.emitSpecialConstructorExpression(exp as SpecialConstructorExpression);
             }
             case ExpressionTag.CallNamespaceFunctionExpression: {
-                return this.checkCallNamespaceFunctionExpression(env, exp as CallNamespaceFunctionExpression);
+                return this.emitCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
             }
             case ExpressionTag.CallTypeFunctionExpression: {
-                return this.checkCallTypeFunctionExpression(env, exp as CallTypeFunctionExpression);
+                return this.emitCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
             }
             case ExpressionTag.LogicActionAndExpression: {
-                return this.checkLogicActionAndExpression(env, exp as LogicActionAndExpression);
+                return this.emitLogicActionAndExpression(exp as LogicActionAndExpression);
             }
             case ExpressionTag.LogicActionOrExpression: {
-                return this.checkLogicActionOrExpression(env, exp as LogicActionOrExpression);
+                return this.emitLogicActionOrExpression(exp as LogicActionOrExpression);
             }
             case ExpressionTag.ParseAsTypeExpression: {
-                return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
+                return this.emitParseAsTypeExpression(exp as ParseAsTypeExpression);
             }
             case ExpressionTag.PostfixOpExpression: {
-                return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);
+                return this.emitPostfixOp(exp as PostfixOp, toplevel);
             }
             case ExpressionTag.PrefixNotOpExpression: {
-                return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
+                return this.emitPrefixNotOpExpression(exp as PrefixNotOpExpression);
             }
             case ExpressionTag.PrefixNegateOrPlusOpExpression: {
-                return this.checkPrefixNegateOrPlusOpExpression(env, exp as PrefixNegateOrPlusOpExpression);
+                return this.emitPrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression);
             }
+            /*
             case ExpressionTag.BinAddExpression: {
                 return this.checkBinAddExpression(env, exp as BinAddExpression);
             }
@@ -512,5 +715,5 @@ class BodyEmitter {
 }
 
 export {
-    BodyEmitter
+    JSEmitter
 };

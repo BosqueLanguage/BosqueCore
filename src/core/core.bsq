@@ -11,8 +11,8 @@ __internal __universal concept Some provides Any {
 
 %** Special type for indicating a value can be used as a key in a collection. **%
 __internal __universal concept KeyType provides Any {
-    function equal<T: KeyType>(a: T, b: T): Bool = special_method;
-    function less<T: KeyType>(a: T, b: T): Bool = special_method;
+    function equal<T: unique KeyType>(a: T, b: T): Bool = special_method;
+    function less<T: unique KeyType>(a: T, b: T): Bool = special_method;
 }
 
 %** Special type for representing values that can be compared with (<, >, ==, !=, <=, and >=) currently the numeric types and typedecls on them (later other with user def operators) **%
@@ -29,12 +29,12 @@ __internal __universal concept Numeric provides Comparable, LinearArithmetic {
 
 %** Type for indicating that a datatype is a Validator. **%
 __internal __universal concept RegexValidator provides Some {
-    function accepts<T: RegexValidator>(s: String): Bool = special_method;
+    function accepts<T: unique RegexValidator>(s: String): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept ExRegexValidator provides Some {
-    function accepts<T: ExRegexValidator>(s: ExString): Bool = special_method;
+__internal __universal concept CRegexValidator provides Some {
+    function accepts<T: unique CRegexValidator>(s: CString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
@@ -94,10 +94,9 @@ __internal __typedeclable entity String provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __constructable __typedeclable entity StringOf<T: RegexValidator> provides Some, KeyType {
+__internal __typedeclable entity StringOf<T: unique RegexValidator> provides Some, KeyType {
     private function s_into(s: String): StringOf<T> = special_inject;
     %*
-    method value(): String = special_extract;
     function coerce(s: String): StringOf<T> {
         assert RegexValidator::accepts<T>(s);
         return StringOf<T>::s_into(s);
@@ -106,17 +105,16 @@ __internal __constructable __typedeclable entity StringOf<T: RegexValidator> pro
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity ExString provides Some, KeyType {
+__internal __typedeclable entity CString provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
-    private function s_into(s: ExString): ExStringOf<T> = special_inject;
+__internal __typedeclable entity CStringOf<T: unique CRegexValidator> provides Some, KeyType {
+    private function s_into(s: CString): CStringOf<T> = special_inject;
     %*
-    method value(): ExString = special_extract;
-    function coerce(s: ExString): ExStringOf<T> {
-        assert ExRegexValidator::accepts<T>(s);
-        return ExStringOf<T>::s_into(s);
+    function coerce(s: CString): CStringOf<T> {
+        assert CRegexValidator::accepts<T>(s);
+        return CStringOf<T>::s_into(s);
     }
     *%
 }
@@ -132,11 +130,11 @@ __internal entity UnicodeRegex provides Some {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity ExRegex provides Some {
-    __safe internal function s_accepts(re: ExRegex, s: ExString): Bool = regex_accepts;
+__internal entity CRegex provides Some {
+    __safe internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
     %*
-    method accepts(s: ExString): Bool {
-        return Regex::s_accepts(this, s);
+    method accepts(s: CString): Bool {
+        return CRegex::s_accepts(this, s);
     }
     *%
 }
@@ -150,41 +148,22 @@ __internal __typedeclable entity TemplateString provides Some {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity TemplateExString provides Some {
+__internal __typedeclable entity TemplateCString provides Some {
 }
 
-%** Generic type for all Option<T> to inherit from. **%
-__universal concept IOption provides Some {
-}
-
-%** Generic type for all Something<T> to inherit from. **%
-__universal concept ISomething provides IOption {
+%** Primitive pair type. **%
+__internal entity Pair<T, U> provides Some {
 }
 
 %** Type for representing the nothing option value. **%
-__internal entity Nothing provides IOption {
+__internal entity Nothing provides Some {
 }
 
 %** Type for representing the nothing option value. **%
-__internal __constructable entity Something<T> provides ISomething, Option<T> {
-    %*
-    method value(): T = special_extract;
-    *%
+__internal __constructable entity Something<T> provides Some, Option<T> {
 }
 
-__internal concept Option<T> provides IOption {
-}
-
-%** Generic type for all Result<T, E> to inherit from. **%
-__universal concept IResult provides Some {
-}
-
-%** Generic type for all Result<T, E>::Ok to inherit from. **%
-__universal concept IOk provides Some {
-}
-
-%** Generic type for all Result<T, E>::Err to inherit from. **%
-__universal concept IErr provides Some {
+__internal concept Option<T> provides Some {
 }
 
 namespace Interpolate {
@@ -192,13 +171,13 @@ namespace Interpolate {
     function string(): String = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function stringOf<T: RegexValidator>(): StringOf<T> = special_method;
+    function stringOf<T: unique RegexValidator>(): StringOf<T> = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function exstring(): ExString = special_method;
+    function cstring(): CString = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function exstringOf<T: ExRegexValidator>(): ExStringOf<T> = special_method;
+    function cstringOf<T: unique CRegexValidator>(): CStringOf<T> = special_method;
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%

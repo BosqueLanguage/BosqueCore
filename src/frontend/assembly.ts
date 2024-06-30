@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature } from "./type.js";
+import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature } from "./type.js";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
@@ -10,8 +10,7 @@ const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
     None,
-    Unique,
-    Atomic
+    Unique
 }
 
 class TemplateTermDecl {
@@ -25,18 +24,14 @@ class TemplateTermDecl {
         this.extraTags = extraTags;
     }
 
-    emitHelper(isinferable: boolean): string {
+    emitHelper(): string {
         let ttgs: string[] = [];
         if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
             ttgs.push("unique");
         }
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Atomic)) {
-            ttgs.push("atomic");
-        }
 
-        let tstr = (this.tconstraint.emit(true) !== "Any") ? `: ${this.tconstraint.emit(true)}` : "";
-
-        return `${this.name}${isinferable ? "?" : ""}: ${[...ttgs, tstr].join(" ")}`;
+        const tstr = (this.tconstraint.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.tconstraint.tkeystr].join(" ")}` : "";
+        return `${this.name}${tstr}`;
     }
 }
 
@@ -46,54 +41,39 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
     }
 
     emit(): string {
-        return this.emitHelper(false);
+        return this.emitHelper();
     }
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    readonly isinferable: boolean;
-
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature, isinferable: boolean) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
         super(name, tconstraint, tags);
-        this.isinferable = isinferable;
     }
 
     emit(): string {
-        return this.emitHelper(this.isinferable);
+        return this.emitHelper();
     }
 }
 
-abstract class InvokeTemplateTypeRestrictionClause {
-    abstract emit(): string ;
-}
-
-class InvokeTemplateTypeRestrictionClauseUnify extends InvokeTemplateTypeRestrictionClause {
-    readonly vname: string;
-    readonly unifyinto: TypeSignature;
-
-    constructor(vname: string, unifyinto: TypeSignature) {
-        super();
-        this.vname = vname;
-        this.unifyinto = unifyinto;
-    }
-
-    emit(): string {
-        return `type(${this.vname}) -> ${this.unifyinto.emit(true)}`;
-    }
-}
-
-class InvokeTemplateTypeRestrictionClauseSubtype extends InvokeTemplateTypeRestrictionClause {
+class InvokeTemplateTypeRestrictionClause {
     readonly t: TemplateTypeSignature;
     readonly subtype: TypeSignature;
+    readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(t: TemplateTypeSignature, subtype: TypeSignature) {
-        super();
+    constructor(t: TemplateTypeSignature, subtype: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
         this.t = t;
         this.subtype = subtype;
+        this.extraTags = extraTags;
     }
 
     emit(): string {
-        return `${this.t}@${this.subtype.emit(true)}`;
+        let ttgs: string[] = [];
+        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
+            ttgs.push("unique");
+        }
+
+        const tstr = (this.subtype.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.subtype.tkeystr].join(" ")}` : "";
+        return `${this.t}${tstr}`;
     }
 }
 
@@ -224,7 +204,7 @@ class InvokeExampleDeclInline extends InvokeExample {
     }
 
     emit(fmt: CodeFormatter): string {
-        const estr = this.entries.map((e) => `(${e.args.map((a) => a.emit(true, fmt)).join(", ")}) => ${e.output.emit(true, fmt)}`).join("; ");
+        const estr = this.entries.map((e) => `[${e.args.map((a) => a.emit(true, fmt)).join(", ")}] => ${e.output.emit(true, fmt)}`).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
             return fmt.indent(`spec { ${estr} }`);
@@ -272,7 +252,7 @@ class DeclarationAttibute {
             return `%** ${this.text} **%`;
         }
         else {
-            return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType.emit(true)}::${t.tag}`).join(", ") + "]"}`;
+            return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType.tkeystr}::${t.tag}`).join(", ") + "]"}`;
         }
     }
 }
@@ -313,8 +293,9 @@ class InvokeParameterDecl {
     }
 
     emit(fmt: CodeFormatter): string {
+        const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.tkeystr}`;
         const defv = this.optDefaultValue === undefined ? "" : ` = ${this.optDefaultValue.emit(true, fmt)}`;
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}: ${this.type.emit(true)}${defv}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
     }
 }
 
@@ -346,7 +327,7 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
         }
 
         let params = this.params.map((p) => p.emit(fmt)).join(", ");
-        let result = (this.resultType instanceof VoidTypeSignature) ? "" : (": " + this.resultType.emit(true));
+        let result = (this.resultType instanceof VoidTypeSignature) ? "" : (": " + this.resultType.tkeystr);
 
         return [`${attrs}${rec}`, `(${params})${result}`];
     }
@@ -365,7 +346,7 @@ class LambdaDecl extends AbstractInvokeDecl {
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
-        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.isRefParam, p.isRestParam));
+        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.type, p.isRefParam, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
     
@@ -531,29 +512,31 @@ class ConstMemberDecl extends AbstractCoreDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}const ${this.name}: ${this.declaredType.emit(true)} = ${this.value.emit(true, fmt)};`);
+        return fmt.indent(`${this.emitAttributes()}const ${this.name}: ${this.declaredType.tkeystr} = ${this.value.emit(true, fmt)};`);
     }
 }
 
 class MemberFieldDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
     readonly defaultValue: ConstantExpressionValue | undefined;
+    readonly isSpecialAccess: boolean;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined, isSpecialAccess: boolean) {
         super(file, sinfo, attributes, name);
         
         this.declaredType = dtype;
         this.defaultValue = dvalue;
+        this.isSpecialAccess = isSpecialAccess;
     }
 
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
         if(this.defaultValue === undefined) {
-            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.emit(true)};`);
+            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.tkeystr};`);
         }
         else {
-            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.emit(true)} = ${this.defaultValue.emit(true, fmt)};`);
+            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.tkeystr} = ${this.defaultValue.emit(true, fmt)};`);
         }
     }
 }
@@ -566,6 +549,7 @@ enum AdditionalTypeDeclTag {
 
 abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
     readonly terms: TypeTemplateTermDecl[] = [];
@@ -580,14 +564,19 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     readonly etag: AdditionalTypeDeclTag;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
         this.attributes = attributes;
+        this.ns = ns;
         this.name = name;
 
         this.etag = etag;
     }
+
+    //These are our annoying nested types
+    isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof ErrTypeDecl); }
+    isSpecialAPIResultEntity(): boolean { return (this instanceof APIRejectedTypeDecl) || (this instanceof APIFailedTypeDecl) || (this instanceof APIErrorTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
@@ -610,7 +599,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     }
 
     emitProvides(): string {
-        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p.emit(true)).join(", ")) : "";
+        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p.tkeystr).join(", ")) : "";
     }
 
     emitBodyGroups(fmt: CodeFormatter): string[][] {
@@ -637,16 +626,16 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 }
 
 abstract class AbstractEntityTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 }
 
 class EnumTypeDecl extends AbstractEntityTypeDecl {
     readonly members: string[];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[], etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, members: string[], etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.members = members;
     }
@@ -663,20 +652,20 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.valuetype = valuetype;
     }
 
     emit(fmt: CodeFormatter): string {
-        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.emit(true)}`;
+        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.tkeystr}`;
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].emit(true) === "Some") {
+        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].tkeystr === "Some") {
             return tdcl + ";";
         }
         else {
@@ -687,7 +676,7 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
 
 abstract class InternalEntityTypeDecl extends AbstractEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+        super(file, sinfo, attributes, new FullyQualifiedNamespace(["Core"]) , name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -721,7 +710,7 @@ class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
     }
 }
 
-class ExRegexValidatorTypeDecl extends InternalEntityTypeDecl {
+class CRegexValidatorTypeDecl extends InternalEntityTypeDecl {
     readonly regex: string;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
@@ -771,7 +760,7 @@ class StringOfTypeDecl extends ThingOfTypeDecl {
     }
 }
 
-class ExStringOfTypeDecl extends ThingOfTypeDecl {
+class CStringOfTypeDecl extends ThingOfTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -913,6 +902,22 @@ class SomethingTypeDecl extends ConstructableTypeDecl {
     }
 }
 
+class PairTypeDecl extends ConstructableTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
 class MapEntryTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -984,8 +989,8 @@ class EventListTypeDecl extends AbstractCollectionTypeDecl {
 class EntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1001,14 +1006,14 @@ class EntityTypeDecl extends AbstractEntityTypeDecl {
 }
 
 abstract class AbstractConceptTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 }
 
 abstract class InternalConceptTypeDecl extends AbstractConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+        super(file, sinfo, attributes, new FullyQualifiedNamespace(["Core"]), name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -1051,6 +1056,14 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
         super(file, sinfo, attributes, name);
     }
 
+    getOkType(): OkTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof OkTypeDecl) as OkTypeDecl;
+    }
+
+    getErrType(): ErrTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof ErrTypeDecl) as ErrTypeDecl;
+    }
+
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
@@ -1070,6 +1083,22 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
+    }
+
+    getAPIErrorType(): APIErrorTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIErrorTypeDecl) as APIErrorTypeDecl;
+    }
+
+    getAPIFailedType(): APIFailedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIFailedTypeDecl) as APIFailedTypeDecl;
+    }
+
+    getAPIRejectedType(): APIRejectedTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APIRejectedTypeDecl) as APIRejectedTypeDecl;
+    }
+
+    getAPISuccessType(): APISuccessTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof APISuccessTypeDecl) as APISuccessTypeDecl;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1105,8 +1134,8 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 class ConceptTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1125,8 +1154,8 @@ class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly parentTypeDecl: DatatypeTypeDecl;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.parentTypeDecl = parentTypeDecl;
     }
@@ -1147,8 +1176,8 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1178,30 +1207,8 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     }
 }
 
-class StatusInfoFilter {
-    readonly standard: TypeSignature | undefined;
-    readonly verbose: TypeSignature | undefined;
-
-    constructor(standard: TypeSignature | undefined, verbose: TypeSignature | undefined) {
-        this.standard = standard;
-        this.verbose = verbose;
-    }
-
-    emit(): string {
-        if(this.standard === undefined) {
-            return "status []";
-        }
-
-        if(this.verbose === undefined) {
-            return `status [${this.standard.emit(true)}]`;
-        }
-
-        return `status [${this.standard.emit(true)}, ${this.verbose.emit(true)}]`;
-    }
-}
-
 class EnvironmentVariableInformation {
-    readonly evname: string; //exstring
+    readonly evname: string; //cstring
     readonly evtype: TypeSignature;
     readonly optdefault: ConstantExpressionValue | undefined;
 
@@ -1213,10 +1220,10 @@ class EnvironmentVariableInformation {
 
     emit(fmt: CodeFormatter): string {
         if(this.optdefault === undefined) {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit(true)}`);
+            return fmt.indent(`${this.evname}: ${this.evtype.tkeystr}`);
         }
         else {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit(true)} = ${this.optdefault.emit(true, fmt)}`);
+            return fmt.indent(`${this.evname}: ${this.evtype.tkeystr} = ${this.optdefault.emit(true, fmt)}`);
         }
     }
 }
@@ -1267,13 +1274,13 @@ class APIDecl extends AbstractCoreDecl {
 
     readonly examples: InvokeExample[];
 
-    readonly statusOutputs: StatusInfoFilter;
+    readonly statusOutputs: TypeSignature[];
     readonly envVarRequirements: EnvironmentVariableInformation[];
     readonly resourceImpacts: ResourceInformation[] | "**" | "{}";
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: TypeSignature[], envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
         super(file, sinfo, attributes, name);
         
         this.params = params;
@@ -1310,9 +1317,8 @@ class APIDecl extends AbstractCoreDecl {
         }
 
         let status: string[] = [];
-        const ss = this.statusOutputs.emit();
-        if(ss !== undefined) {
-            status = [ss];
+        if(this.statusOutputs.length !== 0) {
+            status = [`status {${this.statusOutputs.map((so) => so.tkeystr).join(", ")}}`];
         }
 
         let resources: string[] = [];
@@ -1347,7 +1353,7 @@ class APIDecl extends AbstractCoreDecl {
         const attrs = this.emitAttributes();
 
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const result = this.resultType.emit(true);
+        const result = this.resultType.tkeystr;
 
         const minfo = this.emitMetaInfo(fmt);
         return `${attrs}api ${this.name}(${params}): ${result} ${this.body.emit(fmt, minfo)}`;
@@ -1359,16 +1365,16 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    eventsInfo: TypeSignature[] | "{}" | "?" | undefined; //undefined means passthrough (or API is defined)
-    statusInfo: StatusInfoFilter | "?" | undefined; //undefined means passthrough
-    envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //undefined means passthrough
-    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //* means any possible resource impact -- undefined means pass through
+    eventsInfo: TypeSignature | undefined; //undefined means no events
+    statusInfo: TypeSignature[] | undefined; //undefined means no status
+    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; 
+    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //** means any possible resource impact -- ? means passthrough
     
     //If this is defined then the info is all taken from the API
     implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
+        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1377,23 +1383,19 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPush();
         const mg: string[][] = [];
         if(this.eventsInfo !== undefined) {
-            if(this.eventsInfo === "{}") {
-                mg.push(["event { }"]);
-            }
-            else if(this.eventsInfo === "?") {
-                mg.push(["event { ? }"]);
-            }
-            else {
-                mg.push([`event { ${this.eventsInfo.map((ei) => ei.emit(true)).join(", ")} }`]);
-            }
+            mg.push([`event ${this.eventsInfo.tkeystr}`]);
         }
         if(this.statusInfo !== undefined) {
-            if(this.statusInfo === "?") {
-                mg.push(["status ?"]);
-            }
-            else {
-                mg.push([this.statusInfo.emit()]);
-            }
+            mg.push([`status {${this.statusInfo.map((so) => so.tkeystr).join(", ")}}`]);
+        }
+        if(this.envVarRequirementInfo !== undefined) {
+            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
+
+            fmt.indentPush();
+            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
+            fmt.indentPop();
+
+            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
         }
         if(this.resourceImpactInfo !== undefined) {
             if(this.resourceImpactInfo === "**") {
@@ -1407,20 +1409,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
             }
             else {
                 mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
-            }
-        }
-        if(this.envVarRequirementInfo !== undefined) {
-            if(this.envVarRequirementInfo === "?") {
-                mg.push(["env { ? }"]);
-            }
-            else {
-                const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
-
-                fmt.indentPush();
-                const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-                fmt.indentPop();
-
-                mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
             }
         }
 
@@ -1466,25 +1454,7 @@ class NamespaceConstDecl extends AbstractCoreDecl {
 
     emit(fmt: CodeFormatter): string {
         const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        return `${attr}const ${this.name}: ${this.declaredType.emit(true)} = ${this.value.emit(true, fmt)};`;
-    }
-}
-
-class NamespaceTypedef extends AbstractCoreDecl {
-    terms: TypeTemplateTermDecl[] = [];
-    boundType: TypeSignature;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], btype: TypeSignature) {
-        super(file, sinfo, attributes, name);
-
-        this.terms = terms;
-        this.boundType = btype;
-    }
-
-    emit(): string {
-        const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        const tstr = this.terms.length !== 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}> ` : "";
-        return `${attr}type ${this.name}${tstr} = ${this.boundType.emit(true)};`;
+        return `${attr}const ${this.name}: ${this.declaredType.tkeystr} = ${this.value.emit(true, fmt)};`;
     }
 }
 
@@ -1524,7 +1494,6 @@ class NamespaceDeclaration {
 
     subns: NamespaceDeclaration[] = [];
 
-    typeDefs: NamespaceTypedef[] = [];
     consts: NamespaceConstDecl[] = [];
     functions: NamespaceFunctionDecl[] = [];
     typedecls: AbstractNominalTypeDecl[] = [];
@@ -1606,13 +1575,6 @@ class NamespaceDeclaration {
             res += "\n";
         }
 
-        this.typeDefs.forEach((td) => {
-            res += fmt.indent(td.emit() + "\n");
-        });
-        if(this.typeDefs.length !== 0) {
-            res += "\n";
-        }
-
         this.consts.forEach((c) => {
             res += fmt.indent(c.emit(fmt) + "\n");
         });
@@ -1684,7 +1646,7 @@ class Assembly {
 
 export {
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
-    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
+    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     InvokeExampleKind, InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
@@ -1699,9 +1661,9 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
-    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
-    ThingOfTypeDecl, StringOfTypeDecl, ExStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
+    RegexValidatorTypeDecl, CRegexValidatorTypeDecl, PathValidatorTypeDecl,
+    ThingOfTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, PairTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
@@ -1709,8 +1671,8 @@ export {
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
-    StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
+    EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl,
-    NamespaceConstDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
+    NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
     Assembly
 };

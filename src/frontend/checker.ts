@@ -1,11 +1,11 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, ConstructableTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
-import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
+import { TypeCheckerRelations } from "./checker_relations.js";
 
 import { accepts } from "@bosque/jsbrex";
 
@@ -31,7 +31,6 @@ const CLEAR_FILENAME = "[GLOBAL]";
 
 class TypeChecker {
     private file: string = CLEAR_FILENAME;
-
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
@@ -55,7 +54,7 @@ class TypeChecker {
     }
 
     private static safeTypePrint(tsig: TypeSignature | undefined): string {
-        return tsig === undefined ? "[undef_type]" : tsig.emit(true);
+        return tsig === undefined ? "[undef_type]" : tsig.tkeystr;
     }
 
     getErrorList(): TypeError[] {
@@ -67,118 +66,290 @@ class TypeChecker {
         return this.relations.wellknowntypes.get(name) as TypeSignature;
     }
 
-    private canCompileTimeReduceConstantExpression(exp: Expression): boolean {
-        if(exp.isLiteralExpression()) {
-            return true;
-        }
-        else if (exp instanceof AccessNamespaceConstantExpression) {
-            const nsresl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
-            if(nsresl === undefined) {
-                return false;
-            }
-
-            return this.canCompileTimeReduceConstantExpression(nsresl.value.exp);
-        }
-        else if (exp instanceof AccessStaticFieldExpression) {
-            if(this.relations.isAccessToEnum(exp.stype, exp.name)) {
-                return true;
-            }
-            else
-            {
-                const cdecl = this.relations.resolveTypeConstant(exp.stype, exp.name, this.constraints);
-                if(cdecl === undefined) {
-                    return false;
-                }
-
-                return this.canCompileTimeReduceConstantExpression(cdecl.member.value.exp);
-            }
-        }
-        else {
-            return false;
-        }
+    private getStringOfType(oftype: TypeSignature): TypeSignature {
+        const stringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "StringOf") as StringOfTypeDecl;
+        return new NominalTypeSignature(oftype.sinfo, stringofdecl, [oftype]);
     }
 
-    private processITest_None(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("None"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+    private getCStringOfType(oftype: TypeSignature): TypeSignature {
+        const cstringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "CStringOf") as CStringOfTypeDecl;
+        return new NominalTypeSignature(oftype.sinfo, cstringofdecl, [oftype]);
     }
 
-    private processITest_Some(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("Some"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+    private getEventListOf(oftype: TypeSignature): TypeSignature {
+        const eventlistdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
+        return new NominalTypeSignature(oftype.sinfo, eventlistdecl, [oftype]);
     }
 
-    private processITest_Nothing(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("Nothing"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+    private isBooleanType(t: TypeSignature): boolean {
+        return (t.tkeystr === "Bool");
     }
 
-    private processITest_Something(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("ISomething"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+    private isVoidType(t: TypeSignature): boolean {
+        return (t.tkeystr === "Void");
     }
 
-    private processITest_Ok(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("IOk"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
-    }
-
-    private processITest_Err(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("IErr"), this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
-    }
-
-    private processITest_Literal(env: TypeEnvironment, src: TypeSignature, literaltype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        if(this.relations.isNoneType(literaltype, this.constraints) || this.relations.isNothingType(literaltype, this.constraints)) {
-            const rinfo = this.relations.refineType(src, literaltype, this.constraints);
-            return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
-        }
-        else {
-            return { ttrue: src, tfalse: src };
-        }
-    }
-
-    private processITest_Type(src: TypeSignature, oftype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, oftype, this.constraints);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
-    }
-    
-    private processITest(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        if(tt instanceof ITestType) {
-            this.checkTypeSignature(tt.ttype);
-            return this.processITest_Type(src, tt.ttype, tt.isnot);
-        }
-        else if(tt instanceof ITestLiteral) {
-            if(!this.canCompileTimeReduceConstantExpression(tt.literal.exp)) {
-                this.reportError(sinfo, "Invalid literal expression value");
-                return { ttrue: src, tfalse: src };
+    private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!none === some
+        if(isnot) {
+            const rinfo = this.relations.splitOnSome(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to some-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
             }
             else {
-                const lltype = this.checkExpression(env, tt.literal.exp, undefined);
-                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isKeyType(lltype, this.constraints), "Literal value must be a key type");
+                return { bindtrue: rinfo.overlapSome, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined};
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnNone(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to none-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSome };
+            }
+        }
+    }
 
-                return this.processITest_Literal(env, src, lltype, tt.isnot);
+    private processITest_Some(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!some === none
+        if(isnot) {
+            const rinfo = this.relations.splitOnNone(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to none-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined , bindfalse: rinfo.remainSome };
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnSome(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to some-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapSome, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined};
+            }
+        }
+    }
+
+    private processITest_Nothing(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!nothing === something
+        if(isnot) {
+            const rinfo = this.relations.splitOnSomething(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to something-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapSomethingT, bindfalse: rinfo.hasnothing ? this.getWellKnownType("Nothing") : undefined};
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnNothing(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnothing ? this.getWellKnownType("Nothing") : undefined, bindfalse: rinfo.remainSomethingT };
+            }
+        }
+    }
+
+    private processITest_Something(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!something === nothing
+        if(isnot) {
+            const rinfo = this.relations.splitOnNothing(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.hasnothing ? this.getWellKnownType("Nothing") : undefined, bindfalse: rinfo.remainSomethingT};
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnSomething(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to something-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapSomethingT, bindfalse: rinfo.hasnothing ? this.getWellKnownType("Nothing") : undefined };
+            }
+        }
+    }
+
+    private processITest_Ok(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!ok === err
+        if(isnot) {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT};
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+            }
+        }
+    }
+
+    private processITest_Err(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+        //!err === ok
+        if(isnot) {
+            const rinfo = this.relations.splitOnOk(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to err-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE};
+            }
+        }
+        else {
+            const rinfo = this.relations.splitOnErr(src, this.constraints);
+            if(rinfo === undefined) {
+                this.reportError(src.sinfo, `Unable to nothing-split type ${src.tkeystr}`);
+                return { bindtrue: undefined, bindfalse: undefined };
+            }
+            else {
+                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+            }
+        }
+    }
+
+    private processITest_Type(src: TypeSignature, oftype: TypeSignature): { ttrue: TypeSignature[], tfalse: TypeSignature[] } {
+        const rinfo = this.relations.refineType(src, oftype, this.constraints);
+        if(rinfo === undefined) {
+            this.reportError(src.sinfo, `Unable to something-split type ${src.tkeystr}`);
+            return { ttrue: [], tfalse: [] };
+        }
+        else {
+            return { ttrue: rinfo.overlap, tfalse: rinfo.remain };
+        }
+    }
+    
+    private processITestAsBoolean(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: boolean, tfalse: boolean } {
+        if(tt instanceof ITestType) {
+            if(!this.checkTypeSignature(tt.ttype)) {
+                return { ttrue: false, tfalse: false };
+            }
+            else {
+                const tres = this.processITest_Type(src, tt.ttype);
+                if(tt.isnot) {
+                    return { ttrue: tres.tfalse.length !== 0, tfalse: tres.ttrue.length !== 0 };
+                }
+                else {
+                    return { ttrue: tres.ttrue.length !== 0, tfalse: tres.tfalse.length !== 0 };
+                }
             }
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.processITest_None(src, tt.isnot);
+                const tres = this.processITest_None(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else if(tt instanceof ITestSome) {
-                return this.processITest_Some(src, tt.isnot);
+                const tres = this.processITest_Some(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else if(tt instanceof ITestNothing) {
-                return this.processITest_Nothing(src, tt.isnot);
+                const tres = this.processITest_Nothing(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else if(tt instanceof ITestSomething) {
-                return this.processITest_Something(src, tt.isnot);
+                const tres = this.processITest_Something(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else if(tt instanceof ITestOk) {
-                return this.processITest_Ok(src, tt.isnot);
+                const tres = this.processITest_Ok(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
             }
             else {
                 assert(tt instanceof ITestErr, "missing case in ITest");
-                return this.processITest_Err(src, tt.isnot);
+                const tres = this.processITest_Err(src, tt.isnot);
+                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
+            }
+        }
+    }
+
+    private processITestConvertForce(opts: TypeSignature[], converttype: TypeSignature): TypeSignature | undefined {
+        if(opts.length === undefined) {
+            return undefined;
+        }
+
+        return converttype;
+    }
+
+    private processITestConvertLUB(sinfo: SourceInfo, opts: TypeSignature[], lubtype: TypeSignature): TypeSignature | undefined {
+        if(opts.length === undefined) {
+            return undefined;
+        }
+
+        return this.relations.flowTypeLUB(sinfo, lubtype, opts, this.constraints);
+    }
+
+    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+        if(tt instanceof ITestType) {
+            if(!this.checkTypeSignature(tt.ttype)) {
+                return { ttrue: undefined, tfalse: undefined };
+            }
+            else {
+                const tres = this.processITest_Type(src, tt.ttype);
+                if(tt.isnot) {
+                    const ttrue = this.processITestConvertLUB(sinfo, tres.tfalse, src); //negate takes the remain and lubs to the src
+                    const tfalse = this.processITestConvertForce(tres.ttrue, tt.ttype); //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
+
+                    return { ttrue: ttrue, tfalse: tfalse };
+                }
+                else {
+                    const ttrue = this.processITestConvertForce(tres.ttrue, tt.ttype); //always cast to what the user asked for
+                    const tfalse = this.processITestConvertLUB(sinfo, tres.tfalse, src); //cast to the LUB of the remaining types (with src as a default option)
+
+                    return { ttrue: ttrue, tfalse: tfalse };
+                }
+            }
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                const tres = this.processITest_None(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestSome) {
+                const tres = this.processITest_Some(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestNothing) {
+                const tres = this.processITest_Nothing(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestSomething) {
+                const tres = this.processITest_Something(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else if(tt instanceof ITestOk) {
+                const tres = this.processITest_Ok(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                const tres = this.processITest_Err(src, tt.isnot);
+                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
             }
         }
     }
@@ -190,17 +361,13 @@ class TypeChecker {
             const tdecl = decls[i];
             const targ = targs[i];
 
-            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.emit(true)}`)) {
+            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.tkeystr}`)) {
                 return false;
             }
 
             if(tdecl.extraTags.length !== 0) {
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
                     this.checkError(sinfo, !this.relations.isUniqueType(targ, this.constraints), `Template argument ${tdecl.name} is not a unique type`);
-                    return false;
-                }
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Atomic)) {
-                    this.checkError(sinfo, !this.relations.isAtomicType(targ, this.constraints), `Template argument ${tdecl.name} is not an atomic type`);
                     return false;
                 }
             }
@@ -219,7 +386,7 @@ class TypeChecker {
             allnames.add(terminfo.name);
 
             if(this.checkTypeSignature(terminfo.tconstraint)) {
-                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
     }
@@ -234,166 +401,70 @@ class TypeChecker {
             allnames.add(terminfo.name);
 
             if(this.checkTypeSignature(terminfo.tconstraint)) {
-                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
     }
 
     //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(type: TypeSignature): boolean {
-        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
-
-        if(tnorm instanceof ErrorTypeSignature || tnorm instanceof AutoTypeSignature) {
+        if(type instanceof ErrorTypeSignature || type instanceof AutoTypeSignature) {
             return false;
         }
-        else if(tnorm instanceof VoidTypeSignature) {
+        else if(type instanceof VoidTypeSignature) {
             return true;
         }
-        else if(tnorm instanceof TemplateTypeSignature) {
-            return this.constraints.resolveConstraint(tnorm.name) !== undefined;
+        else if(type instanceof TemplateTypeSignature) {
+            return this.constraints.resolveConstraint(type.name) !== undefined;
         }
-        else if(tnorm instanceof NominalTypeSignature) {
-            const typesok = tnorm.tscope.every((entry) => entry.terms.every((ttval) => this.checkTypeSignatureAndStorable(ttval)));
+        else if(type instanceof NominalTypeSignature) {
+            const typesok = type.alltermargs.every((targ) => this.checkTypeSignature(targ));
 
             if(!typesok) {
                 return false;
             }
             
-            const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
-            const tterms = tnorm.tscope[0].terms;
-            if(tdecl instanceof ConstructableTypeDecl) {
-                if(tdecl instanceof OkTypeDecl || tdecl instanceof ErrTypeDecl) {
-                    if(tterms.length !== 2) {
-                        this.reportError(type.sinfo, `Result type ${tdecl.name} type expected 2 terms but got ${tterms.length}`);
-                        return false;
-                    }
-                    return true;
-                }
-                else if(tdecl instanceof APIErrorTypeDecl || tdecl instanceof APIFailedTypeDecl || tdecl instanceof APIRejectedTypeDecl || tdecl instanceof APISuccessTypeDecl) {
-                    if(tterms.length !== 1) {
-                        this.reportError(type.sinfo, `APIResult type ${tdecl.name} expected 1 term but got ${tterms.length}`);
-                        return false;
-                    }
-
-                    return true;
-                }
-                else {
-                    if(tterms.length !== 2) {
-                        this.reportError(type.sinfo, `MapEntry type expected 2 terms but got ${tterms.length}`);
-                        return false;
-                    }
-                    if(!this.relations.isKeyType(tterms[0], this.constraints)) {
-                        this.reportError(type.sinfo, `MapEntry key is not a key type`);
-                        return false;
-                    }
-                    return true;
-                }
+            if(type.alltermargs.length !== type.decl.terms.length) {
+                this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
+                return false;
             }
-            else if(tdecl instanceof ResultTypeDecl || tdecl instanceof APIResultTypeDecl) {
-                if(tterms.length !== tdecl.terms.length) {
-                    this.reportError(type.sinfo, `(API)Result type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
-                    return false;
-                }
 
-                return true;
-            }
-            else {
-                if(tterms.length !== tdecl.terms.length) {
-                    this.reportError(type.sinfo, `Type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
-                    return false;
-                }
-
-                return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, tterms, tdecl.terms);
-            }
+            return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, type.alltermargs, type.decl.terms);
         }
-        else if(tnorm instanceof TupleTypeSignature) {
-            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
+        else if(type instanceof EListTypeSignature) {
+            return type.entries.every((entry) => this.checkTypeSignature(entry));
         }
-        else if(tnorm instanceof RecordTypeSignature) {
-            let pnames: Set<string> = new Set<string>();
-            return tnorm.entries.every((entry) => {
-                if(pnames.has(entry[0])) {
-                    this.reportError(type.sinfo, `Property name ${entry[0]} is already defined`)
-                    return false;
-                }
-                pnames.add(entry[0]);
-                if(!this.checkTypeSignatureAndStorable(entry[1])) {
-                    return false;
-                }
-
-                return true;
-            });
+        else if(type instanceof StringTemplateTypeSignature) {
+            return type.argtypes.every((entry) => this.checkTypeSignature(entry));
         }
-        else if(tnorm instanceof EListTypeSignature) {
-            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
-        }
-        else if(tnorm instanceof StringTemplateTypeSignature) {
-            return tnorm.argtypes.every((entry) => this.checkTypeSignature(entry));
-        }
-        else if(tnorm instanceof LambdaTypeSignature) {
-            const oksig = tnorm.params.every((pp) => this.checkTypeSignatureParam(pp)) && this.checkTypeSignature(tnorm.resultType);
+        else if(type instanceof LambdaTypeSignature) {
+            const oksig = type.params.every((pp) => this.checkTypeSignature(pp.type)) && this.checkTypeSignature(type.resultType);
             if(!oksig) {
                 return false;
             }
 
-            let pnames: Set<string> = new Set<string>();
             let refct = 0;
-            for(let i = 0; i < tnorm.params.length; ++i) {
-                const pp = tnorm.params[i];
+            for(let i = 0; i < type.params.length; ++i) {
+                const pp = type.params[i];
 
                 refct += pp.isRefParam ? 1 : 0;
-                if(pp.isRestParam && i !== tnorm.params.length - 1) {
-                    this.reportError(type.sinfo, `Rest parameter ${pp.name} must be the last parameter in the lambda`);
+                if(pp.isRestParam && i !== type.params.length - 1) {
+                    this.reportError(type.sinfo, `Rest parameter must be the last parameter in the lambda`);
                     return false;
                 }
-
-                if(pnames.has(pp.name)) {
-                    this.reportError(type.sinfo, `Parameter name ${pp.name} is already defined`)
-                    return false;
-                }
-                pnames.add(pp.name);
             }
 
             return refct <= 1;
         }
-        else if(tnorm instanceof NoneableTypeSignature) {
-            return this.checkTypeSignature(tnorm.type);
-        }
-        else if(tnorm instanceof UnionTypeSignature) {
-            return this.checkTypeSignature(tnorm.ltype) && this.checkTypeSignature(tnorm.rtype);
+        else if(type instanceof NoneableTypeSignature) {
+            return this.checkTypeSignature(type.type);
         }
         else {
             assert(false, "Unknown TypeSignature type");
         }
     }
 
-    //Given a type signature -- check that is is well formed (and not an EList or EventList) and report any issues
-    private checkTypeSignatureAndStorable(type: TypeSignature): boolean {
-        const isok = this.checkTypeSignature(type);
-        if(!isok) {
-            return false;
-        }
-
-        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
-        return !(tnorm instanceof EListTypeSignature) && !(tnorm instanceof EventListTypeDecl);
-    }
-
-    //Given a type signature parameter
-    private checkTypeSignatureParam(pp: LambdaParameterSignature): boolean {
-        const isok = this.checkTypeSignature(pp.type);
-        if(!isok) {
-            return false;
-        }
-
-        const tnorm = this.relations.normalizeTypeSignature(pp.type, this.constraints);
-        if(tnorm instanceof EListTypeSignature) {
-            return false;
-        }
-
-        return !(pp.isRefParam && pp.isRestParam);
-    }
-
-    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
+    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekeyunique" | "rhssomekeyunique" | "stdkeyunique" | "stdkeynoneable" {
         if (lhsexp.tag === ExpressionTag.LiteralNoneExpression && rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
             return "truealways";
         }
@@ -403,19 +474,19 @@ class TypeChecker {
         }
 
         if (lhsexp.tag === ExpressionTag.LiteralNoneExpression) {
-            return this.relations.includesNoneType(rhs, this.constraints) ? "lhsnone" : "falsealways";
+            return this.relations.isSubtypeOf(this.getWellKnownType("None"), rhs, this.constraints) ? "lhsnone" : "falsealways";
         }
 
         if (rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
-            return this.relations.includesNoneType(lhs, this.constraints) ? "rhsnone" : "falsealways";
+            return this.relations.isSubtypeOf(this.getWellKnownType("None"), lhs, this.constraints) ? "rhsnone" : "falsealways";
         }
 
         if (lhsexp.tag === ExpressionTag.LiteralNothingExpression) {
-            return this.relations.includesNothingType(rhs, this.constraints) ? "lhsnothing" : "falsealways";
+            return this.relations.isSubtypeOf(this.getWellKnownType("Nothing"), rhs, this.constraints) ? "lhsnothing" : "falsealways";
         }
 
         if (rhsexp.tag === ExpressionTag.LiteralNothingExpression) {
-            return this.relations.includesNothingType(lhs, this.constraints) ? "rhsnothing" : "falsealways";
+            return this.relations.isSubtypeOf(this.getWellKnownType("Nothing"), lhs, this.constraints) ? "rhsnothing" : "falsealways";
         }
 
         //should be a subtype on one of the sides
@@ -425,28 +496,18 @@ class TypeChecker {
 
         if (this.relations.areSameTypes(lhs, rhs, this.constraints)) {
             if(this.relations.isUniqueType(lhs, this.constraints) && this.relations.isUniqueType(rhs, this.constraints)) { 
-                return "stdkeywithunique";
+                return "stdkeyunique";
             }
             else {
-                return "stdkey"
+                return "stdkeynoneable"
             }
         }
         else {
             if(this.relations.isSubtypeOf(lhs, rhs, this.constraints)) {
-                if(this.relations.isUniqueType(lhs, this.constraints)) {
-                    return "lhssomekeywithunique";
-                }
-                else {
-                    return "lhssomekey";
-                }
+                return "lhssomekeyunique";
             }
             else {
-                if(this.relations.isUniqueType(rhs, this.constraints)) {
-                    return "rhssomekeywithunique";
-                }
-                else {
-                    return "rhssomekey";
-                }
+                return "rhssomekeyunique";
             }
         }
     }
@@ -692,11 +753,11 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("UnicodeRegex"));
     }
 
-    private checkLiteralExRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
+    private checkLiteralCRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
         //TODO: validate regex parse is error free
 
-        if(exp.value.endsWith("a")) {
-            return exp.setType(this.getWellKnownType("ExRegex"));
+        if(exp.value.endsWith("c")) {
+            return exp.setType(this.getWellKnownType("CRegex"));
         }
         else {
             return exp.setType(this.getWellKnownType("PathRegex"));
@@ -709,34 +770,14 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("String"));
     }
 
-    private checkLiteralExStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralCStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: validate string encoding is correct
         
-        return exp.setType(this.getWellKnownType("ExString"));
+        return exp.setType(this.getWellKnownType("CString"));
     }
 
     private runValidatorRegex(sinfo: SourceInfo, restr: string, litstr: string): boolean {
-        const res = accepts(restr, litstr);
-        if(res === null) {
-            this.reportError(sinfo, `Literal string failed Validator regex -- ${restr}`);
-        }
-
-        return !!res; //force to boolean
-    }
-
-    private checkValidatorRegexPack(sinfo: SourceInfo, restr: string, revalidator: RegexValidatorPack): boolean {
-        if(revalidator instanceof SingleRegexValidatorPack) {
-            return this.runValidatorRegex(sinfo, restr, revalidator.vre);
-        }
-        else if(revalidator instanceof OrRegexValidatorPack) {
-            //make sure to run all of them in case one is malformed -- we want to report that
-            return revalidator.validators.map((v) => this.checkValidatorRegexPack(sinfo, restr, v)).reduce((acc, v) => acc || v, false);
-        }
-        else {
-            assert(false, "Unknown Validator regex pack type");
-            return false;
-        }
-
+        return accepts(restr, litstr);
     }
 
     private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -746,36 +787,36 @@ class TypeChecker {
 
         const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
         if(revalidator === undefined) {
-            return exp.setType(this.relations.getStringOfType(exp.stype));
+            return exp.setType(this.getStringOfType(exp.stype));
         }
 
-        if(revalidator instanceof ErrorRegexValidatorPack) {
+        if(revalidator === undefined) {
             this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
         else {
-            this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator); 
-            return exp.setType(this.relations.getStringOfType(exp.stype));
+            this.runValidatorRegex(exp.sinfo, revalidator, exp.value.slice(1, exp.value.length - 1)); 
+            return exp.setType(this.getStringOfType(exp.stype));
         }
     }
 
-    private checkLiteralExTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
+    private checkLiteralTypedCStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
         if(!this.checkTypeSignature(exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
         const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
         if(revalidator === undefined) {
-            return exp.setType(this.relations.getStringOfType(exp.stype));
+            return exp.setType(this.getCStringOfType(exp.stype));
         }
 
-        if(revalidator instanceof ErrorRegexValidatorPack) {
-            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
+        if(revalidator === undefined) {
+            this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- could not resolve to a valid regex`);
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
         else {
-            this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator); 
-            return exp.setType(this.relations.getStringOfType(exp.stype));
+            this.runValidatorRegex(exp.sinfo, revalidator, exp.value.slice(1, exp.value.length - 1)); 
+            return exp.setType(this.getCStringOfType(exp.stype));
         }
     }
 
@@ -785,10 +826,10 @@ class TypeChecker {
         return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "utf8", []));
     }
 
-    private checkLiteralTemplateExStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
+    private checkLiteralTemplateCStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
-        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "ex", []));
+        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "chars", []));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
@@ -808,15 +849,14 @@ class TypeChecker {
             return exp.setType(exp.constype);
         }
 
-        const rconsttype = this.relations.normalizeTypeSignature(exp.constype, this.constraints);
-        if(!(rconsttype instanceof NominalTypeSignature) || !(rconsttype.resolvedDeclaration instanceof TypedeclTypeDecl)) {
+        if(!(exp.constype instanceof NominalTypeSignature) || !(exp.constype.decl instanceof TypedeclTypeDecl)) {
             this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
             return exp.setType(exp.constype);
         }
 
-        const btype = this.relations.getTypeDeclBasePrimitiveType(rconsttype, this.constraints);
+        const btype = this.relations.getTypeDeclBasePrimitiveType(exp.constype);
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
-        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype, this.constraints), `Literal value is not the same type (${bvalue.emit(true)}) as the typedecl base type (${btype !== undefined ? btype.emit(true) : "[unset]"})`);
+        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype, this.constraints), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
         return exp.setType(exp.constype);
     }
@@ -854,6 +894,10 @@ class TypeChecker {
 
         this.checkTypeSignature(cdecl.declaredType);
         return exp.setType(cdecl.declaredType);
+    }
+
+    private checkAccessEnumExpression(env: TypeEnvironment, exp: AccessEnumExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkAccessEnumExpression");
     }
 
     private checkAccessStaticFieldExpression(env: TypeEnvironment, exp: AccessStaticFieldExpression): TypeSignature {
@@ -932,14 +976,6 @@ class TypeChecker {
 
     ////////
     // Postfix Expressions
-    private checkPostfixAccessFromIndex(env: TypeEnvironment, exp: PostfixAccessFromIndex, rcvrtype: TypeSignature): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
-    }
-
-    private checkPostfixProjectFromIndecies(env: TypeEnvironment, exp: PostfixProjectFromIndecies, rcvrtype: TypeSignature, infertype: TypeInferContext | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixProjectFromIndecies");
-    }
-
     private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
         assert(false, "Not Implemented -- checkPostfixAccessFromName");
     }
@@ -949,30 +985,19 @@ class TypeChecker {
     }
 
     private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
-        const splits = this.processITest(exp.sinfo, env, rcvrtype, exp.ttest);
-        this.checkError(exp.sinfo, splits.ttrue === undefined, "Test is never true");
-        this.checkError(exp.sinfo, splits.tfalse === undefined, "Test is never false");
+        const splits = this.processITestAsBoolean(exp.sinfo, env, rcvrtype, exp.ttest);
+        this.checkError(exp.sinfo, !splits.ttrue, "Test is never true");
+        this.checkError(exp.sinfo, !splits.tfalse, "Test is never false");
 
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkPostfixAsConvert(env: TypeEnvironment, exp: PostfixAsConvert, rcvrtype: TypeSignature): TypeSignature {
-        const splits = this.processITest(exp.sinfo, env, rcvrtype, exp.ttest);
+        const splits = this.processITestAsConvert(exp.sinfo, env, rcvrtype, exp.ttest);
         this.checkError(exp.sinfo, splits.ttrue === undefined, "Convert always fails");
         //if always true then this is an upcast and OK!
 
         return exp.setType(splits.ttrue || new ErrorTypeSignature(exp.sinfo, undefined));
-    }
-
-    private checkPostfixTypeDeclValue(env: TypeEnvironment, exp: PostfixTypeDeclValue, rcvrtype: TypeSignature): TypeSignature {
-        if(exp.opr === "value") {
-            const vtype = this.relations.getTypeDeclValueType(rcvrtype, this.constraints);
-            return exp.setType(vtype || new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-        else {
-            const btype = this.relations.getTypeDeclBasePrimitiveType(rcvrtype, this.constraints);
-            return exp.setType(btype || new ErrorTypeSignature(exp.sinfo, undefined));
-        }
     }
 
     private checkPostfixAssignFields(env: TypeEnvironment, exp: PostfixAssignFields, rcvrtype: TypeSignature): TypeSignature {
@@ -999,12 +1024,6 @@ class TypeChecker {
 
             op.setRcvrType(ctype);
             switch(op.tag) {
-                case PostfixOpTag.PostfixAccessFromIndex: {
-                    ctype = this.checkPostfixAccessFromIndex(env, op as PostfixAccessFromIndex, ctype);
-                }
-                case PostfixOpTag.PostfixProjectFromIndecies: {
-                    ctype = this.checkPostfixProjectFromIndecies(env, op as PostfixProjectFromIndecies, ctype, texpected);
-                }
                 case PostfixOpTag.PostfixAccessFromName: {
                     ctype = this.checkPostfixAccessFromName(env, op as PostfixAccessFromName, ctype);
                 }
@@ -1016,9 +1035,6 @@ class TypeChecker {
                 }
                 case PostfixOpTag.PostfixAsConvert: {
                     ctype = this.checkPostfixAsConvert(env, op as PostfixAsConvert, ctype);
-                }
-                case PostfixOpTag.PostfixTypeDeclValue: {
-                    ctype = this.checkPostfixTypeDeclValue(env, op as PostfixTypeDeclValue, ctype);
                 }
                 case PostfixOpTag.PostfixAssignFields: {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
@@ -1050,7 +1066,7 @@ class TypeChecker {
             return exp.setType(etype);
         }
 
-        this.checkError(exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), "Prefix Not operator requires a Bool type");
+        this.checkError(exp.sinfo, !this.isBooleanType(etype), "Prefix Not operator requires a Bool type");
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1121,21 +1137,21 @@ class TypeChecker {
         }
 
         let res: TypeSignature;
-        if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+        if(this.relations.isPrimitiveType(tlhs) && this.relations.isPrimitiveType(trhs)) {
             if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Multiplication operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs;
         }
-        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
-            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
+        else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
+            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
             if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
-        else if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isTypeDeclType(trhs, this.constraints)) {
-            const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+        else if(this.relations.isPrimitiveType(tlhs) && this.relations.isTypeDeclType(trhs)) {
+            const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs);
             if(this.checkError(exp.sinfo, baserhs === undefined || !this.relations.areSameTypes(tlhs, baserhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
@@ -1156,24 +1172,24 @@ class TypeChecker {
         }
 
         let res: TypeSignature;
-        if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+        if(this.relations.isPrimitiveType(tlhs) && this.relations.isPrimitiveType(trhs)) {
             if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs;
         }
-        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
-            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
+        else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
+            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
             if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
-        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isTypeDeclType(trhs, this.constraints)) {
+        else if(this.relations.isTypeDeclType(tlhs) && this.relations.isTypeDeclType(trhs)) {
             if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
-            const basetype = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+            const basetype = this.relations.getTypeDeclBasePrimitiveType(trhs);
             if(this.checkError(exp.sinfo, basetype === undefined, "Division operator requires matching types on the arguments")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
@@ -1196,13 +1212,13 @@ class TypeChecker {
         }
         
         if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable -- one must be subtype of the other`);
+            this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable -- one must be subtype of the other`);
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable`);
+            this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable`);
             return exp.setType(this.getWellKnownType("Bool"));
         }
         if(action === "truealways" || action === "falsealways") {
@@ -1214,27 +1230,19 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
         else {
-            if (action === "stdkeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            if (action === "stdkeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr})}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
-            else if (action === "lhssomekeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+            else if (action === "lhssomekeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr}`);
             }
-            else if (action === "rhssomekeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            else if (action === "rhssomekeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
             else {
-                if (action === "lhssomekey") {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                }
-                else if (action === "rhssomekey") {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
-                }
-                else {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
-                }
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
 
             return exp.setType(this.getWellKnownType("Bool"));
@@ -1250,13 +1258,13 @@ class TypeChecker {
         }
         
         if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable -- one must be subtype of the other`);
+            this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable -- one must be subtype of the other`);
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable`);
+            this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable`);
             return exp.setType(this.getWellKnownType("Bool"));
         }
         if(action === "truealways" || action === "falsealways") {
@@ -1268,27 +1276,19 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
         else {
-            if (action === "stdkeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            if (action === "stdkeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
-            else if (action === "lhssomekeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+            else if (action === "lhssomekeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr}`);
             }
-            else if (action === "rhssomekeywithunique") {
-                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            else if (action === "rhssomekeyunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
             else {
-                if (action === "lhssomekey") {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                }
-                else if (action === "rhssomekey") {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
-                }
-                else {
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
-                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
-                }
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.tkeystr}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.tkeystr}`);
             }
 
             return exp.setType(this.getWellKnownType("Bool"));
@@ -1367,10 +1367,10 @@ class TypeChecker {
             return;
         }
 
-        if(this.checkError(lhs.sinfo, !this.relations.isBooleanType(tlhs, this.constraints), "Binary operator requires a Bool type")) {
+        if(this.checkError(lhs.sinfo, !this.isBooleanType(tlhs), "Binary operator requires a Bool type")) {
             return;
         }
-        if(this.checkError(rhs.sinfo, !this.relations.isBooleanType(trhs, this.constraints), "Binary operator requires a Bool type")) {
+        if(this.checkError(rhs.sinfo, !this.isBooleanType(trhs), "Binary operator requires a Bool type")) {
             return;
         }
 
@@ -1412,7 +1412,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(exp.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(exp.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(exp.sinfo, exp.trueValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
             this.checkError(exp.sinfo, exp.falseValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
@@ -1420,7 +1420,7 @@ class TypeChecker {
             tfalse = this.checkExpression(env, exp.falseValue, typeinfer);
         }
         else {
-            const splits = this.processITest(exp.sinfo, env, eetype, exp.test.itestopt);
+            const splits = this.processITestAsConvert(exp.sinfo, env, eetype, exp.test.itestopt);
             this.checkError(exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
@@ -1445,7 +1445,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         else {
-            const jtype = this.relations.joinTypes(ttrue, tfalse, this.constraints);
+            const jtype = this.relations.flowTypeLUB(exp.sinfo, TypeInferContext.asSimpleType(typeinfer), [ttrue, tfalse], this.constraints);
             return exp.setType(jtype);
         }
     }
@@ -1550,26 +1550,26 @@ class TypeChecker {
             case ExpressionTag.LiteralUnicodeRegexExpression: {
                 return this.checkLiteralUnicodeRegexExpression(env, exp as LiteralRegexExpression);
             }
-            case ExpressionTag.LiteralExRegexExpression: {
-                return this.checkLiteralExRegexExpression(env, exp as LiteralRegexExpression);
+            case ExpressionTag.LiteralCRegexExpression: {
+                return this.checkLiteralCRegexExpression(env, exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralExStringExpression: {
-                return this.checkLiteralExStringExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralCStringExpression: {
+                return this.checkLiteralCStringExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
             }
-            case ExpressionTag.LiteralExTypedStringExpression: {
-                return this.checkLiteralExTypedStringExpression(env, exp as LiteralTypedStringExpression);
+            case ExpressionTag.LiteralTypedCStringExpression: {
+                return this.checkLiteralTypedCStringExpression(env, exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralTemplateExStringExpression: {
-                return this.checkLiteralTemplateExStringExpression(env, exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralTemplateCStringExpression: {
+                return this.checkLiteralTemplateCStringExpression(env, exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
@@ -1603,6 +1603,9 @@ class TypeChecker {
             }
             case ExpressionTag.AccessNamespaceConstantExpression: {
                 return this.checkAccessNamespaceConstantExpression(env, exp as AccessNamespaceConstantExpression);
+            }
+            case ExpressionTag.AccessEnumExpression: {
+                return this.checkAccessEnumExpression(env, exp as AccessEnumExpression);
             }
             case ExpressionTag.AccessStaticFieldExpression: {
                 return this.checkAccessStaticFieldExpression(env, exp as AccessStaticFieldExpression);
@@ -2732,7 +2735,7 @@ class TypeChecker {
             return env;
         }
 
-        const splits = this.processITest(stmt.sinfo, env, vinfo.vtype, stmt.ttest);
+        const splits = this.processITestAsConvert(stmt.sinfo, env, vinfo.vtype, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
 
         return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.vtype);
@@ -2740,14 +2743,14 @@ class TypeChecker {
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
         if(stmt.value === undefined) {
-            this.checkError(stmt.sinfo, !this.relations.isVoidType(env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(true)}`);
+            this.checkError(stmt.sinfo, !this.isVoidType(env.declReturnType), `Expected a return value of type ${env.declReturnType.tkeystr}`);
         }
         else if(!Array.isArray(stmt.value)) {
             const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
-            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(true)} but got ${rtype.emit(true)}`);
+            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.tkeystr} but got ${rtype.tkeystr}`);
         }
         else {
-            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit(true)}`)) {
+            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.tkeystr}`)) {
                 return env.setReturnFlow();
             }
 
@@ -2758,8 +2761,8 @@ class TypeChecker {
                 const rtype = i < rtypes.length ? rtypes[i] : undefined;
                 const etype = this.checkExpressionRHS(env, stmt.value[i], rtype);
 
-                const rtname = rtype !== undefined ? rtype.emit(true) : "skip";
-                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit(true)}`);
+                const rtname = rtype !== undefined ? rtype.tkeystr : "skip";
+                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.tkeystr}`);
             }
 
             return env.setReturnFlow();
@@ -2797,13 +2800,13 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkBlockStatement(env, stmt.trueBlock);
         }
         else {
-            const splits = this.processITest(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
@@ -2817,7 +2820,7 @@ class TypeChecker {
         }
 
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, env);
-        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
         this.checkFlowRebinder(stmt.sinfo, stmt.trueBinder, env);
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue);
@@ -2833,7 +2836,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
             this.checkError(stmt.sinfo, stmt.falseBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
@@ -2841,7 +2844,7 @@ class TypeChecker {
             tfalse = this.checkBlockStatement(env, stmt.falseBlock);
         }
         else {
-            const splits = this.processITest(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
@@ -2863,7 +2866,7 @@ class TypeChecker {
         }
         
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, tfalse);
-        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
         this.checkFlowRebinder(stmt.sinfo, stmt.trueBinder, env);
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue, tfalse);
@@ -2873,26 +2876,15 @@ class TypeChecker {
         let branchflows: TypeEnvironment[] = [];
 
         for(let i = 0; i < stmt.condflow.length; ++i) {
-            let etype = this.checkExpression(env, stmt.condflow[i].cond.exp, undefined);
+            let etype = this.checkExpression(env, stmt.condflow[i].cond, undefined);
+            if(etype instanceof ErrorTypeSignature) {
+                etype = this.getWellKnownType("Bool");
+            }
 
-            if(stmt.condflow[i].cond.itestopt === undefined) {
-                if(etype instanceof ErrorTypeSignature) {
-                    etype = this.getWellKnownType("Bool");
-                }
-
-                this.checkError(stmt.condflow[i].cond.exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean expression but got ${etype.emit(true)}`);
+            this.checkError(stmt.condflow[i].cond.sinfo, !this.isBooleanType(etype), `Expected a boolean expression but got ${etype.tkeystr}`);
             
-                const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
-                branchflows.push(resenv);
-            }
-            else {
-                const splits = this.processITest(stmt.condflow[i].cond.exp.sinfo, env, etype, stmt.condflow[i].cond.itestopt as ITest);
-                this.checkError(stmt.condflow[i].cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-                this.checkError(stmt.condflow[i].cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
-
-                const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
-                branchflows.push(resenv);
-            }
+            const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
+            branchflows.push(resenv);
         }
 
         const elseflow = this.checkBlockStatement(env, stmt.elseflow);
@@ -2901,7 +2893,7 @@ class TypeChecker {
     }
 
     private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {
-        let ctype = this.checkExpression(env, stmt.sval[0], undefined);
+        let ctype = this.checkExpression(env, stmt.sval, undefined);
         
         let exhaustive = false;
         let results: TypeEnvironment[] = [];
@@ -2914,62 +2906,36 @@ class TypeChecker {
                 this.checkError(stmt.sinfo, i !== stmt.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
                 exhaustive = true;
 
-                let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, ctype) : env;
-                cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
-
-                if(stmt.switchflow[i].bindername !== undefined) {
-                    cenv = cenv.popLocalScope();
-                }
+                const cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
                 results.push(cenv);
             }
             else {
                 const slitexp = (stmt.switchflow[i].lval as LiteralExpressionValue).exp;
-
-                const isconsteval = this.canCompileTimeReduceConstantExpression(slitexp)
-                const ltype = this.checkExpression(env, slitexp, undefined);
-
-                if(!isconsteval || ltype instanceof ErrorTypeSignature) {
-                    let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, ctype) : env;
-                    cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
-
-                    if(stmt.switchflow[i].bindername !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
-                    results.push(cenv);
+                const littype = this.checkExpression(env, slitexp, undefined);
+                if(!this.relations.isUniqueKeyType(littype, this.constraints)) {
+                    this.reportError(slitexp.sinfo, `Switch statement requires a unique key type but got ${littype.tkeystr}`);
                 }
                 else {
-                    this.checkError(slitexp.sinfo, !this.relations.isKeyType(ltype, this.constraints), "Literal value must be a key type");
-
-                    const splits = this.processITest_Literal(env, ctype, ltype, false);
-                    this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-
-                    exhaustive = splits.tfalse === undefined;
-                    this.checkError(stmt.sinfo, splits.tfalse === undefined && i !== stmt.switchflow.length - 1, `Test is never false -- but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
-
-                    let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, splits.ttrue || ctype) : env;
-                    cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
-
-                    if(stmt.switchflow[i].bindername !== undefined) {
-                        cenv = cenv.popLocalScope();
-                    }
-
-                    ctype = splits.tfalse || ctype;
-                    results.push(cenv);
+                    const cmpok = this.checkValueEq(stmt.sval, ctype, slitexp, littype);
+                    this.checkError(slitexp.sinfo, cmpok === "err", `Cannot compare arguments in switch statement ${littype.tkeystr}`);
                 }
+
+                const cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+                results.push(cenv);
             }
         }
         this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
         
-
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.sval[1], ...results);
-        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
-
-        this.checkFlowRebinder(stmt.sinfo, stmt.sval[1], env);
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
+        return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
-        let ctype = this.checkExpression(env, stmt.sval[0], undefined);
+        const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        let ctype = this.relations.decomposeType(eetype, this.constraints) || [];
+        if(ctype.length === 0) {
+            this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.tkeystr}`);
+            return env;
+        }
         
         let exhaustive = false;
         let results: TypeEnvironment[] = [];
@@ -2982,7 +2948,7 @@ class TypeChecker {
                 this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
                 exhaustive = true;
 
-                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, ctype) : env;
+                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints)) : env;
                 cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
 
                 if(stmt.matchflow[i].bindername !== undefined) {
@@ -2991,29 +2957,33 @@ class TypeChecker {
                 results.push(cenv);
             }
             else {
-                this.checkTypeSignature(stmt.matchflow[i].mtype as TypeSignature);
+                const mtype = stmt.matchflow[i].mtype as TypeSignature;
+                this.checkTypeSignature(mtype);
 
-                const splits = this.processITest_Type(ctype, stmt.matchflow[i].mtype as TypeSignature, false);
-                this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-
-                exhaustive = splits.tfalse === undefined;
-                this.checkError(stmt.sinfo, splits.tfalse === undefined && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
-
-                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, splits.ttrue || ctype) : env;
-                cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
-
-                if(stmt.matchflow[i].bindername !== undefined) {
-                    cenv = cenv.popLocalScope();
+                const splits = this.relations.refineMatchType(ctype, mtype, this.constraints);
+                if(splits === undefined) {
+                    this.reportError(stmt.sinfo, `Match statement requires a type that is a subtype of the decomposed type but got ${mtype.tkeystr}`);
+                    return env;
                 }
+                else {
+                    this.checkError(stmt.sinfo, splits.overlap.length === 0, "Test is never true -- true branch of if is unreachable");
 
-                ctype = splits.tfalse || ctype;
-                results.push(cenv);
+                    exhaustive = splits.remain.length === 0;
+                    this.checkError(stmt.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+
+                    const btype = this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, splits.overlap || ctype, this.constraints)
+                    let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, btype) : env;
+                    cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+
+                    ctype = splits.remain || ctype;
+                    results.push(cenv);
+                }
             }
         }
         this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
         
         const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.sval[1], ...results);
-        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
 
         this.checkFlowRebinder(stmt.sinfo, stmt.sval[1], env);
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
@@ -3029,7 +2999,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for assert condition but got ${etype.emit(true)}`);
+        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.tkeystr}`);
         return env;
     }
 
@@ -3039,7 +3009,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for validate condition but got ${etype.emit(true)}`);
+        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.tkeystr}`);
         return env;
     }
 
@@ -3049,8 +3019,12 @@ class TypeChecker {
         return env;
     }
 
-    private checkStandaloneExpressionStatement(env: TypeEnvironment, stmt: StandaloneExpressionStatement): TypeEnvironment {
-        assert(false, "Not implemented -- StandaloneExpressionStatement");
+    private checkVoidRefCallStatement(env: TypeEnvironment, stmt: VoidRefCallStatement): TypeEnvironment {
+        assert(false, "Not implemented -- VoidRefCallStatement");
+    }
+
+    private checkVarUpdateStatement(env: TypeEnvironment, stmt: VarUpdateStatement): TypeEnvironment {
+        assert(false, "Not implemented -- VarUpdateStatement");
     }
 
     private checkThisUpdateStatement(env: TypeEnvironment, stmt: ThisUpdateStatement): TypeEnvironment {
@@ -3355,8 +3329,11 @@ class TypeChecker {
             case StatementTag.DebugStatement: {
                 return this.checkDebugStatement(env, stmt as DebugStatement);
             }
-            case StatementTag.StandaloneExpressionStatement: {
-                return this.checkStandaloneExpressionStatement(env, stmt as StandaloneExpressionStatement);
+            case StatementTag.VoidRefCallStatement: {
+                return this.checkVoidRefCallStatement(env, stmt as VoidRefCallStatement);
+            }
+            case StatementTag.VarUpdateStatement: {
+                return this.checkVarUpdateStatement(env, stmt as VarUpdateStatement);
             }
             case StatementTag.ThisUpdateStatement: {
                 return this.checkThisUpdateStatement(env, stmt as ThisUpdateStatement);
@@ -3397,7 +3374,7 @@ class TypeChecker {
 
         if(body instanceof ExpressionBodyImplementation) {
             const etype = this.checkExpression(env, body.exp, env.inferReturn);
-            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit(true)} but got ${etype.emit(true)}`);
+            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.tkeystr} but got ${etype.tkeystr}`);
         }
         else {
             assert(body instanceof StandardBodyImplementation);
@@ -3407,7 +3384,7 @@ class TypeChecker {
                 env = this.checkStatement(env, body.statements[i]);
             }
 
-            this.checkError(body.sinfo, !this.relations.isVoidType(env.declReturnType, this.constraints) && env.normalflow, "Function does not have a return statement in all code paths");
+            this.checkError(body.sinfo, !this.isVoidType(env.declReturnType) && env.normalflow, "Function does not have a return statement in all code paths");
         }
     }
 
@@ -3415,7 +3392,7 @@ class TypeChecker {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
             const etype = this.checkExpression(env, precond.exp, undefined);
-            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Requires expression does not have a boolean type -- got ${etype.emit(true)}`);
+            this.checkError(precond.sinfo, !this.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.tkeystr}`);
         }
     }
 
@@ -3424,7 +3401,7 @@ class TypeChecker {
         
         eev = eev.addLocalVariable(WELL_KNOWN_RETURN_VAR_NAME, env.declReturnType, true, true);
         if(eventtype !== undefined) {
-            const eventlisttype = this.relations.getEventListOf(eventtype);
+            const eventlisttype = this.getEventListOf(eventtype);
             eev = eev.addLocalVariable(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
         }
 
@@ -3436,7 +3413,7 @@ class TypeChecker {
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
             const etype = this.checkExpression(eev, postcond.exp, undefined);
-            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Ensures expression does not have a boolean type -- got ${etype.emit(true)}`);
+            this.checkError(postcond.sinfo, !this.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.tkeystr}`);
         }
     }
 
@@ -3446,7 +3423,7 @@ class TypeChecker {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
             const etype = this.checkExpression(env, inv.exp.exp, undefined);
-            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Invariant expression does not have a boolean type -- got ${etype.emit(true)}`);
+            this.checkError(invariants[i].sinfo, !this.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.tkeystr}`);
         }
     }
 
@@ -3455,7 +3432,7 @@ class TypeChecker {
 
         for(let i = 0; i < validates.length; ++i) {
             const etype = this.checkExpression(env, validates[i].exp.exp, undefined);
-            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Validate expression does not have a boolean type -- got ${etype.emit(true)}`);
+            this.checkError(validates[i].sinfo, !this.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.tkeystr}`);
         }
     }
 
@@ -3501,7 +3478,7 @@ class TypeChecker {
                 const env = TypeEnvironment.createInitialStdEnv(fullvinfo, idecl.resultType, new SimpleTypeInferContext(idecl.resultType));
                 const etype = this.checkExpression(env, p.optDefaultValue.exp, p.type);
 
-                this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit(true)} but got ${etype.emit(true)}`);
+                this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.tkeystr} but got ${etype.tkeystr}`);
             }
         }
 
@@ -3590,14 +3567,14 @@ class TypeChecker {
         for(let i = 0; i < mdecls.length; ++i) {
             const m = mdecls[i];
 
-            if(this.checkTypeSignatureAndStorable(m.declaredType)) {
+            if(this.checkTypeSignature(m.declaredType)) {
                 this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
 
                 const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
                 const env = TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype);
 
                 const decltype = this.checkExpression(env, m.value.exp, new SimpleTypeInferContext(m.declaredType));
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(true)} but got ${decltype.emit(true)}`);
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.tkeystr} but got ${decltype.tkeystr}`);
             }
         }
     }
@@ -3606,13 +3583,13 @@ class TypeChecker {
         for(let i = 0; i < fdecls.length; ++i) {
             const f = fdecls[i];
             
-            if(this.checkTypeSignatureAndStorable(f.declaredType)) {
+            if(this.checkTypeSignature(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
                     const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
                     const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, true, true)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
-                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(true)} but got ${decltype.emit(true)}`);
+                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.tkeystr} but got ${decltype.tkeystr}`);
                 }
             }
         }
@@ -3623,8 +3600,8 @@ class TypeChecker {
             const p = provides[i];
             this.checkTypeSignature(p);
 
-            if(!this.relations.isValidProvidesType(p, this.constraints)) {
-                this.reportError(p.sinfo, `Invalid provides type -- ${p.emit(true)}`);
+            if(!this.relations.isValidProvidesType(p)) {
+                this.reportError(p.sinfo, `Invalid provides type -- ${p.tkeystr}`);
             }
         }
     }
@@ -3673,13 +3650,14 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
  
         //Make sure that any provides types are not adding on fields, consts, or functions
-        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides, this.constraints);
+        const etype = new NominalTypeSignature(tdecl.sinfo, tdecl, []);
+        const providesdecls = this.relations.resolveTransitiveProvidesDecls(etype, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.tsig.decl.name}`);
         }
 
         this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
@@ -3687,7 +3665,7 @@ class TypeChecker {
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
 
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, []);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
@@ -3711,16 +3689,17 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
 
         //Make sure that any provides types are not adding on fields!
-        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides, this.constraints);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const providesdecls = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
         }
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
             //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(true)}`);
+            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
 
             //make sure all of the invariants on this typecheck
             this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
@@ -3730,9 +3709,7 @@ class TypeChecker {
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
 
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
-
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], isentity);
 
         if(tdecl.terms.length !== 0) {
@@ -3742,13 +3719,8 @@ class TypeChecker {
     }
 
     private checkInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, isentity);
-    }
-
-    private checkInteralSimpleNestedTypeDeclHelper(ns: NamespaceDeclaration, encldecl: InternalEntityTypeDecl, tdecl: InternalEntityTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForNestedDecl(ns, encldecl, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, true);
     }
 
     private checkPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
@@ -3759,7 +3731,7 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkExRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: ExRegexValidatorTypeDecl) {
+    private checkCRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: CRegexValidatorTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -3771,7 +3743,7 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkExStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: ExStringOfTypeDecl) {
+    private checkCStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: CStringOfTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -3787,31 +3759,35 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkOkTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: OkTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl)
+    private checkOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true)
     }
 
-    private checkErrTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: ErrTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
+    private checkErrTypeDecl(ns: NamespaceDeclaration, tdecl: ErrTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIRejectedTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIRejectedTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
+    private checkAPIRejectedTypeDecl(ns: NamespaceDeclaration, tdecl: APIRejectedTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIFailedTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIFailedTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
+    private checkAPIFailedTypeDecl(ns: NamespaceDeclaration, tdecl: APIFailedTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPIErrorTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIErrorTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
+    private checkAPIErrorTypeDecl(ns: NamespaceDeclaration, tdecl: APIErrorTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkAPISuccessTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APISuccessTypeDecl) {
-        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
+    private checkAPISuccessTypeDecl(ns: NamespaceDeclaration, tdecl: APISuccessTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkSomethingTypeDecl(ns: NamespaceDeclaration, tdecl: SomethingTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    }
+
+    private checkPairTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -3845,8 +3821,8 @@ class TypeChecker {
 
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
         this.file = CLEAR_FILENAME;
@@ -3867,10 +3843,10 @@ class TypeChecker {
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof OkTypeDecl) {
-                this.checkOkTypeDecl(ns, tdecl, ned);
+                this.checkOkTypeDecl(ns, ned);
             }
             else {
-                this.checkErrTypeDecl(ns, tdecl, ned as ErrTypeDecl);
+                this.checkErrTypeDecl(ns, ned as ErrTypeDecl);
             }
         }
         this.constraints.popConstraintScope();
@@ -3883,16 +3859,16 @@ class TypeChecker {
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof APIRejectedTypeDecl) {
-                this.checkAPIRejectedTypeDecl(ns, tdecl, ned);
+                this.checkAPIRejectedTypeDecl(ns, ned);
             }
             else if(ned instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, tdecl, ned);
+                this.checkAPIFailedTypeDecl(ns, ned);
             }
             else if(ned instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, tdecl, ned);
+                this.checkAPIErrorTypeDecl(ns, ned);
             }
             else {
-                this.checkAPISuccessTypeDecl(ns, tdecl, ned as APISuccessTypeDecl);
+                this.checkAPISuccessTypeDecl(ns, ned as APISuccessTypeDecl);
             }
         }
         this.constraints.popConstraintScope();
@@ -3904,24 +3880,24 @@ class TypeChecker {
 
     private checkConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, false);
         this.file = CLEAR_FILENAME;
     }
 
     private checkDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
     }
 
     private checkDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
 
@@ -3931,41 +3907,23 @@ class TypeChecker {
         this.file = CLEAR_FILENAME;
     }
 
-    private checkEventInfo(einfo: TypeSignature[] | "{}" | "?") {
-        if(einfo === "{}" || einfo === "?") {
-            return;
+    private checkEventInfo(einfo: TypeSignature) {
+        const oksig = this.checkTypeSignature(einfo);
+        if(oksig) {
+            this.checkError(einfo.sinfo, !this.relations.isEventDataType(einfo), `Event type is not a valid event type -- ${einfo.tkeystr}`);
         }
-        else {
-            for(let i = 0; i < einfo.length; ++i) {
-                const oksig = this.checkTypeSignature(einfo[i]);
-                if(oksig) {
-                    this.checkError(einfo[i].sinfo, !this.relations.isEventDataType(einfo[i], this.constraints), `Event type is not a valid event type -- ${einfo[i].emit(true)}`);
-                }
+    }
+
+    private checkStatusInfo(sinfo: TypeSignature[]) {
+        for(let i = 0; i < sinfo.length; ++i) {
+            const oksig = this.checkTypeSignature(sinfo[i]);
+            if(oksig) {
+                this.checkError(sinfo[i].sinfo, !this.relations.isStatusDataType(sinfo[i]), `Event type is not a valid status type -- ${sinfo[i].tkeystr}`);
             }
         }
     }
 
-    private checkStatusInfoFilter(status: StatusInfoFilter | "?") {
-        if(status === "?") {
-            return;
-        }
-
-        const okstdsig = status.standard !== undefined && this.checkTypeSignature(status.standard);
-        if(okstdsig) {
-            this.checkError(status.standard.sinfo, !this.relations.isStatusDataType(status.standard, this.constraints), `Status type is not a valid status type -- ${status.standard.emit(true)}`);
-        }
-
-        const okverbosesig = status.verbose !== undefined && this.checkTypeSignature(status.verbose);
-        if(okverbosesig) {
-            this.checkError(status.verbose.sinfo, !this.relations.isStatusDataType(status.verbose, this.constraints), `Status type is not a valid status type -- ${status.verbose.emit(true)}`);
-        }
-    }
-
-    private checkEnvironmentVariableInformation(env: EnvironmentVariableInformation[] | "?") {
-        if(env === "?") {
-            return;
-        }
-
+    private checkEnvironmentVariableInformation(env: EnvironmentVariableInformation[]) {
         for(let i = 0; i < env.length; ++i) {
             assert(false, "Not implemented -- checkEnvironmentVariableInformation");
         }
@@ -3993,7 +3951,7 @@ class TypeChecker {
             this.constraints.pushConstraintScope(tdecl.terms);
         }
 
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
 
         //make sure all of the invariants on this typecheck
@@ -4011,10 +3969,18 @@ class TypeChecker {
             assert(false, "Not implemented -- checkTaskDecl implementsapi");
         }
         else {
-            this.checkEventInfo(tdecl.eventsInfo as TypeSignature[] | "{}" | "?");
-            this.checkStatusInfoFilter(tdecl.statusInfo as StatusInfoFilter | "?");
-            this.checkEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[] | "?");
-            this.checkResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
+            if(tdecl.eventsInfo !== undefined) {
+                this.checkEventInfo(tdecl.eventsInfo as TypeSignature);
+            }
+            if(tdecl.statusInfo !== undefined) {
+                this.checkStatusInfo(tdecl.statusInfo as TypeSignature[]);
+            }
+            if(tdecl.envVarRequirementInfo !== undefined) {
+                this.checkEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[]);
+            }
+            if(tdecl.resourceImpactInfo !== undefined) {
+                this.checkResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
+            }
         }
 
         if(tdecl.terms.length !== 0) {
@@ -4028,33 +3994,16 @@ class TypeChecker {
             const m = cdecls[i];
 
             this.file = m.file;
-            if(this.checkTypeSignatureAndStorable(m.declaredType)) {
+            if(this.checkTypeSignature(m.declaredType)) {
                 this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
                 const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
                 const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
 
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(true)} but got ${decltype.emit(true)}`);
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.tkeystr} but got ${decltype.tkeystr}`);
             }
             this.file = CLEAR_FILENAME;
         }
     }
-
-    private checkNamespaceTypedef(tdecl: NamespaceTypedef) {
-        this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
-        }
-
-        this.checkTypeSignature(tdecl.boundType);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
-        }
-        this.file = CLEAR_FILENAME;
-    }
-
 
     private checkNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[]) {
         for(let i = 0; i < tdecl.length; ++i) {
@@ -4072,8 +4021,8 @@ class TypeChecker {
             else if(tt instanceof RegexValidatorTypeDecl) {
                 this.checkRegexValidatorTypeDecl(ns, tt);
             }
-            else if(tt instanceof ExRegexValidatorTypeDecl) {
-                this.checkExRegexValidatorTypeDecl(ns, tt);
+            else if(tt instanceof CRegexValidatorTypeDecl) {
+                this.checkCRegexValidatorTypeDecl(ns, tt);
             }
             else if(tt instanceof PathValidatorTypeDecl) {
                 this.checkPathValidatorTypeDecl(ns, tt);
@@ -4081,8 +4030,8 @@ class TypeChecker {
             else if(tt instanceof StringOfTypeDecl) {
                 this.checkStringOfTypeDecl(ns, tt);
             }
-            else if(tt instanceof ExStringOfTypeDecl) {
-                this.checkExStringOfTypeDecl(ns, tt);
+            else if(tt instanceof CStringOfTypeDecl) {
+                this.checkCStringOfTypeDecl(ns, tt);
             }
             else if(tt instanceof PathOfTypeDecl) {
                 this.checkPathOfTypeDecl(ns, tt);
@@ -4094,25 +4043,28 @@ class TypeChecker {
                 this.checkPathGlobOfTypeDecl(ns, tt);
             }
             else if(tt instanceof OkTypeDecl) {
-                this.checkOkTypeDecl(ns, tt, tt);
+                this.checkOkTypeDecl(ns, tt);
             }
             else if(tt instanceof ErrTypeDecl) {
-                this.checkErrTypeDecl(ns, tt, tt);
+                this.checkErrTypeDecl(ns, tt);
             }
             else if(tt instanceof APIRejectedTypeDecl) {
-                this.checkAPIRejectedTypeDecl(ns, tt, tt);
+                this.checkAPIRejectedTypeDecl(ns, tt);
             }
             else if(tt instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, tt, tt);
+                this.checkAPIFailedTypeDecl(ns, tt);
             }
             else if(tt instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, tt, tt);
+                this.checkAPIErrorTypeDecl(ns, tt);
             }
             else if(tt instanceof APISuccessTypeDecl) {
-                this.checkAPISuccessTypeDecl(ns, tt, tt);
+                this.checkAPISuccessTypeDecl(ns, tt);
             }
             else if(tt instanceof SomethingTypeDecl) {
                 this.checkSomethingTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PairTypeDecl) {
+                this.checkPairTypeDecl(ns, tt);
             }
             else if(tt instanceof MapEntryTypeDecl) {
                 this.checkMapEntryTypeDecl(ns, tt);
@@ -4168,10 +4120,6 @@ class TypeChecker {
     private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
         //all usings should be resolved and valid so nothing to do there
 
-        for(let i = 0; i < decl.typeDefs.length; ++i) {
-            this.checkNamespaceTypedef(decl.typeDefs[i]);
-        }
-
         this.checkNamespaceConstDecls(decl.consts);
         this.checkNamespaceFunctionDecls(decl.functions);
         this.checkNamespaceTypeDecls(decl, decl.typedecls);
@@ -4196,7 +4144,7 @@ class TypeChecker {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], undefined, tdecl));
+        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, tdecl, []));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {
@@ -4209,9 +4157,6 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Numeric", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "ISomething", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "IOk", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "IErr", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "None", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Nothing", wellknownTypes);
@@ -4228,10 +4173,10 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "TemplateExString", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "TemplateCString", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "ExRegexValidator", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "CRegexValidator", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));

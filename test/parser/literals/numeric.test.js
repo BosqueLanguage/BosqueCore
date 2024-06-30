@@ -96,10 +96,6 @@ describe ("Parser -- DecimalDegree", () => {
     it("should fail missing .x", function () {
         parseTestExpError("1dd", "Un-annotated numeric literals are not supported", "DecimalDegree");
     });
-
-    it("should fail no leading digit", function () {
-        parseTestExpError("+.5dd", "Unexpected token in expression -- .", "DecimalDegree");
-    });
 });
 
 describe ("Parser -- Lat/Long", () => {

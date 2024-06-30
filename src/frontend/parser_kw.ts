@@ -21,7 +21,6 @@ const KW_fn = "fn";
 const KW_if = "if";
 const KW_implements = "implements";
 const KW_let = "let";
-const KW_literal = "literal";
 const KW_match = "match";
 const KW_none = "none";
 const KW_nothing = "nothing";
@@ -32,7 +31,6 @@ const KW_return = "return";
 const KW_something = "something";
 const KW_some = "some";
 const KW_this = "this";
-const KW_type = "type";
 const KW_self = "self";
 const KW_switch = "switch";
 const KW_then = "then";
@@ -85,6 +83,8 @@ const KW_chktest = "chktest";
 
 //reserved
 const KW_operator = "operator";
+const KW_type = "type";
+const KW_literal = "literal";
 
 const KeywordStrings = [
     KW_recursive_q,
@@ -218,8 +218,12 @@ const SYM_rbracebar = "|}";
 const SYM_langle = "<";
 const SYM_rangle = ">";
 
+
+const SYM_amp = "&";
+const SYM_bar = "|";
 const SYM_at = "@";
 const SYM_atat = "@@";
+const SYM_hash = "#";
 const SYM_bang = "!";
 const SYM_colon = ":";
 const SYM_coloncolon = "::";
@@ -236,7 +240,6 @@ const SYM_HOLE = "$?_";
 const SYM_positive = " +";
 const SYM_negate = " -";
 
-const SYM_amp = " & ";
 const SYM_ampamp = " && ";
 const SYM_bangeq = " != ";
 const SYM_bangeqeq = " !== ";
@@ -246,7 +249,6 @@ const SYM_bigarrow = " => ";
 const SYM_implies = " ==> ";
 const SYM_iff = " <==> ";
 const SYM_arrow = " -> ";
-const SYM_bar = " | ";
 const SYM_barbar = " || ";
 const SYM_plus = " + ";
 const SYM_lt = " < ";
@@ -265,6 +267,8 @@ const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar, SYM_l
 const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar, SYM_rangle];
 
 const StandardSymbols = [
+    SYM_amp,
+    SYM_bar,
     SYM_at,
     SYM_bang,
     SYM_colon,
@@ -281,11 +285,11 @@ const StandardSymbols = [
     SYM_wildcard,
 
     SYM_atat,
+    SYM_hash,
     SYM_questionquestion
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const SpaceRequiredSymbols = [
-    SYM_amp,
     SYM_ampamp,
     SYM_bangeq,
     SYM_bangeqeq,
@@ -295,7 +299,6 @@ const SpaceRequiredSymbols = [
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_bar,
     SYM_barbar,
     SYM_plus,
     SYM_lt,
@@ -410,8 +413,11 @@ export {
     SYM_rangle,
     SYM_rbracebar,
 
+    SYM_amp,
+    SYM_bar,
     SYM_at,
     SYM_atat,
+    SYM_hash,
     SYM_bang,
     SYM_colon,
     SYM_coloncolon,
@@ -429,7 +435,6 @@ export {
     SYM_positive,
     SYM_negate,
 
-    SYM_amp,
     SYM_ampamp,
     SYM_bangeq,
     SYM_bangeqeq,
@@ -439,7 +444,6 @@ export {
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_bar,
     SYM_barbar,
     SYM_plus,
     SYM_lt,
