@@ -665,7 +665,7 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].tkeystr === "Some") {
+        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].tkeystr === "Any") {
             return tdcl + ";";
         }
         else {
@@ -886,7 +886,7 @@ class APISuccessTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class SomethingTypeDecl extends ConstructableTypeDecl {
+class SomeTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1663,7 +1663,7 @@ export {
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     RegexValidatorTypeDecl, CRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, PairTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, PairTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 

@@ -269,23 +269,10 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
-class NoneableTypeSignature extends TypeSignature {
-    readonly type: TypeSignature;
-
-    constructor(sinfo: SourceInfo, type: TypeSignature) {
-        super(sinfo, `${type.tkeystr}?`);
-        this.type = type;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new NoneableTypeSignature(this.sinfo, this.type.remapTemplateBindings(mapper));
-    }
-}
-
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature, StringTemplateTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
 };

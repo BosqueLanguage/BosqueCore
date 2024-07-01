@@ -67,26 +67,6 @@ class ITestSome extends ITest {
     }
 }
 
-class ITestNothing extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}nothing`;
-    }
-}
-
-class ITestSomething extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}something`;
-    }
-}
-
 class ITestOk extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
@@ -716,10 +696,10 @@ class LetExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "err" | "something" | "result";
+    readonly rop: "ok" | "err" | "some" | "option" | "result";
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "something" | "result", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "some" | "option" | "result", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
@@ -2352,7 +2332,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,

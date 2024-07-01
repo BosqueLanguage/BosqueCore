@@ -23,12 +23,11 @@ const KW_implements = "implements";
 const KW_let = "let";
 const KW_match = "match";
 const KW_none = "none";
-const KW_nothing = "nothing";
 const KW_ok = "ok";
+const KW_option = "option";
 const KW_pred = "pred";
 const KW_ref = "ref";
 const KW_return = "return";
-const KW_something = "something";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
@@ -122,10 +121,10 @@ const KeywordStrings = [
     KW_method,
     KW_namespace,
     KW_none,
-    KW_nothing,
     KW_of,
     KW_ok,
     KW_operator,
+    KW_option,
     KW_pred,
     KW_predicate,
     KW_provides,
@@ -134,7 +133,6 @@ const KeywordStrings = [
     KW_return,
     KW_requires,
     KW_self,
-    KW_something,
     KW_some,
     KW_safety,
     KW_spec,
@@ -196,7 +194,6 @@ const AllAttributes = [
 const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
-    "__constructable",
     "__universal",
     "__inline",
     "__safe",
@@ -362,10 +359,10 @@ export {
     KW_method,
     KW_namespace,
     KW_none,
-    KW_nothing,
     KW_of,
     KW_ok,
     KW_operator,
+    KW_option,
     KW_pred,
     KW_predicate,
     KW_provides,
@@ -374,7 +371,6 @@ export {
     KW_return,
     KW_requires,
     KW_self,
-    KW_something,
     KW_some,
     KW_safety,
     KW_spec,
