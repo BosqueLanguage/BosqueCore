@@ -51,11 +51,10 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 ## Literals
 
 ### Unique Values
-The keywords `none`, `nothing`, `true`, `false` are the unique literal representations for the `None`, `Nothing`, and `Boolean` types. 
+The keywords `none`, `true`, `false` are the unique literal representations for the `None`, and `Boolean` types. 
 
 ```none
 none     //special none value
-nothing  //special nothing value
 
 true     //true boolean literal
 false    //false boolean literal

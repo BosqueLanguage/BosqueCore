@@ -67,26 +67,6 @@ class ITestSome extends ITest {
     }
 }
 
-class ITestNothing extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}nothing`;
-    }
-}
-
-class ITestSomething extends ITest {
-    constructor(isnot: boolean) {
-        super(isnot);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}something`;
-    }
-}
-
 class ITestOk extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
@@ -181,7 +161,6 @@ enum ExpressionTag {
     ErrorExpression = "ErrorExpression",
 
     LiteralNoneExpression = "LiteralNoneExpression",
-    LiteralNothingExpression = "LiteralNothingExpression",
     LiteralBoolExpression = "LiteralBoolExpression",
     LiteralNatExpression = "LiteralNatExpression",
     LiteralIntExpression = "LiteralIntExpression",
@@ -252,6 +231,7 @@ enum ExpressionTag {
 
     LambdaInvokeExpression = "LambdaInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
+    SpecialConverterExpression = "SpecialConverterExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallTypeFunctionExpression = "CallTypeFunctionExpression",
     CallRefThisExpression = "CallRefThisExpression",
@@ -371,13 +351,9 @@ class ConstantExpressionValue {
     }
 }
 
-class LiteralSingletonExpression extends Expression {
-    readonly value: string;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: "none" | "nothing") {
+class LiteralNoneExpression extends Expression {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo) {
         super(tag, sinfo);
-
-        this.value = value;
     }
 
     override isLiteralExpression(): boolean {
@@ -385,7 +361,7 @@ class LiteralSingletonExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
+        return "none";
     }
 }
 
@@ -716,11 +692,26 @@ class LetExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "err" | "something" | "result";
+    readonly rop: "ok" | "err" | "some";
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "something" | "result", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "some", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
+        this.rop = rop;
+        this.arg = arg;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
+    }
+}
+
+class SpecialConverterExpression extends Expression {
+    readonly rop: "option" | "result";
+    readonly arg: Expression;
+
+    constructor(sinfo: SourceInfo, rop: "option" | "result", arg: Expression) {
+        super(ExpressionTag.SpecialConverterExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
     }
@@ -2352,16 +2343,16 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
-    LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
+    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
     LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
     InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
-    ConstructorLambdaExpression, SpecialConstructorExpression,
+    ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
     LetExpression,
     LambdaInvokeExpression,
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,

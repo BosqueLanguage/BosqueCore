@@ -5,10 +5,6 @@ declare namespace Core;
 __internal __universal concept Any {
 }
 
-%** Special type for representing all non-none values. **%
-__internal __universal concept Some provides Any {
-}
-
 %** Special type for indicating a value can be used as a key in a collection. **%
 __internal __universal concept KeyType provides Any {
     function equal<T: unique KeyType>(a: T, b: T): Bool = special_method;
@@ -16,11 +12,11 @@ __internal __universal concept KeyType provides Any {
 }
 
 %** Special type for representing values that can be compared with (<, >, ==, !=, <=, and >=) currently the numeric types and typedecls on them (later other with user def operators) **%
-__internal __universal concept Comparable provides Some {
+__internal __universal concept Comparable provides Any {
 }
 
 %** Special type for representing values that can be operated on with (-+, +, -) with standard unit-results currently the numeric types and typedecls on them (later other with user def operators) **%
-__internal __universal concept LinearArithmetic provides Some {
+__internal __universal concept LinearArithmetic provides Any {
 }
 
 %** Special type for representing numeric values **%
@@ -28,25 +24,33 @@ __internal __universal concept Numeric provides Comparable, LinearArithmetic {
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept RegexValidator provides Some {
+__internal __universal concept RegexValidator provides Any {
     function accepts<T: unique RegexValidator>(s: String): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept CRegexValidator provides Some {
+__internal __universal concept CRegexValidator provides Any {
     function accepts<T: unique CRegexValidator>(s: CString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept PathValidator provides Some {
+__internal __universal concept PathValidator provides Any {
 }
 
-%** Type for representing the none value. **%
+%** Type for representing the option value. **%
+__internal concept Option<T> provides Any {
+}
+
+%** Type for representing the none option value. **%
 __internal entity None provides KeyType {
 }
 
+%** Type for representing the some option value. **%
+__internal entity Some<T> provides Any, Option<T> {
+}
+
 %** Primitive boolean value. **%
-__internal __typedeclable entity Bool provides Some, KeyType {
+__internal __typedeclable entity Bool provides KeyType {
 }
 
 %** Primitive natural number value. **%
@@ -82,7 +86,7 @@ __internal __typedeclable entity DecimalDegree provides Numeric {
 }
 
 %** Primitive latitude/longitude value. **%
-__internal __typedeclable entity LatLongCoordinate provides Some {
+__internal __typedeclable entity LatLongCoordinate provides Any {
 }
 
 %** Primitive complex number value. **%
@@ -90,11 +94,11 @@ __internal __typedeclable entity Complex provides Numeric {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity String provides Some, KeyType {
+__internal __typedeclable entity String provides KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __typedeclable entity StringOf<T: unique RegexValidator> provides Some, KeyType {
+__internal __typedeclable entity StringOf<T: unique RegexValidator> provides KeyType {
     private function s_into(s: String): StringOf<T> = special_inject;
     %*
     function coerce(s: String): StringOf<T> {
@@ -105,11 +109,11 @@ __internal __typedeclable entity StringOf<T: unique RegexValidator> provides Som
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity CString provides Some, KeyType {
+__internal __typedeclable entity CString provides KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __typedeclable entity CStringOf<T: unique CRegexValidator> provides Some, KeyType {
+__internal __typedeclable entity CStringOf<T: unique CRegexValidator> provides KeyType {
     private function s_into(s: CString): CStringOf<T> = special_inject;
     %*
     function coerce(s: CString): CStringOf<T> {
@@ -120,7 +124,7 @@ __internal __typedeclable entity CStringOf<T: unique CRegexValidator> provides S
 }
 
 %** Primitive unicode regex value. **%
-__internal entity UnicodeRegex provides Some {
+__internal entity UnicodeRegex provides Any {
     __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
     %*
     method accepts(s: String): Bool {
@@ -130,7 +134,7 @@ __internal entity UnicodeRegex provides Some {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity CRegex provides Some {
+__internal entity CRegex provides Any {
     __safe internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
     %*
     method accepts(s: CString): Bool {
@@ -140,30 +144,19 @@ __internal entity CRegex provides Some {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity PathRegex provides Some {
+__internal entity PathRegex provides Any {
 }
 
 %** Primitive template string value. **%
-__internal __typedeclable entity TemplateString provides Some {
+__internal __typedeclable entity TemplateString provides Any {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity TemplateCString provides Some {
+__internal __typedeclable entity TemplateCString provides Any {
 }
 
 %** Primitive pair type. **%
-__internal entity Pair<T, U> provides Some {
-}
-
-%** Type for representing the nothing option value. **%
-__internal entity Nothing provides Some {
-}
-
-%** Type for representing the nothing option value. **%
-__internal __constructable entity Something<T> provides Some, Option<T> {
-}
-
-__internal concept Option<T> provides Some {
+__internal entity Pair<T, U> provides Any {
 }
 
 namespace Interpolate {
@@ -181,7 +174,7 @@ namespace Interpolate {
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%
-__internal __universal concept Object provides Some {
+__internal __universal concept Object provides Any {
 }
 
 #if CHECK_LIBS
@@ -191,7 +184,7 @@ internal function s_reshavoc<T>(): T = s_reshavoc;
 #endif
 
 %** All collections provide this concept so we can expand them with spread operators. **%
-__internal __universal concept Expandoable<T> provides Some {
+__internal __universal concept Expandoable<T> provides Any {
 }
 
 __assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;

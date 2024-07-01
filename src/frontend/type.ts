@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, TemplateTermDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, OptionTypeDecl, TemplateTermDecl } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -90,7 +90,7 @@ class TemplateNameMapper {
     }
 
     resolveTemplateMapping(ttype: TemplateTypeSignature): TypeSignature {
-        for(let i = this.mapper.length - 1; i >= 0; ++i) {
+        for(let i = this.mapper.length - 1; i >= 0; --i) {
             const res = this.mapper[i].get(ttype.name);
             if(res !== undefined) {
                 if(res instanceof TemplateTypeSignature) {
@@ -171,7 +171,16 @@ class NominalTypeSignature extends TypeSignature {
 
     private static computeTKeyStr(decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]): string {
         const tscope = alltermargs.length !== 0 ? ("<" + alltermargs.map((tt) => tt.tkeystr).join(", ") + ">") : "";
-        if(decl.isSpecialResultEntity()) {
+        if(decl instanceof OptionTypeDecl) {
+            const oftype = alltermargs[0].tkeystr;
+            if(!oftype.endsWith("?")) {
+                return `${oftype}?`
+            }
+            else {
+                return `Option<${oftype}>`;
+            }
+        }
+        else if(decl.isSpecialResultEntity()) {
             return `Result${tscope}::${decl.name}`;
         }
         else if(decl.isSpecialAPIResultEntity()) {
@@ -269,23 +278,10 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
-class NoneableTypeSignature extends TypeSignature {
-    readonly type: TypeSignature;
-
-    constructor(sinfo: SourceInfo, type: TypeSignature) {
-        super(sinfo, `${type.tkeystr}?`);
-        this.type = type;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new NoneableTypeSignature(this.sinfo, this.type.remapTemplateBindings(mapper));
-    }
-}
-
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature, StringTemplateTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
 };

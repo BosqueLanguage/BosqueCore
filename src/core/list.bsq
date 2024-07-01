@@ -4,7 +4,7 @@ namespace Core;
 namespace List {
 }
 
-__internal entity List<T> provides Some, Expandoable<T> {
+__internal entity List<T> provides Expandoable<T> {
 %*
     method size(): Nat {
         if(ListOps::s_list_empty<T>(this)) {
