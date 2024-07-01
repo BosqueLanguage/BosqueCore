@@ -22,14 +22,6 @@ class JSEmitter {
         return `${val}.$is${isnot ? "Not" : ""}Some()`;
     }
 
-    private emitITest_Nothing(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}Nothing()`;
-    }
-
-    private emitITest_Something(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}Something()`;
-    }
-
     private emitITest_Ok(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Ok()`;
     }
@@ -53,12 +45,6 @@ class JSEmitter {
             else if(tt instanceof ITestSome) {
                 return this.emitITest_Some(val, tt.isnot);
             }
-            else if(tt instanceof ITestNothing) {
-                return this.emitITest_Nothing(val, tt.isnot);
-            }
-            else if(tt instanceof ITestSomething) {
-                return this.emitITest_Something(val, tt.isnot);
-            }
             else if(tt instanceof ITestOk) {
                 return this.emitITest_Ok(val, tt.isnot);
             }
@@ -72,10 +58,6 @@ class JSEmitter {
 
     private emitLiteralNoneExpression(): string {
         return "$Runtime.none";
-    }
-
-    private emitLiteralNothingExpression() {
-        return "$Runtime.nothing";
     }
 
     private emitLiteralBoolExpression(exp: LiteralSimpleExpression): string {
@@ -413,9 +395,6 @@ class JSEmitter {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
                 return this.emitLiteralNoneExpression();
-            }
-            case ExpressionTag.LiteralNothingExpression: {
-                return this.emitLiteralNothingExpression();
             }
             case ExpressionTag.LiteralBoolExpression: {
                 return this.emitLiteralBoolExpression(exp as LiteralSimpleExpression);

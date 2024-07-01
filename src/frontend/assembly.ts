@@ -1037,7 +1037,7 @@ class OptionTypeDecl extends InternalConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
-
+    
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 

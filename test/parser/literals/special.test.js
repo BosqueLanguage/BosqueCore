@@ -7,10 +7,6 @@ describe ("Parser -- special literals", () => {
     it("should parse none", () => {
         parseTestExp("none", undefined, "None");
     });
-    
-    it("should parse nothing", function () {
-        parseTestExp("nothing", undefined, "Nothing");
-    });
 
     it("should parse true", function () {
         parseTestExp("true", undefined, "Bool");

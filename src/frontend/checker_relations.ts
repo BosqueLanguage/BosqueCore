@@ -625,7 +625,7 @@ class TypeCheckerRelations {
         return { hasnone: hasnone, remainSomeT: someT as TypeSignature };
     }
 
-    splitOnNothing(src: TypeSignature, tconstrain: TemplateConstraintScope): { hasnone: boolean, remainSomeT: TypeSignature | undefined } | undefined {
+    splitOnNone(src: TypeSignature, tconstrain: TemplateConstraintScope): { hasnone: boolean, remainSomeT: TypeSignature | undefined } | undefined {
         if(src instanceof ErrorTypeSignature) {
             return { hasnone: false, remainSomeT: undefined };
         }
@@ -661,7 +661,7 @@ class TypeCheckerRelations {
         return { overlapSomeT: someT as TypeSignature, hasnone: hasnone };
     }
 
-    splitOnSomething(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapSomeT: TypeSignature | undefined, hasnone: boolean } | undefined {
+    splitOnSome(src: TypeSignature, tconstrain: TemplateConstraintScope): { overlapSomeT: TypeSignature | undefined, hasnone: boolean } | undefined {
         if(src instanceof ErrorTypeSignature) {
             return { overlapSomeT: undefined, hasnone: false };
         }

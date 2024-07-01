@@ -7,10 +7,6 @@ describe ("TypeChecker -- special literals", () => {
     it("should check none", () => {
         checkTestExp("none", "None");
     });
-    
-    it("should check nothing", function () {
-        checkTestExp("nothing", "Nothing");
-    });
 
     it("should check true", function () {
         checkTestExp("true", "Bool");

@@ -28,6 +28,7 @@ const KW_option = "option";
 const KW_pred = "pred";
 const KW_ref = "ref";
 const KW_return = "return";
+const KW_result = "result";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
@@ -131,6 +132,7 @@ const KeywordStrings = [
     KW_ref,
     KW_release,
     KW_return,
+    KW_result,
     KW_requires,
     KW_self,
     KW_some,
@@ -369,6 +371,7 @@ export {
     KW_ref,
     KW_release,
     KW_return,
+    KW_result,
     KW_requires,
     KW_self,
     KW_some,
