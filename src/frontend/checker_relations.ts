@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, AbstractEntityTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -89,9 +89,9 @@ class TypeCheckerRelations {
 
     //get all of the actual concepts + template mappings that are provided by a type
     resolveDirectProvidesDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeLookupInfo[] {
-        const specialprovides = this.resolveSpecialProvidesDecls(ttype as NominalTypeSignature, tconstrain).map((t) => new TypeLookupInfo(t, this.generateTemplateMappingForTypeDecl(t)));
+        const specialprovides = this.resolveSpecialProvidesDecls(ttype as NominalTypeSignature, tconstrain);
         if(!(ttype instanceof NominalTypeSignature)) {
-            return specialprovides
+            return specialprovides.map((t) => new TypeLookupInfo(t, TemplateNameMapper.createEmpty()));
         }
 
         const pdecls: TypeLookupInfo[] = [];
@@ -105,10 +105,10 @@ class TypeCheckerRelations {
                 continue;
             }
 
-            pdecls.push(new TypeLookupInfo(ptype, this.generateTemplateMappingForTypeDecl(ptype)));
+            pdecls.push(new TypeLookupInfo(ptype, this.generateTemplateMappingForTypeDecl(ttype)));
         }
 
-        return [...specialprovides, ...pdecls];
+        return [...specialprovides.map((t) => new TypeLookupInfo(t, this.generateTemplateMappingForTypeDecl(ttype))), ...pdecls];
     }
 
     private normalizeTypeSignatureHelper(tsig: TypeSignature, tconstrain: TemplateConstraintScope, toptemplate: boolean, alltemplates: boolean): TypeSignature {
@@ -531,7 +531,7 @@ class TypeCheckerRelations {
         } 
         else if(t instanceof NominalTypeSignature) {
             //Atomic types are unique and datatypes are closed on extensibility so subtyping is ok for disjointness there too
-            return (t.decl instanceof AbstractConceptTypeDecl) || (t.decl instanceof DatatypeTypeDecl);
+            return (t.decl instanceof AbstractEntityTypeDecl) || (t.decl instanceof DatatypeTypeDecl);
         }
         else {
             return false;

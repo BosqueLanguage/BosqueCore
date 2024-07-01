@@ -256,14 +256,14 @@ class TypeChecker {
             else {
                 const tres = this.processITest_Type(src, tt.ttype);
                 if(tt.isnot) {
-                    const ttrue = this.processITestConvertLUB(sinfo, tres.tfalse, src); //negate takes the remain and lubs to the src
-                    const tfalse = this.processITestConvertForce(tres.ttrue, tt.ttype); //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
+                    const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
+                    const tfalse = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
 
                     return { ttrue: ttrue, tfalse: tfalse };
                 }
                 else {
-                    const ttrue = this.processITestConvertForce(tres.ttrue, tt.ttype); //always cast to what the user asked for
-                    const tfalse = this.processITestConvertLUB(sinfo, tres.tfalse, src); //cast to the LUB of the remaining types (with src as a default option)
+                    const ttrue = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //always cast to what the user asked for
+                    const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
 
                     return { ttrue: ttrue, tfalse: tfalse };
                 }
@@ -873,38 +873,49 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkLambdaInvokeExpression");
     }
 
-    private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        if(infertype === undefined) {
-            this.reportError(exp.sinfo, "Cannot infer type for special constructor");
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+    private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
+        const corens = this.relations.assembly.getCoreNamespace();
+
+        const etype = this.checkExpression(env, exp.arg, undefined);
+        if((etype instanceof ErrorTypeSignature) || (etype instanceof EListTypeSignature)) {
+            this.reportError(exp.sinfo, `Invalid type for special constructor -- got ${etype.tkeystr}`);
+            return exp.setType(etype);
         }
 
-        if(!(infertype instanceof NominalTypeSignature)) {
-            this.reportError(exp.sinfo, `Cannot infer type for special constructor -- got ${infertype.tkeystr}`);
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-
-        const ninfer = infertype as NominalTypeSignature;
         if(exp.rop === "some") {
-            if(ninfer.decl instanceof SomeTypeDecl) {
-                const ttype = ninfer.alltermargs[0];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
-
-                return exp.setType(ninfer);
-            }
-            else if(ninfer.decl instanceof OptionTypeDecl) {
-                const ttype = ninfer.alltermargs[0];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
-
-                return exp.setType(ninfer);
-            }
-            else {
-                this.reportError(exp.sinfo, `Cannot infer type for special Some constructor -- got ${infertype.tkeystr}`);
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-            }
+            return exp.setType(new NominalTypeSignature(exp.sinfo, corens.typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [etype]));
         }
+        else {
+            this.reportError(exp.sinfo, "Cannot infer type for special Ok/Err constructor");
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+    }
+
+    private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
+        if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
+            return this.checkSpecialConstructorExpressionNoInfer(env, exp);
+        }
+        else {
+            const ninfer = infertype as NominalTypeSignature;
+            if(exp.rop === "some") {
+                if(ninfer.decl instanceof SomeTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof OptionTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else {
+                    return this.checkSpecialConstructorExpressionNoInfer(env, exp);
+                }
+            }
         else if(exp.rop === "ok") {
             if(ninfer.decl instanceof OkTypeDecl) {
                 const ttype = ninfer.alltermargs[0];
@@ -945,6 +956,7 @@ class TypeChecker {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
         }
+    }
     }
 
     private checkSpecialConverterExpression(env: TypeEnvironment, exp: SpecialConverterExpression, infertype: TypeSignature | undefined): TypeSignature {
