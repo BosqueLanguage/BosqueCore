@@ -340,6 +340,7 @@ class Lexer {
         return accepts(Lexer._s_templateNameRe, str);
     }
 
+    xxxx;
     private static readonly _s_literalTDOnlyTagRE = `"_"`;
 
     private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
@@ -631,6 +632,7 @@ class Lexer {
             epos++;
             let strval = this.input.substring(ncpos, epos);
 
+            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
@@ -692,6 +694,7 @@ class Lexer {
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
+                xxxx;
                 if(istemplate) {
                     this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Template strings cannot have type tags");
                 }
@@ -739,7 +742,7 @@ class Lexer {
 
     
     private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /(_[_a-zA-Z])|[(*]/y;
+    private static readonly _s_literalPathTagRE = /(_[A-Z])|[*]/y;
     private tryLexPath() {
         Lexer._s_pathRe.lastIndex = this.cpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
@@ -750,7 +753,8 @@ class Lexer {
             Lexer._s_literalPathTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalPathTagRE.exec(this.input);
             if(mtag !== null) {
-                if(mtag[0].startsWith("_")) {
+                xxxx;
+                if(!mtag[0].startsWith("_")) {
                     epos++; //eat the underscore and include it in the string
                     pthval += "_"; 
                 }
@@ -945,7 +949,8 @@ class Lexer {
         }
     }
 
-    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[_a-zA-Z(]/`;
+    xxxx;
+    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[A-Z]/`;
     private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
         const mtb = lexFront(Lexer._s_taggedBooleanRE, this.cpos);
