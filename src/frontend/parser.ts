@@ -1,5 +1,6 @@
 
 import assert from "node:assert";
+import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
@@ -178,14 +179,40 @@ class Lexer {
     readonly scanmode: LexerStateScanMode[];
 
     readonly input: string;
-    readonly epos: number;
-    cpos: number;
+
+    private jsStrPos: number;
+    private utf8StrPos: number;
+
+    private jsStrEnd: number;
+    private utf8StrEnd: number;
 
     cline: number;
     linestart: number;
     
     tokens: Token[];
     errors: ParserError[];
+
+    private static computeBytesPerChar(cc: string): number {
+        //this is pretty brutal perf wise but we want to be simple and obvious for now
+
+        return Buffer.from(cc, "utf8").length;
+    }
+
+    private advancePositionInfo(epos: number): [number, number] {
+        const u16count = epos - this.jsStrPos;
+        let u8count = 0;
+        for(let i = this.jsStrPos; i < epos ; ++i) {
+            u8count += Lexer.computeBytesPerChar(this.input[i]);
+        }
+
+        return [u16count, u8count];
+    }
+
+    private advancePosition(epos: number) {
+        const [u16count, u8count] = this.advancePositionInfo(epos);
+        this.jsStrPos += u16count;
+        this.utf8StrPos += u8count;
+    }
 
     constructor(iscore: boolean, srcfile: string, input: string, macrodefs: string[]) {
         this.iscore = iscore;
@@ -196,8 +223,12 @@ class Lexer {
         this.input = input;
         initializeLexer(this.input);
 
-        this.epos = this.input.length;
-        this.cpos = 0;
+        this.jsStrPos = 0;
+        this.utf8StrPos = 0;
+
+        const [u16count, u8count] = this.advancePositionInfo(this.input.length);
+        this.jsStrEnd = u16count;
+        this.utf8StrEnd = u8count;
 
         this.cline = 1;
         this.linestart = 0;
@@ -222,18 +253,18 @@ class Lexer {
         }
     }
 
-    private recordLexToken(epos: number, kind: string) {
-        this.pushToken(new Token(this.cline, this.cpos - this.linestart, this.cpos, epos - this.cpos, kind, kind)); //set data to kind string
-        this.cpos = epos;
+    private recordLexToken(jsepos: number, kind: string) {
+        this.pushToken(new Token(this.cline, this.jsStrPos - this.linestart, this.jsStrPos, jsepos - this.jsStrPos, kind, kind)); //set data to kind string
+        this.advancePosition(jsepos);
     }
 
-    private recordLexTokenWData(epos: number, kind: string, data: string) {
-        this.pushToken(new Token(this.cline, this.cpos - this.linestart, this.cpos, epos - this.cpos, kind, data));
-        this.cpos = epos;
+    private recordLexTokenWData(jsepos: number, kind: string, data: string) {
+        this.pushToken(new Token(this.cline, this.jsStrPos - this.linestart, this.jsStrPos, jsepos - this.jsStrPos, kind, data));
+        this.advancePosition(jsepos);
     }
 
-    private updatePositionInfo(spos: number, epos: number) {
-        for (let i = spos; i < epos; ++i) {
+    private updatePositionInfo(jspos: number, jepos: number) {
+        for (let i = jspos; i < jepos; ++i) {
             if (this.input[i] === "\n") {
                 this.cline++;
                 this.linestart = i + 1;
@@ -251,61 +282,61 @@ class Lexer {
 
     private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]+/';
     private tryLexWS(): boolean {
-        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.cpos);
+        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.utf8StrPos);
         if (arop !== null) {
             return false;
         }
 
-        const frop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.cpos);
+        const frop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.utf8StrPos);
         if (frop !== null) {
             return false;
         }
 
-        const m = lexFront(Lexer._s_whitespaceRe, this.cpos);
+        const m = lexFront(Lexer._s_whitespaceRe, this.utf8StrPos);
         if (m === null) {
             return false;
         }
 
-        this.updatePositionInfo(this.cpos, this.cpos + m.length);
-        this.cpos += m.length;
+        this.updatePositionInfo(this.jsStrPos, this.jsStrPos + m.length);
+        this.advancePosition(this.jsStrPos + m.length);
 
         return true;
     }
 
     private tryLexLineComment(): boolean {
-        const m = this.input.startsWith("%%", this.cpos);
+        const m = this.input.startsWith("%%", this.jsStrPos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, this.epos).indexOf("\n", this.cpos);
+        let jepos = this.input.slice(0, this.jsStrEnd).indexOf("\n", this.jsStrPos);
 
-        if (epos === -1) {
-            this.updatePositionInfo(this.cpos, epos);
-            this.cpos = this.epos;
+        if (jepos === -1) {
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.advancePosition(this.jsStrEnd);
         }
         else {
-            epos++;
+            jepos++;
 
-            this.updatePositionInfo(this.cpos, epos);
-            this.cpos = epos;
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.advancePosition(jepos);
         }
 
         return true;
     }
 
     private tryLexDocComment(): boolean {
-        const m = this.input.startsWith("%** ", this.cpos);
+        const m = this.input.startsWith("%** ", this.jsStrPos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, this.epos).indexOf(" **%", this.cpos + 4);
-        if (epos !== -1) {
-            epos += 4;
+        let jepos = this.input.slice(0, this.jsStrEnd).indexOf(" **%", this.jsStrPos + 4);
+        if (jepos !== -1) {
+            jepos += 4;
 
-            this.updatePositionInfo(this.cpos, epos);
-            this.recordLexTokenWData(epos, TokenStrings.DocComment, this.input.substring(this.cpos, epos));
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.DocComment, this.input.substring(this.jsStrPos, jepos));
             return true;
         }
 
@@ -313,23 +344,23 @@ class Lexer {
     }
 
     private tryLexSpanComment(): boolean {
-        const m = this.input.startsWith("%*", this.cpos);
+        const m = this.input.startsWith("%*", this.jsStrPos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, this.epos).indexOf("*%", this.cpos + 2);
-        if (epos === -1) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated span comment");
+        let jepos = this.input.slice(0, this.jsStrEnd).indexOf("*%", this.jsStrPos + 2);
+        if (jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated span comment");
             
-            this.updatePositionInfo(this.cpos, epos);
-            this.cpos = this.epos;
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.advancePosition(this.jsStrEnd);
         }
         else {
-            epos += 2;
+            jepos += 2;
 
-            this.updatePositionInfo(this.cpos, epos);
-            this.cpos = epos;
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.advancePosition(jepos);
         }
 
         return true;
@@ -385,26 +416,26 @@ class Lexer {
 
     private static readonly _s_redundantSignRE = /[+-]{2,}/y;
     private checkRedundantSigns() {
-        if(this.cpos !== this.epos && (this.input[this.cpos] === "+" || this.input[this.cpos] === "-")) {
-            Lexer._s_redundantSignRE.lastIndex = this.cpos;
+        if(this.jsStrPos !== this.jsStrEnd && (this.input[this.jsStrPos] === "+" || this.input[this.jsStrPos] === "-")) {
+            Lexer._s_redundantSignRE.lastIndex = this.jsStrPos;
             const mm = Lexer._s_redundantSignRE.exec(this.input);
             if(mm !== null) {
-                this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Redundant sign"));
-                this.cpos = Math.min(this.epos, this.cpos + mm.length - 1);
+                this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.jsStrPos, mm.length), "Redundant sign"));
+                this.advancePosition(Math.min(this.jsStrEnd, this.jsStrPos + mm.length - 1));
             }
         }
     }
 
     private tryLexFloatCompositeLikeToken(): boolean {
-        const mcomplex = lexFront(Lexer._s_complexRe, this.cpos);
+        const mcomplex = lexFront(Lexer._s_complexRe, this.utf8StrPos);
         if(mcomplex !== null) {
-            this.recordLexTokenWData(this.cpos + mcomplex.length, TokenStrings.Complex, mcomplex);
+            this.recordLexTokenWData(this.jsStrPos + mcomplex.length, TokenStrings.Complex, mcomplex);
             return true;
         }
 
-        const mlatlong = lexFront(Lexer._s_latlongRe, this.cpos);
+        const mlatlong = lexFront(Lexer._s_latlongRe, this.utf8StrPos);
         if(mlatlong !== null) {
-            this.recordLexTokenWData(this.cpos + mlatlong.length, TokenStrings.LatLong, mlatlong);
+            this.recordLexTokenWData(this.jsStrPos + mlatlong.length, TokenStrings.LatLong, mlatlong);
             return true;
         }
 
@@ -412,39 +443,39 @@ class Lexer {
     }
 
     private tryLexFloatLikeToken(): boolean {
-        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, this.cpos);
+        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, this.utf8StrPos);
         if(mdecimaldegree !== null) {
-            this.recordLexTokenWData(this.cpos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
+            this.recordLexTokenWData(this.jsStrPos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
             return true;
         }
 
-        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, this.cpos);
+        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, this.utf8StrPos);
         if(mdeltaseconds !== null) {
-            this.recordLexTokenWData(this.cpos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
+            this.recordLexTokenWData(this.jsStrPos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
             return true;
         }
 
-        const mdecimal = lexFront(Lexer._s_decimalRe, this.cpos);
+        const mdecimal = lexFront(Lexer._s_decimalRe, this.utf8StrPos);
         if(mdecimal !== null) {
-            this.recordLexTokenWData(this.cpos + mdecimal.length, TokenStrings.Decimal, mdecimal);
+            this.recordLexTokenWData(this.jsStrPos + mdecimal.length, TokenStrings.Decimal, mdecimal);
             return true;
         }
 
-        const mfloat = lexFront(Lexer._s_floatRe, this.cpos);
+        const mfloat = lexFront(Lexer._s_floatRe, this.utf8StrPos);
         if(mfloat !== null) {
-            this.recordLexTokenWData(this.cpos + mfloat.length, TokenStrings.Float, mfloat);
+            this.recordLexTokenWData(this.jsStrPos + mfloat.length, TokenStrings.Float, mfloat);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, this.cpos);
+        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, this.utf8StrPos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
+            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
             return true;
         }
 
-        const unumberino = lexFront(Lexer._s_floatNumberinoRe, this.cpos);
+        const unumberino = lexFront(Lexer._s_floatNumberinoRe, this.utf8StrPos);
         if(unumberino !== null) {
-            this.recordLexTokenWData(this.cpos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
+            this.recordLexTokenWData(this.jsStrPos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
             return true;
         }
 
@@ -452,29 +483,29 @@ class Lexer {
     }
 
     private tryLexIntegralCompositeLikeToken(): boolean {
-        const mrational = lexFront(Lexer._s_rationalRe, this.cpos);
+        const mrational = lexFront(Lexer._s_rationalRe, this.utf8StrPos);
         if(mrational !== null) {
-            this.recordLexTokenWData(this.cpos + mrational.length, TokenStrings.Rational, mrational);
+            this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, this.cpos);
+        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, this.utf8StrPos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
+            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
             return true;
         }
 
-        const mzerodenom = lexFront(Lexer._s_zerodenomRationalRe, this.cpos);
+        const mzerodenom = lexFront(Lexer._s_zerodenomRationalRe, this.utf8StrPos);
         if(mzerodenom !== null) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Zero denominator in rational number");
-            this.recordLexTokenWData(this.cpos + mzerodenom.length, TokenStrings.Rational, mzerodenom);
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenom.length), "Zero denominator in rational number");
+            this.recordLexTokenWData(this.jsStrPos + mzerodenom.length, TokenStrings.Rational, mzerodenom);
             return true;
         }
 
-        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalTaggedNumberinoRe, this.cpos);
+        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalTaggedNumberinoRe, this.utf8StrPos);
         if(mzerodenomtagged !== null) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Zero denominator in rational number");
-            this.recordLexTokenWData(this.cpos + mzerodenomtagged.length, TokenStrings.TaggedNumberinoRational, mzerodenomtagged);
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenomtagged.length), "Zero denominator in rational number");
+            this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.TaggedNumberinoRational, mzerodenomtagged);
             return true;
         }
 
@@ -482,63 +513,63 @@ class Lexer {
     }
 
     private tryLexIntegralLikeToken(): boolean {
-        const mtick = lexFront(Lexer._s_ticktimeRe, this.cpos);
+        const mtick = lexFront(Lexer._s_ticktimeRe, this.utf8StrPos);
         if(mtick !== null) {
-            this.recordLexTokenWData(this.cpos + mtick.length, TokenStrings.TickTime, mtick);
+            this.recordLexTokenWData(this.jsStrPos + mtick.length, TokenStrings.TickTime, mtick);
             return true;
         }
 
-        const mlogical = lexFront(Lexer._s_logicaltimeRe, this.cpos);
+        const mlogical = lexFront(Lexer._s_logicaltimeRe, this.utf8StrPos);
         if(mlogical !== null) {
-            this.recordLexTokenWData(this.cpos + mlogical.length, TokenStrings.LogicalTime, mlogical);
+            this.recordLexTokenWData(this.jsStrPos + mlogical.length, TokenStrings.LogicalTime, mlogical);
             return true;
         }
 
-        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, this.cpos);
+        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, this.utf8StrPos);
         if(m_deltatick !== null) {
-            this.recordLexTokenWData(this.cpos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
+            this.recordLexTokenWData(this.jsStrPos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
             return true;
         }
 
-        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, this.cpos);
+        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, this.utf8StrPos);
         if(m_deltalogical !== null) {
-            this.recordLexTokenWData(this.cpos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
+            this.recordLexTokenWData(this.jsStrPos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
             return true;
         }
         
-        const mint = lexFront(Lexer._s_intRe, this.cpos);
+        const mint = lexFront(Lexer._s_intRe, this.utf8StrPos);
         if(mint !== null) {
-            this.recordLexTokenWData(this.cpos + mint.length, TokenStrings.Int, mint);
+            this.recordLexTokenWData(this.jsStrPos + mint.length, TokenStrings.Int, mint);
             return true;
         }
 
-        const mnat = lexFront(Lexer._s_natRe, this.cpos);
+        const mnat = lexFront(Lexer._s_natRe, this.utf8StrPos);
         if(mnat !== null) {
-            this.recordLexTokenWData(this.cpos + mnat.length, TokenStrings.Nat, mnat);
+            this.recordLexTokenWData(this.jsStrPos + mnat.length, TokenStrings.Nat, mnat);
             return true;
         }
 
-        const mbigint = lexFront(Lexer._s_bigintRe, this.cpos);
+        const mbigint = lexFront(Lexer._s_bigintRe, this.utf8StrPos);
         if(mbigint !== null) {
-            this.recordLexTokenWData(this.cpos + mbigint.length, TokenStrings.BigInt, mbigint);
+            this.recordLexTokenWData(this.jsStrPos + mbigint.length, TokenStrings.BigInt, mbigint);
             return true;
         }
 
-        const mbignat = lexFront(Lexer._s_bignatRe, this.cpos);
+        const mbignat = lexFront(Lexer._s_bignatRe, this.utf8StrPos);
         if(mbignat !== null) {
-            this.recordLexTokenWData(this.cpos + mbignat.length, TokenStrings.BigNat, mbignat);
+            this.recordLexTokenWData(this.jsStrPos + mbignat.length, TokenStrings.BigNat, mbignat);
             return true;
         }
 
-        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, this.cpos);
+        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, this.utf8StrPos);
         if(mtnumberino !== null) {
-            this.recordLexTokenWData(this.cpos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
+            this.recordLexTokenWData(this.jsStrPos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_intNumberinoRe, this.cpos);
+        const mnumberino = lexFront(Lexer._s_intNumberinoRe, this.utf8StrPos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
+            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
             return true;
         }
 
@@ -573,9 +604,9 @@ class Lexer {
 
     private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexByteBuffer(): boolean {
-        const m = lexFront(Lexer._s_bytebufferRe, this.cpos);
+        const m = lexFront(Lexer._s_bytebufferRe, this.utf8StrPos);
         if(m !== null) {
-            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.ByteBuffer, m);
+            this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.ByteBuffer, m);
             return true;
         }
 
@@ -584,9 +615,9 @@ class Lexer {
 
     private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexUUID(): boolean {
-        const m = lexFront(Lexer._s_uuidRe, this.cpos);
+        const m = lexFront(Lexer._s_uuidRe, this.utf8StrPos);
         if(m !== null) {
-            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.UUIDValue, m);
+            this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.UUIDValue, m);
             return true;
         }
 
@@ -595,9 +626,9 @@ class Lexer {
 
     private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexHashCode(): boolean {
-        const m = lexFront(Lexer._s_shaRe, this.cpos);
+        const m = lexFront(Lexer._s_shaRe, this.utf8StrPos);
         if(m !== null) {
-            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.ShaHashcode, m);
+            this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.ShaHashcode, m);
             return true;
         }
 
@@ -726,7 +757,7 @@ class Lexer {
 
     private static _s_regexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[cp]?/';
     private tryLexRegex() {
-        const rem = lexFront(Lexer._s_regexRe, this.cpos);
+        const rem = lexFront(Lexer._s_regexRe, this.utf8StrPos);
         if(rem === null) {
             return false;
         }

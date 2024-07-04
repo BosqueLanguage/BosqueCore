@@ -19,7 +19,7 @@ describe ("Checker -- String", () => {
 
     it("should fail bad escapes", function () {
         checkTestExpError('"a%53"', "String", "Escape sequence is missing terminal ';'");
-        checkTestExpError('"a%bob;"', "String", "err3");
+        checkTestExpError('"a%bob;"', "String", "Invalid escape sequence -- unknown escape name 'bob'");
     });
 });
 
@@ -40,6 +40,6 @@ describe ("Checker -- CString", () => {
         checkTestExpError("'a%53'", "CString", "Escape sequence is missing terminal ';'",);
         checkTestExpError("'a%bob;'", "CString", "Invalid escape sequence -- unknown escape name 'bob'");
 
-        checkTestExpError("'%x1f335;'", "CString", "err5");
+        checkTestExpError("'%x1f335;'", "CString", "Invalid hex escape sequence");
     });
 });
