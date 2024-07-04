@@ -410,7 +410,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}${this.stype.tkeystr}`;
+        return `${this.value}_${this.stype.tkeystr}`;
     }
 }
 
@@ -446,7 +446,7 @@ class LiteralPathExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.ptype !== undefined ? this.ptype.tkeystr : ""})`;
+        return `${this.value}${this.ptype !== undefined ? ("_" + this.ptype.tkeystr) : ""}`;
     }
 }
 
@@ -465,7 +465,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}_${this.constype.tkeystr}`;
+        return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
     }
 }
 
@@ -484,7 +484,7 @@ class LiteralTypeDeclIntegralValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.constype.tkeystr}`;
+        return `${this.value}(${this.constype.tkeystr})`;
     }
 }
 
@@ -503,7 +503,7 @@ class LiteralTypeDeclFloatPointValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.constype.tkeystr}`;
+        return `${this.value}(${this.constype.tkeystr})`;
     }
 }
 

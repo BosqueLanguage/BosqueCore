@@ -82,7 +82,7 @@ describe ("Parser -- Rational", () => {
     });
 
     it("should fail zero denom rational", function () {
-        parseTestExpError("1/0_Foo", "Zero denominator in rational number", "Rational");
+        parseTestExpError("1/0(Foo)", "Zero denominator in rational number", "Rational");
     });
 });
 

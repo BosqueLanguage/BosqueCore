@@ -340,8 +340,7 @@ class Lexer {
         return accepts(Lexer._s_templateNameRe, str);
     }
 
-    xxxx;
-    private static readonly _s_literalTDOnlyTagRE = `"_"`;
+    private static readonly _s_literalTDOnlyTagRE = `"("`;
 
     private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
     private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
@@ -605,7 +604,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /_?[A-Z]/y;
+    private static readonly _s_literalGeneralTagRE = /[_(]/y;
     private tryLexUnicodeString(): boolean {
         let ncpos = this.cpos;
         let istemplate = false;
@@ -632,7 +631,6 @@ class Lexer {
             epos++;
             let strval = this.input.substring(ncpos, epos);
 
-            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
@@ -644,8 +642,7 @@ class Lexer {
                         strval += "[OF]"; //put special marker on back of string value for later
                     }
                     else {
-                        epos++; //eat the underscore and include it in the string
-                        strval += "_";
+                        strval += "[T]";
                     }
                 }   
             }
@@ -656,7 +653,7 @@ class Lexer {
         }
     }
 
-    static _s_validCStringChars = /[ -~]*/;
+    static _s_validCStringChars = /[ -~\t\n]*/;
     private tryLexCString(): boolean {
         let ncpos = this.cpos;
         let istemplate = false;
@@ -694,7 +691,6 @@ class Lexer {
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
-                xxxx;
                 if(istemplate) {
                     this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Template strings cannot have type tags");
                 }
@@ -703,8 +699,7 @@ class Lexer {
                         strval += "[OF]"; //put special marker on back of string value for later
                     }
                     else {
-                        epos++; //eat the underscore and include it in the string
-                        strval += "_";
+                        strval += "[T]";
                     }
                 }   
             }
@@ -742,7 +737,7 @@ class Lexer {
 
     
     private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /(_[A-Z])|[*]/y;
+    private static readonly _s_literalPathTagRE = /[_(*]/y;
     private tryLexPath() {
         Lexer._s_pathRe.lastIndex = this.cpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
@@ -753,13 +748,11 @@ class Lexer {
             Lexer._s_literalPathTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalPathTagRE.exec(this.input);
             if(mtag !== null) {
-                xxxx;
-                if(!mtag[0].startsWith("_")) {
-                    epos++; //eat the underscore and include it in the string
-                    pthval += "_"; 
-                }
-                else if(mtag[0].startsWith("(")) {
+                if(mtag[0].startsWith("_")) {
                     pthval += "[OF]"; //put special marker on back of string value for later
+                }
+                if(!mtag[0].startsWith("(")) {
+                    pthval += "[T]"; 
                 }
                 else {
                     //implicit path of URI
@@ -949,8 +942,7 @@ class Lexer {
         }
     }
 
-    xxxx;
-    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[A-Z]/`;
+    private static readonly _s_taggedBooleanRE = `/"true("|"false("/`;
     private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
         const mtb = lexFront(Lexer._s_taggedBooleanRE, this.cpos);
@@ -2694,12 +2686,15 @@ class Parser {
     }
 
     private static isTaggedLiteral(val: string): boolean {
-        return val.endsWith("_");
+        return val.endsWith("(");
     }
 
     private processTaggedLiteral(val: string): [string, TypeSignature] {
         const vval = val.slice(0, val.length - 1);
+
         const ttype = this.parseTypeTagSignature();
+        this.ensureAndConsumeTokenIf(SYM_rparen, "tagged literal");
+        
         return [vval, ttype];
     }
 
@@ -3006,9 +3001,13 @@ class Parser {
         }
         else if(tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue();
-            if(sstr.endsWith("_")) {
-                const vval = sstr.slice(0, sstr.length - 1);
+            if(sstr.endsWith("[T]")) {
+                const vval = sstr.slice(0, sstr.length - "[T]".length);
+
+                this.ensureAndConsumeTokenIf(SYM_lparen, "string type tag");
                 const ttype = this.parseTypeTagSignature();
+                this.ensureAndConsumeTokenIf(SYM_rparen, "string type tag");
+                
                 return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralStringExpression, sinfo, vval), ttype);
             }
             else if(sstr.endsWith("[OF]")) {
@@ -3022,9 +3021,13 @@ class Parser {
         }
         else if(tk === TokenStrings.CString) {
             const sstr = this.consumeTokenAndGetValue();
-            if(sstr.endsWith("_")) {
-                const vval = sstr.slice(0, sstr.length - 1);
+            if(sstr.endsWith("[T]")) {
+                const vval = sstr.slice(0, sstr.length - "[T]".length);
+                
+                this.ensureAndConsumeTokenIf(SYM_lparen, "string type tag");
                 const ttype = this.parseTypeTagSignature();
+                this.ensureAndConsumeTokenIf(SYM_rparen, "string type tag");
+
                 return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralCStringExpression, sinfo, vval), ttype);
             }
             else if(sstr.endsWith("[OF]")) {
@@ -3052,9 +3055,13 @@ class Parser {
                 ptag = sstr.startsWith("g") ? ExpressionTag.LiteralPathGlobExpression : ExpressionTag.LiteralPathFragmentExpression;
             }
 
-            if(sstr.endsWith("_")) {
-                const vval = sstr.slice(0, sstr.length - 1);
+            if(sstr.endsWith("[T]")) {
+                const vval = sstr.slice(0, sstr.length - "[T]".length);
+                
+                this.ensureAndConsumeTokenIf(SYM_lparen, "string type tag");
                 const ttype = this.parseTypeTagSignature();
+                this.ensureAndConsumeTokenIf(SYM_rparen, "string type tag");
+
                 return new LiteralTypeDeclValueExpression(sinfo, new LiteralPathExpression(ptag, sinfo, vval, undefined), ttype);
             }
             else if(sstr.endsWith("[OF]")) {
@@ -3063,7 +3070,8 @@ class Parser {
                 return new LiteralPathExpression(ptag, sinfo, vval, oftype);
             }
             else {
-                return new LiteralPathExpression(ptag, sinfo, sstr, undefined);
+                const vval = sstr.slice(0, sstr.length - "*".length);
+                return new LiteralPathExpression(ptag, sinfo, vval, undefined);
             }
         }
         else if (tk === KW_this) {
