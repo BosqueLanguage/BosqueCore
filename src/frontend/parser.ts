@@ -629,7 +629,7 @@ class Lexer {
         }
         else {
             epos++;
-            let strval = this.input.substring(ncpos, epos);
+            let strval = this.input.substring(this.cpos, epos);
 
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
@@ -670,23 +670,23 @@ class Lexer {
 
         let epos = this.input.slice(0, this.epos).indexOf("'", ncpos);
 
-        const mstr = this.input.slice(ncpos, this.epos);
-        if(Lexer._s_validCStringChars.test(mstr)) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Invalid chacaters in Ex string literal");
+        const mstr = this.input.slice(ncpos, this.epos - 1);
+        if(!Lexer._s_validCStringChars.test(mstr)) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Invalid chacaters in CString literal");
             this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
 
         if(epos === -1) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated Ex string literal");
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated CString literal");
             this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
         else {
             epos++;
-            let strval = this.input.substring(ncpos, epos);
+            let strval = this.input.substring(this.cpos, epos);
 
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);

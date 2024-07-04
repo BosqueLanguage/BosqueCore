@@ -367,6 +367,7 @@ class LiteralNoneExpression extends Expression {
 
 class LiteralSimpleExpression extends Expression {
     readonly value: string;
+    resolvedValue: any = undefined; //e.g. for string and regex types after unescaping
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
@@ -398,6 +399,7 @@ class LiteralRegexExpression extends Expression {
 class LiteralTypedStringExpression extends Expression {
     readonly value: string;
     readonly stype: TypeSignature;
+    resolvedValue: any = undefined; //string after unescaping
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, stype: TypeSignature) {
         super(tag, sinfo);
