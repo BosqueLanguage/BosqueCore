@@ -37,8 +37,9 @@ describe ("Parser -- CString", () => {
     it("should fail missing quotes", function () {
         parseTestExpError("'abc", "Unterminated CString literal", "CString");
     });
+    
     it("should fail illegal chars", function () {
         parseTestExpError("'a🌵c'", "Invalid chacaters in CString literal", "CString");
-        parseTestExpError("'\v'", "err4", "CString");
+        parseTestExpError("'\v'", "Invalid chacaters in CString literal", "CString");
     });
 });
