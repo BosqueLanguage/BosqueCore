@@ -2112,7 +2112,7 @@ class SelfUpdateStatement extends Statement {
 }
 
 class EnvironmentUpdateStatement extends Statement {
-    readonly updates: [LiteralExpressionValue, Expression][]; //exchange strings
+    readonly updates: [LiteralExpressionValue, Expression][];
 
     constructor(sinfo: SourceInfo, updates: [LiteralExpressionValue, Expression][]) {
         super(StatementTag.EnvironmentUpdateStatement, sinfo);

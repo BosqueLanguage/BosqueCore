@@ -17,6 +17,16 @@ function parseFunction(ff: string): string {
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
+function parseFunctionInFile(code: string): string {
+    const src = workflowLoadCoreSrc();
+    if(src === undefined) {
+        return "**ERROR**";
+    }
+
+    const rr = Parser.test_parseSFunctionInFile(src, ["EXEC_LIBS"], code, "main");
+    return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
+}
+
 function generateExpFunction(exp: string, type: string): string {
     return `function main(): ${type} { return ${exp}; }`;
 }
@@ -40,7 +50,12 @@ function parseTestFunctionError(ff: string, error: string) {
     assert.equal(parseFunction(ff), error);
 }
 
+function parseTestFunctionInFile(code: string, rff: string) {
+    assert.equal(parseFunctionInFile(code.replace("[FUNC]", rff)), wsnorm(rff));
+}
+
 export {
     parseTestExp, parseTestExpError,
-    parseTestFunction, parseTestFunctionError
+    parseTestFunction, parseTestFunctionError,
+    parseTestFunctionInFile
 };

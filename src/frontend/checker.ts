@@ -3718,6 +3718,8 @@ class TypeChecker {
 
     private checkPathValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: PathValidatorTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+
+        assert(false, "Not implemented -- checkPathValidatorTypeDecl");
     }
 
     private checkStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: StringOfTypeDecl) {
