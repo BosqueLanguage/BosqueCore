@@ -367,6 +367,7 @@ class LiteralNoneExpression extends Expression {
 
 class LiteralSimpleExpression extends Expression {
     readonly value: string;
+    resolvedValue: any = undefined; //e.g. for string and regex types after unescaping
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
@@ -398,6 +399,7 @@ class LiteralRegexExpression extends Expression {
 class LiteralTypedStringExpression extends Expression {
     readonly value: string;
     readonly stype: TypeSignature;
+    resolvedValue: any = undefined; //string after unescaping
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, stype: TypeSignature) {
         super(tag, sinfo);
@@ -410,7 +412,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}${this.stype.tkeystr}`;
+        return `${this.value}_${this.stype.tkeystr}`;
     }
 }
 
@@ -446,7 +448,7 @@ class LiteralPathExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.ptype !== undefined ? this.ptype.tkeystr : ""})`;
+        return `${this.value}${this.ptype !== undefined ? ("_" + this.ptype.tkeystr) : ""}`;
     }
 }
 
@@ -465,7 +467,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}_${this.constype.tkeystr}`;
+        return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
     }
 }
 
@@ -484,7 +486,7 @@ class LiteralTypeDeclIntegralValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.constype.tkeystr}`;
+        return `${this.value}(${this.constype.tkeystr})`;
     }
 }
 
@@ -503,7 +505,7 @@ class LiteralTypeDeclFloatPointValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.constype.tkeystr}`;
+        return `${this.value}(${this.constype.tkeystr})`;
     }
 }
 

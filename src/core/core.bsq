@@ -164,13 +164,7 @@ namespace Interpolate {
     function string(): String = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function stringOf<T: unique RegexValidator>(): StringOf<T> = special_method;
-
-    %** Special declaration of string interpolation function. **%
     function cstring(): CString = special_method;
-
-    %** Special declaration of string interpolation function. **%
-    function cstringOf<T: unique CRegexValidator>(): CStringOf<T> = special_method;
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%

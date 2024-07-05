@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
-import { accepts } from "@bosque/jsbrex";
+import { accepts, validateStringLiteral, validateCStringLiteral } from "@bosque/jsbrex";
 
 const MIN_SAFE_INT = -9223372036854775807n;
 const MAX_SAFE_INT = 9223372036854775807n;
@@ -688,13 +688,23 @@ class TypeChecker {
     }
 
     private checkLiteralStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        //TODO: validate string encoding is correct
+        try {
+            const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
+            exp.resolvedValue = vs;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
+        }
         
         return exp.setType(this.getWellKnownType("String"));
     }
 
     private checkLiteralCStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        //TODO: validate string encoding is correct
+        try {
+            const vs = validateCStringLiteral(exp.value.slice(1, exp.value.length - 1));
+            exp.resolvedValue = vs;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
+        }
         
         return exp.setType(this.getWellKnownType("CString"));
     }
@@ -717,10 +727,16 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
-        else {
-            this.runValidatorRegex(exp.sinfo, revalidator, exp.value.slice(1, exp.value.length - 1)); 
-            return exp.setType(this.getStringOfType(exp.stype));
+
+        try {
+            const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
+            this.runValidatorRegex(exp.sinfo, revalidator, vs as string); 
+            exp.resolvedValue = vs;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
         }
+
+        return exp.setType(this.getStringOfType(exp.stype));
     }
 
     private checkLiteralTypedCStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -737,10 +753,16 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- could not resolve to a valid regex`);
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
-        else {
-            this.runValidatorRegex(exp.sinfo, revalidator, exp.value.slice(1, exp.value.length - 1)); 
-            return exp.setType(this.getCStringOfType(exp.stype));
+
+        try {
+            const vs = validateCStringLiteral(exp.value.slice(1, exp.value.length - 1));
+            this.runValidatorRegex(exp.sinfo, revalidator, vs as string); 
+            exp.resolvedValue = vs;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
         }
+
+        return exp.setType(this.getCStringOfType(exp.stype));
     }
 
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
@@ -4136,6 +4158,9 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CRegexValidator", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
 
