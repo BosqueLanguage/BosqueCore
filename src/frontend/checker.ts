@@ -4115,9 +4115,17 @@ class TypeChecker {
             this.checkTaskDecl(decl, decl.tasks[i]);
         }
 
-
         for(let i = 0; i < decl.subns.length; ++i) {
             this.checkNamespaceDeclaration(decl.subns[i]);
+        }
+    }
+
+    private static processConstsAndValidatorREs(assembly: Assembly) {
+        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+            const ns = assembly.toplevelNamespaces[i];
+            const nsinfo = ns.loadConstantsAndValidatorREs();
+
+            xxxx;
         }
     }
 
@@ -4164,8 +4172,11 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
 
-        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
+        //Gather all the const and validator regexs, make sure they are valid and generate the compiled versions
+        TypeChecker.processConstsAndValidatorREs(assembly);
 
+        //Type-check each of the assemblies
+        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
         }

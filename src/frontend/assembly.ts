@@ -1481,6 +1481,21 @@ class NamespaceUsing {
     }
 }
 
+type NSRegexNameInfo = {
+    inns: string,
+    nsmappings: [string, string][]
+}
+
+type NSRegexREInfoEntry = {
+    name: string,
+    restr: string
+}
+
+type NSRegexInfo = {
+    nsinfo: NSRegexNameInfo,
+    reinfos: NSRegexREInfoEntry[]
+}
+
 class NamespaceDeclaration {
     readonly istoplevel: boolean;
     readonly name: string; 
@@ -1542,6 +1557,30 @@ class NamespaceDeclaration {
 
     checkDeclNameClashMember(rname: string): boolean {
         return this.declaredNames.has(rname);
+    }
+
+    loadConstantsAndValidatorREs(): NSRegexInfo[] {
+        const inns = this.fullnamespace.emit();
+        const nsmappings = this.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns.emit(), u.asns as string]);
+
+        const reinfos: NSRegexREInfoEntry[] = [];
+        this.typedecls.forEach((td) => {
+            if(td instanceof RegexValidatorTypeDecl) {
+                reinfos.push({name: td.name, restr: td.regex});
+            }
+            if(td instanceof CRegexValidatorTypeDecl) {
+                reinfos.push({name: td.name, restr: td.regex});
+            }
+        });
+        this.consts.forEach((c) => {
+            xxxx;
+
+            if(c.declaredType instanceof CRegexValidatorTypeDecl) {
+                reinfos.push({name: c.name, restr: c.value.regex});
+            }
+        });
+
+        const subnsinfo = this.subns.map((ns) => ns.loadConstantsAndValidatorREs());
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1674,5 +1713,6 @@ export {
     EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl,
     NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
+    NSRegexInfo, NSRegexNameInfo, NSRegexREInfoEntry,
     Assembly
 };
