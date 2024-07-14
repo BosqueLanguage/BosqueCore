@@ -54,8 +54,12 @@ function parseTestFunctionInFile(code: string, rff: string) {
     assert.equal(parseFunctionInFile(code.replace("[FUNC]", rff)), wsnorm(rff));
 }
 
+function parseTestFunctionInFileError(code: string, error: string) {
+    assert.equal(parseFunctionInFile(code), error);
+}
+
 export {
     parseTestExp, parseTestExpError,
     parseTestFunction, parseTestFunctionError,
-    parseTestFunctionInFile
+    parseTestFunctionInFile, parseTestFunctionInFileError
 };

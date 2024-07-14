@@ -848,10 +848,10 @@ class TypeCheckerRelations {
     resolveStringRegexValidatorInfo(ttype: TypeSignature): string | undefined {
         if(ttype instanceof NominalTypeSignature) {
             if(ttype.decl instanceof RegexValidatorTypeDecl) {
-                return ttype.decl.ns.emit() + "::" + ttype.decl.name;
+                return ttype.decl.ns.ns.join("::") + "::" + ttype.decl.name;
             }
             else if(ttype.decl instanceof CRegexValidatorTypeDecl) {
-                return ttype.decl.ns.emit() + "::" + ttype.decl.name;
+                return ttype.decl.ns.ns.join("::") + "::" + ttype.decl.name;
             }
             else {
                 return undefined;

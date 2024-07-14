@@ -728,6 +728,11 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
+        if(!this.relations.isSubtypeOf(exp.stype, this.getWellKnownType("RegexValidator"), this.constraints)) {
+            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- expected a RegexValidator`);
+            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        }
+
         try {
             const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
             this.runValidatorRegex(exp.sinfo, revalidator, vs as string); 
@@ -751,6 +756,11 @@ class TypeChecker {
 
         if(revalidator === undefined) {
             this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- could not resolve to a valid regex`);
+            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        }
+
+        if(!this.relations.isSubtypeOf(exp.stype, this.getWellKnownType("CRegexValidator"), this.constraints)) {
+            this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- expected a CRegexValidator`);
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
