@@ -1,13 +1,13 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
-import { accepts, validateStringLiteral, validateCStringLiteral } from "@bosque/jsbrex";
+import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, runNamedRegexAccepts } from "@bosque/jsbrex";
 
 const MIN_SAFE_INT = -9223372036854775807n;
 const MAX_SAFE_INT = 9223372036854775807n;
@@ -709,8 +709,8 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CString"));
     }
 
-    private runValidatorRegex(sinfo: SourceInfo, restr: string, litstr: string): boolean {
-        return accepts(restr, litstr);
+    private runValidatorRegex(sinfo: SourceInfo, rename: string, litstr: string): boolean {
+        return runNamedRegexAccepts(rename, litstr.slice(1, litstr.length - 1), litstr.startsWith('"'));
     }
 
     private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -4120,13 +4120,54 @@ class TypeChecker {
         }
     }
 
-    private static processConstsAndValidatorREs(assembly: Assembly) {
-        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
-            const ns = assembly.toplevelNamespaces[i];
-            const nsinfo = ns.loadConstantsAndValidatorREs();
-
-            xxxx;
+    private tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
+        if(exp instanceof LiteralRegexExpression) {
+            return exp;
         }
+        else if (exp instanceof AccessNamespaceConstantExpression) {
+            const nsresl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
+            if(nsresl === undefined) {
+                return undefined;
+            }
+
+            return this.tryReduceConstantExpressionToRE(nsresl.value.exp);
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    private loadConstantsAndValidatorREs(nsdecl: NamespaceDeclaration): NSRegexInfo[] {
+        const inns = nsdecl.fullnamespace.emit();
+        const nsmappings = nsdecl.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns.emit(), u.asns as string] as [string, string]);
+        const nsinfo: NSRegexNameInfo = {inns: inns, nsmappings: nsmappings};
+
+        const reinfos: NSRegexREInfoEntry[] = [];
+        nsdecl.typedecls.forEach((td) => {
+            if(td instanceof RegexValidatorTypeDecl) {
+                reinfos.push({name: td.name, restr: td.regex});
+            }
+            if(td instanceof CRegexValidatorTypeDecl) {
+                reinfos.push({name: td.name, restr: td.regex});
+            }
+        });
+        nsdecl.consts.forEach((c) => {
+            const re = this.tryReduceConstantExpressionToRE(c.value.exp);
+            if(re !== undefined) {
+                reinfos.push({name: c.name, restr: re.value});
+            }
+        });
+
+        const subnsinfo = nsdecl.subns.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
+
+        return [{nsinfo: nsinfo, reinfos:  reinfos}, ...subnsinfo];
+    }
+
+    private processConstsAndValidatorREs(assembly: Assembly) {
+        const asmreinfo = assembly.toplevelNamespaces.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
+
+        //Now process the regexs
+        loadConstAndValidateRESystem(asmreinfo);
     }
 
     private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
@@ -4172,11 +4213,12 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
 
+        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
+
         //Gather all the const and validator regexs, make sure they are valid and generate the compiled versions
-        TypeChecker.processConstsAndValidatorREs(assembly);
+        checker.processConstsAndValidatorREs(assembly);
 
         //Type-check each of the assemblies
-        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
         }

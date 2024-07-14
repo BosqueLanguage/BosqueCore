@@ -10,7 +10,6 @@ describe ("Parser -- StringOf", () => {
         parseTestFunctionInFile('validator Foo = /[0-9]*/; [FUNC]', 'function main(): StringOf<Foo> { return "a🌵c"_Foo; }');
     });
 
-    /*
     it("should fail missing under", function () {
         parseTestExpError('"abc"Foo', 'Expected ";" but got "Foo" when parsing "line statement"', "StringOf<Foo>");
     });
@@ -18,7 +17,6 @@ describe ("Parser -- StringOf", () => {
     it("should fail missing typename", function () {
         parseTestExpError('"abc"_', 'err2', "StringOf<Foo>");
     });
-    */
 });
 
 describe ("Parser -- CStringOf", () => {
@@ -27,9 +25,7 @@ describe ("Parser -- CStringOf", () => {
         parseTestFunctionInFile('validator Foo = /[0-9]*/; [FUNC]', "function main(): CStringOf<Foo> { return '123'_Foo; }");
     });
 
-    /*
     it("should fail missing under", function () {
         parseTestExpError("'abc'Foo", 'Expected ";" but got "Foo" when parsing "line statement"', "CStringOf<Foo>");
     });
-    */
 });
