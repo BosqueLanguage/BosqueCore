@@ -845,13 +845,13 @@ class TypeCheckerRelations {
         return curns;
     }
 
-    resolveStringRegexValidatorInfo(ttype: TypeSignature): string | undefined {
+    resolveStringRegexValidatorInfo(inns: FullyQualifiedNamespace, ttype: TypeSignature): string | undefined {
         if(ttype instanceof NominalTypeSignature) {
             if(ttype.decl instanceof RegexValidatorTypeDecl) {
-                return ttype.decl.ns.ns.join("::") + "::" + ttype.decl.name;
+                return inns.ns.join("::") + "::" + ttype.decl.name;
             }
             else if(ttype.decl instanceof CRegexValidatorTypeDecl) {
-                return ttype.decl.ns.ns.join("::") + "::" + ttype.decl.name;
+                return inns.ns.join("::") + "::" + ttype.decl.name;
             }
             else {
                 return undefined;
