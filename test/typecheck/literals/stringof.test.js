@@ -5,21 +5,21 @@ import { describe, it } from "node:test";
 
 describe("Checker -- StringOf", () => {
     it("should check simple stringof", function () {
-        //checkTestFunctionInFile('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return ""_Foo; }');
+        checkTestFunctionInFile('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return ""_Foo; }');
         checkTestFunctionInFile('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "123"_Foo; }');
     });
 
-    it.skip("should check simple stringof fails", function () {
-        checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a"_Foo; }', "err1");
-        checkTestFunctionInFileError('validator Foo = /[0-9]+/; function main(): StringOf<Foo> { return ""_Foo; }', "err2");
-        checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a🌵c"_Foo; }', "err3");
+    it("should check simple stringof fails", function () {
+        checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a"_Foo; }', "Literal value does not match regex validator Main::Foo");
+        checkTestFunctionInFileError('validator Foo = /[0-9]+/; function main(): StringOf<Foo> { return ""_Foo; }', "errLiteral value does not match regex validator Main::Foo2");
+        checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a🌵c"_Foo; }', "Literal value does not match regex validator Main::Foo");
     });
 
-    it.skip("should fail mismatch regex", function () {
+    it("should fail mismatch regex", function () {
         checkTestFunctionInFileError('validator Foo = /[0-9]*/c; function main(): StringOf<Foo> { return "123"_Foo; }', "Template argument T is not a subtype of RegexValidator");
     });
 
-    it.skip("should fail missing typename", function () {
+    it("should fail missing typename", function () {
         checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "123"; }', "Expected a return value of type StringOf<Foo> but got String");
     });
 });
@@ -30,16 +30,16 @@ describe("Checker -- CStringOf", () => {
         checkTestFunctionInFile("validator Foo = /[0-9]*/c; function main(): CStringOf<Foo> { return '123'_Foo; }");
     });
 
-    it.skip("should check simple cstringof fails", function () {
-        checkTestFunctionInFileError("validator Foo = /[0-9]+/c; function main(): CStringOf<Foo> { return ''_Foo; }", "err7");
-        checkTestFunctionInFileError("validator Foo = /[0-9]*/c; function main(): CStringOf<Foo> { return 'a'_Foo; }", "err8");
+    it("should check simple cstringof fails", function () {
+        checkTestFunctionInFileError("validator Foo = /[0-9]+/c; function main(): CStringOf<Foo> { return ''_Foo; }", "Literal value does not match regex validator Main::Foo");
+        checkTestFunctionInFileError("validator Foo = /[0-9]*/c; function main(): CStringOf<Foo> { return 'a'_Foo; }", "Literal value does not match regex validator Main::Foo");
     });
 
-    it.skip("should fail mismatch regex", function () {
+    it("should fail mismatch regex", function () {
         checkTestFunctionInFileError("validator Foo = /[0-9]*/; function main(): CStringOf<Foo> { return '123'_Foo; }", "Template argument T is not a subtype of CRegexValidator");
     });
 
-    it.skip("should fail missing typename", function () {
+    it("should fail missing typename", function () {
         checkTestFunctionInFileError("validator Foo = /[0-9]*/c; function main(): CStringOf<Foo> { return '123'; }", "Expected a return value of type CStringOf<Foo> but got CString");
     });
 });
