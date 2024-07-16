@@ -658,8 +658,9 @@ class Lexer {
                     this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Template strings cannot have type tags");
                 }
                 else {
-                    if(!mtag[0].startsWith("_")) {
+                    if(mtag[0].startsWith("_")) {
                         strval += "[OF]"; //put special marker on back of string value for later
+                        jepos++; //eat the _
                     }
                     else {
                         strval += "[T]";
@@ -714,8 +715,9 @@ class Lexer {
                     this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Template strings cannot have type tags");
                 }
                 else {
-                    if(!mtag[0].startsWith("_")) {
+                    if(mtag[0].startsWith("_")) {
                         strval += "[OF]"; //put special marker on back of string value for later
+                        jepos++; //eat the _
                     }
                     else {
                         strval += "[T]";
@@ -769,6 +771,7 @@ class Lexer {
             if(mtag !== null) {
                 if(mtag[0].startsWith("_")) {
                     pthval += "[OF]"; //put special marker on back of string value for later
+                    jepos++; //eat the _
                 }
                 if(!mtag[0].startsWith("(")) {
                     pthval += "[T]"; 
@@ -5352,6 +5355,7 @@ class Parser {
             if(this.testToken(TokenStrings.Regex)) {
                 const vregex = this.consumeTokenAndGetValue();
 
+                //parser just reads the string, we will need to validate it later
                 if(vregex.endsWith("/")) {
                     const vdecl = new RegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
                     this.env.currentNamespace.typedecls.push(vdecl);
@@ -5360,8 +5364,6 @@ class Parser {
                     const vdecl = new CRegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
                     this.env.currentNamespace.typedecls.push(vdecl);
                 }
-
-                assert(false, "TODO: we need to validate the regex parse too!!!");
             }
             else if(this.testToken(TokenStrings.PathItem)) {
                 const pthglb = this.consumeTokenAndGetValue();
@@ -5370,10 +5372,9 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "Path glob must start with end with a 'g'");
                 }
 
+                //parser just reads the string, we will need to validate it later
                 const vdecl = new PathValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, pthglb);
                 this.env.currentNamespace.typedecls.push(vdecl);
-
-                assert(false, "TODO: we need to validate the path glob parse too!!!");
             }
             else {
                 this.recordErrorGeneral(sinfo, "Invalid validator declaration");
@@ -5985,6 +5986,23 @@ class Parser {
         let registeredNamespaces = new Set<string>();
         const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
         const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${sff}`}], macrodefs, assembly, registeredNamespaces);
+        
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
+        }
+
+        const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
+        const sffdecl = ns.functions.find((f) => f.name === "main");
+
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+    }
+
+    static test_parseSFunctionInFile(core: CodeFileInfo[], macrodefs: string[], code: string, fname: string): string | ParserError[] {
+        let assembly = new Assembly();
+
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${code}`}], macrodefs, assembly, registeredNamespaces);
         
         if(coreerrors.length !== 0 || ferrors.length !== 0) {
             return [...coreerrors, ...ferrors];

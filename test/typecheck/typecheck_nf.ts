@@ -6,7 +6,7 @@ import { Parser } from '../../src/frontend/parser.js';
 
 import assert from "node:assert";
 
-function loadFunction(ff: string): Assembly | string {
+function loadContents(ff: string): Assembly | string {
     const src = workflowLoadCoreSrc();
     if(src === undefined) {
         return "**ERROR**";
@@ -22,9 +22,13 @@ function generateExpFunctionContents(exp: string, type: string): string {
     return `declare namespace Main; function main(): ${type} { return ${exp}; }`;
 }
 
+function generateFileContents(contents: string): string {
+    return `declare namespace Main; ${contents}`;
+}
+
 function checkTestExp(exp: string, type: string) {
     const ff = generateExpFunctionContents(exp, type);
-    const assembly = loadFunction(ff);
+    const assembly = loadContents(ff);
 
     if(typeof(assembly) === "string") {
         assert.fail(assembly);
@@ -38,7 +42,7 @@ function checkTestExp(exp: string, type: string) {
 
 function checkTestExpError(exp: string, type: string, msg: string) {
     const ff = generateExpFunctionContents(exp, type);
-    const assembly = loadFunction(ff);
+    const assembly = loadContents(ff);
 
     if(typeof(assembly) === "string") {
         assert.fail(assembly);
@@ -53,7 +57,7 @@ function generateFunctionContents(ff: string): string {
 }
 
 function checkTestFunction(ff: string) {
-    const assembly = loadFunction(generateFunctionContents(ff));
+    const assembly = loadContents(generateFunctionContents(ff));
 
     if(typeof(assembly) === "string") {
         assert.fail(assembly);
@@ -66,7 +70,32 @@ function checkTestFunction(ff: string) {
 }
 
 function checkTestFunctionError(ff: string, msg: string) {
-    const assembly = loadFunction(generateFunctionContents(ff));
+    const assembly = loadContents(generateFunctionContents(ff));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    assert.equal(errors[0].msg, msg);
+}
+
+
+function checkTestFunctionInFile(code: string) {
+    const assembly = loadContents(generateFileContents(code));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    if(errors.length > 0) {
+        assert.fail(errors.map(e => e.msg).join("\n"));
+    }
+}
+
+function checkTestFunctionInFileError(code: string, msg: string) {
+    const assembly = loadContents(generateFileContents(code));
 
     if(typeof(assembly) === "string") {
         assert.fail(assembly);
@@ -78,5 +107,6 @@ function checkTestFunctionError(ff: string, msg: string) {
 
 export {
     checkTestExp, checkTestExpError,
-    checkTestFunction, checkTestFunctionError
+    checkTestFunction, checkTestFunctionError,
+    checkTestFunctionInFile, checkTestFunctionInFileError
 };

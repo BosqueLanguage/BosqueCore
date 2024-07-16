@@ -1481,6 +1481,21 @@ class NamespaceUsing {
     }
 }
 
+type NSRegexNameInfo = {
+    inns: string,
+    nsmappings: [string, string][]
+}
+
+type NSRegexREInfoEntry = {
+    name: string,
+    restr: string
+}
+
+type NSRegexInfo = {
+    nsinfo: NSRegexNameInfo,
+    reinfos: NSRegexREInfoEntry[]
+}
+
 class NamespaceDeclaration {
     readonly istoplevel: boolean;
     readonly name: string; 
@@ -1674,5 +1689,6 @@ export {
     EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl,
     NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
+    NSRegexInfo, NSRegexNameInfo, NSRegexREInfoEntry,
     Assembly
 };
