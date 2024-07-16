@@ -11,7 +11,7 @@ describe("Checker -- StringOf", () => {
 
     it("should check simple stringof fails", function () {
         checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a"_Foo; }', "Literal value does not match regex validator Main::Foo");
-        checkTestFunctionInFileError('validator Foo = /[0-9]+/; function main(): StringOf<Foo> { return ""_Foo; }', "errLiteral value does not match regex validator Main::Foo2");
+        checkTestFunctionInFileError('validator Foo = /[0-9]+/; function main(): StringOf<Foo> { return ""_Foo; }', "Literal value does not match regex validator Main::Foo");
         checkTestFunctionInFileError('validator Foo = /[0-9]*/; function main(): StringOf<Foo> { return "a🌵c"_Foo; }', "Literal value does not match regex validator Main::Foo");
     });
 
