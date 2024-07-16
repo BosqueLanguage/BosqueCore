@@ -6009,7 +6009,24 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === "main");
+        const sffdecl = ns.functions.find((f) => f.name === fname);
+
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+    }
+
+    static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
+        let assembly = new Assembly();
+
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [...ctxfiles, {srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs, assembly, registeredNamespaces);
+        
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
+        }
+
+        const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
+        const sffdecl = ns.functions.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }

@@ -192,7 +192,7 @@ class NominalTypeSignature extends TypeSignature {
                 nscope = decl.ns.ns.slice(1).join("::");
             }
             else {
-                nscope = decl.ns.ns.join("::") + "::";
+                nscope = decl.ns.ns.join("::");
             }
 
             return nscope + (nscope !== "" ? "::" : "") + decl.name + tscope;
