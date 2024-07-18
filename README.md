@@ -72,7 +72,7 @@ Complete documenation for the language and standard libraries are on the [Langua
 Detailed Documentation, Tutorials, and Technical Information:
 * [Language Docs](docs/overview.md)
 * [Library Docs](docs/overview.md)
-* [Technical Papers](docs/papers/publist.md)
+* [Technical Papers](docs/research/papers/publist.md)
 
 ## Code Snippets
 
