@@ -168,8 +168,9 @@ class TemplateTypeSignature extends TypeSignature {
 class NominalTypeSignature extends TypeSignature {
     readonly decl: AbstractNominalTypeDecl;
     readonly alltermargs: TypeSignature[];
+    readonly altns: FullyQualifiedNamespace | undefined;
 
-    private static computeTKeyStr(decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]): string {
+    private static computeTKeyStr(altns: FullyQualifiedNamespace | undefined, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]): string {
         const tscope = alltermargs.length !== 0 ? ("<" + alltermargs.map((tt) => tt.tkeystr).join(", ") + ">") : "";
         if(decl instanceof OptionTypeDecl) {
             const oftype = alltermargs[0].tkeystr;
@@ -192,15 +193,15 @@ class NominalTypeSignature extends TypeSignature {
                 nscope = decl.ns.ns.slice(1).join("::");
             }
             else {
-                nscope = decl.ns.ns.join("::");
+                nscope = altns !== undefined ? altns.ns.join("::") : decl.ns.ns.join("::");
             }
 
             return nscope + (nscope !== "" ? "::" : "") + decl.name + tscope;
         }
     }
 
-    constructor(sinfo: SourceInfo, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]) {
-        super(sinfo, NominalTypeSignature.computeTKeyStr(decl, alltermargs));
+    constructor(sinfo: SourceInfo, altns: FullyQualifiedNamespace | undefined, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]) {
+        super(sinfo, NominalTypeSignature.computeTKeyStr(altns, decl, alltermargs));
         this.decl = decl;
         this.alltermargs = alltermargs;
     }
@@ -208,7 +209,7 @@ class NominalTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtall = this.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
 
-        return new NominalTypeSignature(this.sinfo, this.decl, rtall);
+        return new NominalTypeSignature(this.sinfo, this.altns, this.decl, rtall);
     }
 }
 

@@ -19,10 +19,10 @@ describe ("Parser -- access argument", () => {
     });
 
     it("should fail undefined namespace", function () {
-        parseTestFunctionInFilePlusError('declare namespace Main; function main(): Other::Foo? { return none; }', "err1", ...ctxcode);  //NS does not exist
+        parseTestFunctionInFilePlusError('declare namespace Main; function main(): Other::Foo? { return none; }', "Unknown namespace Other", ...ctxcode);  //NS does not exist
     });
 
     it("should fail not-imported namespace", function () {
-        parseTestFunctionInFilePlusError('declare namespace Main; function main(): Other::Foo? { return none; }', "err2", ...ctxcode);  //NS exists but not imported
+        parseTestFunctionInFilePlusError('declare namespace Main; function main(): NSOther::Foo? { return none; }', "Missing import for namespace NSOther", ...ctxcode);  //NS exists but not imported
     });
 });
