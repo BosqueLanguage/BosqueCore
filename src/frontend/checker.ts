@@ -874,6 +874,9 @@ class TypeChecker {
     }
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
+        const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
+        xxxx;
+
         if(exp.isCaptured) {
             return exp.setType(env.resolveLambdaCaptureVarType(exp.scopename) || new ErrorTypeSignature(exp.sinfo, undefined));
         }

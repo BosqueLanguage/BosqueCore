@@ -7,13 +7,13 @@ import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
-    readonly scopename: string;    //maybe a different name that gets used for shadowing binders
+    scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
 
-    constructor(srcname: string, scopename: string, implicitdef: boolean, refineonfollow: boolean) {
+    constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
-        this.scopename = scopename;
+        this.scopename = srcname;
         this.implicitdef = implicitdef;
         this.refineonfollow = refineonfollow;
     }
@@ -339,11 +339,9 @@ class LiteralExpressionValue {
 //This just holds a constant expression (for use where we expect a constant -- or restricted constant expression) but not a subtype of Expression so we can distinguish as types
 class ConstantExpressionValue {
     readonly exp: Expression;
-    readonly captured: Set<string>;
 
-    constructor(exp: Expression, captured: Set<string>) {
+    constructor(exp: Expression) {
         this.exp = exp;
-        this.captured = captured;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -599,14 +597,14 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    readonly scopename: string;    //maybe a different name that gets used for shadowing binders
-    readonly isCaptured: boolean;
+    scopename: string;    //maybe a different name that gets used for shadowing binders
+    isCaptured: boolean;
 
-    constructor(sinfo: SourceInfo, srcname: string, scopename: string, isCaptured: boolean) {
+    constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
-        this.scopename = scopename;
-        this.isCaptured = isCaptured;
+        this.scopename = srcname;
+        this.isCaptured = false;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {

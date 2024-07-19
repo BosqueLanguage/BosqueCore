@@ -1815,7 +1815,7 @@ class Parser {
     private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
-        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -1846,11 +1846,11 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
 
-        const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo("$" + v, true));
+        const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo(true, "$" + v));
 
-        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo(WELL_KNOWN_RETURN_VAR_NAME, true)];
+        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), ...refnames, new LocalVariableDefinitionInfo(true, WELL_KNOWN_RETURN_VAR_NAME)];
         if(taskcond || apicond) {
-            postvardecls.push(new LocalVariableDefinitionInfo(WELL_KNOWN_EVENTS_VAR_NAME, true));
+            postvardecls.push(new LocalVariableDefinitionInfo(true, WELL_KNOWN_EVENTS_VAR_NAME));
         }
 
         this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -1925,7 +1925,7 @@ class Parser {
 
                     this.ensureAndConsumeTokenAlways(SYM_bigarrow, "example");
 
-                    this.env.scope = new StandardScopeInfo([new LocalVariableDefinitionInfo(WELL_KNOWN_SRC_VAR_NAME, true)], boundtemplates, undefined);
+                    this.env.scope = new StandardScopeInfo([new LocalVariableDefinitionInfo(true, WELL_KNOWN_SRC_VAR_NAME)], boundtemplates, undefined);
                     const result = this.parseExpression();
                     this.env.scope = undefined;
 
@@ -2155,13 +2155,13 @@ class Parser {
             this.consumeToken();
         }
         
-        const lambdaargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
-        const lambdaenv = this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
+        const lambdaargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
+        this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
 
         const lambdapdecls = params.map((p) => new InvokeParameterDecl(p.name, p.type, undefined, p.isRefParam, p.isRestParam));
-        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, lambdapdecls, resultInfo, body, lambdaenv.capturedVars, !someTypedParams);
+        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, lambdapdecls, resultInfo, body, !someTypedParams);
     }
 
     private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
@@ -2212,7 +2212,7 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.isRefParam, param.name));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
@@ -2264,19 +2264,19 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
 
         if(taskscope) {
             argNames.add("self");
-            cargs = [new LocalVariableDefinitionInfo("self", !isref), ...cargs];
+            cargs = [new LocalVariableDefinitionInfo(!isref, "self"), ...cargs];
             if(isref) {
                 refparams.add("self");
             }
         }
         else {
             argNames.add("this");
-            cargs = [new LocalVariableDefinitionInfo("self", !isref), ...cargs];
+            cargs = [new LocalVariableDefinitionInfo(!isref, "this"), ...cargs];
             if(isref) {
                 refparams.add("this");
             }
@@ -2324,11 +2324,11 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
 
         argNames.add("self");
-        cargs = [new LocalVariableDefinitionInfo("self", true), ...cargs];
+        cargs = [new LocalVariableDefinitionInfo(true, "self"), ...cargs];
         refparams.add("self");
     
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
@@ -2684,10 +2684,6 @@ class Parser {
             return new ErrorExpression(sinfo, undefined, undefined);
         }
 
-        ldecl.captureVarSet.forEach((v) => {
-            this.env.useVariable(v);
-        });
-
         return new ConstructorLambdaExpression(sinfo, ldecl);
     }
 
@@ -2705,22 +2701,12 @@ class Parser {
 
     private parseConstExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): ConstantExpressionValue {
         this.env.pushStandardFunctionScope([], boundtemplates, etype);
-        this.env.pushBinderUnknownInConstantExpressionScope();
+        this.env.pushBlockScope();
         const exp = this.parseExpression();
-        const usedbinds = this.env.popBinderUnknownInConstantExpressionScope();
+        this.env.popBlockScope();
         this.env.popStandardFunctionScope();
 
-        return new ConstantExpressionValue(exp, new Set<string>(...usedbinds));
-    }
-
-    private parseConstResourceExpression(): ConstantExpressionValue {
-        this.env.pushStandardFunctionScope([], new Set<string>(), undefined);
-        this.env.pushBinderUnknownInConstantExpressionScope();
-        const exp = this.parsePrimaryExpression(); //just a primary expression
-        const usedbinds = this.env.popBinderUnknownInConstantExpressionScope();
-        this.env.popStandardFunctionScope();
-
-        return new ConstantExpressionValue(exp, new Set<string>(...usedbinds));
+        return new ConstantExpressionValue(exp);
     }
 
     private static isTaggedLiteral(val: string): boolean {
@@ -2816,27 +2802,11 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
         if (this.peekTokenData().startsWith("$")) {
             const idname = this.parseIdentifierAsBinderVariable();
-            
-            const scopename = this.env.useVariable(idname);
-            if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
-            }
-            else {
-                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
+            return new AccessVariableExpression(sinfo, idname);
         }
         else if (this.env.identifierResolvesAsVariable(this.peekTokenData())) {
             const idname = this.parseIdentifierAsStdVariable();
-            
-            const scopename = this.env.useVariable(idname);
-            if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
-            }
-            else {
-                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
+            return new AccessVariableExpression(sinfo, idname);
         }
         else {
             const peekname = this.peekTokenData();
@@ -3128,15 +3098,7 @@ class Parser {
         }
         else if (tk === KW_this) {
             this.consumeToken();
-
-            const scopename = this.env.useVariable("this");
-            if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, "this", scopename[0], scopename[1]);
-            }
-            else {
-                this.recordErrorGeneral(sinfo, "Variable 'this' is not defined in this context");
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
+            return new AccessVariableExpression(sinfo, "this");
         }
         else if (tk === KW_self) {
             assert(false, "Need to handle any self cases");
@@ -3619,33 +3581,25 @@ class Parser {
 
         this.ensureAndConsumeTokenIf(KW_then, "if-expression")
 
-        const ifvalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
+        const ifvalueinfo = this.parseExpression();
         let btrue: BinderInfo | undefined = undefined;
-        if(ifvalueinfo.used.length > 0) {
-            btrue = new BinderInfo(ifvalueinfo.used[0].srcname, ifvalueinfo.used[0].scopedname, implicitdef, false);
+        if(binder !== undefined) {
+            btrue = new BinderInfo(binder, implicitdef, false);
         }
 
         this.ensureAndConsumeTokenIf(KW_else, "if-expression");
-        const elsevalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
+        const elsevalueinfo = this.parseExpression();
 
         let belse: BinderInfo | undefined = undefined;
-        if(elsevalueinfo.used.length > 0) {
-            belse = new BinderInfo(elsevalueinfo.used[0].srcname, elsevalueinfo.used[0].scopedname, implicitdef, false);
+        if(binder !== undefined) {
+            belse = new BinderInfo(binder, implicitdef, false);
         }
 
-        return new IfExpression(sinfo, new IfTest(iexp, itest), ifvalueinfo.exp, btrue, elsevalueinfo.exp, belse);
+        return new IfExpression(sinfo, new IfTest(iexp, itest), ifvalueinfo, btrue, elsevalueinfo, belse);
     }
 
     private parseExpression(): Expression {
         return this.parseImpliesExpression();
-    }
-
-    private parseExpressionWithBinder(bindernames: string[]): {exp: Expression, used: {srcname: string, scopedname: string}[]} {
-        this.env.pushBinderExpressionScope(bindernames)
-        const exp = this.parseExpression();
-        const used = this.env.popBinderExpressionScope();
-
-        return {exp: exp, used: used};
     }
 
     private parseMapEntryConstructorExpression(): Expression {
@@ -4230,7 +4184,7 @@ class Parser {
     private parseScopedBlockStatement(): BlockStatement {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.env.pushStandardBlockScope();
+        this.env.pushBlockScope();
 
         const closeparen = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
         this.prepStateStackForNested("BlockStatement", closeparen);
@@ -4244,7 +4198,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "block statement");
         
         this.popStateIntoParentOk();
-        this.env.popStandardBlockScope();
+        this.env.popBlockScope();
 
         if(stmts.length === 0) {
             this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
@@ -4253,42 +4207,16 @@ class Parser {
         return new BlockStatement(sinfo, stmts);
     }
 
-    private parseScopedBlockStatementWithBinderTracking(bindernames: string[]): {block: BlockStatement, used: {srcname: string, scopedname: string}[]} {
-        const sinfo = this.peekToken().getSourceInfo();
-
-        this.env.pushBinderExpressionScope(bindernames);
-
-        const closeparen = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
-        this.prepStateStackForNested("BlockStatement", closeparen);
-
-        let stmts: Statement[] = [];
-        this.ensureAndConsumeTokenAlways(SYM_lbrace, "block statement");
-        while(!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
-            const stmt = this.parseStatement();
-            stmts.push(stmt);
-        }
-        this.ensureAndConsumeTokenAlways(SYM_rbrace, "block statement");
-        
-        this.popStateIntoParentOk();
-        const used = this.env.popBinderExpressionScope();
-
-        if(stmts.length === 0) {
-            this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
-        }
-        
-        return {block: new BlockStatement(sinfo, stmts), used: used};
-    }
-
     private parseIfElseStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
         const [iexp, binder, implicitdef, ispostflow, itest] = this.parseIfTest(false);
 
-        const ifbody = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
+        const ifbody = this.parseScopedBlockStatement();
         let ifbind: BinderInfo | undefined = undefined;
-        if(ifbody.used.length > 0) {
-            ifbind = new BinderInfo(ifbody.used[0].srcname, ifbody.used[0].scopedname, implicitdef, ispostflow);
+        if(binder !== undefined) {
+            ifbind = new BinderInfo(binder, implicitdef, ispostflow);
         }
 
         let conds: {cond: IfTest, block: BlockStatement}[] = [];
@@ -4304,16 +4232,16 @@ class Parser {
 
         if(conds.length === 0) {
             if(!this.testAndConsumeTokenIf(KW_else)) {
-                return new IfStatement(sinfo, new IfTest(iexp, itest), ifbody.block, ifbind);
+                return new IfStatement(sinfo, new IfTest(iexp, itest), ifbody, ifbind);
             }
             else {
-                const elsebody = this.parseScopedBlockStatementWithBinderTracking([]);
+                const elsebody = this.parseScopedBlockStatement();
                 let elsebind: BinderInfo | undefined = undefined;
-                if(elsebody.used.length > 0) {
-                    elsebind = new BinderInfo(elsebody.used[0].srcname, elsebody.used[0].scopedname, false, ispostflow);
+                if(binder !== undefined) {
+                    elsebind = new BinderInfo(binder, false, ispostflow);
                 }
 
-                return new IfElseStatement(sinfo, new IfTest(iexp, itest), ifbody.block, ifbind, elsebody.block, elsebind);
+                return new IfElseStatement(sinfo, new IfTest(iexp, itest), ifbody, ifbind, elsebody, elsebind);
             }
         }
         else {
@@ -4321,12 +4249,8 @@ class Parser {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
 
-            if(ifbody.used.length > 0) {
-                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
-            }
-
             const elssebody = this.parseScopedBlockStatement();
-            return new IfElifElseStatement(sinfo, [{cond: iexp, block: ifbody.block}, ...conds.map((cc) => { return {cond: cc.cond.exp, block: cc.block}; })], elssebody);
+            return new IfElifElseStatement(sinfo, [{cond: iexp, block: ifbody}, ...conds.map((cc) => { return {cond: cc.cond.exp, block: cc.block}; })], elssebody);
         }
     }
 
@@ -4373,23 +4297,23 @@ class Parser {
 
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
-        const mvalue = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
+        const mvalue = this.parseScopedBlockStatement();
 
-        entries.push({ mtype: mtype, value: mvalue.block, bindername: mvalue.used.length !== 0 ? mvalue.used[0].srcname : undefined});
+        entries.push({ mtype: mtype, value: mvalue, bindername: binder });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
             
             const mtypex = this.parseMatchTypeGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
-            const mvaluex = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
+            const mvaluex = this.parseScopedBlockStatement();
 
-            entries.push({ mtype: mtypex, value: mvaluex.block, bindername: mvaluex.used.length !== 0 ? mvaluex.used[0].srcname : undefined});
+            entries.push({ mtype: mtypex, value: mvaluex, bindername: binder });
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
         let bindinfo: BinderInfo | undefined = undefined;
-        if(binder !== undefined && entries.some((cc) => cc.bindername !== undefined)) {
-            bindinfo = new BinderInfo(binder, this.env.getScope().getBinderVarName(binder), implicitdef, ispostflow);
+        if(binder !== undefined) {
+            bindinfo = new BinderInfo(binder, implicitdef, ispostflow);
         }
 
         return new MatchStatement(sinfo, [mexp, bindinfo], entries);
@@ -4730,10 +4654,7 @@ class Parser {
 
             this.ensureAndConsumeTokenIf(SYM_eq, "const member");
             const value = this.parseConstExpression(stype, new Set<string>());
-            if(value.captured.size !== 0) {
-                this.recordErrorGeneral(sinfo, "Cannot have captured variables in const member");
-            }
-
+        
             this.env.currentNamespace.consts.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "const member");
@@ -5707,7 +5628,7 @@ class Parser {
                     }
                     else {
                         tdecl.resourceImpactInfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            const pp = this.parseConstResourceExpression();
+                            const pp = this.parseConstExpression(undefined, new Set<string>());
                             this.ensureAndConsumeTokenIf(SYM_at, "task resource section");
 
                             const mod = this.ensureToken(TokenStrings.ResourceUseMod, "task resource section") ? this.consumeTokenAndGetValue() : "[*]";
@@ -5782,7 +5703,7 @@ class Parser {
             const resultInfo = this.parseReturnTypeSignature();
 
             const argNames = new Set<string>(params.map((param) => param.name));
-            const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+            const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
 
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
             const samples = this.parseSamples(sinfo, boundtemplates);
@@ -5817,7 +5738,7 @@ class Parser {
                     }
                     else {
                         resouceinfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            const pp = this.parseConstResourceExpression();
+                            const pp = this.parseConstExpression(undefined, new Set<string>());
                             this.ensureAndConsumeTokenIf(SYM_at, "task resource section");
 
                             const mod = this.ensureToken(TokenStrings.ResourceUseMod, "task resource section") ? this.consumeTokenAndGetValue() : "[*]";

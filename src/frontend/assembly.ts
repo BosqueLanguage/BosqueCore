@@ -334,14 +334,11 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
 }
 
 class LambdaDecl extends AbstractInvokeDecl {
-    readonly captureVarSet: Set<string>;
-
     readonly isAuto: boolean;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, isAuto: boolean) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, isAuto: boolean) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body);
 
-        this.captureVarSet = captureVarSet;
         this.isAuto = isAuto;
     }
 
@@ -349,20 +346,11 @@ class LambdaDecl extends AbstractInvokeDecl {
         const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.type, p.isRefParam, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
-    
-    private emitCaptureInfo(): string {
-        let capturev = "";
-        if(this.captureVarSet.size !== 0) {
-            capturev = "[" + Array.from(this.captureVarSet).sort().join(", ") + "]";
-        }
-
-        return "%*" + capturev + "*%";
-    }
 
     emit(fmt: CodeFormatter): string {
         const ssig = this.emitSig(fmt);
 
-        return `${ssig[0]}${this.name}${ssig[1]} ${this.body.emit(fmt, this.emitCaptureInfo())}`;
+        return `${ssig[0]}${this.name}${ssig[1]} ${this.body.emit(fmt, undefined)}`;
     }
 }
 
