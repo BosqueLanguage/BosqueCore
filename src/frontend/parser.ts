@@ -1568,8 +1568,8 @@ class Parser {
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, [nsroot]);
-            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
             const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;

@@ -8,7 +8,7 @@ const ctxcode = [
 describe ("Parser -- access argument", () => {
     it("should parse implicit access", function () {
         parseTestFunctionInFilePlus("declare namespace Main; [FUNC]", 'function main(x: Int): Int { return x; }', undefined, ...ctxcode);  //Core is always ok
-        parseTestFunctionInFilePlus("declare namespace Main; entity Bar { } [FUNC]", 'function main(): Bar? { return none; }', 'function main(): Main::Bar? { return none; }', ...ctxcode);  //Implicit same namespace is ok
+        parseTestFunctionInFilePlus("declare namespace Main; entity Bar { } [FUNC]", 'function main(): Bar? { return none; }', 'function main(): Bar? { return none; }', ...ctxcode);  //Implicit same namespace is ok
         parseTestFunctionInFilePlus("declare namespace Main; entity Bar { } [FUNC]", 'function main(): Main::Bar? { return none; }', undefined, ...ctxcode);  //Explicit same namespace is ok
     });
 
