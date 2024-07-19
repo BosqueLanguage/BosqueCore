@@ -552,16 +552,18 @@ class TaskAccessInfoExpression extends Expression {
 
 class AccessNamespaceConstantExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
+    readonly isImplicitNS: boolean;
     readonly name: string;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, name: string) {
+    constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string) {
         super(ExpressionTag.AccessNamespaceConstantExpression, sinfo);
         this.ns = ns;
+        this.isImplicitNS = isImplicitNS;
         this.name = name;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ns.emit()}::${this.name}`;
+        return `${!this.isImplicitNS ? (this.ns.emit() + "::") : ""}${this.name}`;
     }
 }
 
@@ -747,14 +749,17 @@ class LambdaInvokeExpression extends Expression {
 
 class CallNamespaceFunctionExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
+    readonly isImplicitNS: boolean;
+
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+    constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
         this.ns = ns;
+        this.isImplicitNS = isImplicitNS;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
@@ -772,7 +777,7 @@ class CallNamespaceFunctionExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
         }
 
-        return `${this.ns.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `${!this.isImplicitNS ? (this.ns.emit() + "::") : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 

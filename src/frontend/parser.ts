@@ -1463,17 +1463,17 @@ class Parser {
     ////
     //Misc parsing
 
-    private identifierResolvesAsScopedConstOrFunction(name: string): NamespaceFunctionDecl | NamespaceConstDecl | undefined {
+    private identifierResolvesAsScopedConstOrFunction(name: string): [NamespaceDeclaration, NamespaceFunctionDecl | NamespaceConstDecl] | undefined {
         const coredecl = this.env.assembly.getCoreNamespace();
         const cdm = coredecl.functions.find((f) => f.name === name) || coredecl.consts.find((c) => c.name === name);
         if(cdm !== undefined) {
-            return cdm;
+            return [coredecl, cdm];
         }
 
         const nsdecl = this.env.currentNamespace;
         const ndm = nsdecl.functions.find((f) => f.name === name) || nsdecl.consts.find((c) => c.name === name);
         if(ndm !== undefined) {
-            return ndm;
+            return [this.env.currentNamespace, ndm];
         }
 
         return undefined;
@@ -1976,7 +1976,7 @@ class Parser {
         return params;
     }
 
-    private parseInvokeDeclParameter(): InvokeParameterDecl {
+    private parseInvokeDeclParameter(boundtemplates: Set<string>): InvokeParameterDecl {
         const cinfo = this.peekToken().getSourceInfo();
 
         const isref = this.testAndConsumeTokenIf(KW_ref);
@@ -2004,7 +2004,7 @@ class Parser {
 
         let optDefaultExp: ConstantExpressionValue | undefined = undefined;
         if(this.testToken(SYM_eq)) {
-            optDefaultExp = this.parseConstExpression(ptype);
+            optDefaultExp = this.parseConstExpression(ptype, boundtemplates);
         }
 
         if(isref && optDefaultExp !== undefined) {
@@ -2014,9 +2014,9 @@ class Parser {
         return new InvokeParameterDecl(pname, ptype, optDefaultExp, isref, isrest);
     }
 
-    private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean): InvokeParameterDecl[] {
+    private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
         const params = this.parseListOf<InvokeParameterDecl>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            return this.parseInvokeDeclParameter()
+            return this.parseInvokeDeclParameter(boundtemplates)
         });
         
         if(params.length !== 0) {
@@ -2196,6 +2196,7 @@ class Parser {
         const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -2203,7 +2204,7 @@ class Parser {
             return undefined;
         }
 
-        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, true);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, true, boundtemplates);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2213,7 +2214,6 @@ class Parser {
         const argNames = new Set<string>(params.map((param) => param.name));
         const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
-        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
         const samples = this.parseSamples(cinfo, boundtemplates);
@@ -2248,6 +2248,7 @@ class Parser {
         const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -2255,7 +2256,7 @@ class Parser {
             return undefined;
         }
 
-        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, !isref);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, !isref, boundtemplates);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2265,7 +2266,6 @@ class Parser {
         const argNames = new Set<string>(params.map((param) => param.name));
         let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
-        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         if(taskscope) {
             argNames.add("self");
@@ -2308,6 +2308,7 @@ class Parser {
         const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -2315,7 +2316,7 @@ class Parser {
             return undefined;
         }
 
-        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, false);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, false, boundtemplates);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2325,7 +2326,6 @@ class Parser {
         const argNames = new Set<string>(params.map((param) => param.name));
         let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
-        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         argNames.add("self");
         cargs = [new LocalVariableDefinitionInfo("self", true), ...cargs];
@@ -2703,8 +2703,8 @@ class Parser {
         return new LiteralExpressionValue(exp);
     }
 
-    private parseConstExpression(etype: TypeSignature | undefined): ConstantExpressionValue {
-        this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, etype);
+    private parseConstExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): ConstantExpressionValue {
+        this.env.pushStandardFunctionScope([], boundtemplates, etype);
         this.env.pushBinderUnknownInConstantExpressionScope();
         const exp = this.parseExpression();
         const usedbinds = this.env.popBinderUnknownInConstantExpressionScope();
@@ -2714,7 +2714,7 @@ class Parser {
     }
 
     private parseConstResourceExpression(): ConstantExpressionValue {
-        this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, undefined);
+        this.env.pushStandardFunctionScope([], new Set<string>(), undefined);
         this.env.pushBinderUnknownInConstantExpressionScope();
         const exp = this.parsePrimaryExpression(); //just a primary expression
         const usedbinds = this.env.popBinderUnknownInConstantExpressionScope();
@@ -2746,8 +2746,21 @@ class Parser {
         }
     }
 
-    private parseImplicitNamespaceScopedConstOrFunc(decl: NamespaceFunctionDecl | NamespaceConstDecl): Expression {
-        assert(false, "Not implemented -- parseImplicitNamespaceScopedConstOrFunc");
+    private parseImplicitNamespaceScopedConstOrFunc(ns: NamespaceDeclaration, decl: NamespaceFunctionDecl | NamespaceConstDecl): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        const idname = this.parseIdentifierAsStdVariable();
+
+        if(decl instanceof NamespaceConstDecl) {
+            return new AccessNamespaceConstantExpression(sinfo, true, ns.fullnamespace, idname);
+        }
+        else {
+            const targs = this.parseInvokeTemplateArguments();
+            const rec = this.parseInvokeRecursiveArgs();
+            const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, true);
+
+            return new CallNamespaceFunctionExpression(sinfo, true, ns.fullnamespace, idname, targs, rec, args);
+        }
     }
 
     private parseNamespaceScopedFirstExpression(nspace: NamespaceDeclaration): Expression {
@@ -2761,14 +2774,14 @@ class Parser {
         const constOpt = nspace.consts.find((c) => c.name === idname);
         const funOpt = nspace.functions.find((f) => f.name === idname);
         if(constOpt) {
-            return new AccessNamespaceConstantExpression(sinfo, nspace.fullnamespace, idname);
+            return new AccessNamespaceConstantExpression(sinfo, false, nspace.fullnamespace, idname);
         }
         else if(funOpt) {
             const targs = this.parseInvokeTemplateArguments();
             const rec = this.parseInvokeRecursiveArgs();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, true);
 
-            return new CallNamespaceFunctionExpression(sinfo, nspace.fullnamespace, idname, targs, rec, args);
+            return new CallNamespaceFunctionExpression(sinfo, false, nspace.fullnamespace, idname, targs, rec, args);
         }
         else {
             this.recordErrorGeneral(sinfo, `Name '${nspace.fullnamespace.emit()}::${idname}' is not defined in this context`);
@@ -2830,7 +2843,7 @@ class Parser {
 
             const isScopedConstOrFunc = this.identifierResolvesAsScopedConstOrFunction(this.peekTokenData());
             if(isScopedConstOrFunc !== undefined) {
-                return this.parseImplicitNamespaceScopedConstOrFunc(isScopedConstOrFunc);
+                return this.parseImplicitNamespaceScopedConstOrFunc(isScopedConstOrFunc[0], isScopedConstOrFunc[1]);
             }
             else {
                 const access = this.parseIdentifierAccessChain();
@@ -4716,7 +4729,7 @@ class Parser {
             const stype = this.parseStdTypeSignature();
 
             this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-            const value = this.parseConstExpression(stype);
+            const value = this.parseConstExpression(stype, new Set<string>());
             if(value.captured.size !== 0) {
                 this.recordErrorGeneral(sinfo, "Cannot have captured variables in const member");
             }
@@ -4802,7 +4815,7 @@ class Parser {
         const stype = this.parseStdTypeSignature();
 
         this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-        const value = this.parseConstExpression(stype);
+        const value = this.parseConstExpression(stype, this.env.getScope().boundtemplates);
 
         if(constMembers === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
@@ -4856,7 +4869,7 @@ class Parser {
 
         let ivalue: ConstantExpressionValue | undefined = undefined;
         if (this.testAndConsumeTokenIf(SYM_eq)) {
-            ivalue = this.parseConstExpression(ftype);
+            ivalue = this.parseConstExpression(ftype, this.env.getScope().boundtemplates);
         }
 
         if(memberFields === undefined) {
@@ -4962,7 +4975,7 @@ class Parser {
             }
 
             if(isvalidate) {
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature);
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, this.env.getScope().boundtemplates);
 
                 if(vdates === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
@@ -4973,7 +4986,7 @@ class Parser {
             }
             else {
                 const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature);
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, this.env.getScope().boundtemplates);
 
                 if(invs === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
@@ -5719,7 +5732,7 @@ class Parser {
                         
                         let exp: ConstantExpressionValue | undefined = undefined;
                         if(this.testAndConsumeTokenIf(SYM_eq)) {
-                            exp = this.parseConstExpression(ttype);
+                            exp = this.parseConstExpression(ttype, new Set<string>());
                         }
 
                         return new EnvironmentVariableInformation(ename, ttype, exp);
@@ -5762,14 +5775,14 @@ class Parser {
                 return;
             }
 
-            const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false);
+            const boundtemplates = new Set<string>();
+            const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
             this.ensureAndConsumeTokenIf(SYM_colon, "api declaration");
             const resultInfo = this.parseReturnTypeSignature();
 
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
-            const boundtemplates = new Set<string>();
 
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
             const samples = this.parseSamples(sinfo, boundtemplates);
@@ -5829,7 +5842,7 @@ class Parser {
 
                         let exp: ConstantExpressionValue | undefined = undefined;
                         if(this.testAndConsumeTokenIf(SYM_eq)) {
-                            exp = this.parseConstExpression(ttype);
+                            exp = this.parseConstExpression(ttype, new Set<string>());
                         }
 
                         return new EnvironmentVariableInformation(ename, ttype, exp);
