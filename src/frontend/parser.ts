@@ -1542,26 +1542,34 @@ class Parser {
         }
     }
 
-    private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
+    private parseIdentifierAccessChain(): {altScope: string[] | undefined, nsScope: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const nsroot = this.peekTokenData();
+        if(!/^[A-Z][_a-zA-Z0-9]+/.test(nsroot)) {
+            return undefined; //not a valid namespace or type name
+        }
 
         const coredecl = this.env.assembly.getCoreNamespace();
         if (nsroot === "Core") {
             this.consumeToken();
-            if(this.testToken(SYM_coloncolon)) {
-                return this.parseIdentifierAccessChainHelper(true, coredecl, ["Core"]);
-            }
-            else {
-                return {nsScope: coredecl, typeTokens: []};
-            }
+            
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), coredecl, ["Core"]);
+            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(coredecl.declaredNames.has(nsroot)) {
-            return this.parseIdentifierAccessChainHelper(false, coredecl, ["Core"]);
+            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, ["Core"]);
+            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if(this.env.currentNamespace.name === nsroot) {
+            this.consumeToken();
+            
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), this.env.currentNamespace, [nsroot]);
+            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
-            return this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, [nsroot]);
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
             const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;
@@ -1577,28 +1585,35 @@ class Parser {
             if(rrns === undefined) {
                 return undefined;
             }
-
-            if(this.testToken(SYM_coloncolon)) {
-                return this.parseIdentifierAccessChainHelper(true, rrns, [nsroot]);
-            }
-            else {
-                return {nsScope: rrns, typeTokens: []};
-            }
+                
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), rrns, [nsroot]);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else {
             this.consumeToken();
 
-            const tlns = this.env.assembly.getToplevelNamespace(nsroot);
-            if(tlns === undefined) {
-                return undefined;
-            }
-            else {
-                if(this.testToken(SYM_coloncolon)) {
-                    return this.parseIdentifierAccessChainHelper(true, tlns, [nsroot]);
+            const hasimport = this.env.currentNamespace.usings.find((nsuse) => nsuse.fromns.ns[0] === nsroot) !== undefined
+            if(hasimport) {
+                const tlns = this.env.assembly.getToplevelNamespace(nsroot);
+                if(tlns === undefined) {
+                    return undefined;
                 }
                 else {
-                    return {nsScope: tlns, typeTokens: []};
+                    const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
+                    return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
                 }
+            }
+            else {
+                //hmm missing import -- see if it exists but not imported or just not there at all
+                const tlns = this.env.assembly.getToplevelNamespace(nsroot);
+                if(tlns === undefined) {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown namespace ${nsroot}`);
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Missing import for namespace ${nsroot}`);
+                }
+
+                return undefined;
             }
         }
     }
@@ -2414,7 +2429,7 @@ class Parser {
         let ttype = tbase
         while(this.testAndConsumeTokenIf(SYM_question)) {
             const odecl = this.env.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
-            ttype = new NominalTypeSignature(ttype.sinfo, odecl, [ttype]);
+            ttype = new NominalTypeSignature(ttype.sinfo, undefined, odecl, [ttype]);
         }
         return ttype;
     }
@@ -2452,7 +2467,8 @@ class Parser {
                 return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
             }
             else {
-                return new NominalTypeSignature(sinfo, resolved, nsr.typeTokens.flatMap((te) => te.tterms));
+                const altns = nsr.altScope !== undefined ? new FullyQualifiedNamespace(nsr.altScope) : undefined;
+                return new NominalTypeSignature(sinfo, altns, resolved, nsr.typeTokens.flatMap((te) => te.tterms));
             }
         }
     }
@@ -2760,11 +2776,12 @@ class Parser {
         }
     }
 
-    private parseTypeScopedFirstExpression(access: {nsScope: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]}): Expression {
+    private parseTypeScopedFirstExpression(access: {altScope: string[] | undefined, nsScope: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]}): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
+        const altns = access.altScope !== undefined ? new FullyQualifiedNamespace(access.altScope) : undefined;
         const resolved = this.normalizeTypeNameChain(sinfo, access.nsScope, access.typeTokens);
-        const tsig = (resolved === undefined)  ? new ErrorTypeSignature(sinfo, access.nsScope.fullnamespace) : new NominalTypeSignature(sinfo, resolved, access.typeTokens.flatMap((te) => te.tterms));
+        const tsig = (resolved === undefined)  ? new ErrorTypeSignature(sinfo, access.nsScope.fullnamespace) : new NominalTypeSignature(sinfo, altns, resolved, access.typeTokens.flatMap((te) => te.tterms));
         const nnsig = this.parseNoneableOfType(tsig);
 
         if(this.testToken(SYM_hash)) {
@@ -4526,6 +4543,7 @@ class Parser {
                     }
                 }
                 else {
+                    this.consumeToken();
                     this.ensureToken(TokenStrings.IdentifierName, "namespace import");
                     const asns = this.parseIdentifierAsNamespaceOrTypeName();
 
@@ -4765,7 +4783,7 @@ class Parser {
             const corens = this.env.assembly.getCoreNamespace();
             const otype = corens.typedecls.find((td) => td.name === "Object") as AbstractNominalTypeDecl;
 
-            provides.push(new NominalTypeSignature(sinfo, otype, []));
+            provides.push(new NominalTypeSignature(sinfo, undefined, otype, []));
         }
 
         return provides;
@@ -5357,11 +5375,11 @@ class Parser {
 
                 //parser just reads the string, we will need to validate it later
                 if(vregex.endsWith("/")) {
-                    const vdecl = new RegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
+                    const vdecl = new RegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, iname, vregex);
                     this.env.currentNamespace.typedecls.push(vdecl);
                 }
                 else {
-                    const vdecl = new CRegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
+                    const vdecl = new CRegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, iname, vregex);
                     this.env.currentNamespace.typedecls.push(vdecl);
                 }
             }
@@ -5373,7 +5391,7 @@ class Parser {
                 }
 
                 //parser just reads the string, we will need to validate it later
-                const vdecl = new PathValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, pthglb);
+                const vdecl = new PathValidatorTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, iname, pthglb);
                 this.env.currentNamespace.typedecls.push(vdecl);
             }
             else {
@@ -5844,7 +5862,7 @@ class Parser {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, tdecl, []));
+        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
     }
 
     private static _s_lcre = /^%%[^\n]*/y;
@@ -6009,7 +6027,24 @@ class Parser {
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
-        const sffdecl = ns.functions.find((f) => f.name === "main");
+        const sffdecl = ns.functions.find((f) => f.name === fname);
+
+        return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
+    }
+
+    static test_parseSFunctionInFilePlus(core: CodeFileInfo[], macrodefs: string[], ctxfiles: CodeFileInfo[], code: string, fname: string): string | ParserError[] {
+        let assembly = new Assembly();
+
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [...ctxfiles, {srcpath: "main.bsq", filename: "main.bsq", contents: code}], macrodefs, assembly, registeredNamespaces);
+        
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
+        }
+
+        const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;
+        const sffdecl = ns.functions.find((f) => f.name === fname);
 
         return sffdecl !== undefined ? sffdecl.emit(new CodeFormatter()) : "**ERROR**";
     }

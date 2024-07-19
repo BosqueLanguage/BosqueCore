@@ -674,6 +674,48 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     }
 }
 
+class RegexValidatorTypeDecl extends AbstractEntityTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, regex: string) {
+        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class CRegexValidatorTypeDecl extends AbstractEntityTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, regex: string) {
+        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class PathValidatorTypeDecl extends AbstractEntityTypeDecl {
+    readonly pathglob: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, pathglob: string) {
+        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
+
+        this.pathglob = pathglob;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
+    }
+}
+
 abstract class InternalEntityTypeDecl extends AbstractEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, new FullyQualifiedNamespace(["Core"]) , name, AdditionalTypeDeclTag.Std);
@@ -693,48 +735,6 @@ class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
         fmt.indentPop();
 
         return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class CRegexValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class PathValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly pathglob: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
-        super(file, sinfo, attributes, name);
-
-        this.pathglob = pathglob;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
     }
 }
 

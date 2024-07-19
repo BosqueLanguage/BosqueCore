@@ -69,17 +69,17 @@ class TypeChecker {
 
     private getStringOfType(oftype: TypeSignature): TypeSignature {
         const stringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "StringOf") as StringOfTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, stringofdecl, [oftype]);
+        return new NominalTypeSignature(oftype.sinfo, undefined, stringofdecl, [oftype]);
     }
 
     private getCStringOfType(oftype: TypeSignature): TypeSignature {
         const cstringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "CStringOf") as CStringOfTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, cstringofdecl, [oftype]);
+        return new NominalTypeSignature(oftype.sinfo, undefined, cstringofdecl, [oftype]);
     }
 
     private getEventListOf(oftype: TypeSignature): TypeSignature {
         const eventlistdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, eventlistdecl, [oftype]);
+        return new NominalTypeSignature(oftype.sinfo, undefined, eventlistdecl, [oftype]);
     }
 
     private isBooleanType(t: TypeSignature): boolean {
@@ -929,7 +929,7 @@ class TypeChecker {
         }
 
         if(exp.rop === "some") {
-            return exp.setType(new NominalTypeSignature(exp.sinfo, corens.typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [etype]));
+            return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, corens.typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [etype]));
         }
         else {
             this.reportError(exp.sinfo, "Cannot infer type for special Ok/Err constructor");
@@ -3655,7 +3655,7 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
  
         //Make sure that any provides types are not adding on fields, consts, or functions
-        const etype = new NominalTypeSignature(tdecl.sinfo, tdecl, []);
+        const etype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const providesdecls = this.relations.resolveTransitiveProvidesDecls(etype, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
@@ -3670,7 +3670,7 @@ class TypeChecker {
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
 
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, []);
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
         this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
@@ -3694,7 +3694,7 @@ class TypeChecker {
         this.checkProvides(tdecl.provides);
 
         //Make sure that any provides types are not adding on fields!
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const providesdecls = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
@@ -3724,7 +3724,7 @@ class TypeChecker {
     }
 
     private checkInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, isentity);
     }
 
@@ -3828,7 +3828,7 @@ class TypeChecker {
 
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
@@ -3887,7 +3887,7 @@ class TypeChecker {
 
     private checkConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, false);
@@ -3895,7 +3895,7 @@ class TypeChecker {
     }
 
     private checkDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
@@ -3903,7 +3903,7 @@ class TypeChecker {
 
     private checkDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl) {
         this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, this.constraints, tdecl.fields);
 
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
@@ -3958,7 +3958,7 @@ class TypeChecker {
             this.constraints.pushConstraintScope(tdecl.terms);
         }
 
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
 
         //make sure all of the invariants on this typecheck
@@ -4202,7 +4202,7 @@ class TypeChecker {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, tdecl, []));
+        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {

@@ -27,6 +27,25 @@ function parseFunctionInFile(code: string): string {
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
+function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
+    const src = workflowLoadCoreSrc();
+    if(src === undefined) {
+        return "**ERROR**";
+    }
+
+    const ctxfiles = ctxcode.map((c, i) => {
+        return { 
+            srcpath: `/src/code_${i}.bsq`, 
+            filename: `code_${i}.bsq`, 
+            contents: c
+        };
+    });
+
+    const rr = Parser.test_parseSFunctionInFilePlus(src, ["EXEC_LIBS"], ctxfiles, code, "main");
+    return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
+
+}
+
 function generateExpFunction(exp: string, type: string): string {
     return `function main(): ${type} { return ${exp}; }`;
 }
@@ -58,8 +77,17 @@ function parseTestFunctionInFileError(code: string, error: string) {
     assert.equal(parseFunctionInFile(code), error);
 }
 
+function parseTestFunctionInFilePlus(code: string, rff: string, eres: string | undefined, ...ctxcode: string[]) {
+    assert.equal(parseFunctionInFilePlus(code.replace("[FUNC]", rff), ctxcode), wsnorm(eres || rff));
+}
+
+function parseTestFunctionInFilePlusError(code: string, error: string, ...ctxcode: string[]) {
+    assert.equal(parseFunctionInFilePlus(code, ctxcode), error);
+}
+
 export {
     parseTestExp, parseTestExpError,
     parseTestFunction, parseTestFunctionError,
-    parseTestFunctionInFile, parseTestFunctionInFileError
+    parseTestFunctionInFile, parseTestFunctionInFileError,
+    parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError
 };

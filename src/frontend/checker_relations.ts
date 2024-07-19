@@ -61,7 +61,7 @@ class TypeCheckerRelations {
             return [this.wellknowntypes.get("PathValidator") as NominalTypeSignature];
         }
         else if(t.decl instanceof DatatypeMemberEntityTypeDecl) {
-            return [new NominalTypeSignature(t.sinfo, t.decl.parentTypeDecl, t.alltermargs)];
+            return [new NominalTypeSignature(t.sinfo, t.altns, t.decl.parentTypeDecl, t.alltermargs)];
         }
         else if(t.decl instanceof TypedeclTypeDecl) {
             let provides: NominalTypeSignature[] = [this.wellknowntypes.get("Any") as NominalTypeSignature];
@@ -126,7 +126,7 @@ class TypeCheckerRelations {
             res = rr === undefined ? tsig : rr.tconstraint;
         }
         else if(tsig instanceof NominalTypeSignature) {
-            res = new NominalTypeSignature(tsig.sinfo, tsig.decl, tsig.alltermargs.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
+            res = new NominalTypeSignature(tsig.sinfo, tsig.altns, tsig.decl, tsig.alltermargs.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
         }
         else if(tsig instanceof EListTypeSignature) {
             res = new EListTypeSignature(tsig.sinfo, tsig.entries.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
@@ -352,14 +352,14 @@ class TypeCheckerRelations {
                 const hasnone = ptl.some((t) => t.decl.name === "None");
                 const some = ptl.find((t) => t.decl instanceof SomeTypeDecl);
                 if(hasnone && some !== undefined) {
-                    return new NominalTypeSignature(sinfo, corens.typedecls.find((tdecl) => tdecl.name === "Option") as TypedeclTypeDecl, some.alltermargs);
+                    return new NominalTypeSignature(sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Option") as TypedeclTypeDecl, some.alltermargs);
                 }
 
                 //check for special case of Ok+Err -> Result
                 const okopt = ptl.find((t) => t.decl instanceof OkTypeDecl);
                 const erropt = ptl.find((t) => t.decl instanceof ErrTypeDecl);
                 if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs, tconstrain)) {
-                    return new NominalTypeSignature(sinfo, corens.typedecls.find((tdecl) => tdecl.name === "Result") as TypedeclTypeDecl, okopt.alltermargs);
+                    return new NominalTypeSignature(sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Result") as TypedeclTypeDecl, okopt.alltermargs);
                 }
             }
 
@@ -367,7 +367,7 @@ class TypeCheckerRelations {
                 //check for complete set of datatype members
                 const dptl = ttl as NominalTypeSignature[];
 
-                const pptype = new NominalTypeSignature(dptl[0].sinfo, (dptl[0].decl as DatatypeMemberEntityTypeDecl).parentTypeDecl, dptl[0].alltermargs);
+                const pptype = new NominalTypeSignature(dptl[0].sinfo, dptl[0].altns, (dptl[0].decl as DatatypeMemberEntityTypeDecl).parentTypeDecl, dptl[0].alltermargs);
                 const allsameparents = dptl.every((t) => this.isSubtypeOf(t, pptype, tconstrain));
             
                 if(allsameparents) {
@@ -503,18 +503,18 @@ class TypeCheckerRelations {
             const corens = this.assembly.getCoreNamespace();
 
             if(t.decl instanceof OptionTypeDecl) {
-                const some = new NominalTypeSignature(t.sinfo, corens.typedecls.find((tdecl) => tdecl.name === "Some") as SomeTypeDecl, t.alltermargs);
+                const some = new NominalTypeSignature(t.sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Some") as SomeTypeDecl, t.alltermargs);
                 return [this.wellknowntypes.get("None") as TypeSignature, some];
             }
             else if(t.decl instanceof ResultTypeDecl) {
                 const tresult = corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl;
-                const tok = new NominalTypeSignature(t.sinfo, tresult.getOkType(), t.alltermargs);
-                const terr = new NominalTypeSignature(t.sinfo, tresult.getErrType(), t.alltermargs);
+                const tok = new NominalTypeSignature(t.sinfo, undefined, tresult.getOkType(), t.alltermargs);
+                const terr = new NominalTypeSignature(t.sinfo, undefined, tresult.getErrType(), t.alltermargs);
 
                 return [tok, terr];
             }
             else if(t.decl instanceof DatatypeTypeDecl) {
-                return t.decl.associatedMemberEntityDecls.map((mem) => new NominalTypeSignature(mem.sinfo, mem, t.alltermargs));
+                return t.decl.associatedMemberEntityDecls.map((mem) => new NominalTypeSignature(mem.sinfo, t.altns, mem, t.alltermargs));
             }
             else {
                 return [t];

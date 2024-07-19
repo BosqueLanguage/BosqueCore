@@ -189,6 +189,21 @@ abstract class ParserScopeInfo {
         return argi !== undefined && !argi.isConst();
     }
 
+    isDefinedVariable_helper(srcname: string): boolean{
+        for (let i = this.blockscope.length - 1; i >= 0; --i) {
+            const vv = this.blockscope[i].lookupVariableInfo(srcname);
+            if(vv !== undefined) {
+                return true;
+            }
+        }
+
+        if(this.args.some((arg) => arg.srcname === srcname)) {
+            return true;
+        }
+
+        return false;
+    }
+
     useVariable_helper(srcname: string): string | undefined {
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
             const vv = this.blockscope[i].lookupVariableInfo(srcname);
@@ -207,6 +222,7 @@ abstract class ParserScopeInfo {
 
     abstract getBinderVarName(srcname: string): string;
 
+    abstract isDefinedVariable(srcname: string): boolean;
     abstract useVariable(srcname: string): [string, boolean] | undefined;
 }
 
@@ -218,6 +234,10 @@ class StandardScopeInfo extends ParserScopeInfo {
     getBinderVarName(srcname: string): string {
         const ctr = this.getBinderVarName_helper(srcname);
         return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+    }
+
+    override isDefinedVariable(srcname: string): boolean {
+        return this.isDefinedVariable_helper(srcname);
     }
 
     useVariable(srcname: string): [string, boolean] | undefined {
@@ -244,6 +264,16 @@ class LambdaScopeInfo extends ParserScopeInfo {
     getBinderVarName(srcname: string): string {
         const ctr = (this.enclosing.getBinderVarName_helper(srcname) + this.getBinderVarName_helper(srcname));
         return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+    }
+
+    override isDefinedVariable(srcname: string): boolean {
+        const tdef = this.isDefinedVariable_helper(srcname);
+        if(tdef) {
+            return true;
+        }
+        else {
+            return this.enclosing.isDefinedVariable(srcname);
+        }
     }
 
     useVariable(srcname: string): [string, boolean] | undefined {
@@ -339,7 +369,7 @@ class ParserEnvironment {
     identifierResolvesAsVariable(srcname: string): boolean {
         assert(this.scope !== undefined);
 
-        return this.scope.useVariable(srcname) !== undefined;
+        return this.scope.isDefinedVariable(srcname);
     }
 
     addVariable(srcname: string, isconst: boolean, ignoreok: boolean): boolean {
