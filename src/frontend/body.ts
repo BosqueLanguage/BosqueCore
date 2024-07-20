@@ -1410,24 +1410,22 @@ class IfTest {
 
 class IfExpression extends Expression {
     readonly test: IfTest;
+    readonly binder: BinderInfo | undefined;
     readonly trueValue: Expression
-    readonly trueValueBinder: BinderInfo | undefined;
     readonly falseValue: Expression;
-    readonly falseValueBinder: BinderInfo | undefined;
 
-    constructor(sinfo: SourceInfo, test: IfTest, trueValue: Expression, trueValueBinder: BinderInfo | undefined, falseValue: Expression, falseValueBinder: BinderInfo | undefined) {
+    constructor(sinfo: SourceInfo, test: IfTest, binder: BinderInfo | undefined, trueValue: Expression, falseValue: Expression) {
         super(ExpressionTag.IfExpression, sinfo);
         this.test = test;
+        this.binder = binder;
         this.trueValue = trueValue;
-        this.trueValueBinder = trueValueBinder;
         this.falseValue = falseValue;
-        this.falseValueBinder = falseValueBinder;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         let bexps: [string, string] = ["", ""];
-        if(this.trueValueBinder !== undefined) {
-            bexps = this.trueValueBinder.emit();
+        if(this.binder !== undefined) {
+            bexps = this.binder.emit();
         }
 
         const itest = this.test.itestopt !== undefined ? `${this.test.itestopt.emit(fmt)}` : "";
@@ -1874,20 +1872,20 @@ class ReturnStatement extends Statement {
 
 class IfStatement extends Statement {
     readonly cond: IfTest;
+    readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
-    readonly trueBinder: BinderInfo | undefined;
     
-    constructor(sinfo: SourceInfo, cond: IfTest, trueBlock: BlockStatement, trueBinder: BinderInfo | undefined) {
+    constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
         this.cond = cond;
+        this.binder = binder;
         this.trueBlock = trueBlock;
-        this.trueBinder = trueBinder;
     }
 
     emit(fmt: CodeFormatter): string {
         let bexps: [string, string] = ["", ""];
-        if(this.trueBinder !== undefined) {
-            bexps = this.trueBinder.emit();
+        if(this.binder !== undefined) {
+            bexps = this.binder.emit();
         }
 
         const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
@@ -1899,24 +1897,22 @@ class IfStatement extends Statement {
 
 class IfElseStatement extends Statement {
     readonly cond: IfTest;
+    readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
-    readonly trueBinder: BinderInfo | undefined;
     readonly falseBlock: BlockStatement;
-    readonly falseBinder: BinderInfo | undefined;
 
-    constructor(sinfo: SourceInfo, cond: IfTest, trueBlock: BlockStatement, trueBinder: BinderInfo | undefined, falseBlock: BlockStatement, falseBinder: BinderInfo | undefined) {
+    constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement,falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
         this.cond = cond;
+        this.binder = binder;
         this.trueBlock = trueBlock;
-        this.trueBinder = trueBinder;
         this.falseBlock = falseBlock;
-        this.falseBinder = falseBinder;
     }
 
     emit(fmt: CodeFormatter): string {
         let bexps: [string, string] = ["", ""];
-        if(this.trueBinder !== undefined) {
-            bexps = this.trueBinder.emit();
+        if(this.binder !== undefined) {
+            bexps = this.binder.emit();
         }
 
         const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
@@ -1976,9 +1972,9 @@ class SwitchStatement extends Statement {
 
 class MatchStatement extends Statement {
     readonly sval: [Expression, BinderInfo | undefined];
-    readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined}[];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined}[]) {
+    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
         this.matchflow = flow;

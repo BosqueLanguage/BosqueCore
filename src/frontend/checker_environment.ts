@@ -132,15 +132,7 @@ class TypeEnvironment {
             return localdef;
         }
 
-        let parent = this.parent;
-        while(parent !== undefined) {
-            const vv = parent.resolveLambdaCaptureVarInfoFromSrcName(vname);
-            if(vv !== undefined) {
-                return vv;
-            }
-        }
-
-        return undefined;
+        return this.parent !== undefined ? this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname) : undefined;
     }
 
     resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
@@ -248,16 +240,6 @@ class TypeEnvironment {
         }
 
         return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
-    }
-
-    static gatherEnvironmentsOptBinderType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
-        if(binfo === undefined) {
-            return undefined;
-        }
-        else {
-            const topts = envs.filter((e) => e.normalflow).map((e) => e.resolveLocalVarInfoFromScopeName(binfo.scopename) as VarInfo);
-            return topts.length !== 0 ? topts.map((v) => v.vtype) : undefined;
-        }
     }
 
     static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo | undefined, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {

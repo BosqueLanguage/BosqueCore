@@ -3577,25 +3577,20 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.consumeToken();
-        const [iexp, binder, implicitdef, _, itest] = this.parseIfTest(true);
+        const [iexp, bindername, implicitdef, _, itest] = this.parseIfTest(true);
 
         this.ensureAndConsumeTokenIf(KW_then, "if-expression")
 
         const ifvalueinfo = this.parseExpression();
-        let btrue: BinderInfo | undefined = undefined;
-        if(binder !== undefined) {
-            btrue = new BinderInfo(binder, implicitdef, false);
+        let binder: BinderInfo | undefined = undefined;
+        if(bindername !== undefined) {
+            binder = new BinderInfo(bindername, implicitdef, false);
         }
 
         this.ensureAndConsumeTokenIf(KW_else, "if-expression");
         const elsevalueinfo = this.parseExpression();
 
-        let belse: BinderInfo | undefined = undefined;
-        if(binder !== undefined) {
-            belse = new BinderInfo(binder, implicitdef, false);
-        }
-
-        return new IfExpression(sinfo, new IfTest(iexp, itest), ifvalueinfo, btrue, elsevalueinfo, belse);
+        return new IfExpression(sinfo, new IfTest(iexp, itest), binder, ifvalueinfo, elsevalueinfo);
     }
 
     private parseExpression(): Expression {
@@ -4211,12 +4206,12 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
-        const [iexp, binder, implicitdef, ispostflow, itest] = this.parseIfTest(false);
+        const [iexp, bindername, implicitdef, ispostflow, itest] = this.parseIfTest(false);
 
         const ifbody = this.parseScopedBlockStatement();
-        let ifbind: BinderInfo | undefined = undefined;
-        if(binder !== undefined) {
-            ifbind = new BinderInfo(binder, implicitdef, ispostflow);
+        let binder: BinderInfo | undefined = undefined;
+        if(bindername !== undefined) {
+            binder = new BinderInfo(bindername, implicitdef, ispostflow);
         }
 
         let conds: {cond: IfTest, block: BlockStatement}[] = [];
@@ -4232,16 +4227,11 @@ class Parser {
 
         if(conds.length === 0) {
             if(!this.testAndConsumeTokenIf(KW_else)) {
-                return new IfStatement(sinfo, new IfTest(iexp, itest), ifbody, ifbind);
+                return new IfStatement(sinfo, new IfTest(iexp, itest), binder, ifbody);
             }
             else {
                 const elsebody = this.parseScopedBlockStatement();
-                let elsebind: BinderInfo | undefined = undefined;
-                if(binder !== undefined) {
-                    elsebind = new BinderInfo(binder, false, ispostflow);
-                }
-
-                return new IfElseStatement(sinfo, new IfTest(iexp, itest), ifbody, ifbind, elsebody, elsebind);
+                return new IfElseStatement(sinfo, new IfTest(iexp, itest), binder, ifbody, elsebody);
             }
         }
         else {
@@ -4292,14 +4282,14 @@ class Parser {
 
         const [mexp, binder, implicitdef, ispostflow] = this.parseMatchTest(true);
 
-        let entries: { mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined  }[] = [];
+        let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
 
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
         const mvalue = this.parseScopedBlockStatement();
 
-        entries.push({ mtype: mtype, value: mvalue, bindername: binder });
+        entries.push({ mtype: mtype, value: mvalue });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
             
@@ -4307,7 +4297,7 @@ class Parser {
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
             const mvaluex = this.parseScopedBlockStatement();
 
-            entries.push({ mtype: mtypex, value: mvaluex, bindername: binder });
+            entries.push({ mtype: mtypex, value: mvaluex });
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 

@@ -875,21 +875,22 @@ class TypeChecker {
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
         const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
-        xxxx;
-
-        if(exp.isCaptured) {
-            return exp.setType(env.resolveLambdaCaptureVarType(exp.scopename) || new ErrorTypeSignature(exp.sinfo, undefined));
+        if(vinfo !== undefined) {
+            this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+            return exp.setType(vinfo.vtype);
         }
         else {
-            const vinfo = env.resolveLocalVarInfo(exp.scopename);
-            if(vinfo === undefined) {
+            const cinfo = env.resolveLambdaCaptureVarInfoFromSrcName(exp.srcname);
+            if(cinfo === undefined) {
                 this.reportError(exp.sinfo, `Variable ${exp.scopename} is not declared here`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+                exp.isCaptured = true;
+                exp.scopename = cinfo.scopename;
 
-                return exp.setType(vinfo.vtype);
+                this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+                return exp.setType(cinfo.vtype);
             }
         }
     }
@@ -1421,8 +1422,7 @@ class TypeChecker {
             }
 
             this.checkError(exp.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(exp.sinfo, exp.trueValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
-            this.checkError(exp.sinfo, exp.falseValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(exp.sinfo, exp.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkExpression(env, exp.trueValue, typeinfer);
             tfalse = this.checkExpression(env, exp.falseValue, typeinfer);
@@ -1432,20 +1432,18 @@ class TypeChecker {
             this.checkError(exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
-            if(exp.trueValueBinder === undefined) {
+            if(exp.binder === undefined) {
                 ttrue = this.checkExpression(env, exp.trueValue, typeinfer);
-            }
-            else {
-                const nenv = env.addLocalVariable(exp.trueValueBinder.scopename, splits.ttrue || eetype, true, true);
-                ttrue = this.checkExpression(nenv, exp.trueValue, typeinfer);
-            }
-
-            if(exp.falseValueBinder === undefined) {
                 tfalse = this.checkExpression(env, exp.falseValue, typeinfer);
             }
             else {
-                const nenv = env.addLocalVariable(exp.falseValueBinder.scopename, splits.tfalse || eetype, true, true);
-                tfalse = this.checkExpression(nenv, exp.falseValue, typeinfer);
+                exp.binder.scopename = env.getBindScopeName(exp.binder.srcname);
+
+                const tenv = env.addBinder(exp.binder.srcname, exp.binder.scopename, splits.ttrue || eetype, true, true);
+                ttrue = this.checkExpression(tenv, exp.trueValue, typeinfer);
+
+                const fenv = env.addBinder(exp.binder.srcname, exp.binder.scopename, splits.tfalse || eetype, true, true);
+                tfalse = this.checkExpression(fenv, exp.falseValue, typeinfer);
             }
         }
         
@@ -2588,13 +2586,13 @@ class TypeChecker {
     private checkVariableDeclarationStatement(env: TypeEnvironment, stmt: VariableDeclarationStatement): TypeEnvironment {
         this.checkTypeSignature(stmt.vtype);
         
-        return env.addLocalVariable(stmt.name, stmt.vtype, false, false);
+        return env.addLocalVar(stmt.name, stmt.vtype, false, false);
     }
     
     private checkVariableMultiDeclarationStatement(env: TypeEnvironment, stmt: VariableMultiDeclarationStatement): TypeEnvironment {
         for(let i = 0; i < stmt.decls.length; ++i) {
             this.checkTypeSignature(stmt.decls[i].vtype);
-            env = env.addLocalVariable(stmt.decls[i].name, stmt.decls[i].vtype, false, false);
+            env = env.addLocalVar(stmt.decls[i].name, stmt.decls[i].vtype, false, false);
         }
         return env;
     }
@@ -2608,7 +2606,7 @@ class TypeChecker {
         //TODO: do we need to update any other type env info here based on RHS actions???
 
         this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-        return stmt.name !== "_" ? env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true) : env; //try to recover a bit
+        return stmt.name !== "_" ? env.addLocalVar(stmt.name, itype || rhs, stmt.isConst, true) : env; //try to recover a bit
     }
 
     private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
@@ -2648,14 +2646,14 @@ class TypeChecker {
             //TODO: do we need to update any other type env info here based on RHS actions???
 
             this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-            env = decl.name !== "_" ? env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true) : env; //try to recover a bit
+            env = decl.name !== "_" ? env.addLocalVar(decl.name, itype || etype, stmt.isConst, true) : env; //try to recover a bit
         }
 
         return env;
     }
 
     private checkVariableAssignmentStatement(env: TypeEnvironment, stmt: VariableAssignmentStatement): TypeEnvironment {
-        const vinfo = env.resolveLocalVarInfo(stmt.name);
+        const vinfo = env.resolveLocalVarInfoFromSrcName(stmt.name);
         if(vinfo === undefined && stmt.name !== "_") {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
             return env;
@@ -2676,7 +2674,7 @@ class TypeChecker {
     }
 
     private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
-        const opts = stmt.names.map((vname) => env.resolveLocalVarInfo(vname));
+        const opts = stmt.names.map((vname) => env.resolveLocalVarInfoFromSrcName(vname));
         let iopts: (TypeSignature | undefined)[] = [];
         for(let i = 0; i < opts.length; ++i) {
             if(opts[i] !== undefined) {
@@ -2729,7 +2727,7 @@ class TypeChecker {
     }
 
     private checkVariableRetypeStatement(env: TypeEnvironment, stmt: VariableRetypeStatement): TypeEnvironment {
-        const vinfo = env.resolveLocalVarInfo(stmt.name);
+        const vinfo = env.resolveLocalVarInfoFromSrcName(stmt.name);
         if(vinfo === undefined) {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
             return env;
@@ -2784,7 +2782,7 @@ class TypeChecker {
             return;
         }
 
-        const vinfo = env.resolveLocalVarInfo(binfo.srcname);
+        const vinfo = env.resolveLocalVarInfoFromScopeName(binfo.scopename);
         if(vinfo === undefined) {
             this.reportError(sinfo, `Variable ${binfo.srcname} is not declared`);
             return
@@ -2809,29 +2807,29 @@ class TypeChecker {
             }
 
             this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue);
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
-            if(stmt.trueBinder === undefined) {
+            if(stmt.binder === undefined) {
                 ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue);
             }
             else {
-                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue || eetype);
+                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
+
+                const lubtype = ttrue.normalflow ? eetype : splits.tfalse;
+                return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
             }
         }
-
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, env);
-        const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
-
-        this.checkFlowRebinder(stmt.sinfo, stmt.trueBinder, env);
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue);
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
@@ -2845,39 +2843,45 @@ class TypeChecker {
             }
 
             this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
-            this.checkError(stmt.sinfo, stmt.falseBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             tfalse = this.checkBlockStatement(env, stmt.falseBlock);
+            return TypeEnvironment.mergeEnvironmentsSimple(ttrue, tfalse);
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
             this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
             this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
-            if(stmt.trueBinder === undefined) {
+            if(stmt.binder === undefined) {
                 ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-            }
-            else {
-                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue || eetype);
-                ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
-            }
-
-            if(stmt.falseBinder === undefined) {
                 tfalse = this.checkBlockStatement(env, stmt.falseBlock);
+                return TypeEnvironment.mergeEnvironmentsSimple(ttrue, tfalse);
             }
             else {
-                const nenv = env.pushNewLocalBinderScope(stmt.falseBinder.scopename, splits.tfalse || eetype);
-                tfalse = this.checkStatement(nenv, stmt.falseBlock).popLocalScope();
+                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+
+                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
+                ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
+
+                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.tfalse || eetype);
+                tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
+
+                if(ttrue.normalflow && tfalse.normalflow) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                }
+                else if(ttrue.normalflow) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.ttrue as TypeSignature, ttrue, tfalse);
+                }
+                else if(tfalse.normalflow) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.tfalse as TypeSignature, ttrue, tfalse);
+                }
+                else {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                }
             }
         }
-        
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, tfalse);
-        const mtype = btypes !== undefined ? this.relations.flowTypeLUB(stmt.sinfo, eetype, btypes, this.constraints) : undefined;
-
-        this.checkFlowRebinder(stmt.sinfo, stmt.trueBinder, env);
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue, tfalse);
     }
 
     private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
@@ -2956,7 +2960,11 @@ class TypeChecker {
                 this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
                 exhaustive = true;
 
-                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints)) : env;
+                let cenv = env;
+                if(stmt.matchflow[i].bindername !== undefined) {
+                    stmt.
+                    cenv = env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints))
+                }
                 cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
 
                 if(stmt.matchflow[i].bindername !== undefined) {
