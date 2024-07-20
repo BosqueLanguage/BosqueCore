@@ -242,10 +242,10 @@ class TypeEnvironment {
         return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
-    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo | undefined, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
+    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
         const menv = TypeEnvironment.mergeEnvironmentsSimple(origenv, ...envs);
 
-        if(binfo === undefined || refinetype === undefined) {
+        if(!binfo.refineonfollow || refinetype === undefined) {
             return menv;
         }
         else {

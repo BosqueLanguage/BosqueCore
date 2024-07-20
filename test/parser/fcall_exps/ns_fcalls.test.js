@@ -1,4 +1,4 @@
-import { parseTestFunctionInFile, parseTestFunctionInFileError } from "../../../bin/test/parser/parse_nf.js";
+import { parseTestFunctionInFile, parseTestFunctionInFileError, parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- NamespaceFunction Implicit", () => {
@@ -29,12 +29,11 @@ describe ("Parser -- NamespaceFunction Implicit", () => {
 
     it("should parse ref", function () {
         parseTestFunctionInFile('function foo(ref x: Int): Int { return 1i; } [FUNC]', 'function main(): Int { var y: Int = 0i; return foo(ref y); }');
-        parseTestFunctionInFile('function foo(ref x: Int): Int { return 1i; } [FUNC]', 'function main(): Int { var y: Int = 0i; return foo(ref x = y); }');
-        parseTestFunctionInFile('function foo(ref x: Int): Int { return 1i; } [FUNC]', 'function main(): Int { var x: Int = 0i; return foo(ref x = x); }');
     });
 
     it("should parse default", function () {
-        parseTestFunctionInFile('function foo(x: Int = 3i, y: Int = $x + 1i): Int { return x + y; } [FUNC]', 'function main(): Int { return foo(1i, 2i); }');    
+        parseTestFunctionInFile('function foo(x: Int = 3i, y: Int = $x + 1i): Int { return x + y; } [FUNC]', 'function main(): Int { return foo(1i, 2i); }');
+        parseTestFunctionInFile('function foo(x: Int = 3i, y: Int = $x + 1i): Int { return x + y; } [FUNC]', 'function main(): Int { return foo(1i); }');    
     });
 
     it("should fail positional", function () {
@@ -62,6 +61,28 @@ describe ("Parser -- NamespaceFunction Implicit", () => {
 
     it("should fail default", function () {
         parseTestFunctionInFileError('function foo(x: Int 1i, y: Int): Int { return x + y; } function main(): Int { return foo(1i 2i); ', 'Expected ")" but got "[RECOVER]" when parsing "function parameter list"');
-        parseTestFunctionInFileError('function foo(x: Int =, y: Int): Int { return x + y; } function main(): Int { return foo(, 2i); ', 'err60');
+        parseTestFunctionInFileError('function foo(x: Int =, y: Int): Int { return x + y; } function main(): Int { return foo(, 2i); ', 'Unexpected token in expression -- ,');
+    });
+});
+
+const ctxcode = [
+    'declare namespace NSOther; function foo(x: Int): Int { return x; }'
+];
+
+describe ("Parser -- access argument", () => {
+    it("should parse explicit Same access", function () {
+        parseTestFunctionInFile("function foo(x: Int): Int { return x; } [FUNC]", 'function main(x: Int): Int { return Main::foo(x); }'); 
+    });
+
+    it("should parse explicit Other access", function () {
+        parseTestFunctionInFilePlus("declare namespace Main { using NSOther; } [FUNC]", 'function main(x: Int): Int { return NSOther::foo(x); }', undefined, ...ctxcode);  //Core is always ok
+    });
+
+    it("should fail undefined namespace", function () {
+        parseTestFunctionInFilePlusError('declare namespace Main; function main(x: Int): Int { return Other::foo(x); }', "Unknown namespace Other", ...ctxcode);  //NS does not exist
+    });
+
+    it("should fail not-imported namespace", function () {
+        parseTestFunctionInFilePlusError('declare namespace Main; function main(x: Int): Int { return NSOther::foo(x); }', "Missing import for namespace NSOther", ...ctxcode);  //NS exists but not imported
     });
 });

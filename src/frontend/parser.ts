@@ -2003,7 +2003,7 @@ class Parser {
         }
 
         let optDefaultExp: ConstantExpressionValue | undefined = undefined;
-        if(this.testToken(SYM_eq)) {
+        if(this.testAndConsumeTokenIf(SYM_eq)) {
             optDefaultExp = this.parseConstExpression(ptype, boundtemplates);
         }
 
@@ -2212,7 +2212,7 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.isRefParam, param.name));
+        const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
@@ -2759,10 +2759,10 @@ class Parser {
 
         const constOpt = nspace.consts.find((c) => c.name === idname);
         const funOpt = nspace.functions.find((f) => f.name === idname);
-        if(constOpt) {
+        if(constOpt !== undefined) {
             return new AccessNamespaceConstantExpression(sinfo, false, nspace.fullnamespace, idname);
         }
-        else if(funOpt) {
+        else if(funOpt !== undefined) {
             const targs = this.parseInvokeTemplateArguments();
             const rec = this.parseInvokeRecursiveArgs();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, true);
@@ -3499,7 +3499,7 @@ class Parser {
             bindername = undefined;
         }
 
-        if(itest !== undefined && implicitdef) {
+        if(dobind && implicitdef) {
             if(exp instanceof AccessVariableExpression) {
                 bindername = "$" + exp.srcname;
             }
@@ -3516,11 +3516,10 @@ class Parser {
         return [exp, bindername, implicitdef, ispostflow, itest];
     }
 
-    private parseMatchTest(isexp: boolean): [Expression, string | undefined, boolean, boolean] {
+    private parseMatchTest(isexp: boolean): [Expression, string | undefined, boolean] {
         let exp: Expression;
         let bindername: string | undefined = undefined;
         let implicitdef: boolean = true;
-        let ispostflow: boolean;
         let dobind: boolean;
 
         this.ensureAndConsumeTokenIf(SYM_lparen, "swtich/match test");
@@ -3533,23 +3532,7 @@ class Parser {
         exp = this.parseExpression();
         this.ensureAndConsumeTokenIf(SYM_rparen, "swtich/match test");
 
-        if(this.testAndConsumeTokenIf(SYM_atat)) {
-            ispostflow = true;
-            dobind = true;
-        }
-        else if(this.testAndConsumeTokenIf(SYM_at)) {
-            ispostflow = false;
-            dobind = true;
-        }
-        else {
-            ispostflow = false;
-            dobind = false;
-        }
-
-        if(isexp && ispostflow) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow in switch/match expression");
-            ispostflow = false;
-        }
+        dobind = this.testAndConsumeTokenIf(SYM_at);
 
         if(bindername !== undefined && !dobind) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder name without '@' or '@@'");
@@ -3565,12 +3548,7 @@ class Parser {
             }
         }
 
-        if(ispostflow && (!implicitdef || !(exp instanceof AccessVariableExpression))) {
-            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow without implicitdef or using a non-variable expression");
-            ispostflow = false;
-        }
-
-        return [exp, bindername, implicitdef, ispostflow];
+        return [exp, bindername, implicitdef];
     }
 
     private parseIfExpression(): Expression {
@@ -4280,7 +4258,7 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
 
-        const [mexp, binder, implicitdef, ispostflow] = this.parseMatchTest(true);
+        const [mexp, binder, implicitdef] = this.parseMatchTest(true);
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
@@ -4303,7 +4281,7 @@ class Parser {
 
         let bindinfo: BinderInfo | undefined = undefined;
         if(binder !== undefined) {
-            bindinfo = new BinderInfo(binder, implicitdef, ispostflow);
+            bindinfo = new BinderInfo(binder, implicitdef, false);
         }
 
         return new MatchStatement(sinfo, [mexp, bindinfo], entries);
