@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -440,52 +440,62 @@ class TypeChecker {
         }
     }
 
-    /*
-    private checkArgumentList(sinfo: SourceInfo, env: ExpressionTypeEnvironment, args: Expression[], calleeparams: FunctionParameter[], fbinds: TemplateBindScope): [TIRExpression[], [string, ResolvedFunctionType, TIRCodePack][], TIRPCodeKey[]] {
-        this.raiseErrorIf(sinfo, args.length !== calleeparams.length, `call expected ${calleeparams.length} arguments but got ${args.length}`);
-        const eenvs = args.map((arg, ii) => {
-            if (this.isPCodeTypedExpression(arg, env)) {
-                const expectedfunc = this.normalizeTypeFunction(calleeparams[ii].type, fbinds);
-                this.raiseErrorIf(sinfo, expectedfunc === undefined, `Expected function argument but got ${calleeparams[ii].type.getDiagnosticName()}`);
+    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, param: InvokeParameterDecl) {
+        if(arg instanceof SpreadArgumentValue) {
+            this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
+        }
 
-                if(arg instanceof AccessVariableExpression) {
-                    const pcl = env.lookupArgPCode(arg.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType};
-                    return [calleeparams[ii].name, new TIRAccessVariableExpression(arg.sinfo, arg.name, pcl.pcode.codekey), pcl.pcode, expectedfunc as ResolvedFunctionType] as [string, TIRExpression, TIRCodePack, ResolvedFunctionType];
+        if(param.isRefParam) {
+            this.checkError(arg.exp.sinfo, !(arg instanceof RefArgumentValue), `Parameter ${param.name} is a reference parameter and must be passed by reference`);
+        }
+        else {
+            this.checkError(arg.exp.sinfo, (arg instanceof RefArgumentValue), `Parameter ${param.name} is not a reference parameter and must be passed by value`);
+        }
+
+        if(arg instanceof NamedArgumentValue) {
+            this.checkError(arg.exp.sinfo, arg.name !== param.name, `Named argument ${arg.name} does not match parameter name ${param.name}`);
+        }
+
+        const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(param.type));
+        this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, param.type, this.constraints), `Argument ${param.name} expected type ${param.type.tkeystr} but got ${argtype.tkeystr}`);
+    }
+
+    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], param: InvokeParameterDecl) {
+        const etype = xxxx;
+
+        return args.every((arg) => {
+            xxxx;
+        });
+    }
+
+    private checkArgumentList(env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[]) {
+        let argsuffle: ArgumentValue[] = [];
+
+        //fill in all the named arguments
+        for(let i = 0; i < args.length; ++i) {
+            if(args[i] instanceof NamedArgumentValue) {
+                const narg = args[i] as NamedArgumentValue;
+                const paramidx = params.findIndex((p) => p.name === narg.name);
+                if(paramidx === -1) {
+                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} not found in parameter list`);
                 }
                 else {
-                    const pcl = this.checkPCodeExpression(env, arg as ConstructorPCodeExpression, expectedfunc as ResolvedFunctionType);
-                    return [calleeparams[ii].name, pcl[0], pcl[0].pcodepack, pcl[1]] as [string, TIRExpression, TIRCodePack, ResolvedFunctionType];
-                }   
-            }
-            else {
-                return this.checkExpression(env, arg, this.normalizeTypeOnly(calleeparams[ii].type, fbinds));
-            }
-        });
-
-        let cexps: TIRExpression[] = [];
-        let ftypes: [string, ResolvedFunctionType, TIRCodePack][] = [];
-        let pckeys: TIRPCodeKey[] = [];
-        for (let i = 0; i < eenvs.length; ++i) {
-            const oftype = this.normalizeTypeGeneral(calleeparams[i].type, fbinds);
-
-            if (Array.isArray(eenvs[i])) {
-                const eev = eenvs[i] as [string, TIRExpression, TIRCodePack, ResolvedFunctionType];
-
-                cexps.push(eev[1]);
-                ftypes.push([eev[0], eev[3], eev[2]]);
-                pckeys.push(eev[2].codekey);
-            }
-            else {
-                assert(oftype instanceof ResolvedType, "Something went wrong");
-                this.raiseErrorIf(args[i].sinfo, !this.subtypeOf((eenvs[i] as ExpressionTypeEnvironment).trepr, oftype as ResolvedType), `${(eenvs[i] as ExpressionTypeEnvironment).trepr.typeID} is not a subtype of ${oftype.typeID}`);
-
-                cexps.push(this.emitCoerceIfNeeded(eenvs[i] as ExpressionTypeEnvironment, args[i].sinfo, oftype as ResolvedType).expressionResult);
+                    argsuffle[paramidx] = narg;
+                }
             }
         }
 
-        return [cexps, ftypes, pckeys];
+        let ppos = argsuffle.findIndex((apos) => apos === undefined);
+        let apos = args.findIndex((apos) => !(apos instanceof NamedArgumentValue));
+        while(ppos < params.length && apos < args.length) {
+            argsuffle[ppos] = args[apos];
+
+            ppos = argsuffle.slice(ppos + 1).findIndex((apos) => apos === undefined);
+            apos = args.slice(apos + 1).findIndex((apos) => !(apos instanceof NamedArgumentValue));
+        }
+
+        xxxx; //TODO: disallow optionals and rest parameters
     }
-    */
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
         return exp.setType(this.getWellKnownType("None"));
@@ -1014,7 +1024,7 @@ class TypeChecker {
     }
 
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkCallNamespaceFunctionExpression");
+        xxx;
     }
 
     private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression): TypeSignature {
