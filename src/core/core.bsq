@@ -159,6 +159,42 @@ __internal __typedeclable entity TemplateCString provides Any {
 __internal entity Pair<T, U> provides Any {
 }
 
+%** Result type. **%
+__internal concept Result<T, E> provides Any {
+    __internal entity Ok provides Result<T, E> {
+    }
+
+    __internal entity Err provides Result<T, E> {
+    }
+
+/*
+    method isOk(): Bool {
+        return this@<Result<T, E>::Ok>;
+    }
+
+    method isErr(): Bool {
+        return this@<Result<T, E>::Err>;
+    }
+
+    method value(): T {
+        return this@<Result<T, E>::Ok>.getv();
+    }
+
+    method error(): E {
+        return this@<Result<T, E>::Err>.gete();
+    }
+
+    method convert<U, V>(): Result<U, V> {
+        if(this?<Result<T, E>::Ok>) {
+            return Result<U, V>::Ok{this.value()@<U>};
+        }
+        else {
+            return Result<U, V>::Err{this.error()@<V>};
+        }
+    }
+*/
+}
+
 namespace Interpolate {
     %** Special declaration of string interpolation function. **%
     function string(): String = special_method;
