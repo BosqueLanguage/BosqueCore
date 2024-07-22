@@ -806,7 +806,19 @@ class TypeCheckerRelations {
         }
         else if(t.decl instanceof InternalEntityTypeDecl) {
             const isdeclable = t.decl.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
-            return isdeclable ? t : undefined;
+            if(!isdeclable) {
+                return undefined;
+            }
+
+            if(t.decl instanceof StringOfTypeDecl) {
+                return this.wellknowntypes.get("String") as TypeSignature;
+            }
+            else if(t.decl instanceof CStringOfTypeDecl) {
+                return this.wellknowntypes.get("CString") as TypeSignature;
+            }
+            else {
+                return t;
+            }
         }
         else {
             return undefined;
@@ -827,6 +839,17 @@ class TypeCheckerRelations {
         else {
             return undefined;
         }
+    }
+
+    getExpandoableOfType(t: TypeSignature): TypeSignature | undefined {
+        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+
+        if(!(t instanceof NominalTypeSignature)) {
+            return undefined;
+        }
+
+        const pexp = t.decl.provides.find((p) => p instanceof NominalTypeSignature && p.decl.ns.ns[0] === "Core" && p.decl.name === "Expandoable");
+        return pexp !== undefined ? (pexp as NominalTypeSignature).alltermargs[0] : undefined;
     }
 
     resolveNamespaceDecl(ns: string[]): NamespaceDeclaration | undefined {

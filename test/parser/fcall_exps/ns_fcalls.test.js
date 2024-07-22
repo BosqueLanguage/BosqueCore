@@ -1,7 +1,7 @@
 import { parseTestFunctionInFile, parseTestFunctionInFileError, parseTestFunctionInFilePlus, parseTestFunctionInFilePlusError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Parser -- NamespaceFunction Implicit", () => {
+describe ("Parser -- NamespaceFunction Implicit (no template)", () => {
     it("should parse positional", function () {
         parseTestFunctionInFile('function foo(): Int { return 1i; } [FUNC]', 'function main(): Int { return foo(); }');
         parseTestFunctionInFile('function foo(x: Int, y: Int): Int { return x + y; } [FUNC]', 'function main(): Int { return foo(1i, 2i); }');    
@@ -69,7 +69,7 @@ const ctxcode = [
     'declare namespace NSOther; function foo(x: Int): Int { return x; }'
 ];
 
-describe ("Parser -- access argument", () => {
+describe ("Parser -- NamespaceFunction explicit (no template)", () => {
     it("should parse explicit Same access", function () {
         parseTestFunctionInFile("function foo(x: Int): Int { return x; } [FUNC]", 'function main(x: Int): Int { return Main::foo(x); }'); 
     });

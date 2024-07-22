@@ -754,6 +754,9 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    shuffleinfo: number[] = [];
+    restinfo: number[] | undefined = undefined;
+
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
         this.ns = ns;
