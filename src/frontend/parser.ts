@@ -2007,6 +2007,10 @@ class Parser {
             optDefaultExp = this.parseConstExpression(ptype, boundtemplates);
         }
 
+        if(isrest && optDefaultExp !== undefined) {
+            this.recordErrorGeneral(cinfo, "Cannot have a default value for rest parameters");
+        }
+
         if(isref && optDefaultExp !== undefined) {
             this.recordErrorGeneral(cinfo, "Cannot have a default value for reference parameters");
         }
@@ -2026,6 +2030,10 @@ class Parser {
 
             if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
                 this.recordErrorGeneral(cinfo, "Cannot have more than one reference parameter");
+            }
+
+            if(params[params.length - 1].isRestParam && params.some((param) => param.optDefaultValue !== undefined)) {
+                this.recordErrorGeneral(cinfo, "Cannot have default values and a rest parameter");
             }
         }
 
@@ -2160,8 +2168,7 @@ class Parser {
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
 
-        const lambdapdecls = params.map((p) => new InvokeParameterDecl(p.name, p.type, undefined, p.isRefParam, p.isRestParam));
-        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, lambdapdecls, resultInfo, body, !someTypedParams);
+        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, !someTypedParams);
     }
 
     private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {

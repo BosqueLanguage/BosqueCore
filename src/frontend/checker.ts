@@ -469,7 +469,12 @@ class TypeChecker {
     }
 
     private checkArgumentList(env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[]) {
-        let argsuffle: ArgumentValue[] = [];
+        let argsuffle: (ArgumentValue | undefined)[] = [];
+        let argsuffleidx: number[] = [];
+        for(let i = 0; i < params.length; ++i) {
+            argsuffle.push(undefined);
+            argsuffleidx.push(-1);
+        }
 
         //fill in all the named arguments
         for(let i = 0; i < args.length; ++i) {
@@ -479,22 +484,37 @@ class TypeChecker {
                 if(paramidx === -1) {
                     this.reportError(narg.exp.sinfo, `Named argument ${narg.name} not found in parameter list`);
                 }
+                else if(params[paramidx].isRestParam) {
+                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} cannot be assigned to rest parameter`);
+                }
                 else {
                     argsuffle[paramidx] = narg;
+                    argsuffleidx[paramidx] = i;
                 }
             }
         }
 
+        const nonrestparams = params.filter((p) => !p.isRestParam);
+        const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
+
         let ppos = argsuffle.findIndex((apos) => apos === undefined);
         let apos = args.findIndex((apos) => !(apos instanceof NamedArgumentValue));
-        while(ppos < params.length && apos < args.length) {
+        while(ppos < nonrestparams.length && apos < args.length) {
             argsuffle[ppos] = args[apos];
+            argsuffleidx[ppos] = apos;
 
             ppos = argsuffle.slice(ppos + 1).findIndex((apos) => apos === undefined);
             apos = args.slice(apos + 1).findIndex((apos) => !(apos instanceof NamedArgumentValue));
         }
 
-        xxxx; //TODO: disallow optionals and rest parameters
+        if(restparam === undefined) {
+            if(ppos < nonrestparams.length && nonrestparams.slice(ppos).some((p) => p.optDefaultValue === undefined)) {
+                this.reportError(args[args.length - 1].exp.sinfo, `Not enough arguments provided to function`);
+            }
+        }
+        else {
+            xxxx;
+        }
     }
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
