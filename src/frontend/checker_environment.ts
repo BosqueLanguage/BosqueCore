@@ -5,13 +5,15 @@ import { BinderInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;
+    readonly scopename: string;
     readonly vtype: TypeSignature;
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
 
-    constructor(srcname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
+    constructor(srcname: string, scopename: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
         this.srcname = srcname;
+        this.scopename = scopename;
         this.vtype = vtype;
 
         this.isConst = isConst;
@@ -19,11 +21,11 @@ class VarInfo {
     }
 
     updateTypeAndDefine(ttype: TypeSignature): VarInfo {
-        return new VarInfo(this.srcname, ttype, this.isConst, true);
+        return new VarInfo(this.srcname, this.scopename, ttype, this.isConst, true);
     }
 
     updateDefine(): VarInfo {
-        return new VarInfo(this.srcname, this.vtype, this.isConst, true);
+        return new VarInfo(this.srcname, this.scopename, this.vtype, this.isConst, true);
     }
 }
 
@@ -100,19 +102,40 @@ class TypeEnvironment {
         return new TypeEnvironment(true, false, enclosing, args, declReturnType, inferReturn, []);
     }
 
-    resolveLambdaCaptureVarType(vname: string): TypeSignature | undefined {
-        let parent = this.parent;
-        while(parent !== undefined) {
-            const vv = parent.resolveLocalVarInfo(vname);
-            if(vv !== undefined) {
-                return vv.vtype;
+    private getBindScopeDepth(vname: string): number {
+        let depth = 0;
+
+        for(let i = this.locals.length - 1; i >= 0; i--) {
+            for(let j = 0; j < this.locals[i].length; j++) {
+                if(this.locals[i][j].srcname === vname) {
+                    depth++;
+                }
             }
         }
 
-        return undefined;
+        let pp = this.parent;
+        while(pp !== undefined) {
+            depth += pp.getBindScopeDepth(vname);
+        }
+
+        return depth;
     }
 
-    resolveLocalVarInfo(vname: string): VarInfo | undefined {
+    getBindScopeName(vname: string): string {
+        const depth = this.getBindScopeDepth(vname);
+        return vname + (depth > 0 ? ("$" + depth) : "");
+    }
+
+    resolveLambdaCaptureVarInfoFromSrcName(vname: string): VarInfo | undefined {
+        const localdef = this.resolveLocalVarInfoFromSrcName(vname);
+        if(localdef !== undefined) {
+            return localdef;
+        }
+
+        return this.parent !== undefined ? this.parent.resolveLambdaCaptureVarInfoFromSrcName(vname) : undefined;
+    }
+
+    resolveLocalVarInfoFromSrcName(vname: string): VarInfo | undefined {
         for(let i = this.locals.length - 1; i >= 0; i--) {
             for(let j = 0; j < this.locals[i].length; j++) {
                 if(this.locals[i][j].srcname === vname) {
@@ -124,8 +147,24 @@ class TypeEnvironment {
         return this.args.find((v) => v.srcname === vname);
     }
 
-    addLocalVariable(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, isConst, mustDefined)]]);
+    resolveLocalVarInfoFromScopeName(vname: string): VarInfo | undefined {
+        for(let i = this.locals.length - 1; i >= 0; i--) {
+            for(let j = 0; j < this.locals[i].length; j++) {
+                if(this.locals[i][j].scopename === vname) {
+                    return this.locals[i][j];
+                }
+            }
+        }
+
+        return this.args.find((v) => v.srcname === vname);
+    }
+
+    addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vname, vtype, isConst, mustDefined)]]);
+    }
+
+    addBinder(vname: string, vscope: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vscope, vtype, isConst, mustDefined)]]);
     }
 
     assignLocalVariable(vname: string): TypeEnvironment {
@@ -178,8 +217,8 @@ class TypeEnvironment {
         return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), []]);
     }
 
-    pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, true, true)]]);
+    pushNewLocalBinderScope(vname: string, scopename: string, vtype: TypeSignature): TypeEnvironment {
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, scopename, vtype, true, true)]]);
     }
 
     popLocalScope(): TypeEnvironment {
@@ -193,8 +232,8 @@ class TypeEnvironment {
             let frame: VarInfo[] = [];
 
             for(let j = 0; j < origenv.locals[i].length; j++) {
-                const mdef = envs.every((e) => (e.resolveLocalVarInfo(origenv.locals[i][j].srcname) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].vtype, origenv.locals[i][j].isConst, mdef));
+                const mdef = envs.every((e) => (e.resolveLocalVarInfoFromScopeName(origenv.locals[i][j].scopename) as VarInfo).mustDefined);
+                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].vtype, origenv.locals[i][j].isConst, mdef));
             }
 
             locals.push(frame);
@@ -203,20 +242,10 @@ class TypeEnvironment {
         return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
-    static gatherEnvironmentsOptBinderType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
-        if(binfo === undefined) {
-            return undefined;
-        }
-        else {
-            const topts = envs.filter((e) => e.normalflow).map((e) => e.resolveLocalVarInfo(binfo.scopename) as VarInfo);
-            return topts.length !== 0 ? topts.map((v) => v.vtype) : undefined;
-        }
-    }
-
-    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo | undefined, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
+    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
         const menv = TypeEnvironment.mergeEnvironmentsSimple(origenv, ...envs);
 
-        if(binfo === undefined || refinetype === undefined) {
+        if(!binfo.refineonfollow || refinetype === undefined) {
             return menv;
         }
         else {

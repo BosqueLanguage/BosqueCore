@@ -5,120 +5,22 @@ import { SourceInfo } from "./build_decls.js";
 import { Assembly, NamespaceDeclaration } from "./assembly.js";
 import { TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type.js";
 
-abstract class SourceNameDefinitionInfo {
-    readonly srcname: string;
-
-    constructor(srcname: string) {
-        this.srcname = srcname;
-    }
-
-    abstract isConst(): boolean;
-    abstract getScopedName(): string;
-
-    abstract markUsed(): void;
-}
-
-class LocalVariableDefinitionInfo extends SourceNameDefinitionInfo {
+class LocalVariableDefinitionInfo {
     readonly isconst: boolean;
+    readonly name: string;
 
-    constructor(srcname: string, isconst: boolean) {
-        super(srcname);
+
+    constructor(isconst: boolean, name: string) {
         this.isconst = isconst;
-    }
-
-    isConst(): boolean {
-        return this.isconst;
-    }
-    getScopedName(): string {
-        return this.srcname;
-    }
-
-    markUsed(): void {
-        ;
+        this.name = name;
     }
 }
 
-class BinderVariableDefinitionInfo extends SourceNameDefinitionInfo {
-    readonly scopedname: string;
-    isUsed: boolean = false;
-
-    constructor(srcname: string, scopedname: string) {
-        super(srcname);
-        this.scopedname = scopedname;
-    }
-
-    isConst(): boolean {
-        return true;
-    }
-    getScopedName(): string {
-        return this.scopedname;
-    }
-
-    markUsed(): void {
-        this.isUsed = true;
-    }
-}
-
-abstract class BlockScopeInfo {
+class BlockScopeInfo {
     locals: LocalVariableDefinitionInfo[] = [];
 
-    abstract lookupVariableInfo(srcname: string): SourceNameDefinitionInfo | undefined;
-    abstract definesBinderSourceName(srcname: string): boolean;
-}
-
-class SimpleBlockScopeInfo extends BlockScopeInfo {
-    constructor() {
-        super();
-    }
-
-    lookupVariableInfo(srcname: string): SourceNameDefinitionInfo | undefined {
-        return this.locals.find((nn) => nn.srcname === srcname);
-    }
-
-    definesBinderSourceName(srcname: string): boolean {
-        return false;
-    }
-}
-
-class BinderBlockScopeInfo extends BlockScopeInfo {
-    readonly binders: BinderVariableDefinitionInfo[];
-
-    constructor(binders: BinderVariableDefinitionInfo[]) {
-        super();
-
-        this.binders = binders;
-    }
-
-    lookupVariableInfo(srcname: string): SourceNameDefinitionInfo | undefined {
-        return this.locals.find((nn) => nn.srcname === srcname) || this.binders.find((nn) => nn.srcname === srcname);
-    }
-
-    definesBinderSourceName(srcname: string): boolean {
-        return this.binders.find((nn) => nn.srcname === srcname) !== undefined;
-    }
-}
-
-class BinderUnknownInConstantScopeInfo extends BlockScopeInfo {
-    readonly binders: BinderVariableDefinitionInfo[] = [];
-
-    constructor() {
-        super();
-    }
-
-    lookupVariableInfo(srcname: string): SourceNameDefinitionInfo | undefined {
-        const idecl = this.locals.find((nn) => nn.srcname === srcname) || this.binders.find((nn) => nn.srcname === srcname);
-        if(idecl !== undefined) {
-            return idecl;
-        }
-
-        if(srcname.startsWith("$")) {
-            this.binders.push(new BinderVariableDefinitionInfo(srcname, srcname));
-        }
-        return this.binders.find((nn) => nn.srcname === srcname);
-    }
-
-    definesBinderSourceName(srcname: string): boolean {
-        return srcname.startsWith("$");
+    lookupVariableInfo(name: string): LocalVariableDefinitionInfo | undefined {
+        return this.locals.find((nn) => nn.name === name);
     }
 }
 
@@ -134,96 +36,65 @@ abstract class ParserScopeInfo {
         this.args = args;
         this.boundtemplates = boundtemplates;
         this.resultingType = rtype;
-        this.blockscope = [new SimpleBlockScopeInfo()];
+        this.blockscope = [new BlockScopeInfo()];
     }
 
     pushBlockScope() {
-        this.blockscope.push(new SimpleBlockScopeInfo());
+        this.blockscope.push(new BlockScopeInfo());
     }
 
     popBlockScope() {
         this.blockscope.pop();
     }
 
-    pushBinderBlockScope(binders: BinderVariableDefinitionInfo[]) {
-        this.blockscope.push(new BinderBlockScopeInfo(binders));
-    }
-
-    popBinderBlockScope(): BinderBlockScopeInfo {
-        return this.blockscope.pop() as BinderBlockScopeInfo;
-    }
-
-    getBinderVarName_helper(srcname: string): number {
-        let bcount = 0;
-
-        for (let i = this.blockscope.length - 1; i >= 0; --i) {
-            if (this.blockscope[i].definesBinderSourceName(srcname)) {
-                bcount++;
-            }
+    checkCanDeclareLocalVar(name: string): boolean {
+        if(name === "_" || name === "this" || name === "self" || name.startsWith("$")) {
+            return false;
         }
 
-        if(this.args.some((arg) => arg.srcname === srcname)) {
-            bcount++;
-        }
-
-        return bcount;
-    }
-
-    checkCanDeclareLocalVar(srcname: string): boolean {
-        const islocalredecl = this.blockscope.some((bs) => bs.lookupVariableInfo(srcname) !== undefined);
-        const isargredecl = this.args.some((arg) => arg.srcname === srcname);
+        const islocalredecl = this.blockscope.some((bs) => bs.lookupVariableInfo(name) !== undefined);
+        const isargredecl = this.args.some((arg) => arg.name === name);
 
         return !islocalredecl && !isargredecl;
     }
 
-    checkCanAssignVariable(srcname: string): boolean {
+    checkCanAssignVariable(name: string): boolean {
+        if(name === "_" || name === "this" || name === "self" || name.startsWith("$")) {
+            return false;
+        }
+
         //can't assign to a binder (so dont even check there) and can't assign to any lambda captures so no need to check there either
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
-            const vinfo = this.blockscope[i].lookupVariableInfo(srcname);
+            const vinfo = this.blockscope[i].lookupVariableInfo(name);
             if (vinfo !== undefined) {
-                return !vinfo.isConst();
+                return !vinfo.isconst;
             }
         }
 
-        const argi = this.args.find((arg) => arg.srcname === srcname);
-        return argi !== undefined && !argi.isConst();
+        const argi = this.args.find((arg) => arg.name === name);
+        return argi !== undefined && !argi.isconst;
     }
 
-    isDefinedVariable_helper(srcname: string): boolean{
+    isDefinedVariable_helper(name: string): boolean{
+        if(name.startsWith("$")) {
+            return true; //assume binders are always defined
+        }
+
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
-            const vv = this.blockscope[i].lookupVariableInfo(srcname);
+            const vv = this.blockscope[i].lookupVariableInfo(name);
             if(vv !== undefined) {
                 return true;
             }
         }
 
-        if(this.args.some((arg) => arg.srcname === srcname)) {
+        if(this.args.some((arg) => arg.name === name)) {
             return true;
         }
 
         return false;
     }
 
-    useVariable_helper(srcname: string): string | undefined {
-        for (let i = this.blockscope.length - 1; i >= 0; --i) {
-            const vv = this.blockscope[i].lookupVariableInfo(srcname);
-            if(vv !== undefined) {
-                vv.markUsed();
-                return vv.getScopedName();
-            }
-        }
-
-        if(this.args.some((arg) => arg.srcname === srcname)) {
-            return srcname;
-        }
-
-        return undefined;
-    }
-
-    abstract getBinderVarName(srcname: string): string;
-
     abstract isDefinedVariable(srcname: string): boolean;
-    abstract useVariable(srcname: string): [string, boolean] | undefined;
 }
 
 class StandardScopeInfo extends ParserScopeInfo {
@@ -231,22 +102,8 @@ class StandardScopeInfo extends ParserScopeInfo {
         super(args, boundtemplates, rtype);
     }
 
-    getBinderVarName(srcname: string): string {
-        const ctr = this.getBinderVarName_helper(srcname);
-        return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
-    }
-
     override isDefinedVariable(srcname: string): boolean {
         return this.isDefinedVariable_helper(srcname);
-    }
-
-    useVariable(srcname: string): [string, boolean] | undefined {
-        const rname = this.useVariable_helper(srcname);
-        if(rname !== undefined) {
-            return [rname, false];
-        }
-
-        return undefined;
     }
 }
 
@@ -261,11 +118,6 @@ class LambdaScopeInfo extends ParserScopeInfo {
         this.enclosing = enclosing;
     }
 
-    getBinderVarName(srcname: string): string {
-        const ctr = (this.enclosing.getBinderVarName_helper(srcname) + this.getBinderVarName_helper(srcname));
-        return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
-    }
-
     override isDefinedVariable(srcname: string): boolean {
         const tdef = this.isDefinedVariable_helper(srcname);
         if(tdef) {
@@ -274,21 +126,6 @@ class LambdaScopeInfo extends ParserScopeInfo {
         else {
             return this.enclosing.isDefinedVariable(srcname);
         }
-    }
-
-    useVariable(srcname: string): [string, boolean] | undefined {
-        const rname = this.useVariable_helper(srcname);
-        if(rname !== undefined) {
-            return [rname, false];
-        }
-
-        const rvar = this.enclosing.useVariable(srcname);
-        if(rvar !== undefined) {
-            this.capturedVars.add(srcname);
-            return [rvar[0], true];
-        }
-
-        return undefined;
     }
 }
 
@@ -315,55 +152,19 @@ class ParserEnvironment {
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
     }
 
-    private getBinderVarName(vname: string): string {
-        assert(this.scope !== undefined);
-        return this.scope.getBinderVarName(vname);
-    }
-
     getScope(): ParserScopeInfo {
         assert(this.scope !== undefined);
         return this.scope;
     }
 
-    pushStandardBlockScope() {
+    pushBlockScope() {
         assert(this.scope !== undefined);
-        this.scope.blockscope.push(new SimpleBlockScopeInfo());
+        this.scope.blockscope.push(new BlockScopeInfo());
     }
 
-    popStandardBlockScope() {
+    popBlockScope() {
         assert(this.scope !== undefined);
         this.scope.blockscope.pop();
-    }
-
-    pushBinderExpressionScope(bindernames: string[]) {
-        assert(this.scope !== undefined);
-
-        const bscope = new BinderBlockScopeInfo(bindernames.map((b) => {
-            return new BinderVariableDefinitionInfo(b, this.getBinderVarName(b));
-        }));
-        
-        this.scope.blockscope.push(bscope);
-    }
-
-    popBinderExpressionScope(): {srcname: string, scopedname: string}[] {
-        assert(this.scope !== undefined);
-        
-        return (this.scope.blockscope.pop() as BinderBlockScopeInfo).binders.filter((b) => b.isUsed).map((b) => {
-            return {srcname: b.srcname, scopedname: b.scopedname};
-        });
-    }
-
-    pushBinderUnknownInConstantExpressionScope() {
-        assert(this.scope !== undefined);
-
-        const bscope = new BinderUnknownInConstantScopeInfo();
-        this.scope.blockscope.push(bscope);
-    }
-
-    popBinderUnknownInConstantExpressionScope(): string[] {
-        assert(this.scope !== undefined);
-        
-        return (this.scope.blockscope.pop() as BinderUnknownInConstantScopeInfo).binders.filter((b) => b.isUsed).map((b) => b.srcname);
     }
 
     identifierResolvesAsVariable(srcname: string): boolean {
@@ -372,18 +173,18 @@ class ParserEnvironment {
         return this.scope.isDefinedVariable(srcname);
     }
 
-    addVariable(srcname: string, isconst: boolean, ignoreok: boolean): boolean {
+    addVariable(name: string, isconst: boolean, ignoreok: boolean): boolean {
         assert(this.scope !== undefined);
 
-        if(srcname === "_") {
+        if(name === "_") {
             return ignoreok;
         }
         else {
-            if(!this.scope.checkCanDeclareLocalVar(srcname)) {
+            if(!this.scope.checkCanDeclareLocalVar(name)) {
                 return false;
             }
 
-            this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new LocalVariableDefinitionInfo(srcname, isconst));
+            this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new LocalVariableDefinitionInfo(isconst, name));
             return true;
         }
     }
@@ -399,23 +200,16 @@ class ParserEnvironment {
         }
     }
 
-    useVariable(srcname: string): [string, boolean] | undefined {
-        assert(this.scope !== undefined);
-
-        return this.scope.useVariable(srcname);
-    }
-
     isTemplateNameDefined(name: string): boolean {
         assert(this.scope !== undefined);
 
         return this.scope.boundtemplates.has(name);
     }
 
-    pushLambdaScope(args: LocalVariableDefinitionInfo[], rtype: TypeSignature | undefined): LambdaScopeInfo {
+    pushLambdaScope(args: LocalVariableDefinitionInfo[], rtype: TypeSignature | undefined) {
         assert(this.scope !== undefined);
 
         this.scope = new LambdaScopeInfo(args, this.scope.boundtemplates, rtype, this.scope);
-        return this.scope as LambdaScopeInfo;
     }
 
     popLambdaScope() {
@@ -440,8 +234,8 @@ class ParserEnvironment {
 }
 
 export { 
-    SourceNameDefinitionInfo, LocalVariableDefinitionInfo, BinderVariableDefinitionInfo,
-    BlockScopeInfo, SimpleBlockScopeInfo, BinderBlockScopeInfo, BinderUnknownInConstantScopeInfo,
+    LocalVariableDefinitionInfo,
+    BlockScopeInfo,
     ParserScopeInfo, StandardScopeInfo, LambdaScopeInfo,
     ParserEnvironment 
 };

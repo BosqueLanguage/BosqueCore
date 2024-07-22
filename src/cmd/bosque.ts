@@ -15,9 +15,9 @@ function checkAssembly(srcfiles: string[]) {
     }
 
     const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = generateASM(userpackage);
+    const [_, perrors, terrors] = generateASM(userpackage);
 
-    if(asm !== undefined) {
+    if(perrors.length === 0 && terrors.length === 0) {
         Status.output("Assembly generation successful!\n");
     }
     else {
