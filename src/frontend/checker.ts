@@ -293,7 +293,7 @@ class TypeChecker {
 
     private checkTemplateInstantiationIsOkWithDecls(sinfo: SourceInfo, targs: TypeSignature[], decls: TypeTemplateTermDecl[]): boolean {
         assert(targs.length === decls.length, "Template instantiation mismatch");
-
+        
         for(let i = 0; i < targs.length; ++i) {
             const tdecl = decls[i];
             const targ = targs[i];
@@ -361,12 +361,28 @@ class TypeChecker {
                 return false;
             }
             
-            if(type.alltermargs.length !== type.decl.terms.length) {
-                this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
-                return false;
+            if((type.decl instanceof OkTypeDecl) || (type.decl instanceof ErrTypeDecl)) {
+                if(type.alltermargs.length !== 2) {
+                    this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
+                    return false;
+                }
+            }
+            else if((type.decl instanceof APIRejectedTypeDecl) || (type.decl instanceof APIFailedTypeDecl) || (type.decl instanceof APIErrorTypeDecl) || (type.decl instanceof APISuccessTypeDecl)) {
+                if(type.alltermargs.length !== 1) {
+                    this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
+                    return false;
+                }
+            }
+            else {
+                if(type.alltermargs.length !== type.decl.terms.length) {
+                    this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
+                    return false;
+                }
+
+                return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, type.alltermargs, type.decl.terms);
             }
 
-            return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, type.alltermargs, type.decl.terms);
+            return true;
         }
         else if(type instanceof EListTypeSignature) {
             return type.entries.every((entry) => this.checkTypeSignature(entry));
@@ -1062,47 +1078,47 @@ class TypeChecker {
                     return this.checkSpecialConstructorExpressionNoInfer(env, exp);
                 }
             }
-        else if(exp.rop === "ok") {
-            if(ninfer.decl instanceof OkTypeDecl) {
-                const ttype = ninfer.alltermargs[0];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
+            else if(exp.rop === "ok") {
+                if(ninfer.decl instanceof OkTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
 
-                return exp.setType(ninfer);
-            }
-            else if(ninfer.decl instanceof ResultTypeDecl) {
-                const ttype = ninfer.alltermargs[0];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof ResultTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
 
-                return exp.setType(ninfer);
+                    return exp.setType(ninfer);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Cannot infer type for special Ok constructor -- got ${infertype.tkeystr}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
             }
             else {
-                this.reportError(exp.sinfo, `Cannot infer type for special Ok constructor -- got ${infertype.tkeystr}`);
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                if(ninfer.decl instanceof ErrTypeDecl) {
+                    const ttype = ninfer.alltermargs[1];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof ResultTypeDecl) {
+                    const ttype = ninfer.alltermargs[1];
+                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Cannot infer type for special Err constructor -- got ${infertype.tkeystr}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
             }
         }
-        else {
-            if(ninfer.decl instanceof ErrTypeDecl) {
-                const ttype = ninfer.alltermargs[1];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
-
-                return exp.setType(ninfer);
-            }
-            else if(ninfer.decl instanceof ResultTypeDecl) {
-                const ttype = ninfer.alltermargs[1];
-                const etype = this.checkExpression(env, exp.arg, ttype);
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
-
-                return exp.setType(ninfer);
-            }
-            else {
-                this.reportError(exp.sinfo, `Cannot infer type for special Err constructor -- got ${infertype.tkeystr}`);
-                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-            }
-        }
-    }
     }
 
     private checkSpecialConverterExpression(env: TypeEnvironment, exp: SpecialConverterExpression, infertype: TypeSignature | undefined): TypeSignature {

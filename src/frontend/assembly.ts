@@ -790,7 +790,7 @@ class OkTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -806,7 +806,7 @@ class ErrTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -822,7 +822,7 @@ class APIRejectedTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -838,7 +838,7 @@ class APIFailedTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -854,7 +854,7 @@ class APIErrorTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -870,7 +870,7 @@ class APISuccessTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
