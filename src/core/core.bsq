@@ -167,7 +167,7 @@ __internal concept Result<T, E> provides Any {
     __internal entity Err provides Result<T, E> {
     }
 
-/*
+%*
     method isOk(): Bool {
         return this@<Result<T, E>::Ok>;
     }
@@ -192,7 +192,7 @@ __internal concept Result<T, E> provides Any {
             return Result<U, V>::Err{this.error()@<V>};
         }
     }
-*/
+*%
 }
 
 namespace Interpolate {

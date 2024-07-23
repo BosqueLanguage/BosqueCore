@@ -4998,50 +4998,29 @@ class Parser {
     }
 
     private parseNestedEntity(specialConcept: InternalConceptTypeDecl, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
-        const sinfo = this.peekToken().getSourceInfo();
-
         this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
         const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            if(ename === "Ok" || ename === "Err") {
-                const rdecl = specialConcept as ResultTypeDecl;
-                if(ename === "Ok") {
-                    rdecl.nestedEntityDecls.push(new OkTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }
-                else {
-                    rdecl.nestedEntityDecls.push(new ErrTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }
-            }
-            else {
-                const rdecl = specialConcept as APIResultTypeDecl;
-                if(ename === "APIRejectedTypeDecl") {
-                    rdecl.nestedEntityDecls.push(new APIRejectedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }
-                else if(ename === "APIFailedTypeDecl") {
-                    rdecl.nestedEntityDecls.push(new APIFailedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }
-                else if(ename === "APIErrorTypeDecl") {
-                    rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }
-                else {
-                    rdecl.nestedEntityDecls.push(new APISuccessTypeDecl(this.env.currentFile, sinfo, attributes, ename));
-                }   
+        if(ename === "Ok" || ename === "Err") {
+            const tdecl = (specialConcept as ResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
+
+            const provides = this.parseProvides(this.peekToken().getSourceInfo(), [SYM_lbrace]);
+            if(provides.length !== 0) {
+                tdecl.provides.push(...provides);
             }
 
-            this.scanOverCodeTo(SYM_lbrace);
-            this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else {
-            if(ename === "Ok" || ename === "Err") {
-                const tdecl = (specialConcept as ResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
-                this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+            const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
+
+            const provides = this.parseProvides(this.peekToken().getSourceInfo(), [SYM_lbrace]);
+            if(provides.length !== 0) {
+                tdecl.provides.push(...provides);
             }
-            else {
-                const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
-                this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
-            }
+
+            this.parseOOPMembersCommonAll(false, undefined, typeTerms, undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
     }
 
@@ -5175,6 +5154,48 @@ class Parser {
         }
     }
 
+    private parseNestedEntityRegisterType(pdecl: InternalConceptTypeDecl) {
+        let attributes: DeclarationAttibute[] = [];
+        while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
+            const attr = this.parseAttribute();
+            attributes.push(attr);
+        }
+
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
+        const ename = this.parseIdentifierAsNamespaceOrTypeName();
+
+        if(ename === "Ok" || ename === "Err") {
+            const rdecl = pdecl as ResultTypeDecl;
+            if(ename === "Ok") {
+                rdecl.nestedEntityDecls.push(new OkTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+            else {
+                rdecl.nestedEntityDecls.push(new ErrTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+        }
+        else {
+            const rdecl = pdecl as APIResultTypeDecl;
+            if(ename === "APIRejectedTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIRejectedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+            else if(ename === "APIFailedTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIFailedTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+            else if(ename === "APIErrorTypeDecl") {
+                rdecl.nestedEntityDecls.push(new APIErrorTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }
+            else {
+                rdecl.nestedEntityDecls.push(new APISuccessTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+            }   
+        }
+
+        this.scanOverCodeTo(SYM_lbrace);
+        this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
+    }
+
     private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
@@ -5188,27 +5209,26 @@ class Parser {
             else if(name === "Result") {
                 tdecl = new ResultTypeDecl(this.env.currentFile, sinfo, attributes, "Result");
 
-                xxxx;
                 this.scanOverCodeTo(SYM_lbrace);
                 this.consumeToken();
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
+                this.parseNestedEntityRegisterType(tdecl);
+                this.parseNestedEntityRegisterType(tdecl);
+
                 this.scanOverCodeTo(SYM_rbrace);
+                this.consumeToken();
             }
             else if(name === "APIResult") {
                 tdecl = new APIResultTypeDecl(this.env.currentFile, sinfo, attributes, "APIResult");
 
-                xxxx;
-                this.parseTypeTemplateTerms();
-                this.ensureAndConsumeTokenAlways(SYM_coloncolon, "APIResult");
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
                 this.scanOverCodeTo(SYM_lbrace);
                 this.consumeToken();
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
-                this.parseNestedEntity(tdecl, attributes, new Set<string>(["T", "E"]));
+                this.parseNestedEntityRegisterType(tdecl);
+                this.parseNestedEntityRegisterType(tdecl);
+                this.parseNestedEntityRegisterType(tdecl);
+                this.parseNestedEntityRegisterType(tdecl);
+
                 this.scanOverCodeTo(SYM_rbrace);
+                this.consumeToken();
             }
             else if(name === "Expandoable") {
                 tdecl = new ExpandoableTypeDecl(this.env.currentFile, sinfo, attributes, "Expandoable");
