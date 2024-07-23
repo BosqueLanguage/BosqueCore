@@ -222,8 +222,6 @@ enum ExpressionTag {
     AccessVariableExpression = "AccessVariableExpression",
 
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
-    ConstructorTupleExpression = "ConstructorTupleExpression",
-    ConstructorRecordExpression = "ConstructorRecordExpression",
     ConstructorEListExpression = "ConstructorEListExpression",
     ConstructorLambdaExpression = "ConstructorLambdaExpression",
 
@@ -631,26 +629,6 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.ctype.tkeystr}${this.args.emit(fmt, "{", "}")}`;
-    }
-}
-
-class ConstructorTupleExpression extends ConstructorExpression {
-    constructor(sinfo: SourceInfo, args: ArgumentList) {
-        super(ExpressionTag.ConstructorTupleExpression, sinfo, args);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "[", "]");
-    }
-}
-
-class ConstructorRecordExpression extends ConstructorExpression {
-    constructor(sinfo: SourceInfo, args: ArgumentList) {
-        super(ExpressionTag.ConstructorRecordExpression, sinfo, args);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "{", "}");
     }
 }
 
@@ -2355,7 +2333,7 @@ export {
     InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
-    ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
+    ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
     LetExpression,
     LambdaInvokeExpression,
