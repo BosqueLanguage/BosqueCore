@@ -621,7 +621,8 @@ abstract class ConstructorExpression extends Expression {
 
 class ConstructorPrimaryExpression extends ConstructorExpression {
     readonly ctype: TypeSignature;
-
+    shuffleinfo: number[] = [];
+    
     constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
         this.ctype = ctype;

@@ -1190,6 +1190,15 @@ class TypeCheckerRelations {
         return [...ibnames, ...mbnames];
     }
 
+    generateAllFieldBNamesInfoWOptInitializer(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope, mfields: MemberFieldDecl[]): {name: string, type: TypeSignature, hasdefault: boolean}[] {
+        const ifields = this.resolveAllInheritedFieldDecls(ttype, tconstrain);
+
+        const ibnames = ifields.map((mf) => { return {name: mf.member.name, type: mf.member.declaredType.remapTemplateBindings(mf.typeinfo.mapping), hasdefault: mf.member.defaultValue !== undefined}; });
+        const mbnames = mfields.map((mf) => { return {name: mf.name, type: mf.declaredType, hasdefault: mf.defaultValue !== undefined}; });
+
+        return [...ibnames, ...mbnames];
+    }
+
     convertTypeSignatureToTypeInferCtx(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeInferContext {
         if(!(tsig instanceof EListTypeSignature)) {
             return new SimpleTypeInferContext(tsig);

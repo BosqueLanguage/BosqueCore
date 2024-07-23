@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
 import { TypeCheckerRelations } from "../frontend/checker_relations.js";
 
 class JSEmitter {
@@ -267,14 +267,6 @@ class JSEmitter {
     
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
         assert(false, "Not implemented -- ConstructorPrimary");
-    }
-    
-    private emitConstructorTupleExpression(exp: ConstructorTupleExpression): string {
-        assert(false, "Not implemented -- ConstructorTuple");
-    }
-    
-    private emitConstructorRecordExpression(exp: ConstructorRecordExpression): string {
-        assert(false, "Not implemented -- ConstructorRecord");
     }
     
     private emitConstructorEListExpression(exp: ConstructorEListExpression): string {
@@ -548,12 +540,6 @@ class JSEmitter {
             }
             case ExpressionTag.ConstructorPrimaryExpression: {
                 return this.emitConstructorPrimaryExpression(exp as ConstructorPrimaryExpression);
-            }
-            case ExpressionTag.ConstructorTupleExpression: {
-                return this.emitConstructorTupleExpression(exp as ConstructorTupleExpression);
-            }
-            case ExpressionTag.ConstructorRecordExpression: {
-                return this.emitConstructorRecordExpression(exp as ConstructorRecordExpression);
             }
             case ExpressionTag.ConstructorEListExpression: {
                 return this.emitConstructorEListExpression(exp as ConstructorEListExpression);
