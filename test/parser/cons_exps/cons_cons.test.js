@@ -9,7 +9,7 @@ describe ("Parser -- Constructable Constructor (Option)", () => {
     });
 
     it("should fail option constructors", function () {
-        checkTestFunctionError("function main(): Int? { return Some<>{}; }", 'err5');
+        parseTestFunctionError("function main(): Int? { return Some<>{}; }", 'Template term list cannot be empty');
         
         parseTestFunctionError("function main(): Int? { return Some<Int>{; }", 'Unexpected token in expression -- ;');
         parseTestFunctionError("function main(): Int? { return Some<Int>2i, false}; }", 'Unknown type scoped expression');

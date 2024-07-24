@@ -2065,9 +2065,15 @@ class Parser {
     private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
         let terms: InvokeTemplateTermDecl[] = [];
         if(this.testToken(SYM_langle)) {
+            const ttok = this.peekToken();
+
             terms = this.parseListOf<InvokeTemplateTermDecl>("template terms", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseInvokeTemplateTermDecl();
             });
+
+            if(terms.length === 0) {
+                this.recordErrorGeneral(ttok.getSourceInfo(), "Template term list cannot be empty");
+            }
         }
 
         return terms;
@@ -2451,10 +2457,17 @@ class Parser {
     private parseTermList(): TypeSignature[] {
         let terms: TypeSignature[] = [];
         if (this.testToken(SYM_langle)) {
+            const ttok = this.peekToken();
+
             terms = this.parseListOf<TypeSignature>("template term list", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseStdTypeSignature();
             });
+
+            if(terms.length === 0) {
+                this.recordErrorGeneral(ttok, "Template term list cannot be empty");
+            }
         }
+
         return terms;
     }
 
@@ -2589,9 +2602,15 @@ class Parser {
     private parseInvokeTemplateArguments() {
         let args: TypeSignature[] = [];
         if (this.testToken(SYM_langle)) {
+            const ttok = this.peekToken();
+
             args = this.parseListOf<TypeSignature>("template arguments", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseStdTypeSignature();
             });
+
+            if(args.length === 0) {
+                this.recordErrorGeneral(ttok, "Template argument list cannot be empty");
+            }
         }
 
         return args;
@@ -4416,9 +4435,15 @@ class Parser {
     private parseTypeTemplateTerms(): TypeTemplateTermDecl[] { 
         let terms: TypeTemplateTermDecl[] = [];
         if(this.testToken(SYM_langle)) {
+            const ttok = this.peekToken();
+
             terms = this.parseListOf<TypeTemplateTermDecl>("template terms", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseTypeTemplateTermDecl();
             });
+
+            if(terms.length === 0) {
+                this.recordErrorGeneral(ttok.getSourceInfo(), "Expected at least one template term");
+            }
         }
 
         return terms;
@@ -4761,7 +4786,7 @@ class Parser {
         }
     }
 
-    private parseMemberField(memberFields: MemberFieldDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+    private parseMemberField(memberFields: MemberFieldDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.peekToken().getSourceInfo();
@@ -4775,7 +4800,7 @@ class Parser {
 
         let ivalue: ConstantExpressionValue | undefined = undefined;
         if (this.testAndConsumeTokenIf(SYM_eq)) {
-            ivalue = this.parseConstExpression(ftype, this.env.getScope().boundtemplates);
+            ivalue = this.parseConstExpression(ftype, typeTerms);
         }
 
         if(memberFields === undefined) {
@@ -4929,7 +4954,7 @@ class Parser {
 
             const sinfo = this.peekToken().getSourceInfo();
             if (this.testToken(KW_field)) {
-                this.parseMemberField(memberFields, allMemberNames, attributes);
+                this.parseMemberField(memberFields, allMemberNames, attributes, typeTerms);
             }
             else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
                 this.parseInvariantsInto(invariants, validates, typeTerms);

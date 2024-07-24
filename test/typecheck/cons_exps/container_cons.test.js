@@ -11,6 +11,7 @@ describe ("Checker -- Container Constructor (List)", () => {
     });
 
     it("should fail list constructors", function () {
-        checkTestFunction("function main(): List<Int> { return List<Int>{x=2i}; }", 'err2');
+        checkTestFunctionError("function main(): List<Int> { return List<Int>{x=2i}; }", 'Rest argument 0 expected to be container of type Int');
+        checkTestFunctionError("function main(): List<Int> { return List<Int>{2n}; }", 'Argument 0 expected type Int');
     });
 });

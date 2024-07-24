@@ -361,13 +361,13 @@ class TypeChecker {
                 return false;
             }
             
-            if((type.decl instanceof OkTypeDecl) || (type.decl instanceof ErrTypeDecl)) {
+            if(type.decl.isSpecialResultEntity()) {
                 if(type.alltermargs.length !== 2) {
                     this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
                     return false;
                 }
             }
-            else if((type.decl instanceof APIRejectedTypeDecl) || (type.decl instanceof APIFailedTypeDecl) || (type.decl instanceof APIErrorTypeDecl) || (type.decl instanceof APISuccessTypeDecl)) {
+            else if(type.decl.isSpecialAPIResultEntity()) {
                 if(type.alltermargs.length !== 1) {
                     this.reportError(type.sinfo, `Type ${type.decl.name} expected ${type.decl.terms.length} terms but got ${type.alltermargs.length}`);
                     return false;
@@ -577,9 +577,13 @@ class TypeChecker {
                 this.reportError(sinfo, `Too many arguments provided to function`);
             }
 
+            for(let i = argsuffleidx.length; i < params.length; ++i) {
+                argsuffleidx.push(-1);
+            }
+
             for(let i = 0; i < params.length; ++i) {
-                if(argsuffle[i] === undefined && params[i].optDefaultValue === undefined) {
-                    this.reportError(sinfo, `Required argument ${params[i].name} not provided`);
+                if(argsuffle[i] === undefined) {
+                    this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
                 }
                 else {
                     this.checkSingleParam(env, argsuffle[i] as ArgumentValue, params[i], imapper);
@@ -636,9 +640,13 @@ class TypeChecker {
             this.reportError(sinfo, `Too many arguments provided to function`);
         }
 
+        for(let i = argsuffleidx.length; i < bnames.length; ++i) {
+            argsuffleidx.push(-1);
+        }
+
         for(let i = 0; i < bnames.length; ++i) {
-            if(argsuffle[i] === undefined && bnames[i].hasdefault) {
-                this.reportError(sinfo, `Required argument ${bnames[i].name} not provided`);
+            if(argsuffle[i] === undefined) {
+                this.checkError(sinfo, !bnames[i].hasdefault, `Required argument ${bnames[i].name} not provided`);
             }
             else {
                 const argexp = (argsuffle[i] as ArgumentValue).exp;
@@ -1084,48 +1092,73 @@ class TypeChecker {
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
-        if(exp.args.args.length !== ctype.alltermargs.length) {
-            this.reportError(exp.sinfo, `Constructor ${ctype.tkeystr} expected ${ctype.alltermargs.length} arguments but got ${exp.args.args.length}`);
-            return exp.setType(ctype);
-        }
-
         if(cdecl instanceof OkTypeDecl) {
-            const oktype = ctype.alltermargs[0];
-            const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
-            this.checkError(exp.sinfo, okarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.tkeystr}`);
+            if(exp.args.args.length !== 1) {
+                this.reportError(exp.sinfo, `Ok constructor expects 1 argument`);
+            }
+            else {
+                const oktype = ctype.alltermargs[0];
+                const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
+                this.checkError(exp.sinfo, okarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.tkeystr}`);
+            }
         }
         else if(cdecl instanceof ErrTypeDecl) {
-            const errtype = ctype.alltermargs[1];
-            const errarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(errtype));
-            this.checkError(exp.sinfo, errarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.tkeystr}`);
+            if(exp.args.args.length !== 1) {
+                this.reportError(exp.sinfo, `Err constructor expects 1 argument`);
+            }
+            else {
+                const errtype = ctype.alltermargs[1];
+                const errarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(errtype));
+                this.checkError(exp.sinfo, errarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.tkeystr}`);
+            }
         }
         else if((cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIFailedTypeDecl) || (cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
-            const apitype = ctype.alltermargs[0];
-            const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
-            this.checkError(exp.sinfo, apiarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.tkeystr}`);
+            if(exp.args.args.length !== 1) {
+                this.reportError(exp.sinfo, `API result constructor expects 1 argument`);
+            }
+            else {
+                const apitype = ctype.alltermargs[0];
+                const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
+                this.checkError(exp.sinfo, apiarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.tkeystr}`);
+            }
         }
         else if(cdecl instanceof SomeTypeDecl) {
-            const ttype = ctype.alltermargs[0];
-            const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+            if(exp.args.args.length !== 1) {
+                this.reportError(exp.sinfo, `Some constructor expects 1 argument`);
+            }
+            else {
+                const ttype = ctype.alltermargs[0];
+                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
+                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+            }
         }
         else if(cdecl instanceof PairTypeDecl) {
-            const ttype = ctype.alltermargs[0];
-            const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Pair constructor first argument is not a subtype of ${ttype.tkeystr}`);
+            if(exp.args.args.length !== 2) {
+                this.reportError(exp.sinfo, `Pair constructor expects 2 arguments`);
+            }
+            else {
+                const ttype = ctype.alltermargs[0];
+                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
+                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Pair constructor first argument is not a subtype of ${ttype.tkeystr}`);
 
-            const stype = ctype.alltermargs[1];
-            const setype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(stype));
-            this.checkError(exp.sinfo, setype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(setype, stype, this.constraints), `Pair constructor second argument is not a subtype of ${stype.tkeystr}`);
+                const stype = ctype.alltermargs[1];
+                const setype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(stype));
+                this.checkError(exp.sinfo, setype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(setype, stype, this.constraints), `Pair constructor second argument is not a subtype of ${stype.tkeystr}`);
+            }
         }
         else if(cdecl instanceof MapEntryTypeDecl) {
-            const ktype = ctype.alltermargs[0];
-            const ketype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ktype));
-            this.checkError(exp.sinfo, ketype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.tkeystr}`);
+            if(exp.args.args.length !== 2) {
+                this.reportError(exp.sinfo, `MapEntry constructor expects 2 arguments`);
+            }
+            else {
+                const ktype = ctype.alltermargs[0];
+                const ketype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ktype));
+                this.checkError(exp.sinfo, ketype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.tkeystr}`);
 
-            const vtype = ctype.alltermargs[1];
-            const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
-            this.checkError(exp.sinfo, vetype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.tkeystr}`);
+                const vtype = ctype.alltermargs[1];
+                const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
+                this.checkError(exp.sinfo, vetype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.tkeystr}`);
+            }
         }
         else {
             assert(false, "Unknown ConstructableTypeDecl type");

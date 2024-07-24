@@ -40,8 +40,18 @@ class TypeCheckerRelations {
 
     generateTemplateMappingForTypeDecl(t: NominalTypeSignature): TemplateNameMapper {
         let pmap = new Map<string, TypeSignature>();
-        for(let j = 0; j < t.decl.terms.length; ++j) {
-            pmap.set(t.decl.terms[j].name, t.alltermargs[j]);
+
+        if(t.decl.isSpecialResultEntity()) {
+            pmap.set("T", t.alltermargs[0]);
+            pmap.set("E", t.alltermargs[1]);
+        }
+        else if(t.decl.isSpecialAPIResultEntity()) {
+            pmap.set("T", t.alltermargs[0]);
+        }
+        else {
+            for(let j = 0; j < t.decl.terms.length; ++j) {
+                pmap.set(t.decl.terms[j].name, t.alltermargs[j]);
+            }
         }
 
         return TemplateNameMapper.createInitialMapping(pmap)
@@ -849,7 +859,9 @@ class TypeCheckerRelations {
         }
 
         const pexp = t.decl.provides.find((p) => p instanceof NominalTypeSignature && p.decl.ns.ns[0] === "Core" && p.decl.name === "Expandoable");
-        return pexp !== undefined ? (pexp as NominalTypeSignature).alltermargs[0] : undefined;
+        const trmp = this.generateTemplateMappingForTypeDecl(t);
+        
+        return pexp !== undefined ? (pexp as NominalTypeSignature).alltermargs[0].remapTemplateBindings(trmp) : undefined;
     }
 
     resolveNamespaceDecl(ns: string[]): NamespaceDeclaration | undefined {
