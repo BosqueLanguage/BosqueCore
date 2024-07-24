@@ -1,0 +1,16 @@
+"use strict";
+
+import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { describe, it } from "node:test";
+
+describe ("Checker -- Container Constructor (List)", () => {
+    it("should check list constructors", function () {
+        checkTestFunction("function main(): List<Int> { return List<Int>{}; }");
+        checkTestFunction("function main(): List<Int> { return List<Int>{1i, 2i, 3i}; }");
+        checkTestFunction("function main(l: List<Int>): List<Int> { return List<Int>{1i, ...l, 3i}; }");
+    });
+
+    it("should fail list constructors", function () {
+        checkTestFunction("function main(): List<Int> { return List<Int>{x=2i}; }", 'err2');
+    });
+});

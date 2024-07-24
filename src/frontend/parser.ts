@@ -2810,7 +2810,8 @@ class Parser {
             return new ConstructorPrimaryExpression(sinfo, nnsig, args);
         }
         else {
-            assert(false, "Not implemented -- parseTypeScopedFirstExpression");
+            this.recordErrorGeneral(sinfo, "Unknown type scoped expression");
+            return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: nnsig}, undefined);
         }
     }
 

@@ -1084,6 +1084,11 @@ class TypeChecker {
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
+        if(exp.args.args.length !== ctype.alltermargs.length) {
+            this.reportError(exp.sinfo, `Constructor ${ctype.tkeystr} expected ${ctype.alltermargs.length} arguments but got ${exp.args.args.length}`);
+            return exp.setType(ctype);
+        }
+
         if(cdecl instanceof OkTypeDecl) {
             const oktype = ctype.alltermargs[0];
             const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
@@ -1126,7 +1131,7 @@ class TypeChecker {
             assert(false, "Unknown ConstructableTypeDecl type");
         }
 
-        exp.shuffleinfo = cdecl.terms.length == 2 ? [0, 1] : [0];
+        exp.shuffleinfo = ctype.alltermargs.length == 2 ? [0, 1] : [0];
         return exp.setType(ctype);
     }
 
