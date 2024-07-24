@@ -995,16 +995,14 @@ class PostfixError extends PostfixOperation {
 
 class PostfixAccessFromName extends PostfixOperation {
     readonly name: string;
-    readonly isLiteralOp: boolean;
 
-    constructor(sinfo: SourceInfo, name: string, isLiteralOp: boolean) {
+    constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
         this.name = name;
-        this.isLiteralOp = isLiteralOp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isLiteralOp ? "!" : ""}.${this.name}`;
+        return `.${this.name}`;
     }
 }
 

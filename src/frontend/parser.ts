@@ -3235,6 +3235,11 @@ class Parser {
                     ops.push(new PostfixAsConvert(sinfo, ttest));
                 }
             }
+            else {
+                this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access");
+
+                xxxx;
+            }
             /*
             else if (this.testToken(SYM_dot)) {
                 this.consumeToken();
@@ -3293,9 +3298,6 @@ class Parser {
                 }
             }
             */
-            else {
-                assert(false, "Not implemented -- parsePostfixExpression");
-            }
         }
 
         if (ops.length === 0) {
