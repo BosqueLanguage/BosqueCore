@@ -10,7 +10,7 @@ describe ("Parser -- Access Field Simple", () => {
     });
 
     it("should fail non-virtual lookup", function () {
-        parseTestFunctionInFileError('entity Foo { field f: Int; } function main(x: Foo): Int { return x..; }', "err1");
+        parseTestFunctionInFileError('entity Foo { field f: Int; } function main(x: Foo): Int { return x..; }', 'Expected "[IDENTIFIER]" but got "." when parsing "postfix access/invoke"');
     });
 });
 

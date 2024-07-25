@@ -3220,24 +3220,18 @@ class Parser {
             const sinfo = this.peekToken().getSourceInfo();
 
             if(this.testToken(SYM_question)) {
-                this.consumeToken();
-
                 const ttest = this.parseITest();
                 if(ttest !== undefined) {
                     ops.push(new PostfixIsTest(sinfo, ttest));
                 }
             }
             else if(this.testToken(SYM_at)) {
-                this.consumeToken();
-                
                 const ttest = this.parseITest();
                 if(ttest !== undefined) {
                     ops.push(new PostfixAsConvert(sinfo, ttest));
                 }
             }
             else {
-                this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access");
-
                 if(this.testToken(SYM_lparen)) {
                     assert(false, "Not implemented yet -- project fields");
                 }
