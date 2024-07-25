@@ -1348,7 +1348,13 @@ class TypeChecker {
     ////////
     // Postfix Expressions
     private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixAccessFromName");
+        const finfo = this.relations.resolveTypeField(rcvrtype, exp.name, this.constraints);
+        if(finfo === undefined) {
+            this.reportError(exp.sinfo, `Could not find field ${exp.name} in type ${rcvrtype.tkeystr}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));
     }
 
     private checkPostfixProjectFromNames(env: TypeEnvironment, exp: PostfixProjectFromNames, rcvrtype: TypeSignature, infertype: TypeInferContext | undefined): TypeSignature {
