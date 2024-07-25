@@ -181,7 +181,7 @@ class JSEmitter {
     }
     
     private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
-        return `$Runtime.regex(${exp.value})`;
+        return `$Runtime.cregex(${exp.value})`;
     }
     
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
@@ -261,7 +261,7 @@ class JSEmitter {
             return exp.scopename;
         }
         else {
-            return `$lambda.${exp.scopename}`;
+            return exp.scopename;
         }
     }
     

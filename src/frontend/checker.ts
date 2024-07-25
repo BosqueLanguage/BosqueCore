@@ -1348,7 +1348,13 @@ class TypeChecker {
     ////////
     // Postfix Expressions
     private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixAccessFromName");
+        const finfo = this.relations.resolveTypeField(rcvrtype, exp.name, this.constraints);
+        if(finfo === undefined) {
+            this.reportError(exp.sinfo, `Could not find field ${exp.name} in type ${rcvrtype.tkeystr}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));
     }
 
     private checkPostfixProjectFromNames(env: TypeEnvironment, exp: PostfixProjectFromNames, rcvrtype: TypeSignature, infertype: TypeInferContext | undefined): TypeSignature {
@@ -1397,28 +1403,36 @@ class TypeChecker {
             switch(op.tag) {
                 case PostfixOpTag.PostfixAccessFromName: {
                     ctype = this.checkPostfixAccessFromName(env, op as PostfixAccessFromName, ctype);
+                    break;
                 }
                 case PostfixOpTag.PostfixProjectFromNames: {
                     ctype = this.checkPostfixProjectFromNames(env, op as PostfixProjectFromNames, ctype, texpected);
+                    break;
                 }
                 case PostfixOpTag.PostfixIsTest: {
                     ctype = this.checkPostfixIsTest(env, op as PostfixIsTest, ctype);
+                    break;
                 }
                 case PostfixOpTag.PostfixAsConvert: {
                     ctype = this.checkPostfixAsConvert(env, op as PostfixAsConvert, ctype);
+                    break;
                 }
                 case PostfixOpTag.PostfixAssignFields: {
                     ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
+                    break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
                     ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype);
+                    break;
                 }
                 case PostfixOpTag.PostfixLiteralKeyAccess: {
                     ctype = this.checkPostfixLiteralKeyAccess(env, op as PostfixLiteralKeyAccess);
+                    break;
                 }
                 default: {
                     assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
                     ctype = new ErrorTypeSignature(op.sinfo, undefined);
+                    break;
                 }
             }
             op.setType(ctype);
