@@ -22,14 +22,26 @@ class JSCodeFormatter {
 }
 
 class TypeNameResolver {
-    emitDeclNameAccess(ttype: NominalTypeSignature): string {
-        const nscope = "$" + ttype.decl.ns.ns.join(".");
-        const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
+    generateTypeKey(ttype: NominalTypeSignature): string {
+        const nscope = ttype.decl.ns.ns.join(".");
 
         if(ttype.decl.terms.length === 0) {
             return nscope + "." + ttype.decl.name;
         }
         else {
+            const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
+            return `${nscope}.${ttype.decl.name}${termstr}`;
+        }
+    }
+
+    emitDeclNameAccess(ttype: NominalTypeSignature): string {
+        const nscope = "$" + ttype.decl.ns.ns.join(".");
+
+        if(ttype.decl.terms.length === 0) {
+            return nscope + "." + ttype.decl.name;
+        }
+        else {
+            const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
             return `${nscope}.${ttype.decl.name}["${termstr}"]`;
         }
     }

@@ -57,27 +57,27 @@ class JSEmitter {
     */
 
     private emitLiteralNoneExpression(): string {
-        return "$Runtime.none";
+        return "null";
     }
 
     private emitLiteralBoolExpression(exp: LiteralSimpleExpression): string {
-        return exp.value === "true" ? "$Runtime.true" : "$Runtime.false";
+        return exp.value;
     }
 
     private emitLiteralNatExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.nat(${exp.value.slice(0, -1)}n)`;
+        return `${exp.value.slice(0, -1)}n`;
     }
 
     private emitLiteralIntExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.int(${exp.value.slice(0, -1)}n)`;
+        return `${exp.value.slice(0, -1)}n`;
     }
 
     private emitLiteralBigNatExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.bignat(${exp.value.slice(0, -1)}n)`;
+        return `${exp.value.slice(0, -1)}n`;
     }
 
     private emitLiteralBigIntExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.bigint(${exp.value.slice(0, -1)}n)`;
+        return `${exp.value.slice(0, -1)}n`;
     }
 
     private emitLiteralRationalExpression(exp: LiteralSimpleExpression): string {
@@ -85,7 +85,7 @@ class JSEmitter {
     }
 
     private emitLiteralFloatExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.float(${exp.value}.slice(0, -1))`;
+        return `${exp.value}.slice(0, -1)`;
     }
     
     private emitLiteralDecimalExpression(exp: LiteralSimpleExpression): string {
@@ -177,18 +177,22 @@ class JSEmitter {
     }
     
     private emitLiteralUnicodeRegexExpression(exp: LiteralRegexExpression): string {
-        return `$Runtime.regex(${exp.value})`;
+        xxxx;
+        return `"${exp.value}"`;
     }
     
     private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
-        return `$Runtime.cregex(${exp.value})`;
+        xxxx;
+        return `"${exp.value}"`;
     }
     
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
+        xxxx;
         return `$Runtime.string(${exp.value})`;
     }
     
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
+        xxxx;
         return `$Runtime.cstring(${exp.value})`;
     }
     

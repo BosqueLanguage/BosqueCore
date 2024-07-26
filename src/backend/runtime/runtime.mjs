@@ -1,12 +1,18 @@
 "use strict;"
 
-import { BSQValue } from "./rtti.mjs";
 
-/**
- * @type {BSQValue}
- */
-let none;
+function box(t, v) {
+    return {tag: t, value: v};
+}
+
+function getTypeTag(b) {
+    return b.tag;
+}
+
+function unbox(b) {
+    return b.value;
+}
 
 export {
-    none
+    box, getTypeTag, unbox
 };
