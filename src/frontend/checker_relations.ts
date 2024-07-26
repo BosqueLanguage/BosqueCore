@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, AbstractEntityTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, PairTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -1186,7 +1186,7 @@ class TypeCheckerRelations {
                 allfields = allfields.concat(pdecl.tsig.decl.fields.map((f) => new MemberLookupInfo<MemberFieldDecl>(pdecl, f)));
             }
             else {
-                allfields = [];
+                ;
             }
         }
 
@@ -1209,6 +1209,31 @@ class TypeCheckerRelations {
         const mbnames = mfields.map((mf) => { return {name: mf.name, type: mf.declaredType, hasdefault: mf.defaultValue !== undefined}; });
 
         return [...ibnames, ...mbnames];
+    }
+
+    //get all of the actual fields that are provided via inheritance
+    resolveAllInheritedValidatorDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): {invariants: MemberLookupInfo<InvariantDecl>[], validators: MemberLookupInfo<ValidateDecl>[]} {
+        const pdecls = this.resolveTransitiveProvidesDecls(ttype, tconstrain);
+
+        let allinvariants: MemberLookupInfo<InvariantDecl>[] = [];
+        let allvalidators: MemberLookupInfo<ValidateDecl>[] = [];
+        for(let i = 0; i < pdecls.length; ++i) {
+            const pdecl = pdecls[i];
+
+            allinvariants = allinvariants.concat(pdecl.tsig.decl.invariants.map((f) => new MemberLookupInfo<InvariantDecl>(pdecl, f)));
+            allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((f) => new MemberLookupInfo<ValidateDecl>(pdecl, f)));
+        }
+
+        return {invariants: allinvariants, validators: allvalidators};
+    }
+
+    hasChecksOnConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+            return true;
+        }
+
+        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
+        return ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
     }
 
     convertTypeSignatureToTypeInferCtx(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeInferContext {

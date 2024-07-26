@@ -621,7 +621,10 @@ abstract class ConstructorExpression extends Expression {
 
 class ConstructorPrimaryExpression extends ConstructorExpression {
     readonly ctype: TypeSignature;
-    shuffleinfo: number[] = [];
+
+    elemtype: TypeSignature | undefined = undefined;
+    shuffleinfo: [number, string, TypeSignature][] = [];
+    hasChecks: boolean = false;
     
     constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
@@ -733,8 +736,8 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: number[] = [];
-    restinfo: number[] | undefined = undefined;
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);

@@ -1,18 +1,14 @@
 "use strict;"
 
 
-function box(t, v) {
-    return {tag: t, value: v};
+function _$b(t, v) {
+    return {$tag: t, $val: v};
 }
 
-function getTypeTag(b) {
-    return b.tag;
-}
-
-function unbox(b) {
-    return b.value;
+function _$u(b) {
+    return b.$val;
 }
 
 export {
-    box, getTypeTag, unbox
+    _$b, _$u
 };

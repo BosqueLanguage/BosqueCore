@@ -1,16 +1,68 @@
 import assert from "node:assert";
 
-import { JSCodeFormatter } from "./jsemitter_support.js";
+import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
-import { TypeCheckerRelations } from "../frontend/checker_relations.js";
+import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, PairTypeDecl } from "../frontend/assembly.js";
+import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 
 class JSEmitter {
+    readonly assembly: Assembly;
     readonly fmt: JSCodeFormatter;
-    readonly relations: TypeCheckerRelations;
 
-    constructor(relations: TypeCheckerRelations) {
+    currentfile: string | undefined;
+    currentns: NamespaceDeclaration | undefined;
+
+    mapper: TemplateNameMapper | undefined;
+
+    constructor(assembly: Assembly) {
+        this.assembly = assembly;
         this.fmt = new JSCodeFormatter(0);
-        this.relations = relations;
+        
+        this.currentfile = undefined;
+        this.currentns = undefined;
+    }
+
+    private tproc(ttype: TypeSignature): TypeSignature {
+        return ttype.remapTemplateBindings(this.getTemplateMapper());
+    }
+
+    private getCurrentNamespace(): NamespaceDeclaration {
+        assert(this.currentns !== undefined, "Current namespace is not set");
+        return this.currentns;
+    }
+
+    private getCurrentFile(): string {
+        assert(this.currentfile !== undefined, "Current file is not set");
+        return this.currentfile;
+    }
+
+    private getTemplateMapper(): TemplateNameMapper {
+        assert(this.mapper !== undefined, "Template mapper is not set");
+        return this.mapper;
+    }
+
+    private emitBoxOperation(val: string, oftype: NominalTypeSignature): string {
+        const taccess = EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), oftype);
+        return `_$b(${taccess}.$tsym, ${val})`;
+    }
+
+    private emitUnBoxOperation(val: string): string {
+        return `_$u(${val})`;
+    }
+
+    private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
+        const oftypet = this.tproc(oftype);
+        const totypet = this.tproc(totype);
+
+        if(EmitNameManager.isNakedTypeRepr(oftypet) == EmitNameManager.isBoxedTypeRepr(totypet)) {
+            return this.emitBoxOperation(val, totypet as NominalTypeSignature);
+        }
+        else if(EmitNameManager.isBoxedTypeRepr(oftypet) && EmitNameManager.isNakedTypeRepr(totypet)) {
+            return this.emitUnBoxOperation(val);
+        }
+        else {
+            return val;
+        }
     }
 
     /*
@@ -177,23 +229,21 @@ class JSEmitter {
     }
     
     private emitLiteralUnicodeRegexExpression(exp: LiteralRegexExpression): string {
-        xxxx;
-        return `"${exp.value}"`;
+        const restr = exp.value.replace(/\"/g, "\\\"");
+        return `"${restr}"`;
     }
     
     private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
-        xxxx;
-        return `"${exp.value}"`;
+        const restr = exp.value.replace(/'/g, "\\'");
+        return `'${restr}'`;
     }
     
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
-        xxxx;
-        return `$Runtime.string(${exp.value})`;
+        return `validateStringLiteral(${exp.value})`;
     }
     
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
-        xxxx;
-        return `$Runtime.cstring(${exp.value})`;
+        return `validateCStringLiteral(${exp.value})`;
     }
     
     private emitLiteralTypedStringExpression(exp: LiteralTypedStringExpression): string {
@@ -253,7 +303,10 @@ class JSEmitter {
     }
 
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
-        return `${exp.ns.ns.join(".")}.${exp.name}()`;
+        const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
+        const nsaccess = EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns);
+
+        return `${nsaccess}${exp.name}`;
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
@@ -269,8 +322,70 @@ class JSEmitter {
         }
     }
     
-    private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
-        assert(false, "Not implemented -- ConstructorPrimary");
+    private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
+        if(cdecl instanceof ListTypeDecl) {
+            return `[${exp.args.args.map((a) => this.emitBUAsNeeded(this.emitExpression(a.exp, true), a.exp.getType(), exp.elemtype as TypeSignature)).join(", ")}]`;
+        }
+        else {
+            assert(false, "Unknown collection type -- emitCollectionConstructor");
+        }
+    }
+
+    private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression, toplevel: boolean): string {
+        if(cdecl instanceof PairTypeDecl || cdecl instanceof MapEntryTypeDecl) {
+            const pairtype = exp.ctype as NominalTypeSignature;
+            const pairargs = exp.args.args;
+            const p0exp = this.emitBUAsNeeded(this.emitExpression(pairargs[0].exp, true),  pairargs[0].exp.getType(), pairtype.alltermargs[0]);
+            const p1exp = this.emitBUAsNeeded(this.emitExpression(pairargs[1].exp, true),  pairargs[1].exp.getType(), pairtype.alltermargs[1]);
+            return `[${p0exp}, ${p1exp}]`;
+        }
+        else {
+            const pexp = exp.args.args[0].exp;
+            return this.emitBUAsNeeded(this.emitExpression(pexp, toplevel), pexp.getType(), exp.getType());
+        }
+    }
+
+    private emitStandardConstructor(exp: ConstructorPrimaryExpression): string {
+        const taccess = EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+
+        const aargs: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                aargs.push("undefined");
+            }
+            else {
+                const aaexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[ii[0]].exp, true), exp.args.args[ii[0]].exp.getType(), ii[2]);
+                aargs.push(aaexp);
+            }
+        }
+
+        if(!exp.hasChecks && exp.shuffleinfo.every((ii) => ii[0] !== -1)) {
+            let iargs: string[] = [];
+
+            for(let i = 0; i < aargs.length; ++i) {
+                iargs.push(`${exp.shuffleinfo[i][1]}: ${aargs[i]}`);
+            }
+
+            return `{${iargs.join(", ")}}`;
+        }
+        else {
+            return `${taccess}.$create(${exp.args.args.map((a) => this.emitExpression(a.exp, true)).join(", ")})`;
+        }
+    }
+
+    private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression, toplevel: boolean): string {
+        const ctype = exp.ctype as NominalTypeSignature;
+        const decl = ctype.decl;
+        if(decl instanceof AbstractCollectionTypeDecl) {
+            return this.emitCollectionConstructor(decl, exp);
+        }
+        else if(decl instanceof ConstructableTypeDecl) {
+            return this.emitSpecialConstructableConstructor(decl, exp, toplevel);
+        }
+        else {
+            return this.emitStandardConstructor(exp);
+        }
     }
     
     private emitConstructorEListExpression(exp: ConstructorEListExpression): string {
@@ -294,7 +409,38 @@ class JSEmitter {
     }
     
     private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
-        assert(false, "Not implemented -- CallNamespaceFunction");
+        const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                argl.push("undefined");
+            }
+            else {
+                const aaexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[ii[0]].exp, true), exp.args.args[ii[0]].exp.getType(), ii[1] as TypeSignature);
+                argl.push(aaexp);
+            }
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: string[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    const rrexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[rri[0]].exp, true), exp.args.args[rri[0]].exp.getType(), rri[2] as TypeSignature);
+                    restl.push(rrexp);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            xxxx;
+        }
+
+        return `${EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns)}.${exp.name}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -543,7 +689,7 @@ class JSEmitter {
                 return this.emitAccessVariableExpression(exp as AccessVariableExpression);
             }
             case ExpressionTag.ConstructorPrimaryExpression: {
-                return this.emitConstructorPrimaryExpression(exp as ConstructorPrimaryExpression);
+                return this.emitConstructorPrimaryExpression(exp as ConstructorPrimaryExpression, toplevel);
             }
             case ExpressionTag.ConstructorEListExpression: {
                 return this.emitConstructorEListExpression(exp as ConstructorEListExpression);

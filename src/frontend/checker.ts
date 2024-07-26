@@ -486,7 +486,7 @@ class TypeChecker {
         return TemplateNameMapper.createInitialMapping(tmap);
     }
 
-    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, param: InvokeParameterDecl, imapper: TemplateNameMapper) {
+    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, param: InvokeParameterDecl, imapper: TemplateNameMapper): TypeSignature {
         if(arg instanceof SpreadArgumentValue) {
             this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
         }
@@ -503,16 +503,19 @@ class TypeChecker {
 
         const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
         this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${param.type.tkeystr} but got ${argtype.tkeystr}`);
+
+        return argtype;
     }
 
-    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], param: InvokeParameterDecl, imapper: TemplateNameMapper) {
+    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], param: InvokeParameterDecl, imapper: TemplateNameMapper): [boolean, TypeSignature][] {
         const ptype = param.type.remapTemplateBindings(imapper);
         const etype = this.relations.getExpandoableOfType(ptype);
         if(etype === undefined) {
             this.reportError(args[args.length - 1].exp.sinfo, `Rest parameter ${param.name} must be of type Expandoable`);
-            return;
+            return [];
         }
 
+        let rtypes: [boolean, TypeSignature][] = [];
         for(let i = 0; i < args.length; ++i) {
             const arg = args[i];
 
@@ -522,22 +525,30 @@ class TypeChecker {
 
             if(arg instanceof PositionalArgumentValue) {
                 const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(etype));
+                rtypes.push([false, argtype]);
+
                 this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, etype, this.constraints), `Rest argument ${i} expected type ${etype.tkeystr}`);
             }
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);
+                rtypes.push([true, argtype]);
+
                 const argetype = this.relations.getExpandoableOfType(argtype);
                 this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype, this.constraints), `Rest argument ${i} expected to be container of type ${etype.tkeystr}`);
             }
         }
+
+        return rtypes;
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: number[], restinfo: number[] | undefined } {
+    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], restinfo: [number, boolean, TypeSignature][] | undefined } {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
+        let argsuffletype: (TypeSignature | undefined)[] = [];
         for(let i = 0; i < args.length; ++i) {
             argsuffle.push(undefined);
             argsuffleidx.push(-1);
+            argsuffletype.push(undefined);
         }
 
         //fill in all the named arguments
@@ -571,7 +582,7 @@ class TypeChecker {
             apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
         }
 
-        let restinfo: number[] | undefined = undefined;
+        let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam === undefined) {
             if(args.length > params.length) {
                 this.reportError(sinfo, `Too many arguments provided to function`);
@@ -586,24 +597,25 @@ class TypeChecker {
                     this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
                 }
                 else {
-                    this.checkSingleParam(env, argsuffle[i] as ArgumentValue, params[i], imapper);
+                    argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, params[i], imapper);
                 }
             }
         }
         else {
             let restargs = args.slice(nonrestparams.length);
-            this.checkRestParam(env, restargs, restparam, imapper);
+            const restypes = this.checkRestParam(env, restargs, restparam, imapper);
 
             restinfo = [];
             for(let i = nonrestparams.length; i < args.length; ++i) {
-                restinfo.push(i);
+                const rri = restypes[i - nonrestparams.length] as [boolean, TypeSignature];
+                restinfo.push([i, rri[0], rri[1]]);
             }
         }
 
-        return { shuffleinfo: argsuffleidx, restinfo: restinfo };
+        return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
     }
 
-    private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[]): number[] {
+    private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[]): [number, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < args.length; ++i) {
@@ -655,7 +667,7 @@ class TypeChecker {
             }
         }
 
-        return argsuffleidx;
+        return argsuffleidx.map((idx, i) => [idx, bnames[i].name, bnames[i].type]);
     }
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
@@ -1069,9 +1081,9 @@ class TypeChecker {
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
-        let shuffleinfo: number[] = [];
+        let shuffleinfo: [number, string, TypeSignature][] = [];
         for(let i = 0; i < exp.args.args.length; ++i) {
-            shuffleinfo.push(i);
+            shuffleinfo.push([i, "_", etype]);
             const arg = exp.args.args[i];
 
             if(arg instanceof PositionalArgumentValue) {
@@ -1085,6 +1097,11 @@ class TypeChecker {
             }
         }
 
+        if((cdecl instanceof SetTypeDecl) || (cdecl instanceof MapTypeDecl)) {
+            exp.hasChecks = true;
+        }
+
+        exp.elemtype = etype;
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(exp.ctype);
     }
@@ -1098,6 +1115,8 @@ class TypeChecker {
             }
             else {
                 const oktype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, "value", oktype]];
+
                 const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
                 this.checkError(exp.sinfo, okarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.tkeystr}`);
             }
@@ -1108,6 +1127,8 @@ class TypeChecker {
             }
             else {
                 const errtype = ctype.alltermargs[1];
+                exp.shuffleinfo = [[0, "value", errtype]];
+
                 const errarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(errtype));
                 this.checkError(exp.sinfo, errarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.tkeystr}`);
             }
@@ -1118,6 +1139,8 @@ class TypeChecker {
             }
             else {
                 const apitype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, "value", apitype]];
+
                 const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
                 this.checkError(exp.sinfo, apiarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.tkeystr}`);
             }
@@ -1128,6 +1151,8 @@ class TypeChecker {
             }
             else {
                 const ttype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, "value", ttype]];
+
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
                 this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
             }
@@ -1138,10 +1163,12 @@ class TypeChecker {
             }
             else {
                 const ttype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, "first", ttype]];
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
                 this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Pair constructor first argument is not a subtype of ${ttype.tkeystr}`);
 
                 const stype = ctype.alltermargs[1];
+                exp.shuffleinfo = [[1, "second", stype]];
                 const setype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(stype));
                 this.checkError(exp.sinfo, setype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(setype, stype, this.constraints), `Pair constructor second argument is not a subtype of ${stype.tkeystr}`);
             }
@@ -1152,10 +1179,12 @@ class TypeChecker {
             }
             else {
                 const ktype = ctype.alltermargs[0];
+                exp.shuffleinfo = [[0, "key", ktype]];
                 const ketype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ktype));
                 this.checkError(exp.sinfo, ketype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.tkeystr}`);
 
                 const vtype = ctype.alltermargs[1];
+                exp.shuffleinfo = [[1, "val", vtype]];
                 const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
                 this.checkError(exp.sinfo, vetype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.tkeystr}`);
             }
@@ -1164,16 +1193,16 @@ class TypeChecker {
             assert(false, "Unknown ConstructableTypeDecl type");
         }
 
-        exp.shuffleinfo = ctype.alltermargs.length == 2 ? [0, 1] : [0];
         return exp.setType(ctype);
     }
 
-    private checkStandardConstructor(env: TypeEnvironment, cdecl: EntityTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+    private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
-        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, this.constraints, cdecl.fields);
+        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, this.constraints, fields);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
+        exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
     }
@@ -1196,7 +1225,10 @@ class TypeChecker {
         }
         else {
             if(decl instanceof EntityTypeDecl) {
-                return this.checkStandardConstructor(env, decl, exp);
+                return this.checkStandardConstructor(env, decl.fields, exp);
+            }
+            else if(decl instanceof DatatypeMemberEntityTypeDecl) {
+                return this.checkStandardConstructor(env, decl.fields, exp);
             }
             else {
                 this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
