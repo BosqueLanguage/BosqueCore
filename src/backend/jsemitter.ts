@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, PairTypeDecl } from "../frontend/assembly.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, IfExpression, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "../frontend/body.js";
+import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, PairTypeDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 
 class JSEmitter {
@@ -47,7 +47,7 @@ class JSEmitter {
     }
 
     private emitUnBoxOperation(val: string): string {
-        return `_$u(${val})`;
+        return `(${val})._$val`;
     }
 
     private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
@@ -65,48 +65,133 @@ class JSEmitter {
         }
     }
 
-    /*
-    private emitITest_None(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}None()`;
+    private emitITestAsTest_None(val: string, isnot: boolean): string {
+        return val + (isnot ? "._$isSome()" : "._$isNone()");
     }
 
-    private emitITest_Some(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}Some()`;
+    private emitITestAsTest_Some(val: string, isnot: boolean): string {
+        return val + (isnot ? "._$isNone()" : "._$isSome()");
     }
 
-    private emitITest_Ok(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}Ok()`;
+    private emitITestAsTest_Ok(val: string, vtype: TypeSignature, isnot: boolean): string {
+        const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+        const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+        const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
+
+        return `${val}._$is(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym)`;
     }
 
-    private emitITest_Err(val: string, isnot: boolean): string {
-        return `${val}.$is${isnot ? "Not" : ""}Err()`;
+    private emitITestAsTest_Err(val: string, vtype: TypeSignature, isnot: boolean): string {
+        const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+        const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+        const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
+
+        return `${val}._$is(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? oktype : errtype)}.$tsym)`;
     }
 
-    private emitITest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
-        assert(false, "Not implemented -- ITest_Type");
+    private emitITestAsTest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
+        return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
     }
     
-    private processITest(val: string, tt: ITest, tconstraints: TemplateConstraintScope): string {
+    private processITestAsTest(val: string, vtype: TypeSignature, tt: ITest): string {
+        const vvtype = this.tproc(vtype);
+        
         if(tt instanceof ITestType) {
-            return this.emitITest_Type(val, tt.ttype, tt.isnot);
+            return this.emitITestAsTest_Type(val, tt.ttype, tt.isnot);
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.emitITest_None(val, tt.isnot);
+                return this.emitITestAsTest_None(val, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                return this.emitITest_Some(val, tt.isnot);
+                return this.emitITestAsTest_Some(val, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
-                return this.emitITest_Ok(val, tt.isnot);
+                return this.emitITestAsTest_Ok(val, vvtype, tt.isnot);
             }
             else {
                 assert(tt instanceof ITestErr, "missing case in ITest");
-                return this.emitITest_Err(val, tt.isnot);
+                return this.emitITestAsTest_Err(val, vvtype, tt.isnot);
             }
         }
     }
-    */
+
+    private emitITestAsConvert_None(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return val;
+        }
+        else {
+            return val + (isnot ? `._$asNone()` : `._$asSome()`);
+        }
+    }
+
+    private emitITestAsConvert_Some(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return val;
+        }
+        else {
+            return val + (isnot ? `._$asSome()` : `._$asNone()`);
+        }
+    }
+
+    private emitITestAsConvert_Ok(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return val;
+        }
+        else {
+            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+            const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
+
+            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true)`;
+        }
+    }
+
+    private emitITestAsConvert_Err(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return val;
+        }
+        else {
+            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+            const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
+
+            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true)`;
+        }
+    }
+
+    private emitITestAsConvert_Type(val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return EmitNameManager.isBoxedTypeRepr(oftype) ? `_$b${val}` : val;
+        }
+        else {
+            const ubx = EmitNameManager.isNakedTypeRepr(oftype);
+            return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+        }
+    }
+    
+    private processITestAsConvert(val: string, vtype: TypeSignature, tt: ITest): string {
+        const vvtype = this.tproc(vtype);
+        
+        if(tt instanceof ITestType) {
+            return this.emitITestAsConvert_Type(val, vvtype, this.tproc(tt.ttype), tt.isnot);
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                return this.emitITestAsConvert_None(val, vvtype, tt.isnot);
+            }
+            else if(tt instanceof ITestSome) {
+                return this.emitITestAsConvert_Some(val, vvtype, tt.isnot);
+            }
+            else if(tt instanceof ITestOk) {
+                return this.emitITestAsConvert_Ok(val, vvtype, tt.isnot);
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                return this.emitITestAsConvert_Err(val, vvtype, tt.isnot);
+            }
+        }
+    }
 
     private emitLiteralNoneExpression(): string {
         return "null";
@@ -437,7 +522,14 @@ class JSEmitter {
                 }
             }
 
-            xxxx;
+            const invk = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
+            const rparams = invk.params[invk.params.length - 1];
+            if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
+                argl.push(`[${restl.join(", ")}]`);
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
         }
 
         return `${EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns)}.${exp.name}(${argl.join(", ")})`;
@@ -459,31 +551,37 @@ class JSEmitter {
         assert(false, "Not implemented -- ParseAsType");
     }
 
-    private emitPostfixAccessFromName(exp: PostfixAccessFromName): string {
-        assert(false, "Not Implemented -- checkPostfixAccessFromName");
+    private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
+        const rcvrtype = this.tproc(exp.getRcvrType());
+        if(EmitNameManager.isNakedTypeRepr(rcvrtype)) {
+            return `${val}.${exp.name}`;
+        }
+        else {
+            return `${val}._$val.${exp.name}`;
+        }
     }
 
-    private emitPostfixProjectFromNames(exp: PostfixProjectFromNames): string {
+    private emitPostfixProjectFromNames(val: string, exp: PostfixProjectFromNames): string {
         assert(false, "Not Implemented -- checkPostfixProjectFromNames");
     }
 
-    private emitPostfixIsTest(exp: PostfixIsTest): string {
-        assert(false, "Not Implemented -- checkPostfixIsTest");
+    private emitPostfixIsTest(val: string, exp: PostfixIsTest): string {
+        return this.processITestAsTest(val, this.tproc(exp.getRcvrType()), exp.ttest);
     }
 
-    private emitPostfixAsConvert(exp: PostfixAsConvert): string {
-        assert(false, "Not Implemented -- checkPostfixAsConvert");
+    private emitPostfixAsConvert(val: string, exp: PostfixAsConvert): string {
+        return this.processITestAsConvert(val, this.tproc(exp.getRcvrType()), exp.ttest);
     }
 
-    private emitPostfixAssignFields(exp: PostfixAssignFields): string {
+    private emitPostfixAssignFields(val: string, exp: PostfixAssignFields): string {
         assert(false, "Not Implemented -- checkPostfixAssignFields");
     }
 
-    private emitPostfixInvoke(exp: PostfixInvoke): string {
+    private emitPostfixInvoke(val: string, exp: PostfixInvoke): string {
         assert(false, "Not Implemented -- checkPostfixInvoke");
     }
 
-    private emitPostfixLiteralKeyAccess(exp: PostfixLiteralKeyAccess): string {
+    private emitPostfixLiteralKeyAccess(val: string, exp: PostfixLiteralKeyAccess): string {
         assert(false, "Not Implemented -- checkPostfixLiteralKeyAccess");
     }
 
@@ -495,25 +593,25 @@ class JSEmitter {
             
             switch(op.tag) {
                 case PostfixOpTag.PostfixAccessFromName: {
-                    eexp += this.emitPostfixAccessFromName(op as PostfixAccessFromName);
+                    eexp = this.emitPostfixAccessFromName(eexp, op as PostfixAccessFromName);
                 }
                 case PostfixOpTag.PostfixProjectFromNames: {
-                    eexp += this.emitPostfixProjectFromNames(op as PostfixProjectFromNames);
+                    eexp = this.emitPostfixProjectFromNames(eexp, op as PostfixProjectFromNames);
                 }
                 case PostfixOpTag.PostfixIsTest: {
-                    eexp += this.emitPostfixIsTest(op as PostfixIsTest);
+                    eexp = this.emitPostfixIsTest(eexp, op as PostfixIsTest);
                 }
                 case PostfixOpTag.PostfixAsConvert: {
-                    eexp += this.emitPostfixAsConvert(op as PostfixAsConvert);
+                    eexp = this.emitPostfixAsConvert(eexp, op as PostfixAsConvert);
                 }
                 case PostfixOpTag.PostfixAssignFields: {
-                    eexp += this.emitPostfixAssignFields(op as PostfixAssignFields);
+                    eexp = this.emitPostfixAssignFields(eexp, op as PostfixAssignFields);
                 }
                 case PostfixOpTag.PostfixInvoke: {
-                    eexp += this.emitPostfixInvoke(op as PostfixInvoke);
+                    eexp = this.emitPostfixInvoke(eexp, op as PostfixInvoke);
                 }
                 case PostfixOpTag.PostfixLiteralKeyAccess: {
-                    eexp += this.emitPostfixLiteralKeyAccess(op as PostfixLiteralKeyAccess);
+                    eexp = this.emitPostfixLiteralKeyAccess(eexp, op as PostfixLiteralKeyAccess);
                 }
                 default: {
                     assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
@@ -525,12 +623,96 @@ class JSEmitter {
         return eexp;
     }
 
-    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression): string {
-        return `!${this.emitExpression(exp.exp, false)}`;
+    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression, toplevel: boolean): string {
+        const eexp = `!${this.emitExpression(exp.exp, false)}`;
+        return toplevel ? `(${eexp})` : eexp;
     }
 
-    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression): string {
-        return `${exp.op}${this.emitExpression(exp.exp, false)}`;
+    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression, toplevel: boolean): string {
+        const eexp = `${exp.op}${this.emitExpression(exp.exp, false)}`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
+        xxxx;
+    }
+
+    private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
+        xxxx;
+    }
+    
+    private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
+        xxxx;
+    }
+    
+    private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
+        xxxx;
+    }
+    
+    private emitBinKeyEqExpression(exp: BinKeyEqExpression, toplevel: boolean): string {
+        xxxx;
+    }
+
+    private emitBinKeyNeqExpression(exp: BinKeyNeqExpression, toplevel: boolean): string {
+        xxxx;
+    }
+
+    private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitNumericNeqExpression(exp: NumericNeqExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+    
+    private emitNumericLessExpression(exp: NumericLessExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} < ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+    
+    private emitNumericLessEqExpression(exp: NumericLessEqExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} <= ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+    
+    private emitNumericGreaterExpression(exp: NumericGreaterExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} > ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitNumericGreaterEqExpression(exp: NumericGreaterEqExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} >= ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitBinLogicAndExpression(exp: BinLogicAndExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} && ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitBinLogicOrExpression(exp: BinLogicOrExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} || ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+
+    private emitBinLogicImpliesExpression(exp: BinLogicImpliesExpression, toplevel: boolean): string {
+        const eeexp = `!(${this.emitExpression(exp.lhs, false)} && !${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eeexp})` : eeexp;
+    }
+
+    private emitBinLogicIFFExpression(exp: BinLogicIFFExpression, toplevel: boolean): string {
+        const eexp = `(${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)})`;
+        return toplevel ? `(${eexp})` : eexp;
+    }
+    
+    private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
+        return `[${this.emitExpression(exp.kexp, true)}, ${this.emitExpression(exp.vexp, true)}]`;
+    }
+
+    private emitIfExpression(exp: IfExpression, toplevel: boolean): string {
+        xxxx;
     }
 
     emitExpression(exp: Expression, toplevel: boolean): string {
@@ -725,67 +907,65 @@ class JSEmitter {
                 return this.emitPostfixOp(exp as PostfixOp, toplevel);
             }
             case ExpressionTag.PrefixNotOpExpression: {
-                return this.emitPrefixNotOpExpression(exp as PrefixNotOpExpression);
+                return this.emitPrefixNotOpExpression(exp as PrefixNotOpExpression, toplevel);
             }
             case ExpressionTag.PrefixNegateOrPlusOpExpression: {
-                return this.emitPrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression);
+                return this.emitPrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression, toplevel);
             }
-            /*
             case ExpressionTag.BinAddExpression: {
-                return this.checkBinAddExpression(env, exp as BinAddExpression);
+                return this.emitBinAddExpression(exp as BinAddExpression, toplevel);
             }
             case ExpressionTag.BinSubExpression: {
-                return this.checkBinSubExpression(env, exp as BinSubExpression);
+                return this.emitBinSubExpression(exp as BinSubExpression, toplevel);
             }
             case ExpressionTag.BinMultExpression: {
-                return this.checkBinMultExpression(env, exp as BinMultExpression);
+                return this.emitBinMultExpression(exp as BinMultExpression, toplevel);
             }
             case ExpressionTag.BinDivExpression: {
-                return this.checkBinDivExpression(env, exp as BinDivExpression);
+                return this.emitBinDivExpression(exp as BinDivExpression, toplevel);
             }
             case ExpressionTag.BinKeyEqExpression: {
-                return this.checkBinKeyEqExpression(env, exp as BinKeyEqExpression);
+                return this.emitBinKeyEqExpression(exp as BinKeyEqExpression, toplevel);
             }
             case ExpressionTag.BinKeyNeqExpression: {
-                return this.checkBinKeyNeqExpression(env, exp as BinKeyNeqExpression);
+                return this.emitBinKeyNeqExpression(exp as BinKeyNeqExpression, toplevel);
             }
             case ExpressionTag.NumericEqExpression: {
-                return this.checkNumericEqExpression(env, exp as NumericEqExpression);
+                return this.emitNumericEqExpression(exp as NumericEqExpression, toplevel);
             }
             case ExpressionTag.NumericNeqExpression: {
-                return this.checkNumericNeqExpression(env, exp as NumericNeqExpression);
+                return this.emitNumericNeqExpression(exp as NumericNeqExpression, toplevel);
             }
             case ExpressionTag.NumericLessExpression: {
-                return this.checkNumericLessExpression(env, exp as NumericLessExpression);
+                return this.emitNumericLessExpression(exp as NumericLessExpression, toplevel);
             }
             case ExpressionTag.NumericLessEqExpression: {
-                return this.checkNumericLessEqExpression(env, exp as NumericLessEqExpression);
+                return this.emitNumericLessEqExpression(exp as NumericLessEqExpression, toplevel);
             }
             case ExpressionTag.NumericGreaterExpression: {
-                return this.checkNumericGreaterExpression(env, exp as NumericGreaterExpression);
+                return this.emitNumericGreaterExpression(exp as NumericGreaterExpression, toplevel);
             }
             case ExpressionTag.NumericGreaterEqExpression: {
-                return this.checkNumericGreaterEqExpression(env, exp as NumericGreaterEqExpression);
+                return this.emitNumericGreaterEqExpression(exp as NumericGreaterEqExpression, toplevel);
             }
             case ExpressionTag.BinLogicAndExpression: {
-                return this.checkBinLogicAndExpression(env, exp as BinLogicAndExpression);
+                return this.emitBinLogicAndExpression(exp as BinLogicAndExpression, toplevel);
             }
             case ExpressionTag.BinLogicOrExpression: {
-                return this.checkBinLogicOrExpression(env, exp as BinLogicOrExpression);
+                return this.emitBinLogicOrExpression(exp as BinLogicOrExpression, toplevel);
             }
             case ExpressionTag.BinLogicImpliesExpression: {
-                return this.checkBinLogicImpliesExpression(env, exp as BinLogicImpliesExpression);
+                return this.emitBinLogicImpliesExpression(exp as BinLogicImpliesExpression, toplevel);
             }
             case ExpressionTag.BinLogicIFFExpression: {
-                return this.checkBinLogicIFFExpression(env, exp as BinLogicIFFExpression);
+                return this.emitBinLogicIFFExpression(exp as BinLogicIFFExpression, toplevel);
             }
             case ExpressionTag.MapEntryConstructorExpression: {
-                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.emitMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
             }
             case ExpressionTag.IfExpression: {
-                return this.checkIfExpression(env, exp as IfExpression, typeinfer);
+                return this.emitIfExpression(exp as IfExpression, toplevel);
             }
-            */
             default: {
                 assert(exp.tag === ExpressionTag.ErrorExpression, "Unknown expression kind");
                 return "[ERROR EXPRESSION]";
@@ -793,40 +973,70 @@ class JSEmitter {
         }
     }
 
-    /*
-    private checkExpressionRHS(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
+    private emitCallRefThisExpression(exp: CallRefThisExpression): string {
+        assert(false, "Not implemented -- CallRefThis");
+    }
+
+    private emitCallRefSelfExpression(exp: CallRefSelfExpression): string {
+        assert(false, "Not implemented -- CallRefSelf");
+    }
+    
+    private emitCallTaskActionExpression(exp: CallTaskActionExpression): string {
+        assert(false, "Not implemented -- CallTaskAction");
+    }
+
+    private emitTaskRunExpression(exp: TaskRunExpression): string {
+        assert(false, "Not implemented -- TaskRun");
+    }
+
+    private emitTaskMultiExpression(exp: TaskMultiExpression): string {
+        assert(false, "Not implemented -- TaskMulti");
+    }
+
+    private emitTaskDashExpression(exp: TaskDashExpression): string {
+        assert(false, "Not implemented -- TaskDash");
+    }
+    
+    private emitTaskAllExpression(exp: TaskAllExpression): string {
+        assert(false, "Not implemented -- TaskAll");
+    }
+    
+    private emitTaskRaceExpression(exp: TaskRaceExpression): string {
+        assert(false, "Not implemented -- TaskRace");
+    }
+
+    private checkExpressionRHS(exp: Expression): string {
         const ttag = exp.tag;
         switch (ttag) {
             case ExpressionTag.CallRefThisExpression: {
-                return this.checkCallRefThisExpression(env, exp as CallRefThisExpression);
+                return this.emitCallRefThisExpression(exp as CallRefThisExpression);
             }
             case ExpressionTag.CallRefSelfExpression: {
-                return this.checkCallRefSelfExpression(env, exp as CallRefSelfExpression);
+                return this.emitCallRefSelfExpression(exp as CallRefSelfExpression);
             }
             case ExpressionTag.CallTaskActionExpression: {
-                return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
+                return this.emitCallTaskActionExpression(exp as CallTaskActionExpression);
             }
             case ExpressionTag.TaskRunExpression: {
-                return this.checkTaskRunExpression(env, exp as TaskRunExpression);
+                return this.emitTaskRunExpression(exp as TaskRunExpression);
             }
             case ExpressionTag.TaskMultiExpression: {
-                return this.checkTaskMultiExpression(env, exp as TaskMultiExpression);
+                return this.emitTaskMultiExpression(exp as TaskMultiExpression);
             }
             case ExpressionTag.TaskDashExpression: {
-                return this.checkTaskDashExpression(env, exp as TaskDashExpression);
+                return this.emitTaskDashExpression(exp as TaskDashExpression);
             }
             case ExpressionTag.TaskAllExpression: {
-                return this.checkTaskAllExpression(env, exp as TaskAllExpression);
+                return this.emitTaskAllExpression(exp as TaskAllExpression);
             }
             case ExpressionTag.TaskRaceExpression: {
-                return this.checkTaskRaceExpression(env, exp as TaskRaceExpression);
+                return this.emitTaskRaceExpression(exp as TaskRaceExpression);
             }
             default: {
-                return this.checkExpression(env, exp, typeinfer);
+                return this.emitExpression(exp, true);
             }
         }
     }
-    */
 }
 
 export {

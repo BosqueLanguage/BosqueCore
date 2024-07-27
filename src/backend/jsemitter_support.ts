@@ -82,7 +82,15 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
-            return `${acroot}${ttype.decl.name}["${termstr}"]`;
+            if(ttype.decl.isSpecialResultEntity()) {
+                return `Result.${ttype.decl.name}["${termstr}"]`;
+            }
+            else if(ttype.decl.isSpecialAPIResultEntity()) {
+                return `APIResult.${ttype.decl.name}["${termstr}"]`;
+            }
+            else {
+                return `${acroot}${ttype.decl.name}["${termstr}"]`;
+            }
         }
     }
 }
