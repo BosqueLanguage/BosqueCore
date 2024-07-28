@@ -90,7 +90,12 @@ class JSEmitter {
     }
 
     private emitITestAsTest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
-        return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
+            return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
+        }
+        else {
+            return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
+        }
     }
     
     private processITestAsTest(val: string, vtype: TypeSignature, tt: ITest): string {
@@ -166,7 +171,12 @@ class JSEmitter {
         }
         else {
             const ubx = EmitNameManager.isNakedTypeRepr(oftype);
-            return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+            if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
+                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+            }
+            else {
+                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+            }
         }
     }
     

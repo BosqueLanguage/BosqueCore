@@ -23,6 +23,10 @@ class JSCodeFormatter {
 }
 
 class EmitNameManager {
+    static isUniqueTypeForSubtypeChecking(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && !(ttype.decl instanceof AbstractConceptTypeDecl);
+    }
+
     static isNakedTypeRepr(ttype: TypeSignature): boolean {
         if(ttype instanceof EListTypeSignature) {
             return true;
