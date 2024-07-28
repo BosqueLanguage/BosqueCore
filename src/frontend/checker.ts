@@ -1497,7 +1497,20 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        exp.opertype = this.resolveUnderlyingType(etype);
         return exp.setType(etype);
+    }
+
+    private resolveUnderlyingType(ttype: TypeSignature): TypeSignature | undefined {
+        if(this.relations.isPrimitiveType(ttype)) {
+            return ttype;
+        }
+        else if(this.relations.isTypeDeclType(ttype)) {
+            return this.relations.getTypeDeclBasePrimitiveType(ttype);
+        }
+        else {
+            return undefined;
+        }
     }
 
     private checkBinaryNumericArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression): [boolean, TypeSignature, TypeSignature] {
@@ -1531,6 +1544,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(tlhs);
     }
 
@@ -1544,6 +1558,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(tlhs);
     }
 
@@ -1579,6 +1594,7 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
+        exp.opertype = this.resolveUnderlyingType(res);
         return exp.setType(res);
     }
 
@@ -1617,6 +1633,7 @@ class TypeChecker {
             res = new ErrorTypeSignature(exp.sinfo, undefined);
         }
 
+        exp.opertype = this.resolveUnderlyingType(res);
         return exp.setType(res);
     }
 
@@ -1638,6 +1655,7 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable`);
         }
         
+        exp.operkind = action;
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1659,6 +1677,7 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Types ${lhstype.tkeystr} and ${rhstype.tkeystr} are not comparable`);
         }
 
+        exp.operkind = action;
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1669,9 +1688,10 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator == requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
-
 
     private checkNumericNeqExpression(env: TypeEnvironment, exp: NumericNeqExpression): TypeSignature {
         const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
@@ -1680,6 +1700,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator != requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1690,6 +1712,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator < requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1700,6 +1724,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator <= requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1710,6 +1736,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator > requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1720,6 +1748,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator >= requires 2 arguments of the same type");
+        
+        exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 

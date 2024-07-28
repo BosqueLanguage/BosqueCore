@@ -1132,6 +1132,8 @@ class PrefixNotOpExpression extends UnaryExpression {
 class PrefixNegateOrPlusOpExpression extends UnaryExpression {
     readonly op: "-" | "+";
 
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
         super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
         this.op = op;
@@ -1145,6 +1147,8 @@ class PrefixNegateOrPlusOpExpression extends UnaryExpression {
 abstract class BinaryArithExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1202,6 +1206,8 @@ abstract class BinaryKeyExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
+    operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | undefined;
+
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
         this.lhs = lhs;
@@ -1237,6 +1243,8 @@ class BinKeyNeqExpression extends BinaryKeyExpression {
 abstract class BinaryNumericExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
