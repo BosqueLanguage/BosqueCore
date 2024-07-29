@@ -2257,21 +2257,6 @@ class TypeChecker {
         }
     }
 
-    private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression): ExpressionTypeEnvironment {
-        const vinfo = env.lookupLocalVar(exp.name);
-
-        if(vinfo !== null) {
-            this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, `${exp.name} may not have been assigned a value`);
-            return env.setResultExpressionInfo(new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType)), vinfo.declaredType);
-        }
-        else {
-            let cvinfo = env.lookupCapturedVar(exp.name);
-            this.raiseErrorIf(exp.sinfo, cvinfo === null, `${exp.name} is not defined`);
-
-            return env.setResultExpressionInfo(new TIRAccessCapturedVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey((cvinfo as VarInfo).declaredType)), (cvinfo as VarInfo).declaredType);
-        }
-    }
-
     private checkConstructorPrimary(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryExpression): ExpressionTypeEnvironment {
         const oftype = this.normalizeTypeOnly(exp.ctype, env.binds).tryGetUniqueEntityTypeInfo();
         this.raiseErrorIf(exp.sinfo, oftype === undefined, "Invalid constructor type");
@@ -2399,127 +2384,6 @@ class TypeChecker {
         else {
             this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${exp.ctype.getDiagnosticName()}`);
             return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, "None"), ResolvedType.createInvalid());
-        }
-    }
-
-    private checkTupleConstructor(env: ExpressionTypeEnvironment, exp: ConstructorTupleExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let itype: ResolvedTupleAtomType | undefined = undefined;
-        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedTupleAtomType && desiredtype.options[0].types.length === exp.args.length) {
-            itype = desiredtype.options[0]
-        }
-
-        if(itype === undefined) {
-            const eargs = exp.args.map((arg) => this.checkExpression(env, arg, undefined));
-
-            const roftype = ResolvedType.createSingle(ResolvedTupleAtomType.create(eargs.map((ee) => ee.trepr)));
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            return env.setResultExpressionInfo(new TIRConstructorTupleExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype);
-        }
-        else {
-            const topts = itype.types;
-            const eargs = exp.args.map((arg, i) => {
-                const texp = this.checkExpression(env, arg, topts[i]);
-                return this.emitCoerceIfNeeded(texp, exp.sinfo, topts[i]);
-            });
-        
-            const roftype = ResolvedType.createSingle(itype);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            return env.setResultExpressionInfo(new TIRConstructorTupleExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype);
-        }
-    }
-
-    private checkRecordConstructor(env: ExpressionTypeEnvironment, exp: ConstructorRecordExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let itype: ResolvedRecordAtomType | undefined = undefined;
-        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedRecordAtomType && desiredtype.options[0].entries.length === exp.args.length) {
-            itype = desiredtype.options[0]
-        }
-
-        if(itype === undefined) {
-            const eargs = exp.args.map((arg) => {
-                const cc = this.checkExpression(env, arg.value, undefined);
-                return {pname: arg.property, penv: cc};
-            });
-
-            const roftype = ResolvedType.createSingle(ResolvedRecordAtomType.create(eargs.map((ee) => {
-                return {pname: ee.pname, ptype: ee.penv.trepr};
-            })));
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            return env.setResultExpressionInfo(new TIRConstructorRecordExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.penv.expressionResult)), roftype);
-        }
-        else {
-            const roftype = ResolvedType.createSingle(itype);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            for(let i = 0; i < itype.entries.length; ++i) {
-                if(itype.entries[i].pname !== exp.args[i].property) {
-                    this.raiseError(exp.sinfo, `expected property name ${itype.entries[i].pname} but got ${exp.args[i].property}`);
-                    return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, "None"), roftype);
-                }
-            }
-
-            const topts = itype.entries;
-            const eargs = exp.args.map((arg, i) => {
-                const texp = this.checkExpression(env, arg.value, topts[i].ptype);
-                return this.emitCoerceIfNeeded(texp, exp.sinfo, topts[i].ptype);
-            });
-
-            return env.setResultExpressionInfo(new TIRConstructorRecordExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype);
-        }
-    }
-
-    private checkSpecialConstructorExpression(env: ExpressionTypeEnvironment, exp: SpecialConstructorExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        if(exp.rop === "something") {
-            this.raiseErrorIf(exp.sinfo, desiredtype === undefined || (desiredtype.options.length !== 1 || !(desiredtype.typeID.startsWith("Option<"))), "something shorthand constructors only valid with Option typed expressions");
-            const T = ((desiredtype as ResolvedType).options[0] as ResolvedConceptAtomType).getTBind();
-
-            const cexp = this.checkExpression(env, exp.arg, T);
-            const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, T);
-
-            const roftype = this.getSomethingType(T);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            const consenv = ecast.setResultExpressionInfo(new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype);
-            if(desiredtype === undefined) {
-                return consenv; 
-            }
-            else {
-                return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype);
-            }
-        }
-        else {
-            this.raiseErrorIf(exp.sinfo, desiredtype === undefined || (desiredtype.options.length !== 1 || !(desiredtype as ResolvedType).typeID.startsWith("Result<")), "ok/err/result shorthand constructors only valid with Result typed expressions");
-            const T = ((desiredtype as ResolvedType).options[0] as ResolvedConceptAtomType).getTBind();
-            const E = ((desiredtype as ResolvedType).options[0] as ResolvedConceptAtomType).getEBind();
-
-            if (exp.rop === "ok") {
-                const okenv = this.checkExpression(env, exp.arg, T);
-                const tcast = this.emitCoerceIfNeeded(okenv, exp.sinfo, T);
-
-                const rokconstype = this.getOkType(T, E);
-                const tirokconstype = this.toTIRTypeKey(rokconstype);
-
-                const consenv = tcast.setResultExpressionInfo(new TIRResultOkConstructorExpression(exp.sinfo, tirokconstype, tcast.expressionResult), rokconstype);
-                return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
-            }
-            else if(exp.rop === "err") {
-                const errenv = this.checkExpression(env, exp.arg, E);
-                const tcast = this.emitCoerceIfNeeded(errenv, exp.sinfo, E);
-
-                const rerrconstype = this.getErrType(T, E);
-                const tirerrconstype = this.toTIRTypeKey(rerrconstype);
-
-                const consenv = tcast.setResultExpressionInfo(new TIRResultErrConstructorExpression(exp.sinfo, tirerrconstype, tcast.expressionResult), rerrconstype);
-                return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
-            }
-            else {
-                this.raiseError(exp.sinfo, "TODO: result special constructor is not supported yet");
-                //TODO: this should best effort (1) convert Result<T, E> into Result<U, V> + coearce T values into Ok<T> and E values into Err<E> Results -- as possible
-
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, this.toTIRTypeKey(this.getSpecialNoneType())), ResolvedType.createInvalid());
-            }
         }
     }
 
@@ -2723,22 +2587,6 @@ class TypeChecker {
         }
     }
 
-    private checkPostfixIs(env: ExpressionTypeEnvironment, op: PostfixIsTest): ExpressionTypeEnvironment {
-        const isr = this.processITestAsTestOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds);
-        this.raiseErrorIf(op.sinfo, isr.falseflow === undefined, `test always evaluates to true`);
-        this.raiseErrorIf(op.sinfo, !isr.hastrueflow, `test always evaluates to false`);
-
-        return env.setResultExpressionInfo(isr.testexp, this.getSpecialBoolType());
-    }
-
-    private checkPostfixAs(env: ExpressionTypeEnvironment, op: PostfixAsConvert): ExpressionTypeEnvironment {
-        const isr = this.processITestAsTestOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds);
-        this.raiseErrorIf(op.sinfo, !isr.hastrueflow, `conversion always fails`);
-
-        const csr = this.processITestAsConvertOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds, false);
-        return env.setResultExpressionInfo(csr.asexp as TIRExpression, csr.trueflow as ResolvedType);
-    }
-
     private checkInvoke(env: ExpressionTypeEnvironment, op: PostfixInvoke, refvar: string | undefined): ExpressionTypeEnvironment {
         const resolvefrom = op.specificResolve !== undefined ? this.normalizeTypeOnly(op.specificResolve, env.binds) : env.trepr;
         const mresolvetry = this.resolveMemberMethod(op.sinfo, resolvefrom, op.name);
@@ -2814,88 +2662,6 @@ class TypeChecker {
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
                 return env.setResultExpressionInfo(new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, op.name, declkey, tirdecltype, tirrtype, rcvrexp.expressionResult, argexps), rtype);
             }
-        }
-    }
-
-    private checkPostfixExpression(env: ExpressionTypeEnvironment, exp: PostfixOp, desiredtype: ResolvedType | undefined, refok: boolean): ExpressionTypeEnvironment {
-        let cenv = this.checkExpression(env, exp.rootExp, undefined);
-
-        let refvar: string | undefined = undefined;
-        if(refok && (exp.rootExp instanceof AccessVariableExpression)) {
-            refvar = exp.rootExp.name;
-        }
-
-        for (let i = 0; i < exp.ops.length; ++i) {
-            //const lastop = (i + 1 === exp.ops.length);
-            //const itype = lastop ? desiredtype : ((exp.ops[i + 1] instanceof PostfixAs) ? this.normalizeTypeOnly((exp.ops[i + 1] as PostfixAs).astype, cenv.binds) : undefined);
-
-            switch (exp.ops[i].op) {
-                case PostfixOpTag.PostfixAccessFromIndex: {
-                    cenv = this.checkAccessFromIndex(cenv, exp.ops[i] as PostfixAccessFromIndex);
-                    break;
-                }
-                case PostfixOpTag.PostfixAccessFromName: {
-                    cenv = this.checkAccessFromName(cenv, exp.ops[i] as PostfixAccessFromName);
-                    break;
-                }
-                case PostfixOpTag.PostfixIsTest: {
-                    cenv = this.checkPostfixIs(cenv, exp.ops[i] as PostfixIsTest);
-                    break;
-                }
-                case PostfixOpTag.PostfixAsConvert: {
-                    cenv = this.checkPostfixAs(cenv, exp.ops[i] as PostfixAsConvert);
-                    break;
-                }
-                default: {
-                    this.raiseErrorIf(exp.sinfo, exp.ops[i].op !== PostfixOpTag.PostfixInvoke, "Unknown postfix op");
-
-                    cenv = this.checkInvoke(cenv, exp.ops[i] as PostfixInvoke, refvar);
-                    break;
-                }
-            }
-
-            //only want ref on first access
-            refvar = undefined;
-        }
-
-        return cenv;
-    }
-
-    private checkMapEntryConstructorExpression(env: ExpressionTypeEnvironment, exp: MapEntryConstructorExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let itype: ResolvedMapEntityAtomType | undefined = undefined;
-        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedMapEntryEntityAtomType) {
-            itype = desiredtype.options[0]
-        }
-
-        const kenv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.kexp, itype !== undefined ? itype.typeK : undefined);
-        const venv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.vexp, itype !== undefined ? itype.typeV : undefined);
-
-        this.raiseErrorIf(exp.kexp.sinfo, !this.subtypeOf(kenv.trepr, this.getSpecialKeyTypeConceptType()) || !ResolvedType.isGroundedType(kenv.trepr.options), "Key must be a grounded KeyType value");
-        if(itype !== undefined) {
-            const ktype = this.toTIRTypeKey(itype.typeK);
-            const kexp = this.emitCoerceIfNeeded(kenv, exp.kexp.sinfo, itype.typeK);
-
-            const vtype = this.toTIRTypeKey(itype.typeV);
-            const vexp = this.emitCoerceIfNeeded(venv, exp.vexp.sinfo, itype.typeV);
-
-            const medecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("MapEntry") as EntityTypeDecl; 
-            const metype = ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create(medecl, itype.typeK, itype.typeV));
-            const oftype = this.toTIRTypeKey(metype);
-
-            return env.setResultExpressionInfo(new TIRMapEntryConstructorExpression(exp.sinfo, kexp.expressionResult, vexp.expressionResult, ktype, vtype, oftype), metype);
-        }
-        else {
-            const ktype = this.toTIRTypeKey(kenv.trepr);
-            const kexp = kenv.expressionResult;
-
-            const vtype = this.toTIRTypeKey(venv.trepr);
-            const vexp = venv.expressionResult;
-
-            const medecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("MapEntry") as EntityTypeDecl; 
-            const metype = ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create(medecl, kenv.trepr, venv.trepr));
-            const oftype = this.toTIRTypeKey(metype);
-
-            return env.setResultExpressionInfo(new TIRMapEntryConstructorExpression(exp.sinfo, kexp, vexp, ktype, vtype, oftype), metype);
         }
     }
 

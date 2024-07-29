@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, IfExpression, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "../frontend/body.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, IfExpression, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, Statement, StatementTag, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, PairTypeDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 
@@ -1100,7 +1100,7 @@ class JSEmitter {
         assert(false, "Not implemented -- TaskRace");
     }
 
-    private checkExpressionRHS(exp: Expression): string {
+    private emitExpressionRHS(exp: Expression): string {
         const ttag = exp.tag;
         switch (ttag) {
             case ExpressionTag.CallRefThisExpression: {
@@ -1129,6 +1129,100 @@ class JSEmitter {
             }
             default: {
                 return this.emitExpression(exp, true);
+            }
+        }
+    }
+
+    private emitStatement(stmt: Statement): string {
+        switch(stmt.tag) {
+            case StatementTag.EmptyStatement: {
+                return this.checkEmptyStatement(env, stmt as EmptyStatement);
+            }
+            case StatementTag.VariableDeclarationStatement: {
+                return this.checkVariableDeclarationStatement(env, stmt as VariableDeclarationStatement);
+            }
+            case StatementTag.VariableMultiDeclarationStatement: {
+                return this.checkVariableMultiDeclarationStatement(env, stmt as VariableMultiDeclarationStatement);
+            }
+            case StatementTag.VariableInitializationStatement: {
+                return this.checkVariableInitializationStatement(env, stmt as VariableInitializationStatement);
+            }
+            case StatementTag.VariableMultiInitializationStatement: {
+                return this.checkVariableMultiInitializationStatement(env, stmt as VariableMultiInitializationStatement);
+            }
+            case StatementTag.VariableAssignmentStatement: {
+                return this.checkVariableAssignmentStatement(env, stmt as VariableAssignmentStatement);
+            }
+            case StatementTag.VariableMultiAssignmentStatement: {
+                return this.checkVariableMultiAssignmentStatement(env, stmt as VariableMultiAssignmentStatement);
+            }
+            case StatementTag.VariableRetypeStatement: {
+                return this.checkVariableRetypeStatement(env, stmt as VariableRetypeStatement);
+            }
+            case StatementTag.ReturnStatement: {
+                return this.checkReturnStatement(env, stmt as ReturnStatement);
+            }
+            case StatementTag.IfStatement: {
+                return this.checkIfStatement(env, stmt as IfStatement);
+            }
+            case StatementTag.IfElseStatement: {
+                return this.checkIfElseStatement(env, stmt as IfElseStatement);
+            }
+            case StatementTag.IfElifElseStatement: {
+                return this.checkIfElifElseStatement(env, stmt as IfElifElseStatement);
+            }
+            case StatementTag.SwitchStatement: {
+                return this.checkSwitchStatement(env, stmt as SwitchStatement);
+            }
+            case StatementTag.MatchStatement: {
+                return this.checkMatchStatement(env, stmt as MatchStatement);
+            }
+            case StatementTag.AbortStatement: {
+                return this.checkAbortStatement(env, stmt as AbortStatement);
+            }
+            case StatementTag.AssertStatement: {
+                return this.checkAssertStatement(env, stmt as AssertStatement);
+            }
+            case StatementTag.ValidateStatement: {
+                return this.checkValidateStatement(env, stmt as ValidateStatement);
+            }
+            case StatementTag.DebugStatement: {
+                return this.checkDebugStatement(env, stmt as DebugStatement);
+            }
+            case StatementTag.VoidRefCallStatement: {
+                return this.checkVoidRefCallStatement(env, stmt as VoidRefCallStatement);
+            }
+            case StatementTag.VarUpdateStatement: {
+                return this.checkVarUpdateStatement(env, stmt as VarUpdateStatement);
+            }
+            case StatementTag.ThisUpdateStatement: {
+                return this.checkThisUpdateStatement(env, stmt as ThisUpdateStatement);
+            }
+            case StatementTag.SelfUpdateStatement: {
+                return this.checkSelfUpdateStatement(env, stmt as SelfUpdateStatement);
+            }
+            case StatementTag.EnvironmentUpdateStatement: {
+                return this.checkEnvironmentUpdateStatement(env, stmt as EnvironmentUpdateStatement);
+            }
+            case StatementTag.EnvironmentBracketStatement: {
+                return this.checkEnvironmentBracketStatement(env, stmt as EnvironmentBracketStatement);
+            }
+            case StatementTag.TaskStatusStatement: {
+                return this.checkTaskStatusStatement(env, stmt as TaskStatusStatement);
+            }
+            case StatementTag.TaskEventEmitStatement: {
+                return this.checkTaskEventEmitStatement(env, stmt as TaskEventEmitStatement);
+            }
+            case StatementTag.TaskYieldStatement: {
+                return this.checkTaskYieldStatement(env, stmt as TaskYieldStatement);
+            }
+            case StatementTag.BlockStatement: {
+                return this.checkBlockStatement(env, stmt as BlockStatement);
+            }
+            default: {
+                assert(stmt.tag === StatementTag.ErrorStatement, `Unknown statement kind -- ${stmt.tag}`);
+
+                return env;
             }
         }
     }
