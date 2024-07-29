@@ -4,6 +4,12 @@ import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
+const MIN_SAFE_INT = -9223372036854775807n;
+const MAX_SAFE_INT = 9223372036854775807n;
+
+//negation and conversion are always safe
+const MAX_SAFE_NAT = 9223372036854775807n;
+
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
 const WELL_KNOWN_SRC_VAR_NAME = "$src";
@@ -1648,6 +1654,7 @@ class Assembly {
 }
 
 export {
+    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     AbstractDecl, 

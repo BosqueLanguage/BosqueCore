@@ -643,28 +643,113 @@ class JSEmitter {
         return toplevel ? `(${eexp})` : eexp;
     }
 
+    private emitBinOpratorExpression(lhs: Expression, rhs: Expression, oprtype: string, op: string, toplevel: boolean): string {
+        if(oprtype === "Int") {
+            return `_$rc_i(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+        }
+        else if(oprtype === "Nat") {
+            return `_$rc_n(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+        }
+        else if(oprtype === "BigInt") {
+            const eexp = `${this.emitExpression(lhs, false)} ${op} ${this.emitExpression(rhs, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else if(oprtype === "BigNat") {
+            return `_$rc_N(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+        }
+        else if(oprtype === "Float") {
+            return `_$rc_f(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+        }
+        else {
+            assert(false, "Unknown bin add type");
+        }
+    }
+
     private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
-        xxxx;
+        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "+", toplevel);
     }
 
     private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
-        xxxx;
+        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "-", toplevel);
     }
     
     private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
-        xxxx;
+        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "*", toplevel);
     }
     
     private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
-        xxxx;
+        const oprtype = (exp.opertype as TypeSignature).tkeystr;
+
+        if(oprtype === "Int") {
+            return `_$dc_i(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(oprtype === "Nat") {
+            return `_$dc_n(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(oprtype === "BigInt") {
+            return `_$dc_I(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(oprtype === "BigNat") {
+            return `_$dc_N(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(oprtype === "Float") {
+            return `_$dc_f(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            assert(false, "Unknown bin add type");
+        }
     }
     
     private emitBinKeyEqExpression(exp: BinKeyEqExpression, toplevel: boolean): string {
-        xxxx;
+        const kcop = exp.operkind;
+
+        if(kcop === "lhsnone") {
+            const eexp = `${this.emitExpression(exp.rhs, false)} === null`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else if(kcop === "rhsnone") {
+            const eexp = `${this.emitExpression(exp.lhs, false)} === null`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else if(kcop === "lhskeyeqoption") {
+            return `${this.emitExpression(exp.rhs, false)}._$keyEqOf(${this.emitExpression(exp.lhs, true)})`;
+        }
+        else if(kcop === "rhskeyeqoption") {
+            return `${this.emitExpression(exp.lhs, false)}._$keyEqOf(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(kcop === "stricteq") {
+            const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            assert(false, "Unknown key eq kind");
+        }
     }
 
     private emitBinKeyNeqExpression(exp: BinKeyNeqExpression, toplevel: boolean): string {
-        xxxx;
+        const kcop = exp.operkind;
+
+        if(kcop === "lhsnone") {
+            const eexp = `${this.emitExpression(exp.rhs, false)} !== null`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else if(kcop === "rhsnone") {
+            const eexp = `${this.emitExpression(exp.lhs, false)} !== null`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else if(kcop === "lhskeyeqoption") {
+            return `${this.emitExpression(exp.rhs, false)}._$keyNeqOf(${this.emitExpression(exp.lhs, true)})`;
+        }
+        else if(kcop === "rhskeyeqoption") {
+            return `${this.emitExpression(exp.lhs, false)}._$keyNeqOf(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(kcop === "stricteq") {
+            const eexp = `${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            assert(false, "Unknown key eq kind");
+        }
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
