@@ -1827,6 +1827,8 @@ class VariableMultiAssignmentStatement extends Statement {
 
 class VariableRetypeStatement extends Statement {
     readonly name: string;
+    vtype: TypeSignature | undefined = undefined;
+    newvtype: TypeSignature | undefined = undefined;
     readonly ttest: ITest;
 
     constructor(sinfo: SourceInfo, name: string, ttest: ITest) {

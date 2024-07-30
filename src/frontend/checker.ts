@@ -2760,7 +2760,7 @@ class TypeChecker {
         let evals: TypeSignature[] = [];
         if(Array.isArray(stmt.exp)) {
             for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
+                const etype = this.checkExpression(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
                 evals.push(etype);
             }
         }
@@ -2834,7 +2834,7 @@ class TypeChecker {
         let evals: TypeSignature[] = [];
         if(Array.isArray(stmt.exp)) {
             for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
+                const etype = this.checkExpression(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
                 evals.push(etype);
             }
         }
@@ -2886,6 +2886,8 @@ class TypeChecker {
         const splits = this.processITestAsConvert(stmt.sinfo, env, vinfo.vtype, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
 
+        stmt.vtype = vinfo.vtype;
+        stmt.newvtype = splits.ttrue || vinfo.vtype;
         return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.vtype);
     }
 
@@ -2907,7 +2909,7 @@ class TypeChecker {
 
             for(let i = 0; i < stmt.value.length; ++i) {
                 const rtype = i < rtypes.length ? rtypes[i] : undefined;
-                const etype = this.checkExpressionRHS(env, stmt.value[i], rtype);
+                const etype = this.checkExpression(env, stmt.value[i], rtype);
 
                 const rtname = rtype !== undefined ? rtype.tkeystr : "skip";
                 this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.tkeystr}`);

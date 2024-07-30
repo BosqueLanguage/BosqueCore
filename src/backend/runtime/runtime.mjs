@@ -42,6 +42,11 @@ const $Unwind_Assert = Symbol("AssertFailed");
  **/
 const $Unwind_TypeAs = Symbol("TypeAsFailed");
 
+/**
+ * @constructor
+ * @param {Symbol} tag
+ * @param {string | undefined} info
+ **/
 function $Unwind(tag, info) {
     this.$tag = tag;
     this.$info = info;
@@ -141,29 +146,31 @@ $Boxed.prototype._$isNotSubtype = function(tsym) {
 
 /**
  * @method
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$asNone = function() {
+$Boxed.prototype._$asNone = function(info) {
     if (this._$isNone()) {
         return null;
     }
     else {
-        throw new $Unwind($Unwind_TypeAs, "Expected None but got Some");
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
 /**
  * @method
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$asSome = function() {
+$Boxed.prototype._$asSome = function(info) {
     if (this._$isSome()) {
         return this.$val;
     }
     else {
-        throw new $Unwind($Unwind_TypeAs, "Expected Some but got None");
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
@@ -171,14 +178,15 @@ $Boxed.prototype._$asSome = function() {
  * @method
  * @param {Symbol} tsym
  * @param {boolean} ubx
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$as = function(tsym, ubx) {
+$Boxed.prototype._$as = function(tsym, ubx, info) {
     if (this._$is(tsym)) {
         return ubx ? this.$val : this;
     } else {
-        throw new $Unwind($Unwind_TypeAs, `Expected ${tsym.toString()} but got ${this.$tag.toString()}`);
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
@@ -186,14 +194,15 @@ $Boxed.prototype._$as = function(tsym, ubx) {
  * @method
  * @param {Symbol} tsym
  * @param {boolean} ubx
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$asNot = function(tsym, ubx) {
+$Boxed.prototype._$asNot = function(tsym, ubx, info) {
     if (this._$isNot(tsym)) {
         return ubx ? this.$val : this;
     } else {
-        throw new $Unwind($Unwind_TypeAs, `Expected type other than ${tsym.toString()}`);
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
@@ -201,14 +210,15 @@ $Boxed.prototype._$asNot = function(tsym, ubx) {
  * @method
  * @param {Symbol} tsym
  * @param {boolean} ubx
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$asSubtype = function(tsym, ubx) {
+$Boxed.prototype._$asSubtype = function(tsym, ubx, info) {
     if (this._$isSubtype(tsym)) {
         return ubx ? this.$val : this;
     } else {
-        throw new $Unwind($Unwind_TypeAs, `Expected ${tsym.toString()} but got ${this.$tag.toString()}`);
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
@@ -216,14 +226,15 @@ $Boxed.prototype._$asSubtype = function(tsym, ubx) {
  * @method
  * @param {Symbol} tsym
  * @param {boolean} ubx
+ * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-$Boxed.prototype._$asNotSubtype = function(tsym, ubx) {
+$Boxed.prototype._$asNotSubtype = function(tsym, ubx, info) {
     if (this._$isNotSubtype(tsym)) {
         return ubx ? this.$val : this;
     } else {
-        throw new $Unwind($Unwind_TypeAs, `Expected type other than ${tsym.toString()}`);
+        throw new $Unwind($Unwind_TypeAs, info);
     }
 };
 
@@ -240,131 +251,145 @@ function _$b(t, v) {
 /**
  * @function
  * @param {bigint} v
+ * @param {string | undefined} info
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$rc_i($v) {
-    if ($v < MIN_SAFE_INT || MAX_SAFE_INT < $v) {
-        throw new $Unwind($Unwind_NumericRange, "Int value out of range");
+function _$rc_i(v, info) {
+    if (v < MIN_SAFE_INT || MAX_SAFE_INT < v) {
+        throw new $Unwind($Unwind_NumericRange, info);
     }
 
-    return $v;
+    return v;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {string|undefined} info
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$rc_n($v) {
-    if ($v < 0n || MAX_SAFE_NAT < $v) {
-        throw new $Unwind($Unwind_NumericRange, "Nat value out of range");
+function _$rc_n(v, info) {
+    if (v < 0n || MAX_SAFE_NAT < v) {
+        throw new $Unwind($Unwind_NumericRange, info);
     }
 
-    return $v;
+    return v;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {string | undefined} info
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$rc_N($v) {
-    if ($v < 0n) {
-        throw new $Unwind($Unwind_NumericRange, "BigNat value is negative");
+function _$rc_N(v, info) {
+    if (v < 0n) {
+        throw new $Unwind($Unwind_NumericRange, info);
     }
 
-    return $v;
+    return v;
 }
 
 /**
  * @function
  * @param {number} v
+ * @param {string | undefined} info
  * @returns {number}
  * @throws {$Unwind}
  **/
-function _$rc_f($v) {
-    if (Number.isNaN($v)) {
-        throw new $Unwind($Unwind_NumericRange, "Value is NaN");
+function _$rc_f(v, info) {
+    if (Number.isNaN(v)) {
+        throw new $Unwind($Unwind_NumericRange, info.replace("[EVALUE]", "NaN"));
     }
 
-    if (!Number.isFinite($v)) {
-        throw new $Unwind($Unwind_NumericRange, "Value is Infinity");
+    if (!Number.isFinite(v)) {
+        throw new $Unwind($Unwind_NumericRange, info.replace("[EVALUE]", "Infinite"));
     }
 
-    return $v;
+    return v;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {bigint} d
+ * @param {string | undefined} infod
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$dc_i($v, $d) {
-    if ($d === 0n) {
-        throw new $Unwind($Unwind_DivZero, "Division by zero");
+function _$dc_i(v, d, infod) {
+    if (d === 0n) {
+        throw new $Unwind($Unwind_DivZero, infod);
     }
 
-    return _$rc_i($v / $d);
+    return v / d;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {bigint} d
+ * @param {string | undefined} infod
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$dc_n($v, $d) {
-    if ($d === 0n) {
-        throw new $Unwind($Unwind_DivZero, "Division by zero");
+function _$dc_n(v, d, infod) {
+    if (d === 0n) {
+        throw new $Unwind($Unwind_DivZero, infod);
     }
 
-    return _$rc_n($v / $d);
+    return v / d;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {bigint} d
+ * @param {string | undefined} infod
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$dc_I($v, $d) {
-    if ($d === 0n) {
-        throw new $Unwind($Unwind_DivZero, "Division by zero");
+function _$dc_I(v, d, infod) {
+    if (d === 0n) {
+        throw new $Unwind($Unwind_DivZero, infod);
     }
 
-    return _$rc_N($v / $d);
+    return v / d;
 }
 
 /**
  * @function
  * @param {bigint} v
+ * @param {bigint} d
+ * @param {string | undefined} infod
  * @returns {bigint}
  * @throws {$Unwind}
  **/
-function _$dc_N($v, $d) {
-    if ($d === 0n) {
-        throw new $Unwind($Unwind_DivZero, "Division by zero");
+function _$dc_N(v, d, infod) {
+    if (d === 0n) {
+        throw new $Unwind($Unwind_DivZero, infod);
     }
 
-    return _$rc_N($v / $d);
+    return v / d;
 }
 
 /**
  * @function
  * @param {number} v
+ * @param {number} d
+ * @param {string | undefined} infod
  * @returns {number}
  * @throws {$Unwind}
  **/
-function _$dc_f($v, $d) {
-    if ($d === 0) {
-        throw new $Unwind($Unwind_DivZero, "Division by zero");
+function _$dc_f(v, d, infod) {
+    if (d === 0) {
+        throw new $Unwind($Unwind_DivZero, infod);
     }
 
-    return _$rc_f($v / $d);
+    return v / d;
 }
 
 export {

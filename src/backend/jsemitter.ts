@@ -1,22 +1,23 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, IfExpression, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, Statement, StatementTag, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "../frontend/body.js";
+import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, PairTypeDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
+import { SourceInfo } from "../frontend/build_decls.js";
 
 class JSEmitter {
     readonly assembly: Assembly;
-    readonly fmt: JSCodeFormatter;
+    readonly mode: "release" | "debug";
 
     currentfile: string | undefined;
     currentns: NamespaceDeclaration | undefined;
 
     mapper: TemplateNameMapper | undefined;
 
-    constructor(assembly: Assembly) {
+    constructor(assembly: Assembly, mode: "release" | "debug") {
         this.assembly = assembly;
-        this.fmt = new JSCodeFormatter(0);
+        this.mode = mode;
         
         this.currentfile = undefined;
         this.currentns = undefined;
@@ -34,6 +35,21 @@ class JSEmitter {
     private getCurrentFile(): string {
         assert(this.currentfile !== undefined, "Current file is not set");
         return this.currentfile;
+    }
+
+    private getErrorInfo(msg: string, sinfo: SourceInfo, diagnosticTag: string | undefined): string | undefined {
+        if(this.mode === "release") {
+            return diagnosticTag;
+        }
+        else {
+            let ff: string = "[internal]";
+            if(this.currentfile !== undefined) {
+                const fnameidex = this.currentfile.lastIndexOf("/");
+                ff = this.currentfile.slice(fnameidex + 1);
+            }
+
+            return `"${msg}${diagnosticTag !== undefined ? ("[" + diagnosticTag + "]") : ""} @ ${ff}:${sinfo.line}"`;
+        }
     }
 
     private getTemplateMapper(): TemplateNameMapper {
@@ -121,38 +137,27 @@ class JSEmitter {
         }
     }
 
-    private emitITestAsConvert_None(val: string, vtype: TypeSignature, isnot: boolean): string {
+    private emitITestAsConvert_None(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
             return val;
         }
         else {
-            return val + (isnot ? `._$asNone()` : `._$asSome()`);
+            const emsg = this.getErrorInfo(isnot ? "expected None but got Some" : "expected Some but got None", sinfo, undefined);
+            return val + (isnot ? `._$asNone(${emsg})` : `._$asSome(${emsg})`);
         }
     }
 
-    private emitITestAsConvert_Some(val: string, vtype: TypeSignature, isnot: boolean): string {
+    private emitITestAsConvert_Some(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
             return val;
         }
         else {
-            return val + (isnot ? `._$asSome()` : `._$asNone()`);
+            const emsg = this.getErrorInfo(isnot ? "expected Some but got None" : "expected None but got Some", sinfo, undefined);
+            return val + (isnot ? `._$asSome(${emsg})` : `._$asNone(${emsg})`);
         }
     }
 
-    private emitITestAsConvert_Ok(val: string, vtype: TypeSignature, isnot: boolean): string {
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return val;
-        }
-        else {
-            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
-            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
-            const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
-
-            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true)`;
-        }
-    }
-
-    private emitITestAsConvert_Err(val: string, vtype: TypeSignature, isnot: boolean): string {
+    private emitITestAsConvert_Ok(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
             return val;
         }
@@ -161,44 +166,63 @@ class JSEmitter {
             const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
             const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
 
-            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true)`;
+            const emsg = this.getErrorInfo(isnot ? "expected Err but got Ok" : "expected Ok but got Err", sinfo, undefined);
+            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true, ${emsg})`;
         }
     }
 
-    private emitITestAsConvert_Type(val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
+    private emitITestAsConvert_Err(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return val;
+        }
+        else {
+            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+            const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
+
+            const emsg = this.getErrorInfo(isnot ? "expected Ok but got Err" : "expected Err but got Ok", sinfo, undefined);
+            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true, ${emsg})`;
+        }
+    }
+
+    private emitITestAsConvert_Type(sinfo: SourceInfo, val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
             return EmitNameManager.isBoxedTypeRepr(oftype) ? `_$b${val}` : val;
         }
         else {
             const ubx = EmitNameManager.isNakedTypeRepr(oftype);
             if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
-                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+                const toftype = this.tproc(oftype) as NominalTypeSignature;
+                const emsg = this.getErrorInfo(isnot ? `expected different type than ${toftype.tkeystr}` : `expected type ${toftype.tkeystr}`, sinfo, undefined);
+                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), toftype)}.$tsym, ${ubx}, ${emsg})`;
             }
             else {
-                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym, ${ubx})`;
+                const toftype = this.tproc(oftype) as NominalTypeSignature;
+                const emsg = this.getErrorInfo(isnot ? `expected not subtype of ${toftype.tkeystr}` : `expected subtytype of ${toftype.tkeystr}`, sinfo, undefined);
+                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), toftype)}.$tsym, ${ubx}, ${emsg})`;
             }
         }
     }
     
-    private processITestAsConvert(val: string, vtype: TypeSignature, tt: ITest): string {
+    private processITestAsConvert(sinfo: SourceInfo, val: string, vtype: TypeSignature, tt: ITest): string {
         const vvtype = this.tproc(vtype);
         
         if(tt instanceof ITestType) {
-            return this.emitITestAsConvert_Type(val, vvtype, this.tproc(tt.ttype), tt.isnot);
+            return this.emitITestAsConvert_Type(sinfo, val, vvtype, this.tproc(tt.ttype), tt.isnot);
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.emitITestAsConvert_None(val, vvtype, tt.isnot);
+                return this.emitITestAsConvert_None(sinfo, val, vvtype, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                return this.emitITestAsConvert_Some(val, vvtype, tt.isnot);
+                return this.emitITestAsConvert_Some(sinfo, val, vvtype, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
-                return this.emitITestAsConvert_Ok(val, vvtype, tt.isnot);
+                return this.emitITestAsConvert_Ok(sinfo, val, vvtype, tt.isnot);
             }
             else {
                 assert(tt instanceof ITestErr, "missing case in ITest");
-                return this.emitITestAsConvert_Err(val, vvtype, tt.isnot);
+                return this.emitITestAsConvert_Err(sinfo, val, vvtype, tt.isnot);
             }
         }
     }
@@ -580,7 +604,7 @@ class JSEmitter {
     }
 
     private emitPostfixAsConvert(val: string, exp: PostfixAsConvert): string {
-        return this.processITestAsConvert(val, this.tproc(exp.getRcvrType()), exp.ttest);
+        return this.processITestAsConvert(exp.sinfo, val, this.tproc(exp.getRcvrType()), exp.ttest);
     }
 
     private emitPostfixAssignFields(val: string, exp: PostfixAssignFields): string {
@@ -643,60 +667,63 @@ class JSEmitter {
         return toplevel ? `(${eexp})` : eexp;
     }
 
-    private emitBinOpratorExpression(lhs: Expression, rhs: Expression, oprtype: string, op: string, toplevel: boolean): string {
+    private emitBinOpratorExpression(sinfo: SourceInfo, lhs: Expression, rhs: Expression, oprtype: string, op: string, toplevel: boolean): string {
+        const eemsg = this.getErrorInfo("operation results in numeric out-of-bounds", sinfo, undefined);
+
         if(oprtype === "Int") {
-            return `_$rc_i(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+            return `_$rc_i(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "Nat") {
-            return `_$rc_n(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+            return `_$rc_n(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "BigInt") {
             const eexp = `${this.emitExpression(lhs, false)} ${op} ${this.emitExpression(rhs, false)}`;
             return toplevel ? `(${eexp})` : eexp;
         }
         else if(oprtype === "BigNat") {
-            return `_$rc_N(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+            return `_$rc_N(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "Float") {
-            return `_$rc_f(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)})`;
+            return `_$rc_f(${this.emitExpression(lhs, true)} ${op} ${this.emitExpression(rhs, true)}, ${eemsg})`;
         }
         else {
-            assert(false, "Unknown bin add type");
+            assert(false, "Unknown bin opr type");
         }
     }
 
     private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
-        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "+", toplevel);
+        return this.emitBinOpratorExpression(exp.sinfo, exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "+", toplevel);
     }
 
     private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
-        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "-", toplevel);
+        return this.emitBinOpratorExpression(exp.sinfo, exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "-", toplevel);
     }
     
     private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
-        return this.emitBinOpratorExpression(exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "*", toplevel);
+        return this.emitBinOpratorExpression(exp.sinfo, exp.lhs, exp.rhs, (exp.opertype as TypeSignature).tkeystr, "*", toplevel);
     }
     
     private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
         const oprtype = (exp.opertype as TypeSignature).tkeystr;
+        const eemsg = this.getErrorInfo("division by zero", exp.sinfo, undefined);
 
         if(oprtype === "Int") {
-            return `_$dc_i(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$dc_i(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "Nat") {
-            return `_$dc_n(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$dc_n(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "BigInt") {
-            return `_$dc_I(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$dc_I(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "BigNat") {
-            return `_$dc_N(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$dc_N(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}, ${eemsg})`;
         }
         else if(oprtype === "Float") {
-            return `_$dc_f(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$dc_f(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}, ${eemsg})`;
         }
         else {
-            assert(false, "Unknown bin add type");
+            assert(false, "Unknown bin div type");
         }
     }
     
@@ -1133,96 +1160,241 @@ class JSEmitter {
         }
     }
 
-    private emitStatement(stmt: Statement): string {
+    private emitEmptyStatement(stmt: EmptyStatement): string {
+        return ";";
+    }
+    
+    private emitVariableDeclarationStatement(stmt: VariableDeclarationStatement): string {
+        return `let ${stmt.name};`;
+    }
+    
+    private emitVariableMultiDeclarationStatement(stmt: VariableMultiDeclarationStatement): string {
+        return `let ${stmt.decls.map((dd) => dd.name).join(", ")};`;
+    }
+    
+    private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
+        return `${stmt.isConst ? "const": "let"} ${stmt.name} = ${this.emitExpressionRHS(stmt.exp)};`;
+    }
+    
+    private emitVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement): string {
+        if(Array.isArray(stmt.exp)) {
+            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
+            const idecls = stmt.decls.map((dd, ii) => `${dd.name} = ${eexps[ii]}`);
+
+            return `${stmt.isConst ? "const": "let"} ${idecls.join(", ")};`;
+        }
+        else {
+            const eexp = this.emitExpressionRHS(stmt.exp);
+            const idecls = stmt.decls.map((dd) => dd.name);
+
+            return `${stmt.isConst ? "const": "let"} [${idecls.join(", ")}] = ${eexp};`;
+        }
+    }
+
+    private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
+        return `${stmt.name} = ${this.emitExpressionRHS(stmt.exp)};`;
+    }
+
+    private emitVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement): string {
+        if(Array.isArray(stmt.exp)) {
+            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
+
+            return `${stmt.names.map((nn, ii) => `${nn} = ${eexps[ii]}`).join(", ")};`;
+        }
+        else {
+            const eexp = this.emitExpressionRHS(stmt.exp);
+
+            return `[${stmt.names.join(", ")}] = ${eexp};`;
+        }
+    }
+
+    private emitVariableRetypeStatement(stmt: VariableRetypeStatement): string {
+        const check = this.processITestAsTest(stmt.name, this.tproc(stmt.vtype as TypeSignature), stmt.ttest);
+        const retypemsg = this.getErrorInfo("retype failed", stmt.sinfo, undefined);
+
+        return `if(!${check}) { throw new $Unwind($TypeAsFailed, ${retypemsg}); }`;
+    }
+
+    private emitReturnStatement(stmt: ReturnStatement): string {
+        if(stmt.value === undefined) {
+            return "return;";
+        }
+        else {
+            if(Array.isArray(stmt.value)) {
+                return `return [${stmt.value.map((vv) => this.emitExpression(vv, true)).join(", ")}];`;
+            }
+            else {
+                return `return ${this.emitExpressionRHS(stmt.value)};`;
+            }
+        }
+    }
+
+    private emitIfStatement(stmt: IfStatement, fmt: JSCodeFormatter): string {
+
+    }
+
+    private emitIfElseStatement(stmt: IfElseStatement, fmt: JSCodeFormatter): string {
+
+    }
+
+    private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: JSCodeFormatter): string {
+
+    }
+
+    private emitSwitchStatement(stmt: SwitchStatement, fmt: JSCodeFormatter): string {
+
+    }
+
+    private emitMatchStatement(stmt: MatchStatement, fmt: JSCodeFormatter): string {
+
+    }
+
+    private emitAbortStatement(stmt: AbortStatement): string {
+
+    }
+
+    private emitAssertStatement(stmt: AssertStatement): string {
+
+    }
+
+    private emitValidateStatement(stmt: ValidateStatement): string {
+
+    }
+
+    private emitDebugStatement(stmt: DebugStatement): string {
+
+    }
+
+    private emitVoidRefCallStatement(stmt: VoidRefCallStatement): string {
+        assert(false, "Not implemented -- VoidRefCall");
+    }
+
+    private emitVarUpdateStatement(stmt: VarUpdateStatement): string {
+        assert(false, "Not implemented -- VarUpdate");
+    }
+
+    private emitThisUpdateStatement(stmt: ThisUpdateStatement): string {
+        assert(false, "Not implemented -- ThisUpdate");
+    }
+
+    private emitSelfUpdateStatement(stmt: SelfUpdateStatement): string {
+        assert(false, "Not implemented -- SelfUpdate");
+    }
+
+    private emitEnvironmentUpdateStatement(stmt: EnvironmentUpdateStatement): string {
+        assert(false, "Not implemented -- EnvironmentUpdate");
+    }
+
+    private emitEnvironmentBracketStatement(stmt: EnvironmentBracketStatement): string {
+        assert(false, "Not implemented -- EnvironmentBracket");
+    }
+
+    private emitTaskStatusStatement(stmt: TaskStatusStatement): string {
+        assert(false, "Not implemented -- TaskStatus");
+    }
+
+    private emitTaskEventEmitStatement(stmt: TaskEventEmitStatement): string {
+        assert(false, "Not implemented -- TaskEventEmit");
+    }
+
+    private emitTaskYieldStatement(stmt: TaskYieldStatement): string {
+        assert(false, "Not implemented -- TaskYield");
+    }
+
+    private emitBlockStatement(stmt: BlockStatement, fmt: JSCodeFormatter): string {
+        xxxx;
+    }
+
+    private emitStatement(stmt: Statement, fmt: JSCodeFormatter): string {
         switch(stmt.tag) {
             case StatementTag.EmptyStatement: {
-                return this.checkEmptyStatement(env, stmt as EmptyStatement);
+                return this.emitEmptyStatement(stmt as EmptyStatement);
             }
             case StatementTag.VariableDeclarationStatement: {
-                return this.checkVariableDeclarationStatement(env, stmt as VariableDeclarationStatement);
+                return this.emitVariableDeclarationStatement(stmt as VariableDeclarationStatement);
             }
             case StatementTag.VariableMultiDeclarationStatement: {
-                return this.checkVariableMultiDeclarationStatement(env, stmt as VariableMultiDeclarationStatement);
+                return this.emitVariableMultiDeclarationStatement(stmt as VariableMultiDeclarationStatement);
             }
             case StatementTag.VariableInitializationStatement: {
-                return this.checkVariableInitializationStatement(env, stmt as VariableInitializationStatement);
+                return this.emitVariableInitializationStatement(stmt as VariableInitializationStatement);
             }
             case StatementTag.VariableMultiInitializationStatement: {
-                return this.checkVariableMultiInitializationStatement(env, stmt as VariableMultiInitializationStatement);
+                return this.emitVariableMultiInitializationStatement(stmt as VariableMultiInitializationStatement);
             }
             case StatementTag.VariableAssignmentStatement: {
-                return this.checkVariableAssignmentStatement(env, stmt as VariableAssignmentStatement);
+                return this.emitVariableAssignmentStatement(stmt as VariableAssignmentStatement);
             }
             case StatementTag.VariableMultiAssignmentStatement: {
-                return this.checkVariableMultiAssignmentStatement(env, stmt as VariableMultiAssignmentStatement);
+                return this.emitVariableMultiAssignmentStatement(stmt as VariableMultiAssignmentStatement);
             }
             case StatementTag.VariableRetypeStatement: {
-                return this.checkVariableRetypeStatement(env, stmt as VariableRetypeStatement);
+                return this.emitVariableRetypeStatement(stmt as VariableRetypeStatement);
             }
             case StatementTag.ReturnStatement: {
-                return this.checkReturnStatement(env, stmt as ReturnStatement);
+                return this.emitReturnStatement(stmt as ReturnStatement);
             }
             case StatementTag.IfStatement: {
-                return this.checkIfStatement(env, stmt as IfStatement);
+                return this.emitIfStatement(stmt as IfStatement, fmt);
             }
             case StatementTag.IfElseStatement: {
-                return this.checkIfElseStatement(env, stmt as IfElseStatement);
+                return this.emitIfElseStatement(stmt as IfElseStatement, fmt);
             }
             case StatementTag.IfElifElseStatement: {
-                return this.checkIfElifElseStatement(env, stmt as IfElifElseStatement);
+                return this.emitIfElifElseStatement(stmt as IfElifElseStatement, fmt);
             }
             case StatementTag.SwitchStatement: {
-                return this.checkSwitchStatement(env, stmt as SwitchStatement);
+                return this.emitSwitchStatement(stmt as SwitchStatement, fmt);
             }
             case StatementTag.MatchStatement: {
-                return this.checkMatchStatement(env, stmt as MatchStatement);
+                return this.emitMatchStatement(stmt as MatchStatement, fmt);
             }
             case StatementTag.AbortStatement: {
-                return this.checkAbortStatement(env, stmt as AbortStatement);
+                return this.emitAbortStatement(stmt as AbortStatement);
             }
             case StatementTag.AssertStatement: {
-                return this.checkAssertStatement(env, stmt as AssertStatement);
+                return this.emitAssertStatement(stmt as AssertStatement);
             }
             case StatementTag.ValidateStatement: {
-                return this.checkValidateStatement(env, stmt as ValidateStatement);
+                return this.emitValidateStatement(stmt as ValidateStatement);
             }
             case StatementTag.DebugStatement: {
-                return this.checkDebugStatement(env, stmt as DebugStatement);
+                return this.emitDebugStatement(stmt as DebugStatement);
             }
             case StatementTag.VoidRefCallStatement: {
-                return this.checkVoidRefCallStatement(env, stmt as VoidRefCallStatement);
+                return this.emitVoidRefCallStatement(stmt as VoidRefCallStatement);
             }
             case StatementTag.VarUpdateStatement: {
-                return this.checkVarUpdateStatement(env, stmt as VarUpdateStatement);
+                return this.emitVarUpdateStatement(stmt as VarUpdateStatement);
             }
             case StatementTag.ThisUpdateStatement: {
-                return this.checkThisUpdateStatement(env, stmt as ThisUpdateStatement);
+                return this.emitThisUpdateStatement(stmt as ThisUpdateStatement);
             }
             case StatementTag.SelfUpdateStatement: {
-                return this.checkSelfUpdateStatement(env, stmt as SelfUpdateStatement);
+                return this.emitSelfUpdateStatement(stmt as SelfUpdateStatement);
             }
             case StatementTag.EnvironmentUpdateStatement: {
-                return this.checkEnvironmentUpdateStatement(env, stmt as EnvironmentUpdateStatement);
+                return this.emitEnvironmentUpdateStatement(stmt as EnvironmentUpdateStatement);
             }
             case StatementTag.EnvironmentBracketStatement: {
-                return this.checkEnvironmentBracketStatement(env, stmt as EnvironmentBracketStatement);
+                return this.emitEnvironmentBracketStatement(stmt as EnvironmentBracketStatement);
             }
             case StatementTag.TaskStatusStatement: {
-                return this.checkTaskStatusStatement(env, stmt as TaskStatusStatement);
+                return this.emitTaskStatusStatement(stmt as TaskStatusStatement);
             }
             case StatementTag.TaskEventEmitStatement: {
-                return this.checkTaskEventEmitStatement(env, stmt as TaskEventEmitStatement);
+                return this.emitTaskEventEmitStatement(stmt as TaskEventEmitStatement);
             }
             case StatementTag.TaskYieldStatement: {
-                return this.checkTaskYieldStatement(env, stmt as TaskYieldStatement);
+                return this.emitTaskYieldStatement(stmt as TaskYieldStatement);
             }
             case StatementTag.BlockStatement: {
-                return this.checkBlockStatement(env, stmt as BlockStatement);
+                return this.emitBlockStatement(stmt as BlockStatement, fmt);
             }
             default: {
                 assert(stmt.tag === StatementTag.ErrorStatement, `Unknown statement kind -- ${stmt.tag}`);
 
-                return env;
+                return "[ERROR STATEMENT]";
             }
         }
     }
