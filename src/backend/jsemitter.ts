@@ -440,7 +440,7 @@ class JSEmitter {
     
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
         if(cdecl instanceof ListTypeDecl) {
-            return `[${exp.args.args.map((a) => this.emitBUAsNeeded(this.emitExpression(a.exp, true), a.exp.getType(), exp.elemtype as TypeSignature)).join(", ")}]`;
+            assert(false, "Not implemented -- List"); //TODO: need to implement list in Bosque core + have way well known way to call constructor here!!!!
         }
         else {
             assert(false, "Unknown collection type -- emitCollectionConstructor");
@@ -556,7 +556,8 @@ class JSEmitter {
             const invk = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
             const rparams = invk.params[invk.params.length - 1];
             if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
-                argl.push(`[${restl.join(", ")}]`);
+                assert(false, "Not implemented -- List");
+                //argl.push(`[${restl.join(", ")}]`);
             }
             else {
                 assert(false, "Not implemented -- CallNamespaceFunction -- rest");

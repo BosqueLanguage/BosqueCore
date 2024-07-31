@@ -95,11 +95,11 @@ class TypeEnvironment {
     }
 
     static createInitialStdEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext): TypeEnvironment {
-        return new TypeEnvironment(true, false, undefined, args, declReturnType, inferReturn, []);
+        return new TypeEnvironment(true, false, undefined, args, declReturnType, inferReturn, [[]]);
     }
 
     static createInitialLambdaEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext, enclosing: TypeEnvironment): TypeEnvironment {
-        return new TypeEnvironment(true, false, enclosing, args, declReturnType, inferReturn, []);
+        return new TypeEnvironment(true, false, enclosing, args, declReturnType, inferReturn, [[]]);
     }
 
     private getBindScopeDepth(vname: string): number {

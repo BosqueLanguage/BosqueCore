@@ -1821,10 +1821,10 @@ class TypeChecker {
             else {
                 exp.binder.scopename = env.getBindScopeName(exp.binder.srcname);
 
-                const tenv = env.addBinder(exp.binder.srcname, exp.binder.scopename, splits.ttrue || eetype, true, true);
+                const tenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.ttrue || eetype);
                 ttrue = this.checkExpression(tenv, exp.trueValue, typeinfer);
 
-                const fenv = env.addBinder(exp.binder.srcname, exp.binder.scopename, splits.tfalse || eetype, true, true);
+                const fenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.tfalse || eetype);
                 tfalse = this.checkExpression(fenv, exp.falseValue, typeinfer);
             }
         }
@@ -3037,7 +3037,7 @@ class TypeChecker {
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
                 stmt.binder.origtype = eetype;
-                
+
                 const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
 
@@ -3627,7 +3627,6 @@ class TypeChecker {
         else {
             assert(body instanceof StandardBodyImplementation);
             
-
             for(let i = 0; i < body.statements.length; ++i) {
                 env = this.checkStatement(env, body.statements[i]);
             }
@@ -3655,7 +3654,7 @@ class TypeChecker {
 
         for(let i = 0; i < refvars.length; ++i) {
             const v = refvars[i];
-            eev = eev.addBinder("$" + v, "$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).vtype, true, true);
+            eev = eev.addLocalVar("$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).vtype, true, true);
         }
 
         for(let i = 0; i < ensures.length; ++i) {
