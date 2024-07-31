@@ -7,9 +7,12 @@ import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
+    origtype: TypeSignature | undefined; //the original type of the binder
     scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
+    refinefollowname: string | undefined;
+    refinefollowtype: TypeSignature | undefined;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
@@ -1659,7 +1662,9 @@ enum StatementTag {
     VariableMultiAssignmentStatement = "VariableMultiAssignmentStatement",
 
     VariableRetypeStatement = "VariableRetypeStatement",
-    ReturnStatement = "ReturnStatement",
+    ReturnVoidStatement = "ReturnVoidStatement",
+    ReturnSingleStatement = "ReturnSingleStatement",
+    ReturnMultiStatement = "ReturnMultiStatement",
 
     IfStatement = "IfStatement",
     IfElseStatement = "IfElseStatement",
@@ -1775,7 +1780,7 @@ class VariableInitializationStatement extends Statement {
 class VariableMultiInitializationStatement extends Statement {
     readonly isConst: boolean;
     readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
-    actualtypes: (TypeSignature | undefined)[] = [];
+    actualtypes: TypeSignature[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, isConst: boolean, decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
@@ -1812,7 +1817,7 @@ class VariableAssignmentStatement extends Statement {
 
 class VariableMultiAssignmentStatement extends Statement {
     readonly names: string[];
-    vtypes: TypeSignature[] | undefined = undefined;
+    vtypes: TypeSignature[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
@@ -1846,24 +1851,40 @@ class VariableRetypeStatement extends Statement {
     }
 }
 
-class ReturnStatement extends Statement {
-    readonly value: Expression[] | Expression | undefined; //array is implicitly converted to EList and undefined is a void return
+class ReturnVoidStatement extends Statement {
+    constructor(sinfo: SourceInfo) {
+        super(StatementTag.ReturnVoidStatement, sinfo);
+    }
 
-    constructor(sinfo: SourceInfo, value: Expression[] | Expression | undefined) {
-        super(StatementTag.ReturnStatement, sinfo);
+    emit(fmt: CodeFormatter): string {
+        return `return;`;
+    }
+}
+
+class ReturnSingleStatement extends Statement {
+    readonly value: Expression;
+
+    constructor(sinfo: SourceInfo, value: Expression) {
+        super(StatementTag.ReturnSingleStatement, sinfo);
         this.value = value;
     }
 
     emit(fmt: CodeFormatter): string {
-        if(this.value === undefined) {
-            return `return;`;
-        }
-        else if(!Array.isArray(this.value)) {
-            return `return ${this.value.emit(true, fmt)};`;
-        }
-        else {
-            return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
-        }
+        return `return ${this.value.emit(true, fmt)};`;
+    }
+}
+
+class ReturnMultiStatement extends Statement {
+    readonly value: Expression[]; //array is implicitly converted to EList
+    rtypes: TypeSignature[] = [];
+
+    constructor(sinfo: SourceInfo, value: Expression[]) {
+        super(StatementTag.ReturnMultiStatement, sinfo);
+        this.value = value;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
     }
 }
 
@@ -2378,7 +2399,7 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
-    ReturnStatement,
+    ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,

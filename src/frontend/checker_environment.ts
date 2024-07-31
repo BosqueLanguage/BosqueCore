@@ -160,11 +160,25 @@ class TypeEnvironment {
     }
 
     addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vname, vtype, isConst, mustDefined)]]);
+        let newlocals = TypeEnvironment.cloneLocals(this.locals);
+        newlocals[newlocals.length - 1].push(new VarInfo(vname, vname, vtype, isConst, mustDefined));
+
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
     }
 
     addBinder(vname: string, vscope: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vscope, vtype, isConst, mustDefined)]]);
+        let newlocals = TypeEnvironment.cloneLocals(this.locals);
+        newlocals[newlocals.length - 1].push(new VarInfo(vname, vscope, vtype, isConst, mustDefined));
+
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
+    }
+
+    addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], isConst: boolean): TypeEnvironment {
+        let newlocals = TypeEnvironment.cloneLocals(this.locals);
+        const newvars = vars.map((v) => new VarInfo(v.name, v.name, v.vtype, isConst, true));
+        newlocals[newlocals.length - 1].push(...newvars);
+
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
     }
 
     assignLocalVariable(vname: string): TypeEnvironment {

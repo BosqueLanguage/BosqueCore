@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
+import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, PairTypeDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
-import { SourceInfo } from "../frontend/build_decls.js";
+import { CodeFormatter, SourceInfo } from "../frontend/build_decls.js";
 
 class JSEmitter {
     readonly assembly: Assembly;
@@ -14,6 +14,8 @@ class JSEmitter {
     currentns: NamespaceDeclaration | undefined;
 
     mapper: TemplateNameMapper | undefined;
+
+    bindernames: Set<string> = new Set();
 
     constructor(assembly: Assembly, mode: "release" | "debug") {
         this.assembly = assembly;
@@ -30,11 +32,6 @@ class JSEmitter {
     private getCurrentNamespace(): NamespaceDeclaration {
         assert(this.currentns !== undefined, "Current namespace is not set");
         return this.currentns;
-    }
-
-    private getCurrentFile(): string {
-        assert(this.currentfile !== undefined, "Current file is not set");
-        return this.currentfile;
     }
 
     private getErrorInfo(msg: string, sinfo: SourceInfo, diagnosticTag: string | undefined): string | undefined {
@@ -834,7 +831,26 @@ class JSEmitter {
     }
 
     private emitIfExpression(exp: IfExpression, toplevel: boolean): string {
-        xxxx;
+        if(exp.test.itestopt === undefined) {
+            const eexp = `${this.emitExpression(exp.test.exp, false)} ? ${this.emitExpression(exp.trueValue, false)} : ${this.emitExpression(exp.falseValue, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const vval = this.emitExpression(exp.test.exp, true);
+        
+            if(exp.binder === undefined) {
+                const ttest = this.processITestAsTest(vval, exp.test.exp.getType(), exp.test.itestopt);
+                const eexp = `${ttest} ? ${this.emitExpression(exp.trueValue, false)} : ${this.emitExpression(exp.falseValue, false)}`;
+                return toplevel ? `(${eexp})` : eexp;
+            }
+            else {
+                this.bindernames.add(exp.binder.scopename);
+
+                const ttest = this.processITestAsTest(exp.binder.scopename, exp.test.exp.getType(), exp.test.itestopt);
+                const eexp = `(${exp.binder.scopename} = ${vval}, ${ttest}) ? ${this.emitExpression(exp.trueValue, false)} : ${this.emitExpression(exp.falseValue, false)}`;
+                return toplevel ? `(${eexp})` : eexp;
+            }
+        }
     }
 
     emitExpression(exp: Expression, toplevel: boolean): string {
@@ -1174,6 +1190,7 @@ class JSEmitter {
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just cast on this if it does)
         const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype || stmt.exp.getType());
         
         if(stmt.name === "_") {
@@ -1185,95 +1202,155 @@ class JSEmitter {
     }
     
     private emitVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement): string {
-        if(Array.isArray(stmt.exp)) {
-            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
+        if(!Array.isArray(stmt.exp)) {
+            const eexp = this.emitExpressionRHS(stmt.exp);
+            const idecls = stmt.decls.map((dd) => dd.name === "_" ? " " : dd.name);
+
+            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
+            return `${stmt.isConst ? "const": "let"} [${idecls.join(", ")}] = ${eexp};`;
+        }
+        else {
+            //TODO: need to check if there are deps between the defs and uses in the expressions here!!!
+            
+            const eexps = stmt.exp.map((ee, ii) => this.emitBUAsNeeded(this.emitExpression(ee, true), ee.getType(), stmt.actualtypes[ii]));
             const idecls = stmt.decls.map((dd, ii) => `${dd.name} = ${eexps[ii]}`);
 
             return `${stmt.isConst ? "const": "let"} ${idecls.join(", ")};`;
-        }
-        else {
-            const eexp = this.emitExpressionRHS(stmt.exp);
-            const idecls = stmt.decls.map((dd) => dd.name);
 
-            return `${stmt.isConst ? "const": "let"} [${idecls.join(", ")}] = ${eexp};`;
         }
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
-        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.vtype);
-        return `${stmt.name} = ${rhsexp};`;
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
+        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.vtype as TypeSignature);
+
+        if(stmt.name === "_") {
+            return `${rhsexp};`;
+        }
+        else {
+            return `${stmt.name} = ${rhsexp};`;
+        }
     }
 
     private emitVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement): string {
-        if(Array.isArray(stmt.exp)) {
-            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
+        if(!Array.isArray(stmt.exp)) {
+            const eexp = this.emitExpressionRHS(stmt.exp);
+            const names = stmt.names.map((nn) => nn === "_" ? " " : nn);
 
-            return `${stmt.names.map((nn, ii) => `${nn} = ${eexps[ii]}`).join(", ")};`;
+            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
+            return `[${names.join(", ")}] = ${eexp};`;
         }
         else {
-            const eexp = this.emitExpressionRHS(stmt.exp);
+            const eexps = stmt.exp.map((ee, ii) => this.emitBUAsNeeded(this.emitExpression(ee, true), ee.getType(), stmt.vtypes[ii]));
 
-            return `[${stmt.names.join(", ")}] = ${eexp};`;
+            return `${stmt.names.map((nn, ii) => `${nn} = ${eexps[ii]}`).join(", ")};`;            
         }
     }
 
     private emitVariableRetypeStatement(stmt: VariableRetypeStatement): string {
-        const check = this.processITestAsTest(stmt.name, this.tproc(stmt.vtype as TypeSignature), stmt.ttest);
-        const retypemsg = this.getErrorInfo("retype failed", stmt.sinfo, undefined);
+        const check = this.processITestAsConvert(stmt.sinfo, stmt.name, this.tproc(stmt.vtype as TypeSignature), stmt.ttest);
 
-        xxx;
-        return `if(!${check}) { throw new $Unwind($TypeAsFailed, ${retypemsg}); }`;
+        return `${stmt.name} = ${check};`;
     }
 
-    private emitReturnStatement(stmt: ReturnStatement): string {
-        if(stmt.value === undefined) {
-            return "return;";
-        }
-        else {
-            xxxx;
-            if(Array.isArray(stmt.value)) {
-                return `return [${stmt.value.map((vv) => this.emitExpression(vv, true)).join(", ")}];`;
-            }
-            else {
-                return `return ${this.emitExpressionRHS(stmt.value)};`;
-            }
-        }
+    private emitReturnVoidStatement(stmt: ReturnVoidStatement): string {
+        return "return;";
+    }
+
+    private emitReturnSingleStatement(stmt: ReturnSingleStatement): string {
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just return on this if it does)
+        return `return ${this.emitExpressionRHS(stmt.value)};`;
+    }
+
+    private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
+        return `return [${stmt.value.map((vv, ii) => this.emitBUAsNeeded(this.emitExpression(vv, true), vv.getType(), stmt.rtypes[ii])).join(", ")}];`;
     }
 
     private emitIfStatement(stmt: IfStatement, fmt: JSCodeFormatter): string {
+        if(stmt.cond.itestopt === undefined) {
+            const test = this.emitExpression(stmt.cond.exp, true);
+            const body = this.emitBlockStatement(stmt.trueBlock, fmt);
+            return `if(${test}) ${body}`;
+        }
+        else {
+            if(stmt.binder === undefined) {
+                const test = this.processITestAsTest(this.emitExpression(stmt.cond.exp, true), stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const body = this.emitBlockStatement(stmt.trueBlock, fmt);
+                return `if(${test}) ${body}`;
+            }
+            else {
+                const bassign = `${stmt.binder.scopename} = ${this.emitExpression(stmt.cond.exp, true)};` + "\n" + fmt.indent("");
+                const test = this.processITestAsTest(stmt.binder.scopename, stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const body = this.emitBlockStatement(stmt.trueBlock, fmt);
 
+                if(!stmt.binder.refineonfollow) {
+                    return `${bassign} if(${test}) ${body}`;
+                }
+                else {
+                    return `${bassign} if(${test}) ${body} ${stmt.binder.refinefollowname} = ${this.emitBUAsNeeded(stmt.binder.scopename, this.tproc(stmt.binder.origtype as TypeSignature), this.tproc(stmt.binder.refinefollowtype as TypeSignature))};`;
+                }
+            }
+        }
     }
 
     private emitIfElseStatement(stmt: IfElseStatement, fmt: JSCodeFormatter): string {
+        if(stmt.cond.itestopt === undefined) {
+            const test = this.emitExpression(stmt.cond.exp, true);
+            const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
+            const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
 
+            return `if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+        }
+        else {
+            if(stmt.binder === undefined) {
+                const test = this.processITestAsTest(this.emitExpression(stmt.cond.exp, true), stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
+                const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
+
+                return `if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+            }
+            else {
+                const bassign = `${stmt.binder.scopename} = ${this.emitExpression(stmt.cond.exp, true)};` + "\n" + fmt.indent("");
+                const test = this.processITestAsTest(stmt.binder.scopename, stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
+                const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
+
+                if(!stmt.binder.refineonfollow) {
+                    return `${bassign} if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+                }
+                else {
+                    return `${bassign} if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}${stmt.binder.refinefollowname} = ${this.emitBUAsNeeded(stmt.binder.scopename, this.tproc(stmt.binder.origtype as TypeSignature), this.tproc(stmt.binder.refinefollowtype as TypeSignature))};`;
+                }
+            }
+        }
     }
 
     private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: JSCodeFormatter): string {
-
+        assert(false, "Not implemented -- IfElifElse");
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: JSCodeFormatter): string {
-
+        assert(false, "Not implemented -- Switch");
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: JSCodeFormatter): string {
-
+        assert(false, "Not implemented -- Match");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
-
+        return `$_abort(${this.getErrorInfo("abort", stmt.sinfo, undefined)});`;
     }
 
     private emitAssertStatement(stmt: AssertStatement): string {
-
+        return `$_assert(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, undefined)});`;
     }
 
     private emitValidateStatement(stmt: ValidateStatement): string {
-
+        return `$_validate(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, stmt.diagnosticTag)});`;
     }
 
     private emitDebugStatement(stmt: DebugStatement): string {
-
+        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch { console.log("Error evaluating debug statement @ ${this.currentfile}:${stmt.sinfo.line}"); }`;
     }
 
     private emitVoidRefCallStatement(stmt: VoidRefCallStatement): string {
@@ -1313,7 +1390,55 @@ class JSEmitter {
     }
 
     private emitBlockStatement(stmt: BlockStatement, fmt: JSCodeFormatter): string {
-        xxxx;
+        let stmtstrs: string[] = ["{\n"];
+
+        fmt.indentPush();
+        let prevskip = false;
+        for(let i = 0; i < stmt.statements.length; ++i) {
+            const stmti = stmt.statements[i];
+            const sstr = fmt.indent(this.emitStatement(stmti, fmt));
+
+            if(i === stmt.statements.length - 1) {
+                stmtstrs.push(sstr);
+                stmtstrs.push("\n");
+            }
+            else {
+                const stag = stmti.tag;
+                switch(stag) {
+                    case StatementTag.BlockStatement: {
+                        if(!prevskip) {
+                            stmtstrs.push("\n");
+                        }
+                        stmtstrs.push(sstr);
+                        stmtstrs.push("\n");
+                        prevskip = true;
+                        break;
+                    }
+                    case StatementTag.IfStatement:
+                    case StatementTag.IfElseStatement: 
+                    case StatementTag.IfElifElseStatement:
+                    case StatementTag.SwitchStatement:
+                    case StatementTag.MatchStatement: {
+                        if(!prevskip) {
+                            stmtstrs.push("\n");
+                        }
+                        stmtstrs.push(sstr);
+                        stmtstrs.push("\n");
+                        prevskip = true;
+                        break;
+                    }
+                    default: {
+                        stmtstrs.push(sstr);
+                        prevskip = false;
+                    }
+                }
+                stmtstrs.push("\n");
+            }
+        }
+        fmt.indentPop();
+
+        stmtstrs.push(fmt.indent("}"));
+        return stmtstrs.join("");
     }
 
     private emitStatement(stmt: Statement, fmt: JSCodeFormatter): string {
@@ -1342,8 +1467,14 @@ class JSEmitter {
             case StatementTag.VariableRetypeStatement: {
                 return this.emitVariableRetypeStatement(stmt as VariableRetypeStatement);
             }
-            case StatementTag.ReturnStatement: {
-                return this.emitReturnStatement(stmt as ReturnStatement);
+            case StatementTag.ReturnVoidStatement: {
+                return this.emitReturnVoidStatement(stmt as ReturnVoidStatement);
+            }
+            case StatementTag.ReturnSingleStatement: {
+                return this.emitReturnSingleStatement(stmt as ReturnSingleStatement);
+            }
+            case StatementTag.ReturnMultiStatement: {
+                return this.emitReturnMultiStatement(stmt as ReturnMultiStatement);
             }
             case StatementTag.IfStatement: {
                 return this.emitIfStatement(stmt as IfStatement, fmt);

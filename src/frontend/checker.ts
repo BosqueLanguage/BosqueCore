@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -2767,12 +2767,33 @@ class TypeChecker {
         let evals: TypeSignature[] = [];
         if(Array.isArray(stmt.exp)) {
             for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpression(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
+                const cenv = env.addLocalVarSet(stmt.decls.filter((dd, ii) => dd.name !== "_" && ii !== i), stmt.isConst);
+
+                //note this is Expression -- RHS expressions are not allowed in multi-expression initialization -- maybe a better error message here
+                const etype = this.checkExpression(cenv, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
                 evals.push(etype);
+            }
+
+            this.checkError(stmt.sinfo, iopts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+            for(let i = evals.length; i < iopts.length; ++i) {
+                evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
+            }
+
+            for(let i = 0; i < stmt.decls.length; ++i) {
+                const decl = stmt.decls[i];
+                const itype = iopts[i];
+                const etype = evals[i];
+    
+                this.checkError(stmt.sinfo, decl.name === "_", "Cannot use _ for variable initialization with multiple explicit expressions!!!");
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                
+                stmt.actualtypes.push(itype || etype);
+                if(decl.name !== "_") {
+                    env = env.addLocalVar(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+                }
             }
         }
         else {
-            xxxx;
             const iinfer = new EListStyleTypeInferContext(iopts);
             const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
             if(etype instanceof EListTypeSignature) {
@@ -2781,27 +2802,23 @@ class TypeChecker {
             else {
                 this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
             }
-        }
 
-        this.checkError(stmt.sinfo, iopts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
-        for(let i = evals.length; i < iopts.length; ++i) {
-            evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
-        }
-
-
-        for(let i = 0; i < stmt.decls.length; ++i) {
-            const decl = stmt.decls[i];
-            const itype = iopts[i];
-            const etype = evals[i];
-
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-            
-            if(decl.name === "_") {
-                stmt.actualtypes.push(undefined);
+            this.checkError(stmt.sinfo, iopts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+            for(let i = evals.length; i < iopts.length; ++i) {
+                evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
             }
-            else {
+
+            for(let i = 0; i < stmt.decls.length; ++i) {
+                const decl = stmt.decls[i];
+                const itype = iopts[i];
+                const etype = evals[i];
+    
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                
                 stmt.actualtypes.push(itype || etype);
-                env = env.addLocalVar(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+                if(decl.name !== "_") {
+                    env = env.addLocalVar(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+                }
             }
         }
 
@@ -2827,7 +2844,7 @@ class TypeChecker {
 
         this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
         
-        xxxx;
+        stmt.vtype = decltype;
         return stmt.name !== "_" ? env.assignLocalVariable(stmt.name) : env;
     }
 
@@ -2849,9 +2866,31 @@ class TypeChecker {
 
         let evals: TypeSignature[] = [];
         if(Array.isArray(stmt.exp)) {
+            //This evaluation is fully parallel -- no updates happen before all expressions are evaluated!!!!
             for(let i = 0; i < stmt.exp.length; ++i) {
+                //note this is Expression -- RHS expressions are not allowed in multi-expression initialization -- maybe a better error message here
                 const etype = this.checkExpression(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
                 evals.push(etype);
+            }
+
+            this.checkError(stmt.sinfo, opts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+            for(let i = evals.length; i < opts.length; ++i) {
+                evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
+            }
+
+            for(let i = 0; i < stmt.names.length; ++i) {
+                const name = stmt.names[i];
+                const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
+                const etype = evals[i];
+    
+
+                this.checkError(stmt.sinfo, name === "_", "Cannot use _ for variable assignment with multiple explicit expressions!!!");
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                
+                stmt.vtypes.push(itype || etype);
+                if(name !== "_") {
+                    env = env.assignLocalVariable(name); //recover a bit
+                }
             }
         }
         else {
@@ -2863,22 +2902,24 @@ class TypeChecker {
             else {
                 this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
             }
-        }
 
-        this.checkError(stmt.sinfo, opts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
-        for(let i = evals.length; i < opts.length; ++i) {
-            evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
-        }
+            this.checkError(stmt.sinfo, opts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+            for(let i = evals.length; i < opts.length; ++i) {
+                evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
+            }
 
-        for(let i = 0; i < stmt.names.length; ++i) {
-            const name = stmt.names[i];
-            const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
-            const etype = evals[i];
-
-            xxxx;
-
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-            env = name !== "_" ? env.assignLocalVariable(name) : env; 
+            for(let i = 0; i < stmt.names.length; ++i) {
+                const name = stmt.names[i];
+                const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
+                const etype = evals[i];
+    
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                
+                stmt.vtypes.push(itype || etype);
+                if(name !== "_") {
+                    env = env.assignLocalVariable(name); //recover a bit
+                }
+            }
         }
 
         return env;
@@ -2907,31 +2948,35 @@ class TypeChecker {
         return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.vtype);
     }
 
-    private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
-        if(stmt.value === undefined) {
-            this.checkError(stmt.sinfo, !this.isVoidType(env.declReturnType), `Expected a return value of type ${env.declReturnType.tkeystr}`);
-        }
-        else if(!Array.isArray(stmt.value)) {
-            const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
-            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.tkeystr} but got ${rtype.tkeystr}`);
-        }
-        else {
-            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.tkeystr}`)) {
-                return env.setReturnFlow();
-            }
+    private checkReturnVoidStatement(env: TypeEnvironment, stmt: ReturnVoidStatement): TypeEnvironment {
+        this.checkError(stmt.sinfo, !this.isVoidType(env.declReturnType), `Expected a void return`);
 
-            const rtypes = TypeInferContext.asEListOptions(env.inferReturn) as (TypeSignature | undefined)[];
-            this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
+        return env.setReturnFlow();
+    }
 
-            for(let i = 0; i < stmt.value.length; ++i) {
-                const rtype = i < rtypes.length ? rtypes[i] : undefined;
-                const etype = this.checkExpression(env, stmt.value[i], rtype);
+    private checkReturnSingleStatement(env: TypeEnvironment, stmt: ReturnSingleStatement): TypeEnvironment {
+        const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
+        this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.tkeystr} but got ${rtype.tkeystr}`);
+        
+        return env.setReturnFlow();
+    }
 
-                const rtname = rtype !== undefined ? rtype.tkeystr : "skip";
-                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.tkeystr}`);
-            }
-
+    private checkReturnMultiStatement(env: TypeEnvironment, stmt: ReturnMultiStatement): TypeEnvironment {
+        if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.tkeystr}`)) {
             return env.setReturnFlow();
+        }
+
+        const rtypes = TypeInferContext.asEListOptions(env.inferReturn) as (TypeSignature | undefined)[];
+        this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
+
+        for(let i = 0; i < stmt.value.length; ++i) {
+            const rtype = i < rtypes.length ? rtypes[i] : undefined;
+            const etype = this.checkExpression(env, stmt.value[i], rtype);
+
+            const rtname = rtype !== undefined ? rtype.tkeystr : "skip";
+            this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.tkeystr}`);
+
+            stmt.rtypes.push(rtype || etype);
         }
 
         return env.setReturnFlow();
@@ -2955,6 +3000,15 @@ class TypeChecker {
             this.reportError(sinfo, `Variable ${binfo.srcname} is not defined`);
             return;
         }
+    }
+
+    private setFlowRebinderInfo(binfo: BinderInfo | undefined, fname: string, ftype: TypeSignature) {
+        if(binfo === undefined || !binfo.refineonfollow) {
+            return;
+        }
+
+        binfo.refinefollowname = fname;
+        binfo.refinefollowtype = ftype;
     }
 
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
@@ -2982,11 +3036,15 @@ class TypeChecker {
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+                stmt.binder.origtype = eetype;
+                
                 const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
 
                 const lubtype = ttrue.normalflow ? eetype : splits.tfalse;
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
+                this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), lubtype || eetype);
+
                 return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
             }
         }
@@ -3019,6 +3077,7 @@ class TypeChecker {
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+                stmt.binder.origtype = eetype;
 
                 const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
@@ -3028,15 +3087,19 @@ class TypeChecker {
 
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
                 if(ttrue.normalflow && tfalse.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
                 }
                 else if(ttrue.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.ttrue as TypeSignature);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.ttrue as TypeSignature, ttrue, tfalse);
                 }
                 else if(tfalse.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.tfalse as TypeSignature);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.tfalse as TypeSignature, ttrue, tfalse);
                 }
                 else {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
                 }
             }
@@ -3478,8 +3541,14 @@ class TypeChecker {
             case StatementTag.VariableRetypeStatement: {
                 return this.checkVariableRetypeStatement(env, stmt as VariableRetypeStatement);
             }
-            case StatementTag.ReturnStatement: {
-                return this.checkReturnStatement(env, stmt as ReturnStatement);
+            case StatementTag.ReturnVoidStatement: {
+                return this.checkReturnVoidStatement(env, stmt as ReturnVoidStatement);
+            }
+            case StatementTag.ReturnSingleStatement: {
+                return this.checkReturnSingleStatement(env, stmt as ReturnSingleStatement);
+            }
+            case StatementTag.ReturnMultiStatement: {
+                return this.checkReturnMultiStatement(env, stmt as ReturnMultiStatement);
             }
             case StatementTag.IfStatement: {
                 return this.checkIfStatement(env, stmt as IfStatement);

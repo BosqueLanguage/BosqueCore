@@ -40,6 +40,12 @@ const $Unwind_Assert = Symbol("AssertFailed");
  * @constant
  * @type {Symbol}
  **/
+const $Unwind_Validate = Symbol("ValidateFailed");
+
+/**
+ * @constant
+ * @type {Symbol}
+ **/
 const $Unwind_TypeAs = Symbol("TypeAsFailed");
 
 /**
@@ -392,7 +398,41 @@ function _$dc_f(v, d, infod) {
     return v / d;
 }
 
+/**
+ * @function
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$abort(info) {
+    throw new $Unwind($Unwind_Assert, info);
+}
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$assert(cond, info) {
+    if (!cond) {
+        throw new $Unwind($Unwind_Assert, info);
+    }
+}
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$validate(cond, info) {
+    if (!cond) {
+        throw new $Unwind($Unwind_Validate, info);
+    }
+}
+
 export {
     _$b, 
-    _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f
+    _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
+    _$abort, _$assert, _$validate,
 };
