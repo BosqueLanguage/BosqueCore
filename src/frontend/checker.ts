@@ -2748,7 +2748,14 @@ class TypeChecker {
         //TODO: do we need to update any other type env info here based on RHS actions???
 
         this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-        return stmt.name !== "_" ? env.addLocalVar(stmt.name, itype || rhs, stmt.isConst, true) : env; //try to recover a bit
+        
+        if(stmt.name === "_") {
+            return env;
+        }
+        else {
+            stmt.actualtype = itype || rhs;
+            return env.addLocalVar(stmt.name, itype || rhs, stmt.isConst, true) //try to recover a bit
+        }
     }
 
     private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
@@ -2765,6 +2772,7 @@ class TypeChecker {
             }
         }
         else {
+            xxxx;
             const iinfer = new EListStyleTypeInferContext(iopts);
             const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
             if(etype instanceof EListTypeSignature) {
@@ -2780,15 +2788,21 @@ class TypeChecker {
             evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
         }
 
+
         for(let i = 0; i < stmt.decls.length; ++i) {
             const decl = stmt.decls[i];
             const itype = iopts[i];
             const etype = evals[i];
 
-            //TODO: do we need to update any other type env info here based on RHS actions???
-
             this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
-            env = decl.name !== "_" ? env.addLocalVar(decl.name, itype || etype, stmt.isConst, true) : env; //try to recover a bit
+            
+            if(decl.name === "_") {
+                stmt.actualtypes.push(undefined);
+            }
+            else {
+                stmt.actualtypes.push(itype || etype);
+                env = env.addLocalVar(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+            }
         }
 
         return env;
@@ -2812,6 +2826,8 @@ class TypeChecker {
         //TODO: do we need to update any other type env info here based on RHS actions???
 
         this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
+        
+        xxxx;
         return stmt.name !== "_" ? env.assignLocalVariable(stmt.name) : env;
     }
 
@@ -2859,7 +2875,7 @@ class TypeChecker {
             const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
             const etype = evals[i];
 
-            //TODO: do we need to update any other type env info here based on RHS actions???
+            xxxx;
 
             this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
             env = name !== "_" ? env.assignLocalVariable(name) : env; 

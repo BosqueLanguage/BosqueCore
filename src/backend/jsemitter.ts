@@ -1127,6 +1127,7 @@ class JSEmitter {
         assert(false, "Not implemented -- TaskRace");
     }
 
+    //TODO: late update this to return 2 strings -- first the sequence to compute the RHS (incl ref updates and early exits) then the actual value expression
     private emitExpressionRHS(exp: Expression): string {
         const ttag = exp.tag;
         switch (ttag) {
@@ -1173,7 +1174,14 @@ class JSEmitter {
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
-        return `${stmt.isConst ? "const": "let"} ${stmt.name} = ${this.emitExpressionRHS(stmt.exp)};`;
+        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype || stmt.exp.getType());
+        
+        if(stmt.name === "_") {
+            return `${rhsexp};`;
+        }
+        else {
+            return `${stmt.isConst ? "const": "let"} ${stmt.name} = ${rhsexp};`;
+        }
     }
     
     private emitVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement): string {
@@ -1192,7 +1200,8 @@ class JSEmitter {
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
-        return `${stmt.name} = ${this.emitExpressionRHS(stmt.exp)};`;
+        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.vtype);
+        return `${stmt.name} = ${rhsexp};`;
     }
 
     private emitVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement): string {
@@ -1212,6 +1221,7 @@ class JSEmitter {
         const check = this.processITestAsTest(stmt.name, this.tproc(stmt.vtype as TypeSignature), stmt.ttest);
         const retypemsg = this.getErrorInfo("retype failed", stmt.sinfo, undefined);
 
+        xxx;
         return `if(!${check}) { throw new $Unwind($TypeAsFailed, ${retypemsg}); }`;
     }
 
@@ -1220,6 +1230,7 @@ class JSEmitter {
             return "return;";
         }
         else {
+            xxxx;
             if(Array.isArray(stmt.value)) {
                 return `return [${stmt.value.map((vv) => this.emitExpression(vv, true)).join(", ")}];`;
             }

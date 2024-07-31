@@ -1753,6 +1753,7 @@ class VariableInitializationStatement extends Statement {
     readonly isConst: boolean;
     readonly name: string;
     readonly vtype: TypeSignature; //maybe Auto
+    actualtype: TypeSignature | undefined = undefined;
     readonly exp: Expression;
 
     constructor(sinfo: SourceInfo, isConst: boolean, name: string, vtype: TypeSignature, exp: Expression) {
@@ -1774,6 +1775,7 @@ class VariableInitializationStatement extends Statement {
 class VariableMultiInitializationStatement extends Statement {
     readonly isConst: boolean;
     readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
+    actualtypes: (TypeSignature | undefined)[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, isConst: boolean, decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
@@ -1794,6 +1796,7 @@ class VariableMultiInitializationStatement extends Statement {
 
 class VariableAssignmentStatement extends Statement {
     readonly name: string;
+    vtype: TypeSignature | undefined = undefined;
     readonly exp: Expression;
 
     constructor(sinfo: SourceInfo, name: string, exp: Expression) {
@@ -1809,6 +1812,7 @@ class VariableAssignmentStatement extends Statement {
 
 class VariableMultiAssignmentStatement extends Statement {
     readonly names: string[];
+    vtypes: TypeSignature[] | undefined = undefined;
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
