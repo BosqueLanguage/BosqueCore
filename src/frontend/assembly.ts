@@ -226,17 +226,15 @@ class InvokeExampleDeclBSQON extends InvokeExampleDeclInlineRepr {
 }
 
 class InvokeExampleDeclLiteral extends InvokeExampleDeclInlineRepr {
-    readonly args: string; //elist as BSQON
-    readonly output: string; //result as BSQON
+    readonly vval: string; //function in/out as BSQON -- (args1, ..., argsN) -> out
 
-    constructor(args: string, output: string) {
+    constructor(vval: string) {
         super();
-        this.args = args;
-        this.output = output;
+        this.vval = vval;
     }
 
     override emit(fmt: CodeFormatter): string {
-        return `bsqon(${this.args} -> ${this.output})`;
+        return this.vval;
     }
 }
 
@@ -1054,22 +1052,6 @@ abstract class InternalConceptTypeDecl extends AbstractConceptTypeDecl {
     }
 }
 
-class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "concept " + this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
 class OptionTypeDecl extends InternalConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1704,7 +1686,7 @@ export {
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
-    AbstractConceptTypeDecl, InternalConceptTypeDecl, PrimitiveConceptTypeDecl, 
+    AbstractConceptTypeDecl, InternalConceptTypeDecl, 
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,

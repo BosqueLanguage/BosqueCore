@@ -13,6 +13,7 @@ const KW_abort = "abort";
 const KW_assert = "assert";
 const KW_bsqon = "bsqon";
 const KW_dollarbsqon = "$bsqon";
+const KW_example = "example";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -96,6 +97,7 @@ const KeywordStrings = [
     KW_action,
     KW_bsqon,
     KW_dollarbsqon,
+    KW_example,
     KW__debug,
     KW_do,
     KW_abort,
@@ -210,6 +212,14 @@ const CoreOnlyAttributes = [
     "__safe",
     "__assume_safe",
     "__conditional_safe"
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const TermRestrictions = [
+    "keytype",
+    "numeric",
+    "revalidator",
+    "crevalidator",
+    "pathvalidator",
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -332,6 +342,7 @@ const ParenSymbols = [
 export {
     KeywordStrings,
     GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
+    TermRestrictions,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 
@@ -343,6 +354,7 @@ export {
     KW_action,
     KW_bsqon,
     KW_dollarbsqon,
+    KW_example,
     KW__debug,
     KW_do,
     KW_abort,

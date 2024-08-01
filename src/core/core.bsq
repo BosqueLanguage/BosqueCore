@@ -74,7 +74,7 @@ __internal __typedeclable __keycomparable entity String {
 }
 
 %** Primitive safe string value. **%
-__internal __typedeclable __keycomparable entity StringOf<T: revalidator> {
+__internal __keycomparable entity StringOf<T: revalidator> {
     private function s_into(s: String): StringOf<T> = special_inject;
     %*
     function coerce(s: String): StringOf<T> {
@@ -89,7 +89,7 @@ __internal __typedeclable __keycomparable entity CString {
 }
 
 %** Primitive safe string value. **%
-__internal __typedeclable __keycomparable entity CStringOf<T: crevalidator> {
+__internal __keycomparable entity CStringOf<T: crevalidator> {
     private function s_into(s: CString): CStringOf<T> = special_inject;
     %*
     function coerce(s: CString): CStringOf<T> {
@@ -121,14 +121,6 @@ __internal entity CRegex {
 
 %** Primitive unicode regex value. **%
 __internal entity PathRegex {
-}
-
-%** Primitive template string value. **%
-__internal __typedeclable entity TemplateString {
-}
-
-%** Primitive string value. **%
-__internal __typedeclable entity TemplateCString {
 }
 
 %** Result type. **%
