@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, PairTypeDecl, ResultTypeDecl } from "../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 import { CodeFormatter, SourceInfo } from "../frontend/build_decls.js";
 
@@ -448,12 +448,12 @@ class JSEmitter {
     }
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression, toplevel: boolean): string {
-        if(cdecl instanceof PairTypeDecl || cdecl instanceof MapEntryTypeDecl) {
-            const pairtype = exp.ctype as NominalTypeSignature;
-            const pairargs = exp.args.args;
-            const p0exp = this.emitBUAsNeeded(this.emitExpression(pairargs[0].exp, true),  pairargs[0].exp.getType(), pairtype.alltermargs[0]);
-            const p1exp = this.emitBUAsNeeded(this.emitExpression(pairargs[1].exp, true),  pairargs[1].exp.getType(), pairtype.alltermargs[1]);
-            return `[${p0exp}, ${p1exp}]`;
+        if(cdecl instanceof MapEntryTypeDecl) {
+            const metype = exp.ctype as NominalTypeSignature;
+            const meargs = exp.args.args;
+            const m0exp = this.emitBUAsNeeded(this.emitExpression(meargs[0].exp, true),  meargs[0].exp.getType(), metype.alltermargs[0]);
+            const m1exp = this.emitBUAsNeeded(this.emitExpression(meargs[1].exp, true),  meargs[1].exp.getType(), metype.alltermargs[1]);
+            return `[${m0exp}, ${m1exp}]`;
         }
         else {
             const pexp = exp.args.args[0].exp;
@@ -1390,16 +1390,16 @@ class JSEmitter {
         assert(false, "Not implemented -- TaskYield");
     }
 
-    private emitBlockStatement(stmt: BlockStatement, fmt: JSCodeFormatter): string {
-        let stmtstrs: string[] = ["{\n"];
+    private emitStatementArray(stmts: Statement[], fmt: JSCodeFormatter): string[] {
+        let stmtstrs: string[] = [];
 
         fmt.indentPush();
         let prevskip = false;
-        for(let i = 0; i < stmt.statements.length; ++i) {
-            const stmti = stmt.statements[i];
+        for(let i = 0; i < stmts.length; ++i) {
+            const stmti = stmts[i];
             const sstr = fmt.indent(this.emitStatement(stmti, fmt));
 
-            if(i === stmt.statements.length - 1) {
+            if(i === stmts.length - 1) {
                 stmtstrs.push(sstr);
                 stmtstrs.push("\n");
             }
@@ -1438,8 +1438,13 @@ class JSEmitter {
         }
         fmt.indentPop();
 
-        stmtstrs.push(fmt.indent("}"));
-        return stmtstrs.join("");
+        return stmtstrs;
+    }
+
+    private emitBlockStatement(stmt: BlockStatement, fmt: JSCodeFormatter): string {
+        const stmts = this.emitStatementArray(stmt.statements, fmt);
+
+        return ["{\n", ...stmts, fmt.indent("}")].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: JSCodeFormatter): string {
@@ -1547,30 +1552,28 @@ class JSEmitter {
             return undefined;
         }
 
-        let bodystr = "";
-        fmt.indentPush();
         if(body instanceof BuiltinBodyImplementation) {
             assert(false, "Not implemented -- emitBuiltinBodyImplementation");
         }
         else if(body instanceof SynthesisBodyImplementation) {
             assert(false, "Not implemented -- emitSynthesisBodyImplementation");
         }
-        else if(body instanceof ExpressionBodyImplementation) {
-            bodystr = `return ${this.emitBUAsNeeded(this.emitExpression(body.exp, true), body.exp.getType(), returntype)};`;
-        }
         else {
-            assert(body instanceof StandardBodyImplementation);
-            
-            for(let i = 0; i < body.statements.length; ++i) {
-                env = this.checkStatement(env, body.statements[i]);
+            let stmts: string[] = [];
+            if(body instanceof ExpressionBodyImplementation) {
+                fmt.indentPush();
+                stmts.push(fmt.indent(`return ${this.emitBUAsNeeded(this.emitExpression(body.exp, true), body.exp.getType(), returntype)};`));
+                fmt.indentPop();
+            }
+            else {
+                assert(body instanceof StandardBodyImplementation);
+                
+                stmts = this.emitStatementArray(body.statements, fmt);
             }
 
-            this.checkError(body.sinfo, !this.isVoidType(env.declReturnType) && env.normalflow, "Function does not have a return statement in all code paths");
-        }
-        fmt.indentPop();
-
         if(this.bindernames.size === 0) {
-            xxxx;
+            return ["{\n", ...stmts, fmt.indent("}")].join("");
+
         }
         else {
             
@@ -1976,10 +1979,6 @@ class JSEmitter {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkPairTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
-    }
-
     private checkMapEntryTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
@@ -2251,9 +2250,6 @@ class JSEmitter {
             else if(tt instanceof SomeTypeDecl) {
                 this.checkSomeTypeDecl(ns, tt);
             }
-            else if(tt instanceof PairTypeDecl) {
-                this.checkPairTypeDecl(ns, tt);
-            }
             else if(tt instanceof MapEntryTypeDecl) {
                 this.checkMapEntryTypeDecl(ns, tt);
             }
@@ -2390,7 +2386,6 @@ class JSEmitter {
         let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
-        TypeChecker.loadWellKnownType(assembly, "Any", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);

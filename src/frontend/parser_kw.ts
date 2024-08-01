@@ -197,6 +197,7 @@ const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
     "__universal",
+    "__register",
     "__inline",
     "__safe",
     "__assume_safe",

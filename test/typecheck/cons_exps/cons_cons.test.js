@@ -28,19 +28,6 @@ describe ("Checker -- Constructable Constructor (Result)", () => {
     });
 });
 
-describe ("Checker -- Constructable Constructor (Pair)", () => {
-    it("should check pair constructors", function () {
-        checkTestFunction("function main(): Pair<Int, Bool> { return Pair<Int, Bool>{2i, false}; }");
-    });
-
-    it("should fail pair constructors", function () {
-        checkTestFunctionError("function main(): Pair<Bool> { return Pair<Int, Bool>{2i}; }", 'Type Pair expected 2 terms but got 1');
-
-        checkTestFunctionError("function main(): Pair<Int, Bool> { return Pair<Int, Bool>{2i}; }", 'Pair constructor expects 2 arguments');
-        checkTestFunctionError("function main(): Pair<Int, Bool> { return Pair<Int, Bool>{2i, 3i, 4i}; }", 'Pair constructor expects 2 arguments');
-    });
-});
-
 describe ("Checker -- Constructable Constructor (MapEntry)", () => {
     it("should check entry constructors", function () {
         checkTestFunction("function main(): MapEntry<Int, Bool> { return MapEntry<Int, Bool>{2i, true}; }");

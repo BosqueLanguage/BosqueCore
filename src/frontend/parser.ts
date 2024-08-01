@@ -5,7 +5,7 @@ import { Buffer } from "node:buffer";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement } from "./body.js";
-import { APIDecl, APIResultTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, PairTypeDecl, OkTypeDecl, ErrTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, ErrTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
 
@@ -120,9 +120,8 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
 ];
 
 const PRIMITIVE_CONCEPT_TYPE_NAMES = [
-    "Any", "KeyType", 
+    "KeyType", 
     "Comparable", "LinearArithmetic", "Numeric",
-    "Object",
     "RegexValidator", "CRegexValidator", "PathValidator"
 ];
 
@@ -2044,7 +2043,7 @@ class Parser {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
 
-        let ttype = this.wellknownTypes.get("Any") as TypeSignature;
+        let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             while(this.testToken(TokenStrings.IdentifierName) && this.peekTokenData() === "unique") {
@@ -2366,8 +2365,8 @@ class Parser {
             case TokenStrings.IdentifierName: {
                 return this.parseNoneableOfType(this.parseNominalType());
             }
-            case SYM_lparen: {
-                return this.parseElistType();
+            case SYM_lbrack: {
+                return this.parseNoneableOfType(this.parseElistType());
             }
             default: {
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
@@ -2383,6 +2382,9 @@ class Parser {
             }
             case TokenStrings.IdentifierName: {
                 return this.parseNoneableOfType(this.parseNominalType());
+            }
+            case SYM_lbrack: {
+                return this.parseNoneableOfType(this.parseElistType());
             }
             case KW_fn:
             case KW_pred:
@@ -2431,6 +2433,9 @@ class Parser {
             }
             case TokenStrings.IdentifierName: {
                 return this.parseNoneableOfType(this.parseNominalType());
+            }
+            case SYM_lbrack: {
+                return this.parseNoneableOfType(this.parseElistType());
             }
             default: {
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
@@ -2525,7 +2530,7 @@ class Parser {
     private parseElistType(): TypeSignature {
         const sinfo = this.peekToken().getSourceInfo();
 
-        const elargs = this.parseListOf<TypeSignature>("paren-type", SYM_lparen, SYM_rparen, SYM_coma, () => {
+        const elargs = this.parseListOf<TypeSignature>("paren-type", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
             return this.parseStdTypeSignature();
         });
 
@@ -3145,13 +3150,13 @@ class Parser {
         else if (tk === SYM_lbracebar) {
             return this.parseLetExpression();
         }
-        else if(tk === SYM_lparen) {
-            const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+        else if(tk === SYM_lbrack) {
+            const closeparen = this.scanMatchingParens(SYM_lbrack, SYM_rbrack);
             this.prepStateStackForNested("paren-type", closeparen);
 
             this.consumeToken();
             let exp = this.parseExpression();
-            if(!this.testAndConsumeTokenIf(SYM_rparen)) {
+            if(!this.testAndConsumeTokenIf(SYM_rbrack)) {
                 exp = this.completeEListConstructorParse(sinfo, exp, closeparen !== undefined);
             }
             else {
@@ -3180,11 +3185,11 @@ class Parser {
     private completeEListConstructorParse(sinfo: SourceInfo, exp: Expression, canrecover: boolean): Expression {
         let exps = [new PositionalArgumentValue(exp)];
 
-        while (!this.testAndConsumeTokenIf(SYM_rparen)) {
+        while (!this.testAndConsumeTokenIf(SYM_rbrack)) {
             const v = this.parseExpression();
             exps.push(new PositionalArgumentValue(v));
             
-            if(this.testToken(SYM_rparen)) {
+            if(this.testToken(SYM_rbrack)) {
                 ; //great this is the happy path we will exit next iter
             }
             else if(this.testToken(SYM_coma)) {
@@ -3192,7 +3197,7 @@ class Parser {
                 this.consumeToken();
 
                 //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
-                if(this.testToken(SYM_rparen)) {
+                if(this.testToken(SYM_rbrack)) {
                     this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Stray , at end of list");
                 }
             }
@@ -4437,7 +4442,7 @@ class Parser {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
 
-        let ttype = this.wellknownTypes.get("Any") as TypeSignature;
+        let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             while(this.testToken(TokenStrings.IdentifierName) && this.peekTokenData() === "unique") {
@@ -4744,13 +4749,6 @@ class Parser {
                 this.consumeTokenIf(SYM_coma);
                 provides.push(this.parseProvidesTypeSignature());
             }
-        }
-        
-        if (this.env.currentNamespace.fullnamespace.ns[0] !== "Core") {
-            const corens = this.env.assembly.getCoreNamespace();
-            const otype = corens.typedecls.find((td) => td.name === "Object") as AbstractNominalTypeDecl;
-
-            provides.push(new NominalTypeSignature(sinfo, undefined, otype, []));
         }
 
         return provides;
@@ -5095,9 +5093,6 @@ class Parser {
             else if(name === "CStringOf") {
                 tdecl = new CStringOfTypeDecl(this.env.currentFile, sinfo, attributes, "CStringOf");
             }
-            else if(name === "Pair") {
-                tdecl = new PairTypeDecl(this.env.currentFile, sinfo, attributes, "Pair");
-            }
             else if(name === "Some") {
                 tdecl = new SomeTypeDecl(this.env.currentFile, sinfo, attributes, "Some");
             }
@@ -5160,9 +5155,6 @@ class Parser {
         }
         else if(tdecl instanceof CStringOfTypeDecl) {
             this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
-        }
-        else if(tdecl instanceof PairTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["T", "U"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof SomeTypeDecl) {
             this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
@@ -5395,8 +5387,6 @@ class Parser {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
             assert(tdecl !== undefined, "Failed to find entity type");
 
-            tdecl.provides.push(this.wellknownTypes.get("Any") as TypeSignature);
-
             this.namespaceParseScanCover(endtok);
         }
     }
@@ -5452,8 +5442,6 @@ class Parser {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === iname);
             assert(tdecl !== undefined, "Failed to find entity type");
 
-            tdecl.provides.push(this.wellknownTypes.get("Any") as TypeSignature);
-
             this.namespaceParseScanCover(endtok);
         }
     }
@@ -5492,10 +5480,7 @@ class Parser {
             const ttype = this.parseTypeTagSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
-            if(this.testAndConsumeTokenIf(SYM_semicolon)) {
-                tdecl.provides.push(this.wellknownTypes.get("Any") as TypeSignature);
-            }
-            else {
+            if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
                 this.ensureAndConsumeTokenIf(SYM_amp, "typedecl declaration");
 
                const provides = this.parseProvides(sinfo, [SYM_lbrace]);
@@ -5981,8 +5966,6 @@ class Parser {
         if(phase === ParsePhase_CompleteParsing) {
             pp.loadWellKnownType("None");
             pp.loadWellKnownType("Bool");
-
-            pp.loadWellKnownType("Any");
         }
 
         pp.parseNamespaceMembers(TokenStrings.EndOfStream);

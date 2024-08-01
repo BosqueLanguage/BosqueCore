@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, PairTypeDecl, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
@@ -1149,22 +1149,6 @@ class TypeChecker {
 
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
                 this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
-            }
-        }
-        else if(cdecl instanceof PairTypeDecl) {
-            if(exp.args.args.length !== 2) {
-                this.reportError(exp.sinfo, `Pair constructor expects 2 arguments`);
-            }
-            else {
-                const ttype = ctype.alltermargs[0];
-                exp.shuffleinfo = [[0, "first", ttype]];
-                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Pair constructor first argument is not a subtype of ${ttype.tkeystr}`);
-
-                const stype = ctype.alltermargs[1];
-                exp.shuffleinfo = [[1, "second", stype]];
-                const setype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(stype));
-                this.checkError(exp.sinfo, setype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(setype, stype, this.constraints), `Pair constructor second argument is not a subtype of ${stype.tkeystr}`);
             }
         }
         else if(cdecl instanceof MapEntryTypeDecl) {
@@ -4034,10 +4018,6 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkPairTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
-    }
-
     private checkMapEntryTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
@@ -4309,9 +4289,6 @@ class TypeChecker {
             else if(tt instanceof SomeTypeDecl) {
                 this.checkSomeTypeDecl(ns, tt);
             }
-            else if(tt instanceof PairTypeDecl) {
-                this.checkPairTypeDecl(ns, tt);
-            }
             else if(tt instanceof MapEntryTypeDecl) {
                 this.checkMapEntryTypeDecl(ns, tt);
             }
@@ -4448,7 +4425,6 @@ class TypeChecker {
         let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
-        TypeChecker.loadWellKnownType(assembly, "Any", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);

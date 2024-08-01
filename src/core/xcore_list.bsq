@@ -29,7 +29,7 @@ namespace ListOps {
     }
 }
 
-protected datatype ListRepr<T> provides Any 
+protected datatype ListRepr<T> 
 of
 ListReprLeaf { 
     field value: T; 

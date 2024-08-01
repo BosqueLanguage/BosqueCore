@@ -21,28 +21,32 @@ enum TemplateTermDeclExtraTag {
 
 class TemplateTermDecl {
     readonly name: string;
-    readonly tconstraint: TypeSignature;
+    readonly tconstraint: TypeSignature | undefined;
     readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(name: string, tconstraint: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
+    constructor(name: string, tconstraint: TypeSignature | undefined, extraTags: TemplateTermDeclExtraTag[]) {
         this.name = name;
         this.tconstraint = tconstraint;
         this.extraTags = extraTags;
     }
 
     emitHelper(): string {
-        let ttgs: string[] = [];
+        let chks: string[] = [];
         if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            ttgs.push("unique");
+            chks.push("unique");
         }
 
-        const tstr = (this.tconstraint.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.tconstraint.tkeystr].join(" ")}` : "";
+        if(this.tconstraint !== undefined) {
+            chks.push(this.tconstraint.tkeystr);
+        }
+
+        const tstr = (chks.length !== 0) ? `: ${chks.join(" ")}` : "";
         return `${this.name}${tstr}`;
     }
 }
 
 class TypeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
         super(name, tconstraint, tags);
     }
 
@@ -52,7 +56,7 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
         super(name, tconstraint, tags);
     }
 
@@ -63,22 +67,26 @@ class InvokeTemplateTermDecl extends TemplateTermDecl {
 
 class InvokeTemplateTypeRestrictionClause {
     readonly t: TemplateTypeSignature;
-    readonly subtype: TypeSignature;
+    readonly subtype: TypeSignature | undefined;
     readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(t: TemplateTypeSignature, subtype: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
+    constructor(t: TemplateTypeSignature, subtype: TypeSignature | undefined, extraTags: TemplateTermDeclExtraTag[]) {
         this.t = t;
         this.subtype = subtype;
         this.extraTags = extraTags;
     }
 
     emit(): string {
-        let ttgs: string[] = [];
+        let chks: string[] = [];
         if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            ttgs.push("unique");
+            chks.push("unique");
         }
 
-        const tstr = (this.subtype.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.subtype.tkeystr].join(" ")}` : "";
+        if(this.subtype !== undefined) {
+            chks.push(this.subtype.tkeystr);
+        }
+
+        const tstr = chks.length !== 0 ? `: ${chks.join(" ")}` : "";
         return `${this.t}${tstr}`;
     }
 }
@@ -659,7 +667,7 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].tkeystr === "Any") {
+        if(bg.length === 0 && this.provides.length === 0) {
             return tdcl + ";";
         }
         else {
@@ -881,22 +889,6 @@ class APISuccessTypeDecl extends ConstructableTypeDecl {
 }
 
 class SomeTypeDecl extends ConstructableTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-class PairTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1673,7 +1665,7 @@ export {
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     RegexValidatorTypeDecl, CRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, PairTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
