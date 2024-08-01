@@ -121,7 +121,7 @@ class TypeCheckerRelations {
         return [...specialprovides.map((t) => new TypeLookupInfo(t, this.generateTemplateMappingForTypeDecl(ttype))), ...pdecls];
     }
 
-    private normalizeTypeSignatureHelper(tsig: TypeSignature, tconstrain: TemplateConstraintScope, toptemplate: boolean, alltemplates: boolean): TypeSignature {
+    normalize(tsig: TypeSignature): TypeSignature {
         const memoval = this.memoizedNormalize.get(tsig.tkeystr);
         if(memoval !== undefined) {
             return memoval;
@@ -132,24 +132,23 @@ class TypeCheckerRelations {
             res = tsig;
         }
         else if(tsig instanceof TemplateTypeSignature) {
-            const rr = toptemplate ? tconstrain.resolveConstraint(tsig.name) : undefined;
-            res = rr === undefined ? tsig : rr.tconstraint;
+            res = tsig;
         }
         else if(tsig instanceof NominalTypeSignature) {
-            res = new NominalTypeSignature(tsig.sinfo, tsig.altns, tsig.decl, tsig.alltermargs.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
+            res = new NominalTypeSignature(tsig.sinfo, tsig.altns, tsig.decl, tsig.alltermargs.map((tt) => this.normalize(tt)));
         }
         else if(tsig instanceof EListTypeSignature) {
-            res = new EListTypeSignature(tsig.sinfo, tsig.entries.map((tt) => this.normalizeTypeSignatureHelper(tt, tconstrain, alltemplates, alltemplates)));
+            res = new EListTypeSignature(tsig.sinfo, tsig.entries.map((tt) => this.normalize(tt)));
         }
         else if(tsig instanceof StringTemplateTypeSignature) {
-            res = new StringTemplateTypeSignature(tsig.sinfo, tsig.kind, tsig.argtypes.map((ts) => this.normalizeTypeSignatureHelper(ts, tconstrain, alltemplates, alltemplates)));
+            res = new StringTemplateTypeSignature(tsig.sinfo, tsig.kind, tsig.argtypes.map((ts) => this.normalize(ts)));
         }
         else if(tsig instanceof LambdaTypeSignature) {
             const rparams = tsig.params.map((pp) => {
-                return new LambdaParameterSignature(this.normalizeTypeSignatureHelper(pp.type, tconstrain, alltemplates, alltemplates), pp.isRefParam, pp.isRestParam);
+                return new LambdaParameterSignature(this.normalize(pp.type), pp.isRefParam, pp.isRestParam);
             });
 
-            res = new LambdaTypeSignature(tsig.sinfo, tsig.recursive, tsig.name, rparams, this.normalizeTypeSignatureHelper(tsig.resultType, tconstrain, alltemplates, alltemplates));
+            res = new LambdaTypeSignature(tsig.sinfo, tsig.recursive, tsig.name, rparams, this.normalize(tsig.resultType));
         }
         else {
             assert(false, "Unknown type signature");
@@ -159,21 +158,13 @@ class TypeCheckerRelations {
         return res;
     }
 
-    normalize(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        return this.normalizeTypeSignatureHelper(tsig, tconstrain, false, false);
-    }
-
-    normalizeAndTemplateInstantiate(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        return this.normalizeTypeSignatureHelper(tsig, tconstrain, true, true);
-    }
-
-    private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[], tconstrain: TemplateConstraintScope): boolean {
+    private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[]): boolean {
         if(tl1.length !== tl2.length) {
             return false;
         }
 
         for(let i = 0; i < tl1.length; ++i) {
-            if(!this.areSameTypes(tl1[i], tl2[i], tconstrain)) {
+            if(!this.areSameTypes(tl1[i], tl2[i])) {
                 return false;
             }
         }
@@ -181,7 +172,7 @@ class TypeCheckerRelations {
         return true;
     }
 
-    private areSameFunctionParamLists(tl1: LambdaParameterSignature[], tl2: LambdaParameterSignature[], tconstrain: TemplateConstraintScope): boolean {
+    private areSameFunctionParamLists(tl1: LambdaParameterSignature[], tl2: LambdaParameterSignature[]): boolean {
         if(tl1.length !== tl2.length) {
             return false;
         }
@@ -191,7 +182,7 @@ class TypeCheckerRelations {
                 return false;
             }
             
-            if(!this.areSameTypes(tl1[i].type, tl2[i].type, tconstrain)) {
+            if(!this.areSameTypes(tl1[i].type, tl2[i].type)) {
                 return false;
             }
         }
@@ -200,7 +191,7 @@ class TypeCheckerRelations {
     }
 
     //Check if t1 and t2 are the same type -- template types are not expanded in this check
-    areSameTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+    areSameTypes(t1: TypeSignature, t2: TypeSignature): boolean {
         assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
         assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking type same on auto");
 
@@ -210,8 +201,8 @@ class TypeCheckerRelations {
             return memoval;
         }
 
-        const nt1 = this.normalize(t1, tconstrain);
-        const nt2 = this.normalize(t2, tconstrain);
+        const nt1 = this.normalize(t1);
+        const nt2 = this.normalize(t2);
 
         let res = false
         if(nt1 instanceof VoidTypeSignature && nt2 instanceof VoidTypeSignature) {
@@ -221,21 +212,21 @@ class TypeCheckerRelations {
             res = (nt1.name === nt2.name);
         }
         else if(nt1 instanceof NominalTypeSignature && nt2 instanceof NominalTypeSignature) {
-            res = (nt1.decl === nt2.decl) && this.areSameTypeSignatureLists(nt1.alltermargs, nt2.alltermargs, tconstrain);
+            res = (nt1.decl === nt2.decl) && this.areSameTypeSignatureLists(nt1.alltermargs, nt2.alltermargs);
         }
         else if(nt1 instanceof EListTypeSignature && nt2 instanceof EListTypeSignature) {
-            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries, tconstrain);
+            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries);
         }
         else if(nt1 instanceof StringTemplateTypeSignature && nt2 instanceof StringTemplateTypeSignature) {
-            res = (nt1.kind === nt2.kind) && this.areSameTypeSignatureLists(nt1.argtypes, nt2.argtypes, tconstrain);
+            res = (nt1.kind === nt2.kind) && this.areSameTypeSignatureLists(nt1.argtypes, nt2.argtypes);
         }
         else if(nt1 instanceof LambdaTypeSignature && nt2 instanceof LambdaTypeSignature) {
             if(nt1.recursive !== nt2.recursive || nt1.name !== nt2.name) {
                 res = false;
             }
             else {
-                const okargs = this.areSameFunctionParamLists(nt1.params, nt2.params, tconstrain);
-                const okres = this.areSameTypes(nt1.resultType, nt2.resultType, tconstrain);
+                const okargs = this.areSameFunctionParamLists(nt1.params, nt2.params);
+                const okres = this.areSameTypes(nt1.resultType, nt2.resultType);
 
                 res = okargs && okres;
             }
@@ -250,7 +241,7 @@ class TypeCheckerRelations {
 
     private templateIsSubtypeOf(t1: TemplateTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         const cons = tconstrain.resolveConstraint(t1.name);
-        return cons !== undefined && this.isSubtypeOf(cons.tconstraint, t2, tconstrain);
+        return cons !== undefined && cons.tconstraint !== undefined && this.isSubtypeOf(cons.tconstraint, t2, tconstrain);
     }
 
     private nominalIsSubtypeOf(t1: NominalTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
@@ -284,11 +275,11 @@ class TypeCheckerRelations {
             return memoval;
         }
 
-        const nt1 = this.normalize(t1, tconstrain);
-        const nt2 = this.normalize(t2, tconstrain);
+        const nt1 = this.normalize(t1);
+        const nt2 = this.normalize(t2);
 
         let res = false;
-        if(this.areSameTypes(nt1, nt2, tconstrain)) {
+        if(this.areSameTypes(nt1, nt2)) {
             res = true;
         }
         else {
@@ -315,7 +306,7 @@ class TypeCheckerRelations {
             return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
         }
 
-        const ttl = tl.map((t) => this.normalize(t, tconstrain));
+        const ttl = tl.map((t) => this.normalize(t));
 
         //handle elist case
         if(ttl.some((t) => t instanceof EListTypeSignature)) {
@@ -325,7 +316,7 @@ class TypeCheckerRelations {
 
             const elts = ttl[0];
             for(let i = 1; i < tl.length; ++i) {
-                if(!this.areSameTypes(elts, tl[i], tconstrain)) {
+                if(!this.areSameTypes(elts, tl[i])) {
                     return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(["LUB GEN"]));
                 }
             }
@@ -365,7 +356,7 @@ class TypeCheckerRelations {
                 //check for special case of Ok+Err -> Result
                 const okopt = ptl.find((t) => t.decl instanceof OkTypeDecl);
                 const erropt = ptl.find((t) => t.decl instanceof ErrTypeDecl);
-                if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs, tconstrain)) {
+                if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs)) {
                     return new NominalTypeSignature(sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Result") as TypedeclTypeDecl, okopt.alltermargs);
                 }
             }
@@ -501,7 +492,7 @@ class TypeCheckerRelations {
 
         if(t instanceof TemplateTypeSignature) {
             const cons = tconstrain.resolveConstraint(t.name);
-            return cons !== undefined ? this.decomposeType(cons.tconstraint, tconstrain) : undefined;
+            return (cons !== undefined && cons.tconstraint !== undefined) ? this.decomposeType(cons.tconstraint, tconstrain) : undefined;
         }
         else if(t instanceof NominalTypeSignature) {
             const corens = this.assembly.getCoreNamespace();
@@ -619,7 +610,7 @@ class TypeCheckerRelations {
             if((t.decl instanceof SomeTypeDecl) || (t.decl instanceof OptionTypeDecl)) {
                 const topt = t.alltermargs[0];
 
-                if(someT !== undefined && !this.areSameTypes(someT, topt, tconstrain)) {
+                if(someT !== undefined && !this.areSameTypes(someT, topt)) {
                     return undefined;
                 }
                 someT = topt;
@@ -655,7 +646,7 @@ class TypeCheckerRelations {
             if((t.decl instanceof SomeTypeDecl) || (t.decl instanceof OptionTypeDecl)) {
                 const topt = t.alltermargs[0];
 
-                if(someT !== undefined && !this.areSameTypes(someT, topt, tconstrain)) {
+                if(someT !== undefined && !this.areSameTypes(someT, topt)) {
                     return undefined;
                 }
                 someT = topt;
@@ -691,12 +682,12 @@ class TypeCheckerRelations {
             const topt = t.alltermargs[0];
             const eopt = t.alltermargs[1];
 
-            if(typeT !== undefined && !this.areSameTypes(typeT, topt, tconstrain)) {
+            if(typeT !== undefined && !this.areSameTypes(typeT, topt)) {
                 return undefined;
             }
             typeT = topt;
 
-            if(typeE !== undefined && !this.areSameTypes(typeE, eopt, tconstrain)) {
+            if(typeE !== undefined && !this.areSameTypes(typeE, eopt)) {
                 return undefined;
             }
             typeE = eopt;
@@ -742,12 +733,12 @@ class TypeCheckerRelations {
             const topt = t.alltermargs[0];
             const eopt = t.alltermargs[1];
 
-            if(typeT !== undefined && !this.areSameTypes(typeT, topt, tconstrain)) {
+            if(typeT !== undefined && !this.areSameTypes(typeT, topt)) {
                 return undefined;
             }
             typeT = topt;
 
-            if(typeE !== undefined && !this.areSameTypes(typeE, eopt, tconstrain)) {
+            if(typeE !== undefined && !this.areSameTypes(typeE, eopt)) {
                 return undefined;
             }
             typeE = eopt;
@@ -910,7 +901,7 @@ class TypeCheckerRelations {
     }
 
     resolveTypeConstant(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<ConstMemberDecl> | undefined {
-        const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
+        const tn = this.normalize(tsig);
 
         if(!(tn instanceof NominalTypeSignature)) {
             return undefined;
@@ -938,7 +929,7 @@ class TypeCheckerRelations {
     }
 
     resolveTypeField(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MemberFieldDecl> | undefined {
-        const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
+        const tn = this.normalize(tsig);
 
         if(!(tn instanceof NominalTypeSignature)) {
             return undefined; //TODO: we could potentially resolve fields from unions later
@@ -1034,7 +1025,7 @@ class TypeCheckerRelations {
     }
 
     resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
-        const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
+        const tn = this.normalize(tsig);
 
         if(!(tn instanceof NominalTypeSignature)) {
             return undefined; //TODO: we could potentially resolve methods from unions later
@@ -1062,7 +1053,7 @@ class TypeCheckerRelations {
     }
 
     resolveTypeMethodImplementation(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
-        const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
+        const tn = this.normalize(tsig);
 
         if(!(tn instanceof NominalTypeSignature)) {
             return undefined; //TODO: we could potentially resolve methods from unions later
@@ -1090,7 +1081,7 @@ class TypeCheckerRelations {
     }
 
     resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl> | undefined {
-        const tn = this.normalizeAndTemplateInstantiate(tsig, tconstrain);
+        const tn = this.normalize(tsig);
 
         if(!(tn instanceof NominalTypeSignature)) {
             return undefined; //TODO: we could potentially resolve methods from unions later

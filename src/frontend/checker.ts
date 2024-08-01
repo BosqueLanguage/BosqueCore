@@ -425,7 +425,7 @@ class TypeChecker {
                 return "rhsnone";
             }
             else {
-                return this.relations.areSameTypes(rhs, lhs.alltermargs[0], this.constraints) ? "rhskeyeqoption" : "err";
+                return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
             }
         }
         else if(rhs.decl instanceof OptionTypeDecl) {
@@ -437,7 +437,7 @@ class TypeChecker {
                 return "lhsnone";
             }
             else {
-                return this.relations.areSameTypes(lhs, rhs.alltermargs[0], this.constraints) ? "lhskeyeqoption" : "err";
+                return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
             }
         }
         else {
@@ -445,7 +445,7 @@ class TypeChecker {
                 return "err";
             }
 
-            return this.relations.areSameTypes(lhs, rhs, this.constraints) ? "stricteq" : "err";
+            return this.relations.areSameTypes(lhs, rhs) ? "stricteq" : "err";
 
         }
     }
@@ -528,7 +528,7 @@ class TypeChecker {
                 rtypes.push([true, argtype]);
 
                 const argetype = this.relations.getExpandoableOfType(argtype);
-                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype, this.constraints), `Rest argument ${i} expected to be container of type ${etype.tkeystr}`);
+                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Rest argument ${i} expected to be container of type ${etype.tkeystr}`);
             }
         }
 
@@ -1002,7 +1002,7 @@ class TypeChecker {
 
         const btype = this.relations.getTypeDeclBasePrimitiveType(exp.constype);
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
-        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype, this.constraints), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
+        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
         return exp.setType(exp.constype);
     }
@@ -1087,7 +1087,7 @@ class TypeChecker {
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);
                 const argetype = this.relations.getExpandoableOfType(argtype);
-                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype, this.constraints), `Rest argument ${i} expected to be container of type ${etype.tkeystr}`);
+                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Rest argument ${i} expected to be container of type ${etype.tkeystr}`);
             }
         }
 
@@ -1532,7 +1532,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Subtraction operator requires 2 arguments of the same type")) {
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Subtraction operator requires 2 arguments of the same type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1548,21 +1548,21 @@ class TypeChecker {
 
         let res: TypeSignature;
         if(this.relations.isPrimitiveType(tlhs) && this.relations.isPrimitiveType(trhs)) {
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Multiplication operator requires 2 arguments of the same type")) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Multiplication operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs;
         }
         else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
             const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
-            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
         else if(this.relations.isPrimitiveType(tlhs) && this.relations.isTypeDeclType(trhs)) {
             const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs);
-            if(this.checkError(exp.sinfo, baserhs === undefined || !this.relations.areSameTypes(tlhs, baserhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+            if(this.checkError(exp.sinfo, baserhs === undefined || !this.relations.areSameTypes(tlhs, baserhs), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = trhs;
@@ -1584,20 +1584,20 @@ class TypeChecker {
 
         let res: TypeSignature;
         if(this.relations.isPrimitiveType(tlhs) && this.relations.isPrimitiveType(trhs)) {
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs;
         }
         else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
             const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
-            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
+            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
         else if(this.relations.isTypeDeclType(tlhs) && this.relations.isTypeDeclType(trhs)) {
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             const basetype = this.relations.getTypeDeclBasePrimitiveType(trhs);
@@ -1665,7 +1665,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator == requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator == requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1677,7 +1677,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator != requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator != requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1689,7 +1689,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator < requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator < requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1701,7 +1701,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator <= requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator <= requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1713,7 +1713,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator > requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator > requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1725,7 +1725,7 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
 
-        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator >= requires 2 arguments of the same type");
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Operator >= requires 2 arguments of the same type");
         
         exp.opertype = this.resolveUnderlyingType(tlhs);
         return exp.setType(this.getWellKnownType("Bool"));
@@ -2797,7 +2797,7 @@ class TypeChecker {
                 const itype = iopts[i];
                 const etype = evals[i];
     
-                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
                 
                 stmt.actualtypes.push(itype || etype);
                 if(decl.name !== "_") {
@@ -2897,7 +2897,7 @@ class TypeChecker {
                 const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
                 const etype = evals[i];
     
-                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
+                this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.areSameTypes(etype, itype), `Expression of type ${TypeChecker.safeTypePrint(etype)} (from EList) cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
                 
                 stmt.vtypes.push(itype || etype);
                 if(name !== "_") {
