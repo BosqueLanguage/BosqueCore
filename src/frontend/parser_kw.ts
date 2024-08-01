@@ -11,6 +11,8 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_bsqon = "bsqon";
+const KW_dollarbsqon = "$bsqon";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -70,7 +72,6 @@ const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
 const KW_when = "when";
-const KW_example = "example";
 const KW_event = "event";
 const KW_status = "status";
 const KW_resource = "resource";
@@ -93,6 +94,8 @@ const KeywordStrings = [
     KW_api,
     KW_as,
     KW_action,
+    KW_bsqon,
+    KW_dollarbsqon,
     KW__debug,
     KW_do,
     KW_abort,
@@ -153,7 +156,6 @@ const KeywordStrings = [
     KW_when,
     KW_yield,
     KW_under,
-    KW_example,
     KW_event,
     KW_status,
     KW_resource,
@@ -196,7 +198,13 @@ const AllAttributes = [
 const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
-    "__universal",
+    
+    "__keycomparable",
+    "__numeric",
+    "__revalidator",
+    "__crevalidator",
+    "__pathvalidator",
+    
     "__register",
     "__inline",
     "__safe",
@@ -333,6 +341,8 @@ export {
     KW_api,
     KW_as,
     KW_action,
+    KW_bsqon,
+    KW_dollarbsqon,
     KW__debug,
     KW_do,
     KW_abort,
@@ -393,7 +403,6 @@ export {
     KW_when,
     KW_yield,
     KW_under,
-    KW_example,
     KW_event,
     KW_resource,
     KW_status,

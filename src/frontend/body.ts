@@ -925,6 +925,8 @@ enum PostfixOpTag {
     PostfixAccessFromName = "PostfixAccessFromName",
     PostfixProjectFromNames = "PostfixProjectFromNames",
 
+    PostfixAccessFromIndex = "PostfixAccessFromIndex",
+
     PostfixIsTest = "PostfixIsTest",
     PostfixAsConvert = "PostfixAsConvert",
 
@@ -1022,6 +1024,19 @@ class PostfixProjectFromNames extends PostfixOperation {
 
     emit(fmt: CodeFormatter): string {
         return `.(${this.names.join(", ")})`;
+    }
+}
+
+class PostfixAccessFromIndex extends PostfixOperation {
+    readonly idx: number;
+
+    constructor(sinfo: SourceInfo, idx: number) {
+        super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
+        this.idx = idx;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `.${this.idx}`;
     }
 }
 
@@ -2379,7 +2394,7 @@ export {
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixError, PostfixAccessFromName, PostfixProjectFromNames,
+    PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
     PostfixInvoke,

@@ -15,8 +15,11 @@ const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
 const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
-    None,
-    Unique
+    KeyType = "keytype",
+    Numeric = "numeric",
+    ValidatorRe = "revalidator",
+    ValidatorCRe = "crevalidator",
+    ValidatorPath = "pathvalidator",
 }
 
 class TemplateTermDecl {
@@ -31,10 +34,7 @@ class TemplateTermDecl {
     }
 
     emitHelper(): string {
-        let chks: string[] = [];
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            chks.push("unique");
-        }
+        let chks: string[] = this.extraTags.map((t) => t);  
 
         if(this.tconstraint !== undefined) {
             chks.push(this.tconstraint.tkeystr);
@@ -77,10 +77,7 @@ class InvokeTemplateTypeRestrictionClause {
     }
 
     emit(): string {
-        let chks: string[] = [];
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            chks.push("unique");
-        }
+        let chks: string[] = this.extraTags.map((t) => t);
 
         if(this.subtype !== undefined) {
             chks.push(this.subtype.tkeystr);
@@ -195,9 +192,9 @@ class ValidateDecl extends ConditionDecl {
 }
 
 enum InvokeExampleKind {
-    Std,
-    Test,
-    Spec
+    Synth, //may be bsqon or literal -- for synthesis
+    Test, //may be bsqon or literal -- for testing
+    Spec //must be bsqon -- for specifications -- DOCUMENTATION and TESTING
 }
 
 abstract class InvokeExample extends AbstractDecl {
@@ -209,16 +206,50 @@ abstract class InvokeExample extends AbstractDecl {
     }
 }
 
-class InvokeExampleDeclInline extends InvokeExample {
-    readonly entries: {args: Expression[], output: Expression}[];
+abstract class InvokeExampleDeclInlineRepr {
+    abstract emit(fmt: CodeFormatter): string;
+}
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, entries: {args: Expression[], output: Expression}[]) {
+class InvokeExampleDeclBSQON extends InvokeExampleDeclInlineRepr {
+    readonly args: Expression[];
+    readonly output: Expression;
+
+    constructor(args: Expression[], output: Expression) {
+        super();
+        this.args = args;
+        this.output = output;
+    }
+
+    override emit(fmt: CodeFormatter): string {
+        return `[${this.args.map((a) => a.emit(true, fmt)).join(", ")}] -> ${this.output.emit(true, fmt)}`;
+    }
+}
+
+class InvokeExampleDeclLiteral extends InvokeExampleDeclInlineRepr {
+    readonly args: string; //elist as BSQON
+    readonly output: string; //result as BSQON
+
+    constructor(args: string, output: string) {
+        super();
+        this.args = args;
+        this.output = output;
+    }
+
+    override emit(fmt: CodeFormatter): string {
+        return `bsqon(${this.args} -> ${this.output})`;
+    }
+}
+
+class InvokeExampleDeclInline extends InvokeExample {
+    readonly entries: InvokeExampleDeclInlineRepr[];
+
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, entries: InvokeExampleDeclInlineRepr[]) {
         super(file, sinfo, ekind);
         this.entries = entries;
     }
 
     emit(fmt: CodeFormatter): string {
-        const estr = this.entries.map((e) => `[${e.args.map((a) => a.emit(true, fmt)).join(", ")}] => ${e.output.emit(true, fmt)}`).join("; ");
+        const estr = this.entries.map((e) => e.emit(fmt)).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
             return fmt.indent(`spec { ${estr} }`);
@@ -594,6 +625,26 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
             case AdditionalTypeDeclTag.Event: return "event ";
             default: return "";
         }
+    }
+
+    isKeyTypeRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__keycomparable") !== undefined;
+    }
+
+    isNumericRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__numeric") !== undefined;
+    }
+
+    isValidatorReRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__revalidator") !== undefined;
+    }
+
+    isValidatorCReRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__crevalidator") !== undefined;
+    }
+
+    isValidatorPathRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__pathvalidator") !== undefined;
     }
 
     emitTerms(): string {
@@ -1095,22 +1146,6 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
         if(this.nestedEntityDecls.length !== 0) {
             bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
         }
-        fmt.indentPop();
-
-        return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-class ExpandoableTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
         return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -1651,7 +1686,7 @@ export {
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
-    InvokeExampleKind, InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
+    InvokeExampleKind, InvokeExample, InvokeExampleDeclInlineRepr, InvokeExampleDeclBSQON, InvokeExampleDeclLiteral, InvokeExampleDeclInline, InvokeExampleDeclFile, 
     DeclarationAttibute, AbstractCoreDecl,
     InvokeParameterDecl, AbstractInvokeDecl, 
     LambdaDecl,
@@ -1670,7 +1705,7 @@ export {
     EventListTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, PrimitiveConceptTypeDecl, 
-    OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
+    OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,

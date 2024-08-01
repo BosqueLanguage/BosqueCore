@@ -1,8 +1,7 @@
-%%The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
-__internal entity MapEntry<K: unique KeyType, V> {
+__internal entity MapEntry<K: keytype, V> {
 }
 
-__internal entity Map<K: unique KeyType, V> provides Expandoable<MapEntry<K, V>> {
+__internal entity Map<K: keytype, V> {
 }

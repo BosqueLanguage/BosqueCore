@@ -1547,7 +1547,7 @@ class JSEmitter {
         }
     }
 
-    private emitBodyImplementation(body: BodyImplementation, returntype: TypeSignature, fmt: JSCodeFormatter): string | undefined {
+    /* private */ emitBodyImplementation(body: BodyImplementation, returntype: TypeSignature, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
@@ -1571,15 +1571,16 @@ class JSEmitter {
                 stmts = this.emitStatementArray(body.statements, fmt);
             }
 
-        if(this.bindernames.size === 0) {
-            return ["{\n", ...stmts, fmt.indent("}")].join("");
-
-        }
-        else {
-            
+            if(this.bindernames.size === 0) {
+                return ["{\n", ...stmts, fmt.indent("}")].join("");
+            }
+            else {
+                assert(false, "Not implemented -- emitBodyImplementation with binders");
+            }
         }
     }
 
+    /*
     private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
@@ -2427,6 +2428,7 @@ class JSEmitter {
 
         return checker.errors;
     }
+    */
 }
 
 export {

@@ -29,7 +29,6 @@ class TypeCheckerRelations {
     readonly assembly: Assembly;
     readonly wellknowntypes: Map<string, TypeSignature>;
 
-    readonly memoizedNormalize: Map<string, TypeSignature> = new Map<string, TypeSignature>();
     readonly memoizedTypeEqualRelation: Map<string, boolean> = new Map<string, boolean>();
     readonly memoizedTypeSubtypeRelation: Map<string, boolean> = new Map<string, boolean>();
 
@@ -121,43 +120,6 @@ class TypeCheckerRelations {
         return [...specialprovides.map((t) => new TypeLookupInfo(t, this.generateTemplateMappingForTypeDecl(ttype))), ...pdecls];
     }
 
-    normalize(tsig: TypeSignature): TypeSignature {
-        const memoval = this.memoizedNormalize.get(tsig.tkeystr);
-        if(memoval !== undefined) {
-            return memoval;
-        }
-
-        let res: TypeSignature;
-        if(tsig instanceof ErrorTypeSignature || tsig instanceof VoidTypeSignature || tsig instanceof AutoTypeSignature) {
-            res = tsig;
-        }
-        else if(tsig instanceof TemplateTypeSignature) {
-            res = tsig;
-        }
-        else if(tsig instanceof NominalTypeSignature) {
-            res = new NominalTypeSignature(tsig.sinfo, tsig.altns, tsig.decl, tsig.alltermargs.map((tt) => this.normalize(tt)));
-        }
-        else if(tsig instanceof EListTypeSignature) {
-            res = new EListTypeSignature(tsig.sinfo, tsig.entries.map((tt) => this.normalize(tt)));
-        }
-        else if(tsig instanceof StringTemplateTypeSignature) {
-            res = new StringTemplateTypeSignature(tsig.sinfo, tsig.kind, tsig.argtypes.map((ts) => this.normalize(ts)));
-        }
-        else if(tsig instanceof LambdaTypeSignature) {
-            const rparams = tsig.params.map((pp) => {
-                return new LambdaParameterSignature(this.normalize(pp.type), pp.isRefParam, pp.isRestParam);
-            });
-
-            res = new LambdaTypeSignature(tsig.sinfo, tsig.recursive, tsig.name, rparams, this.normalize(tsig.resultType));
-        }
-        else {
-            assert(false, "Unknown type signature");
-        }
-
-        this.memoizedNormalize.set(tsig.tkeystr, res);
-        return res;
-    }
-
     private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[]): boolean {
         if(tl1.length !== tl2.length) {
             return false;
@@ -201,21 +163,18 @@ class TypeCheckerRelations {
             return memoval;
         }
 
-        const nt1 = this.normalize(t1);
-        const nt2 = this.normalize(t2);
-
         let res = false
-        if(nt1 instanceof VoidTypeSignature && nt2 instanceof VoidTypeSignature) {
+        if(t1 instanceof VoidTypeSignature && t2 instanceof VoidTypeSignature) {
             res = true;
         }
-        else if(nt1 instanceof TemplateTypeSignature && nt2 instanceof TemplateTypeSignature) {
-            res = (nt1.name === nt2.name);
+        else if(t1 instanceof TemplateTypeSignature && t2 instanceof TemplateTypeSignature) {
+            res = (t1.name === t2.name);
         }
-        else if(nt1 instanceof NominalTypeSignature && nt2 instanceof NominalTypeSignature) {
-            res = (nt1.decl === nt2.decl) && this.areSameTypeSignatureLists(nt1.alltermargs, nt2.alltermargs);
+        else if(t1 instanceof NominalTypeSignature && t2 instanceof NominalTypeSignature) {
+            res = (t1.decl === t2.decl) && this.areSameTypeSignatureLists(t1.alltermargs, t2.alltermargs);
         }
         else if(nt1 instanceof EListTypeSignature && nt2 instanceof EListTypeSignature) {
-            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries);
+            res = this.areSameTypeSignatureLists(t1.entries, t2.entries);
         }
         else if(nt1 instanceof StringTemplateTypeSignature && nt2 instanceof StringTemplateTypeSignature) {
             res = (nt1.kind === nt2.kind) && this.areSameTypeSignatureLists(nt1.argtypes, nt2.argtypes);
