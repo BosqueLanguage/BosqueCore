@@ -1,9 +1,9 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
@@ -59,21 +59,6 @@ class TypeChecker {
     private getWellKnownType(name: string): TypeSignature {
         assert(this.relations.wellknowntypes.has(name), `Well known type ${name} not found`);
         return this.relations.wellknowntypes.get(name) as TypeSignature;
-    }
-
-    private getStringOfType(oftype: TypeSignature): TypeSignature {
-        const stringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "StringOf") as StringOfTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, undefined, stringofdecl, [oftype]);
-    }
-
-    private getCStringOfType(oftype: TypeSignature): TypeSignature {
-        const cstringofdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "CStringOf") as CStringOfTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, undefined, cstringofdecl, [oftype]);
-    }
-
-    private getEventListOf(oftype: TypeSignature): TypeSignature {
-        const eventlistdecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
-        return new NominalTypeSignature(oftype.sinfo, undefined, eventlistdecl, [oftype]);
     }
 
     private isBooleanType(t: TypeSignature): boolean {
@@ -292,13 +277,17 @@ class TypeChecker {
             const tdecl = decls[i];
             const targ = targs[i];
 
-            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.tkeystr}`)) {
+            if(this.checkError(sinfo, tdecl.tconstraint !== undefined && !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of restriction`)) {
                 return false;
             }
 
             if(tdecl.extraTags.length !== 0) {
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-                    this.checkError(sinfo, !this.relations.isUniqueType(targ, this.constraints), `Template argument ${tdecl.name} is not a unique type`);
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                    this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
+                    return false;
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                    this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
                     return false;
                 }
             }
@@ -316,7 +305,7 @@ class TypeChecker {
             this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
             allnames.add(terminfo.name);
 
-            if(this.checkTypeSignature(terminfo.tconstraint)) {
+            if(terminfo.tconstraint !== undefined && this.checkTypeSignature(terminfo.tconstraint)) {
                 this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
@@ -331,7 +320,7 @@ class TypeChecker {
             this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
             allnames.add(terminfo.name);
 
-            if(this.checkTypeSignature(terminfo.tconstraint)) {
+            if(terminfo.tconstraint !== undefined && this.checkTypeSignature(terminfo.tconstraint)) {
                 this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
@@ -381,9 +370,6 @@ class TypeChecker {
         else if(type instanceof EListTypeSignature) {
             return type.entries.every((entry) => this.checkTypeSignature(entry));
         }
-        else if(type instanceof StringTemplateTypeSignature) {
-            return type.argtypes.every((entry) => this.checkTypeSignature(entry));
-        }
         else if(type instanceof LambdaTypeSignature) {
             const oksig = type.params.every((pp) => this.checkTypeSignature(pp.type)) && this.checkTypeSignature(type.resultType);
             if(!oksig) {
@@ -417,7 +403,7 @@ class TypeChecker {
             return "err";
         }
         else if(lhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isUniqueKeyType(rhs, this.constraints)) {
+            if(!this.relations.isKeyType(rhs, this.constraints)) {
                 return "err";
             }
 
@@ -429,7 +415,7 @@ class TypeChecker {
             }
         }
         else if(rhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isUniqueKeyType(lhs, this.constraints)) {
+            if(!this.relations.isKeyType(lhs, this.constraints)) {
                 return "err";
             }
 
@@ -441,7 +427,7 @@ class TypeChecker {
             }
         }
         else {
-            if(!this.relations.isUniqueKeyType(lhs, this.constraints) && !this.relations.isUniqueKeyType(rhs, this.constraints)) {
+            if(!this.relations.isKeyType(lhs, this.constraints) && !this.relations.isKeyType(rhs, this.constraints)) {
                 return "err";
             }
 
@@ -462,14 +448,18 @@ class TypeChecker {
             const tdecl = decl.terms[i];
 
             const trestrict = tdecl.tconstraint;
-            if(!this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
-                this.reportError(decl.sinfo, `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.tkeystr}`);
+            if(trestrict !== undefined && !this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
+                this.reportError(decl.sinfo, `Template argument ${tdecl.name} is not a subtype of constraint type`);
                 return undefined;
             }
 
             if(tdecl.extraTags.length !== 0) {
-                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-                    this.checkError(decl.sinfo, !this.relations.isUniqueType(targ, this.constraints), `Template argument ${tdecl.name} is not a unique type`);
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                    this.checkError(decl.sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
+                    return undefined;
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                    this.checkError(decl.sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
                     return undefined;
                 }
             }
@@ -887,106 +877,15 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("CString"));
     }
 
-    private runValidatorRegex(sinfo: SourceInfo, rename: string, litstr: string, isunicode: boolean) {
-        const accepts = runNamedRegexAccepts(rename, litstr, isunicode);
-        this.checkError(sinfo, !accepts, `Literal value does not match regex validator ${rename}`);
-    }
-
-    private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(!this.checkTypeSignature(exp.stype)) {
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        const revalidator = this.relations.resolveStringRegexValidatorInfo(this.ns, exp.stype);
-        if(revalidator === undefined) {
-            return exp.setType(this.getStringOfType(exp.stype));
-        }
-
-        if(revalidator === undefined) {
-            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        if(!this.relations.isSubtypeOf(exp.stype, this.getWellKnownType("RegexValidator"), this.constraints)) {
-            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- expected a RegexValidator`);
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        try {
-            const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
-            if(vs === null) {
-                this.reportError(exp.sinfo, `Invalid String literal`);
-                return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-            }
-            else {
-                this.runValidatorRegex(exp.sinfo, revalidator, vs, true); 
-                exp.resolvedValue = vs;
-            }
-        } catch(err) {
-            this.reportError(exp.sinfo, (err as Error).message);
-        }
-
-        return exp.setType(this.getStringOfType(exp.stype));
-    }
-
-    private checkLiteralTypedCStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(!this.checkTypeSignature(exp.stype)) {
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        const revalidator = this.relations.resolveStringRegexValidatorInfo(this.ns, exp.stype);
-        if(revalidator === undefined) {
-            return exp.setType(this.getCStringOfType(exp.stype));
-        }
-
-        if(revalidator === undefined) {
-            this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- could not resolve to a valid regex`);
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        if(!this.relations.isSubtypeOf(exp.stype, this.getWellKnownType("CRegexValidator"), this.constraints)) {
-            this.reportError(exp.sinfo, `Bad Validator type for CStringOf -- expected a CRegexValidator`);
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-        }
-
-        try {
-            const vs = validateCStringLiteral(exp.value.slice(1, exp.value.length - 1));
-            if(vs === null) {
-                this.reportError(exp.sinfo, `Invalid CString literal`);
-                return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
-            }
-            else {
-                this.runValidatorRegex(exp.sinfo, revalidator, vs, false); 
-                exp.resolvedValue = vs;
-            }
-        } catch(err) {
-            this.reportError(exp.sinfo, (err as Error).message);
-        }
-
-        return exp.setType(this.getCStringOfType(exp.stype));
-    }
-
-    private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
-        //TODO: validate string encoding is correct and extract template arguments + types
-        
-        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "utf8", []));
-    }
-
-    private checkLiteralTemplateCStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
-        //TODO: validate string encoding is correct and extract template arguments + types
-        
-        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "chars", []));
-    }
-
-    private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
+    private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         assert(false, "Not Implemented -- checkLiteralPathExpression");
     }
 
-    private checkLiteralPathFragmentExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
+    private checkLiteralPathFragmentExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         assert(false, "Not Implemented -- checkLiteralPathFragmentExpression");
     }
 
-    private checkLiteralPathGlobExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
+    private checkLiteralPathGlobExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         assert(false, "Not Implemented -- checkLiteralPathGlobExpression");
     }
 
@@ -1005,18 +904,6 @@ class TypeChecker {
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
         return exp.setType(exp.constype);
-    }
-
-    private checkLiteralTypeDeclIntegralValueExpression(env: TypeEnvironment, exp: LiteralTypeDeclIntegralValueExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLiteralTypeDeclIntegralValueExpression");
-    }
-
-    private checkLiteralTypeDeclFloatPointValueExpression(env: TypeEnvironment, exp: LiteralTypeDeclFloatPointValueExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLiteralTypeDeclFloatPointValueExpression");
-    }
-
-    private checkInterpolateExpression(env: TypeEnvironment, exp: InterpolateExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkInterpolateExpression");
     }
 
     private checkHasEnvValueExpression(env: TypeEnvironment, exp: AccessEnvValueExpression): TypeSignature {
@@ -1177,7 +1064,7 @@ class TypeChecker {
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
-        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, this.constraints, fields);
+        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
         exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
@@ -1371,6 +1258,10 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkPostfixProjectFromNames");
     }
 
+    private checkPostfixAccessFromIndex(env: TypeEnvironment, exp: PostfixAccessFromIndex, rcvrtype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
+    }
+
     private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
         const splits = this.processITestAsBoolean(exp.sinfo, env, rcvrtype, exp.ttest);
         this.checkError(exp.sinfo, !splits.ttrue, "Test is never true");
@@ -1417,6 +1308,10 @@ class TypeChecker {
                 }
                 case PostfixOpTag.PostfixProjectFromNames: {
                     ctype = this.checkPostfixProjectFromNames(env, op as PostfixProjectFromNames, ctype, texpected);
+                    break;
+                }
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    ctype = this.checkPostfixAccessFromIndex(env, op as PostfixAccessFromIndex, ctype);
                     break;
                 }
                 case PostfixOpTag.PostfixIsTest: {
@@ -1471,7 +1366,7 @@ class TypeChecker {
             return exp.setType(etype);
         }
 
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(etype, this.constraints), "Prefix Negate/Plus operator requires a unique numeric type")) {
+        if(this.checkError(exp.sinfo, !this.relations.isNumericType(etype, this.constraints), "Prefix Negate/Plus operator requires a unique numeric type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1502,10 +1397,10 @@ class TypeChecker {
             return [false, tlhs, trhs];
         }
 
-        if(this.checkError(lhs.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Binary operator requires a unique numeric type")) {
+        if(this.checkError(lhs.sinfo, !this.relations.isNumericType(tlhs, this.constraints), "Binary operator requires a unique numeric type")) {
             return [false, tlhs, trhs];
         }
-        if(this.checkError(rhs.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Binary operator requires a unique numeric type")) {
+        if(this.checkError(rhs.sinfo, !this.relations.isNumericType(trhs, this.constraints), "Binary operator requires a unique numeric type")) {
             return [false, tlhs, trhs];
         }
 
@@ -1518,7 +1413,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         
-        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Addition operator requires 2 arguments of the same type")) {
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Addition operator requires 2 arguments of the same type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1928,38 +1823,17 @@ class TypeChecker {
             case ExpressionTag.LiteralCStringExpression: {
                 return this.checkLiteralCStringExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralTypedStringExpression: {
-                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralTypedCStringExpression: {
-                return this.checkLiteralTypedCStringExpression(env, exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralTemplateStringExpression: {
-                return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
-            }
-            case ExpressionTag.LiteralTemplateCStringExpression: {
-                return this.checkLiteralTemplateCStringExpression(env, exp as LiteralTemplateStringExpression);
-            }
             case ExpressionTag.LiteralPathExpression: {
-                return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
+                return this.checkLiteralPathExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPathFragmentExpression: {
-                return this.checkLiteralPathFragmentExpression(env, exp as LiteralPathExpression);
+                return this.checkLiteralPathFragmentExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPathGlobExpression: {
-                return this.checkLiteralPathGlobExpression(env, exp as LiteralPathExpression);
+                return this.checkLiteralPathGlobExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
                 return this.checkLiteralTypeDeclValueExpression(env, exp as LiteralTypeDeclValueExpression);
-            }
-            case ExpressionTag.LiteralTypeDeclIntegralValueExpression: {
-                return this.checkLiteralTypeDeclIntegralValueExpression(env, exp as LiteralTypeDeclIntegralValueExpression);
-            }
-            case ExpressionTag.LiteralTypeDeclFloatPointValueExpression: {
-                return this.checkLiteralTypeDeclFloatPointValueExpression(env, exp as LiteralTypeDeclFloatPointValueExpression);
-            }
-            case ExpressionTag.InterpolateExpression: {
-                return this.checkInterpolateExpression(env, exp as InterpolateExpression);
             }
             case ExpressionTag.HasEnvValueExpression: {
                 return this.checkHasEnvValueExpression(env, exp as AccessEnvValueExpression);
@@ -3130,7 +3004,7 @@ class TypeChecker {
             else {
                 const slitexp = (stmt.switchflow[i].lval as LiteralExpressionValue).exp;
                 const littype = this.checkExpression(env, slitexp, undefined);
-                if(!this.relations.isUniqueKeyType(littype, this.constraints)) {
+                if(!this.relations.isKeyType(littype, this.constraints)) {
                     this.reportError(slitexp.sinfo, `Switch statement requires a unique key type but got ${littype.tkeystr}`);
                 }
                 else {
@@ -3149,7 +3023,7 @@ class TypeChecker {
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
         const eetype = this.checkExpression(env, stmt.sval[0], undefined);
-        let ctype = this.relations.decomposeType(eetype, this.constraints) || [];
+        let ctype = this.relations.decomposeType(eetype) || [];
         if(ctype.length === 0) {
             this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.tkeystr}`);
             return env;
@@ -4425,11 +4299,6 @@ class TypeChecker {
         let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
-        TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Numeric", wellknownTypes);
-
         TypeChecker.loadWellKnownType(assembly, "None", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Some", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Bool", wellknownTypes);
@@ -4443,13 +4312,6 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "TemplateCString", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "CRegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);

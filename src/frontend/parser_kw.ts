@@ -76,7 +76,6 @@ const KW_when = "when";
 const KW_event = "event";
 const KW_status = "status";
 const KW_resource = "resource";
-const KW_validator = "validator";
 const KW_predicate = "predicate";
 
 const KW_softcheck = "softcheck";
@@ -161,7 +160,6 @@ const KeywordStrings = [
     KW_event,
     KW_status,
     KW_resource,
-    KW_validator,
     KW_softcheck,
     KW_errtest,
     KW_chktest
@@ -418,7 +416,6 @@ export {
     KW_event,
     KW_resource,
     KW_status,
-    KW_validator,
     KW_softcheck,
     KW_errtest,
     KW_chktest,

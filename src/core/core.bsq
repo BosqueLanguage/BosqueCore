@@ -7,12 +7,6 @@ namespace KeyComparator {
     function less<T: keytype>(a: T, b: T): Bool = special_method;
 }
 
-%** Type for indicating that a datatype is a Validator. **%
-namespace Validator {
-    function acceptsRe<T: revalidator>(s: String): Bool = special_method;
-    function acceptsCRe<T: crevalidator>(s: CString): Bool = special_method;
-}
-
 %** Type for representing the option value. **%
 __internal concept Option<T> {
 }
@@ -73,30 +67,8 @@ __internal __typedeclable __numeric entity Complex {
 __internal __typedeclable __keycomparable entity String {
 }
 
-%** Primitive safe string value. **%
-__internal __keycomparable entity StringOf<T: revalidator> {
-    private function s_into(s: String): StringOf<T> = special_inject;
-    %*
-    function coerce(s: String): StringOf<T> {
-        assert RegexValidator::accepts<T>(s);
-        return StringOf<T>::s_into(s);
-    }
-    *%
-}
-
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity CString {
-}
-
-%** Primitive safe string value. **%
-__internal __keycomparable entity CStringOf<T: crevalidator> {
-    private function s_into(s: CString): CStringOf<T> = special_inject;
-    %*
-    function coerce(s: CString): CStringOf<T> {
-        assert CRegexValidator::accepts<T>(s);
-        return CStringOf<T>::s_into(s);
-    }
-    *%
 }
 
 %** Primitive unicode regex value. **%
@@ -123,6 +95,18 @@ __internal entity CRegex {
 __internal entity PathRegex {
 }
 
+%** Primitive path value. **%
+__internal __typedeclable __keycomparable entity Path {
+}
+
+%** Primitive path fragment value. **%
+__internal __typedeclable __keycomparable entity Fragment {
+}
+
+%** Primitive path glob value. **%
+__internal __typedeclable __keycomparable entity Glob {
+}
+
 %** Result type. **%
 __internal concept Result<T, E> {
     __internal entity Ok provides Result<T, E> {
@@ -130,33 +114,6 @@ __internal concept Result<T, E> {
 
     __internal entity Err provides Result<T, E> {
     }
-
-%*
-    method isOk(): Bool {
-        return this@<Result<T, E>::Ok>;
-    }
-
-    method isErr(): Bool {
-        return this@<Result<T, E>::Err>;
-    }
-
-    method value(): T {
-        return this@<Result<T, E>::Ok>.getv();
-    }
-
-    method error(): E {
-        return this@<Result<T, E>::Err>.gete();
-    }
-
-    method convert<U, V>(): Result<U, V> {
-        if(this?<Result<T, E>::Ok>) {
-            return Result<U, V>::Ok{this.value()@<U>};
-        }
-        else {
-            return Result<U, V>::Err{this.error()@<V>};
-        }
-    }
-*%
 }
 
 namespace Interpolate {

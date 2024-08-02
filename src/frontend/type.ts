@@ -226,21 +226,6 @@ class EListTypeSignature extends TypeSignature {
     }
 }
 
-class StringTemplateTypeSignature extends TypeSignature {
-    readonly kind: "chars" | "utf8";
-    readonly argtypes: TypeSignature[];
-
-    constructor(sinfo: SourceInfo, kind: "chars" | "utf8", argtypes: TypeSignature[]) {
-        super(sinfo, (kind === "chars" ? "CStringTemplate" : "StringTemplate") + "<" + argtypes.map((tt) => tt.tkeystr).join(", ") + ">");
-        this.kind = kind;
-        this.argtypes = argtypes;
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new StringTemplateTypeSignature(this.sinfo, this.kind, this.argtypes.map((tt) => tt.remapTemplateBindings(mapper)));
-    }
-}
-
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
 class LambdaParameterSignature {
@@ -283,6 +268,6 @@ export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
-    EListTypeSignature, StringTemplateTypeSignature,
+    EListTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
 };

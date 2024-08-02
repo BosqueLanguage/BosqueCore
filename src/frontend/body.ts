@@ -200,21 +200,11 @@ enum ExpressionTag {
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",
     
-    LiteralTypedStringExpression = "LiteralTypedStringExpression",
-    LiteralTypedCStringExpression = "LiteralTypedCStringExpression",
-    
-    LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
-    LiteralTemplateCStringExpression = "LiteralTemplateCStringExpression",
-    
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
     LiteralPathGlobExpression = "LiteralPathGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
-    LiteralTypeDeclIntegralValueExpression = "LiteralTypeDeclIntegralValueExpression",
-    LiteralTypeDeclFloatPointValueExpression = "LiteralTypeDeclFloatPointValueExpression",
-
-    InterpolateExpression = "InterpolateExpression",
 
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
@@ -415,42 +405,6 @@ class LiteralTypedStringExpression extends Expression {
     }
 }
 
-class LiteralTemplateStringExpression extends Expression {
-    readonly value: string;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
-        super(tag, sinfo);
-        this.value = value;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value; //should be $"" for unicode and $'' for exchange strings
-    }
-}
-
-class LiteralPathExpression extends Expression {
-    readonly value: string;
-    readonly ptype: TypeSignature | undefined; 
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, ptype: TypeSignature | undefined) {
-        super(tag, sinfo);
-        this.value = value;
-        this.ptype = ptype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}${this.ptype !== undefined ? ("_" + this.ptype.tkeystr) : ""}`;
-    }
-}
-
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
@@ -467,59 +421,6 @@ class LiteralTypeDeclValueExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
-    }
-}
-
-class LiteralTypeDeclIntegralValueExpression extends Expression {
-    readonly value: string;
-    readonly constype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypeDeclIntegralValueExpression, sinfo);
-        this.value = value;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.constype.tkeystr})`;
-    }
-}
-
-class LiteralTypeDeclFloatPointValueExpression extends Expression {
-    readonly value: string;
-    readonly constype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypeDeclFloatPointValueExpression, sinfo);
-        this.value = value;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.constype.tkeystr})`;
-    }
-}
-
-class InterpolateExpression extends Expression {
-    readonly str: Expression;
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, str: Expression, args: ArgumentList) {
-        super(ExpressionTag.InterpolateExpression, sinfo);
-        this.str = str;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `interpolate(${this.str.emit(toplevel, fmt)}, ${this.args.emit(fmt, ", ", "")}`;
     }
 }
 
@@ -2380,9 +2281,8 @@ export {
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
-    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
-    LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
-    InterpolateExpression,
+    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression,
+    LiteralTypeDeclValueExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
