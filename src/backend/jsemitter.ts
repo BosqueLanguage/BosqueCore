@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, ResultTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 import { CodeFormatter, SourceInfo } from "../frontend/build_decls.js";
@@ -362,48 +362,8 @@ class JSEmitter {
         return `validateCStringLiteral(${exp.value})`;
     }
     
-    private emitLiteralTypedStringExpression(exp: LiteralTypedStringExpression): string {
-        assert(false, "Not implemented -- TypedString");
-    }
-    
-    private emitLiteralTypedCStringExpression(exp: LiteralTypedStringExpression): string {
-        assert(false, "Not implemented -- TypedCString");
-    }
-    
-    private emitLiteralTemplateStringExpression(exp: LiteralTemplateStringExpression): string {
-        assert(false, "Not implemented -- TemplateString");
-    }
-    
-    private emitLiteralTemplateCStringExpression(exp: LiteralTemplateStringExpression): string {
-        assert(false, "Not implemented -- TemplateCString");
-    }
-    
-    private emitLiteralPathExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented -- Path");
-    }
-    
-    private emitLiteralPathFragmentExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented -- PathFragment");
-    }
-    
-    private emitLiteralPathGlobExpression(exp: LiteralPathExpression): string {
-        assert(false, "Not implemented -- PathGlob");
-    }
-    
     private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression, toplevel: boolean): string {
         assert(false, "Not implemented -- TypeDeclValue");
-    }
-    
-    private emitLiteralTypeDeclIntegralValueExpression(exp: LiteralTypeDeclIntegralValueExpression, toplevel: boolean): string {
-        assert(false, "Not implemented -- TypeDeclIntegralValue");
-    }
-    
-    private emitLiteralTypeDeclFloatPointValueExpression(exp: LiteralTypeDeclFloatPointValueExpression, toplevel: boolean): string {
-        assert(false, "Not implemented -- TypeDeclFloatPointValue");
-    }
-
-    private emitInterpolateExpression(exp: InterpolateExpression): string {
-        assert(false, "Not implemented -- Interpolate");
     }
         
     private emitHasEnvValueExpression(exp: AccessEnvValueExpression): string {
@@ -597,6 +557,10 @@ class JSEmitter {
         assert(false, "Not Implemented -- checkPostfixProjectFromNames");
     }
 
+    private emitPostfixAccessFromIndex(val: string, exp: PostfixAccessFromIndex): string {
+        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
+    }
+
     private emitPostfixIsTest(val: string, exp: PostfixIsTest): string {
         return this.processITestAsTest(val, this.tproc(exp.getRcvrType()), exp.ttest);
     }
@@ -629,6 +593,9 @@ class JSEmitter {
                 }
                 case PostfixOpTag.PostfixProjectFromNames: {
                     eexp = this.emitPostfixProjectFromNames(eexp, op as PostfixProjectFromNames);
+                }
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    eexp = this.emitPostfixAccessFromIndex(eexp, op as PostfixAccessFromIndex);
                 }
                 case PostfixOpTag.PostfixIsTest: {
                     eexp = this.emitPostfixIsTest(eexp, op as PostfixIsTest);
@@ -958,38 +925,8 @@ class JSEmitter {
             case ExpressionTag.LiteralCStringExpression: {
                 return this.emitLiteralCStringExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralTypedStringExpression: {
-                return this.emitLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralTypedCStringExpression: {
-                return this.emitLiteralTypedCStringExpression(exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralTemplateStringExpression: {
-                return this.emitLiteralTemplateStringExpression(exp as LiteralTemplateStringExpression);
-            }
-            case ExpressionTag.LiteralTemplateCStringExpression: {
-                return this.emitLiteralTemplateCStringExpression(exp as LiteralTemplateStringExpression);
-            }
-            case ExpressionTag.LiteralPathExpression: {
-                return this.emitLiteralPathExpression(exp as LiteralPathExpression);
-            }
-            case ExpressionTag.LiteralPathFragmentExpression: {
-                return this.emitLiteralPathFragmentExpression(exp as LiteralPathExpression);
-            }
-            case ExpressionTag.LiteralPathGlobExpression: {
-                return this.emitLiteralPathGlobExpression(exp as LiteralPathExpression);
-            }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
                 return this.emitLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression, toplevel);
-            }
-            case ExpressionTag.LiteralTypeDeclIntegralValueExpression: {
-                return this.emitLiteralTypeDeclIntegralValueExpression(exp as LiteralTypeDeclIntegralValueExpression, toplevel);
-            }
-            case ExpressionTag.LiteralTypeDeclFloatPointValueExpression: {
-                return this.emitLiteralTypeDeclFloatPointValueExpression(exp as LiteralTypeDeclFloatPointValueExpression, toplevel);
-            }
-            case ExpressionTag.InterpolateExpression: {
-                return this.emitInterpolateExpression(exp as InterpolateExpression);
             }
             case ExpressionTag.HasEnvValueExpression: {
                 return this.emitHasEnvValueExpression(exp as AccessEnvValueExpression);

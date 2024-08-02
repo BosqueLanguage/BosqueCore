@@ -315,7 +315,7 @@ class TypeCheckerRelations {
 
     //Check if this type is a primitive type in Core
     isPrimitiveType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking primitive on errors");
 
         return (t instanceof NominalTypeSignature) && t.decl instanceof PrimitiveEntityTypeDecl;
     }
@@ -331,35 +331,35 @@ class TypeCheckerRelations {
 
     //Check if this type is a valid event type
     isEventDataType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking event on errors");
 
         return (t instanceof NominalTypeSignature) && t.decl.etag === AdditionalTypeDeclTag.Event;
     }
 
     //Check if this type is a valid status
     isStatusDataType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking status on errors");
 
         return (t instanceof NominalTypeSignature) && t.decl.etag === AdditionalTypeDeclTag.Status;
     }
 
     //Check if this type is a valid type to have as a provides type -- must be a unique CONCEPT type
     isValidProvidesType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking provides on errors");
 
         return (t instanceof NominalTypeSignature) && (t.decl instanceof AbstractConceptTypeDecl);
     }
 
     //Check if this is a valid type to have a template restriction set to
     isValidTemplateRestrictionType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking template on errors");
 
         return (t instanceof NominalTypeSignature) && (t.decl instanceof AbstractConceptTypeDecl);
     }
 
     //Check if this type is a typedecl of some sort
     isTypeDeclType(t: TypeSignature): boolean {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking typedecl on errors");
 
         return (t instanceof NominalTypeSignature) && (t.decl instanceof TypedeclTypeDecl);
     }
@@ -643,7 +643,7 @@ class TypeCheckerRelations {
 
     //Get the assigned value type of a typedecl (resolving as needed)
     getTypeDeclValueType(t: TypeSignature): TypeSignature | undefined {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking getvalue on errors");
 
         if(!(t instanceof NominalTypeSignature)) {
             return undefined;
@@ -658,7 +658,7 @@ class TypeCheckerRelations {
     }
 
     private getTypeDeclBasePrimitiveType_Helper(t: TypeSignature): TypeSignature | undefined {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking getprimitive on errors");
 
         if(!(t instanceof NominalTypeSignature)) {
             return undefined;
@@ -686,7 +686,7 @@ class TypeCheckerRelations {
 
     //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
     getTypeDeclBasePrimitiveType(t: TypeSignature): TypeSignature | undefined {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking base on errors");
 
         if(!(t instanceof NominalTypeSignature)) {
             return undefined;
@@ -701,7 +701,7 @@ class TypeCheckerRelations {
     }
 
     getExpandoableOfType(t: TypeSignature): TypeSignature | undefined {
-        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t instanceof ErrorTypeSignature), "Checking expandoable on errors");
 
         if(!(t instanceof NominalTypeSignature) || !(t.decl instanceof AbstractCollectionTypeDecl)) {
             return undefined;

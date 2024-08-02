@@ -385,26 +385,6 @@ class LiteralRegexExpression extends Expression {
     }
 }
 
-class LiteralTypedStringExpression extends Expression {
-    readonly value: string;
-    readonly stype: TypeSignature;
-    resolvedValue: any = undefined; //string after unescaping
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, stype: TypeSignature) {
-        super(tag, sinfo);
-        this.value = value;
-        this.stype = stype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.stype.tkeystr}`;
-    }
-}
-
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
@@ -2281,7 +2261,7 @@ export {
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
-    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression,
+    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
     LiteralTypeDeclValueExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,

@@ -118,7 +118,9 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaPlainDate", "DeltaPlainTime", "DeltaSeconds", "DeltaTickTime", "DeltaLogicalTime", "DeltaISOTimestamp",
-    "String", "CString", "UnicodeRegex", "CRegex", "PathRegex"
+    "String", "CString", 
+    "UnicodeRegex", "CRegex", "PathRegex",
+    "Path", "Fragment", "Glob"
 ];
 
 class Token {
@@ -1788,7 +1790,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "template term restiction");
         this.ensureAndConsumeTokenAlways(KW_when, "template term restiction");
         
-        const trl = this.parseListOf<InvokeTemplateTypeRestrictionClause>("template term restiction list", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+        const trl = this.parseListOf<InvokeTemplateTypeRestrictionClause>("template term restiction list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
             const ts = this.parseTemplateTypeReference();
             this.ensureAndConsumeTokenIf(SYM_colon, "template term restiction");
 
@@ -1802,7 +1804,10 @@ class Parser {
                 tags.push(rr as TemplateTermDeclExtraTag);
             }
 
-            const subtype = this.parseStdTypeSignature();
+            let subtype: TypeSignature | undefined = undefined;
+            if(!this.testToken(SYM_coma) && !this.testToken(SYM_rbrace)) {
+                subtype = this.parseStdTypeSignature();
+            }
 
             return new InvokeTemplateTypeRestrictionClause(ts as TemplateTypeSignature, subtype, tags);
         });
@@ -2060,7 +2065,6 @@ class Parser {
         let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
         if(this.testAndConsumeTokenIf(SYM_colon)) {
-            let tags: TemplateTermDeclExtraTag[] = [];
             while(this.testToken(TokenStrings.IdentifierName) && TermRestrictions.includes(this.peekTokenData())) {
                 const rr = this.consumeTokenAndGetValue();
                 if(tags.find((t) => t === rr) !== undefined) {
@@ -2070,7 +2074,9 @@ class Parser {
                 tags.push(rr as TemplateTermDeclExtraTag);
             }
 
-            ttype = this.parseStdTypeSignature();
+            if(!this.testToken(SYM_coma) && !this.testToken(SYM_rangle)) {
+                ttype = this.parseStdTypeSignature();
+            }
         }
 
         return new InvokeTemplateTermDecl(tname, tags, ttype);
@@ -2899,6 +2905,22 @@ class Parser {
         return new SpecialConstructorExpression(sinfo, cons, exp);
     }
 
+    private parseEListConstructorExpression(): Expression {
+        let exps = this.parseListOf<Expression>("elist constructor expression", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+            return this.parseExpression();
+        });
+
+        if(exps.length === 0) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Empty elist constructor");
+        }
+        if(exps.length === 1) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Singleton elist constructor");
+        }
+
+        const argl = new ArgumentList(exps.map((arg) => new PositionalArgumentValue(arg)));
+        return new ConstructorEListExpression(this.peekToken().getSourceInfo(), argl);
+    }
+
     private parseLetExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -3128,26 +3150,25 @@ class Parser {
         else if(tk === KW_some || tk === KW_ok || tk === KW_err) {
             return this.parseSpecialConstructorExpression();
         }
+        else if(tk === SYM_rbrack) {
+            return this.parseEListConstructorExpression();
+        }
         else if (tk === SYM_lbracebar) {
             return this.parseLetExpression();
         }
-        else if(tk === SYM_lbrack) {
+        else if(tk === SYM_lparen) {
             const closeparen = this.scanMatchingParens(SYM_lbrack, SYM_rbrack);
             this.prepStateStackForNested("paren-type", closeparen);
 
             this.consumeToken();
             let exp = this.parseExpression();
-            if(!this.testAndConsumeTokenIf(SYM_rbrack)) {
-                exp = this.completeEListConstructorParse(sinfo, exp, closeparen !== undefined);
+            
+            if(this.testToken(SYM_rparen)) {
+                this.consumeToken();
             }
             else {
-                if(this.testToken(SYM_rparen)) {
-                    this.consumeToken();
-                }
-                else {
-                    if(closeparen !== undefined) {
-                        this.currentState().moveToRecoverPosition();
-                    }
+                if(closeparen !== undefined) {
+                    this.currentState().moveToRecoverPosition();
                 }
             }
 
@@ -3161,41 +3182,6 @@ class Parser {
             this.recordErrorGeneral(sinfo, `Unexpected token in expression -- ${tk}`);
             return new ErrorExpression(sinfo, undefined, undefined);
         }
-    }
-
-    private completeEListConstructorParse(sinfo: SourceInfo, exp: Expression, canrecover: boolean): Expression {
-        let exps = [new PositionalArgumentValue(exp)];
-
-        while (!this.testAndConsumeTokenIf(SYM_rbrack)) {
-            const v = this.parseExpression();
-            exps.push(new PositionalArgumentValue(v));
-            
-            if(this.testToken(SYM_rbrack)) {
-                ; //great this is the happy path we will exit next iter
-            }
-            else if(this.testToken(SYM_coma)) {
-                //consume the sep
-                this.consumeToken();
-
-                //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
-                if(this.testToken(SYM_rbrack)) {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Stray , at end of list");
-                }
-            }
-            else {
-                //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
-                //maybe this is where we want to do some tryParse stuff to recover as robustly as possible -- like in the TypeSpec list parse implementation
-
-                if(!canrecover) {
-                    break; //we can't scan to a known recovery token so just break and let it sort itself out
-                }
-                else {
-                    this.currentState().moveToRecoverPosition();
-                }
-            }
-        }
-
-        return new ConstructorEListExpression(sinfo, new ArgumentList(exps));
     }
 
     private parsePostfixExpression(): Expression {
@@ -4429,7 +4415,6 @@ class Parser {
         let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
         if(this.testAndConsumeTokenIf(SYM_colon)) {
-            let tags: TemplateTermDeclExtraTag[] = [];
             while(this.testToken(TokenStrings.IdentifierName) && TermRestrictions.includes(this.peekTokenData())) {
                 const rr = this.consumeTokenAndGetValue();
                 if(tags.find((t) => t === rr) !== undefined) {
@@ -4439,7 +4424,9 @@ class Parser {
                 tags.push(rr as TemplateTermDeclExtraTag);
             }
 
-            ttype = this.parseStdTypeSignature();
+            if(!this.testToken(SYM_coma) && !this.testToken(SYM_rangle)) {
+                ttype = this.parseStdTypeSignature();
+            }
         }
 
         return new TypeTemplateTermDecl(tname, tags, ttype);
@@ -5094,7 +5081,7 @@ class Parser {
                 tdecl = new EventListTypeDecl(this.env.currentFile, sinfo, attributes, "EventList");
             }
             else {
-                assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse");
+                assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse -- " + name);
 
                 tdecl = new EntityTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, name, etag);
             }
