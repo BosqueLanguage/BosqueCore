@@ -3792,7 +3792,7 @@ class TypeChecker {
         this.file = CLEAR_FILENAME;
     }
 
-    private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, isentity: boolean) {
+    private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl) {
         this.file = tdecl.file;
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
@@ -3824,7 +3824,7 @@ class TypeChecker {
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
 
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], isentity);
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
@@ -4082,7 +4082,7 @@ class TypeChecker {
                 this.checkEnumTypeDecl(ns, tt);
             }
             else if(tt instanceof TypedeclTypeDecl) {
-                this.checkTypedeclTypeDecl(ns, tt, true);
+                this.checkTypedeclTypeDecl(ns, tt);
             }
             else if(tt instanceof PrimitiveEntityTypeDecl) {
                 this.checkPrimitiveEntityTypeDecl(ns, tt);

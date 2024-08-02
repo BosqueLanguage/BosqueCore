@@ -1920,13 +1920,15 @@ class Parser {
                 this.consumeToken();
             }
 
+            const terms = this.parseInvokeTemplateArguments();
+
             if(this.testToken(TokenStrings.PathItem)) {
                 const fp = this.consumeTokenAndGetValue();
 
                 if(ekind === InvokeExampleKind.Spec) {
                     this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have a spec example in a file -- too big for documentation");
                 }
-                samples.push(new InvokeExampleDeclFile(this.env.currentFile, sinfo, ekind, fp));
+                samples.push(new InvokeExampleDeclFile(this.env.currentFile, sinfo, ekind, terms, fp));
             }
             else {
                 this.ensureToken(SYM_lbrace, "example");
@@ -1950,7 +1952,7 @@ class Parser {
                     }
                 });
                 
-                samples.push(new InvokeExampleDeclInline(this.env.currentFile, sinfo, ekind, examples));
+                samples.push(new InvokeExampleDeclInline(this.env.currentFile, sinfo, ekind, terms, examples));
             }
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "example");

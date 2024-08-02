@@ -2,22 +2,25 @@ import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, ListTypeDecl, MapEntryTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, ResultTypeDecl } from "../frontend/assembly.js";
-import { NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
-import { CodeFormatter, SourceInfo } from "../frontend/build_decls.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, ConstructableTypeDecl, EnumTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
+import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
+import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 
 class JSEmitter {
     readonly assembly: Assembly;
     readonly mode: "release" | "debug";
+    readonly buildlevel: BuildLevel;
+    readonly generateTestInfo: boolean;
 
     currentfile: string | undefined;
     currentns: NamespaceDeclaration | undefined;
 
     mapper: TemplateNameMapper | undefined;
+    returncompletecall: string | undefined = undefined;
 
     bindernames: Set<string> = new Set();
 
-    constructor(assembly: Assembly, mode: "release" | "debug") {
+    constructor(assembly: Assembly, mode: "release" | "debug", generateTestInfo: boolean) {
         this.assembly = assembly;
         this.mode = mode;
         
@@ -382,7 +385,7 @@ class JSEmitter {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
         const nsaccess = EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns);
 
-        return `${nsaccess}${exp.name}`;
+        return `${nsaccess}${exp.name}()`;
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
@@ -391,7 +394,15 @@ class JSEmitter {
     
     private emitAccessVariableExpression(exp: AccessVariableExpression): string {
         if(!exp.isCaptured) {
-            return exp.scopename;
+            if(exp.srcname === "this") {
+                return "_$this";
+            }
+            else if(exp.srcname === "self") {
+                return "_$self";
+            }
+            else {
+                return exp.scopename;
+            }
         }
         else {
             return exp.scopename;
@@ -1192,16 +1203,35 @@ class JSEmitter {
     }
 
     private emitReturnVoidStatement(stmt: ReturnVoidStatement): string {
-        return "return;";
+        if(this.returncompletecall === undefined) {
+            return "return;";
+        }
+        else {
+            return `return ${this.returncompletecall};`;
+        }
     }
 
     private emitReturnSingleStatement(stmt: ReturnSingleStatement): string {
         //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just return on this if it does)
-        return `return ${this.emitExpressionRHS(stmt.value)};`;
+        const rexp = this.emitExpressionRHS(stmt.value);
+
+        if(this.returncompletecall === undefined) {
+            return `return ${rexp};`;
+        }
+        else {
+            return `return ${this.returncompletecall.replace("$[RESULT ARG]$", this.emitExpressionRHS(stmt.value))};`;
+        }
     }
 
     private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
-        return `return [${stmt.value.map((vv, ii) => this.emitBUAsNeeded(this.emitExpression(vv, true), vv.getType(), stmt.rtypes[ii])).join(", ")}];`;
+        const rexp = `[stmt.value.map((vv, ii) => this.emitBUAsNeeded(this.emitExpression(vv, true), vv.getType(), stmt.rtypes[ii])).join(", ")}]`;
+
+        if(this.returncompletecall === undefined) {
+            return `return ${rexp};`;
+        }
+        else {
+            return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
+        }
     }
 
     private emitIfStatement(stmt: IfStatement, fmt: JSCodeFormatter): string {
@@ -1484,7 +1514,7 @@ class JSEmitter {
         }
     }
 
-    /* private */ emitBodyImplementation(body: BodyImplementation, returntype: TypeSignature, fmt: JSCodeFormatter): string | undefined {
+    private emitBodyImplementation(body: BodyImplementation, returntype: TypeSignature, initializers: string[] | undefined, preconds: string[] | undefined, refsaves: string[] | undefined, returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
@@ -1505,49 +1535,68 @@ class JSEmitter {
             else {
                 assert(body instanceof StandardBodyImplementation);
                 
+                this.returncompletecall = returncompletecall;
                 stmts = this.emitStatementArray(body.statements, fmt);
             }
 
-            if(this.bindernames.size === 0) {
+            if(this.bindernames.size === 0 && initializers === undefined && preconds === undefined) {
                 return ["{\n", ...stmts, fmt.indent("}")].join("");
             }
             else {
-                assert(false, "Not implemented -- emitBodyImplementation with binders");
+                return ["{\n", ...(initializers || []), ...(refsaves || []), ...(preconds || []), ...stmts, fmt.indent("}")].join("");
             }
         }
     }
 
-    /*
-    private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {
+    private emitRequires(requires: PreConditionDecl[]): string[] {
+        let preconds: string[] = [];
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
-            const etype = this.checkExpression(env, precond.exp, undefined);
-            this.checkError(precond.sinfo, !this.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.tkeystr}`);
+            if(isBuildLevelEnabled(precond.level, this.buildlevel)) {
+                const eexp = this.emitExpression(precond.exp, true);
+                if(precond.issoft) {
+                    preconds.push(`_$softprecond(${eexp}, ${this.getErrorInfo(precond.exp.emit(true, new CodeFormatter()), precond.sinfo, precond.diagnosticTag)});`);
+                }
+                else {
+                    preconds.push(`_$precond(${eexp}, ${this.getErrorInfo(precond.exp.emit(true, new CodeFormatter()), precond.sinfo, precond.diagnosticTag)});`);
+                }
+            }
         }
+
+        return preconds;
     }
 
-    private checkEnsures(env: TypeEnvironment, refvars: string[], eventtype: TypeSignature | undefined, ensures: PostConditionDecl[]) {
-        let eev = env.pushNewLocalScope();
-        
-        eev = eev.addLocalVar(WELL_KNOWN_RETURN_VAR_NAME, env.declReturnType, true, true);
-        if(eventtype !== undefined) {
-            const eventlisttype = this.getEventListOf(eventtype);
-            eev = eev.addLocalVar(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
+    private emitRefSaves(params: InvokeParameterDecl[]): string[] {
+        let refsaves: string[] = [];
+        for(let i = 0; i < params.length; ++i) {
+            const p = params[i];
+            if(p.isRefParam) {
+                refsaves.push(`const $${p.name} = ${p.name};`);
+            }
         }
 
-        for(let i = 0; i < refvars.length; ++i) {
-            const v = refvars[i];
-            eev = eev.addLocalVar("$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).vtype, true, true);
-        }
+        return refsaves;
+    }
 
+    private emitEnsures(ensures: PostConditionDecl[]): string[] {
+        let postconds: string[] = [];
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
-            const etype = this.checkExpression(eev, postcond.exp, undefined);
-            this.checkError(postcond.sinfo, !this.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.tkeystr}`);
+            if(isBuildLevelEnabled(postcond.level, this.buildlevel)) {
+                const eexp = this.emitExpression(postcond.exp, true);
+                if(postcond.issoft) {
+                    postconds.push(`_$softpostcond(${eexp}, ${this.getErrorInfo(postcond.exp.emit(true, new CodeFormatter()), postcond.sinfo, postcond.diagnosticTag)});`);
+                }
+                else {
+                    postconds.push(`_$postcond(${eexp}, ${this.getErrorInfo(postcond.exp.emit(true, new CodeFormatter()), postcond.sinfo, postcond.diagnosticTag)});`);
+                }
+            }
         }
+
+        return postconds;
     }
 
-    private checkInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
+    private emitInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
@@ -1557,7 +1606,7 @@ class JSEmitter {
         }
     }
 
-    private checkValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
+    private emitValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
@@ -1587,15 +1636,7 @@ class JSEmitter {
         }
     }
 
-    private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
-        this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
-
-        if(idecl.termRestriction !== undefined) {
-            assert(false, "Not implemented -- checkExplicitInvokeDeclTermInfo"); //make sure it is well formed
-        }
-    }
-
-    private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
+    private emitExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
         let argnames = new Set<string>();
         const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, !p.isRefParam, true))];
         for(let i = 0; i < idecl.params.length; ++i) {
@@ -1626,11 +1667,10 @@ class JSEmitter {
         this.checkExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples);
     }
 
-    private checkNamespaceFunctionDecls(fdecls: NamespaceFunctionDecl[]) {
+    private emitNamespaceFunctionDecls(fdecls: NamespaceFunctionDecl[]): string[] {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
     
-            this.file = fdecl.file;
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
@@ -1647,12 +1687,10 @@ class JSEmitter {
             if(fdecl.terms.length !== 0) {
                 this.constraints.popConstraintScope();
             }
-
-            this.file = CLEAR_FILENAME;
         }
     }
 
-    private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
+    private emitTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]): string[] {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
     
@@ -1693,52 +1731,18 @@ class JSEmitter {
         }
     }
 
-    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]) {
+    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]): string[] {
+        let cdecls: string[] = [];
         for(let i = 0; i < mdecls.length; ++i) {
             const m = mdecls[i];
 
-            if(this.checkTypeSignature(m.declaredType)) {
-                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
-                const env = TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype);
+            const eexp = this.emitExpression(m.value.exp, true);
+            const lexp = `() => ${eexp}`;
 
-                const decltype = this.checkExpression(env, m.value.exp, new SimpleTypeInferContext(m.declaredType));
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.tkeystr} but got ${decltype.tkeystr}`);
-            }
+            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
         }
-    }
 
-    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature}[], fdecls: MemberFieldDecl[]) {
-        for(let i = 0; i < fdecls.length; ++i) {
-            const f = fdecls[i];
-            
-            if(this.checkTypeSignature(f.declaredType)) {
-                if(f.defaultValue !== undefined) {
-                    const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
-                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), f.declaredType, infertype);
-
-                    const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
-                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.tkeystr} but got ${decltype.tkeystr}`);
-                }
-            }
-        }
-    }
-
-    private checkProvides(provides: TypeSignature[]) {
-        for(let i = 0; i < provides.length; ++i) {
-            const p = provides[i];
-            this.checkTypeSignature(p);
-
-            if(!this.relations.isValidProvidesType(p)) {
-                this.reportError(p.sinfo, `Invalid provides type -- ${p.tkeystr}`);
-            }
-        }
-    }
-
-    private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
-        ////
-        //TODO: Check that there are no name collisions on inhertied members and members in this
-        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented (depending on isentity)
-        ////
+        return cdecls;
     }
 
     private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
@@ -1771,7 +1775,7 @@ class JSEmitter {
         this.file = CLEAR_FILENAME;
     }
 
-    private checkEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl) {
+    private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl): string {
         this.file = tdecl.file;
         this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
         
@@ -2239,10 +2243,8 @@ class JSEmitter {
         }
     }
 
-    private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration): string {
         //all usings should be resolved and valid so nothing to do there
-
-        this.ns = decl.fullnamespace;
 
         this.checkNamespaceConstDecls(decl.consts);
         this.checkNamespaceFunctionDecls(decl.functions);
@@ -2261,111 +2263,20 @@ class JSEmitter {
         }
     }
 
-    private tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
-        if(exp instanceof LiteralRegexExpression) {
-            return exp;
-        }
-        else if (exp instanceof AccessNamespaceConstantExpression) {
-            const nsresl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
-            if(nsresl === undefined) {
-                return undefined;
-            }
+    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug"): {ns: FullyQualifiedNamespace, contents: string}[] {
+        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", mode === "testing");
 
-            return this.tryReduceConstantExpressionToRE(nsresl.value.exp);
-        }
-        else {
-            return undefined;
-        }
-    }
-
-    private loadConstantsAndValidatorREs(nsdecl: NamespaceDeclaration): NSRegexInfo[] {
-        const inns = nsdecl.fullnamespace.ns.join("::");
-        const nsmappings = nsdecl.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns.emit(), u.asns as string] as [string, string]);
-        const nsinfo: NSRegexNameInfo = {inns: inns, nsmappings: nsmappings};
-
-        const reinfos: NSRegexREInfoEntry[] = [];
-        nsdecl.typedecls.forEach((td) => {
-            if(td instanceof RegexValidatorTypeDecl) {
-                reinfos.push({name: td.name, restr: td.regex});
-            }
-            if(td instanceof CRegexValidatorTypeDecl) {
-                reinfos.push({name: td.name, restr: td.regex});
-            }
-        });
-        nsdecl.consts.forEach((c) => {
-            const re = this.tryReduceConstantExpressionToRE(c.value.exp);
-            if(re !== undefined) {
-                reinfos.push({name: c.name, restr: re.value});
-            }
-        });
-
-        const subnsinfo = nsdecl.subns.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
-
-        return [{nsinfo: nsinfo, reinfos:  reinfos}, ...subnsinfo];
-    }
-
-    private processConstsAndValidatorREs(assembly: Assembly) {
-        const asmreinfo = assembly.toplevelNamespaces.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
-
-        //Now process the regexs
-        loadConstAndValidateRESystem(asmreinfo);
-    }
-
-    private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
-        const ccore = assembly.getCoreNamespace();
-
-        const tdecl = ccore.typedecls.find((td) => td.name === name);
-        assert(tdecl !== undefined, "Failed to find well known type");
-
-        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
-    }
-
-    static emitAssembly(assembly: Assembly): string[] {
-        let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
-        wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
-
-        TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Numeric", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "None", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Some", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Bool", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Int", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Nat", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "BigInt", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "BigNat", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Rational", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Float", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Decimal", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "TemplateCString", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "CRegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
-
-        TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
-
-        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
-
-        //Gather all the const and validator regexs, make sure they are valid and generate the compiled versions
-        checker.processConstsAndValidatorREs(assembly);
-
-        //Type-check each of the assemblies
+        //emit each of the assemblies
+        let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
-            checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
+            const nsdecl = assembly.toplevelNamespaces[i];
+            const code = emitter.emitNamespaceDeclaration(nsdecl);
+
+            results.push({ns: nsdecl.fullnamespace, contents: code});
         }
 
-        return checker.errors;
+        return results;
     }
-    */
 }
 
 export {

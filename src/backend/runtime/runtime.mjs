@@ -2,6 +2,12 @@
 
 /**
  * @constant
+ * @type {string[]}
+ **/
+let _$softfails = [];
+
+/**
+ * @constant
  * @type {bigint}
  **/
 const MIN_SAFE_INT = -9223372036854775807n;
@@ -35,6 +41,18 @@ const $Unwind_DivZero = Symbol("DivZeroFailed");
  * @type {Symbol}
  **/
 const $Unwind_Assert = Symbol("AssertFailed");
+
+/**
+ * @constant
+ * @type {Symbol}
+ **/
+const $Unwind_PreCond = Symbol("PreCondFailed");
+
+/**
+ * @constant
+ * @type {Symbol}
+ **/
+const $Unwind_PostCond = Symbol("PostCondFailed");
 
 /**
  * @constant
@@ -431,8 +449,77 @@ function _$validate(cond, info) {
     }
 }
 
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$precond(cond, info) {
+    if (!cond) {
+        throw new $Unwind($Unwind_PreCond, info);
+    }
+}
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info
+ **/
+function _$softprecond(cond, info) {
+   if (!cond) {
+        //TODO: later we need to do this in a task-local context
+        _$softfails.push(info);
+    }
+}
+
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$postcond(cond, info) {
+    if (!cond) {
+        throw new $Unwind($Unwind_PostCond, info);
+    }
+}
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ **/
+function _$softpostcond(cond, info) {
+   if (!cond) {
+        //TODO: later we need to do this in a task-local context
+        _$softfails.push(info);
+    }
+}
+
+/**
+ * @function
+ * @param {Map<string, any>} memmap
+ * @param {string} key
+ * @param {function(): any} comp
+ **/ 
+function _$memoconstval(memmap, key, comp) {
+    const vval = memmap.get(key);
+    if(vval !== undefined) {
+        return vval;
+    }
+
+    const nval = comp();
+    memmap.set(key, nval);
+
+    return nval;
+}
+
 export {
+    _$softfails,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
-    _$abort, _$assert, _$validate,
+    _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
+    _$memoconstval
 };

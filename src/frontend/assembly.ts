@@ -196,10 +196,12 @@ enum InvokeExampleKind {
 
 abstract class InvokeExample extends AbstractDecl {
     readonly kind: InvokeExampleKind;
+    readonly terms: TypeSignature[]; //template bindings for the type and/or invoke
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind) {
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[]) {
         super(file, sinfo);
         this.kind = ekind;
+        this.terms = terms;
     }
 }
 
@@ -238,22 +240,23 @@ class InvokeExampleDeclLiteral extends InvokeExampleDeclInlineRepr {
 class InvokeExampleDeclInline extends InvokeExample {
     readonly entries: InvokeExampleDeclInlineRepr[];
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, entries: InvokeExampleDeclInlineRepr[]) {
-        super(file, sinfo, ekind);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[], entries: InvokeExampleDeclInlineRepr[]) {
+        super(file, sinfo, ekind, terms);
         this.entries = entries;
     }
 
     emit(fmt: CodeFormatter): string {
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
         const estr = this.entries.map((e) => e.emit(fmt)).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
-            return fmt.indent(`spec { ${estr} }`);
+            return fmt.indent(`spec${terms}{ ${estr} }`);
         }
         else if(this.kind === InvokeExampleKind.Test) {
-            return fmt.indent(`test { ${estr} }`);
+            return fmt.indent(`test${terms}{ ${estr} }`);
         }
         else {
-            return fmt.indent(`example { ${estr} }`);
+            return fmt.indent(`example${terms}{ ${estr} }`);
         }
     }
 }
@@ -261,17 +264,19 @@ class InvokeExampleDeclInline extends InvokeExample {
 class InvokeExampleDeclFile extends InvokeExample {
     readonly filepath: string; //may use the ROOT and SRC environment variables
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, filepath: string) {
-        super(file, sinfo, ekind);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[], filepath: string) {
+        super(file, sinfo, ekind, terms);
         this.filepath = filepath;
     }
 
     emit(fmt: CodeFormatter): string {
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
+        
         if(this.kind === InvokeExampleKind.Test) {
-            return fmt.indent(`test ${this.filepath};`);
+            return fmt.indent(`test${terms}${this.filepath};`);
         }
         else {
-            return fmt.indent(`example ${this.filepath};`);
+            return fmt.indent(`example${terms}${this.filepath};`);
         }
     }
 }
