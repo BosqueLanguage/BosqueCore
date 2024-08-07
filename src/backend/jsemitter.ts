@@ -2,15 +2,18 @@ import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, ConstructableTypeDecl, EnumTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, ConstructableTypeDecl, EnumTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
+import { AssemblyInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 
 class JSEmitter {
     readonly assembly: Assembly;
     readonly mode: "release" | "debug";
     readonly buildlevel: BuildLevel;
     readonly generateTestInfo: boolean;
+
+    readonly instantiations: AssemblyInstantiationInfo;
 
     currentfile: string | undefined;
     currentns: NamespaceDeclaration | undefined;
@@ -1701,15 +1704,15 @@ class JSEmitter {
         return {body: `${sig} ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
-    private emitFunctionDecls(fdecls: [FunctionInvokeDecl, TemplateNameMapper[] | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitFunctionDecls(fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i][0];
-            const mappers = fdecls[i][1]; 
+            const fii = fdecls[i][1]; 
     
-            if(mappers === undefined) {
+            if(fii.binds === undefined) {
                 const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, undefined, fmt);
             
                 if(resfimpl !== undefined) {
@@ -1720,8 +1723,8 @@ class JSEmitter {
                 tests.push(...tests);
             }
             else {
-                for(let j = 0; j < mappers.length; ++j) {
-                    const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, mappers[j], fmt);
+                for(let j = 0; j < fii.binds.length; ++j) {
+                    const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, fii.binds[j], fmt);
             
                     if(resfimpl !== undefined) {
                         decls.push(resfimpl);
@@ -1736,7 +1739,7 @@ class JSEmitter {
         return {decls: decls, tests: tests};
     }
 
-    private emitMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]): {decls: string[], tests: string[]} {
+    private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
@@ -1747,7 +1750,7 @@ class JSEmitter {
         return {decls: decls, tests: tests};
     }
 
-    private emitTaskMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskMethodDecl[]): string[] {
+    private emitTaskMethodDecls(rcvr: TypeSignature, mdecls: [TaskMethodDecl, TemplateNameMapper][]): string[] {
         let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
@@ -1757,7 +1760,7 @@ class JSEmitter {
         return decls;
     }
 
-    private emitTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskActionDecl[]): string[] {
+    private emitTaskActionDecls(rcvr: TypeSignature, mdecls: TaskActionDecl[]): string[] {
         let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
@@ -1767,7 +1770,7 @@ class JSEmitter {
         return decls;
     }
 
-    private emitConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]): string[] {
+    private emitConstMemberDecls(mdecls: ConstMemberDecl[]): string[] {
         let cdecls: string[] = [];
         for(let i = 0; i < mdecls.length; ++i) {
             const m = mdecls[i];
@@ -1781,58 +1784,73 @@ class JSEmitter {
         return cdecls;
     }
 
-    private emitAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, mappings: TemplateNameMapper[] | undefined, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
-        this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+    private emitMemberFieldInitializers(tdecl: AbstractNominalTypeDecl, decls: MemberFieldDecl[]): string[] {
+        xxxx;
+    }
 
+    private emitCreate(): string {
+        xxxx;
+    }
+
+    private emitCreateAPIValidate(): string {
+        xxxx;
+    }
+
+    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, optfdecls: MemberFieldDecl[] | undefined, instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
+            this.mapper = instantiation.binds;
         }
 
-        this.checkProvides(tdecl.provides);
-
-        //make sure all of the invariants on this typecheck
-        this.checkInvariants(bnames, tdecl.invariants);
-        this.checkValidates(bnames, tdecl.validates);
-        
-        this.checkConstMemberDecls(tdecl, tdecl.consts);
-        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        fmt.indentPush();
+        let decls: string[] = [];
+        let tests: string[] = [];
 
         if(optfdecls !== undefined) {
-            this.checkMemberFieldDecls(bnames, optfdecls);
+            decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls));
         }
 
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, optfdecls, isentity);
+        //make sure all of the invariants on this typecheck
+        decls.push(...this.emitInvariants(tdecl.saturatedBFieldInfo, tdecl.invariants));
+        decls.push(...this.emitValidates(tdecl.saturatedBFieldInfo, tdecl.validates));
+        
+        if(isentity) {
+            decls.push(this.emitCreate());
+            decls.push(this.emitCreateAPIValidate());
+        }
 
+        decls.push(...this.emitConstMemberDecls(tdecl.consts));
+
+        const fdecls = this.emitFunctionDecls(tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name) as FunctionInstantiationInfo]), fmt);
+        decls.push(...fdecls.decls);
+        tests.push(...fdecls.tests);
+
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name) as MethodInstantiationInfo]), fmt);
+        decls.push(...mdecls.decls);
+        tests.push(...mdecls.tests);
+
+        if(isentity) {
+            this.emitVTable(xxxx);
+        }
+
+        this.mapper = undefined;
+        fmt.indentPop();
+    }
+
+    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, mappings: TemplateNameMapper[] | undefined) {
         if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
+            this.mapper = xxxx;
         }
-        this.file = CLEAR_FILENAME;
+
+        let decls: string[] = [];
+
+        decls.push(...this.emitConstMemberDecls(tdecl, tdecl.consts));
+        decls.push(...this.emitTypeFunctionDecls(tdecl, tdecl.functions));
+        decls.push(...this.emitMethodDecls(tdecl, tdecl.methods));
+
+        this.mapper = undefined;
     }
 
     private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl): string {
-        this.file = tdecl.file;
-        this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
-        
-        this.checkProvides(tdecl.provides);
- 
-        //Make sure that any provides types are not adding on fields, consts, or functions
-        const etype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        const providesdecls = this.relations.resolveTransitiveProvidesDecls(etype, this.constraints);
-        for(let i = 0; i < providesdecls.length; ++i) {
-            const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.tsig.decl.name}`);
-        }
-
-        this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
-
-        this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
-        this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
-
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
@@ -1850,13 +1868,8 @@ class JSEmitter {
         return "[TYPEDECL]";
     }
 
-    private checkInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, isentity);
-    }
-
-    private checkOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true)
+    private emitOkTypeDecl(tdecl: OkTypeDecl) {
+        this.emitInteralSimpleTypeDeclHelper(tdecl)
     }
 
     private checkErrTypeDecl(ns: NamespaceDeclaration, tdecl: ErrTypeDecl) {

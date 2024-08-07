@@ -597,6 +597,10 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     readonly etag: AdditionalTypeDeclTag;
 
+    xxxx;
+    saturatedProvides: TypeSignature[] = [];
+    saturatedBFieldInfo: {name: string, type: TypeSignature}[] = [];
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
