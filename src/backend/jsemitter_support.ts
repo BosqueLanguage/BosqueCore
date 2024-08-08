@@ -106,7 +106,7 @@ class EmitNameManager {
         }
     }
 
-    static generateDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper): string {
+    static generateDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
         const nns = EmitNameManager.emitNamespaceAccess(currentns, currentns);
 
         if(nns === "") {
@@ -114,7 +114,7 @@ class EmitNameManager {
                 return `function ${fv.name}`;
             }
             else {
-                const termstr = `<${fv.terms.map((t) => mapper.resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+                const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
                 return `"${fv.name}${termstr}": `;
             }
         }
@@ -123,13 +123,36 @@ class EmitNameManager {
                 return `${fv.name}: `;
             }
             else {
-                const termstr = `<${fv.terms.map((t) => mapper.resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+                const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
                 return `"${fv.name}${termstr}": `;
             }
         }
     }
 
-    static generateDeclarationNameForTypeConstant(cv: ConstMemberDecl): string {
+    static generateOnCompleteDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        const nns = EmitNameManager.emitNamespaceAccess(currentns, currentns);
+
+        if(nns === "") {
+            if(fv.terms.length === 0) {
+                return `function ${fv.name}$OnReturn`;
+            }
+            else {
+                const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+                return `"${fv.name}${termstr}$OnReturn": `;
+            }
+        }
+        else {
+            if(fv.terms.length === 0) {
+                return `${fv.name}$OnReturn: `;
+            }
+            else {
+                const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+                return `"${fv.name}${termstr}$OnReturn": `;
+            }
+        }
+    }
+
+    static generateDeclarationNameForTypeConstant(ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
         return `${cv.name}: `;
     }
 
@@ -143,6 +166,16 @@ class EmitNameManager {
         }
     }
 
+    static generateOnCompleteDeclarationNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        if(fv.terms.length === 0) {
+            return `${fv.name}$OnReturn: `;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `"${fv.name}${termstr}$OnReturn": `;
+        }
+    }
+
     static generateAccssorNameForNamespaceConstant(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, cv: NamespaceConstDecl): string {
         const nns = this.emitNamespaceAccess(currentns, inns);
         const ans = nns !== "" ? (nns + ".") : "";
@@ -150,7 +183,7 @@ class EmitNameManager {
         return `${ans}${cv}`;
     }
 
-    static generateAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper): string {
+    static generateAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
         const nns = this.emitNamespaceAccess(currentns, inns);
         const ans = nns !== "" ? (nns + ".") : "";
 
@@ -158,8 +191,21 @@ class EmitNameManager {
             return `${ans}${fv.name}`;
         }
         else {
-            const termstr = `<${fv.terms.map((t) => mapper.resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
             return `${ans}["${fv.name}${termstr}"]`;
+        }
+    }
+
+    static generateOnCompleteAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        const nns = this.emitNamespaceAccess(currentns, currentns);
+        const ans = nns !== "" ? (nns + ".") : "";
+
+        if(fv.terms.length === 0) {
+            return `${ans}${fv.name}$OnReturn`;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `${ans}["${fv.name}${termstr}$OnReturn"]`;
         }
     }
 
@@ -167,8 +213,12 @@ class EmitNameManager {
         return `${this.generateTypeKey(ttype)}["${membername}"]`;
     }
 
-    static generateAccssorNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper): string {
+    static generateAccssorNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
         return `${this.generateTypeKey(ttype)}["${membername}"]`;
+    }
+
+    static generateOnCompleteAccssorNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        xxxx;
     }
 }
 
