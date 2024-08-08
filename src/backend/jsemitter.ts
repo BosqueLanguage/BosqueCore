@@ -386,7 +386,7 @@ class JSEmitter {
 
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
-        const nsaccess = EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns);
+        const nsaccess = EmitNameManager.generateAccssorNameForNamespaceConstant(this.getCurrentNamespace(), cns, exp.name);
 
         return `${nsaccess}${exp.name}()`;
     }
@@ -538,7 +538,7 @@ class JSEmitter {
             }
         }
 
-        return `${EmitNameManager.emitNamespaceAccess(this.getCurrentNamespace(), cns)}.${exp.name}(${argl.join(", ")})`;
+        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns)}.${exp.name}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1695,13 +1695,15 @@ class JSEmitter {
 
             resf = `${fdecl.name}$onreturn`;
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
-            resfimpl = `function ${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return) {\n${resb}${fmt.indent("\n")}}`;
+            resfimpl = `${resf}: (${fdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}${fmt.indent("\n")}}`;
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = undefined;
 
-        return {body: `${sig} ${body}`, resfimpl: resfimpl, tests: tests};
+        xxxx;
+        const nformat = isnamespace ? "function" : "function";
+        return {body: `${sig} => ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
     private emitFunctionDecls(fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -1784,16 +1786,27 @@ class JSEmitter {
         return cdecls;
     }
 
-    private emitMemberFieldInitializers(tdecl: AbstractNominalTypeDecl, decls: MemberFieldDecl[]): string[] {
-        xxxx;
+    private emitMemberFieldInitializers(tdecl: AbstractNominalTypeDecl, decls: MemberFieldDecl[], fmt: JSCodeFormatter): string[] {
+        const inits = decls.filter((d) => d.defaultValue !== undefined);
+
+        let initializers: string[] = [];
+        for(let i = 0; i < inits.length; ++i) {
+            assert(false, "Not implemented -- emitMemberFieldInitializer");
+        }
+
+        return initializers;
     }
 
-    private emitCreate(): string {
-        xxxx;
+    private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+        return "[VTABLE -- NOT IMPLEMENTED]";
     }
 
-    private emitCreateAPIValidate(): string {
-        xxxx;
+    private emitCreate(tdecl: AbstractNominalTypeDecl,fmt: JSCodeFormatter): string {
+        return "[CREATE -- NOT IMPLEMENTED]";
+    }
+
+    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+        return "[CREATE API VALIDATE -- NOT IMPLEMENTED]";
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, optfdecls: MemberFieldDecl[] | undefined, instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -1806,7 +1819,7 @@ class JSEmitter {
         let tests: string[] = [];
 
         if(optfdecls !== undefined) {
-            decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls));
+            decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls, fmt));
         }
 
         //make sure all of the invariants on this typecheck
@@ -1814,8 +1827,8 @@ class JSEmitter {
         decls.push(...this.emitValidates(tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            decls.push(this.emitCreate());
-            decls.push(this.emitCreateAPIValidate());
+            decls.push(this.emitCreate(tdecl, fmt));
+            decls.push(this.emitCreateAPIValidate(tdecl, fmt));
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
@@ -1829,32 +1842,45 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         if(isentity) {
-            this.emitVTable(xxxx);
+            this.emitVTable(tdecl, fmt);
         }
 
         this.mapper = undefined;
         fmt.indentPop();
+
+        return {decls: decls, tests: tests};
     }
 
-    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, mappings: TemplateNameMapper[] | undefined) {
+    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, rcvr: TypeSignature, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string[] {
         if(tdecl.terms.length !== 0) {
-            this.mapper = xxxx;
+            this.mapper = instantiation.binds;
         }
 
+        fmt.indentPush();
         let decls: string[] = [];
 
-        decls.push(...this.emitConstMemberDecls(tdecl, tdecl.consts));
-        decls.push(...this.emitTypeFunctionDecls(tdecl, tdecl.functions));
-        decls.push(...this.emitMethodDecls(tdecl, tdecl.methods));
+        decls.push(...this.emitConstMemberDecls(tdecl.consts));
+
+        const fdecls = this.emitFunctionDecls(tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name) as FunctionInstantiationInfo]), fmt);
+        decls.push(...fdecls.decls);
+
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name) as MethodInstantiationInfo]), fmt);
+        decls.push(...mdecls.decls);
 
         this.mapper = undefined;
+        fmt.indentPop();
+
+        return decls;
     }
 
-    private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl): string {
+    private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl, fmt: JSCodeFormatter): string[] {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
+        fmt.indentPush();
+        let decls: string[] = [];
+
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, MethodInstantiationInfo.createNoTemplateInfo()]), fmt);
+        decls.push(...mdecls.decls);
 
         let opts = new Set<string>();
         for(let i = 0; i < tdecl.members.length; ++i) {
