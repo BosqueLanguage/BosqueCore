@@ -7,9 +7,12 @@ import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
+    origtype: TypeSignature | undefined; //the original type of the binder
     scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
+    refinefollowname: string | undefined;
+    refinefollowtype: TypeSignature | undefined;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
@@ -197,21 +200,11 @@ enum ExpressionTag {
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",
     
-    LiteralTypedStringExpression = "LiteralTypedStringExpression",
-    LiteralTypedCStringExpression = "LiteralTypedCStringExpression",
-    
-    LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
-    LiteralTemplateCStringExpression = "LiteralTemplateCStringExpression",
-    
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
     LiteralPathGlobExpression = "LiteralPathGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
-    LiteralTypeDeclIntegralValueExpression = "LiteralTypeDeclIntegralValueExpression",
-    LiteralTypeDeclFloatPointValueExpression = "LiteralTypeDeclFloatPointValueExpression",
-
-    InterpolateExpression = "InterpolateExpression",
 
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
@@ -392,62 +385,6 @@ class LiteralRegexExpression extends Expression {
     }
 }
 
-class LiteralTypedStringExpression extends Expression {
-    readonly value: string;
-    readonly stype: TypeSignature;
-    resolvedValue: any = undefined; //string after unescaping
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, stype: TypeSignature) {
-        super(tag, sinfo);
-        this.value = value;
-        this.stype = stype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}_${this.stype.tkeystr}`;
-    }
-}
-
-class LiteralTemplateStringExpression extends Expression {
-    readonly value: string;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
-        super(tag, sinfo);
-        this.value = value;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value; //should be $"" for unicode and $'' for exchange strings
-    }
-}
-
-class LiteralPathExpression extends Expression {
-    readonly value: string;
-    readonly ptype: TypeSignature | undefined; 
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, ptype: TypeSignature | undefined) {
-        super(tag, sinfo);
-        this.value = value;
-        this.ptype = ptype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}${this.ptype !== undefined ? ("_" + this.ptype.tkeystr) : ""}`;
-    }
-}
-
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
@@ -464,59 +401,6 @@ class LiteralTypeDeclValueExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
-    }
-}
-
-class LiteralTypeDeclIntegralValueExpression extends Expression {
-    readonly value: string;
-    readonly constype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypeDeclIntegralValueExpression, sinfo);
-        this.value = value;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.constype.tkeystr})`;
-    }
-}
-
-class LiteralTypeDeclFloatPointValueExpression extends Expression {
-    readonly value: string;
-    readonly constype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypeDeclFloatPointValueExpression, sinfo);
-        this.value = value;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value}(${this.constype.tkeystr})`;
-    }
-}
-
-class InterpolateExpression extends Expression {
-    readonly str: Expression;
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, str: Expression, args: ArgumentList) {
-        super(ExpressionTag.InterpolateExpression, sinfo);
-        this.str = str;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `interpolate(${this.str.emit(toplevel, fmt)}, ${this.args.emit(fmt, ", ", "")}`;
     }
 }
 
@@ -621,7 +505,10 @@ abstract class ConstructorExpression extends Expression {
 
 class ConstructorPrimaryExpression extends ConstructorExpression {
     readonly ctype: TypeSignature;
-    shuffleinfo: number[] = [];
+
+    elemtype: TypeSignature | undefined = undefined;
+    shuffleinfo: [number, string, TypeSignature][] = [];
+    hasChecks: boolean = false;
     
     constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
@@ -639,7 +526,7 @@ class ConstructorEListExpression extends ConstructorExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "(", ")");
+        return this.args.emit(fmt, "[", "]");
     }
 }
 
@@ -733,8 +620,8 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: number[] = [];
-    restinfo: number[] | undefined = undefined;
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
@@ -919,6 +806,8 @@ enum PostfixOpTag {
     PostfixAccessFromName = "PostfixAccessFromName",
     PostfixProjectFromNames = "PostfixProjectFromNames",
 
+    PostfixAccessFromIndex = "PostfixAccessFromIndex",
+
     PostfixIsTest = "PostfixIsTest",
     PostfixAsConvert = "PostfixAsConvert",
 
@@ -1016,6 +905,19 @@ class PostfixProjectFromNames extends PostfixOperation {
 
     emit(fmt: CodeFormatter): string {
         return `.(${this.names.join(", ")})`;
+    }
+}
+
+class PostfixAccessFromIndex extends PostfixOperation {
+    readonly idx: number;
+
+    constructor(sinfo: SourceInfo, idx: number) {
+        super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
+        this.idx = idx;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `.${this.idx}`;
     }
 }
 
@@ -1129,6 +1031,8 @@ class PrefixNotOpExpression extends UnaryExpression {
 class PrefixNegateOrPlusOpExpression extends UnaryExpression {
     readonly op: "-" | "+";
 
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
         super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
         this.op = op;
@@ -1142,6 +1046,8 @@ class PrefixNegateOrPlusOpExpression extends UnaryExpression {
 abstract class BinaryArithExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1199,6 +1105,8 @@ abstract class BinaryKeyExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
+    operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | undefined;
+
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
         this.lhs = lhs;
@@ -1234,6 +1142,8 @@ class BinKeyNeqExpression extends BinaryKeyExpression {
 abstract class BinaryNumericExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1648,7 +1558,9 @@ enum StatementTag {
     VariableMultiAssignmentStatement = "VariableMultiAssignmentStatement",
 
     VariableRetypeStatement = "VariableRetypeStatement",
-    ReturnStatement = "ReturnStatement",
+    ReturnVoidStatement = "ReturnVoidStatement",
+    ReturnSingleStatement = "ReturnSingleStatement",
+    ReturnMultiStatement = "ReturnMultiStatement",
 
     IfStatement = "IfStatement",
     IfElseStatement = "IfElseStatement",
@@ -1742,6 +1654,7 @@ class VariableInitializationStatement extends Statement {
     readonly isConst: boolean;
     readonly name: string;
     readonly vtype: TypeSignature; //maybe Auto
+    actualtype: TypeSignature | undefined = undefined;
     readonly exp: Expression;
 
     constructor(sinfo: SourceInfo, isConst: boolean, name: string, vtype: TypeSignature, exp: Expression) {
@@ -1763,6 +1676,7 @@ class VariableInitializationStatement extends Statement {
 class VariableMultiInitializationStatement extends Statement {
     readonly isConst: boolean;
     readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
+    actualtypes: TypeSignature[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, isConst: boolean, decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
@@ -1783,6 +1697,7 @@ class VariableMultiInitializationStatement extends Statement {
 
 class VariableAssignmentStatement extends Statement {
     readonly name: string;
+    vtype: TypeSignature | undefined = undefined;
     readonly exp: Expression;
 
     constructor(sinfo: SourceInfo, name: string, exp: Expression) {
@@ -1798,6 +1713,7 @@ class VariableAssignmentStatement extends Statement {
 
 class VariableMultiAssignmentStatement extends Statement {
     readonly names: string[];
+    vtypes: TypeSignature[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
@@ -1816,6 +1732,8 @@ class VariableMultiAssignmentStatement extends Statement {
 
 class VariableRetypeStatement extends Statement {
     readonly name: string;
+    vtype: TypeSignature | undefined = undefined;
+    newvtype: TypeSignature | undefined = undefined;
     readonly ttest: ITest;
 
     constructor(sinfo: SourceInfo, name: string, ttest: ITest) {
@@ -1829,24 +1747,40 @@ class VariableRetypeStatement extends Statement {
     }
 }
 
-class ReturnStatement extends Statement {
-    readonly value: Expression[] | Expression | undefined; //array is implicitly converted to EList and undefined is a void return
+class ReturnVoidStatement extends Statement {
+    constructor(sinfo: SourceInfo) {
+        super(StatementTag.ReturnVoidStatement, sinfo);
+    }
 
-    constructor(sinfo: SourceInfo, value: Expression[] | Expression | undefined) {
-        super(StatementTag.ReturnStatement, sinfo);
+    emit(fmt: CodeFormatter): string {
+        return `return;`;
+    }
+}
+
+class ReturnSingleStatement extends Statement {
+    readonly value: Expression;
+
+    constructor(sinfo: SourceInfo, value: Expression) {
+        super(StatementTag.ReturnSingleStatement, sinfo);
         this.value = value;
     }
 
     emit(fmt: CodeFormatter): string {
-        if(this.value === undefined) {
-            return `return;`;
-        }
-        else if(!Array.isArray(this.value)) {
-            return `return ${this.value.emit(true, fmt)};`;
-        }
-        else {
-            return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
-        }
+        return `return ${this.value.emit(true, fmt)};`;
+    }
+}
+
+class ReturnMultiStatement extends Statement {
+    readonly value: Expression[]; //array is implicitly converted to EList
+    rtypes: TypeSignature[] = [];
+
+    constructor(sinfo: SourceInfo, value: Expression[]) {
+        super(StatementTag.ReturnMultiStatement, sinfo);
+        this.value = value;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
     }
 }
 
@@ -2327,9 +2261,8 @@ export {
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
-    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
-    LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
-    InterpolateExpression,
+    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
+    LiteralTypeDeclValueExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
@@ -2341,7 +2274,7 @@ export {
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixError, PostfixAccessFromName, PostfixProjectFromNames,
+    PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
     PostfixInvoke,
@@ -2361,7 +2294,7 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
-    ReturnStatement,
+    ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,

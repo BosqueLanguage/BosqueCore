@@ -23,16 +23,6 @@ describe ("Parser -- Constructable Constructor (Result)", () => {
     });
 });
 
-describe ("Parser -- Constructable Constructor (Pair)", () => {
-    it("should parse pair constructors", function () {
-        parseTestFunction("function main(): Pair<Int, Bool> { return Pair<Int, Bool>{2i, false}; }", undefined);
-    });
-
-    it("should fail pair constructors", function () {
-        parseTestFunctionError("function main(): Pair<Int Bool> { return Pair<Int, Bool>{2i, 3i, 4i}; }", 'Expected ">" but got "[RECOVER]" when parsing "template term list"');
-    });
-});
-
 describe ("Parser -- Constructable Constructor (MapEntry)", () => {
     it("should parse entry constructors", function () {
         parseTestFunction("function main(): MapEntry<Int, Bool> { return MapEntry<Int, Bool>{2i, true}; }", undefined);

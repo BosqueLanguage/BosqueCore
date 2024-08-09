@@ -4,39 +4,46 @@ import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
+const MIN_SAFE_INT = -9223372036854775807n;
+const MAX_SAFE_INT = 9223372036854775807n;
+
+//negation and conversion are always safe
+const MAX_SAFE_NAT = 9223372036854775807n;
+
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
 const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
 enum TemplateTermDeclExtraTag {
-    None,
-    Unique
+    KeyType = "keytype",
+    Numeric = "numeric"
 }
 
 class TemplateTermDecl {
     readonly name: string;
-    readonly tconstraint: TypeSignature;
+    readonly tconstraint: TypeSignature | undefined;
     readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(name: string, tconstraint: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
+    constructor(name: string, tconstraint: TypeSignature | undefined, extraTags: TemplateTermDeclExtraTag[]) {
         this.name = name;
         this.tconstraint = tconstraint;
         this.extraTags = extraTags;
     }
 
     emitHelper(): string {
-        let ttgs: string[] = [];
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            ttgs.push("unique");
+        let chks: string[] = this.extraTags.map((t) => t);  
+
+        if(this.tconstraint !== undefined) {
+            chks.push(this.tconstraint.tkeystr);
         }
 
-        const tstr = (this.tconstraint.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.tconstraint.tkeystr].join(" ")}` : "";
+        const tstr = (chks.length !== 0) ? `: ${chks.join(" ")}` : "";
         return `${this.name}${tstr}`;
     }
 }
 
 class TypeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
         super(name, tconstraint, tags);
     }
 
@@ -46,7 +53,7 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
         super(name, tconstraint, tags);
     }
 
@@ -57,22 +64,23 @@ class InvokeTemplateTermDecl extends TemplateTermDecl {
 
 class InvokeTemplateTypeRestrictionClause {
     readonly t: TemplateTypeSignature;
-    readonly subtype: TypeSignature;
+    readonly subtype: TypeSignature | undefined;
     readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(t: TemplateTypeSignature, subtype: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
+    constructor(t: TemplateTypeSignature, subtype: TypeSignature | undefined, extraTags: TemplateTermDeclExtraTag[]) {
         this.t = t;
         this.subtype = subtype;
         this.extraTags = extraTags;
     }
 
     emit(): string {
-        let ttgs: string[] = [];
-        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
-            ttgs.push("unique");
+        let chks: string[] = this.extraTags.map((t) => t);
+
+        if(this.subtype !== undefined) {
+            chks.push(this.subtype.tkeystr);
         }
 
-        const tstr = (this.subtype.tkeystr !== "Any") || ttgs.length !== 0 ? `: ${[...ttgs, this.subtype.tkeystr].join(" ")}` : "";
+        const tstr = chks.length !== 0 ? `: ${chks.join(" ")}` : "";
         return `${this.t}${tstr}`;
     }
 }
@@ -181,39 +189,74 @@ class ValidateDecl extends ConditionDecl {
 }
 
 enum InvokeExampleKind {
-    Std,
-    Test,
-    Spec
+    Synth, //may be bsqon or literal -- for synthesis
+    Test, //may be bsqon or literal -- for testing
+    Spec //must be bsqon -- for specifications -- DOCUMENTATION and TESTING
 }
 
 abstract class InvokeExample extends AbstractDecl {
     readonly kind: InvokeExampleKind;
+    readonly terms: TypeSignature[]; //template bindings for the type and/or invoke
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind) {
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[]) {
         super(file, sinfo);
         this.kind = ekind;
+        this.terms = terms;
+    }
+}
+
+abstract class InvokeExampleDeclInlineRepr {
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class InvokeExampleDeclBSQON extends InvokeExampleDeclInlineRepr {
+    readonly args: Expression[];
+    readonly output: Expression;
+
+    constructor(args: Expression[], output: Expression) {
+        super();
+        this.args = args;
+        this.output = output;
+    }
+
+    override emit(fmt: CodeFormatter): string {
+        return `[${this.args.map((a) => a.emit(true, fmt)).join(", ")}] -> ${this.output.emit(true, fmt)}`;
+    }
+}
+
+class InvokeExampleDeclLiteral extends InvokeExampleDeclInlineRepr {
+    readonly vval: string; //function in/out as BSQON -- (args1, ..., argsN) -> out
+
+    constructor(vval: string) {
+        super();
+        this.vval = vval;
+    }
+
+    override emit(fmt: CodeFormatter): string {
+        return this.vval;
     }
 }
 
 class InvokeExampleDeclInline extends InvokeExample {
-    readonly entries: {args: Expression[], output: Expression}[];
+    readonly entries: InvokeExampleDeclInlineRepr[];
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, entries: {args: Expression[], output: Expression}[]) {
-        super(file, sinfo, ekind);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[], entries: InvokeExampleDeclInlineRepr[]) {
+        super(file, sinfo, ekind, terms);
         this.entries = entries;
     }
 
     emit(fmt: CodeFormatter): string {
-        const estr = this.entries.map((e) => `[${e.args.map((a) => a.emit(true, fmt)).join(", ")}] => ${e.output.emit(true, fmt)}`).join("; ");
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
+        const estr = this.entries.map((e) => e.emit(fmt)).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
-            return fmt.indent(`spec { ${estr} }`);
+            return fmt.indent(`spec${terms}{ ${estr} }`);
         }
         else if(this.kind === InvokeExampleKind.Test) {
-            return fmt.indent(`test { ${estr} }`);
+            return fmt.indent(`test${terms}{ ${estr} }`);
         }
         else {
-            return fmt.indent(`example { ${estr} }`);
+            return fmt.indent(`example${terms}{ ${estr} }`);
         }
     }
 }
@@ -221,17 +264,19 @@ class InvokeExampleDeclInline extends InvokeExample {
 class InvokeExampleDeclFile extends InvokeExample {
     readonly filepath: string; //may use the ROOT and SRC environment variables
 
-    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, filepath: string) {
-        super(file, sinfo, ekind);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, terms: TypeSignature[], filepath: string) {
+        super(file, sinfo, ekind, terms);
         this.filepath = filepath;
     }
 
     emit(fmt: CodeFormatter): string {
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
+        
         if(this.kind === InvokeExampleKind.Test) {
-            return fmt.indent(`test ${this.filepath};`);
+            return fmt.indent(`test${terms}${this.filepath};`);
         }
         else {
-            return fmt.indent(`example ${this.filepath};`);
+            return fmt.indent(`example${terms}${this.filepath};`);
         }
     }
 }
@@ -552,6 +597,9 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     readonly etag: AdditionalTypeDeclTag;
 
+    saturatedProvides: TypeSignature[] = [];
+    saturatedBFieldInfo: {name: string, type: TypeSignature}[] = [];
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
@@ -580,6 +628,14 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
             case AdditionalTypeDeclTag.Event: return "event ";
             default: return "";
         }
+    }
+
+    isKeyTypeRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__keycomparable") !== undefined;
+    }
+
+    isNumericRestricted(): boolean {
+        return this.attributes.find((attr) => attr.name === "__numeric") !== undefined;
     }
 
     emitTerms(): string {
@@ -653,54 +709,12 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].tkeystr === "Any") {
+        if(bg.length === 0 && this.provides.length === 0) {
             return tdcl + ";";
         }
         else {
             return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
-    }
-}
-
-class RegexValidatorTypeDecl extends AbstractEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, regex: string) {
-        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class CRegexValidatorTypeDecl extends AbstractEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, regex: string) {
-        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class PathValidatorTypeDecl extends AbstractEntityTypeDecl {
-    readonly pathglob: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, pathglob: string) {
-        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
-
-        this.pathglob = pathglob;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
     }
 }
 
@@ -723,52 +737,6 @@ class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
         fmt.indentPop();
 
         return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-class StringOfTypeDecl extends ThingOfTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class CStringOfTypeDecl extends ThingOfTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class PathOfTypeDecl extends ThingOfTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class PathFragmentOfTypeDecl extends ThingOfTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-}
-
-class PathGlobOfTypeDecl extends ThingOfTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
     }
 }
 
@@ -890,22 +858,6 @@ class SomeTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class PairTypeDecl extends ConstructableTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
 class MapEntryTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1005,22 +957,6 @@ abstract class InternalConceptTypeDecl extends AbstractConceptTypeDecl {
     }
 }
 
-class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "concept " + this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
 class OptionTypeDecl extends InternalConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1097,22 +1033,6 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
         if(this.nestedEntityDecls.length !== 0) {
             bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
         }
-        fmt.indentPop();
-
-        return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-}
-
-class ExpandoableTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
         return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -1648,11 +1568,12 @@ class Assembly {
 }
 
 export {
+    MIN_SAFE_INT, MAX_SAFE_INT, MAX_SAFE_NAT,
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
-    InvokeExampleKind, InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
+    InvokeExampleKind, InvokeExample, InvokeExampleDeclInlineRepr, InvokeExampleDeclBSQON, InvokeExampleDeclLiteral, InvokeExampleDeclInline, InvokeExampleDeclFile, 
     DeclarationAttibute, AbstractCoreDecl,
     InvokeParameterDecl, AbstractInvokeDecl, 
     LambdaDecl,
@@ -1664,14 +1585,12 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
-    RegexValidatorTypeDecl, CRegexValidatorTypeDecl, PathValidatorTypeDecl,
-    ThingOfTypeDecl, StringOfTypeDecl, CStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, PairTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
-    AbstractConceptTypeDecl, InternalConceptTypeDecl, PrimitiveConceptTypeDecl, 
-    OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
+    AbstractConceptTypeDecl, InternalConceptTypeDecl, 
+    OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,

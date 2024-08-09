@@ -26,11 +26,11 @@ describe ("Checker -- Simple if-expression", () => {
     });
 
     it("should fail bad true", function () {
-        checkTestExpError("if(1n == 2n) then true else 2i", "Int", "Expected a return value of type Int but got Any");
+        checkTestExpError("if(1n == 2n) then true else 2i", "Int", "Could not unify types of true and false branches of if expression");
     });
 
     it("should fail bad false", function () {
-        checkTestExpError("if(1n < 2n) then 3i else none", "Int", "Expected a return value of type Int but got Any");
+        checkTestExpError("if(1n < 2n) then 3i else none", "Int", "Could not unify types of true and false branches of if expression");
     });
 
     it("should fail always true", function () {
@@ -38,6 +38,6 @@ describe ("Checker -- Simple if-expression", () => {
     });
 
     it("should fail always false", function () {
-        checkTestFunctionError("function main(x: Int): Int { return if(x)@<Any> then 2i else 3i; }", "Test is never false -- false branch of if is unreachable");
+        checkTestFunctionError("function main(x: Int): Int { return if(x)@!<Bool> then 2i else 3i; }", "Test is never false -- false branch of if is unreachable");
     });
 });

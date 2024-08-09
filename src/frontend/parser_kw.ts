@@ -11,6 +11,9 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_bsqon = "bsqon";
+const KW_dollarbsqon = "$bsqon";
+const KW_example = "example";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -70,11 +73,9 @@ const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
 const KW_when = "when";
-const KW_example = "example";
 const KW_event = "event";
 const KW_status = "status";
 const KW_resource = "resource";
-const KW_validator = "validator";
 const KW_predicate = "predicate";
 
 const KW_softcheck = "softcheck";
@@ -93,6 +94,9 @@ const KeywordStrings = [
     KW_api,
     KW_as,
     KW_action,
+    KW_bsqon,
+    KW_dollarbsqon,
+    KW_example,
     KW__debug,
     KW_do,
     KW_abort,
@@ -153,11 +157,9 @@ const KeywordStrings = [
     KW_when,
     KW_yield,
     KW_under,
-    KW_example,
     KW_event,
     KW_status,
     KW_resource,
-    KW_validator,
     KW_softcheck,
     KW_errtest,
     KW_chktest
@@ -196,11 +198,26 @@ const AllAttributes = [
 const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
-    "__universal",
+    
+    "__keycomparable",
+    "__numeric",
+    "__revalidator",
+    "__crevalidator",
+    "__pathvalidator",
+    
+    "__register",
     "__inline",
     "__safe",
     "__assume_safe",
     "__conditional_safe"
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const TermRestrictions = [
+    "keytype",
+    "numeric",
+    "revalidator",
+    "crevalidator",
+    "pathvalidator",
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -323,6 +340,7 @@ const ParenSymbols = [
 export {
     KeywordStrings,
     GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
+    TermRestrictions,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 
@@ -332,6 +350,9 @@ export {
     KW_api,
     KW_as,
     KW_action,
+    KW_bsqon,
+    KW_dollarbsqon,
+    KW_example,
     KW__debug,
     KW_do,
     KW_abort,
@@ -392,11 +413,9 @@ export {
     KW_when,
     KW_yield,
     KW_under,
-    KW_example,
     KW_event,
     KW_resource,
     KW_status,
-    KW_validator,
     KW_softcheck,
     KW_errtest,
     KW_chktest,

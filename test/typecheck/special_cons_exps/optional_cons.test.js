@@ -14,11 +14,6 @@ describe ("Checker -- Special Constructor Optional", () => {
         checkTestExp("some(3i)", "Int?");
     });
 
-    it("should check some w/o infer", function () {
-        checkTestExp("none", "Any");
-        checkTestExp("some(3i)", "Any");
-    });
-
     it("should fail cannot convert", function () {
         checkTestExpError("none", "Int", "Expected a return value of type Int but got None");
         checkTestExpError("some(3i)", "Int", "Expected a return value of type Int but got Some<Int>");
@@ -41,11 +36,6 @@ describe ("Checker -- Special Constructor Result", () => {
         checkTestExpError("ok(3i)", "Int", "Cannot infer type for special Ok constructor -- got Int");
         checkTestExpError("err(3i)", "Int", "Cannot infer type for special Err constructor -- got Int");
         checkTestExpError("ok(3n)", "Result<Int, Bool>", "Ok constructor argument is not a subtype of Int");
-    });
-
-    it("should fail check some w/o infer", function () {
-        checkTestExpError("ok(3i)", "Any", "Cannot infer type for special Ok constructor -- got Any");
-        checkTestExpError("err(false)", "Any", "Cannot infer type for special Err constructor -- got Any");
     });
 });
 

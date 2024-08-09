@@ -1,130 +1,78 @@
 %%The core namespace implements the primitive types used in the Bosque language
 declare namespace Core;
 
-%** Special type which all values are instances of. **%
-__internal __universal concept Any {
-}
-
 %** Special type for indicating a value can be used as a key in a collection. **%
-__internal __universal concept KeyType provides Any {
-    function equal<T: unique KeyType>(a: T, b: T): Bool = special_method;
-    function less<T: unique KeyType>(a: T, b: T): Bool = special_method;
-}
-
-%** Special type for representing values that can be compared with (<, >, ==, !=, <=, and >=) currently the numeric types and typedecls on them (later other with user def operators) **%
-__internal __universal concept Comparable provides Any {
-}
-
-%** Special type for representing values that can be operated on with (-+, +, -) with standard unit-results currently the numeric types and typedecls on them (later other with user def operators) **%
-__internal __universal concept LinearArithmetic provides Any {
-}
-
-%** Special type for representing numeric values **%
-__internal __universal concept Numeric provides Comparable, LinearArithmetic {
-}
-
-%** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept RegexValidator provides Any {
-    function accepts<T: unique RegexValidator>(s: String): Bool = special_method;
-}
-
-%** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept CRegexValidator provides Any {
-    function accepts<T: unique CRegexValidator>(s: CString): Bool = special_method;
-}
-
-%** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept PathValidator provides Any {
+namespace KeyComparator {
+    function equal<T: keytype>(a: T, b: T): Bool = special_method;
+    function less<T: keytype>(a: T, b: T): Bool = special_method;
 }
 
 %** Type for representing the option value. **%
-__internal concept Option<T> provides Any {
+__internal concept Option<T> {
 }
 
 %** Type for representing the none option value. **%
-__internal entity None provides KeyType {
+__internal entity None {
 }
 
 %** Type for representing the some option value. **%
-__internal entity Some<T> provides Any, Option<T> {
+__internal entity Some<T> provides Option<T> {
 }
 
 %** Primitive boolean value. **%
-__internal __typedeclable entity Bool provides KeyType {
+__internal __typedeclable __keycomparable entity Bool {
 }
 
 %** Primitive natural number value. **%
-__internal __typedeclable entity Nat provides Numeric, KeyType {
+__internal __typedeclable __keycomparable __numeric entity Nat {
 }
 
 %** Primitive integer value. **%
-__internal __typedeclable entity Int provides Numeric, KeyType {
+__internal __typedeclable __keycomparable __numeric entity Int {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable entity BigNat provides Numeric, KeyType {
+__internal __typedeclable __keycomparable __numeric entity BigNat {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable entity BigInt provides Numeric, KeyType {
+__internal __typedeclable __keycomparable __numeric entity BigInt {
 }
 
 %** Primitive rational value. **%
-__internal __typedeclable entity Rational provides Numeric {
+__internal __typedeclable __numeric entity Rational {
 }
 
 %** Primitive float value. **%
-__internal __typedeclable entity Float provides Numeric {
+__internal __typedeclable __numeric entity Float {
 }
 
 %** Primitive float decimal value. **%
-__internal __typedeclable entity Decimal provides Numeric {
+__internal __typedeclable __numeric entity Decimal {
 }
 
 %** Primitive decimal degree value. **%
-__internal __typedeclable entity DecimalDegree provides Numeric {
+__internal __typedeclable __numeric entity DecimalDegree {
 }
 
 %** Primitive latitude/longitude value. **%
-__internal __typedeclable entity LatLongCoordinate provides Any {
+__internal __typedeclable entity LatLongCoordinate {
 }
 
 %** Primitive complex number value. **%
-__internal __typedeclable entity Complex provides Numeric {
+__internal __typedeclable __numeric entity Complex {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity String provides KeyType {
-}
-
-%** Primitive safe string value. **%
-__internal __typedeclable entity StringOf<T: unique RegexValidator> provides KeyType {
-    private function s_into(s: String): StringOf<T> = special_inject;
-    %*
-    function coerce(s: String): StringOf<T> {
-        assert RegexValidator::accepts<T>(s);
-        return StringOf<T>::s_into(s);
-    }
-    *%
+__internal __typedeclable __keycomparable entity String {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity CString provides KeyType {
-}
-
-%** Primitive safe string value. **%
-__internal __typedeclable entity CStringOf<T: unique CRegexValidator> provides KeyType {
-    private function s_into(s: CString): CStringOf<T> = special_inject;
-    %*
-    function coerce(s: CString): CStringOf<T> {
-        assert CRegexValidator::accepts<T>(s);
-        return CStringOf<T>::s_into(s);
-    }
-    *%
+__internal __typedeclable __keycomparable entity CString {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity UnicodeRegex provides Any {
+__internal entity UnicodeRegex {
     __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
     %*
     method accepts(s: String): Bool {
@@ -134,7 +82,7 @@ __internal entity UnicodeRegex provides Any {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity CRegex provides Any {
+__internal entity CRegex {
     __safe internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
     %*
     method accepts(s: CString): Bool {
@@ -144,55 +92,28 @@ __internal entity CRegex provides Any {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity PathRegex provides Any {
+__internal entity PathRegex {
 }
 
-%** Primitive template string value. **%
-__internal __typedeclable entity TemplateString provides Any {
+%** Primitive path value. **%
+__internal __typedeclable __keycomparable entity Path {
 }
 
-%** Primitive string value. **%
-__internal __typedeclable entity TemplateCString provides Any {
+%** Primitive path fragment value. **%
+__internal __typedeclable __keycomparable entity Fragment {
 }
 
-%** Primitive pair type. **%
-__internal entity Pair<T, U> provides Any {
+%** Primitive path glob value. **%
+__internal __typedeclable __keycomparable entity Glob {
 }
 
 %** Result type. **%
-__internal concept Result<T, E> provides Any {
+__internal concept Result<T, E> {
     __internal entity Ok provides Result<T, E> {
     }
 
     __internal entity Err provides Result<T, E> {
     }
-
-%*
-    method isOk(): Bool {
-        return this@<Result<T, E>::Ok>;
-    }
-
-    method isErr(): Bool {
-        return this@<Result<T, E>::Err>;
-    }
-
-    method value(): T {
-        return this@<Result<T, E>::Ok>.getv();
-    }
-
-    method error(): E {
-        return this@<Result<T, E>::Err>.gete();
-    }
-
-    method convert<U, V>(): Result<U, V> {
-        if(this?<Result<T, E>::Ok>) {
-            return Result<U, V>::Ok{this.value()@<U>};
-        }
-        else {
-            return Result<U, V>::Err{this.error()@<V>};
-        }
-    }
-*%
 }
 
 namespace Interpolate {
@@ -203,19 +124,14 @@ namespace Interpolate {
     function cstring(): CString = special_method;
 }
 
-%** All actual entities/concepts implicitly provide this concept. **%
-__internal __universal concept Object provides Any {
-}
-
+namespace XCore {
 #if CHECK_LIBS
-internal function s_blockingfailure<T>(): T = s_blockingfailure;
+    internal function s_blockingfailure<T>(): T = s_blockingfailure;
 
-internal function s_reshavoc<T>(): T = s_reshavoc;
+    internal function s_reshavoc<T>(): T = s_reshavoc;
 #endif
 
-%** All collections provide this concept so we can expand them with spread operators. **%
-__internal __universal concept Expandoable<T> provides Any {
+    __assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;
 }
 
-__assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;
 
