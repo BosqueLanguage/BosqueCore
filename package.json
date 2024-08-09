@@ -17,7 +17,8 @@
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js &&  node --test --experimental-test-coverage ./test/*/*/*.test.js"
+        "test": "node ./build/build_all.js &&  node --test ./test/*/*/*.test.js",
+        "test-coverage": "node ./build/build_all.js &&  node --test --experimental-test-coverage ./test/*/*/*.test.js"
     },
     "files": [
         "bin/*"
