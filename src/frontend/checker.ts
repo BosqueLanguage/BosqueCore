@@ -3736,6 +3736,8 @@ class TypeChecker {
         }
 
         this.checkProvides(tdecl.provides);
+        tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
+        tdecl.saturatedBFieldInfo = bnames;
 
         //make sure all of the invariants on this typecheck
         this.checkInvariants(bnames, tdecl.invariants);

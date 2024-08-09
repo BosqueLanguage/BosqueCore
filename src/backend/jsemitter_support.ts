@@ -209,16 +209,40 @@ class EmitNameManager {
         }
     }
 
-    static generateAccssorNameForTypeConstant(ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
-        return `${this.generateTypeKey(ttype)}["${membername}"]`;
+    static generateAccssorNameForTypeConstant(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.${cv.name}`;
     }
 
-    static generateAccssorNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
-        return `${this.generateTypeKey(ttype)}["${membername}"]`;
+    static generateAccssorNameForTypeFunction(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        const tas = this.emitTypeAccess(currentns, ttype);
+
+        if(fv.terms.length === 0) {
+            return `${tas}.${fv.name}`;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `${tas}["${fv.name}${termstr}"]`;
+        }
     }
 
-    static generateOnCompleteAccssorNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
-        xxxx;
+    static generateOnCompleteAccssorNameForTypeFunction(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        const tas = this.emitTypeAccess(currentns, ttype);
+
+        if(fv.terms.length === 0) {
+            return `${tas}.${fv.name}$OnReturn`;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `${tas}["${fv.name}${termstr}$OnReturn"]`;
+        }
+    }
+
+    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.$create`;
+    }
+
+    static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.$tsym`;
     }
 }
 

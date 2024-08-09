@@ -1,8 +1,8 @@
-import assert, { ok } from "node:assert";
+import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { AssemblyInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
@@ -23,10 +23,15 @@ class JSEmitter {
 
     bindernames: Set<string> = new Set();
 
-    constructor(assembly: Assembly, mode: "release" | "debug", generateTestInfo: boolean) {
+    constructor(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean, instantiations: AssemblyInstantiationInfo) {
         this.assembly = assembly;
         this.mode = mode;
         
+        this.buildlevel = buildlevel;
+        this.generateTestInfo = generateTestInfo;
+
+        this.instantiations = instantiations;
+
         this.currentfile = undefined;
         this.currentns = undefined;
     }
@@ -61,8 +66,8 @@ class JSEmitter {
     }
 
     private emitBoxOperation(val: string, oftype: NominalTypeSignature): string {
-        const taccess = EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), oftype);
-        return `_$b(${taccess}.$tsym, ${val})`;
+        const taccess = EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype);
+        return `_$b(${taccess}, ${val})`;
     }
 
     private emitUnBoxOperation(val: string): string {
@@ -97,7 +102,7 @@ class JSEmitter {
         const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
         const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
 
-        return `${val}._$is(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym)`;
+        return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? errtype : oktype)})`;
     }
 
     private emitITestAsTest_Err(val: string, vtype: TypeSignature, isnot: boolean): string {
@@ -105,15 +110,15 @@ class JSEmitter {
         const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
         const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
 
-        return `${val}._$is(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? oktype : errtype)}.$tsym)`;
+        return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? oktype : errtype)})`;
     }
 
     private emitITestAsTest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
-            return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
+            return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)})`;
         }
         else {
-            return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)}.$tsym)`;
+            return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)})`;
         }
     }
     
@@ -170,7 +175,7 @@ class JSEmitter {
             const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
 
             const emsg = this.getErrorInfo(isnot ? "expected Err but got Ok" : "expected Ok but got Err", sinfo, undefined);
-            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true, ${emsg})`;
+            return `${val}._$as(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? errtype : oktype)}, true, ${emsg})`;
         }
     }
 
@@ -184,7 +189,7 @@ class JSEmitter {
             const errtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getErrType(), (vtype as NominalTypeSignature).alltermargs);
 
             const emsg = this.getErrorInfo(isnot ? "expected Ok but got Err" : "expected Err but got Ok", sinfo, undefined);
-            return `${val}._$as(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), isnot ? errtype : oktype)}.$tsym, true, ${emsg})`;
+            return `${val}._$as(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? errtype : oktype)}, true, ${emsg})`;
         }
     }
 
@@ -197,12 +202,12 @@ class JSEmitter {
             if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
                 const toftype = this.tproc(oftype) as NominalTypeSignature;
                 const emsg = this.getErrorInfo(isnot ? `expected different type than ${toftype.tkeystr}` : `expected type ${toftype.tkeystr}`, sinfo, undefined);
-                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), toftype)}.$tsym, ${ubx}, ${emsg})`;
+                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), toftype)}, ${ubx}, ${emsg})`;
             }
             else {
                 const toftype = this.tproc(oftype) as NominalTypeSignature;
                 const emsg = this.getErrorInfo(isnot ? `expected not subtype of ${toftype.tkeystr}` : `expected subtytype of ${toftype.tkeystr}`, sinfo, undefined);
-                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), toftype)}.$tsym, ${ubx}, ${emsg})`;
+                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), toftype)}, ${ubx}, ${emsg})`;
             }
         }
     }
@@ -386,7 +391,8 @@ class JSEmitter {
 
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
-        const nsaccess = EmitNameManager.generateAccssorNameForNamespaceConstant(this.getCurrentNamespace(), cns, exp.name);
+        const cdecl = cns.consts.find((c) => c.name === exp.name) as NamespaceConstDecl;
+        const nsaccess = EmitNameManager.generateAccssorNameForNamespaceConstant(this.getCurrentNamespace(), cns, cdecl);
 
         return `${nsaccess}${exp.name}()`;
     }
@@ -436,7 +442,7 @@ class JSEmitter {
     }
 
     private emitStandardConstructor(exp: ConstructorPrimaryExpression): string {
-        const taccess = EmitNameManager.emitTypeAccess(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+        const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
 
         const aargs: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -500,6 +506,7 @@ class JSEmitter {
     
     private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
+        const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
         const argl: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -538,7 +545,7 @@ class JSEmitter {
             }
         }
 
-        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns)}.${exp.name}(${argl.join(", ")})`;
+        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}.${exp.name}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1614,22 +1621,21 @@ class JSEmitter {
     }
 
     private emitInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]): string[] {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-
+        let invexps: string[] = [];
         for(let i = 0; i < invariants.length; ++i) {
-            const inv = invariants[i];
-            const etype = this.checkExpression(env, inv.exp.exp, undefined);
-            this.checkError(invariants[i].sinfo, !this.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.tkeystr}`);
+            assert(false, "Not implemented -- checkInvariants");
         }
+
+        return invexps;
     }
 
     private emitValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]): string[] {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-
+        let vexps: string[] = [];
         for(let i = 0; i < validates.length; ++i) {
-            const etype = this.checkExpression(env, validates[i].exp.exp, undefined);
-            this.checkError(validates[i].sinfo, !this.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.tkeystr}`);
+            assert(false, "Not implemented -- checkValidates");
         }
+
+        return vexps;
     }
 
     private emitExamplesInline(sinfo: SourceInfo, args: TypeSignature[], resulttype: TypeSignature, example: InvokeExampleDeclInline): string[] {
@@ -1702,11 +1708,11 @@ class JSEmitter {
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = undefined;
 
-        const nf = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : EmitNameManager.generateAccssorNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping);
+        const nf = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping);
         return {body: `${nf}${sig} => ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
-    private emitFunctionDecls(optenclosingtype: NominalTypeSignature | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitFunctionDecls(optenclosingtype: NominalTypeSignature | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
@@ -1714,26 +1720,34 @@ class JSEmitter {
             const fdecl = fdecls[i][0];
             const fii = fdecls[i][1]; 
     
-            if(fii.binds === undefined) {
-                const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, undefined, fmt);
-            
-                if(resfimpl !== undefined) {
-                    decls.push(resfimpl);
-                }
-                decls.push(body);
-
-                tests.push(...tests);
-            }
-            else {
-                for(let j = 0; j < fii.binds.length; ++j) {
-                    const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, fii.binds[j], fmt);
+            if(fii !== undefined) {
+                if(fii.binds === undefined) {
+                    const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, undefined, fmt);
             
                     if(resfimpl !== undefined) {
                         decls.push(resfimpl);
                     }
                     decls.push(body);
-
+                
                     tests.push(...tests);
+                }
+                else {
+                    fmt.indentPush();
+                    let idecls: string[] = []
+                    for(let j = 0; j < fii.binds.length; ++j) {
+                        const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, fii.binds[j], fmt);
+            
+                        if(resfimpl !== undefined) {
+                            idecls.push(resfimpl);
+                        }
+                        idecls.push(body);
+
+                        tests.push(...tests);
+                    }
+                    fmt.indentPop();
+
+                    const fobj = `${fdecl.name}: {\n${idecls.map((dd) => fmt.indent(dd)).join(", ")}${fmt.indent("}")}`;
+                    decls.push(fobj);
                 }
             }
         }
@@ -1741,12 +1755,14 @@ class JSEmitter {
         return {decls: decls, tests: tests};
     }
 
-    private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
-        for(let i = 0; i < mdecls.length; ++i) {   
-            assert(false, "Not implemented -- checkMethodDecl");
+        for(let i = 0; i < mdecls.length; ++i) {
+            if(mdecls[i][1] !== undefined) {
+                assert(false, "Not implemented -- checkMethodDecl");
+            }
         }
 
         return {decls: decls, tests: tests};
@@ -1772,10 +1788,11 @@ class JSEmitter {
         return decls;
     }
 */
-    private emitConstMemberDecls(mdecls: ConstMemberDecl[]): string[] {
+
+    private emitConstMemberDecls(decls: ConstMemberDecl[]): string[] {
         let cdecls: string[] = [];
-        for(let i = 0; i < mdecls.length; ++i) {
-            const m = mdecls[i];
+        for(let i = 0; i < decls.length; ++i) {
+            const m = decls[i];
 
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
@@ -1783,7 +1800,7 @@ class JSEmitter {
             cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
         }
 
-        return cdecls;
+        return [...cdecls, `_$consts: new Map()`];
     }
 
     private emitMemberFieldInitializers(tdecl: AbstractNominalTypeDecl, decls: MemberFieldDecl[], fmt: JSCodeFormatter): string[] {
@@ -1795,6 +1812,10 @@ class JSEmitter {
         }
 
         return initializers;
+    }
+
+    private emitTypeSymbol(rcvr: NominalTypeSignature): string {
+        return `$tsym: Symbol("${rcvr.tkeystr}");`;
     }
 
     private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
@@ -1818,6 +1839,7 @@ class JSEmitter {
         let decls: string[] = [];
         let tests: string[] = [];
 
+        decls.push(this.emitTypeSymbol(rcvr));
         if(optfdecls !== undefined) {
             decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls, fmt));
         }
@@ -1833,11 +1855,11 @@ class JSEmitter {
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
-        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name) as FunctionInstantiationInfo]), fmt);
+        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
         tests.push(...fdecls.tests);
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name) as MethodInstantiationInfo]), fmt);
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
         tests.push(...mdecls.tests);
 
@@ -1859,18 +1881,20 @@ class JSEmitter {
         fmt.indentPush();
         let decls: string[] = [];
 
+        decls.push(this.emitTypeSymbol(rcvr));
+
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
-        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name) as FunctionInstantiationInfo]), fmt);
+        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name) as MethodInstantiationInfo]), fmt);
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `{${[...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${[...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
         if(isnested) {
             return `${rcvr.tkeystr}: ${obj}`;
@@ -1885,26 +1909,33 @@ class JSEmitter {
         }
     }
 
-    private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl, fmt: JSCodeFormatter): string {
+    private emitPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [], false);
+    }
+
+    private emitEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
 
         fmt.indentPush();
         let decls: string[] = [];
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, MethodInstantiationInfo.createNoTemplateInfo()]), fmt);
+        decls.push(this.emitTypeSymbol(rcvr));
+
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
         decls.push(...tdecl.members.map((mm) => `${mm}: Symbol(${mm})`));
 
         fmt.indentPop();
 
-        const obj = `{${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
-        return `const ${rcvr.tkeystr} = ${obj}`;
+        return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: mdecls.tests};
     }
 
-    private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
-        return "[TYPEDECL]";
+    private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
+        return {decl: "[TYPEDECL]", tests: []};
     }
 
     private emitOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
@@ -1981,7 +2012,7 @@ class JSEmitter {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        const obj = `{${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
@@ -1991,12 +2022,12 @@ class JSEmitter {
         }
     }
 
-    private emitOptionTypeDecl(ns: NamespaceDeclaration, tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitOptionTypeDecl(ns: NamespaceDeclaration, tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => (instantiation.binds as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(tdecl.sinfo, tt.name))));
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [], false);
     }
 
-    private emitResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
         fmt.indentPush();
         const okdecl = this.emitOkTypeDecl(ns, tdecl.getOkType(), instantiation, fmt);
         const errdecl = this.emitErrTypeDecl(ns, tdecl.getErrType(), instantiation, fmt);
@@ -2006,7 +2037,7 @@ class JSEmitter {
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [okdecl, errdecl], false);
     }
 
-    private emitAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
         fmt.indentPush();
         const rejecteddecl = this.emitOkTypeDecl(ns, tdecl.getAPIRejectedType(), instantiation, fmt);
         const faileddecl = this.emitErrTypeDecl(ns, tdecl.getAPIFailedType(), instantiation, fmt);
@@ -2018,11 +2049,11 @@ class JSEmitter {
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [rejecteddecl, faileddecl, errordecl, successdecl], false);
     }
 
-    private emitConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        const obj = `{${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
@@ -2032,11 +2063,11 @@ class JSEmitter {
         }
     }
 
-    private emitDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        const obj = `{${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
@@ -2046,11 +2077,11 @@ class JSEmitter {
         }
     }
 
-    private emitDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter) {
+    private emitDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        const obj = `{${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
@@ -2060,166 +2091,205 @@ class JSEmitter {
         }
     }
 
-
-    private checkAPIDecl(adecl: APIDecl) {
+    private emitAPIDecls(ns: NamespaceDeclaration, adecls: APIDecl[]): string {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
-    private checkTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
+    private emitTaskDecls(ns: NamespaceDeclaration, tdecls: TaskDecl[]): string {
         assert(false, "Not implemented -- checkTaskDecl");
     }
 
-    private emitNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
-        for(let i = 0; i < cdecls.length; ++i) {
-            const m = cdecls[i];
+    private emitNamespaceConstDecls(decls: NamespaceConstDecl[]): string[] {
+        let cdecls: string[] = [];
+        for(let i = 0; i < decls.length; ++i) {
+            const m = decls[i];
 
-            this.file = m.file;
-            if(this.checkTypeSignature(m.declaredType)) {
-                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
-                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
+            const eexp = this.emitExpression(m.value.exp, true);
+            const lexp = `() => ${eexp}`;
 
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.tkeystr} but got ${decltype.tkeystr}`);
-            }
-            this.file = CLEAR_FILENAME;
+            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
         }
+
+        return [...cdecls, `let _$consts = new Map()`];
     }
 
-    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], fmt: JSCodeFormatter) {
+    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: AssemblyInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+        let alldecls: string[] = [];
+        let alltests: string[] = [];
+
         for(let i = 0; i < tdecl.length; ++i) {
             const tt = tdecl[i];
+            const iinsts = asminstantiation.typebinds.get(tt.name);
+            if(iinsts === undefined) {
+                continue;
+            }
 
-            if(tt instanceof EnumTypeDecl) {
-                this.emitEnumTypeDecl(ns, tt, fmt);
+            let ddecls: string[] = [];
+            for(let j = 0; j < iinsts.length; ++j) {
+                const instantiation = iinsts[j];
+
+                if(tt instanceof EnumTypeDecl) {
+                    const {decl, tests} = this.emitEnumTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else if(tt instanceof TypedeclTypeDecl) {
+                    const {decl, tests} = this.emitTypedeclTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else if(tt instanceof PrimitiveEntityTypeDecl) {
+                    const decl = this.emitPrimitiveEntityTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof OkTypeDecl) {
+                    const decl = this.emitOkTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof ErrTypeDecl) {
+                    const decl = this.emitErrTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof APIRejectedTypeDecl) {
+                    const decl = this.emitAPIRejectedTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof APIFailedTypeDecl) {
+                    const decl = this.emitAPIFailedTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof APIErrorTypeDecl) {
+                    const decl = this.emitAPIErrorTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof APISuccessTypeDecl) {
+                    const decl = this.emitAPISuccessTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof SomeTypeDecl) {
+                    const decl = this.emitSomeTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof MapEntryTypeDecl) {
+                    const decl = this.emitMapEntryTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof ListTypeDecl) {
+                    const decl = this.emitListTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof StackTypeDecl) {
+                    const decl = this.emitStackTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof QueueTypeDecl) {
+                    const decl = this.emitQueueTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof SetTypeDecl) {
+                    const decl = this.emitSetTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof MapTypeDecl) {
+                    const decl = this.emitMapTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof EventListTypeDecl) {
+                    const decl = this.emitEventListTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof EntityTypeDecl) {
+                    const {decl, tests} = this.emitEntityTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else if(tt instanceof OptionTypeDecl) {
+                    const decl = this.emitOptionTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof ResultTypeDecl) {
+                    const decl = this.emitResultTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof APIResultTypeDecl) {
+                    const decl = this.emitAPIResultTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                }
+                else if(tt instanceof ConceptTypeDecl) {
+                    const {decl, tests} = this.emitConceptTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+                    const {decl, tests} = this.emitDatatypeMemberEntityTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else if(tt instanceof DatatypeTypeDecl) {
+                    const {decl, tests} = this.emitDatatypeTypeDecl(ns, tt, instantiation, fmt);
+                    ddecls.push(decl);
+                    alltests.push(...tests);
+                }
+                else {
+                    assert(false, "Unknown type decl kind");
+                }
             }
-            else if(tt instanceof TypedeclTypeDecl) {
-                this.emitTypedeclTypeDecl(ns, tt, xxx, fmt);
-            }
-            else if(tt instanceof PrimitiveEntityTypeDecl) {
-                this.checkPrimitiveEntityTypeDecl(ns, tt);
-            }
-            else if(tt instanceof RegexValidatorTypeDecl) {
-                this.checkRegexValidatorTypeDecl(ns, tt);
-            }
-            else if(tt instanceof CRegexValidatorTypeDecl) {
-                this.checkCRegexValidatorTypeDecl(ns, tt);
-            }
-            else if(tt instanceof PathValidatorTypeDecl) {
-                this.checkPathValidatorTypeDecl(ns, tt);
-            }
-            else if(tt instanceof StringOfTypeDecl) {
-                this.checkStringOfTypeDecl(ns, tt);
-            }
-            else if(tt instanceof CStringOfTypeDecl) {
-                this.checkCStringOfTypeDecl(ns, tt);
-            }
-            else if(tt instanceof PathOfTypeDecl) {
-                this.checkPathOfTypeDecl(ns, tt);
-            }
-            else if(tt instanceof PathFragmentOfTypeDecl) {
-                this.checkPathFragmentOfTypeDecl(ns, tt);
-            }
-            else if(tt instanceof PathGlobOfTypeDecl) {
-                this.checkPathGlobOfTypeDecl(ns, tt);
-            }
-            else if(tt instanceof OkTypeDecl) {
-                this.checkOkTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ErrTypeDecl) {
-                this.checkErrTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIRejectedTypeDecl) {
-                this.checkAPIRejectedTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APISuccessTypeDecl) {
-                this.checkAPISuccessTypeDecl(ns, tt);
-            }
-            else if(tt instanceof SomeTypeDecl) {
-                this.checkSomeTypeDecl(ns, tt);
-            }
-            else if(tt instanceof MapEntryTypeDecl) {
-                this.checkMapEntryTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ListTypeDecl) {
-                this.checkListTypeDecl(ns, tt);
-            }
-            else if(tt instanceof StackTypeDecl) {
-                this.checkStackTypeDecl(ns, tt);
-            }
-            else if(tt instanceof QueueTypeDecl) {
-                this.checkQueueTypeDecl(ns, tt);
-            }
-            else if(tt instanceof SetTypeDecl) {
-                this.checkSetTypeDecl(ns, tt);
-            }
-            else if(tt instanceof MapTypeDecl) {
-                this.checkMapTypeDecl(ns, tt);
-            }
-            else if(tt instanceof EventListTypeDecl) {
-                this.checkEventListTypeDecl(ns, tt);
-            }
-            else if(tt instanceof EntityTypeDecl) {
-                this.checkEntityTypeDecl(ns, tt);
-            }
-            else if(tt instanceof OptionTypeDecl) {
-                this.checkOptionTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ResultTypeDecl) {
-                this.checkResultTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIResultTypeDecl) {
-                this.checkAPIResultTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ConceptTypeDecl) {
-                this.checkConceptTypeDecl(ns, tt);
-            }
-            else if(tt instanceof DatatypeTypeDecl) {
-                this.checkDatatypeTypeDecl(ns, tt);
+
+            if(ddecls.length === 1) {
+                alldecls.push(...ddecls);
             }
             else {
-                assert(false, "Unknown type decl kind");
+                alldecls.push(`const ${tt.name} = {\n${ddecls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`);
             }
         }
+
+        return {decls: alldecls, tests: alltests};
     }
 
-    private emitNamespaceDeclaration(decl: NamespaceDeclaration): string {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: AssemblyInstantiationInfo): {contents: string, tests: string[]} {
         //all usings should be resolved and valid so nothing to do there
 
-        this.checkNamespaceConstDecls(decl.consts);
-        this.checkNamespaceFunctionDecls(decl.functions);
-        this.checkNamespaceTypeDecls(decl, decl.typedecls);
+        let decls: string[] = [];
+        let tests: string[] = [];
 
-        for(let i = 0; i < decl.apis.length; ++i) {
-            this.checkAPIDecl(decl.apis[i]);
-        }
+        const cdecls = this.emitNamespaceConstDecls(decl.consts);
+        decls.push(...cdecls);
 
-        for(let i = 0; i < decl.tasks.length; ++i) {
-            this.checkTaskDecl(decl, decl.tasks[i]);
-        }
+        const fdecls = this.emitFunctionDecls(undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), new JSCodeFormatter(0));
+        decls.push(...fdecls.decls);
+        tests.push(...fdecls.tests);
 
-        for(let i = 0; i < decl.subns.length; ++i) {
-            this.checkNamespaceDeclaration(decl.subns[i]);
-        }
+        const tdecls = this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, new JSCodeFormatter(0));
+        decls.push(...tdecls.decls);
+        tests.push(...tdecls.tests);
+
+        const apidecls = this.emitAPIDecls(decl, decl.apis);
+        decls.push(...apidecls);
+
+        const taskdecls = this.emitTaskDecls(decl, decl.tasks);
+        decls.push(...taskdecls);
+
+        const ddecls = decls.join("\n\n");
+        const exportdecl = `export {${[...decl.declaredNames].map((tt) => tt).join(", ")}};`;
+
+        return {contents: `${ddecls}\n\n${exportdecl}`, tests: tests};
     }
 
-    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug"): {ns: FullyQualifiedNamespace, contents: string}[] {
-        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", mode === "testing");
+    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: AssemblyInstantiationInfo): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
+        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", buildlevel, mode === "testing", asminstantiation);
 
         //emit each of the assemblies
         let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
+        let tests: string[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
-            const code = emitter.emitNamespaceDeclaration(nsdecl);
+            const code = emitter.emitNamespaceDeclaration(nsdecl, asminstantiation);
 
-            results.push({ns: nsdecl.fullnamespace, contents: code});
+            results.push({ns: nsdecl.fullnamespace, contents: code.contents});
+            tests.push(...code.tests);
         }
 
-        return results;
+        return [results, tests];
     }
 }
 

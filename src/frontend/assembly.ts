@@ -597,7 +597,6 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     readonly etag: AdditionalTypeDeclTag;
 
-    xxxx;
     saturatedProvides: TypeSignature[] = [];
     saturatedBFieldInfo: {name: string, type: TypeSignature}[] = [];
 
