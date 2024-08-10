@@ -61,20 +61,15 @@ const TokenStrings = {
     PathItem: "[LITERAL_PATH_ITEM]",
     PathTemplateItem: "[LITERAL_TEMPLATE_PATH_ITEM]",
 
-    DateTime: "[LITERAL_DATETIME]",
-    UTCDateTime: "[LITERAL_UTC_DATETIME]",
+    TZDateTime: "[LITERAL_TZTIME]",
+    TAITime: "[LITERAL_TAI_TIME]",
     PlainDate: "[LITERAL_PLAIN_DATE]",
     PlainTime: "[LITERAL_PLAIN_TIME]",
-    TickTime: "[LITERAL_TICK_TIME]",
     LogicalTime: "[LITERAL_LOGICAL_TIME]",
     Timestamp: "[LITERAL_TIMESTAMP]",
 
     DeltaDateTime: "[LITERAL_DELTA_DATETIME]",
-    DeltaUTCDateTime: "[LITERAL_DELTA_UTC_DATETIME]",
-    DeltaPlainDate: "[LITERAL_DELTA_PLAIN_DATE]",
-    DeltaPlainTime: "[LITERAL_DELTA_PLAIN_TIME]",
     DeltaSeconds: "[LITERAL_DELTA_SECONDS]",
-    DeltaTickTime: "[LITERAL_DELTA_TICK_TIME]",
     DeltaLogicalTime: "[LITERAL_DELTA_LOGICAL_TIME]",
     DeltaTimestamp: "[LITERAL_DELTA_TIMESTAMP]",
 
@@ -116,8 +111,8 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
     "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimestamp",
-    "DeltaDateTime", "DeltaPlainDate", "DeltaPlainTime", "DeltaSeconds", "DeltaTickTime", "DeltaLogicalTime", "DeltaISOTimestamp",
+    "DateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
+    "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
     "String", "CString", 
     "UnicodeRegex", "CRegex", "PathRegex",
     "Path", "Fragment", "Glob"
@@ -390,11 +385,9 @@ class Lexer {
     private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
     
-    private static readonly _s_ticktimeRe = `/(${Lexer._s_intValueRE})"t"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private static readonly _s_zerodenomRationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"${Lexer._s_literalTDOnlyTagRE}/`;
@@ -499,21 +492,9 @@ class Lexer {
     }
 
     private tryLexIntegralLikeToken(): boolean {
-        const mtick = lexFront(Lexer._s_ticktimeRe, this.utf8StrPos);
-        if(mtick !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mtick.length, TokenStrings.TickTime, mtick);
-            return true;
-        }
-
         const mlogical = lexFront(Lexer._s_logicaltimeRe, this.utf8StrPos);
         if(mlogical !== null) {
             this.recordLexTokenWData(this.jsStrPos + mlogical.length, TokenStrings.LogicalTime, mlogical);
-            return true;
-        }
-
-        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, this.utf8StrPos);
-        if(m_deltatick !== null) {
-            this.recordLexTokenWData(this.jsStrPos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
             return true;
         }
 
@@ -809,7 +790,7 @@ class Lexer {
     private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
 
     private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_utcdatetimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_taitimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_plaindateRE = `/${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
@@ -817,13 +798,13 @@ class Lexer {
     private tryLexDateTime() {
         const mdt = lexFront(Lexer._s_datatimeRE, this.utf8StrPos);
         if(mdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.DateTime, mdt);
+            this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.TZDateTime, mdt);
             return true;
         }
 
-        const mutcdt = lexFront(Lexer._s_utcdatetimeRE, this.utf8StrPos);
+        const mutcdt = lexFront(Lexer._s_taitimeRE, this.utf8StrPos);
         if(mutcdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.UTCDateTime, mutcdt);
+            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.TAITime, mutcdt);
             return true;
         }
 
@@ -847,22 +828,19 @@ class Lexer {
 
         return false;
     }
-    private static _s_datatimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_utcdatetimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static _s_deltadatevalueRE = '([0-9]{1,4})"-"([0-9]{1,2})"-"([0-9]{1,2})';
+    private static _s_deltatimevalueRE = '([0-9]{1,2})":"([0-9]{1,2})":"([0-9]{1,2})';
+
+    private static _s_datetimeDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_deltatimevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTimeDelta() {
-        const mdt = lexFront(Lexer._s_datatimeDeltaRE, this.utf8StrPos);
+        const mdt = lexFront(Lexer._s_datetimeDeltaRE, this.utf8StrPos);
         if(mdt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.DeltaDateTime, mdt);
-            return true;
-        }
-
-        const mutcdt = lexFront(Lexer._s_utcdatetimeDeltaRE, this.utf8StrPos);
-        if(mutcdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.DeltaUTCDateTime, mutcdt);
             return true;
         }
 
@@ -874,13 +852,13 @@ class Lexer {
 
         const mpd = lexFront(Lexer._s_plaindateDeltaRE, this.utf8StrPos);
         if(mpd !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.DeltaPlainDate, mpd);
+            this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.DeltaDateTime, mpd + "T00:00:00");
             return true;
         }
 
         const mpt = lexFront(Lexer._s_plaintimeDeltaRE, this.utf8StrPos);
         if(mpt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.DeltaPlainTime, mpt);
+            this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.DeltaDateTime, "0000-00-00T" + mpt);
             return true;
         }
 
@@ -3031,13 +3009,13 @@ class Parser {
             const hstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralSHAContentHashExpression, hstr);
         }
-        else if(tk === TokenStrings.DateTime) {
+        else if(tk === TokenStrings.TZDateTime) {
             const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDateTimeExpression, dstr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTZDateTimeExpression, dstr);
         }
-        else if(tk === TokenStrings.UTCDateTime) {
+        else if(tk === TokenStrings.TAITime) {
             const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralUTCDateTimeExpression, dstr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTAITimeExpression, dstr);
         }
         else if(tk === TokenStrings.PlainDate) {
             const dstr = this.consumeTokenAndGetValue();
@@ -3051,10 +3029,6 @@ class Parser {
             const tstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralLogicalTimeExpression, tstr);
         }
-        else if(tk === TokenStrings.TickTime) {
-            const tstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTickTimeExpression, tstr);
-        }
         else if(tk === TokenStrings.Timestamp) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralISOTimeStampExpression, dstr);
@@ -3063,14 +3037,6 @@ class Parser {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaDateTimeExpression, dstr);
         }
-        else if(tk === TokenStrings.DeltaPlainDate) {
-            const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainDateExpression, dstr);
-        }
-        else if(tk === TokenStrings.DeltaPlainTime) {
-            const tstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainTimeExpression, tstr);
-        }
         else if(tk === TokenStrings.DeltaTimestamp) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaISOTimeStampExpression, dstr);
@@ -3078,10 +3044,6 @@ class Parser {
         else if(tk === TokenStrings.DeltaSeconds) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaSecondsExpression, dstr);
-        }
-        else if(tk === TokenStrings.DeltaTickTime) {
-            const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaTickExpression, dstr);
         }
         else if(tk === TokenStrings.DeltaLogicalTime) {
             const dstr = this.consumeTokenAndGetValue();

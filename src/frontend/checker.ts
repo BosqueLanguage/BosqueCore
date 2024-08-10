@@ -783,14 +783,14 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("SHAContentHash"));
     }
 
-    private checkLiteralDateTimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralTZDateTimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: missing years and days in month validation here
-        return exp.setType(this.getWellKnownType("DateTime"));
+        return exp.setType(this.getWellKnownType("TZDateTime"));
     }
 
-    private checkLiteralUTCDateTimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralTAITimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: missing years and days in month validation here -- also leap seconds
-        return exp.setType(this.getWellKnownType("UTCDateTime"));
+        return exp.setType(this.getWellKnownType("TAIDateTime"));
     }
 
     private checkLiteralPlainDateExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -806,10 +806,6 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("LogicalTime"));
     }
 
-    private checkLiteralTickTimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        return exp.setType(this.getWellKnownType("TickTime"));
-    }
-
     private checkLiteralISOTimeStampExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: missing years and days in month validation here -- also leap seconds
         return exp.setType(this.getWellKnownType("ISOTimeStamp"));
@@ -819,24 +815,12 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("DeltaDateTime"));
     }
 
-    private checkLiteralDeltaPlainDateExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        return exp.setType(this.getWellKnownType("DeltaPlainDate"));
-    }
-
-    private checkLiteralDeltaPlainTimeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        return exp.setType(this.getWellKnownType("DeltaPlainTime"));
-    }
-
     private checkLiteralDeltaISOTimeStampExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         return exp.setType(this.getWellKnownType("DeltaISOTimeStamp"));
     }
 
     private checkLiteralDeltaSecondsExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         return exp.setType(this.getWellKnownType("DeltaSeconds"));
-    }
-
-    private checkLiteralDeltaTickExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        return exp.setType(this.getWellKnownType("DeltaTick"));
     }
 
     private checkLiteralDeltaLogicalExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -1776,11 +1760,11 @@ class TypeChecker {
             case ExpressionTag.LiteralSHAContentHashExpression: {
                 return this.checkLiteralSHAContentHashExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralDateTimeExpression: {
-                return this.checkLiteralDateTimeExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralTZDateTimeExpression: {
+                return this.checkLiteralTZDateTimeExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralUTCDateTimeExpression: {
-                return this.checkLiteralUTCDateTimeExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralTAITimeExpression: {
+                return this.checkLiteralTAITimeExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPlainDateExpression: {
                 return this.checkLiteralPlainDateExpression(env, exp as LiteralSimpleExpression);
@@ -1791,29 +1775,17 @@ class TypeChecker {
             case ExpressionTag.LiteralLogicalTimeExpression: {
                 return this.checkLiteralLogicalTimeExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralTickTimeExpression: {
-                return this.checkLiteralTickTimeExpression(env, exp as LiteralSimpleExpression);
-            }
             case ExpressionTag.LiteralISOTimeStampExpression: {
                 return this.checkLiteralISOTimeStampExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaDateTimeExpression: {
                 return this.checkLiteralDeltaDateTimeExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralDeltaPlainDateExpression: {
-                return this.checkLiteralDeltaPlainDateExpression(env, exp as LiteralSimpleExpression);
-            }
-            case ExpressionTag.LiteralDeltaPlainTimeExpression: {
-                return this.checkLiteralDeltaPlainTimeExpression(env, exp as LiteralSimpleExpression);
-            }
             case ExpressionTag.LiteralDeltaISOTimeStampExpression: {
                 return this.checkLiteralDeltaISOTimeStampExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaSecondsExpression: {
                 return this.checkLiteralDeltaSecondsExpression(env, exp as LiteralSimpleExpression);
-            }
-            case ExpressionTag.LiteralDeltaTickExpression: {
-                return this.checkLiteralDeltaTickExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaLogicalExpression: {
                 return this.checkLiteralDeltaLogicalExpression(env, exp as LiteralSimpleExpression);

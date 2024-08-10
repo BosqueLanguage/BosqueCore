@@ -5,15 +5,13 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, A
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
-import { AssemblyInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
+import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 
 class JSEmitter {
     readonly assembly: Assembly;
     readonly mode: "release" | "debug";
     readonly buildlevel: BuildLevel;
     readonly generateTestInfo: boolean;
-
-    readonly instantiations: AssemblyInstantiationInfo;
 
     currentfile: string | undefined;
     currentns: NamespaceDeclaration | undefined;
@@ -23,14 +21,12 @@ class JSEmitter {
 
     bindernames: Set<string> = new Set();
 
-    constructor(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean, instantiations: AssemblyInstantiationInfo) {
+    constructor(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean) {
         this.assembly = assembly;
         this.mode = mode;
         
         this.buildlevel = buildlevel;
         this.generateTestInfo = generateTestInfo;
-
-        this.instantiations = instantiations;
 
         this.currentfile = undefined;
         this.currentns = undefined;
@@ -299,12 +295,12 @@ class JSEmitter {
         assert(false, "Not implemented -- SHAContentHash");
     }
     
-    private emitLiteralDateTimeExpression(exp: LiteralSimpleExpression): string {
+    private emitLiteralTZDateTimeExpression(exp: LiteralSimpleExpression): string {
         assert(false, "Not implemented -- DateTime");
     }
     
-    private emitLiteralUTCDateTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented -- UTCDateTime");
+    private emitLiteralTAITimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented -- TAIDateTime");
     }
     
     private emitLiteralPlainDateExpression(exp: LiteralSimpleExpression): string {
@@ -319,10 +315,6 @@ class JSEmitter {
         assert(false, "Not implemented -- LogicalTime");
     }
     
-    private emitLiteralTickTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented -- TickTime");
-    }
-    
     private emitLiteralISOTimeStampExpression(exp: LiteralSimpleExpression): string {
         assert(false, "Not implemented -- ISOTimeStamp");
     }
@@ -331,24 +323,12 @@ class JSEmitter {
         assert(false, "Not implemented -- DeltaDateTime");
     }
     
-    private emitLiteralDeltaPlainDateExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented -- DeltaPlainDate");
-    }
-    
-    private emitLiteralDeltaPlainTimeExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented -- DeltaPlainTime");
-    }
-    
     private emitLiteralDeltaISOTimeStampExpression(exp: LiteralSimpleExpression): string {
         assert(false, "Not implemented -- DeltaISOTimeStamp");
     }
     
     private emitLiteralDeltaSecondsExpression(exp: LiteralSimpleExpression): string {
         assert(false, "Not implemented -- DeltaSeconds");
-    }
-    
-    private emitLiteralDeltaTickExpression(exp: LiteralSimpleExpression): string {
-        assert(false, "Not implemented -- DeltaTick");
     }
     
     private emitLiteralDeltaLogicalExpression(exp: LiteralSimpleExpression): string {
@@ -892,11 +872,11 @@ class JSEmitter {
             case ExpressionTag.LiteralSHAContentHashExpression: {
                 return this.emitLiteralSHAContentHashExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralDateTimeExpression: {
-                return this.emitLiteralDateTimeExpression(exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralTZDateTimeExpression: {
+                return this.emitLiteralTZDateTimeExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralUTCDateTimeExpression: {
-                return this.emitLiteralUTCDateTimeExpression(exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralTAITimeExpression: {
+                return this.emitLiteralTAITimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPlainDateExpression: {
                 return this.emitLiteralPlainDateExpression(exp as LiteralSimpleExpression);
@@ -907,29 +887,17 @@ class JSEmitter {
             case ExpressionTag.LiteralLogicalTimeExpression: {
                 return this.emitLiteralLogicalTimeExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralTickTimeExpression: {
-                return this.emitLiteralTickTimeExpression(exp as LiteralSimpleExpression);
-            }
             case ExpressionTag.LiteralISOTimeStampExpression: {
                 return this.emitLiteralISOTimeStampExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaDateTimeExpression: {
                 return this.emitLiteralDeltaDateTimeExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralDeltaPlainDateExpression: {
-                return this.emitLiteralDeltaPlainDateExpression(exp as LiteralSimpleExpression);
-            }
-            case ExpressionTag.LiteralDeltaPlainTimeExpression: {
-                return this.emitLiteralDeltaPlainTimeExpression(exp as LiteralSimpleExpression);
-            }
             case ExpressionTag.LiteralDeltaISOTimeStampExpression: {
                 return this.emitLiteralDeltaISOTimeStampExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaSecondsExpression: {
                 return this.emitLiteralDeltaSecondsExpression(exp as LiteralSimpleExpression);
-            }
-            case ExpressionTag.LiteralDeltaTickExpression: {
-                return this.emitLiteralDeltaTickExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaLogicalExpression: {
                 return this.emitLiteralDeltaLogicalExpression(exp as LiteralSimpleExpression);
@@ -1720,6 +1688,8 @@ class JSEmitter {
             const fdecl = fdecls[i][0];
             const fii = fdecls[i][1]; 
     
+            this.currentfile = fdecl.file;
+
             if(fii !== undefined) {
                 if(fii.binds === undefined) {
                     const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, undefined, fmt);
@@ -1760,7 +1730,12 @@ class JSEmitter {
         let tests: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
-            if(mdecls[i][1] !== undefined) {
+            const mdecl = mdecls[i][0];
+            const mii = mdecls[i][1];
+
+            this.currentfile = mdecl.file;
+
+            if(mii !== undefined) {
                 assert(false, "Not implemented -- checkMethodDecl");
             }
         }
@@ -2104,6 +2079,7 @@ class JSEmitter {
         for(let i = 0; i < decls.length; ++i) {
             const m = decls[i];
 
+            this.currentfile = m.file;
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
@@ -2113,7 +2089,7 @@ class JSEmitter {
         return [...cdecls, `let _$consts = new Map()`];
     }
 
-    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: AssemblyInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let alldecls: string[] = [];
         let alltests: string[] = [];
 
@@ -2123,6 +2099,8 @@ class JSEmitter {
             if(iinsts === undefined) {
                 continue;
             }
+
+            this.currentfile = tt.file;
 
             let ddecls: string[] = [];
             for(let j = 0; j < iinsts.length; ++j) {
@@ -2246,7 +2224,7 @@ class JSEmitter {
         return {decls: alldecls, tests: alltests};
     }
 
-    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: AssemblyInstantiationInfo): {contents: string, tests: string[]} {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {contents: string, tests: string[]} {
         //all usings should be resolved and valid so nothing to do there
 
         let decls: string[] = [];
@@ -2275,15 +2253,18 @@ class JSEmitter {
         return {contents: `${ddecls}\n\n${exportdecl}`, tests: tests};
     }
 
-    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: AssemblyInstantiationInfo): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
-        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", buildlevel, mode === "testing", asminstantiation);
+    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
+        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
 
         //emit each of the assemblies
         let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
         let tests: string[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
-            const code = emitter.emitNamespaceDeclaration(nsdecl, asminstantiation);
+            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit()) as NamespaceInstantiationInfo;
+
+            emitter.currentns = nsdecl;
+            const code = emitter.emitNamespaceDeclaration(nsdecl, nsii);
 
             results.push({ns: nsdecl.fullnamespace, contents: code.contents});
             tests.push(...code.tests);
