@@ -111,7 +111,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
     "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "DateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
+    "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
     "String", "CString", 
     "UnicodeRegex", "CRegex", "PathRegex",

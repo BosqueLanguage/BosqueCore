@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, Assembly, InvokeParameterDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "./type.js";
-import { ArgumentValue, Expression, ExpressionTag, LiteralNoneExpression, LiteralSimpleExpression } from "./body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, Expression, ExpressionTag, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, TaskAccessInfoExpression } from "./body.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
     return (tbinds.length !== 0) ? `<${tbinds.map(t => t.toString()).join(", ")}>` : "";
@@ -143,76 +143,66 @@ class InstantiationPropagator {
         args.forEach((arg) => this.insantiateExpression(arg.exp));
     }
 
+
+    private instantiateLiteralCRegexExpression(exp: LiteralRegexExpression) {
+        this.instantiateTypeSignature(exp.value.endsWith("c") ? exp.setType(this.getWellKnownType("CRegex")) : exp.setType(this.getWellKnownType("PathRegex")), this.currentMapping);
+    }
+
+    private instantiateLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression) {
+        this.instantiateTypeSignature(exp.constype, this.currentMapping);
+        this.insantiateExpression(exp.value);
+    }
+    
+    private instantiateHasEnvValueExpression(exp: AccessEnvValueExpression) {
+        assert(false, "Not Implemented -- checkHasEnvValueExpression");
+    }
+    
+    private instantiateAccessEnvValueExpression(exp: AccessEnvValueExpression) {
+        assert(false, "Not Implemented -- checkAccessEnvValueExpression");
+    }
+
+    private instantiateTaskAccessInfoExpression(exp: TaskAccessInfoExpression) {
+        assert(false, "Not Implemented -- checkTaskAccessInfoExpression");
+    }
+
+    private instantiateAccessEnumExpression(exp: AccessEnumExpression) {
+        assert(false, "Not Implemented -- checkAccessEnumExpression");
+    }
+
+    private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {
+        assert(false, "Not Implemented -- checkAccessStaticFieldExpression");
+    }
+
     insantiateExpression(exp: Expression) {
+        this.instantiateTypeSignature(exp.getType(), this.currentMapping);
+
         switch (exp.tag) {
-            case ExpressionTag.LiteralNoneExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("None"), this.currentMapping);
+            case ExpressionTag.LiteralTypeDeclValueExpression: {
+                this.instantiateLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression);
+                break;
             }
-            case ExpressionTag.LiteralBoolExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Bool"), this.currentMapping);
+            case ExpressionTag.HasEnvValueExpression: {
+                this.instantiateHasEnvValueExpression(exp as AccessEnvValueExpression);
+                break;
             }
-            case ExpressionTag.LiteralNatExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Nat"), this.currentMapping);
+            case ExpressionTag.AccessEnvValueExpression: {
+                this.instantiateAccessEnvValueExpression(exp as AccessEnvValueExpression);
+                break;
             }
-            case ExpressionTag.LiteralIntExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Int"), this.currentMapping);
+            case ExpressionTag.TaskAccessInfoExpression: {
+                this.instantiateTaskAccessInfoExpression(exp as TaskAccessInfoExpression);
+                break;
             }
-            case ExpressionTag.LiteralBigNatExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("BigNat"), this.currentMapping);
+            case ExpressionTag.AccessEnumExpression: {
+                this.instantiateAccessEnumExpression(exp as AccessEnumExpression);
+                break;
             }
-            case ExpressionTag.LiteralBigIntExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("BigInt"), this.currentMapping);
+            case ExpressionTag.AccessStaticFieldExpression: {
+                this.instantiateAccessStaticFieldExpression(exp as AccessStaticFieldExpression);
+                break;
             }
-            case ExpressionTag.LiteralRationalExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Rational"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralFloatExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Float"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralDecimalExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Decimal"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralDecimalDegreeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("DecimalDegree"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralLatLongCoordinateExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("LatLongCoordinate"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralComplexNumberExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("Complex"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralByteBufferExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("ByteBuffer"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralUUIDv4Expression: {
-                this.instantiateTypeSignature(this.getWellKnownType("UUIDv4"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralUUIDv7Expression: {
-                this.instantiateTypeSignature(this.getWellKnownType("UUIDv7"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralSHAContentHashExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("SHAContentHash"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralDateTimeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("DateTime"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralUTCDateTimeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("UTCDateTime"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralPlainDateExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("PlainDate"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralPlainTimeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("PlainTime"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralLogicalTimeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("LogicalTime"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralTickTimeExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("TickTime"), this.currentMapping);
-            }
-            case ExpressionTag.LiteralISOTimeStampExpression: {
-                this.instantiateTypeSignature(this.getWellKnownType("ISOTimeStamp"), this.currentMapping);
+            default: {
+                ; //handled by the type signature instantiation on exp type
             }
         }
     }
