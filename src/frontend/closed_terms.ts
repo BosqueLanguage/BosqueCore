@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, Assembly, InvokeParameterDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, Expression, ExpressionTag, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, TaskAccessInfoExpression } from "./body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, SpecialConstructorExpression, SpecialConverterExpression, TaskAccessInfoExpression } from "./body.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
     return (tbinds.length !== 0) ? `<${tbinds.map(t => t.toString()).join(", ")}>` : "";
@@ -154,23 +154,165 @@ class InstantiationPropagator {
     }
     
     private instantiateHasEnvValueExpression(exp: AccessEnvValueExpression) {
-        assert(false, "Not Implemented -- checkHasEnvValueExpression");
+        assert(false, "Not Implemented -- instantiateHasEnvValueExpression");
     }
     
     private instantiateAccessEnvValueExpression(exp: AccessEnvValueExpression) {
-        assert(false, "Not Implemented -- checkAccessEnvValueExpression");
+        assert(false, "Not Implemented -- instantiateAccessEnvValueExpression");
     }
 
     private instantiateTaskAccessInfoExpression(exp: TaskAccessInfoExpression) {
-        assert(false, "Not Implemented -- checkTaskAccessInfoExpression");
+        assert(false, "Not Implemented -- instantiateTaskAccessInfoExpression");
     }
 
     private instantiateAccessEnumExpression(exp: AccessEnumExpression) {
-        assert(false, "Not Implemented -- checkAccessEnumExpression");
+        assert(false, "Not Implemented -- instantiateAccessEnumExpression");
     }
 
     private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {
-        assert(false, "Not Implemented -- checkAccessStaticFieldExpression");
+        assert(false, "Not Implemented -- instantiateAccessStaticFieldExpression");
+    }
+
+    private instantiateConstructorPrimaryExpression(exp: ConstructorPrimaryExpression) {
+        this.instantiateTypeSignature(exp.ctype);
+
+        if(!(exp.ctype instanceof NominalTypeSignature)) {
+            this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const ctype = exp.ctype as NominalTypeSignature;
+        const decl = ctype.decl;
+        if(decl instanceof AbstractCollectionTypeDecl) {
+            return this.instantiateCollectionConstructor(env, decl, exp);
+        }
+        else if(decl instanceof ConstructableTypeDecl) {
+            return this.instantiateSpecialConstructableConstructor(env, decl, exp);
+        }
+        else {
+            if(decl instanceof EntityTypeDecl) {
+                return this.instantiateStandardConstructor(env, decl.fields, exp);
+            }
+            else if(decl instanceof DatatypeMemberEntityTypeDecl) {
+                return this.instantiateStandardConstructor(env, decl.fields, exp);
+            }
+            else {
+                this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+        }
+    }
+    
+    private instantiateConstructorEListExpression(exp: ConstructorEListExpression) {
+        assert(false, "Not Implemented -- instantiateConstructorEListExpression");
+    }
+
+    private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression) {
+        assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
+    }
+
+    private instantiateLetExpression(exp: LetExpression) {
+        assert(false, "Not Implemented -- instantiateLetExpression");
+    }
+
+    private instantiateLambdaInvokeExpression(exp: LambdaInvokeExpression) {
+        assert(false, "Not Implemented -- instantiateLambdaInvokeExpression");
+    }
+
+    private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
+        if(infertype === undefined || !(infertype instanceof NominalTypeSignature)) {
+            return this.instantiateSpecialConstructorExpressionNoInfer(env, exp);
+        }
+        else {
+            const ninfer = infertype as NominalTypeSignature;
+            if(exp.rop === "some") {
+                if(ninfer.decl instanceof SomeTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof OptionTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else {
+                    return this.instantiateSpecialConstructorExpressionNoInfer(env, exp);
+                }
+            }
+            else if(exp.rop === "ok") {
+                if(ninfer.decl instanceof OkTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof ResultTypeDecl) {
+                    const ttype = ninfer.alltermargs[0];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Cannot infer type for special Ok constructor -- got ${infertype.tkeystr}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
+            }
+            else {
+                if(ninfer.decl instanceof ErrTypeDecl) {
+                    const ttype = ninfer.alltermargs[1];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else if(ninfer.decl instanceof ResultTypeDecl) {
+                    const ttype = ninfer.alltermargs[1];
+                    const etype = this.instantiateExpression(env, exp.arg, ttype);
+                    this.instantiateError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
+
+                    return exp.setType(ninfer);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Cannot infer type for special Err constructor -- got ${infertype.tkeystr}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
+            }
+        }
+    }
+
+    private instantiateSpecialConverterExpression(exp: SpecialConverterExpression) {
+        assert(false, "Not Implemented -- instantiateSpecialConverterExpression");
+    }
+
+    private instantiateCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression) {
+        this.instantiateTemplateBindingsOnInvoke(env, exp.terms, fdecl); 
+
+        this.instantiateArgumentList(exp.args.args);
+
+        xxxx;
+    }
+
+    private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
+        assert(false, "Not Implemented -- instantiateCallTypeFunctionExpression");
+    }
+    
+    private instantiateLogicActionAndExpression(exp: LogicActionAndExpression) {
+        assert(false, "Not Implemented -- instantiateLogicActionAndExpression");
+    }
+
+    private instantiateLogicActionOrExpression(exp: LogicActionOrExpression) {
+        assert(false, "Not Implemented -- instantiateLogicActionOrExpression");
+    }
+
+    private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {
+        assert(false, "Not Implemented -- instantiateParseAsTypeExpression");
     }
 
     insantiateExpression(exp: Expression) {
@@ -199,6 +341,54 @@ class InstantiationPropagator {
             }
             case ExpressionTag.AccessStaticFieldExpression: {
                 this.instantiateAccessStaticFieldExpression(exp as AccessStaticFieldExpression);
+                break;
+            }
+            case ExpressionTag.ConstructorPrimaryExpression: {
+                this.instantiateConstructorPrimaryExpression(exp as ConstructorPrimaryExpression);
+                break;
+            }
+            case ExpressionTag.ConstructorEListExpression: {
+                this.instantiateConstructorEListExpression(exp as ConstructorEListExpression);
+                break;
+            }
+            case ExpressionTag.ConstructorLambdaExpression: {
+                this.instantiateConstructorLambdaExpression(exp as ConstructorLambdaExpression);
+                break;
+            }
+            case ExpressionTag.LetExpression: {
+                this.instantiateLetExpression(exp as LetExpression);
+                break;
+            }
+            case ExpressionTag.LambdaInvokeExpression: {
+                this.instantiateLambdaInvokeExpression(exp as LambdaInvokeExpression);
+                break;
+            }
+            case ExpressionTag.SpecialConstructorExpression: {
+                this.instantiateSpecialConstructorExpression(exp as SpecialConstructorExpression);
+                break;
+            }
+            case ExpressionTag.SpecialConverterExpression: {
+                this.instantiateSpecialConverterExpression(exp as SpecialConverterExpression);
+                break;
+            }
+            case ExpressionTag.CallNamespaceFunctionExpression: {
+                this.instantiateCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
+                break;
+            }
+            case ExpressionTag.CallTypeFunctionExpression: {
+                this.instantiateCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
+                break;
+            }
+            case ExpressionTag.LogicActionAndExpression: {
+                this.instantiateLogicActionAndExpression(exp as LogicActionAndExpression);
+                break;
+            }
+            case ExpressionTag.LogicActionOrExpression: {
+                this.instantiateLogicActionOrExpression(exp as LogicActionOrExpression);
+                break;
+            }
+            case ExpressionTag.ParseAsTypeExpression: {
+                this.instantiateParseAsTypeExpression(exp as ParseAsTypeExpression);
                 break;
             }
             default: {
