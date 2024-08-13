@@ -908,7 +908,7 @@ class TypeChecker {
     }
     
     private checkAccessNamespaceConstantExpression(env: TypeEnvironment, exp: AccessNamespaceConstantExpression): TypeSignature {
-        const cdecl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
+        const cdecl = this.relations.assembly.resolveNamespaceConstant(exp.ns, exp.name);
         if(cdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace constant ${exp.ns}::${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -1198,7 +1198,7 @@ class TypeChecker {
     }
 
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression): TypeSignature {
-        const fdecl = this.relations.resolveNamespaceFunction(exp.ns, exp.name);
+        const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name);
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace function ${exp.ns}::${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -2094,136 +2094,6 @@ class TypeChecker {
         }
     }
 
-    private checkConstructorPrimary(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryExpression): ExpressionTypeEnvironment {
-        const oftype = this.normalizeTypeOnly(exp.ctype, env.binds).tryGetUniqueEntityTypeInfo();
-        this.raiseErrorIf(exp.sinfo, oftype === undefined, "Invalid constructor type");
-
-        if(oftype instanceof ResolvedObjectEntityAtomType) {
-            const roftype = ResolvedType.createSingle(oftype);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            const allf = [...this.getAllOOFields(roftype, oftype.object, oftype.binds)];
-            this.raiseErrorIf(exp.sinfo, allf.length !== exp.args.length, `got ${exp.args.length} args for constructor but expected ${allf.length}`);
-            const eargs = exp.args.map((arg, i) => {
-                const itype = this.normalizeTypeOnly(allf[i][1][2].declaredType, TemplateBindScope.createBaseBindScope(allf[i][1][3]));
-                const ee = this.checkExpression(env, arg, itype);
-
-                return this.emitCoerceIfNeeded(ee, exp.sinfo, itype);
-            });
-
-            if(!this.entityTypeConstructorHasInvariants(roftype, oftype.object, oftype.binds)) {
-                const econs = new TIRConstructorPrimaryDirectExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
-                return env.setResultExpressionInfo(econs, roftype);
-            }
-            else {
-                const econs = new TIRConstructorPrimaryCheckExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
-                return env.setResultExpressionInfo(econs, roftype);
-            }
-        }
-        else if(oftype instanceof ResolvedTypedeclEntityAtomType) {
-            const roftype = ResolvedType.createSingle(oftype);
-
-            this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, `${oftype.typeID} constructor expects a single arg`);
-            const cexp = this.checkExpression(env, exp.args[0], ResolvedType.createSingle(oftype.valuetype));
-            const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, ResolvedType.createSingle(oftype.valuetype));
-
-            if (!this.typedeclTypeConstructorFromValueHasInvariants(roftype, oftype.object)) {
-                const nexp = new TIRTypedeclDirectExpression(exp.sinfo, this.toTIRTypeKey(roftype), ecast.expressionResult);
-                return env.setResultExpressionInfo(nexp, roftype);
-            }
-            else {
-                const nexp = new TIRTypedeclConstructorExpression(exp.sinfo, this.toTIRTypeKey(roftype), ecast.expressionResult);
-                return env.setResultExpressionInfo(nexp, roftype);
-            }
-        }
-        else if(oftype instanceof ResolvedConstructableEntityAtomType) {
-            const roftype = ResolvedType.createSingle(oftype);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            if(oftype instanceof ResolvedOkEntityAtomType) {
-                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Result<T, E>::Ok constructor expects a single arg of type T");
-                const cexp = this.checkExpression(env, exp.args[0], oftype.typeT);
-                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
-
-                return env.setResultExpressionInfo(new TIRResultOkConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype);
-            }
-            else if(oftype instanceof ResolvedErrEntityAtomType) {
-                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Result<T, E>::Ok constructor expects a single arg of type E");
-                const cexp = this.checkExpression(env, exp.args[0], oftype.typeE);
-                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeE);
-
-                return env.setResultExpressionInfo(new TIRResultErrConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype);
-            }
-            else if(oftype instanceof ResolvedSomethingEntityAtomType) {
-                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Something<T> constructor expects a single arg of type T");
-                const cexp = this.checkExpression(env, exp.args[0], oftype.typeT);
-                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
-
-                return env.setResultExpressionInfo(new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype);
-            }
-            else if(oftype instanceof ResolvedMapEntryEntityAtomType) {
-                const tirktype = this.toTIRTypeKey(oftype.typeK);
-                const tirvtype = this.toTIRTypeKey(oftype.typeV);
-
-                this.raiseErrorIf(exp.sinfo, exp.args.length !== 2, "MapEntry<K, V> constructor expects two args of type K, V");
-                const kexp = this.checkExpression(env, exp.args[0], oftype.typeK);
-                const vexp = this.checkExpression(env, exp.args[1], oftype.typeV);
-
-                const kcast = this.emitCoerceIfNeeded(kexp, exp.args[0].sinfo, oftype.typeK);
-                const vcast = this.emitCoerceIfNeeded(vexp, exp.args[1].sinfo, oftype.typeV);
-
-                return env.setResultExpressionInfo(new TIRMapEntryConstructorExpression(exp.sinfo, kcast.expressionResult, vcast.expressionResult, tirktype, tirvtype, tiroftype), ResolvedType.createSingle(oftype));
-            }
-            else {
-                this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${oftype.typeID}`);
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tiroftype), roftype);
-            }
-        }
-        else if (oftype instanceof ResolvedPrimitiveCollectionEntityAtomType) {
-            const roftype = ResolvedType.createSingle(oftype);
-            const tiroftype = this.toTIRTypeKey(roftype);
-
-            if(oftype instanceof ResolvedListEntityAtomType) {
-                const eargs = exp.args.map((arg) => {
-                    const texp = this.checkExpression(env, arg, oftype.typeT);
-                    return this.emitCoerceIfNeeded(texp, exp.sinfo, oftype.typeT);
-                });
-
-                return env.setResultExpressionInfo(new TIRConstructorListExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype);
-            }
-            else if(oftype instanceof ResolvedStackEntityAtomType) {
-                this.raiseError(exp.sinfo, "Stack<T> not fully supported yet");
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tiroftype), roftype);
-            }
-            else if(oftype instanceof ResolvedQueueEntityAtomType) {
-                this.raiseError(exp.sinfo, "Queue<T> not fully supported yet");
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tiroftype), roftype);
-            }
-            else if(oftype instanceof ResolvedSetEntityAtomType) {
-                this.raiseError(exp.sinfo, "Set<T> not fully supported yet");
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tiroftype), roftype);
-            }
-            else if(oftype instanceof ResolvedMapEntityAtomType) {
-                const metype = this.normalizeTypeOnly(new NominalTypeSignature(exp.sinfo, "Core", ["MapEntry"], [new TemplateTypeSignature(exp.sinfo, "K"), new TemplateTypeSignature(exp.sinfo, "V")]), TemplateBindScope.createDoubleBindScope("K", oftype.typeK, "V", oftype.typeV));
-                
-                const eargs = exp.args.map((arg) => {
-                    const texp = this.checkExpression(env, arg, metype);
-                    return this.emitCoerceIfNeeded(texp, exp.sinfo, metype);
-                });
-
-                return env.setResultExpressionInfo(new TIRConstructorMapExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype);
-            }
-            else {
-                this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${oftype.typeID}`);
-                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tiroftype), roftype);
-            }
-        }
-        else {
-            this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${exp.ctype.getDiagnosticName()}`);
-            return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, "None"), ResolvedType.createInvalid());
-        }
-    }
-
     private checkPCodeInvokeExpression(env: ExpressionTypeEnvironment, exp: PCodeInvokeExpression): ExpressionTypeEnvironment {
         const pco = env.argpcodes.get(exp.pcode);
         if (pco !== undefined) {
@@ -2243,62 +2113,6 @@ class TypeChecker {
             const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pco.ftype.resultType), pco.pcode, [pcload, ...args]);
 
             return env.setResultExpressionInfo(pci, pco.ftype.resultType);
-        }
-    }
-
-    private checkCallNamespaceFunctionOrOperatorExpression(env: ExpressionTypeEnvironment, exp: CallNamespaceFunctionOrOperatorExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_assembly.hasNamespace(exp.ns), `Namespace '${exp.ns}' is not defined`);
-        const nsdecl = this.m_assembly.getNamespace(exp.ns);
-
-        if(nsdecl.ns === "Core" && exp.name === "s_safeAs") {
-            const argenv = this.checkExpression(env, exp.args[0], this.normalizeTypeOnly(exp.terms[0], env.binds));
-            const astype = this.normalizeTypeOnly(exp.terms[1], env.binds);
-
-            return this.emitCoerceIfNeeded_NoCheck(argenv, exp.sinfo, astype);
-        }
-        else {
-            if (nsdecl.operators.has(exp.name)) {
-                const opsintro = (nsdecl.operators.get(exp.name) as NamespaceOperatorDecl[]).find((nso) =>  nso.invoke.attributes.includes("abstract") || nso.invoke.attributes.includes("virtual"));
-                const opdecls = (nsdecl.operators.get(exp.name) as NamespaceOperatorDecl[]).filter((nso) => !nso.invoke.attributes.includes("abstract") && !nso.invoke.attributes.includes("virtual"));
-                this.raiseErrorIf(exp.sinfo, opsintro !== undefined, "Operator must have exactly one abstract/virtual declaration");
-                this.raiseErrorIf(exp.sinfo, opdecls.length === 0, "Operator must have at least one implementation");
-
-                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceOperatorBase(nsdecl.ns, exp.name);
-                const rtype = this.normalizeTypeOnly((opsintro as NamespaceOperatorDecl).invoke.resultType, TemplateBindScope.createEmptyBindScope());
-                const tirrtype = this.toTIRTypeKey(rtype);
-
-                const [argexps, _] = this.checkArgumentList(exp.sinfo, env, exp.args, (opsintro as NamespaceOperatorDecl).invoke.params, TemplateBindScope.createEmptyBindScope());
-
-                this.m_pendingNamespaceOperators.push({fkey: fkey, decl: opsintro as NamespaceOperatorDecl, impls: opdecls.map((opi, ii) => { return {fkey: TIRIDGenerator.generateInvokeIDForNamespaceOperatorImpl(opi.ns, opi.name, ii), decl: opi}; })});
-                const tircall = new TIRCallNamespaceOperatorExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
-                return env.setResultExpressionInfo(tircall, rtype);
-            }
-            else {
-                this.raiseErrorIf(exp.sinfo, !nsdecl.functions.has(exp.name), `Function named '${exp.name}' is not defined`);
-                const fdecl = nsdecl.functions.get(exp.name) as NamespaceFunctionDecl;
-
-                this.raiseErrorIf(exp.sinfo, fdecl.invoke.terms.length !== exp.terms.length, "missing template types");
-                let binds = new Map<string, ResolvedType>();
-                for(let i = 0; i < fdecl.invoke.terms.length; ++i) {
-                    binds.set(fdecl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
-                }
-                this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.invoke.terms, TemplateBindScope.createEmptyBindScope(), binds, fdecl.invoke.termRestrictions);
-
-                const rtype = this.normalizeTypeOnly(fdecl.invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
-                const tirrtype = this.toTIRTypeKey(rtype);
-
-                const [argexps, fargs, pcl] = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.invoke.params, TemplateBindScope.createBaseBindScope(binds));
-                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), pcl);
-
-                let pcodes = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
-                fargs.forEach((ee) => {
-                    pcodes.set(ee[0], {iscapture: false, pcode: ee[2], ftype: ee[1]});
-                });
-                this.m_pendingNamespaceFunctions.push({fkey: fkey, decl: fdecl, binds: binds, pcodes: pcodes});
-
-                const tircall = new TIRCallNamespaceFunctionExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
-                return env.setResultExpressionInfo(tircall, rtype);
-            }
         }
     }
 
@@ -3138,11 +2952,20 @@ class TypeChecker {
     }
 
     private checkBlockStatement(env: TypeEnvironment, stmt: BlockStatement): TypeEnvironment {
-        env = env.pushNewLocalScope();
-        for (let i = 0; i < stmt.statements.length; ++i) {
-            env = this.checkStatement(env, stmt.statements[i]);
+        let cenv = env;
+
+        if(stmt.isScoping) {
+            cenv = cenv.pushNewLocalScope();
+            for (let i = 0; i < stmt.statements.length; ++i) {
+                cenv = this.checkStatement(cenv, stmt.statements[i]);
+            }
+            cenv = cenv.popLocalScope();
         }
-        env = env.popLocalScope();
+        else {
+            for (let i = 0; i < stmt.statements.length; ++i) {
+                cenv = this.checkStatement(cenv, stmt.statements[i]);
+            }
+        }
 
         return env;
     }
@@ -4152,7 +3975,7 @@ class TypeChecker {
             return exp;
         }
         else if (exp instanceof AccessNamespaceConstantExpression) {
-            const nsresl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
+            const nsresl = this.relations.assembly.resolveNamespaceConstant(exp.ns, exp.name);
             if(nsresl === undefined) {
                 return undefined;
             }

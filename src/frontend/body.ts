@@ -550,8 +550,8 @@ class LetExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.tkeystr : ""} = ${dd.value.emit(true, fmt)};`).join(", ");
-        return `{| let ${dds} in ${this.body.emit(true, fmt)} |}`;
+        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.tkeystr : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
+        return `let ${dds} in ${this.body.emit(true, fmt)}`;
     }
 }
 
@@ -2099,10 +2099,12 @@ class TaskYieldStatement extends Statement {
 
 class BlockStatement extends Statement {
     readonly statements: Statement[];
+    readonly isScoping: boolean;
 
-    constructor(sinfo: SourceInfo, statements: Statement[]) {
+    constructor(sinfo: SourceInfo, statements: Statement[], isScoping: boolean) {
         super(StatementTag.BlockStatement, sinfo);
         this.statements = statements;
+        this.isScoping = isScoping;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -2110,7 +2112,7 @@ class BlockStatement extends Statement {
         const bb = this.statements.map((stmt) => fmt.indent(stmt.emit(fmt))).join("\n");
         fmt.indentPop();
 
-        return `{${bb}}`;
+        return this.isScoping ? `{${bb}}` : `{|${bb}|}`;
     }
 }
 

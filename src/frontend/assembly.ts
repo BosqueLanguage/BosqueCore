@@ -1565,6 +1565,40 @@ class Assembly {
 
         return this.getToplevelNamespace(ns) as NamespaceDeclaration;
     }
+
+    resolveNamespaceDecl(ns: string[]): NamespaceDeclaration | undefined {
+        let curns = this.getToplevelNamespace(ns[0]);
+        if(curns === undefined) {
+            return undefined;
+        }
+
+        for(let i = 1; i < ns.length; ++i) {
+            curns = curns.subns.find((nns) => nns.name === ns[i]);
+            if(curns === undefined) {
+                return undefined;
+            }
+        }
+
+        return curns;
+    }
+
+    resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.consts.find((c) => c.name === name);
+    }
+
+    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string): NamespaceFunctionDecl | undefined {
+        const nsdecl = this.resolveNamespaceDecl(ns.ns);
+        if(nsdecl === undefined) {
+            return undefined;
+        }
+
+        return nsdecl.functions.find((c) => c.name === name);
+    }
 }
 
 export {
