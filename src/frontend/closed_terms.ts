@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, Assembly, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, ExpressionTag, ITest, LambdaInvokeExpression, LetExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, SpecialConstructorExpression, SpecialConverterExpression, TaskAccessInfoExpression } from "./body.js";
+import { AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, EmptyStatement, Expression, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, LambdaInvokeExpression, LetExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SpecialConstructorExpression, SpecialConverterExpression, Statement, StatementTag, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
     return (tbinds.length !== 0) ? `<${tbinds.map(t => t.toString()).join(", ")}>` : "";
@@ -196,95 +196,39 @@ class InstantiationPropagator {
         }
     }
 
-    private processITestAsBoolean(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: boolean, tfalse: boolean } {
+    private processITestAsBoolean(src: TypeSignature, tt: ITest) {
+        this.instantiateTypeSignature(src, this.currentMapping);
+        
         if(tt instanceof ITestType) {
-            if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: false, tfalse: false };
-            }
-            else {
-                const tres = this.processITest_Type(src, tt.ttype);
-                if(tt.isnot) {
-                    return { ttrue: tres.tfalse.length !== 0, tfalse: tres.ttrue.length !== 0 };
-                }
-                else {
-                    return { ttrue: tres.ttrue.length !== 0, tfalse: tres.tfalse.length !== 0 };
-                }
-            }
+            this.instantiateTypeSignature(tt.ttype, this.currentMapping);
         }
         else {
-            if(tt instanceof ITestNone) {
-                const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestSome) {
-                const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else if(tt instanceof ITestOk) {
-                const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
-            else {
-                assert(tt instanceof ITestErr, "missing case in ITest");
-                const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue !== undefined, tfalse: tres.bindfalse !== undefined };
-            }
+            ; //any needed instantiations will happen in the specific type processing (e.g. Option<T> will also force processing Some<T> and None)
         }
     }
 
-    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+    private processITestAsConvert(src: TypeSignature, tt: ITest) {
+        this.instantiateTypeSignature(src, this.currentMapping);
+        
         if(tt instanceof ITestType) {
-            if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: undefined, tfalse: undefined };
-            }
-            else {
-                const tres = this.processITest_Type(src, tt.ttype);
-                if(tt.isnot) {
-                    const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
-                    const tfalse = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
-
-                    return { ttrue: ttrue, tfalse: tfalse };
-                }
-                else {
-                    const ttrue = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //always cast to what the user asked for
-                    const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
-
-                    return { ttrue: ttrue, tfalse: tfalse };
-                }
-            }
+            this.instantiateTypeSignature(tt.ttype, this.currentMapping);
         }
         else {
-            if(tt instanceof ITestNone) {
-                const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestSome) {
-                const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else if(tt instanceof ITestOk) {
-                const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
-            else {
-                assert(tt instanceof ITestErr, "missing case in ITest");
-                const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
-            }
+            ; //any needed instantiations will happen in the specific type processing (e.g. Option<T> will also force processing Some<T> and None)
         }
     }
 
     private instantiateArgumentList(args: ArgumentValue[]) {
-        args.forEach((arg) => this.insantiateExpression(arg.exp));
+        args.forEach((arg) => this.instantiateExpression(arg.exp));
     }
 
     private instantiateConstructorArgumentList(args: ArgumentValue[]) {
-        args.forEach((arg) => this.insantiateExpression(arg.exp));
+        args.forEach((arg) => this.instantiateExpression(arg.exp));
     }
 
     private instantiateLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression) {
         this.instantiateTypeSignature(exp.constype, this.currentMapping);
-        this.insantiateExpression(exp.value);
+        this.instantiateExpression(exp.value);
     }
     
     private instantiateHasEnvValueExpression(exp: AccessEnvValueExpression) {
@@ -328,7 +272,7 @@ class InstantiationPropagator {
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
-        this.insantiateExpression(exp.arg);
+        this.instantiateExpression(exp.arg);
     }
 
     private instantiateSpecialConverterExpression(exp: SpecialConverterExpression) {
@@ -360,20 +304,11 @@ class InstantiationPropagator {
     }
 
     private instantiatePostfixIsTest(exp: PostfixIsTest) {
-        this.instantiateITe
-        const splits = this.processITestAsBoolean(exp.sinfo, env, rcvrtype, exp.ttest);
-        this.checkError(exp.sinfo, !splits.ttrue, "Test is never true");
-        this.checkError(exp.sinfo, !splits.tfalse, "Test is never false");
-
-        return exp.setType(this.getWellKnownType("Bool"));
+        this.processITestAsBoolean(exp.getRcvrType(), exp.ttest);
     }
 
     private instantiatePostfixAsConvert(exp: PostfixAsConvert) {
-        const splits = this.processITestAsConvert(exp.sinfo, env, rcvrtype, exp.ttest);
-        this.checkError(exp.sinfo, splits.ttrue === undefined, "Convert always fails");
-        //if always true then this is an upcast and OK!
-
-        return exp.setType(splits.ttrue || new ErrorTypeSignature(exp.sinfo, undefined));
+        this.processITestAsConvert(exp.getRcvrType(), exp.ttest);
     }
 
     private instantiatePostfixAssignFields(exp: PostfixAssignFields) {
@@ -389,7 +324,7 @@ class InstantiationPropagator {
     }
 
     private instantiatePostfixOp(exp: PostfixOp) {
-        this.insantiateExpression(exp.rootExp);
+        this.instantiateExpression(exp.rootExp);
         
         for(let i = 0; i < exp.ops.length; ++i) {
             const op = exp.ops[i];
@@ -425,7 +360,106 @@ class InstantiationPropagator {
         }
     }
 
-    private insantiateExpression(exp: Expression) {
+    private instantiatePrefixNotOpExpression(exp: PrefixNotOpExpression) {
+        this.instantiateExpression(exp.exp);
+    }
+
+    private instantiatePrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression) {
+        this.instantiateExpression(exp.exp);
+    }
+
+    private instantiateBinaryNumericArgs(lhs: Expression, rhs: Expression) {
+        this.instantiateExpression(lhs);
+        this.instantiateExpression(rhs);
+    }
+
+    private instantiateBinAddExpression(exp: BinAddExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinSubExpression(exp: BinSubExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinMultExpression(exp: BinMultExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinDivExpression(exp: BinDivExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinKeyEqExpression(exp: BinKeyEqExpression) {
+        this.instantiateExpression(exp.lhs);
+        this.instantiateExpression(exp.rhs);
+    }
+
+    private instantiateBinKeyNeqExpression(exp: BinKeyNeqExpression) {
+        this.instantiateExpression(exp.lhs);
+        this.instantiateExpression(exp.rhs);
+    }
+
+    private instantiateNumericEqExpression(exp: NumericEqExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateNumericNeqExpression(exp: NumericNeqExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateNumericLessExpression(exp: NumericLessExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateNumericLessEqExpression(exp: NumericLessEqExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateNumericGreaterExpression(exp: NumericGreaterExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateNumericGreaterEqExpression(exp: NumericGreaterEqExpression) {
+        this.instantiateBinaryNumericArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinaryBooleanArgs(lhs: Expression, rhs: Expression) {
+        this.instantiateExpression(lhs);
+        this.instantiateExpression(rhs);
+    }
+
+    private instantiateBinLogicAndExpression(exp: BinLogicAndExpression) {
+        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinLogicOrExpression(exp: BinLogicOrExpression) {
+        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinLogicImpliesExpression(exp: BinLogicImpliesExpression) {
+        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateBinLogicIFFExpression(exp: BinLogicIFFExpression) {
+        this.instantiateBinaryBooleanArgs(exp.lhs, exp.rhs);
+    }
+
+    private instantiateMapEntryConstructorExpression(exp: MapEntryConstructorExpression) {
+        assert(false, "Not Implemented -- instantiateMapEntryConstructorExpression");
+    }
+
+    private instantiateIfExpression(exp: IfExpression) {
+        this.instantiateExpression(exp.test.exp);
+
+        this.instantiateExpression(exp.trueValue);
+        this.instantiateExpression(exp.falseValue);
+
+        if(exp.test.itestopt !== undefined) {
+            this.processITestAsConvert(exp.test.exp.getType(), exp.test.itestopt);
+        }
+    }
+
+    private instantiateExpression(exp: Expression) {
         this.instantiateTypeSignature(exp.getType(), this.currentMapping);
 
         switch (exp.tag) {
@@ -502,10 +536,640 @@ class InstantiationPropagator {
                 break;
             }
             case ExpressionTag.PostfixOpExpression: {
-                return this.instantiatePostfixOp(env, exp as PostfixOp);
+                this.instantiatePostfixOp(exp as PostfixOp);
+                break;
+            }
+            case ExpressionTag.PrefixNotOpExpression: {
+                this.instantiatePrefixNotOpExpression(exp as PrefixNotOpExpression);
+                break;
+            }
+            case ExpressionTag.PrefixNegateOrPlusOpExpression: {
+                this.instantiatePrefixNegateOrPlusOpExpression(exp as PrefixNegateOrPlusOpExpression);
+                break;
+            }
+            case ExpressionTag.BinAddExpression: {
+                this.instantiateBinAddExpression(exp as BinAddExpression);
+                break;
+            }
+            case ExpressionTag.BinSubExpression: {
+                this.instantiateBinSubExpression(exp as BinSubExpression);
+                break;
+            }
+            case ExpressionTag.BinMultExpression: {
+                this.instantiateBinMultExpression(exp as BinMultExpression);
+                break;
+            }
+            case ExpressionTag.BinDivExpression: {
+                this.instantiateBinDivExpression(exp as BinDivExpression);
+                break;
+            }
+            case ExpressionTag.BinKeyEqExpression: {
+                this.instantiateBinKeyEqExpression(exp as BinKeyEqExpression);
+                break;
+            }
+            case ExpressionTag.BinKeyNeqExpression: {
+                this.instantiateBinKeyNeqExpression(exp as BinKeyNeqExpression);
+                break;
+            }
+            case ExpressionTag.NumericEqExpression: {
+                this.instantiateNumericEqExpression(exp as NumericEqExpression);
+                break;
+            }
+            case ExpressionTag.NumericNeqExpression: {
+                this.instantiateNumericNeqExpression(exp as NumericNeqExpression);
+                break;
+            }
+            case ExpressionTag.NumericLessExpression: {
+                this.instantiateNumericLessExpression(exp as NumericLessExpression);
+                break;
+            }
+            case ExpressionTag.NumericLessEqExpression: {
+                this.instantiateNumericLessEqExpression(exp as NumericLessEqExpression);
+                break;
+            }
+            case ExpressionTag.NumericGreaterExpression: {
+                this.instantiateNumericGreaterExpression(exp as NumericGreaterExpression);
+                break;
+            }
+            case ExpressionTag.NumericGreaterEqExpression: {
+                this.instantiateNumericGreaterEqExpression(exp as NumericGreaterEqExpression);
+                break;
+            }
+            case ExpressionTag.BinLogicAndExpression: {
+                this.instantiateBinLogicAndExpression(exp as BinLogicAndExpression);
+                break;
+            }
+            case ExpressionTag.BinLogicOrExpression: {
+                this.instantiateBinLogicOrExpression(exp as BinLogicOrExpression);
+                break;
+            }
+            case ExpressionTag.BinLogicImpliesExpression: {
+                this.instantiateBinLogicImpliesExpression(exp as BinLogicImpliesExpression);
+                break;
+            }
+            case ExpressionTag.BinLogicIFFExpression: {
+                this.instantiateBinLogicIFFExpression(exp as BinLogicIFFExpression);
+                break;
+            }
+            case ExpressionTag.MapEntryConstructorExpression: {
+                this.instantiateMapEntryConstructorExpression(exp as MapEntryConstructorExpression);
+                break;
+            }
+            case ExpressionTag.IfExpression: {
+                this.instantiateIfExpression(exp as IfExpression);
+                break;
             }
             default: {
                 ; //handled by the type signature instantiation on exp type
+            }
+        }
+    }
+
+    private instantiateCallRefThisExpression(exp: CallRefThisExpression) {
+        assert(false, "Not Implemented -- instantiateCallRefThisExpression");
+    }
+
+    private instantiateCallRefSelfExpression(exp: CallRefSelfExpression) {
+        assert(false, "Not Implemented -- instantiateCallRefSelfExpression");
+    }
+
+    private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
+        assert(false, "Not Implemented -- instantiateCallTaskActionExpression");
+    }
+
+    private instantiateTaskRunExpression(exp: TaskRunExpression) {
+        assert(false, "Not Implemented -- instantiateTaskRunExpression");
+    }
+
+    private instantiateTaskMultiExpression(exp: TaskMultiExpression) {
+        assert(false, "Not Implemented -- instantiateTaskMultiExpression");
+    }
+
+    private instantiateTaskDashExpression(exp: TaskDashExpression) {
+        assert(false, "Not Implemented -- instantiateTaskDashExpression");
+    }
+
+    private instantiateTaskAllExpression(exp: TaskAllExpression) {
+        assert(false, "Not Implemented -- instantiateTaskAllExpression");
+    }
+
+    private instantiateTaskRaceExpression(exp: TaskRaceExpression) {
+        assert(false, "Not Implemented -- instantiateTaskRaceExpression");
+    }
+
+    private instantiateExpressionRHS(exp: Expression) {
+        const ttag = exp.tag;
+        switch (ttag) {
+            case ExpressionTag.CallRefThisExpression: {
+                this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
+                break;
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                this.instantiateCallRefSelfExpression(exp as CallRefSelfExpression);
+                break;
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                this.instantiateCallTaskActionExpression(exp as CallTaskActionExpression);
+                break;
+            }
+            case ExpressionTag.TaskRunExpression: {
+                this.instantiateTaskRunExpression(exp as TaskRunExpression);
+                break;
+            }
+            case ExpressionTag.TaskMultiExpression: {
+                this.instantiateTaskMultiExpression(exp as TaskMultiExpression);
+                break;
+            }
+            case ExpressionTag.TaskDashExpression: {
+                this.instantiateTaskDashExpression(exp as TaskDashExpression);
+                break;
+            }
+            case ExpressionTag.TaskAllExpression: {
+                this.instantiateTaskAllExpression(exp as TaskAllExpression);
+                break;
+            }
+            case ExpressionTag.TaskRaceExpression: {
+                this.instantiateTaskRaceExpression(exp as TaskRaceExpression);
+                break;
+            }
+            default: {
+                this.instantiateExpression(exp);
+                break;
+            }
+        }
+    }
+
+    private instantiateEmptyStatement(stmt: EmptyStatement) {
+        return;
+    }
+
+    private instantiateVariableDeclarationStatement(stmt: VariableDeclarationStatement) {
+        this.instantiateTypeSignature(stmt.vtype, this.currentMapping);
+    }
+    
+    private instantiateVariableMultiDeclarationStatement(stmt: VariableMultiDeclarationStatement) {
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            this.instantiateTypeSignature(stmt.decls[i].vtype, this.currentMapping);
+        }
+    }
+
+    private instantiateVariableInitializationStatement(stmt: VariableInitializationStatement) {
+        this.instantiateTypeSignature(stmt.vtype, this.currentMapping);
+        this.instantiateExpressionRHS(stmt.exp);
+    }
+
+    private instantiateVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement) {
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            this.instantiateTypeSignature(stmt.decls[i].vtype, this.currentMapping);
+        }
+
+        if(Array.isArray(stmt.exp)) {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                this.instantiateExpression(stmt.exp[i]); 
+            }
+        }
+        else {
+            this.instantiateExpressionRHS(stmt.exp);
+        }
+    }
+
+    private instantiateVariableAssignmentStatement(stmt: VariableAssignmentStatement) {
+        this.instantiateExpressionRHS(stmt.exp);
+    }
+
+    private instantiateVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement) {
+        if(Array.isArray(stmt.exp)) {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                this.instantiateExpression(stmt.exp[i]); 
+            }
+        }
+        else {
+            this.instantiateExpressionRHS(stmt.exp);
+        }
+    }
+
+    private instantiateVariableRetypeStatement(stmt: VariableRetypeStatement) {
+        this.processITestAsConvert(stmt.vtype as TypeSignature, stmt.ttest);
+        this.instantiateTypeSignature(stmt.newvtype as TypeSignature, this.currentMapping);
+    }
+
+    private instantiateReturnVoidStatement(stmt: ReturnVoidStatement) {
+        return;
+    }
+
+    private instantiateReturnSingleStatement(stmt: ReturnSingleStatement) {
+        this.instantiateExpressionRHS(stmt.value);
+    }
+
+    private instantiateReturnMultiStatement(stmt: ReturnMultiStatement) {
+        for(let i = 0; i < stmt.value.length; ++i) {
+            this.instantiateExpression(stmt.value[i]);
+        }
+    }
+
+    private instantiateIfStatement(stmt: IfStatement) {
+        this.instantiateExpression(stmt.cond.exp);
+        
+        this.instantiateBlockStatement(stmt.trueBlock);
+
+        if(stmt.cond.itestopt !== undefined) {
+            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+            if(stmt.binder === undefined) {
+                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue);
+            }
+            else {
+                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+                stmt.binder.origtype = eetype;
+
+                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
+                const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
+
+                const lubtype = ttrue.normalflow ? eetype : splits.tfalse;
+                this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
+                this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), lubtype || eetype);
+
+                return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
+            }
+        }
+    }
+
+    private instantiateIfElseStatement(stmt: IfElseStatement) {
+        this.instantiateExpression(stmt.cond.exp);
+
+        this.instantiateBlockStatement(stmt.trueBlock);
+        this.instantiateBlockStatement(stmt.falseBlock);
+
+        if(stmt.cond.itestopt !== undefined) {
+            const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+            if(stmt.binder === undefined) {
+                const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+                const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
+                return TypeEnvironment.mergeEnvironmentsSimple(ttrue, tfalse);
+            }
+            else {
+                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
+                stmt.binder.origtype = eetype;
+
+                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
+                const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
+
+                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.tfalse || eetype);
+                const tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
+
+                this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
+                if(ttrue.normalflow && tfalse.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                }
+                else if(ttrue.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.ttrue as TypeSignature);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.ttrue as TypeSignature, ttrue, tfalse);
+                }
+                else if(tfalse.normalflow) {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.tfalse as TypeSignature);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.tfalse as TypeSignature, ttrue, tfalse);
+                }
+                else {
+                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                }
+            }
+        }
+    }
+
+    private instantiateIfElifElseStatement(stmt: IfElifElseStatement) {
+        for(let i = 0; i < stmt.condflow.length; ++i) {
+            this.instantiateExpression(stmt.condflow[i].cond);
+            this.instantiateBlockStatement(stmt.condflow[i].block);
+        }
+
+        this.instantiateBlockStatement(stmt.elseflow);
+    }
+
+    private instantiateSwitchStatement(stmt: SwitchStatement) {
+        let ctype = this.checkExpression(env, stmt.sval, undefined);
+        
+        let exhaustive = false;
+        let results: TypeEnvironment[] = [];
+
+        this.checkError(stmt.sinfo, stmt.switchflow.length < 2, "Switch statement must have 2 or more choices");
+
+        for (let i = 0; i < stmt.switchflow.length && !exhaustive; ++i) {
+            //it is a wildcard match
+            if(stmt.switchflow[i].lval === undefined) {
+                this.checkError(stmt.sinfo, i !== stmt.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
+                exhaustive = true;
+
+                const cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+                results.push(cenv);
+            }
+            else {
+                const slitexp = (stmt.switchflow[i].lval as LiteralExpressionValue).exp;
+                const littype = this.checkExpression(env, slitexp, undefined);
+                if(!this.relations.isKeyType(littype, this.constraints)) {
+                    this.reportError(slitexp.sinfo, `Switch statement requires a unique key type but got ${littype.tkeystr}`);
+                }
+                else {
+                    const cmpok = this.checkValueEq(stmt.sval, ctype, slitexp, littype);
+                    this.checkError(slitexp.sinfo, cmpok === "err", `Cannot compare arguments in switch statement ${littype.tkeystr}`);
+                }
+
+                const cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+                results.push(cenv);
+            }
+        }
+        this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
+        
+        return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
+    }
+
+    private instantiateMatchStatement(stmt: MatchStatement) {
+        const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        let ctype = this.relations.decomposeType(eetype) || [];
+        if(ctype.length === 0) {
+            this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.tkeystr}`);
+            return env;
+        }
+        
+        let exhaustive = false;
+        let results: TypeEnvironment[] = [];
+
+        if(stmt.sval[1] !== undefined) {
+            stmt.sval[1].scopename = env.getBindScopeName(stmt.sval[1].srcname);
+        }
+
+        this.checkError(stmt.sinfo, stmt.matchflow.length < 2, "Switch statement must have 2 or more choices");
+
+        for (let i = 0; i < stmt.matchflow.length && !exhaustive; ++i) {
+            //it is a wildcard match
+            if(stmt.matchflow[i].mtype === undefined) {
+                this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+                exhaustive = true;
+
+                let cenv = env;
+                if(stmt.sval[1] !== undefined) {
+                    const lubattempt = this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints);
+                    const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
+
+                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, defaulttype)
+                }
+                cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+
+                if(stmt.sval[1] !== undefined) {
+                    cenv = cenv.popLocalScope();
+                }
+                results.push(cenv);
+            }
+            else {
+                const mtype = stmt.matchflow[i].mtype as TypeSignature;
+                this.checkTypeSignature(mtype);
+
+                const splits = this.relations.refineMatchType(ctype, mtype, this.constraints);
+                if(splits === undefined) {
+                    this.reportError(stmt.sinfo, `Match statement requires a type that is a subtype of the decomposed type but got ${mtype.tkeystr}`);
+                    return env;
+                }
+                else {
+                    this.checkError(stmt.sinfo, splits.overlap.length === 0, "Test is never true -- true branch of if is unreachable");
+
+                    exhaustive = splits.remain.length === 0;
+                    this.checkError(stmt.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+
+                    let cenv = env;
+                    if(stmt.sval[1] !== undefined) {
+                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, mtype);
+                    }
+                    cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+
+                    if(stmt.sval[1] !== undefined) {
+                        cenv = cenv.popLocalScope();
+                    }
+                    ctype = splits.remain || ctype;
+                    results.push(cenv);
+                }
+            }
+        }
+        this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
+        
+        return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
+    }
+
+    private instantiateAbortStatement(stmt: AbortStatement) {
+        return env.setDeadFlow();
+    }
+
+    private instantiateAssertStatement(stmt: AssertStatement) {
+        const etype = this.checkExpression(env, stmt.cond, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return env;
+        }
+
+        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.tkeystr}`);
+        return env;
+    }
+
+    private instantiateValidateStatement(stmt: ValidateStatement) {
+        const etype = this.checkExpression(env, stmt.cond, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return env;
+        }
+
+        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.tkeystr}`);
+        return env;
+    }
+
+    private instantiateDebugStatement(stmt: DebugStatement) {
+        this.checkExpression(env, stmt.value, undefined);
+
+        return env;
+    }
+
+    private instantiateVoidRefCallStatement(stmt: VoidRefCallStatement) {
+        assert(false, "Not implemented -- VoidRefCallStatement");
+    }
+
+    private instantiateVarUpdateStatement(stmt: VarUpdateStatement) {
+        assert(false, "Not implemented -- VarUpdateStatement");
+    }
+
+    private instantiateThisUpdateStatement(stmt: ThisUpdateStatement) {
+        assert(false, "Not implemented -- ThisUpdateStatement");
+    }
+
+    private instantiateSelfUpdateStatement(stmt: SelfUpdateStatement) {
+        assert(false, "Not implemented -- SelfUpdateStatement");
+    }
+
+    private instantiateEnvironmentUpdateStatement(stmt: EnvironmentUpdateStatement) {
+        assert(false, "Not implemented -- EnvironmentUpdateStatement");
+    }
+
+    private instantiateEnvironmentBracketStatement(stmt: EnvironmentBracketStatement) {
+        assert(false, "Not implemented -- EnvironmentBracketStatement");
+    }
+
+    private instantiateTaskStatusStatement(stmt: TaskStatusStatement) {
+        assert(false, "Not implemented -- TaskStatusStatement");
+    }
+
+    private instantiateTaskEventEmitStatement(stmt: TaskEventEmitStatement) {
+        assert(false, "Not implemented -- TaskEventEmitStatement");
+    }
+
+    private instantiateTaskYieldStatement(stmt: TaskYieldStatement) {
+        assert(false, "Not implemented -- TaskYieldStatement");
+    }
+
+    private instantiateBlockStatement(stmt: BlockStatement) {
+        let cenv = env;
+
+        if(stmt.isScoping) {
+            cenv = cenv.pushNewLocalScope();
+            for (let i = 0; i < stmt.statements.length; ++i) {
+                cenv = this.checkStatement(cenv, stmt.statements[i]);
+            }
+            cenv = cenv.popLocalScope();
+        }
+        else {
+            for (let i = 0; i < stmt.statements.length; ++i) {
+                cenv = this.checkStatement(cenv, stmt.statements[i]);
+            }
+        }
+
+        return env;
+    }
+
+    private instantiateStatement(stmt: Statement) {
+        switch(stmt.tag) {
+            case StatementTag.EmptyStatement: {
+                this.instantiateEmptyStatement(stmt as EmptyStatement);
+                break;
+            }
+            case StatementTag.VariableDeclarationStatement: {
+                this.instantiateVariableDeclarationStatement(stmt as VariableDeclarationStatement);
+                break;
+            }
+            case StatementTag.VariableMultiDeclarationStatement: {
+                this.instantiateVariableMultiDeclarationStatement(stmt as VariableMultiDeclarationStatement);
+                break;
+            }
+            case StatementTag.VariableInitializationStatement: {
+                this.instantiateVariableInitializationStatement(stmt as VariableInitializationStatement);
+                break;
+            }
+            case StatementTag.VariableMultiInitializationStatement: {
+                this.instantiateVariableMultiInitializationStatement(stmt as VariableMultiInitializationStatement);
+                break;
+            }
+            case StatementTag.VariableAssignmentStatement: {
+                this.instantiateVariableAssignmentStatement(stmt as VariableAssignmentStatement);
+                break;
+            }
+            case StatementTag.VariableMultiAssignmentStatement: {
+                this.instantiateVariableMultiAssignmentStatement(stmt as VariableMultiAssignmentStatement);
+                break;
+            }
+            case StatementTag.VariableRetypeStatement: {
+                this.instantiateVariableRetypeStatement(stmt as VariableRetypeStatement);
+                break;
+            }
+            case StatementTag.ReturnVoidStatement: {
+                this.instantiateReturnVoidStatement(stmt as ReturnVoidStatement);
+                break;
+            }
+            case StatementTag.ReturnSingleStatement: {
+                this.instantiateReturnSingleStatement(stmt as ReturnSingleStatement);
+                break;
+            }
+            case StatementTag.ReturnMultiStatement: {
+                this.instantiateReturnMultiStatement(stmt as ReturnMultiStatement);
+                break;
+            }
+            case StatementTag.IfStatement: {
+                this.instantiateIfStatement(stmt as IfStatement);
+                break;
+            }
+            case StatementTag.IfElseStatement: {
+                this.instantiateIfElseStatement(stmt as IfElseStatement);
+                break;
+            }
+            case StatementTag.IfElifElseStatement: {
+                this.instantiateIfElifElseStatement(stmt as IfElifElseStatement);
+                break;
+            }
+            case StatementTag.SwitchStatement: {
+                this.instantiateSwitchStatement(stmt as SwitchStatement);
+                break;
+            }
+            case StatementTag.MatchStatement: {
+                this.instantiateMatchStatement(stmt as MatchStatement);
+                break;
+            }
+            case StatementTag.AbortStatement: {
+                this.instantiateAbortStatement(stmt as AbortStatement);
+                break;
+            }
+            case StatementTag.AssertStatement: {
+                this.instantiateAssertStatement(stmt as AssertStatement);
+                break;
+            }
+            case StatementTag.ValidateStatement: {
+                this.instantiateValidateStatement(stmt as ValidateStatement);
+                break;
+            }
+            case StatementTag.DebugStatement: {
+                this.instantiateDebugStatement(stmt as DebugStatement);
+                break;
+            }
+            case StatementTag.VoidRefCallStatement: {
+                this.instantiateVoidRefCallStatement(stmt as VoidRefCallStatement);
+                break;
+            }
+            case StatementTag.VarUpdateStatement: {
+                this.instantiateVarUpdateStatement(stmt as VarUpdateStatement);
+                break;
+            }
+            case StatementTag.ThisUpdateStatement: {
+                this.instantiateThisUpdateStatement(stmt as ThisUpdateStatement);
+                break;
+            }
+            case StatementTag.SelfUpdateStatement: {
+                this.instantiateSelfUpdateStatement(stmt as SelfUpdateStatement);
+                break;
+            }
+            case StatementTag.EnvironmentUpdateStatement: {
+                this.instantiateEnvironmentUpdateStatement(stmt as EnvironmentUpdateStatement);
+                break;
+            }
+            case StatementTag.EnvironmentBracketStatement: {
+                this.instantiateEnvironmentBracketStatement(stmt as EnvironmentBracketStatement);
+                break;
+            }
+            case StatementTag.TaskStatusStatement: {
+                this.instantiateTaskStatusStatement(stmt as TaskStatusStatement);
+                break;
+            }
+            case StatementTag.TaskEventEmitStatement: {
+                this.instantiateTaskEventEmitStatement(stmt as TaskEventEmitStatement);
+                break;
+            }
+            case StatementTag.TaskYieldStatement: {
+                this.instantiateTaskYieldStatement(stmt as TaskYieldStatement);
+                break;
+            }
+            case StatementTag.BlockStatement: {
+                this.instantiateBlockStatement(stmt as BlockStatement);
+                break;
+            }
+            default: {
+                assert(false, `Unknown statement kind -- ${stmt.tag}`);
             }
         }
     }
