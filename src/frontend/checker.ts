@@ -3342,7 +3342,8 @@ class TypeChecker {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
-            const etype = this.checkExpression(env, validates[i].exp.exp, undefined);
+            const validate = validates[i];
+            const etype = this.checkExpression(env, validate.exp.exp, undefined);
             this.checkError(validates[i].sinfo, !this.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.tkeystr}`);
         }
     }
