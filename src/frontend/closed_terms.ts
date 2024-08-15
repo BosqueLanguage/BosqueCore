@@ -1,9 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "./assembly.js";
-import { FunctionInstantiationInfo, NamespaceInstantiationInfo } from "./instantiation_map.js";
-import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature } from "./type.js";
+import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "./assembly.js";
+import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
+import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
+import { SourceInfo } from "./build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
     return (tbinds.length !== 0) ? `<${tbinds.map(t => t.toString()).join(", ")}>` : "";
@@ -43,17 +44,17 @@ class PendingTypeFunction {
 
 class PendingTypeMethod {
     readonly type: TypeSignature;
-    readonly function: TypeFunctionDecl;
+    readonly method: ExplicitInvokeDecl;
     readonly instantiation: TypeSignature[];
 
     readonly mkey: string;
 
-    constructor(type: TypeSignature, func: TypeFunctionDecl, instantiation: TypeSignature[]) {
+    constructor(type: TypeSignature, mthd: ExplicitInvokeDecl, instantiation: TypeSignature[]) {
         this.type = type;
-        this.function = func;
+        this.method = mthd;
         this.instantiation = instantiation;
 
-        this.mkey = `${type.tkeystr}@${func.name}${computeTBindsKey(instantiation)}`;
+        this.mkey = `${type.tkeystr}@${mthd.name}${computeTBindsKey(instantiation)}`;
     }
 }
 
@@ -1112,7 +1113,9 @@ class InstantiationPropagator {
         this.instantiateExamples(idecl.params.map((p) => p.type), idecl.resultType, idecl.examples);
     }
 
-    private instantiateNamespaceFunctionDecl(fdecl: PendingNamespaceFunction) {
+    private instantiateNamespaceFunctionDecl(ns: NamespaceDeclaration, fdecl: PendingNamespaceFunction) {
+        this.instantiateNamespaceDeclaration(ns);
+
         this.currentMapping = undefined;
         if(fdecl.function.terms.length !== 0) {
             let tmap = new Map<string, TypeSignature>();
@@ -1127,21 +1130,33 @@ class InstantiationPropagator {
         this.instantiateExplicitInvokeDeclMetaData(fdecl.function, undefined);
 
         this.instantiateBodyImplementation(fdecl.function.body);
+
+        const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        if(!cnns.functionbinds.has(fdecl.function.name)) {
+            cnns.functionbinds.set(fdecl.function.name, new FunctionInstantiationInfo(fdecl.function.terms.length !== 0 ? [] : undefined));
+        }
+
+        if(fdecl.function.terms.length !== 0) {
+            ((cnns.functionbinds.get(fdecl.function.name) as FunctionInstantiationInfo).binds as TemplateNameMapper[]).push(this.currentMapping as TemplateNameMapper);
+            this.currentMapping = undefined;
+        }
     }
 
-    private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl) {
+    private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, tfd: PendingTypeFunction) {
         assert(false, "Not implemented -- instantiateTypeFunctionDecl");
     }
 
-    private instantiateMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: MethodDecl) { 
+    private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) { 
+        //TODO: dont forget to add any virtual or override methods here....
+
         assert(false, "Not implemented -- instantiateMethodDecl");
     }
 
-    private instantiateTaskMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: TaskMethodDecl) {
+    private instantiateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
         assert(false, "Not implemented -- instantiateTaskMethodDecl");
     }
 
-    private instantiateTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecl: TaskActionDecl) {
+    private instantiateTaskActionDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
         assert(false, "Not implemented -- instantiateTaskActionDecl");
     }
 
@@ -1172,272 +1187,181 @@ class InstantiationPropagator {
         }
     }
 
-    private instantiateAbstractNominalTypeDeclHelper(pdecl: PendingNominalTypeDecl, rcvr: TypeSignature, optfdecls: MemberFieldDecl[] | undefined) {
-        this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+    private instantiateAbstractNominalTypeDeclHelper(pdecl: PendingNominalTypeDecl, terms: string[], optfdecls: MemberFieldDecl[] | undefined, optreqtypes: TypeSignature[] | undefined) {
+        this.currentMapping = undefined;
+        if(terms.length !== 0) {
+            let tmap = new Map<string, TypeSignature>();
+            terms.forEach((t, ii) => {
+                tmap.set(t, pdecl.instantiation[ii])
+            });
 
-        if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
+            this.currentMapping = new TemplateNameMapper([tmap])
         }
 
-        this.checkProvides(tdecl.provides);
-        tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
-        tdecl.saturatedBFieldInfo = bnames;
+        this.instantiateProvides(pdecl.type.provides);
+
+        if(optreqtypes !== undefined) {
+            for(let i = 0; i < optreqtypes.length; ++i) {
+                this.instantiateTypeSignature(optreqtypes[i], this.currentMapping);
+            }
+        }
 
         //make sure all of the invariants on this typecheck
-        this.checkInvariants(bnames, tdecl.invariants);
-        this.checkValidates(bnames, tdecl.validates);
+        this.instantiateInvariants(pdecl.type.invariants);
+        this.instantiateValidates(pdecl.type.validates);
         
-        this.checkConstMemberDecls(tdecl, tdecl.consts);
-        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+        this.instantiateConstMemberDecls(pdecl.type, pdecl.type.consts);
 
         if(optfdecls !== undefined) {
-            this.checkMemberFieldDecls(bnames, optfdecls);
+            this.instantiateMemberFieldDecls(optfdecls);
         }
 
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, optfdecls, isentity);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
+        const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        if(!cnns.typebinds.has(pdecl.type.name)) {
+            cnns.typebinds.set(pdecl.type.name, []);
         }
-        this.file = CLEAR_FILENAME;
+        const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
+
+        if(terms.length === 0) {
+            bbl.push(new TypeInstantiationInfo(undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+        }
+        else {
+            bbl.push(new TypeInstantiationInfo(this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            this.currentMapping = undefined;
+        }
     }
 
-    private instantiateEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl) {
-        this.file = tdecl.file;
-        this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
-        
-        this.checkProvides(tdecl.provides);
- 
-        //Make sure that any provides types are not adding on fields, consts, or functions
-        const etype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        const providesdecls = this.relations.resolveTransitiveProvidesDecls(etype, this.constraints);
-        for(let i = 0; i < providesdecls.length; ++i) {
-            const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.tsig.decl.name}`);
-        }
-
-        this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
-
-        this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
-        this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
-
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
-
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
-
-        let opts = new Set<string>();
-        for(let i = 0; i < tdecl.members.length; ++i) {
-            this.checkError(tdecl.sinfo, opts.has(tdecl.members[i]), `Duplicate enum option ${tdecl.members[i]}`);
-            opts.add(tdecl.members[i]);
-        }
-        this.file = CLEAR_FILENAME;
+    private instantiateEnumTypeDecl(tdecl: EnumTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, [], undefined, undefined);
     }
 
-    private instantiateTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl) {
-        this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
-
+    private instantiateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, pdecl: PendingNominalTypeDecl) {
+        let mapping: TemplateNameMapper | undefined = undefined;
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
-        }
+            let tmap = new Map<string, TypeSignature>();
+            tdecl.terms.forEach((t, ii) => {
+                tmap.set(t.name, pdecl.instantiation[ii])
+            });
 
-        this.checkProvides(tdecl.provides);
-
-        //Make sure that any provides types are not adding on fields!
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const providesdecls = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints);
-        for(let i = 0; i < providesdecls.length; ++i) {
-            const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
-        }
-
-        if(this.checkTypeSignature(tdecl.valuetype)) {
-            //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
-
-            //make sure all of the invariants on this typecheck
-            this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
-            this.checkValidates([{name: "value", type: tdecl.valuetype}], tdecl.validates);
+            mapping = new TemplateNameMapper([tmap])
         }
         
-        this.checkConstMemberDecls(tdecl, tdecl.consts);
-        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+        const etypes = [
+            mapping !== undefined ? tdecl.valuetype.remapTemplateBindings(mapping) : tdecl.valuetype
+        ];
 
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
-        }
-        this.file = CLEAR_FILENAME;
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((t) => t.name), undefined, etypes);
     }
 
-    private instantiateInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, isentity);
+    private instantiateInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, pdecl: PendingNominalTypeDecl, terms: string[], optreqtypes: TypeSignature[] | undefined) {
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, terms, undefined, optreqtypes);
     }
 
-    private instantiatePrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, [], undefined);
     }
 
-    private instantiateOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true)
+    private instantiateOkTypeDecl(tdecl: OkTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], undefined)
     }
 
-    private instantiateErrTypeDecl(ns: NamespaceDeclaration, tdecl: ErrTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateErrTypeDecl(tdecl: ErrTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], undefined);
     }
 
-    private instantiateAPIRejectedTypeDecl(ns: NamespaceDeclaration, tdecl: APIRejectedTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateAPIFailedTypeDecl(ns: NamespaceDeclaration, tdecl: APIFailedTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateAPIFailedTypeDecl(tdecl: APIFailedTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateAPIErrorTypeDecl(ns: NamespaceDeclaration, tdecl: APIErrorTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateAPISuccessTypeDecl(ns: NamespaceDeclaration, tdecl: APISuccessTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateSomeTypeDecl(ns: NamespaceDeclaration, tdecl: SomeTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateSomeTypeDecl(tdecl: SomeTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateMapEntryTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["K", "V"], undefined);
     }
 
-    private instantiateListTypeDecl(ns: NamespaceDeclaration, tdecl: ListTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateListTypeDecl(tdecl: ListTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateStackTypeDecl(ns: NamespaceDeclaration, tdecl: StackTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateStackTypeDecl(tdecl: StackTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateQueueTypeDecl(ns: NamespaceDeclaration, tdecl: QueueTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateQueueTypeDecl(tdecl: QueueTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateSetTypeDecl(ns: NamespaceDeclaration, tdecl: SetTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateSetTypeDecl(tdecl: SetTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateMapTypeDecl(ns: NamespaceDeclaration, tdecl: MapTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateMapTypeDecl(tdecl: MapTypeDecl, pdecl: PendingNominalTypeDecl) {
+        const metype = [
+            new NominalTypeSignature(tdecl.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as MapEntryTypeDecl, pdecl.instantiation)
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["K", "V"],  metype);
     }
 
-    private instantiateEventListTypeDecl(ns: NamespaceDeclaration, tdecl: EventListTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
+    private instantiateEventListTypeDecl(tdecl: EventListTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
     }
 
-    private instantiateEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
-        this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, tdecl.fields, this.constraints);
-
-        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
-        this.file = CLEAR_FILENAME;
+    private instantiateEntityTypeDecl(tdecl: EntityTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((tt) => tt.name), tdecl.fields, undefined);
     }
 
-    private instantiateOptionTypeDecl(ns: NamespaceDeclaration, tdecl: OptionTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
+    private instantiateOptionTypeDecl(tdecl: OptionTypeDecl, pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            this.getWellKnownType("None"),
+            new NominalTypeSignature(tdecl.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, pdecl.instantiation)
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], stypes);
     }
 
-    private instantiateResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
-
-        this.constraints.pushConstraintScope(tdecl.terms);
-        for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
-            const ned = tdecl.nestedEntityDecls[i];
-            if(ned instanceof OkTypeDecl) {
-                this.checkOkTypeDecl(ns, ned);
-            }
-            else {
-                this.checkErrTypeDecl(ns, ned as ErrTypeDecl);
-            }
-        }
-        this.constraints.popConstraintScope();
+    private instantiateResultTypeDecl(tdecl: ResultTypeDecl, pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[0], pdecl.instantiation),
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[1], pdecl.instantiation)
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], stypes);
     }
 
-    private instantiateAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl) {
-        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
-
-        this.constraints.pushConstraintScope(tdecl.terms);
-        for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
-            const ned = tdecl.nestedEntityDecls[i];
-            if(ned instanceof APIRejectedTypeDecl) {
-                this.checkAPIRejectedTypeDecl(ns, ned);
-            }
-            else if(ned instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, ned);
-            }
-            else if(ned instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, ned);
-            }
-            else {
-                this.checkAPISuccessTypeDecl(ns, ned as APISuccessTypeDecl);
-            }
-        }
-        this.constraints.popConstraintScope();
+    private instantiateAPIResultTypeDecl(tdecl: APIResultTypeDecl, pdecl: PendingNominalTypeDecl) {
+        const stypes = [
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[0], pdecl.instantiation),
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[1], pdecl.instantiation),
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[2], pdecl.instantiation),
+            new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[3], pdecl.instantiation)
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], stypes);
     }
 
-    private instantiateConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
-        this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, tdecl.fields, this.constraints);
-
-        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, false);
-        this.file = CLEAR_FILENAME;
+    private instantiateConceptTypeDecl(tdecl: ConceptTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((tt) => tt.name), tdecl.fields, undefined);
     }
 
-    private instantiateDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, tdecl.fields, this.constraints);
-
-        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
+    private instantiateDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, pdecl: PendingNominalTypeDecl) {
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((tt) => tt.name), tdecl.fields, undefined);
     }
 
-    private instantiateDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl) {
-        this.file = tdecl.file;
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = this.relations.generateAllFieldBNamesInfo(rcvr, tdecl.fields, this.constraints);
-
-        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
-
-        for(let i = 0; i < tdecl.associatedMemberEntityDecls.length; ++i) {
-            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i]);
-        }
-        this.file = CLEAR_FILENAME;
-    }
-
-    private instantiateEventInfo(einfo: TypeSignature) {
-        const oksig = this.checkTypeSignature(einfo);
-        if(oksig) {
-            this.checkError(einfo.sinfo, !this.relations.isEventDataType(einfo), `Event type is not a valid event type -- ${einfo.tkeystr}`);
-        }
-    }
-
-    private instantiateStatusInfo(sinfo: TypeSignature[]) {
-        for(let i = 0; i < sinfo.length; ++i) {
-            const oksig = this.checkTypeSignature(sinfo[i]);
-            if(oksig) {
-                this.checkError(sinfo[i].sinfo, !this.relations.isStatusDataType(sinfo[i]), `Event type is not a valid status type -- ${sinfo[i].tkeystr}`);
-            }
-        }
+    private instantiateDatatypeTypeDecl(tdecl: DatatypeTypeDecl, pdecl: PendingNominalTypeDecl) {
+        const stypes = tdecl.associatedMemberEntityDecls.map((dd) => new NominalTypeSignature(tdecl.sinfo, undefined, dd, pdecl.instantiation));
+        
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((tt) => tt.name), tdecl.fields, stypes);
     }
 
     private instantiateEnvironmentVariableInformation(env: EnvironmentVariableInformation[]) {
@@ -1460,154 +1384,289 @@ class InstantiationPropagator {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
-    private instantiateTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
-        this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
-
+    private instantiateTaskDecl(tdecl: TaskDecl, pdecl: PendingNominalTypeDecl) {
+        this.currentMapping = undefined;
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
+            let tmap = new Map<string, TypeSignature>();
+            tdecl.terms.forEach((t, ii) => {
+                tmap.set(tdecl.name, pdecl.instantiation[ii])
+            });
+
+            this.currentMapping = new TemplateNameMapper([tmap])
         }
 
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
+        this.instantiateProvides(pdecl.type.provides);
 
         //make sure all of the invariants on this typecheck
-        this.checkInvariants(bnames, tdecl.invariants);
-        this.checkValidates(bnames, tdecl.validates);
+        this.instantiateInvariants(pdecl.type.invariants);
+        this.instantiateValidates(pdecl.type.validates);
         
-        this.checkConstMemberDecls(tdecl, tdecl.consts);
-        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-        this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);
-        this.checkTaskActionDecls(tdecl, rcvr, tdecl.actions);
+        this.instantiateConstMemberDecls(pdecl.type, pdecl.type.consts);
 
-        this.checkMemberFieldDecls(bnames, tdecl.fields);
+        this.instantiateMemberFieldDecls(tdecl.fields);
 
         if(tdecl.implementsapi !== undefined) {
             assert(false, "Not implemented -- checkTaskDecl implementsapi");
         }
         else {
             if(tdecl.eventsInfo !== undefined) {
-                this.checkEventInfo(tdecl.eventsInfo as TypeSignature);
+                this.instantiateTypeSignature(tdecl.eventsInfo, this.currentMapping);
             }
             if(tdecl.statusInfo !== undefined) {
-                this.checkStatusInfo(tdecl.statusInfo as TypeSignature[]);
+                for(let i = 0; i < tdecl.statusInfo.length; ++i) {
+                    this.instantiateTypeSignature(tdecl.statusInfo[i], this.currentMapping);
+                }
             }
             if(tdecl.envVarRequirementInfo !== undefined) {
-                this.checkEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[]);
+                this.instantiateEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[]);
             }
             if(tdecl.resourceImpactInfo !== undefined) {
-                this.checkResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
+                this.instantiateResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
             }
         }
 
-        if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
+        const cnns = this.currentNSInstantiation as NamespaceInstantiationInfo;
+        if(!cnns.typebinds.has(pdecl.type.name)) {
+            cnns.typebinds.set(pdecl.type.name, []);
         }
-        this.file = CLEAR_FILENAME;
+        const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
+
+        if(tdecl.terms.length === 0) {
+            bbl.push(new TypeInstantiationInfo(undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+        }
+        else {
+            bbl.push(new TypeInstantiationInfo(this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            this.currentMapping = undefined;
+        }
     }
 
     private instantiateNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
         for(let i = 0; i < cdecls.length; ++i) {
             const m = cdecls[i];
 
-            this.file = m.file;
-            if(this.checkTypeSignature(m.declaredType)) {
-                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
-                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
-
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.tkeystr} but got ${decltype.tkeystr}`);
-            }
-            this.file = CLEAR_FILENAME;
+            this.instantiateTypeSignature(m.declaredType, this.currentMapping);
+            this.instantiateExpression(m.value.exp);
         }
     }
 
-    private instantiateNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[]) {
-        for(let i = 0; i < tdecl.length; ++i) {
-            const tt = tdecl[i];
+    private instantiateNamespaceTypeDecl(ns: NamespaceDeclaration, pdecl: PendingNominalTypeDecl) {
+        this.instantiateNamespaceDeclaration(ns);
 
-            if(tt instanceof EnumTypeDecl) {
-                this.checkEnumTypeDecl(ns, tt);
-            }
-            else if(tt instanceof TypedeclTypeDecl) {
-                this.checkTypedeclTypeDecl(ns, tt);
-            }
-            else if(tt instanceof PrimitiveEntityTypeDecl) {
-                this.checkPrimitiveEntityTypeDecl(ns, tt);
-            }
-            else if(tt instanceof OkTypeDecl) {
-                this.checkOkTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ErrTypeDecl) {
-                this.checkErrTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIRejectedTypeDecl) {
-                this.checkAPIRejectedTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIFailedTypeDecl) {
-                this.checkAPIFailedTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIErrorTypeDecl) {
-                this.checkAPIErrorTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APISuccessTypeDecl) {
-                this.checkAPISuccessTypeDecl(ns, tt);
-            }
-            else if(tt instanceof SomeTypeDecl) {
-                this.checkSomeTypeDecl(ns, tt);
-            }
-            else if(tt instanceof MapEntryTypeDecl) {
-                this.checkMapEntryTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ListTypeDecl) {
-                this.checkListTypeDecl(ns, tt);
-            }
-            else if(tt instanceof StackTypeDecl) {
-                this.checkStackTypeDecl(ns, tt);
-            }
-            else if(tt instanceof QueueTypeDecl) {
-                this.checkQueueTypeDecl(ns, tt);
-            }
-            else if(tt instanceof SetTypeDecl) {
-                this.checkSetTypeDecl(ns, tt);
-            }
-            else if(tt instanceof MapTypeDecl) {
-                this.checkMapTypeDecl(ns, tt);
-            }
-            else if(tt instanceof EventListTypeDecl) {
-                this.checkEventListTypeDecl(ns, tt);
-            }
-            else if(tt instanceof EntityTypeDecl) {
-                this.checkEntityTypeDecl(ns, tt);
-            }
-            else if(tt instanceof OptionTypeDecl) {
-                this.checkOptionTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ResultTypeDecl) {
-                this.checkResultTypeDecl(ns, tt);
-            }
-            else if(tt instanceof APIResultTypeDecl) {
-                this.checkAPIResultTypeDecl(ns, tt);
-            }
-            else if(tt instanceof ConceptTypeDecl) {
-                this.checkConceptTypeDecl(ns, tt);
-            }
-            else if(tt instanceof DatatypeTypeDecl) {
-                this.checkDatatypeTypeDecl(ns, tt);
-            }
-            else {
-                assert(false, "Unknown type decl kind");
-            }
+        const tt = pdecl.type;
+        if(tt instanceof EnumTypeDecl) {
+            this.instantiateEnumTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof TypedeclTypeDecl) {
+            this.instantiateTypedeclTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof PrimitiveEntityTypeDecl) {
+            this.instantiatePrimitiveEntityTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof OkTypeDecl) {
+            this.instantiateOkTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ErrTypeDecl) {
+            this.instantiateErrTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APIRejectedTypeDecl) {
+            this.instantiateAPIRejectedTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APIFailedTypeDecl) {
+            this.instantiateAPIFailedTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APIErrorTypeDecl) {
+            this.instantiateAPIErrorTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APISuccessTypeDecl) {
+            this.instantiateAPISuccessTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof SomeTypeDecl) {
+            this.instantiateSomeTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof MapEntryTypeDecl) {
+            this.instantiateMapEntryTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ListTypeDecl) {
+            this.instantiateListTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof StackTypeDecl) {
+            this.instantiateStackTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof QueueTypeDecl) {
+            this.instantiateQueueTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof SetTypeDecl) {
+            this.instantiateSetTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof MapTypeDecl) {
+            this.instantiateMapTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof EventListTypeDecl) {
+            this.instantiateEventListTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof EntityTypeDecl) {
+            this.instantiateEntityTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof OptionTypeDecl) {
+            this.instantiateOptionTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ResultTypeDecl) {
+            this.instantiateResultTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof APIResultTypeDecl) {
+            this.instantiateAPIResultTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof ConceptTypeDecl) {
+            this.instantiateConceptTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+            this.instantiateDatatypeMemberEntityTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof DatatypeTypeDecl) {
+            this.instantiateDatatypeTypeDecl(tt, pdecl);
+        }
+        else {
+            assert(false, "Unknown type decl kind");
         }
     }
 
     private instantiateNamespaceDeclaration(decl: NamespaceDeclaration) {
+        const nskey = decl.fullnamespace.emit();
+        if(this.instantiation.find((nsi) => nsi.ns.emit() === nskey) !== undefined) {
+            this.instantiation.push(new NamespaceInstantiationInfo(decl.fullnamespace));
+        }
+        this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey) as NamespaceInstantiationInfo;
+
         this.instantiateNamespaceConstDecls(decl.consts);
     }
 
+    private shouldInstantiateAsRootType(tdecl: AbstractNominalTypeDecl): boolean {
+        return tdecl.terms.length === 0 && tdecl.attributes.find((attr) => attr.name === "public") !== undefined; 
+    }
 
-    static computeInstantiations(assembly: Assembly): AssemblyInstantiationInfo {
+    private shouldInstantiateAsRootInvoke(idecl: NamespaceFunctionDecl): boolean {
+        return idecl.terms.length === 0 && idecl.attributes.find((attr) => attr.name === "public") !== undefined; 
+    }
 
-        xxxx;
+    private instantiateRootNamespaceDeclaration(decl: NamespaceDeclaration) {
+        this.instantiateNamespaceConstDecls(decl.consts);
+
+        for(let i = 0; i < decl.functions.length; ++i) {
+            if(this.shouldInstantiateAsRootInvoke(decl.functions[i])) {
+                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], []));
+            }
+        }
+
+        for(let i = 0; i < decl.typedecls.length; ++i) {
+            if(this.shouldInstantiateAsRootType(decl.typedecls[i])) {
+                const tsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, decl.typedecls[i], []);
+                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, decl.typedecls[i], []));
+            }
+        }
+
+        for(let i = 0; i < decl.apis.length; ++i) {
+            this.instantiateAPIDecl(decl.apis[i]);
+        }
+
+        for(let i = 0; i < decl.tasks.length; ++i) {
+            if(this.shouldInstantiateAsRootType(decl.typedecls[i])) {
+                const tsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, decl.typedecls[i], []);
+                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, decl.typedecls[i], []));
+            }
+        }
+
+        for(let i = 0; i < decl.subns.length; ++i) {
+            this. instantiateRootNamespaceDeclaration(decl.subns[i]);
+        }
+    }
+
+    private hasPendingWork(): boolean {
+        if(this.pendingNominalTypeDecls.length !== 0) {
+            return true;
+        }
+        
+        return this.pendingNamespaceFunctions.length !== 0 || this.pendingTypeFunctions.length !== 0 || this.pendingTypeMethods.length !== 0;
+    }
+
+    private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
+        const ccore = assembly.getCoreNamespace();
+
+        const tdecl = ccore.typedecls.find((td) => td.name === name);
+        assert(tdecl !== undefined, "Failed to find well known type");
+
+        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
+    }
+
+    static computeInstantiations(assembly: Assembly, roonts: string): NamespaceInstantiationInfo[] {
+        let wellknownTypes = new Map<string, TypeSignature>();
+        wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
+        InstantiationPropagator.loadWellKnownType(assembly, "None", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Some", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Bool", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Int", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Nat", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "BigInt", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "BigNat", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Rational", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Float", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Decimal", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "Complex", wellknownTypes);
+
+        InstantiationPropagator.loadWellKnownType(assembly, "String", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "CString", wellknownTypes);
+
+        let iim = new InstantiationPropagator(assembly, wellknownTypes);
+
+        const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;
+        iim.instantiateRootNamespaceDeclaration(rootns);
+
+        while(iim.hasPendingWork()) {
+            if(iim.pendingNominalTypeDecls.length !== 0) {
+                const ntd = iim.pendingNominalTypeDecls[0];
+                const ns = assembly.resolveNamespaceDecl(ntd.type.ns.ns) as NamespaceDeclaration;
+                if(ntd.type instanceof TaskDecl) {
+                    iim.instantiateTaskDecl(ntd.type as TaskDecl, ntd);
+                }
+                else {
+                    iim.instantiateNamespaceTypeDecl(ns, ntd);
+                }
+
+                iim.pendingNominalTypeDecls.shift();
+            }
+            else {
+                if(iim.pendingNamespaceFunctions.length !== 0) {
+                    const nfd = iim.pendingNamespaceFunctions[0];
+                    iim.instantiateNamespaceFunctionDecl(nfd.namespace, nfd);
+
+                    iim.pendingNamespaceFunctions.shift();
+                }
+                else if(iim.pendingTypeFunctions.length !== 0) {
+                    const tfd = iim.pendingTypeFunctions[0];
+                    iim.instantiateTypeFunctionDecl((tfd.type as NominalTypeSignature).decl, tfd);
+
+                    iim.pendingTypeFunctions.shift();
+                }
+                else {
+                    const tmd = iim.pendingTypeMethods[0];
+                    if(tmd.method instanceof TaskMethodDecl) {
+                        iim.instantiateTaskMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                    }
+                    else if(tmd.method instanceof TaskActionDecl) {
+                        iim.instantiateTaskActionDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                    }
+                    else {
+                        iim.instantiateMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
+                    }
+
+                    iim.pendingTypeMethods.shift();
+                }
+            }
+        }
+
+        return iim.instantiation;
     }
 }
 
