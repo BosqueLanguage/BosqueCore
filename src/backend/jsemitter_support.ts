@@ -106,48 +106,48 @@ class EmitNameManager {
         }
     }
 
-    static generateDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+    static generateDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): [string, boolean] {
         const nns = EmitNameManager.emitNamespaceAccess(currentns, currentns);
 
         if(nns === "") {
             if(fv.terms.length === 0) {
-                return `function ${fv.name}`;
+                return [`export function ${fv.name}`, false];
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return `"${fv.name}${termstr}": `;
+                return [`"${fv.name}${termstr}": `, true];
             }
         }
         else {
             if(fv.terms.length === 0) {
-                return `${fv.name}: `;
+                return [`${fv.name}: `, true];
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return `"${fv.name}${termstr}": `;
+                return [`"${fv.name}${termstr}": `, true];
             }
         }
     }
 
-    static generateOnCompleteDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+    static generateOnCompleteDeclarationNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): [string, boolean] {
         const nns = EmitNameManager.emitNamespaceAccess(currentns, currentns);
 
         if(nns === "") {
             if(fv.terms.length === 0) {
-                return `function ${fv.name}$OnReturn`;
+                return [`export function ${fv.name}$OnReturn`, false];
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return `"${fv.name}${termstr}$OnReturn": `;
+                return [`"${fv.name}${termstr}$OnReturn": `, true];
             }
         }
         else {
             if(fv.terms.length === 0) {
-                return `${fv.name}$OnReturn: `;
+                return [`${fv.name}$OnReturn: `, true];
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return `"${fv.name}${termstr}$OnReturn": `;
+                return [`"${fv.name}${termstr}$OnReturn": `, true];
             }
         }
     }

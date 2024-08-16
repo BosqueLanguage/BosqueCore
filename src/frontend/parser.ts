@@ -7,7 +7,7 @@ import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifi
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, ErrTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_typedecl, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_typedecl, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
 
 import { accepts, initializeLexer, lexFront } from "@bosque/jsbrex";
 
@@ -61,20 +61,15 @@ const TokenStrings = {
     PathItem: "[LITERAL_PATH_ITEM]",
     PathTemplateItem: "[LITERAL_TEMPLATE_PATH_ITEM]",
 
-    DateTime: "[LITERAL_DATETIME]",
-    UTCDateTime: "[LITERAL_UTC_DATETIME]",
+    TZDateTime: "[LITERAL_TZTIME]",
+    TAITime: "[LITERAL_TAI_TIME]",
     PlainDate: "[LITERAL_PLAIN_DATE]",
     PlainTime: "[LITERAL_PLAIN_TIME]",
-    TickTime: "[LITERAL_TICK_TIME]",
     LogicalTime: "[LITERAL_LOGICAL_TIME]",
     Timestamp: "[LITERAL_TIMESTAMP]",
 
     DeltaDateTime: "[LITERAL_DELTA_DATETIME]",
-    DeltaUTCDateTime: "[LITERAL_DELTA_UTC_DATETIME]",
-    DeltaPlainDate: "[LITERAL_DELTA_PLAIN_DATE]",
-    DeltaPlainTime: "[LITERAL_DELTA_PLAIN_TIME]",
     DeltaSeconds: "[LITERAL_DELTA_SECONDS]",
-    DeltaTickTime: "[LITERAL_DELTA_TICK_TIME]",
     DeltaLogicalTime: "[LITERAL_DELTA_LOGICAL_TIME]",
     DeltaTimestamp: "[LITERAL_DELTA_TIMESTAMP]",
 
@@ -116,8 +111,8 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
     "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimestamp",
-    "DeltaDateTime", "DeltaPlainDate", "DeltaPlainTime", "DeltaSeconds", "DeltaTickTime", "DeltaLogicalTime", "DeltaISOTimestamp",
+    "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
+    "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
     "String", "CString", 
     "UnicodeRegex", "CRegex", "PathRegex",
     "Path", "Fragment", "Glob"
@@ -390,11 +385,9 @@ class Lexer {
     private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
     
-    private static readonly _s_ticktimeRe = `/(${Lexer._s_intValueRE})"t"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private static readonly _s_zerodenomRationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"${Lexer._s_literalTDOnlyTagRE}/`;
@@ -499,21 +492,9 @@ class Lexer {
     }
 
     private tryLexIntegralLikeToken(): boolean {
-        const mtick = lexFront(Lexer._s_ticktimeRe, this.utf8StrPos);
-        if(mtick !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mtick.length, TokenStrings.TickTime, mtick);
-            return true;
-        }
-
         const mlogical = lexFront(Lexer._s_logicaltimeRe, this.utf8StrPos);
         if(mlogical !== null) {
             this.recordLexTokenWData(this.jsStrPos + mlogical.length, TokenStrings.LogicalTime, mlogical);
-            return true;
-        }
-
-        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, this.utf8StrPos);
-        if(m_deltatick !== null) {
-            this.recordLexTokenWData(this.jsStrPos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
             return true;
         }
 
@@ -809,7 +790,7 @@ class Lexer {
     private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
 
     private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_utcdatetimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_taitimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_plaindateRE = `/${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
@@ -817,13 +798,13 @@ class Lexer {
     private tryLexDateTime() {
         const mdt = lexFront(Lexer._s_datatimeRE, this.utf8StrPos);
         if(mdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.DateTime, mdt);
+            this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.TZDateTime, mdt);
             return true;
         }
 
-        const mutcdt = lexFront(Lexer._s_utcdatetimeRE, this.utf8StrPos);
+        const mutcdt = lexFront(Lexer._s_taitimeRE, this.utf8StrPos);
         if(mutcdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.UTCDateTime, mutcdt);
+            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.TAITime, mutcdt);
             return true;
         }
 
@@ -847,22 +828,19 @@ class Lexer {
 
         return false;
     }
-    private static _s_datatimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_utcdatetimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static _s_deltadatevalueRE = '([0-9]{1,4})"-"([0-9]{1,2})"-"([0-9]{1,2})';
+    private static _s_deltatimevalueRE = '([0-9]{1,2})":"([0-9]{1,2})":"([0-9]{1,2})';
+
+    private static _s_datetimeDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_deltatimevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTimeDelta() {
-        const mdt = lexFront(Lexer._s_datatimeDeltaRE, this.utf8StrPos);
+        const mdt = lexFront(Lexer._s_datetimeDeltaRE, this.utf8StrPos);
         if(mdt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.DeltaDateTime, mdt);
-            return true;
-        }
-
-        const mutcdt = lexFront(Lexer._s_utcdatetimeDeltaRE, this.utf8StrPos);
-        if(mutcdt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.DeltaUTCDateTime, mutcdt);
             return true;
         }
 
@@ -874,13 +852,13 @@ class Lexer {
 
         const mpd = lexFront(Lexer._s_plaindateDeltaRE, this.utf8StrPos);
         if(mpd !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.DeltaPlainDate, mpd);
+            this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.DeltaDateTime, mpd + "T00:00:00");
             return true;
         }
 
         const mpt = lexFront(Lexer._s_plaintimeDeltaRE, this.utf8StrPos);
         if(mpt !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.DeltaPlainTime, mpt);
+            this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.DeltaDateTime, "0000-00-00T" + mpt);
             return true;
         }
 
@@ -2926,8 +2904,6 @@ class Parser {
     private parseLetExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.ensureAndConsumeTokenAlways(SYM_lbracebar, "let expression");
-
         const decls = this.parseListOf<{vname: string, vtype: TypeSignature | undefined, value: Expression}>("let expression", KW_let, KW_in, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "let expression variable name");
             const vname = this.parseIdentifierAsIgnoreableVariable();
@@ -2945,8 +2921,6 @@ class Parser {
         });
 
         const body = this.parseExpression();
-
-        this.ensureAndConsumeTokenAlways(SYM_rbracebar, "let expression");
 
         return new LetExpression(sinfo, decls, body);
     }
@@ -3031,13 +3005,13 @@ class Parser {
             const hstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralSHAContentHashExpression, hstr);
         }
-        else if(tk === TokenStrings.DateTime) {
+        else if(tk === TokenStrings.TZDateTime) {
             const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDateTimeExpression, dstr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTZDateTimeExpression, dstr);
         }
-        else if(tk === TokenStrings.UTCDateTime) {
+        else if(tk === TokenStrings.TAITime) {
             const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralUTCDateTimeExpression, dstr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTAITimeExpression, dstr);
         }
         else if(tk === TokenStrings.PlainDate) {
             const dstr = this.consumeTokenAndGetValue();
@@ -3051,10 +3025,6 @@ class Parser {
             const tstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralLogicalTimeExpression, tstr);
         }
-        else if(tk === TokenStrings.TickTime) {
-            const tstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTickTimeExpression, tstr);
-        }
         else if(tk === TokenStrings.Timestamp) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralISOTimeStampExpression, dstr);
@@ -3063,14 +3033,6 @@ class Parser {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaDateTimeExpression, dstr);
         }
-        else if(tk === TokenStrings.DeltaPlainDate) {
-            const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainDateExpression, dstr);
-        }
-        else if(tk === TokenStrings.DeltaPlainTime) {
-            const tstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainTimeExpression, tstr);
-        }
         else if(tk === TokenStrings.DeltaTimestamp) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaISOTimeStampExpression, dstr);
@@ -3078,10 +3040,6 @@ class Parser {
         else if(tk === TokenStrings.DeltaSeconds) {
             const dstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaSecondsExpression, dstr);
-        }
-        else if(tk === TokenStrings.DeltaTickTime) {
-            const dstr = this.consumeTokenAndGetValue();
-            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaTickExpression, dstr);
         }
         else if(tk === TokenStrings.DeltaLogicalTime) {
             const dstr = this.consumeTokenAndGetValue();
@@ -3155,7 +3113,7 @@ class Parser {
         else if(tk === SYM_rbrack) {
             return this.parseEListConstructorExpression();
         }
-        else if (tk === SYM_lbracebar) {
+        else if (tk === KW_let) {
             return this.parseLetExpression();
         }
         else if(tk === SYM_lparen) {
@@ -4190,6 +4148,36 @@ class Parser {
         }
     }
 
+    /*
+    TODO: use this with env-scoped and other scopeable statements
+
+    private parseUnScopedBlockStatement(): BlockStatement {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.env.pushBlockScope();
+
+        const closeparen = this.scanMatchingParens(SYM_lbracebar, SYM_rbracebar);
+        this.prepStateStackForNested("BlockStatement", closeparen);
+
+        let stmts: Statement[] = [];
+        this.ensureAndConsumeTokenAlways(SYM_lbracebar, "block statement");
+        while(!this.testToken(SYM_rbracebar) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+            const stmt = this.parseStatement();
+            stmts.push(stmt);
+        }
+        this.ensureAndConsumeTokenAlways(SYM_rbracebar, "block statement");
+        
+        this.popStateIntoParentOk();
+        this.env.popBlockScope();
+
+        if(stmts.length === 0) {
+            this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
+        }
+
+        return new BlockStatement(sinfo, stmts, false);
+    }
+    */
+
     private parseScopedBlockStatement(): BlockStatement {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -4213,7 +4201,7 @@ class Parser {
             this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
         }
 
-        return new BlockStatement(sinfo, stmts);
+        return new BlockStatement(sinfo, stmts, true);
     }
 
     private parseIfElseStatement(): Statement {

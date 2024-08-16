@@ -1,8 +1,8 @@
-import { TemplateNameMapper } from "./type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper } from "./type.js";
 
 
 class FunctionInstantiationInfo {
-    binds: TemplateNameMapper[] | undefined;
+    readonly binds: TemplateNameMapper[] | undefined;
 
     constructor(binds: TemplateNameMapper[] | undefined) {
         this.binds = binds;
@@ -14,7 +14,7 @@ class FunctionInstantiationInfo {
 }
 
 class MethodInstantiationInfo {
-    binds: TemplateNameMapper[] | undefined;
+    readonly binds: TemplateNameMapper[] | undefined;
 
     constructor(binds: TemplateNameMapper[] | undefined) {
         this.binds = binds;
@@ -26,9 +26,9 @@ class MethodInstantiationInfo {
 }
 
 class TypeInstantiationInfo {
-    binds: TemplateNameMapper | undefined;
-    functionbinds: Map<string, FunctionInstantiationInfo>;
-    methodbinds: Map<string, MethodInstantiationInfo>;
+    readonly binds: TemplateNameMapper | undefined;
+    readonly functionbinds: Map<string, FunctionInstantiationInfo>;
+    readonly methodbinds: Map<string, MethodInstantiationInfo>;
 
     constructor(binds: TemplateNameMapper | undefined, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>) {
         this.binds = binds;
@@ -42,13 +42,20 @@ class TypeInstantiationInfo {
     }
 }
 
-class AssemblyInstantiationInfo {
-    functionbinds: Map<string, FunctionInstantiationInfo>;
-    typebinds: Map<string, TypeInstantiationInfo[]>;
+class NamespaceInstantiationInfo {
+    readonly ns: FullyQualifiedNamespace;
 
-    constructor(functionbinds: Map<string, FunctionInstantiationInfo>, typebinds: Map<string, TypeInstantiationInfo[]>) {
-        this.functionbinds = functionbinds;
-        this.typebinds = typebinds;
+    readonly functionbinds: Map<string, FunctionInstantiationInfo>;
+    readonly typebinds: Map<string, TypeInstantiationInfo[]>;
+
+    readonly elists: Map<string, EListTypeSignature>;
+
+    constructor(ns: FullyQualifiedNamespace) {
+        this.ns = ns;
+        
+        this.functionbinds = new Map<string, FunctionInstantiationInfo>();
+        this.typebinds = new Map<string, TypeInstantiationInfo[]>();
+        this.elists = new Map<string, EListTypeSignature>();
     }
 }
 
@@ -57,5 +64,5 @@ export {
     FunctionInstantiationInfo,
     MethodInstantiationInfo,
     TypeInstantiationInfo,
-    AssemblyInstantiationInfo
+    NamespaceInstantiationInfo
 };
