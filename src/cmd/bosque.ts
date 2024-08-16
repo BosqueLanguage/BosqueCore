@@ -7,6 +7,12 @@ import { Status } from "./status_output.js";
 import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const bosque_dir: string = path.join(__dirname, "../../../");
+const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
+
 let fullargs = [...process.argv].slice(2);
 
 function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
@@ -17,6 +23,8 @@ function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug",
     Status.output("writing JS code to disk...\n");
     const nndir = path.normalize(outname);
     try {
+        fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
+
         for(let i = 0; i < jscode.length; ++i) {
             const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
             fs.writeFileSync(fname, jscode[i].contents);

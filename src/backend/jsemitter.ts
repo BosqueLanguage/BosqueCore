@@ -7,6 +7,14 @@ import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, Temp
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 
+const prefix = 
+'"use strict";\n' +
+'const JSMap = Map;\n' +
+'\n' +
+'import {_$softfails, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
+'\n'
+;
+
 class JSEmitter {
     readonly assembly: Assembly;
     readonly mode: "release" | "debug";
@@ -1669,15 +1677,15 @@ class JSEmitter {
 
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
-            let resf = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping);
-            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}${fmt.indent("\n")}}`;
+            let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
+            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}${fmt.indent("\n")}}`;
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = undefined;
 
-        const nf = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping);
-        return {body: `${nf}${sig} => ${body}`, resfimpl: resfimpl, tests: tests};
+        const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
+        return {body: `${nf}${sig}${nss ? " => " : " "}${body}`, resfimpl: resfimpl, tests: tests};
     }
 
     private emitFunctionDecls(optenclosingtype: NominalTypeSignature | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -1772,11 +1780,11 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
+            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp}`);
         }
 
         if(cdecls.length !== 0) {
-            cdecls.push("_$consts: new Map()");
+            cdecls.push("_$consts: new JSMap()");
         }
 
         return cdecls;
@@ -1794,7 +1802,7 @@ class JSEmitter {
     }
 
     private emitTypeSymbol(rcvr: NominalTypeSignature): string {
-        return `$tsym: Symbol("${rcvr.tkeystr}");`;
+        return `$tsym: Symbol("${rcvr.tkeystr}")`;
     }
 
     private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
@@ -1870,10 +1878,12 @@ class JSEmitter {
         const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
+        const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n");
+
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `{\n${[...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
         if(isnested) {
             return `${rcvr.tkeystr}: ${obj}`;
@@ -1883,7 +1893,7 @@ class JSEmitter {
                 return `${rcvr.tkeystr}: ${obj}`;
             }
             else {
-                return `const ${rcvr.tkeystr} = ${obj}`;
+                return `export const ${rcvr.tkeystr} = ${obj}`;
             }
         }
     }
@@ -1910,7 +1920,7 @@ class JSEmitter {
 
         const obj = `{\n${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
 
-        return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: mdecls.tests};
+        return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: mdecls.tests};
     }
 
     private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
@@ -1997,7 +2007,7 @@ class JSEmitter {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2038,7 +2048,7 @@ class JSEmitter {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2052,7 +2062,7 @@ class JSEmitter {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2066,7 +2076,7 @@ class JSEmitter {
             return {decl: `${rcvr.tkeystr}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2095,10 +2105,10 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
+            cdecls.push(`export function ${m.name}() => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
         }
 
-        return [...cdecls, `let _$consts = new Map()`];
+        return [...cdecls, `let _$consts = new JSMap();`];
     }
 
     private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2226,10 +2236,10 @@ class JSEmitter {
             }
 
             if(ddecls.length === 1) {
-                alldecls.push(...ddecls);
+                alldecls.push(fmt.indent(ddecls[0] + ";"));
             }
             else {
-                alldecls.push(`const ${tt.name} = {\n${ddecls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`);
+                alldecls.push(`export const ${tt.name} = {\n${ddecls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`);
             }
         }
 
@@ -2260,9 +2270,18 @@ class JSEmitter {
         decls.push(...taskdecls);
 
         const ddecls = decls.join("\n\n");
-        const exportdecl = `export {${[...decl.declaredNames].map((tt) => tt).join(", ")}};`;
 
-        return {contents: `${ddecls}\n\n${exportdecl}`, tests: tests};
+        let imports = "";
+        if(decl.name !== "Core") {
+            imports = `import * as Core from "./Core.mjs";\n\n`;
+        }
+
+        let mainop = "\n";
+        if(decl.name === "Main") {
+            mainop = `\n\nconsole.log(main());\n`;
+        }
+
+        return {contents: prefix + imports + ddecls + mainop, tests: tests};
     }
 
     static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {

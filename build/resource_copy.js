@@ -23,5 +23,6 @@ function copyResourceDir(dirfrom, dirto) {
 process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core/", "core/");
+copyResourceDir("backend/runtime/", "jsruntime/");
 
 process.stdout.write(`done!\n`);
