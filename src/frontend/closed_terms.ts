@@ -1532,7 +1532,7 @@ class InstantiationPropagator {
 
     private instantiateNamespaceDeclaration(decl: NamespaceDeclaration) {
         const nskey = decl.fullnamespace.emit();
-        if(this.instantiation.find((nsi) => nsi.ns.emit() === nskey) !== undefined) {
+        if(this.instantiation.find((nsi) => nsi.ns.emit() === nskey) === undefined) {
             this.instantiation.push(new NamespaceInstantiationInfo(decl.fullnamespace));
         }
         this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey) as NamespaceInstantiationInfo;

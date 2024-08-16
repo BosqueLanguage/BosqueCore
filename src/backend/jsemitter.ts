@@ -1775,7 +1775,11 @@ class JSEmitter {
             cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
         }
 
-        return [...cdecls, `_$consts: new Map()`];
+        if(cdecls.length !== 0) {
+            cdecls.push("_$consts: new Map()");
+        }
+
+        return cdecls;
     }
 
     private emitMemberFieldInitializers(tdecl: AbstractNominalTypeDecl, decls: MemberFieldDecl[], fmt: JSCodeFormatter): string[] {
@@ -2066,12 +2070,20 @@ class JSEmitter {
         }
     }
 
-    private emitAPIDecls(ns: NamespaceDeclaration, adecls: APIDecl[]): string {
-        assert(false, "Not implemented -- checkAPIDecl");
+    private emitAPIDecls(ns: NamespaceDeclaration, adecls: APIDecl[]): string[] {
+        if(adecls.length !== 0) {
+            assert(false, "Not implemented -- checkAPIDecl");
+        }
+
+        return [];
     }
 
-    private emitTaskDecls(ns: NamespaceDeclaration, tdecls: TaskDecl[]): string {
-        assert(false, "Not implemented -- checkTaskDecl");
+    private emitTaskDecls(ns: NamespaceDeclaration, tdecls: TaskDecl[]): string[] {
+        if(tdecls.length !== 0) {
+            assert(false, "Not implemented -- checkTaskDecl");
+        }
+
+        return [];
     }
 
     private emitNamespaceConstDecls(decls: NamespaceConstDecl[]): string[] {

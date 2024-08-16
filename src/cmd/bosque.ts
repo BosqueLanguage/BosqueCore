@@ -18,7 +18,7 @@ function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug",
     const nndir = path.normalize(outname);
     try {
         for(let i = 0; i < jscode.length; ++i) {
-            const fname = path.join(nndir, `${jscode[i].ns}.mjs`);
+            const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
             fs.writeFileSync(fname, jscode[i].contents);
         }
     }
@@ -65,7 +65,7 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 
 const asm = checkAssembly(fullargs);
 if(asm !== undefined) {
-    const outdir = path.join(path.dirname(path.normalize(fullargs[0])), "jsout");
+    const outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
     Status.output(`JS output directory: ${outdir}\n`);
 
     fs.rmSync(outdir, { recursive: true, force: true });
