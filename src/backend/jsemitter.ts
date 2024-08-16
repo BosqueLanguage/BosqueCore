@@ -2261,13 +2261,15 @@ class JSEmitter {
         let tests: string[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
-            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit()) as NamespaceInstantiationInfo;
+            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                emitter.currentns = nsdecl;
+                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii);
 
-            emitter.currentns = nsdecl;
-            const code = emitter.emitNamespaceDeclaration(nsdecl, nsii);
-
-            results.push({ns: nsdecl.fullnamespace, contents: code.contents});
-            tests.push(...code.tests);
+                results.push({ns: nsdecl.fullnamespace, contents: code.contents});
+                tests.push(...code.tests);
+            }
         }
 
         return [results, tests];
