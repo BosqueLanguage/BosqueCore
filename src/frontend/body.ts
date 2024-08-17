@@ -522,7 +522,7 @@ class ConstructorEListExpression extends ConstructorExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "[", "]");
+        return this.args.emit(fmt, "(|", "|)");
     }
 }
 

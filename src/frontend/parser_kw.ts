@@ -226,14 +226,18 @@ const TermRestrictions = [
 const SYM_lbrack = "[";
 const SYM_lparen = "(";
 const SYM_lbrace = "{";
+const SYM_lbrackbar = "[|";
+const SYM_lparenbar = "(|";
 const SYM_lbracebar = "{|";
+
 const SYM_rbrack = "]";
 const SYM_rparen = ")";
 const SYM_rbrace = "}";
+const SYM_rbrackbar = "|]";
+const SYM_rparenbar = "|)";
 const SYM_rbracebar = "|}";
 const SYM_langle = "<";
 const SYM_rangle = ">";
-
 
 const SYM_amp = "&";
 const SYM_bar = "|";
@@ -279,8 +283,8 @@ const SYM_wildcard = "**";
 //Reserved
 const SYM_questionquestion = "??";
 
-const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar, SYM_langle];
-const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar, SYM_rangle];
+const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbrackbar, SYM_lparenbar, SYM_lbracebar, SYM_langle];
+const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbrackbar, SYM_rparenbar, SYM_rbracebar, SYM_rangle];
 
 const StandardSymbols = [
     SYM_amp,
@@ -424,11 +428,15 @@ export {
     SYM_lparen,
     SYM_lbrace,
     SYM_langle,
+    SYM_lbrackbar,
+    SYM_lparenbar,
     SYM_lbracebar,
     SYM_rbrack,
     SYM_rparen,
     SYM_rbrace,
     SYM_rangle,
+    SYM_rbrackbar,
+    SYM_rparenbar,
     SYM_rbracebar,
 
     SYM_amp,

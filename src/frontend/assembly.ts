@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.js";
+import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -695,6 +695,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
+    optofexp: LiteralExpressionValue | undefined; 
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -709,11 +710,16 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
+        let ofexp = "";
+        if(this.optofexp !== undefined) {
+            ofexp = ` of ${this.optofexp.emit(true, fmt)}`;
+        }
+
         if(bg.length === 0 && this.provides.length === 0) {
-            return tdcl + ";";
+            return tdcl + ofexp + ";";
         }
         else {
-            return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+            return tdcl + ofexp + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
     }
 }

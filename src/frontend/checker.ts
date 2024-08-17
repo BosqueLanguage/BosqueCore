@@ -3598,6 +3598,34 @@ class TypeChecker {
             this.constraints.pushConstraintScope(tdecl.terms);
         }
 
+        const okvalue = this.checkTypeSignature(tdecl.valuetype);
+        if(!okvalue) {
+            return;
+        }
+
+        if(tdecl.optofexp !== undefined) {
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(this.getWellKnownType("Void"), this.constraints);
+            const etype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], this.getWellKnownType("Void"), infertype), tdecl.optofexp.exp, undefined);
+
+            const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
+            this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `OptOf expression cannot be used on a primitive type -- ${tdecl.valuetype.tkeystr}`);
+
+            if(primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
+                if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
+                    xxxx;
+                }
+                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
+                    xxxx;
+                }
+                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl &&primtivetype.decl.name === "Buffer") {
+                    xxxx;
+                }
+                else {
+                    this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
+                }
+            }
+        }
+
         this.checkProvides(tdecl.provides);
 
         //Make sure that any provides types are not adding on fields!
