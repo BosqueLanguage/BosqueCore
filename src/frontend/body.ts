@@ -396,7 +396,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
+        return `${this.value.emit(toplevel, fmt)}<${this.constype.tkeystr}>`;
     }
 }
 

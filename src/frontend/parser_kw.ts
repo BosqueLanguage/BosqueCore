@@ -38,6 +38,7 @@ const KW_self = "self";
 const KW_switch = "switch";
 const KW_then = "then";
 const KW_true = "true";
+const KW_type = "type";
 const KW_var = "var";
 const KW_yield = "yield";
 const KW_under = "_";
@@ -68,7 +69,6 @@ const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_in = "in";
 const KW_task = "task";
-const KW_typedecl = "typedecl";
 const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
@@ -84,8 +84,7 @@ const KW_chktest = "chktest";
 
 //reserved
 const KW_operator = "operator";
-const KW_type = "type";
-const KW_literal = "literal";
+const KW_variant = "variant";
 
 const KeywordStrings = [
     KW_recursive_q,
@@ -121,7 +120,6 @@ const KeywordStrings = [
     KW_in,
     KW_invariant,
     KW_let,
-    KW_literal,
     KW_match,
     KW_method,
     KW_namespace,
@@ -149,10 +147,10 @@ const KeywordStrings = [
     KW_this,
     KW_true,
     KW_type,
-    KW_typedecl,
     KW_datatype,
     KW_using,
     KW_validate,
+    KW_variant,
     KW_var,
     KW_when,
     KW_yield,
@@ -381,7 +379,6 @@ export {
     KW_in,
     KW_invariant,
     KW_let,
-    KW_literal,
     KW_match,
     KW_method,
     KW_namespace,
@@ -409,10 +406,10 @@ export {
     KW_this,
     KW_true,
     KW_type,
-    KW_typedecl,
     KW_datatype,
     KW_using,
     KW_validate,
+    KW_variant,
     KW_var,
     KW_when,
     KW_yield,

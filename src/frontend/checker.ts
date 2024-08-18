@@ -3604,21 +3604,30 @@ class TypeChecker {
         }
 
         if(tdecl.optofexp !== undefined) {
-            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(this.getWellKnownType("Void"), this.constraints);
-            const etype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], this.getWellKnownType("Void"), infertype), tdecl.optofexp.exp, undefined);
-
             const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
-            this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `OptOf expression cannot be used on a primitive type -- ${tdecl.valuetype.tkeystr}`);
+            this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `could not resolve the value type -- ${tdecl.valuetype.tkeystr}`);
 
-            if(primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
+            const checkerexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp);
+            this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
+
+            if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
                 if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
-                    xxxx;
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
+
+                    const uretype = this.getWellKnownType("UnicodeRegex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
                 }
                 else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
-                    xxxx;
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
+
+                    const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
                 }
-                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl &&primtivetype.decl.name === "Buffer") {
-                    xxxx;
+                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralPathGlobExpression, `of expression must be path glob`);
+
+                    const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
                 }
                 else {
                     this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);

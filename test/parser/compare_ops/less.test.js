@@ -11,7 +11,7 @@ describe ("Parser -- basic <", () => {
     });
 
     it("should fail stuck operator", function () {
-        parseTestExpError("2n<3n", 'Expected ";" but got "<" when parsing "line statement"', "Nat");
+        parseTestExpError("2n<3n", 'Expected ">" but got "3n" when parsing "tagged literal"', "Nat");
     });
 });
 
@@ -24,7 +24,7 @@ describe ("Parser -- basic <=", () => {
     });
 
     it("should fail stuck operator", function () {
-        parseTestExpError("2n<=3n", 'Expected ";" but got "<" when parsing "line statement"', "Nat");
+        parseTestExpError("2n<=3n", 'Expected ">" but got "=" when parsing "tagged literal"', "Nat");
     });
 });
 
