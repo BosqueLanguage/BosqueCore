@@ -23,5 +23,6 @@
         "src/cmd/*.ts",
         "test/parser/parse_nf.ts",
         "test/typecheck/typecheck_nf.ts",
+        "test/runtime/runtime_nf.ts"
     ]
 }
