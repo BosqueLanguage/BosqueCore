@@ -384,6 +384,8 @@ class LiteralRegexExpression extends Expression {
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
+    
+    optResolvedString: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);

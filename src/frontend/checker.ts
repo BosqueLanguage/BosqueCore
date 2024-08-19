@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
-import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem } from "@bosque/jsbrex";
+import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts } from "@bosque/jsbrex";
 
 class TypeError {
     readonly file: string;
@@ -891,6 +891,47 @@ class TypeChecker {
         const btype = this.relations.getTypeDeclBasePrimitiveType(exp.constype);
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
+
+        if(exp.constype.decl.optofexp !== undefined) {
+            const eeres = this.relations.assembly.resolveValidatorLiteral(exp.constype.decl.optofexp.exp);
+
+            //error gets reported on type declaration -- so no need to report here
+            if(eeres !== undefined) {
+                if(eeres.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                    if(exp.value.tag !== ExpressionTag.LiteralStringExpression) {
+                        this.reportError(exp.sinfo, `Expected string literal for regex validation`);
+                    }
+                    else {
+                        const vs = validateStringLiteral((exp.value as LiteralSimpleExpression).value.slice(1, -1));
+                        exp.optResolvedString = vs !== null ? vs : undefined;
+
+                        this.checkError(exp.sinfo, vs !== null && !accepts((eeres as LiteralRegexExpression).value, vs), `Literal value ${exp.value} does not match regex -- ${(eeres as LiteralRegexExpression).value}`);
+                    }
+                }
+                else if(eeres.tag === ExpressionTag.LiteralCRegexExpression) {
+                    if(exp.value.tag !== ExpressionTag.LiteralCStringExpression) {
+                        this.reportError(exp.sinfo, `Expected cstring literal for cregex validation`);
+                    }
+                    else {
+                        const vs = validateCStringLiteral((exp.value as LiteralSimpleExpression).value.slice(1, -1));
+                        exp.optResolvedString = vs !== null ? vs : undefined;
+
+                        this.checkError(exp.sinfo, vs !== null && !accepts((eeres as LiteralRegexExpression).value, vs), `Literal value ${exp.value} does not match regex -- ${(eeres as LiteralRegexExpression).value}`);
+                    }
+                }
+                else if(eeres.tag === ExpressionTag.LiteralPathGlobExpression) {
+                    if(exp.value.tag !== ExpressionTag.LiteralPathExpression) {
+                        this.reportError(exp.sinfo, `Expected path literal for pathglob validation`);
+                    }
+                    else {
+                        ; //TODO: implement pathglob validation here;
+                    }
+                }
+                else {
+                    ; //error gets reported in declaration so no need to report here
+                }
+            }
+        }
 
         return exp.setType(exp.constype);
     }
@@ -3648,7 +3689,7 @@ class TypeChecker {
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
             //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
+            this.checkError(tdecl.sinfo, !this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
 
             //make sure all of the invariants on this typecheck
             this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);

@@ -16,3 +16,9 @@ describe ("Parser -- type decl of number", () => {
         parseTestFunctionInFile('type FVal = Float; [FUNC]', 'function main(): FVal { return 0.0f<FVal>; }');    
     });
 });
+
+describe ("Parser -- type decl of number with value", () => {
+    it("should parse numeric type decls", function () {
+        parseTestFunctionInFile('type NVal = Int; [FUNC]', 'function main(): Int { let x = -2i<NVal>; return x.value; }');    
+    });
+});
