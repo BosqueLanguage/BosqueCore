@@ -384,6 +384,8 @@ class LiteralRegexExpression extends Expression {
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
+    
+    optResolvedString: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
@@ -396,7 +398,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}(${this.constype.tkeystr})`;
+        return `${this.value.emit(toplevel, fmt)}<${this.constype.tkeystr}>`;
     }
 }
 
@@ -522,7 +524,7 @@ class ConstructorEListExpression extends ConstructorExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "[", "]");
+        return this.args.emit(fmt, "(|", "|)");
     }
 }
 

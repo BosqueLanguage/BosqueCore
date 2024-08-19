@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
-import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem } from "@bosque/jsbrex";
+import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";
 
 class TypeError {
     readonly file: string;
@@ -66,6 +66,62 @@ class TypeChecker {
 
     private isVoidType(t: TypeSignature): boolean {
         return (t.tkeystr === "Void");
+    }
+
+    private checkTypeDeclOfRestrictions(optofexp: LiteralExpressionValue | undefined, exp: Expression): string | undefined {
+        if(exp.tag === ExpressionTag.LiteralStringExpression) {
+            const vs = validateStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
+            this.checkError(exp.sinfo, vs === null, `Invalid string literal value ${(exp as LiteralSimpleExpression).value}`);
+
+            if(optofexp !== undefined && vs !== null) {
+                const reexp = this.relations.assembly.resolveValidatorLiteral(optofexp.exp);
+                if(reexp === undefined || reexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
+                    this.reportError(exp.sinfo, `Unable to resolve regex validator`);
+                }
+                else {
+                    if(optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                        this.checkError(exp.sinfo, !accepts((optofexp.exp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${(optofexp.exp as LiteralRegexExpression).value}`);
+                    }
+                    else {
+                        const nsaccess = optofexp.exp as AccessNamespaceConstantExpression;
+                        const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
+                        this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, true), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${rename}`);
+                    }
+                }
+            }
+
+            return vs !== null ? vs : undefined;
+        }
+        else if(exp.tag === ExpressionTag.LiteralCStringExpression) {
+            const vs = validateCStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
+            this.checkError(exp.sinfo, vs === null, `Invalid cstring literal value ${(exp as LiteralSimpleExpression).value}`);
+
+            if(optofexp !== undefined && vs !== null) {
+                const reexp = this.relations.assembly.resolveValidatorLiteral(optofexp.exp);
+                if(reexp === undefined || reexp.tag !== ExpressionTag.LiteralCRegexExpression) {
+                    this.reportError(exp.sinfo, `Unable to resolve cregex validator`);
+                }
+                else {
+                    if(optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
+                        this.checkError(exp.sinfo, !accepts((optofexp.exp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${(optofexp.exp as LiteralRegexExpression).value}`);
+                    }
+                    else {
+                        const nsaccess = optofexp.exp as AccessNamespaceConstantExpression;
+                        const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
+                        this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, false), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${rename}`);
+                    }
+                }
+            }
+
+            return vs !== null ? vs : undefined;
+        }
+        else {
+            // 
+            //TODO: validation for path literal values
+            //
+        }
+
+        return undefined;
     }
 
     private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
@@ -830,7 +886,7 @@ class TypeChecker {
     private checkLiteralUnicodeRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
         //TODO: validate regex parse is error free
 
-        return exp.setType(this.getWellKnownType("UnicodeRegex"));
+        return exp.setType(this.getWellKnownType("Regex"));
     }
 
     private checkLiteralCRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
@@ -890,8 +946,9 @@ class TypeChecker {
 
         const btype = this.relations.getTypeDeclBasePrimitiveType(exp.constype);
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
-        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the typedecl base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
+        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
+        exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl.optofexp, exp.value);
         return exp.setType(exp.constype);
     }
 
@@ -3598,6 +3655,43 @@ class TypeChecker {
             this.constraints.pushConstraintScope(tdecl.terms);
         }
 
+        const okvalue = this.checkTypeSignature(tdecl.valuetype);
+        if(!okvalue) {
+            return;
+        }
+
+        if(tdecl.optofexp !== undefined) {
+            const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
+            this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `could not resolve the value type -- ${tdecl.valuetype.tkeystr}`);
+
+            const checkerexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp);
+            this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
+
+            if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
+                if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
+
+                    const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
+                }
+                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
+
+                    const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
+                }
+                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralPathGlobExpression, `of expression must be path glob`);
+
+                    const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
+                }
+                else {
+                    this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
+                }
+            }
+        }
+
         this.checkProvides(tdecl.provides);
 
         //Make sure that any provides types are not adding on fields!
@@ -3611,7 +3705,7 @@ class TypeChecker {
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
             //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
+            this.checkError(tdecl.sinfo, !this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.tkeystr}`);
 
             //make sure all of the invariants on this typecheck
             this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
@@ -4042,6 +4136,9 @@ class TypeChecker {
 
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "Regex", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "CRegex", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
 

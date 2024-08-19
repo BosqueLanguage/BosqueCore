@@ -217,7 +217,7 @@ class EListTypeSignature extends TypeSignature {
     readonly entries: TypeSignature[];
 
     constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
-        super(sinfo, "(" + entries.map((tt) => tt.tkeystr).join(", ") + ")");
+        super(sinfo, "(|" + entries.map((tt) => tt.tkeystr).join(", ") + "|)");
         this.entries = entries;
     }
 

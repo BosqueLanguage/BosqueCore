@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.js";
+import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -695,6 +695,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
+    optofexp: LiteralExpressionValue | undefined; 
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -703,17 +704,22 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.tkeystr}`;
+        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}type ${this.name}${this.emitTerms()} = ${this.valuetype.tkeystr}`;
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
+        let ofexp = "";
+        if(this.optofexp !== undefined) {
+            ofexp = ` of ${this.optofexp.emit(true, fmt)}`;
+        }
+
         if(bg.length === 0 && this.provides.length === 0) {
-            return tdcl + ";";
+            return tdcl + ofexp + ";";
         }
         else {
-            return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+            return tdcl + ofexp + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
     }
 }
@@ -1580,6 +1586,26 @@ class Assembly {
         }
 
         return curns;
+    }
+
+    resolveValidatorLiteral(exp: Expression): Expression | undefined {
+        if(exp.tag === ExpressionTag.AccessNamespaceConstantExpression) {
+            const cexp = exp as AccessNamespaceConstantExpression;
+            const nsconst = this.resolveNamespaceConstant(cexp.ns, cexp.name);
+            if(nsconst === undefined) {
+                return undefined;
+            }
+
+            return this.resolveValidatorLiteral(nsconst.value.exp);
+        }
+        else {
+            if(exp.tag === ExpressionTag.LiteralUnicodeRegexExpression || exp.tag === ExpressionTag.LiteralCRegexExpression || exp.tag === ExpressionTag.LiteralPathGlobExpression) {
+                return exp;
+            }
+            else {
+                return undefined;
+            }
+        }
     }
 
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {

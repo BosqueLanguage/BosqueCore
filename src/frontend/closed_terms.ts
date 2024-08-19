@@ -1618,6 +1618,9 @@ class InstantiationPropagator {
         InstantiationPropagator.loadWellKnownType(assembly, "String", wellknownTypes);
         InstantiationPropagator.loadWellKnownType(assembly, "CString", wellknownTypes);
 
+        InstantiationPropagator.loadWellKnownType(assembly, "Regex", wellknownTypes);
+        InstantiationPropagator.loadWellKnownType(assembly, "CRegex", wellknownTypes);
+
         let iim = new InstantiationPropagator(assembly, wellknownTypes);
 
         const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;
