@@ -72,11 +72,11 @@ __internal __typedeclable __keycomparable entity CString {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity UnicodeRegex {
-    __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
+__internal entity Regex {
+    __safe internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;
     %*
     method accepts(s: String): Bool {
-        return UnicodeRegex::s_accepts(this, s);
+        return Regex::s_accepts(this, s);
     }
     *%
 }

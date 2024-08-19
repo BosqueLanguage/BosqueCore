@@ -114,7 +114,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
     "String", "CString", 
-    "UnicodeRegex", "CRegex", "PathRegex",
+    "Regex", "CRegex", "PathRegex",
     "Path", "Fragment", "Glob"
 ];
 

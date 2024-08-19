@@ -657,7 +657,7 @@ class TypeCheckerRelations {
         }
     }
 
-    private getTypeDeclBasePrimitiveType_Helper(t: TypeSignature): TypeSignature | undefined {
+    getTypeDeclBasePrimitiveType(t: TypeSignature): TypeSignature | undefined {
         assert(!(t instanceof ErrorTypeSignature), "Checking getprimitive on errors");
 
         if(!(t instanceof NominalTypeSignature)) {
@@ -668,7 +668,7 @@ class TypeCheckerRelations {
             return t;
         }
         else if(t.decl instanceof TypedeclTypeDecl) {
-            return this.getTypeDeclBasePrimitiveType_Helper(t.decl.valuetype.remapTemplateBindings(this.generateTemplateMappingForTypeDecl(t)));
+            return this.getTypeDeclBasePrimitiveType(t.decl.valuetype.remapTemplateBindings(this.generateTemplateMappingForTypeDecl(t)));
         }
         else if(t.decl instanceof InternalEntityTypeDecl) {
             const isdeclable = t.decl.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
@@ -678,22 +678,6 @@ class TypeCheckerRelations {
             else {
                 return t;
             }
-        }
-        else {
-            return undefined;
-        }
-    }
-
-    //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
-    getTypeDeclBasePrimitiveType(t: TypeSignature): TypeSignature | undefined {
-        assert(!(t instanceof ErrorTypeSignature), "Checking base on errors");
-
-        if(!(t instanceof NominalTypeSignature)) {
-            return undefined;
-        }
-
-        if(t.decl instanceof TypedeclTypeDecl) {
-            return this.getTypeDeclBasePrimitiveType_Helper(t);
         }
         else {
             return undefined;
