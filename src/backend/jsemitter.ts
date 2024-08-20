@@ -41,7 +41,7 @@ class JSEmitter {
     }
 
     private tproc(ttype: TypeSignature): TypeSignature {
-        return ttype.remapTemplateBindings(this.getTemplateMapper());
+        return this.mapper !== undefined ? ttype.remapTemplateBindings(this.getTemplateMapper()) : ttype;
     }
 
     private getCurrentNamespace(): NamespaceDeclaration {
@@ -1126,7 +1126,7 @@ class JSEmitter {
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
         //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just cast on this if it does)
-        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype || stmt.exp.getType());
+        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype as TypeSignature);
         
         if(stmt.name === "_") {
             return `${rhsexp};`;

@@ -22,6 +22,30 @@ function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");
 }
 
+function fromBSONHelper(val: any, type: string): string {
+    if(type === "None") {
+        return "null";
+    }
+    else if(type === "Bool") {
+        return val ? "true" : "false";
+    }
+    else if(type === "Nat") {
+        return val.toString();
+    }
+    else if(type === "Int") {
+        return val.toString();
+    }
+    else if(type === "String") {
+        return `"${val}"`;
+    }
+    else if(type === "CString") {
+        return `"${val}"`;
+    }
+    else {
+        return `unknown[${val}, ${type}]`;
+    }
+}
+
 function buildAssembly(srcfile: string): Assembly | undefined {
     const userpackage = new PackageConfig([], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
     const [asm, perrors, terrors] = generateASM(userpackage);
@@ -54,7 +78,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
     return true;
 }
 
-function runMainCode(code: string, expected: string) {
+function runMainCode(code: string, expected: [any, string]) {
     const nndir = fs.mkdtempSync("bosque-test-");
 
     let result = "";
@@ -85,7 +109,7 @@ function runMainCode(code: string, expected: string) {
         fs.rmSync(nndir, { recursive: true });
     }
 
-    assert.equal(wsnorm(result), wsnorm(expected));
+    assert.equal(wsnorm(result), fromBSONHelper(expected[0], expected[1]));
 }
 
 export {
