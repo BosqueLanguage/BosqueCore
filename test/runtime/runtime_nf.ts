@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
 
-//import { tmpdir } from 'node:os';
+import { tmpdir } from 'node:os';
 
 function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");
@@ -79,7 +79,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
 }
 
 function runMainCode(code: string, expected: [any, string]) {
-    const nndir = fs.mkdtempSync("bosque-test-");
+    const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-test-"));
 
     let result = "";
     try {

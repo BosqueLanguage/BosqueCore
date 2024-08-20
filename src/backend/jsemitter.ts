@@ -533,7 +533,7 @@ class JSEmitter {
             }
         }
 
-        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}.${exp.name}(${argl.join(", ")})`;
+        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1540,9 +1540,10 @@ class JSEmitter {
         let inits: string[] = [];
         for(let i = 0; i < params.length; ++i) {
             const p = params[i];
-            assert(p.optDefaultValue !== undefined);
-
-            inits.push(`if(${p.name} === undefined) { ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
+            
+            if(p.optDefaultValue !== undefined) {
+                inits.push(`if(${p.name} === undefined) { ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
+            }
         }
 
         return inits;
@@ -2278,7 +2279,7 @@ class JSEmitter {
 
         let mainop = "\n";
         if(decl.name === "Main") {
-            mainop = "\nprocess.stdout.write(`${main()}`);\n";
+            mainop = "\nprocess.stdout.write(`${main()}\\n`);\n";
         }
 
         return {contents: prefix + imports + ddecls + mainop, tests: tests};

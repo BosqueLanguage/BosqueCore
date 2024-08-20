@@ -3,7 +3,6 @@
 import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("Exec -- simple declare only", () => {
     it("should type simple declares", function () {
         runMainCode("public function main(): Int { var x: Int; return 0i; }", [0n, "Int"]);
