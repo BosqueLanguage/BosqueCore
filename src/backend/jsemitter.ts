@@ -248,19 +248,19 @@ class JSEmitter {
     }
 
     private emitLiteralNatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralIntExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralBigNatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralBigIntExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralRationalExpression(exp: LiteralSimpleExpression): string {
@@ -637,8 +637,13 @@ class JSEmitter {
     }
 
     private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression, toplevel: boolean): string {
-        const eexp = `${exp.op}${this.emitExpression(exp.exp, false)}`;
-        return toplevel ? `(${eexp})` : eexp;
+        if(exp.op === "+") {
+            return this.emitExpression(exp.exp, toplevel);
+        }
+        else {
+            const eexp = `${exp.op}${this.emitExpression(exp.exp, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitBinOpratorExpression(sinfo: SourceInfo, lhs: Expression, rhs: Expression, oprtype: string, op: string, toplevel: boolean): string {

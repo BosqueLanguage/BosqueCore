@@ -52,6 +52,8 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 
     if(perrors.length === 0 && terrors.length === 0) {
         Status.output("Assembly generation successful!\n");
+
+        return asm;
     }
     else {
         Status.error("Failed to generate assembly!\n");
@@ -66,9 +68,9 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
         for(let i = 0; i < terrors.length; ++i) {
             Status.error(`Type Error: ${terrors[i].msg}\n`);
         }
-    }
 
-    return asm;
+        return undefined;
+    }
 }
 
 const asm = checkAssembly(fullargs);
