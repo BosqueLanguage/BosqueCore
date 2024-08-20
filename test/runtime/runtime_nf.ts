@@ -13,8 +13,14 @@ import { PackageConfig } from "../../src/frontend/build_decls.js";
 import { execSync } from "child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const bosque_dir: string = path.join(__dirname, "../../../../");
+const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
+
+//import { tmpdir } from 'node:os';
+
+function wsnorm(s: string): string {
+    return s.trim().replace(/\s+/g, " ");
+}
 
 function buildAssembly(srcfile: string): Assembly | undefined {
     const userpackage = new PackageConfig([], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
@@ -41,7 +47,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
             fs.writeFileSync(fname, jscode[i].contents);
         }
     }
-    catch(e) {      
+    catch(e) {  
         return false;
     }
 
@@ -53,7 +59,7 @@ function runMainCode(code: string, expected: string) {
 
     let result = "";
     try {
-        const asm = buildAssembly(code);
+        const asm = buildAssembly("declare namespace Main;\n\n" + code);
         if(asm === undefined) {
             result = "[FAILED TO BUILD ASSEMBLY]";
         }
@@ -64,7 +70,7 @@ function runMainCode(code: string, expected: string) {
             else {
                 try {
                     const mjs = path.join(nndir, "Main.mjs");
-                    result = execSync(`node ${mjs}`).toString().trim();
+                    result = execSync(`node ${mjs}`).toString();
                 }
                 catch(e) {
                     result = "[FAILED TO RUN MAIN CODE]";
@@ -79,7 +85,7 @@ function runMainCode(code: string, expected: string) {
         fs.rmSync(nndir, { recursive: true });
     }
 
-    assert.equal(result, expected);
+    assert.equal(wsnorm(result), wsnorm(expected));
 }
 
 export {

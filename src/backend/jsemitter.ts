@@ -2278,7 +2278,7 @@ class JSEmitter {
 
         let mainop = "\n";
         if(decl.name === "Main") {
-            mainop = `\n\nconsole.log(main());\n`;
+            mainop = "\nprocess.stdout.write(`${main()}`);\n";
         }
 
         return {contents: prefix + imports + ddecls + mainop, tests: tests};
