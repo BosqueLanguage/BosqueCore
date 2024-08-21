@@ -3,7 +3,7 @@
 import { checkTestExp, checkTestExpError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Checker -- Simple Boolean not", () => {
+describe ("Checker -- Simple numeric sign", () => {
     it("should check simple not", function () {
         checkTestExp("-(3i)", "Int");
         checkTestExp("+(5n)", "Nat");
