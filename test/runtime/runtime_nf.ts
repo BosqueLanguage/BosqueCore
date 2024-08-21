@@ -78,7 +78,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
     return true;
 }
 
-function runMainCode(code: string, expected: [any, string]) {
+function execMainCode(code: string): string {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-test-"));
 
     let result = "";
@@ -109,9 +109,22 @@ function runMainCode(code: string, expected: [any, string]) {
         fs.rmSync(nndir, { recursive: true });
     }
 
+    return wsnorm(result);
+}
+
+function runMainCode(code: string, expected: [any, string]) {
+    const result = execMainCode(code);
+
     assert.equal(wsnorm(result), fromBSONHelper(expected[0], expected[1]));
 }
 
+
+function runMainCodeError(code: string, expected: string) {
+    const result = execMainCode(code);
+
+    assert.equal(wsnorm(result), expected);
+}
+
 export {
-    runMainCode
+    runMainCode, runMainCodeError
 };

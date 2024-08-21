@@ -1,6 +1,6 @@
 "use strict";
 
-import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
+import { runMainCode, runMainCodeError } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Exec -- Simple subtraction", () => {
@@ -9,13 +9,7 @@ describe ("Exec -- Simple subtraction", () => {
         runMainCode("public function main(): Int { return 2i - -2i; }", [4n, "Int"]);
     });
 
-    /*
-    it("should fail not same type", function () {
-        checkTestExpError("0n - 5i", "Int", "Subtraction operator requires 2 arguments of the same type");
+    it("should fail underflow", function () {
+        runMainCodeError("public function main(): Nat { return 1n - 5n; }", "Error -- operation results in numeric out-of-bounds @ test.bsq:3");
     });
-
-    it("should fail not numeric", function () {
-        checkTestExpError("none - true", "Nat", "Binary operator requires a unique numeric type");
-    });
-    */
 });
