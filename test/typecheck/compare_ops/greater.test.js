@@ -20,7 +20,7 @@ describe ("Checker -- basic >", () => {
     });
 });
 
-describe ("Checker -- basic <=", () => {
+describe ("Checker -- basic >=", () => {
     it("should check compare simple types", function () {
         checkTestExp("0n >= 1n", "Bool");
         checkTestExp("+2i >= -2i", "Bool");
