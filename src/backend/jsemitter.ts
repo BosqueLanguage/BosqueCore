@@ -41,7 +41,7 @@ class JSEmitter {
     }
 
     private tproc(ttype: TypeSignature): TypeSignature {
-        return ttype.remapTemplateBindings(this.getTemplateMapper());
+        return this.mapper !== undefined ? ttype.remapTemplateBindings(this.getTemplateMapper()) : ttype;
     }
 
     private getCurrentNamespace(): NamespaceDeclaration {
@@ -248,19 +248,19 @@ class JSEmitter {
     }
 
     private emitLiteralNatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralIntExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralBigNatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralBigIntExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value.slice(0, -1)}n`;
+        return `${exp.value.slice(exp.value.startsWith("+") ? 1 : 0, -1)}n`;
     }
 
     private emitLiteralRationalExpression(exp: LiteralSimpleExpression): string {
@@ -533,7 +533,7 @@ class JSEmitter {
             }
         }
 
-        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}.${exp.name}(${argl.join(", ")})`;
+        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -637,8 +637,13 @@ class JSEmitter {
     }
 
     private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression, toplevel: boolean): string {
-        const eexp = `${exp.op}${this.emitExpression(exp.exp, false)}`;
-        return toplevel ? `(${eexp})` : eexp;
+        if(exp.op === "+") {
+            return this.emitExpression(exp.exp, toplevel);
+        }
+        else {
+            const eexp = `${exp.op}${this.emitExpression(exp.exp, false)}`;
+            return toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitBinOpratorExpression(sinfo: SourceInfo, lhs: Expression, rhs: Expression, oprtype: string, op: string, toplevel: boolean): string {
@@ -1126,7 +1131,7 @@ class JSEmitter {
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
         //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just cast on this if it does)
-        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype || stmt.exp.getType());
+        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype as TypeSignature);
         
         if(stmt.name === "_") {
             return `${rhsexp};`;
@@ -1540,9 +1545,10 @@ class JSEmitter {
         let inits: string[] = [];
         for(let i = 0; i < params.length; ++i) {
             const p = params[i];
-            assert(p.optDefaultValue !== undefined);
-
-            inits.push(`if(${p.name} === undefined) { ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
+            
+            if(p.optDefaultValue !== undefined) {
+                inits.push(`if(${p.name} === undefined) { ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
+            }
         }
 
         return inits;
@@ -2278,7 +2284,7 @@ class JSEmitter {
 
         let mainop = "\n";
         if(decl.name === "Main") {
-            mainop = `\n\nconsole.log(main());\n`;
+            mainop = "\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
         }
 
         return {contents: prefix + imports + ddecls + mainop, tests: tests};

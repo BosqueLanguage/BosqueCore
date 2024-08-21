@@ -715,7 +715,7 @@ class InstantiationPropagator {
     }
 
     private instantiateVariableInitializationStatement(stmt: VariableInitializationStatement) {
-        this.instantiateTypeSignature(stmt.vtype, this.currentMapping);
+        this.instantiateTypeSignature(stmt.actualtype as TypeSignature, this.currentMapping);
         this.instantiateExpressionRHS(stmt.exp);
     }
 
