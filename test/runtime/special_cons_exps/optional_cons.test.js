@@ -3,19 +3,14 @@
 import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it } from "node:test";
 
-/*
 describe ("Checker -- Special Constructor Optional", () => {
     it("should check none with simple infer", function () {
         runMainCode("public function main(): None { return none; }", [null, "None"]);
-        runMainCode("public function main(): Int? { return none", "Int?");
-    });
-
-    it("should check some with simple infer", function () {
-        runMainCode("some(3i)", "Some<Int>");
-        runMainCode("some(3i)", "Int?");
+        runMainCode("public function main(): Int { let x: Int? = some(3i); return x@some; }");
     });
 });
 
+/*
 describe ("Checker -- Special Constructor Result", () => {
     it("should check ok with simple infer", function () {
         runMainCode("ok(3i)", "Result<Int, Bool>::Ok");

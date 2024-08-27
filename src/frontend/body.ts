@@ -902,7 +902,7 @@ class PostfixProjectFromNames extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.(${this.names.join(", ")})`;
+        return `.(|${this.names.join(", ")}|)`;
     }
 }
 
@@ -954,7 +954,7 @@ class PostfixAssignFields extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.${this.updates.emit(fmt, "[", "]")}`;
+        return `${this.updates.emit(fmt, "[", "]")}`;
     }
 }
 
@@ -993,7 +993,7 @@ class PostfixLiteralKeyAccess extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `![${this.kexp.emit(true, fmt)}]`;
+        return `[|${this.kexp.emit(true, fmt)}|]`;
     }
 }
 
@@ -1432,7 +1432,7 @@ class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
 
     emit(fmt: CodeFormatter): string {
         const updatel = this.updates.map((arg) => `${arg.envkey.exp.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
-        return `.[ ${updatel} ]`;
+        return `[ ${updatel} ]`;
     }
 }
 
@@ -1466,7 +1466,8 @@ class TaskRunExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::run<${this.task.tkeystr + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(this.args.emit("(", ")"), ${this.enva.emit(fmt)})`;
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::run<${this.task.tkeystr + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl}, ${this.enva.emit(fmt)})`;
     }
 }
 

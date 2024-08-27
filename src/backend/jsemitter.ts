@@ -488,8 +488,8 @@ class JSEmitter {
         assert(false, "Not implemented -- LambdaInvoke");
     }
 
-    private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {
-        assert(false, "Not implemented -- SpecialConstructor");
+    private emitSpecialConstructorExpression(exp: SpecialConstructorExpression, toplevel: boolean): string {
+        return this.emitBUAsNeeded(this.emitExpression(exp.arg, toplevel), exp.arg.getType(), exp.getType());
     }
     
     private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
@@ -563,11 +563,11 @@ class JSEmitter {
     }
 
     private emitPostfixProjectFromNames(val: string, exp: PostfixProjectFromNames): string {
-        assert(false, "Not Implemented -- checkPostfixProjectFromNames");
+        assert(false, "Not Implemented -- emitPostfixProjectFromNames");
     }
 
     private emitPostfixAccessFromIndex(val: string, exp: PostfixAccessFromIndex): string {
-        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
+        assert(false, "Not Implemented -- emitPostfixAccessFromIndex");
     }
 
     private emitPostfixIsTest(val: string, exp: PostfixIsTest): string {
@@ -579,15 +579,15 @@ class JSEmitter {
     }
 
     private emitPostfixAssignFields(val: string, exp: PostfixAssignFields): string {
-        assert(false, "Not Implemented -- checkPostfixAssignFields");
+        assert(false, "Not Implemented -- emitPostfixAssignFields");
     }
 
     private emitPostfixInvoke(val: string, exp: PostfixInvoke): string {
-        assert(false, "Not Implemented -- checkPostfixInvoke");
+        assert(false, "Not Implemented -- emitPostfixInvoke");
     }
 
     private emitPostfixLiteralKeyAccess(val: string, exp: PostfixLiteralKeyAccess): string {
-        assert(false, "Not Implemented -- checkPostfixLiteralKeyAccess");
+        assert(false, "Not Implemented -- emitPostfixLiteralKeyAccess");
     }
 
     private emitPostfixOp(exp: PostfixOp, toplevel: boolean): string {
@@ -599,27 +599,35 @@ class JSEmitter {
             switch(op.tag) {
                 case PostfixOpTag.PostfixAccessFromName: {
                     eexp = this.emitPostfixAccessFromName(eexp, op as PostfixAccessFromName);
+                    break;
                 }
                 case PostfixOpTag.PostfixProjectFromNames: {
                     eexp = this.emitPostfixProjectFromNames(eexp, op as PostfixProjectFromNames);
+                    break;
                 }
                 case PostfixOpTag.PostfixAccessFromIndex: {
                     eexp = this.emitPostfixAccessFromIndex(eexp, op as PostfixAccessFromIndex);
+                    break;
                 }
                 case PostfixOpTag.PostfixIsTest: {
                     eexp = this.emitPostfixIsTest(eexp, op as PostfixIsTest);
+                    break;
                 }
                 case PostfixOpTag.PostfixAsConvert: {
                     eexp = this.emitPostfixAsConvert(eexp, op as PostfixAsConvert);
+                    break;
                 }
                 case PostfixOpTag.PostfixAssignFields: {
                     eexp = this.emitPostfixAssignFields(eexp, op as PostfixAssignFields);
+                    break;
                 }
                 case PostfixOpTag.PostfixInvoke: {
                     eexp = this.emitPostfixInvoke(eexp, op as PostfixInvoke);
+                    break;
                 }
                 case PostfixOpTag.PostfixLiteralKeyAccess: {
                     eexp = this.emitPostfixLiteralKeyAccess(eexp, op as PostfixLiteralKeyAccess);
+                    break;
                 }
                 default: {
                     assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
@@ -964,7 +972,7 @@ class JSEmitter {
                 return this.emitLambdaInvokeExpression(exp as LambdaInvokeExpression);
             }
             case ExpressionTag.SpecialConstructorExpression: {
-                return this.emitSpecialConstructorExpression(exp as SpecialConstructorExpression);
+                return this.emitSpecialConstructorExpression(exp as SpecialConstructorExpression, toplevel);
             }
             case ExpressionTag.CallNamespaceFunctionExpression: {
                 return this.emitCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);

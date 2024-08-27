@@ -26,19 +26,22 @@ class MethodInstantiationInfo {
 }
 
 class TypeInstantiationInfo {
+    readonly tkey: string;
+
     readonly binds: TemplateNameMapper | undefined;
     readonly functionbinds: Map<string, FunctionInstantiationInfo>;
     readonly methodbinds: Map<string, MethodInstantiationInfo>;
 
-    constructor(binds: TemplateNameMapper | undefined, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>) {
+    constructor(tkey: string, binds: TemplateNameMapper | undefined, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>) {
+        this.tkey = tkey;
         this.binds = binds;
 
         this.functionbinds = functionbinds;
         this.methodbinds = methodbinds;
     }
 
-    static createNoTemplateInfo(functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>): TypeInstantiationInfo {
-        return new TypeInstantiationInfo(undefined, functionbinds, methodbinds);
+    static createNoTemplateInfo(tkey: string, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>): TypeInstantiationInfo {
+        return new TypeInstantiationInfo(tkey, undefined, functionbinds, methodbinds);
     }
 }
 
