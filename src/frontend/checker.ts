@@ -1296,6 +1296,10 @@ class TypeChecker {
             this.reportError(exp.sinfo, `Could not find field ${exp.name} in type ${rcvrtype.tkeystr}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
+        else {
+            exp.declaredInType = finfo.typeinfo.tsig;
+            exp.fieldDecl = finfo.member;
+        }
 
         return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));
     }

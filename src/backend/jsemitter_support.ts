@@ -89,10 +89,10 @@ class EmitNameManager {
         else {
             const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
             if(ttype.decl.isSpecialResultEntity()) {
-                return `${acroot}Result.${ttype.decl.name}["${termstr}"]`;
+                return `${acroot}Result["${termstr}"].${ttype.decl.name}`;
             }
             else if(ttype.decl.isSpecialAPIResultEntity()) {
-                return `${acroot}APIResult.${ttype.decl.name}["${termstr}"]`;
+                return `${acroot}APIResult["${termstr}"].${ttype.decl.name}`;
             }
             else {
                 return `${acroot}${ttype.decl.name}["${termstr}"]`;

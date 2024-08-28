@@ -94,6 +94,12 @@ function $Boxed(t, v) {
 
 /**
  * @constant
+ * @type {Symbol}
+ **/
+const $SymbolNone = Symbol.for("None");
+
+/**
+ * @constant
  * @type {$Boxed}
  **/
 const $BoxedNone = new $Boxed(Symbol.for("None"), null);
@@ -104,7 +110,7 @@ const $BoxedNone = new $Boxed(Symbol.for("None"), null);
  * @returns {boolean}
  **/
 $Boxed.prototype._$keyEqOf = function(v) {
-    return this.$val !== null && this.$val === v;
+    return !this._$isNone() && this.$val === v;
 };
 
 /**
@@ -113,7 +119,7 @@ $Boxed.prototype._$keyEqOf = function(v) {
  * @returns {boolean}
  **/
 $Boxed.prototype._$keyNeqOf = function(v) {
-    return this.$val === null || this.$val !== v;
+    return this._$isNone() || this.$val !== v;
 };
 
 /**
@@ -121,7 +127,7 @@ $Boxed.prototype._$keyNeqOf = function(v) {
  * @returns {boolean}
  **/
 $Boxed.prototype._$isNone = function() {
-    return this.$val === null;
+    return this.$tag === $SymbolNone;
 };
 
 /**
@@ -129,7 +135,7 @@ $Boxed.prototype._$isNone = function() {
  * @returns {boolean}
  **/
 $Boxed.prototype._$isSome = function() {
-    return this.$val !== null;
+    return this.$tag !== $SymbolNone;
 };
 
 /**

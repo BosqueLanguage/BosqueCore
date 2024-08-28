@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
+import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -882,6 +882,9 @@ class PostfixError extends PostfixOperation {
 
 class PostfixAccessFromName extends PostfixOperation {
     readonly name: string;
+    
+    declaredInType: TypeSignature | undefined = undefined;
+    fieldDecl: MemberFieldDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);

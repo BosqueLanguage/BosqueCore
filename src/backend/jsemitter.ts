@@ -554,11 +554,27 @@ class JSEmitter {
 
     private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
         const rcvrtype = this.tproc(exp.getRcvrType());
+
+        let bbase = "";
         if(EmitNameManager.isNakedTypeRepr(rcvrtype)) {
-            return `${val}.${exp.name}`;
+            bbase = `${val}`;
         }
         else {
-            return `${val}._$val.${exp.name}`;
+            bbase = `${val}._$val`;
+        }
+
+        const fdecl = exp.fieldDecl as MemberFieldDecl;
+        if(!fdecl.isSpecialAccess) {
+            return `${bbase}.${fdecl.name}`;
+        }
+        else {
+            const declin = exp.declaredInType as NominalTypeSignature;
+            if(declin.decl instanceof MapEntryTypeDecl) {
+                return `${bbase}[${fdecl.name === "key" ? 0 : 1}]`;
+            }
+            else {
+                return bbase; //special case thing
+            }
         }
     }
 
@@ -1816,7 +1832,7 @@ class JSEmitter {
     }
 
     private emitTypeSymbol(rcvr: NominalTypeSignature): string {
-        return `$tsym: Symbol("${rcvr.tkeystr}")`;
+        return `$tsym: Symbol.for("${rcvr.tkeystr}")`;
     }
 
     private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
@@ -1900,7 +1916,7 @@ class JSEmitter {
         const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
         if(nested !== undefined) {
-            return `${nested}.${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`;
+            return `${tdecl.name}: ${obj}`;
         }
         else {
             if(tdecl.terms.length !== 0) {
