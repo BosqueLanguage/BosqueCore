@@ -781,7 +781,7 @@ class TypeCheckerRelations {
             }
             else if(tn.decl instanceof ErrTypeDecl) {
                 if(name === "info") {
-                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "info", tn.alltermargs[0], undefined, true);
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "info", tn.alltermargs[1], undefined, true);
                 }
             }
             else if(tn.decl instanceof MapEntryTypeDecl) {

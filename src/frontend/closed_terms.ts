@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
@@ -83,6 +83,8 @@ class InstantiationPropagator {
     readonly pendingTypeMethods: PendingTypeMethod[] = [];
     readonly pendingNominalTypeDecls: PendingNominalTypeDecl[] = [];
 
+    readonly completedInstantiations: Set<string> = new Set<string>();
+
     currentMapping: TemplateNameMapper | undefined = undefined;
     currentNSInstantiation: NamespaceInstantiationInfo | undefined = undefined;
 
@@ -99,17 +101,7 @@ class InstantiationPropagator {
     }
 
     private isAlreadySeenType(tkey: string): boolean {
-        const isdoneNominal = this.instantiation.some((ainfo) => ainfo.typebinds.has(tkey));
-        if(isdoneNominal) {
-            return true;
-        }
-
-        const isdoneEList = this.instantiation.some((ainfo) => ainfo.elists.has(tkey));
-        if(isdoneEList) {
-            return true;
-        }
-
-        return this.pendingNominalTypeDecls.some((pntd) => pntd.tkey === tkey);
+        return this.completedInstantiations.has(tkey) || this.pendingNominalTypeDecls.some((pntd) => pntd.tkey === tkey);
     }
 
     //Given a type signature -- instantiate it and all sub-component types
@@ -273,6 +265,7 @@ class InstantiationPropagator {
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
+        this.instantiateTypeSignature(exp.constype as TypeSignature, this.currentMapping);
         this.instantiateExpression(exp.arg);
     }
 
@@ -1223,15 +1216,15 @@ class InstantiationPropagator {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
             this.currentMapping = undefined;
         }
     }
 
-    private instantiateEnumTypeDecl(tdecl: EnumTypeDecl, pdecl: PendingNominalTypeDecl) {
+    private instantiateEnumTypeDecl(pdecl: PendingNominalTypeDecl) {
         this.instantiateAbstractNominalTypeDeclHelper(pdecl, [], undefined, undefined);
     }
 
@@ -1253,71 +1246,71 @@ class InstantiationPropagator {
         this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((t) => t.name), undefined, etypes);
     }
 
-    private instantiateInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, pdecl: PendingNominalTypeDecl, terms: string[], optreqtypes: TypeSignature[] | undefined) {
+    private instantiateInteralSimpleTypeDeclHelper(pdecl: PendingNominalTypeDecl, terms: string[], optreqtypes: TypeSignature[] | undefined) {
         this.instantiateAbstractNominalTypeDeclHelper(pdecl, terms, undefined, optreqtypes);
     }
 
-    private instantiatePrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, [], undefined);
+    private instantiatePrimitiveEntityTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
     }
 
-    private instantiateOkTypeDecl(tdecl: OkTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], undefined)
+    private instantiateOkTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], undefined)
     }
 
-    private instantiateErrTypeDecl(tdecl: ErrTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], undefined);
+    private instantiateErrTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], undefined);
     }
 
-    private instantiateAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateAPIRejectedTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateAPIFailedTypeDecl(tdecl: APIFailedTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateAPIFailedTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateAPIErrorTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateAPISuccessTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateSomeTypeDecl(tdecl: SomeTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateSomeTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateMapEntryTypeDecl(tdecl: MapEntryTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["K", "V"], undefined);
+    private instantiateMapEntryTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["K", "V"], undefined);
     }
 
-    private instantiateListTypeDecl(tdecl: ListTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateListTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateStackTypeDecl(tdecl: StackTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateStackTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateQueueTypeDecl(tdecl: QueueTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateQueueTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
-    private instantiateSetTypeDecl(tdecl: SetTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateSetTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
     private instantiateMapTypeDecl(tdecl: MapTypeDecl, pdecl: PendingNominalTypeDecl) {
         const metype = [
             new NominalTypeSignature(tdecl.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as MapEntryTypeDecl, pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["K", "V"],  metype);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["K", "V"],  metype);
     }
 
-    private instantiateEventListTypeDecl(tdecl: EventListTypeDecl, pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], undefined);
+    private instantiateEventListTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
 
     private instantiateEntityTypeDecl(tdecl: EntityTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -1329,7 +1322,7 @@ class InstantiationPropagator {
             this.getWellKnownType("None"),
             new NominalTypeSignature(tdecl.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateResultTypeDecl(tdecl: ResultTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -1337,7 +1330,7 @@ class InstantiationPropagator {
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[0], pdecl.instantiation),
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[1], pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T", "E"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
     private instantiateAPIResultTypeDecl(tdecl: APIResultTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -1347,7 +1340,7 @@ class InstantiationPropagator {
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[2], pdecl.instantiation),
             new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.nestedEntityDecls[3], pdecl.instantiation)
         ];
-        this.instantiateInteralSimpleTypeDeclHelper(tdecl, pdecl, ["T"], stypes);
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateConceptTypeDecl(tdecl: ConceptTypeDecl, pdecl: PendingNominalTypeDecl) {
@@ -1432,10 +1425,10 @@ class InstantiationPropagator {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(tdecl.terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
             this.currentMapping = undefined;
         }
     }
@@ -1454,55 +1447,55 @@ class InstantiationPropagator {
 
         const tt = pdecl.type;
         if(tt instanceof EnumTypeDecl) {
-            this.instantiateEnumTypeDecl(tt, pdecl);
+            this.instantiateEnumTypeDecl(pdecl);
         }
         else if(tt instanceof TypedeclTypeDecl) {
             this.instantiateTypedeclTypeDecl(tt, pdecl);
         }
         else if(tt instanceof PrimitiveEntityTypeDecl) {
-            this.instantiatePrimitiveEntityTypeDecl(tt, pdecl);
+            this.instantiatePrimitiveEntityTypeDecl(pdecl);
         }
         else if(tt instanceof OkTypeDecl) {
-            this.instantiateOkTypeDecl(tt, pdecl);
+            this.instantiateOkTypeDecl(pdecl);
         }
         else if(tt instanceof ErrTypeDecl) {
-            this.instantiateErrTypeDecl(tt, pdecl);
+            this.instantiateErrTypeDecl(pdecl);
         }
         else if(tt instanceof APIRejectedTypeDecl) {
-            this.instantiateAPIRejectedTypeDecl(tt, pdecl);
+            this.instantiateAPIRejectedTypeDecl(pdecl);
         }
         else if(tt instanceof APIFailedTypeDecl) {
-            this.instantiateAPIFailedTypeDecl(tt, pdecl);
+            this.instantiateAPIFailedTypeDecl(pdecl);
         }
         else if(tt instanceof APIErrorTypeDecl) {
-            this.instantiateAPIErrorTypeDecl(tt, pdecl);
+            this.instantiateAPIErrorTypeDecl(pdecl);
         }
         else if(tt instanceof APISuccessTypeDecl) {
-            this.instantiateAPISuccessTypeDecl(tt, pdecl);
+            this.instantiateAPISuccessTypeDecl(pdecl);
         }
         else if(tt instanceof SomeTypeDecl) {
-            this.instantiateSomeTypeDecl(tt, pdecl);
+            this.instantiateSomeTypeDecl(pdecl);
         }
         else if(tt instanceof MapEntryTypeDecl) {
-            this.instantiateMapEntryTypeDecl(tt, pdecl);
+            this.instantiateMapEntryTypeDecl(pdecl);
         }
         else if(tt instanceof ListTypeDecl) {
-            this.instantiateListTypeDecl(tt, pdecl);
+            this.instantiateListTypeDecl(pdecl);
         }
         else if(tt instanceof StackTypeDecl) {
-            this.instantiateStackTypeDecl(tt, pdecl);
+            this.instantiateStackTypeDecl(pdecl);
         }
         else if(tt instanceof QueueTypeDecl) {
-            this.instantiateQueueTypeDecl(tt, pdecl);
+            this.instantiateQueueTypeDecl(pdecl);
         }
         else if(tt instanceof SetTypeDecl) {
-            this.instantiateSetTypeDecl(tt, pdecl);
+            this.instantiateSetTypeDecl(pdecl);
         }
         else if(tt instanceof MapTypeDecl) {
             this.instantiateMapTypeDecl(tt, pdecl);
         }
         else if(tt instanceof EventListTypeDecl) {
-            this.instantiateEventListTypeDecl(tt, pdecl);
+            this.instantiateEventListTypeDecl(pdecl);
         }
         else if(tt instanceof EntityTypeDecl) {
             this.instantiateEntityTypeDecl(tt, pdecl);
@@ -1637,6 +1630,7 @@ class InstantiationPropagator {
                     iim.instantiateNamespaceTypeDecl(ns, ntd);
                 }
 
+                iim.completedInstantiations.add(ntd.tkey);
                 iim.pendingNominalTypeDecls.shift();
             }
             else {

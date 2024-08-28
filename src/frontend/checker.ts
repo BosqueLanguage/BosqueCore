@@ -1174,7 +1174,8 @@ class TypeChecker {
         }
 
         if(exp.rop === "some") {
-            return exp.setType(new NominalTypeSignature(exp.sinfo, undefined, corens.typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [etype]));
+            exp.constype = new NominalTypeSignature(exp.sinfo, undefined, corens.typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [etype]);
+            return exp.setType(exp.constype);
         }
         else {
             this.reportError(exp.sinfo, "Cannot infer type for special Ok/Err constructor");
@@ -1194,6 +1195,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = ninfer;
                     return exp.setType(ninfer);
                 }
                 else if(ninfer.decl instanceof OptionTypeDecl) {
@@ -1201,6 +1203,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [ttype]);
                     return exp.setType(ninfer);
                 }
                 else {
@@ -1213,6 +1216,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = ninfer;
                     return exp.setType(ninfer);
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
@@ -1220,6 +1224,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getOkType(), [ttype, ninfer.alltermargs[1]]);
                     return exp.setType(ninfer);
                 }
                 else {
@@ -1233,6 +1238,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = ninfer;
                     return exp.setType(ninfer);
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
@@ -1240,6 +1246,7 @@ class TypeChecker {
                     const etype = this.checkExpression(env, exp.arg, ttype);
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.tkeystr}`);
 
+                    exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getErrType(), [ninfer.alltermargs[0], ttype]);
                     return exp.setType(ninfer);
                 }
                 else {
@@ -1295,6 +1302,10 @@ class TypeChecker {
         if(finfo === undefined) {
             this.reportError(exp.sinfo, `Could not find field ${exp.name} in type ${rcvrtype.tkeystr}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        else {
+            exp.declaredInType = finfo.typeinfo.tsig;
+            exp.fieldDecl = finfo.member;
         }
 
         return exp.setType(finfo.member.declaredType.remapTemplateBindings(finfo.typeinfo.mapping));

@@ -72,23 +72,27 @@ class EmitNameManager {
     }
 
     private static emitNamespaceAccess(currentns: NamespaceDeclaration, tns: NamespaceDeclaration): string {
-        return (tns.fullnamespace.ns[0] === "Core"  || currentns.fullnamespace.ns[0] === tns.fullnamespace.ns[0]) ? (tns.fullnamespace.ns.slice(1).join(".")) : ("$" + tns.fullnamespace.ns.join("."));
+        return currentns.fullnamespace.ns[0] === tns.fullnamespace.ns[0] ? (tns.fullnamespace.ns.slice(1).join(".")) : ("$" + tns.fullnamespace.ns.join("."));
+    }
+
+    static emitTypeTermKey(tsig: NominalTypeSignature): string {
+        return `"<${tsig.alltermargs.map((t) => t.tkeystr).join(", ")}>"`;
     }
 
     private static emitTypeAccess(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
-        const nscope = (ttype.decl.ns.ns[0] === "Core" || currentns.fullnamespace.ns[0] === ttype.decl.ns.ns[0]) ? (ttype.decl.ns.ns.slice(1).join(".")) : ("$" + ttype.decl.ns.ns.join("."));
+        const nscope = currentns.fullnamespace.ns[0] === ttype.decl.ns.ns[0] ? (ttype.decl.ns.ns.slice(1).join(".")) : ("$" + ttype.decl.ns.ns.join("."));
         const acroot = nscope !== "" ?  nscope + "." : "";
 
-        if(ttype.decl.terms.length === 0) {
+        if(ttype.alltermargs.length === 0) {
             return acroot + ttype.decl.name;
         }
         else {
             const termstr = `<${ttype.alltermargs.map((t) => t.tkeystr).join(", ")}>`;
             if(ttype.decl.isSpecialResultEntity()) {
-                return `Result.${ttype.decl.name}["${termstr}"]`;
+                return `${acroot}Result["${termstr}"].${ttype.decl.name}`;
             }
             else if(ttype.decl.isSpecialAPIResultEntity()) {
-                return `APIResult.${ttype.decl.name}["${termstr}"]`;
+                return `${acroot}APIResult["${termstr}"].${ttype.decl.name}`;
             }
             else {
                 return `${acroot}${ttype.decl.name}["${termstr}"]`;

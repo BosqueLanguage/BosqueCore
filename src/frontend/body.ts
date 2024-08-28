@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
+import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -561,6 +561,8 @@ class SpecialConstructorExpression extends Expression {
     readonly rop: "ok" | "err" | "some";
     readonly arg: Expression;
 
+    constype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, rop: "ok" | "err" | "some", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
@@ -882,6 +884,9 @@ class PostfixError extends PostfixOperation {
 
 class PostfixAccessFromName extends PostfixOperation {
     readonly name: string;
+    
+    declaredInType: TypeSignature | undefined = undefined;
+    fieldDecl: MemberFieldDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
@@ -902,7 +907,7 @@ class PostfixProjectFromNames extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.(${this.names.join(", ")})`;
+        return `.(|${this.names.join(", ")}|)`;
     }
 }
 
@@ -954,7 +959,7 @@ class PostfixAssignFields extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.${this.updates.emit(fmt, "[", "]")}`;
+        return `${this.updates.emit(fmt, "[", "]")}`;
     }
 }
 
@@ -993,7 +998,7 @@ class PostfixLiteralKeyAccess extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `![${this.kexp.emit(true, fmt)}]`;
+        return `[|${this.kexp.emit(true, fmt)}|]`;
     }
 }
 
@@ -1432,7 +1437,7 @@ class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
 
     emit(fmt: CodeFormatter): string {
         const updatel = this.updates.map((arg) => `${arg.envkey.exp.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
-        return `.[ ${updatel} ]`;
+        return `[ ${updatel} ]`;
     }
 }
 
@@ -1466,7 +1471,8 @@ class TaskRunExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::run<${this.task.tkeystr + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(this.args.emit("(", ")"), ${this.enva.emit(fmt)})`;
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::run<${this.task.tkeystr + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl}, ${this.enva.emit(fmt)})`;
     }
 }
 
