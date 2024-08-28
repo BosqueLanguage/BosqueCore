@@ -561,6 +561,8 @@ class SpecialConstructorExpression extends Expression {
     readonly rop: "ok" | "err" | "some";
     readonly arg: Expression;
 
+    constype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, rop: "ok" | "err" | "some", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;

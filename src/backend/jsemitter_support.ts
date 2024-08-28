@@ -83,7 +83,7 @@ class EmitNameManager {
         const nscope = currentns.fullnamespace.ns[0] === ttype.decl.ns.ns[0] ? (ttype.decl.ns.ns.slice(1).join(".")) : ("$" + ttype.decl.ns.ns.join("."));
         const acroot = nscope !== "" ?  nscope + "." : "";
 
-        if(ttype.decl.terms.length === 0) {
+        if(ttype.alltermargs.length === 0) {
             return acroot + ttype.decl.name;
         }
         else {

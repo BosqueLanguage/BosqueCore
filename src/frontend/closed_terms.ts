@@ -265,6 +265,7 @@ class InstantiationPropagator {
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
+        this.instantiateTypeSignature(exp.constype as TypeSignature, this.currentMapping);
         this.instantiateExpression(exp.arg);
     }
 
