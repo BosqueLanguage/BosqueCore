@@ -4,10 +4,10 @@ import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, ErrTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement } from "./body.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
 
 import { accepts, initializeLexer, lexFront } from "@bosque/jsbrex";
 
@@ -1485,7 +1485,7 @@ class Parser {
                 this.ensureToken(TokenStrings.IdentifierName, "type tail");
                 const ttname = (this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]");
 
-                if(tsroot === "Result" && (ttname === "Ok" || ttname === "Err")) {
+                if(tsroot === "Result" && (ttname === "Ok" || ttname === "Fail")) {
                     return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
                 }
                 else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
@@ -2361,13 +2361,13 @@ class Parser {
     private parseReturnTypeSignature(): TypeSignature {
         switch (this.peekTokenKind()) {
             case TokenStrings.Template: {
-                return this.parseNoneableOfType(this.parseTemplateTypeReference());
+                return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                return this.parseNoneableOfType(this.parseNominalType());
+                return this.parseNominalType();
             }
             case SYM_lbrack: {
-                return this.parseNoneableOfType(this.parseElistType());
+                return this.parseElistType();
             }
             default: {
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
@@ -2379,13 +2379,13 @@ class Parser {
     private parseParameterTypeSignature(): TypeSignature {
         switch (this.peekTokenKind()) {
             case TokenStrings.Template: {
-                return this.parseNoneableOfType(this.parseTemplateTypeReference());
+                return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                return this.parseNoneableOfType(this.parseNominalType());
+                return this.parseNominalType();
             }
             case SYM_lbrack: {
-                return this.parseNoneableOfType(this.parseElistType());
+                return this.parseElistType();
             }
             case KW_fn:
             case KW_pred:
@@ -2430,27 +2430,18 @@ class Parser {
     private parseStdTypeSignature(): TypeSignature {
         switch (this.peekTokenKind()) {
             case TokenStrings.Template: {
-                return this.parseNoneableOfType(this.parseTemplateTypeReference());
+                return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                return this.parseNoneableOfType(this.parseNominalType());
+                return this.parseNominalType();
             }
             case SYM_lbrack: {
-                return this.parseNoneableOfType(this.parseElistType());
+                return this.parseElistType();
             }
             default: {
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
-    }
-
-    private parseNoneableOfType(tbase: TypeSignature): TypeSignature {
-        let ttype = tbase
-        while(this.testAndConsumeTokenIf(SYM_question)) {
-            const odecl = this.env.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Option") as OptionTypeDecl;
-            ttype = new NominalTypeSignature(ttype.sinfo, undefined, odecl, [ttype]);
-        }
-        return ttype;
     }
 
     private parseTemplateTypeReference(): TypeSignature {
@@ -2586,9 +2577,9 @@ class Parser {
                 this.consumeToken();
                 return new ITestOk(isnot);
             }
-            else if(this.testToken(KW_err)) {
+            else if(this.testToken(KW_fail)) {
                 this.consumeToken();
-                return new ITestErr(isnot);
+                return new ITestFail(isnot);
             }
             else {
                 this.recordErrorGeneral(this.peekToken(), "Expected ITest");
@@ -2815,7 +2806,6 @@ class Parser {
         const altns = access.altScope !== undefined ? new FullyQualifiedNamespace(access.altScope) : undefined;
         const resolved = this.normalizeTypeNameChain(sinfo, access.nsScope, access.typeTokens);
         const tsig = (resolved === undefined)  ? new ErrorTypeSignature(sinfo, access.nsScope.fullnamespace) : new NominalTypeSignature(sinfo, altns, resolved, access.typeTokens.flatMap((te) => te.tterms));
-        const nnsig = this.parseNoneableOfType(tsig);
 
         if(this.testToken(SYM_hash)) {
             this.consumeToken();
@@ -2825,18 +2815,18 @@ class Parser {
         }
         else if(this.testToken(SYM_lparen)) {
             const exp = this.parseExpression();
-            return new ParseAsTypeExpression(sinfo, exp, nnsig);
+            return new ParseAsTypeExpression(sinfo, exp, tsig);
         }
         else if(this.testToken(SYM_lbrace)) {
-            const isContainer = nnsig instanceof NominalTypeSignature && nnsig.decl instanceof AbstractCollectionTypeDecl;
-            const isMap = isContainer && (nnsig instanceof NominalTypeSignature) && (nnsig.decl instanceof MapTypeDecl);
+            const isContainer = tsig instanceof NominalTypeSignature && tsig.decl instanceof AbstractCollectionTypeDecl;
+            const isMap = isContainer && (tsig instanceof NominalTypeSignature) && (tsig.decl instanceof MapTypeDecl);
             const args = this.parseArguments(SYM_lbrace, SYM_rbrace, SYM_coma, false, isContainer, isContainer, isMap, false);
 
-            return new ConstructorPrimaryExpression(sinfo, nnsig, args);
+            return new ConstructorPrimaryExpression(sinfo, tsig, args);
         }
         else {
             this.recordErrorGeneral(sinfo, "Unknown type scoped expression");
-            return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: nnsig}, undefined);
+            return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: tsig}, undefined);
         }
     }
 
@@ -2876,7 +2866,7 @@ class Parser {
 
     private parseSpecialConstructorExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        const cons = this.consumeTokenAndGetValue() as "err" | "ok" | "some";
+        const cons = this.consumeTokenAndGetValue() as "fail" | "ok" | "some";
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "special constructor expression");
         const exp = this.parseExpression();
@@ -3107,7 +3097,7 @@ class Parser {
         else if (tk === KW_self) {
             assert(false, "Need to handle any self cases");
         }
-        else if(tk === KW_some || tk === KW_ok || tk === KW_err) {
+        else if(tk === KW_some || tk === KW_ok || tk === KW_fail) {
             return this.parseSpecialConstructorExpression();
         }
         else if(tk === SYM_rbrack) {
@@ -5024,7 +5014,7 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
         const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
-        if(ename === "Ok" || ename === "Err") {
+        if(ename === "Ok" || ename === "Fail") {
             const tdecl = (specialConcept as ResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
 
             const provides = this.parseProvides(this.peekToken().getSourceInfo(), [SYM_lbrace]);
@@ -5171,13 +5161,13 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
         const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
-        if(ename === "Ok" || ename === "Err") {
+        if(ename === "Ok" || ename === "Fail") {
             const rdecl = pdecl as ResultTypeDecl;
             if(ename === "Ok") {
                 rdecl.nestedEntityDecls.push(new OkTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
             else {
-                rdecl.nestedEntityDecls.push(new ErrTypeDecl(this.env.currentFile, sinfo, attributes, ename));
+                rdecl.nestedEntityDecls.push(new FailTypeDecl(this.env.currentFile, sinfo, attributes, ename));
             }
         }
         else {

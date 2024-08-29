@@ -112,7 +112,7 @@ __internal concept Result<T, E> {
     __internal entity Ok provides Result<T, E> {
     }
 
-    __internal entity Err provides Result<T, E> {
+    __internal entity Fail provides Result<T, E> {
     }
 }
 

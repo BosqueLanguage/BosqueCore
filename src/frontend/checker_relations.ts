@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -254,7 +254,7 @@ class TypeCheckerRelations {
 
                 //check for special case of Ok+Err -> Result
                 const okopt = ptl.find((t) => t.decl instanceof OkTypeDecl);
-                const erropt = ptl.find((t) => t.decl instanceof ErrTypeDecl);
+                const erropt = ptl.find((t) => t.decl instanceof FailTypeDecl);
                 if(okopt && erropt && this.areSameTypeSignatureLists(okopt.alltermargs, erropt.alltermargs)) {
                     return new NominalTypeSignature(sinfo, undefined, corens.typedecls.find((tdecl) => tdecl.name === "Result") as TypedeclTypeDecl, okopt.alltermargs);
                 }
@@ -378,7 +378,7 @@ class TypeCheckerRelations {
             else if(t.decl instanceof ResultTypeDecl) {
                 const tresult = corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl;
                 const tok = new NominalTypeSignature(t.sinfo, undefined, tresult.getOkType(), t.alltermargs);
-                const terr = new NominalTypeSignature(t.sinfo, undefined, tresult.getErrType(), t.alltermargs);
+                const terr = new NominalTypeSignature(t.sinfo, undefined, tresult.getFailType(), t.alltermargs);
 
                 return [tok, terr];
             }
@@ -540,7 +540,7 @@ class TypeCheckerRelations {
     }
 
     splitOnOkDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapOkT: TypeSignature | undefined, remainErrE: TypeSignature | undefined } | undefined {
-        if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof ErrTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
+        if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof FailTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
             return undefined;
         }
 
@@ -567,7 +567,7 @@ class TypeCheckerRelations {
                 hasok = true;
                 haserr = true;
             }
-            if(t.decl instanceof ErrTypeDecl) {
+            if(t.decl instanceof FailTypeDecl) {
                 haserr = true;
             }
             else {
@@ -591,7 +591,7 @@ class TypeCheckerRelations {
     }
 
     splitOnErrDecomposedSet(dcs: TypeSignature[], tconstrain: TemplateConstraintScope): { overlapErrE: TypeSignature | undefined, remainOkT: TypeSignature | undefined } | undefined {
-        if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof ErrTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
+        if(!dcs.every((t) => (t instanceof NominalTypeSignature) && ((t.decl instanceof OkTypeDecl) || (t.decl instanceof FailTypeDecl) || (t.decl instanceof ResultTypeDecl)))) {
             return undefined;
         }
 
@@ -779,7 +779,7 @@ class TypeCheckerRelations {
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[0], undefined, true);
                 }
             }
-            else if(tn.decl instanceof ErrTypeDecl) {
+            else if(tn.decl instanceof FailTypeDecl) {
                 if(name === "info") {
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "info", tn.alltermargs[1], undefined, true);
                 }

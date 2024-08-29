@@ -611,7 +611,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     }
 
     //These are our annoying nested types
-    isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof ErrTypeDecl); }
+    isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
     isSpecialAPIResultEntity(): boolean { return (this instanceof APIRejectedTypeDecl) || (this instanceof APIFailedTypeDecl) || (this instanceof APIErrorTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
     hasAttribute(aname: string): boolean {
@@ -768,7 +768,7 @@ class OkTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class ErrTypeDecl extends ConstructableTypeDecl {
+class FailTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -980,7 +980,7 @@ class OptionTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[] = [];
+    readonly nestedEntityDecls: (OkTypeDecl | FailTypeDecl)[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -990,8 +990,8 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
         return this.nestedEntityDecls.find((ned) => ned instanceof OkTypeDecl) as OkTypeDecl;
     }
 
-    getErrType(): ErrTypeDecl {
-        return this.nestedEntityDecls.find((ned) => ned instanceof ErrTypeDecl) as ErrTypeDecl;
+    getFailType(): FailTypeDecl {
+        return this.nestedEntityDecls.find((ned) => ned instanceof FailTypeDecl) as FailTypeDecl;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1645,7 +1645,7 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
