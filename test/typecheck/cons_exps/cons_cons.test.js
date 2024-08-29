@@ -5,26 +5,26 @@ import { describe, it } from "node:test";
 
 describe ("Checker -- Constructable Constructor (Option)", () => {
     it("should check option constructors", function () {
-        checkTestFunction("function main(): Int? { return Some<Int>{2i}; }");
+        checkTestFunction("function main(): Option<Int> { return Some<Int>{2i}; }");
     });
 
     it("should fail option constructors", function () {
-        checkTestFunctionError("function main(): Int? { return Some<Int>{}; }", 'Some constructor expects 1 argument');
-        checkTestFunctionError("function main(): Int? { return Some<Int>{2i, false}; }", 'Some constructor expects 1 argument');
+        checkTestFunctionError("function main(): Option<Int> { return Some<Int>{}; }", 'Some constructor expects 1 argument');
+        checkTestFunctionError("function main(): Option<Int> { return Some<Int>{2i, false}; }", 'Some constructor expects 1 argument');
     });
 });
 
 describe ("Checker -- Constructable Constructor (Result)", () => {
     it("should check result constructors", function () {
         checkTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Ok{2i}; }");
-        checkTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Err{false}; }");
+        checkTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Fail{false}; }");
     });
 
     it("should fail result constructors", function () {
         checkTestFunctionError("function main(): Result<Int, Bool> { return Result<Int, Bool, Bool>::Ok{}; }", 'Type Ok expected 0 terms but got 3');
 
         checkTestFunctionError("function main(): Result<Int, Bool> { return Result<Int, Bool>::Ok{}; }", 'Ok constructor expects 1 argument');
-        checkTestFunctionError("function main(): Result<Int, Bool> { return Result<Int, Bool>::Err{3i, false}; }", 'Err constructor expects 1 argument');
+        checkTestFunctionError("function main(): Result<Int, Bool> { return Result<Int, Bool>::Fail{3i, false}; }", 'Fail constructor expects 1 argument');
     });
 });
 

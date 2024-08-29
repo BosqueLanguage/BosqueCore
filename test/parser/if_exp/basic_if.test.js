@@ -14,9 +14,9 @@ describe ("Parser -- if-expression", () => {
         parseTestExp("if(3n)<Some> then 2i else 3i", undefined, "Int");
         parseTestExp("if(if(true) then false else true) then 2i else 3i", undefined, "Int");
 
-        parseTestFunction("function main(x: Int?): Int { return if(x)@!none then $x else 3i; }", undefined);
-        parseTestFunction("function main(x: Int?): Int { return if(x + 1i)@!none then $_ else 3i; }", undefined);
-        parseTestFunction("function main(x: Int?): Int { return if($y = x + 1i)@<Some> then $y else 3i; }", undefined);
+        parseTestFunction("function main(x: Option<Int>): Int { return if(x)@!none then $x else 3i; }", undefined);
+        parseTestFunction("function main(x: Option<Int>): Int { return if(x + 1i)@!none then $_ else 3i; }", undefined);
+        parseTestFunction("function main(x: Option<Int>): Int { return if($y = x + 1i)@<Some> then $y else 3i; }", undefined);
     });
 
     it("should fail missing then", function () {
