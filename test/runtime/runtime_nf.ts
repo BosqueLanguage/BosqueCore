@@ -36,10 +36,10 @@ function fromBSONHelper(val: any, type: string): string {
         return val.toString();
     }
     else if(type === "String") {
-        return `"${val}"`;
+        return val;
     }
     else if(type === "CString") {
-        return `"${val}"`;
+        return val;
     }
     else {
         return `unknown[${val}, ${type}]`;

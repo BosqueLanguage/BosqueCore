@@ -20,7 +20,15 @@ class JSCodeFormatter {
     
     indent(code: string): string {
         return "    ".repeat(this.level) + code;
-    }   
+    }
+
+    static isEscapeFreeString(str: string): boolean {
+        return JSON.stringify(str).slice(1, -1) === str;
+    }
+
+    static emitEscapedString(str: string): string {
+        return  '"' + encodeURI(str) + '"';
+    }
 }
 
 class EmitNameManager {

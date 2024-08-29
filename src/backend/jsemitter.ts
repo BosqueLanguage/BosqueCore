@@ -363,14 +363,26 @@ class JSEmitter {
     }
     
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
-        return `validateStringLiteral(${exp.value})`;
+        if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
+            return `"${exp.resolvedValue}"`;
+        }
+        else {
+            return `decodeURI(${JSCodeFormatter.emitEscapedString(exp.resolvedValue)})`;
+        }
     }
     
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
-        return `validateCStringLiteral(${exp.value})`;
+        if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
+            return `"${exp.resolvedValue}"`;
+        }
+        else {
+            return `decodeURI(${JSCodeFormatter.emitEscapedString(exp.resolvedValue)})`;
+        }
     }
     
     private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression, toplevel: boolean): string {
+        //const ctype = this.tproc(exp.constype) as NominalTypeSignature;
+
         assert(false, "Not implemented -- TypeDeclValue");
     }
         
