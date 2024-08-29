@@ -1250,7 +1250,7 @@ class TypeChecker {
                     return exp.setType(ninfer);
                 }
                 else {
-                    this.reportError(exp.sinfo, `Cannot infer type for special Err constructor -- got ${infertype.tkeystr}`);
+                    this.reportError(exp.sinfo, `Cannot infer type for special Fail constructor -- got ${infertype.tkeystr}`);
                     return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
                 }
             }
