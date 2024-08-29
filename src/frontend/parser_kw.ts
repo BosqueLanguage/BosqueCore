@@ -18,7 +18,7 @@ const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
-const KW_err = "err";
+const KW_fail = "fail";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
@@ -110,7 +110,7 @@ const KeywordStrings = [
     KW_env,
     KW_entity,
     KW_ensures,
-    KW_err,
+    KW_fail,
     KW_false,
     KW_field,
     KW_fn,
@@ -369,7 +369,7 @@ export {
     KW_env,
     KW_entity,
     KW_ensures,
-    KW_err,
+    KW_fail,
     KW_false,
     KW_field,
     KW_fn,

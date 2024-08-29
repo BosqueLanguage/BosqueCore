@@ -80,13 +80,13 @@ class ITestOk extends ITest {
     }
 }
 
-class ITestErr extends ITest {
+class ITestFail extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}err`;
+        return `${this.isnot ? "!" : ""}fail`;
     }
 }
 
@@ -558,12 +558,12 @@ class LetExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "err" | "some";
+    readonly rop: "ok" | "fail" | "some";
     readonly arg: Expression;
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "some", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
@@ -1612,7 +1612,7 @@ class ErrorStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `error`;
+        return `[error]`;
     }
 }
 
@@ -2264,7 +2264,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestErr,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,

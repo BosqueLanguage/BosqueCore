@@ -5,21 +5,21 @@ import { describe, it } from "node:test";
 
 describe ("Parser -- Constructable Constructor (Option)", () => {
     it("should parse option constructors", function () {
-        parseTestFunction("function main(): Int? { return Some<Int>{2i}; }", undefined);
+        parseTestFunction("function main(): Option<Int> { return Some<Int>{2i}; }", undefined);
     });
 
     it("should fail option constructors", function () {
-        parseTestFunctionError("function main(): Int? { return Some<>{}; }", 'Template term list cannot be empty');
+        parseTestFunctionError("function main(): Option<Int> { return Some<>{}; }", 'Template term list cannot be empty');
         
-        parseTestFunctionError("function main(): Int? { return Some<Int>{; }", 'Unexpected token in expression -- ;');
-        parseTestFunctionError("function main(): Int? { return Some<Int>2i, false}; }", 'Unknown type scoped expression');
+        parseTestFunctionError("function main(): Option<Int> { return Some<Int>{; }", 'Unexpected token in expression -- ;');
+        parseTestFunctionError("function main(): Option<Int> { return Some<Int>2i, false}; }", 'Unknown type scoped expression');
     });
 });
 
 describe ("Parser -- Constructable Constructor (Result)", () => {
     it("should parse result constructors", function () {
         parseTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Ok{2i}; }", undefined);
-        parseTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Err{false}; }", undefined);
+        parseTestFunction("function main(): Result<Int, Bool> { return Result<Int, Bool>::Fail{false}; }", undefined);
     });
 });
 
