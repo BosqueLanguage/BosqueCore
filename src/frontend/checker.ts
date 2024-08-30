@@ -68,24 +68,27 @@ class TypeChecker {
         return (t.tkeystr === "Void");
     }
 
-    private checkTypeDeclOfRestrictions(optofexp: LiteralExpressionValue | undefined, exp: Expression): string | undefined {
+    private checkTypeDeclOfRestrictions(tdecl: TypedeclTypeDecl, exp: Expression): string | undefined {
         if(exp.tag === ExpressionTag.LiteralStringExpression) {
             const vs = validateStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
             this.checkError(exp.sinfo, vs === null, `Invalid string literal value ${(exp as LiteralSimpleExpression).value}`);
 
-            if(optofexp !== undefined && vs !== null) {
-                const reexp = this.relations.assembly.resolveValidatorLiteral(optofexp.exp);
-                if(reexp === undefined || reexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
+            if(vs !== null) {
+                const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
+                if(reexp.some((rev) => rev[0] === undefined || rev[0].tag !== ExpressionTag.LiteralUnicodeRegexExpression)) {
                     this.reportError(exp.sinfo, `Unable to resolve regex validator`);
                 }
                 else {
-                    if(optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                        this.checkError(exp.sinfo, !accepts((optofexp.exp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${(optofexp.exp as LiteralRegexExpression).value}`);
-                    }
-                    else {
-                        const nsaccess = optofexp.exp as AccessNamespaceConstantExpression;
-                        const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
-                        this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, true), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${rename}`);
+                    for(let i = 0; i < reexp.length; ++i) {
+                        const vexp = reexp[i][1];
+                        if(vexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                            this.checkError(exp.sinfo, !accepts((vexp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${(vexp as LiteralRegexExpression).value}`);
+                        }
+                        else {
+                            const nsaccess = vexp as AccessNamespaceConstantExpression;
+                            const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
+                            this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, true), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${rename}`);
+                        }
                     }
                 }
             }
@@ -96,19 +99,22 @@ class TypeChecker {
             const vs = validateCStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
             this.checkError(exp.sinfo, vs === null, `Invalid cstring literal value ${(exp as LiteralSimpleExpression).value}`);
 
-            if(optofexp !== undefined && vs !== null) {
-                const reexp = this.relations.assembly.resolveValidatorLiteral(optofexp.exp);
-                if(reexp === undefined || reexp.tag !== ExpressionTag.LiteralCRegexExpression) {
+            if(vs !== null) {
+                const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
+                if(reexp.some((rev) => rev[0] === undefined || rev[0].tag !== ExpressionTag.LiteralCRegexExpression)) {
                     this.reportError(exp.sinfo, `Unable to resolve cregex validator`);
                 }
                 else {
-                    if(optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
-                        this.checkError(exp.sinfo, !accepts((optofexp.exp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${(optofexp.exp as LiteralRegexExpression).value}`);
-                    }
-                    else {
-                        const nsaccess = optofexp.exp as AccessNamespaceConstantExpression;
-                        const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
-                        this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, false), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${rename}`);
+                    for(let i = 0; i < reexp.length; ++i) {
+                        const vexp = reexp[i][1];
+                        if(vexp.tag === ExpressionTag.LiteralCRegexExpression) {
+                            this.checkError(exp.sinfo, !accepts((vexp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${(vexp as LiteralRegexExpression).value}`);
+                        }
+                        else {
+                            const nsaccess = vexp as AccessNamespaceConstantExpression;
+                            const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
+                            this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, false), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${rename}`);
+                        }
                     }
                 }
             }
@@ -948,7 +954,7 @@ class TypeChecker {
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
-        exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl.optofexp, exp.value);
+        exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
         return exp.setType(exp.constype);
     }
 

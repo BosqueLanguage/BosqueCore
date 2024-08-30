@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
 import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
@@ -1606,6 +1606,21 @@ class Assembly {
                 return undefined;
             }
         }
+    }
+
+    //pairs of [ResolvedRegex, ValidatorExp]
+    resolveAllValidatorLiterals(tdecl: TypedeclTypeDecl): [Expression | undefined, Expression][] {
+        let vexps: [Expression | undefined, Expression] [] = [];
+        if(tdecl.valuetype instanceof NominalTypeSignature && tdecl.valuetype.decl instanceof TypedeclTypeDecl) {
+            vexps = this.resolveAllValidatorLiterals(tdecl.valuetype.decl);
+        }
+
+        if(tdecl.optofexp !== undefined) {
+            const vexp = this.resolveValidatorLiteral(tdecl.optofexp.exp);
+            vexps.push([vexp, tdecl.optofexp.exp]);
+        }
+
+        return vexps;
     }
 
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
