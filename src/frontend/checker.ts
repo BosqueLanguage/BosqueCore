@@ -5,7 +5,7 @@ import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
-import { TypeCheckerRelations } from "./checker_relations.js";
+import { flattenAndOrderTypeList, TypeCheckerRelations } from "./checker_relations.js";
 
 import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";
 
@@ -955,6 +955,7 @@ class TypeChecker {
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.tkeystr}) as the base type (${btype !== undefined ? btype.tkeystr : "[unset]"})`);
 
         exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
+        exp.isDirect = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints);
         return exp.setType(exp.constype);
     }
 
@@ -3590,7 +3591,14 @@ class TypeChecker {
         }
     }
 
-    private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
+    private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, provides: TypeSignature[], isentity: boolean) {
+        if(isentity) {
+            const thisdynamic = tdecl.methods.some((mm) => mm.hasAttribute("override"));
+            const pdynamic = provides.some((pp) => (pp as NominalTypeSignature).decl.hasAttribute("abstract") || (pp as NominalTypeSignature).decl.hasAttribute("virtual"));
+
+            tdecl.hasDynamicInvokes = thisdynamic || pdynamic;
+        }
+
         ////
         //TODO: Check that there are no name collisions on inhertied members and members in this
         //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented (depending on isentity)
@@ -3613,6 +3621,10 @@ class TypeChecker {
         this.checkInvariants(bnames, tdecl.invariants);
         this.checkValidates(bnames, tdecl.validates);
         
+        const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
+        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
+        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
@@ -3621,7 +3633,7 @@ class TypeChecker {
             this.checkMemberFieldDecls(bnames, optfdecls);
         }
 
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, optfdecls, isentity);
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, tdecl.saturatedProvides, isentity);
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
@@ -3633,7 +3645,10 @@ class TypeChecker {
         this.file = tdecl.file;
         this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
         
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+
         this.checkProvides(tdecl.provides);
+        tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
  
         //Make sure that any provides types are not adding on fields, consts, or functions
         const etype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
@@ -3651,10 +3666,9 @@ class TypeChecker {
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
 
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
-        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, tdecl.saturatedProvides, true);
 
         let opts = new Set<string>();
         for(let i = 0; i < tdecl.members.length; ++i) {
@@ -3677,11 +3691,12 @@ class TypeChecker {
             return;
         }
 
-        if(tdecl.optofexp !== undefined) {
-            const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
-            this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `could not resolve the value type -- ${tdecl.valuetype.tkeystr}`);
+        const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
+        const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
+        this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `could not resolve the value type -- ${tdecl.valuetype.tkeystr}`);
 
-            const checkerexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp);
+        for(let i = 0; i < reexp.length; ++i) {
+            const checkerexp = reexp[i][0];
             this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
 
             if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
@@ -3709,10 +3724,14 @@ class TypeChecker {
             }
         }
 
+        tdecl.allOfExps = reexp.map((re) => re[1]);
+
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+
         this.checkProvides(tdecl.provides);
+        tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
 
         //Make sure that any provides types are not adding on fields!
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const providesdecls = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
@@ -3729,6 +3748,10 @@ class TypeChecker {
             this.checkValidates([{name: "value", type: tdecl.valuetype}], tdecl.validates);
         }
         
+        const {invariants, validators} = this.relations.resolveAllTypeDeclaredValidatorDecls(rcvr, this.constraints);
+        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
+        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
 
@@ -3932,11 +3955,16 @@ class TypeChecker {
 
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
         const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
+        tdecl.saturatedBFieldInfo = bnames;
 
         //make sure all of the invariants on this typecheck
         this.checkInvariants(bnames, tdecl.invariants);
         this.checkValidates(bnames, tdecl.validates);
         
+        const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
+        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
+        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
         this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);

@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import {_$softfails, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
+'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -381,9 +381,12 @@ class JSEmitter {
     }
     
     private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression, toplevel: boolean): string {
-        //const ctype = this.tproc(exp.constype) as NominalTypeSignature;
-
-        assert(false, "Not implemented -- TypeDeclValue");
+        if(exp.isDirect) {
+            return this.emitExpression(exp.value, toplevel);
+        }
+        else {
+            assert(false, "Not implemented -- TypeDeclValue");
+        }
     }
         
     private emitHasEnvValueExpression(exp: AccessEnvValueExpression): string {
@@ -1900,8 +1903,13 @@ class JSEmitter {
         decls.push(...this.emitValidates(tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            decls.push(this.emitCreate(tdecl, fmt));
-            decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+            if(tdecl.allInvariants.length !== 0) {
+                decls.push(this.emitCreate(tdecl, fmt));
+            }
+
+            if(tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
+                decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+            }
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
@@ -1915,7 +1923,9 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         if(isentity) {
-            this.emitVTable(tdecl, fmt);
+            if(tdecl.hasDynamicInvokes) {
+                this.emitVTable(tdecl, fmt);
+            }
         }
 
         this.mapper = undefined;
@@ -1988,7 +1998,51 @@ class JSEmitter {
     }
 
     private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
-        return {decl: "[TYPEDECL]", tests: []};
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+
+        fmt.indentPush();
+        let decls: string[] = [];
+        let tests: string[] = [];
+
+        decls.push(this.emitTypeSymbol(rcvr));
+
+        //make sure all of the invariants on this typecheck
+        decls.push(...this.emitInvariants(tdecl.saturatedBFieldInfo, tdecl.invariants));
+        decls.push(...this.emitValidates(tdecl.saturatedBFieldInfo, tdecl.validates));
+        
+
+        if(tdecl.allOfExps.length !== 0 || tdecl.allInvariants.length !== 0) {
+            decls.push(this.emitCreate(tdecl, fmt));
+        }
+
+        if(tdecl.allOfExps.length !== 0 || tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
+            decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+        }
+
+        decls.push(...this.emitConstMemberDecls(tdecl.consts));
+
+        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+        decls.push(...fdecls.decls);
+        tests.push(...fdecls.tests);
+
+        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        decls.push(...mdecls.decls);
+        tests.push(...mdecls.tests);
+
+        if(tdecl.hasDynamicInvokes) {
+            this.emitVTable(tdecl, fmt);
+        }
+
+        fmt.indentPop();
+
+        const obj = `{\n${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+
+        if(tdecl.terms.length !== 0) {
+            return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: tests};
+        }
+        else {
+            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: tests};
+        }
     }
 
     private emitOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
@@ -2175,6 +2229,15 @@ class JSEmitter {
         return [...cdecls, `let _$consts = new JSMap();`];
     }
 
+
+    private emitTypeSubtypeRelation(tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): string {
+        this.mapper = instantiation.binds;
+        const supers = tdecl.saturatedProvides.map((ss) => `Symbol.for("${this.tproc(ss).tkeystr}")`).join(", ");
+        this.mapper = undefined;
+
+        return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
+    }
+
     private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let ttdecls: string[] = [];
         let alldecls: string[] = [];
@@ -2203,76 +2266,94 @@ class JSEmitter {
                 if(tt instanceof EnumTypeDecl) {
                     const {decl, tests} = this.emitEnumTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof TypedeclTypeDecl) {
                     const {decl, tests} = this.emitTypedeclTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof PrimitiveEntityTypeDecl) {
                     const decl = this.emitPrimitiveEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof OkTypeDecl) {
                     const decl = this.emitOkTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof FailTypeDecl) {
                     const decl = this.emitFailTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIRejectedTypeDecl) {
                     const decl = this.emitAPIRejectedTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIFailedTypeDecl) {
                     const decl = this.emitAPIFailedTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIErrorTypeDecl) {
                     const decl = this.emitAPIErrorTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APISuccessTypeDecl) {
                     const decl = this.emitAPISuccessTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof SomeTypeDecl) {
                     const decl = this.emitSomeTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof MapEntryTypeDecl) {
                     const decl = this.emitMapEntryTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof ListTypeDecl) {
                     const decl = this.emitListTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof StackTypeDecl) {
                     const decl = this.emitStackTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof QueueTypeDecl) {
                     const decl = this.emitQueueTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof SetTypeDecl) {
                     const decl = this.emitSetTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof MapTypeDecl) {
                     const decl = this.emitMapTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof EventListTypeDecl) {
                     const decl = this.emitEventListTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof EntityTypeDecl) {
                     const {decl, tests} = this.emitEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof OptionTypeDecl) {
@@ -2295,6 +2376,7 @@ class JSEmitter {
                 else if(tt instanceof DatatypeMemberEntityTypeDecl) {
                     const {decl, tests} = this.emitDatatypeMemberEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
+                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof DatatypeTypeDecl) {

@@ -78,9 +78,9 @@ function $Unwind(tag, info) {
 
 /**
  * @constant
- * @type {Map<Symbol, Set<Symbol>>}
+ * @type {object}
  */
-let $supertypes = new Map();
+let _$supertypes = {};
 
 /**
  * @constructor
@@ -162,7 +162,7 @@ $Boxed.prototype._$isNot = function(tsym) {
  * @returns {boolean}
  **/
 $Boxed.prototype._$isSubtype = function(tsym) {
-    return $supertypes.get(this.$tag).has(tsym);
+    return _$supertypes.get(this.$tag).has(tsym);
 };
 
 /**
@@ -171,7 +171,7 @@ $Boxed.prototype._$isSubtype = function(tsym) {
  * @returns {boolean}
  **/
 $Boxed.prototype._$isNotSubtype = function(tsym) {
-    return !$supertypes.get(this.$tag).has(tsym);
+    return !_$supertypes.get(this.$tag).has(tsym);
 };
 
 /**
@@ -524,6 +524,7 @@ function _$memoconstval(memmap, key, comp) {
 
 export {
     _$softfails,
+    _$supertypes,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
     _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,

@@ -600,6 +600,11 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     saturatedProvides: TypeSignature[] = [];
     saturatedBFieldInfo: {name: string, type: TypeSignature}[] = [];
 
+    allInvariants: TypeSignature[] = [];
+    allValidates: TypeSignature[] = [];
+
+    hasDynamicInvokes: boolean = false;
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
@@ -696,6 +701,8 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
     optofexp: LiteralExpressionValue | undefined; 
+
+    allOfExps: Expression[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);

@@ -2426,6 +2426,18 @@ class Parser {
         }
     }
 
+    //parse just types that are legal as the RHS of a typedecl
+    private parseTypedeclRHSSignature(): TypeSignature {
+        switch (this.peekTokenKind()) {
+            case TokenStrings.IdentifierName: {
+                return this.parseNominalType();
+            }
+            default: {
+                return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
+            }
+        }
+    }
+
     //parse just types that are legal as variables, fields, consts, etc
     private parseStdTypeSignature(): TypeSignature {
         switch (this.peekTokenKind()) {
@@ -5357,7 +5369,7 @@ class Parser {
             }
 
             this.ensureAndConsumeTokenIf(SYM_eq, "typedecl declaration");
-            const ttype = this.parseTypeTagSignature();
+            const ttype = this.parseTypedeclRHSSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
             if(this.testAndConsumeTokenIf(KW_of)) {
