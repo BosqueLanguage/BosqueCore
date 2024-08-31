@@ -46,7 +46,7 @@ class ITestType extends ITest {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}<${this.ttype.tkeystr}>`;
+        return `${this.isnot ? "!" : ""}<${this.ttype.emit()}>`;
     }
 }
 
@@ -399,7 +399,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}<${this.constype.tkeystr}>`;
+        return `${this.value.emit(toplevel, fmt)}<${this.constype.emit()}>`;
     }
 }
 
@@ -457,7 +457,7 @@ class AccessStaticFieldExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.stype.tkeystr}::${this.name}`;
+        return `${this.stype.emit()}::${this.name}`;
     }
 }
 
@@ -472,7 +472,7 @@ class AccessEnumExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.stype.tkeystr}#${this.name}`;
+        return `${this.stype.emit()}#${this.name}`;
     }
 }
 
@@ -515,7 +515,7 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ctype.tkeystr}${this.args.emit(fmt, "{", "}")}`;
+        return `${this.ctype.emit()}${this.args.emit(fmt, "{", "}")}`;
     }
 }
 
@@ -553,7 +553,7 @@ class LetExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.tkeystr : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
+        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
         return `let ${dds} in ${this.body.emit(true, fmt)}`;
     }
 }
@@ -642,7 +642,7 @@ class CallNamespaceFunctionExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
         return `${!this.isImplicitNS ? (this.ns.emit() + "::") : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -673,10 +673,10 @@ class CallTypeFunctionExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `${this.ttype.tkeystr}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -702,7 +702,7 @@ class CallRefThisExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
         return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -731,7 +731,7 @@ class CallRefSelfExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
         return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -753,7 +753,7 @@ class CallTaskActionExpression extends Expression {
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
         return `do self.${this.name}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -797,7 +797,7 @@ class ParseAsTypeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ttype.tkeystr}(${this.exp.emit(toplevel, fmt)})`;
+        return `${this.ttype.emit()}(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 
@@ -986,7 +986,7 @@ class PostfixInvoke extends PostfixOperation {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
 
-        return `${this.specificResolve ? this.specificResolve.tkeystr + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
+        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -1473,7 +1473,7 @@ class TaskRunExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.emit(fmt, "", "");
-        return `Task::run<${this.task.tkeystr + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl}, ${this.enva.emit(fmt)})`;
+        return `Task::run<${this.task.emit() + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl}, ${this.enva.emit(fmt)})`;
     }
 }
 
@@ -1491,7 +1491,7 @@ class TaskMultiExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::run<${this.tasks.map((tt) => tt.tkeystr).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1509,7 +1509,7 @@ class TaskDashExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::dash<${this.tasks.map((tt) => tt.tkeystr).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1527,7 +1527,7 @@ class TaskAllExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::all<${this.tasks.map((tt) => tt.tkeystr).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1545,7 +1545,7 @@ class TaskRaceExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::race<${this.tasks.map((tt) => tt.tkeystr).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1638,7 +1638,7 @@ class VariableDeclarationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.name}: ${this.vtype.tkeystr};`;
+        return `var ${this.name}: ${this.vtype.emit()};`;
     }
 }
 
@@ -1651,7 +1651,7 @@ class VariableMultiDeclarationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.decls.map((dd) => `${dd.name}: ${dd.vtype.tkeystr}`).join(", ")};`;
+        return `var ${this.decls.map((dd) => `${dd.name}: ${dd.vtype.emit()}`).join(", ")};`;
     }
 }
 
@@ -1672,7 +1672,7 @@ class VariableInitializationStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
-        const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.tkeystr}`;
+        const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit()}`;
 
         return `${dc} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
     }
@@ -1693,7 +1693,7 @@ class VariableMultiInitializationStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
-        const ttdecls = this.decls.map((dd) => dd.name + (dd.vtype instanceof AutoTypeSignature ? "" : `: ${dd.vtype.tkeystr}`));
+        const ttdecls = this.decls.map((dd) => dd.name + (dd.vtype instanceof AutoTypeSignature ? "" : `: ${dd.vtype.emit()}`));
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${dc} ${ttdecls.join(", ")} = ${ttexp};`;
@@ -1907,7 +1907,7 @@ class MatchStatement extends Statement {
 
         const mheader = `match(${bexps[0]}${this.sval[0].emit(true, fmt)})${bexps[1]}`;
         fmt.indentPush();
-        const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.tkeystr : "_"} => ${mf.value.emit(fmt)}`);
+        const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
         const iil = fmt.indent(ttmf[0]);
@@ -2099,7 +2099,7 @@ class TaskYieldStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.tkeystr).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
         return `yield self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;

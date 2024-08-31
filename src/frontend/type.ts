@@ -116,6 +116,8 @@ abstract class TypeSignature {
     }
 
     abstract remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature;
+
+    abstract emit(): string;
 }
 
 class ErrorTypeSignature extends TypeSignature {
@@ -130,6 +132,10 @@ class ErrorTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
+
+    emit(): string {
+        return this.tkeystr;
+    }
 }
 
 class VoidTypeSignature extends TypeSignature {
@@ -140,6 +146,10 @@ class VoidTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
+
+    emit(): string {
+        return "Void";
+    }
 }
 
 class AutoTypeSignature extends TypeSignature {
@@ -149,6 +159,10 @@ class AutoTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
+    }
+
+    emit(): string {
+        return "^auto^";
     }
 }
 
@@ -163,6 +177,10 @@ class TemplateTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return mapper.resolveTemplateMapping(this);
     }
+
+    emit(): string {
+        return this.name;
+    }
 }
 
 class NominalTypeSignature extends TypeSignature {
@@ -170,7 +188,7 @@ class NominalTypeSignature extends TypeSignature {
     readonly alltermargs: TypeSignature[];
     readonly altns: FullyQualifiedNamespace | undefined;
 
-    private static computeTKeyStr(altns: FullyQualifiedNamespace | undefined, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]): string {
+    private static computeTKeyStr(decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]): string {
         const tscope = alltermargs.length !== 0 ? ("<" + alltermargs.map((tt) => tt.tkeystr).join(", ") + ">") : "";
         if(decl.isSpecialResultEntity()) {
             return `Result${tscope}::${decl.name}`;
@@ -184,7 +202,7 @@ class NominalTypeSignature extends TypeSignature {
                 nscope = decl.ns.ns.slice(1).join("::");
             }
             else {
-                nscope = altns !== undefined ? altns.ns.join("::") : decl.ns.ns.join("::");
+                nscope = decl.ns.ns.join("::");
             }
 
             return nscope + (nscope !== "" ? "::" : "") + decl.name + tscope;
@@ -192,15 +210,37 @@ class NominalTypeSignature extends TypeSignature {
     }
 
     constructor(sinfo: SourceInfo, altns: FullyQualifiedNamespace | undefined, decl: AbstractNominalTypeDecl, alltermargs: TypeSignature[]) {
-        super(sinfo, NominalTypeSignature.computeTKeyStr(altns, decl, alltermargs));
+        super(sinfo, NominalTypeSignature.computeTKeyStr(decl, alltermargs));
         this.decl = decl;
         this.alltermargs = alltermargs;
+        this.altns = altns;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtall = this.alltermargs.map((tt) => tt.remapTemplateBindings(mapper));
 
         return new NominalTypeSignature(this.sinfo, this.altns, this.decl, rtall);
+    }
+
+    emit(): string {
+        const tscope = this.alltermargs.length !== 0 ? ("<" + this.alltermargs.map((tt) => tt.emit()).join(", ") + ">") : "";
+        if(this.decl.isSpecialResultEntity()) {
+            return `Result${tscope}::${this.decl.name}`;
+        }
+        else if(this.decl.isSpecialAPIResultEntity()) {
+            return `APIResult${tscope}::${this.decl.name}`;
+        }
+        else {
+            let nscope: string;
+            if(this.decl.ns.ns[0] === "Core") {
+                nscope = this.decl.ns.ns.slice(1).join("::");
+            }
+            else {
+                nscope = this.altns !== undefined ? this.altns.ns.join("::") : this.decl.ns.ns.join("::");
+            }
+
+            return nscope + (nscope !== "" ? "::" : "") + this.decl.name + tscope;
+        }
     }
 }
 
@@ -214,6 +254,10 @@ class EListTypeSignature extends TypeSignature {
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    emit(): string {
+        return `( | ${this.entries.map((tt) => tt.emit()).join(", ")} | )`;
     }
 }
 
@@ -231,7 +275,7 @@ class LambdaParameterSignature {
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.tkeystr}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
     }
 }
 
@@ -252,6 +296,17 @@ class LambdaTypeSignature extends TypeSignature {
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
+    }
+
+    emit(): string {
+        let recstr = "";
+        if(this.recursive === "yes") {
+            recstr = "recursive ";
+        }
+        else if(this.recursive === "cond") {
+            recstr = "recursive?";
+        }
+        return `${recstr}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType.emit()}`;
     }
 }
 

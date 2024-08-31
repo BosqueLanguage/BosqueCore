@@ -34,7 +34,7 @@ class TemplateTermDecl {
         let chks: string[] = this.extraTags.map((t) => t);  
 
         if(this.tconstraint !== undefined) {
-            chks.push(this.tconstraint.tkeystr);
+            chks.push(this.tconstraint.emit());
         }
 
         const tstr = (chks.length !== 0) ? `: ${chks.join(" ")}` : "";
@@ -77,7 +77,7 @@ class InvokeTemplateTypeRestrictionClause {
         let chks: string[] = this.extraTags.map((t) => t);
 
         if(this.subtype !== undefined) {
-            chks.push(this.subtype.tkeystr);
+            chks.push(this.subtype.emit());
         }
 
         const tstr = chks.length !== 0 ? `: ${chks.join(" ")}` : "";
@@ -246,7 +246,7 @@ class InvokeExampleDeclInline extends InvokeExample {
     }
 
     emit(fmt: CodeFormatter): string {
-        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.emit()).join(", ")}> ` : " ";
         const estr = this.entries.map((e) => e.emit(fmt)).join("; ");
 
         if(this.kind === InvokeExampleKind.Spec) {
@@ -270,7 +270,7 @@ class InvokeExampleDeclFile extends InvokeExample {
     }
 
     emit(fmt: CodeFormatter): string {
-        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.tkeystr).join(", ")}> ` : " ";
+        const terms = this.terms.length !== 0 ? ` <${this.terms.map((t) => t.emit()).join(", ")}> ` : " ";
         
         if(this.kind === InvokeExampleKind.Test) {
             return fmt.indent(`test${terms}${this.filepath};`);
@@ -297,7 +297,7 @@ class DeclarationAttibute {
             return `%** ${this.text} **%`;
         }
         else {
-            return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType.tkeystr}::${t.tag}`).join(", ") + "]"}`;
+            return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType.emit()}::${t.tag}`).join(", ") + "]"}`;
         }
     }
 }
@@ -338,7 +338,7 @@ class InvokeParameterDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.tkeystr}`;
+        const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.emit()}`;
         const defv = this.optDefaultValue === undefined ? "" : ` = ${this.optDefaultValue.emit(true, fmt)}`;
         return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
     }
@@ -372,7 +372,7 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
         }
 
         let params = this.params.map((p) => p.emit(fmt)).join(", ");
-        let result = (this.resultType instanceof VoidTypeSignature) ? "" : (": " + this.resultType.tkeystr);
+        let result = (this.resultType instanceof VoidTypeSignature) ? "" : (": " + this.resultType.emit());
 
         return [`${attrs}${rec}`, `(${params})${result}`];
     }
@@ -545,7 +545,7 @@ class ConstMemberDecl extends AbstractCoreDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}const ${this.name}: ${this.declaredType.tkeystr} = ${this.value.emit(true, fmt)};`);
+        return fmt.indent(`${this.emitAttributes()}const ${this.name}: ${this.declaredType.emit()} = ${this.value.emit(true, fmt)};`);
     }
 }
 
@@ -566,10 +566,10 @@ class MemberFieldDecl extends AbstractCoreDecl {
         const attrs = this.emitAttributes();
 
         if(this.defaultValue === undefined) {
-            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.tkeystr};`);
+            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.emit()};`);
         }
         else {
-            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.tkeystr} = ${this.defaultValue.emit(true, fmt)};`);
+            return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.emit()} = ${this.defaultValue.emit(true, fmt)};`);
         }
     }
 }
@@ -648,7 +648,7 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     }
 
     emitProvides(): string {
-        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p.tkeystr).join(", ")) : "";
+        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p.emit()).join(", ")) : "";
     }
 
     emitBodyGroups(fmt: CodeFormatter): string[][] {
@@ -711,7 +711,7 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}type ${this.name}${this.emitTerms()} = ${this.valuetype.tkeystr}`;
+        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}type ${this.name}${this.emitTerms()} = ${this.valuetype.emit()}`;
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
@@ -1141,10 +1141,10 @@ class EnvironmentVariableInformation {
 
     emit(fmt: CodeFormatter): string {
         if(this.optdefault === undefined) {
-            return fmt.indent(`${this.evname}: ${this.evtype.tkeystr}`);
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()}`);
         }
         else {
-            return fmt.indent(`${this.evname}: ${this.evtype.tkeystr} = ${this.optdefault.emit(true, fmt)}`);
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)}`);
         }
     }
 }
@@ -1239,7 +1239,7 @@ class APIDecl extends AbstractCoreDecl {
 
         let status: string[] = [];
         if(this.statusOutputs.length !== 0) {
-            status = [`status {${this.statusOutputs.map((so) => so.tkeystr).join(", ")}}`];
+            status = [`status {${this.statusOutputs.map((so) => so.emit()).join(", ")}}`];
         }
 
         let resources: string[] = [];
@@ -1274,7 +1274,7 @@ class APIDecl extends AbstractCoreDecl {
         const attrs = this.emitAttributes();
 
         const params = this.params.map((p) => p.emit(fmt)).join(", ");
-        const result = this.resultType.tkeystr;
+        const result = this.resultType.emit();
 
         const minfo = this.emitMetaInfo(fmt);
         return `${attrs}api ${this.name}(${params}): ${result} ${this.body.emit(fmt, minfo)}`;
@@ -1304,10 +1304,10 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPush();
         const mg: string[][] = [];
         if(this.eventsInfo !== undefined) {
-            mg.push([`event ${this.eventsInfo.tkeystr}`]);
+            mg.push([`event ${this.eventsInfo.emit()}`]);
         }
         if(this.statusInfo !== undefined) {
-            mg.push([`status {${this.statusInfo.map((so) => so.tkeystr).join(", ")}}`]);
+            mg.push([`status {${this.statusInfo.map((so) => so.emit()).join(", ")}}`]);
         }
         if(this.envVarRequirementInfo !== undefined) {
             const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
@@ -1375,7 +1375,7 @@ class NamespaceConstDecl extends AbstractCoreDecl {
 
     emit(fmt: CodeFormatter): string {
         const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        return `${attr}const ${this.name}: ${this.declaredType.tkeystr} = ${this.value.emit(true, fmt)};`;
+        return `${attr}const ${this.name}: ${this.declaredType.emit()} = ${this.value.emit(true, fmt)};`;
     }
 }
 

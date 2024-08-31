@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
@@ -2241,6 +2241,7 @@ class JSEmitter {
     private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let ttdecls: string[] = [];
         let alldecls: string[] = [];
+        let allsupertypes: string[] = [];
         let alltests: string[] = [];
 
         let emittedtdecls = new Set<string>();
@@ -2266,94 +2267,76 @@ class JSEmitter {
                 if(tt instanceof EnumTypeDecl) {
                     const {decl, tests} = this.emitEnumTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof TypedeclTypeDecl) {
                     const {decl, tests} = this.emitTypedeclTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof PrimitiveEntityTypeDecl) {
                     const decl = this.emitPrimitiveEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof OkTypeDecl) {
                     const decl = this.emitOkTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof FailTypeDecl) {
                     const decl = this.emitFailTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIRejectedTypeDecl) {
                     const decl = this.emitAPIRejectedTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIFailedTypeDecl) {
                     const decl = this.emitAPIFailedTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APIErrorTypeDecl) {
                     const decl = this.emitAPIErrorTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof APISuccessTypeDecl) {
                     const decl = this.emitAPISuccessTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof SomeTypeDecl) {
                     const decl = this.emitSomeTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof MapEntryTypeDecl) {
                     const decl = this.emitMapEntryTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof ListTypeDecl) {
                     const decl = this.emitListTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof StackTypeDecl) {
                     const decl = this.emitStackTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof QueueTypeDecl) {
                     const decl = this.emitQueueTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof SetTypeDecl) {
                     const decl = this.emitSetTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof MapTypeDecl) {
                     const decl = this.emitMapTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof EventListTypeDecl) {
                     const decl = this.emitEventListTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                 }
                 else if(tt instanceof EntityTypeDecl) {
                     const {decl, tests} = this.emitEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof OptionTypeDecl) {
@@ -2376,7 +2359,6 @@ class JSEmitter {
                 else if(tt instanceof DatatypeMemberEntityTypeDecl) {
                     const {decl, tests} = this.emitDatatypeMemberEntityTypeDecl(ns, tt, instantiation, fmt);
                     ddecls.push(decl);
-                    ddecls.push(this.emitTypeSubtypeRelation(tt, instantiation));
                     alltests.push(...tests);
                 }
                 else if(tt instanceof DatatypeTypeDecl) {
@@ -2386,6 +2368,23 @@ class JSEmitter {
                 }
                 else {
                     assert(false, "Unknown type decl kind");
+                }
+
+                if(tt instanceof AbstractEntityTypeDecl) {
+                    allsupertypes.push(this.emitTypeSubtypeRelation(tt, instantiation));
+                }
+                else {
+                    if(tt instanceof ResultTypeDecl) {
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getOkType(), instantiation));
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getFailType(), instantiation));
+                    }
+
+                    if(tt instanceof APIResultTypeDecl) {
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getAPIRejectedType(), instantiation));
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getAPIFailedType(), instantiation));
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getAPIErrorType(), instantiation));
+                        allsupertypes.push(this.emitTypeSubtypeRelation(tt.getAPISuccessType(), instantiation));
+                    }
                 }
             }
 
@@ -2397,7 +2396,7 @@ class JSEmitter {
             }
         }
 
-        return {decls: [...ttdecls, ...alldecls], tests: alltests};
+        return {decls: [...ttdecls, ...alldecls, ...allsupertypes], tests: alltests};
     }
 
     private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {contents: string, tests: string[]} {
