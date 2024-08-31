@@ -1924,7 +1924,7 @@ class JSEmitter {
 
         if(isentity) {
             if(tdecl.hasDynamicInvokes) {
-                this.emitVTable(tdecl, fmt);
+                decls.push(this.emitVTable(tdecl, fmt));
             }
         }
 
@@ -1967,7 +1967,7 @@ class JSEmitter {
                 return `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`;
             }
             else {
-                return `export const ${rcvr.tkeystr} = ${obj}`;
+                return `export const ${tdecl.name} = ${obj}`;
             }
         }
     }
@@ -1990,11 +1990,17 @@ class JSEmitter {
 
         decls.push(...tdecl.members.map((mm) => `${mm}: Symbol(${mm})`));
 
+        if(tdecl.hasDynamicInvokes) {
+            decls.push(this.emitVTable(tdecl, fmt));
+        }
+
+        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
+
         fmt.indentPop();
 
-        const obj = `{\n${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
-        return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: mdecls.tests};
+        return {decl: `export const ${tdecl.name} = ${obj}`, tests: mdecls.tests};
     }
 
     private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
@@ -2030,18 +2036,20 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         if(tdecl.hasDynamicInvokes) {
-            this.emitVTable(tdecl, fmt);
+            decls.push(this.emitVTable(tdecl, fmt));
         }
+
+        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
 
         fmt.indentPop();
 
-        const obj = `{\n${decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: tests};
         }
         else {
-            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: tests};
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: tests};
         }
     }
 
@@ -2119,13 +2127,17 @@ class JSEmitter {
         const rcvr = JSEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        fmt.indentPush();
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        fmt.indentPop();
+
+        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2160,13 +2172,17 @@ class JSEmitter {
         const rcvr = JSEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        fmt.indentPush();
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        fmt.indentPop();
+
+        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2174,13 +2190,17 @@ class JSEmitter {
         const rcvr = JSEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        fmt.indentPush();
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        fmt.indentPop();
+
+        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2188,13 +2208,17 @@ class JSEmitter {
         const rcvr = JSEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        const obj = `{\n${rr.decls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`;
+        fmt.indentPush();
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        fmt.indentPop();
+
+        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${rcvr.tkeystr} = ${obj}`, tests: rr.tests};
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
         }
     }
 
@@ -2431,7 +2455,7 @@ class JSEmitter {
 
         let mainop = "\n";
         if(decl.name === "Main") {
-            mainop = "\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
+            mainop = "\n\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
         }
 
         return {contents: prefix + imports + ddecls + mainop, tests: tests};
