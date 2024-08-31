@@ -35,7 +35,6 @@ describe ("Checker -- type decl of strings w/ constraints", () => {
     });
 });
 
-
 describe ("Checker -- type decl of string with value", () => {
     it("should check string type decls", function () {
         checkTestFunction('type SV1 = String; function main(): String { let x = "ok"<SV1>; return x.value; }');    
@@ -45,7 +44,6 @@ describe ("Checker -- type decl of string with value", () => {
         checkTestFunctionError('type SV1 = String; function main(): Int { let x = "ok"<SV1>; return x.value; }', "Expected a return value of type Int but got String");
     });
 });
-
 
 describe ("Checker -- type decl zipcode/css", () => {
     it("should check string options type decl", function () {
@@ -62,5 +60,20 @@ describe ("Checker -- type decl zipcode/css", () => {
 
     it("should fail type mismatch", function () {
         checkTestFunctionError('type Zipcode = String of /[0-9]{5}("-"[0-9]{4})?/; type CSSPt = String of /[0-9]+"pt"/; function main(): CSSPt { return "87111"<Zipcode>; }', "Expected a return value of type CSSPt but got Zipcode");  
+    });
+});
+
+describe ("Checker -- type decl of strings w/ stacked constraints", () => {
+    it("should check string options type decl", function () {
+        checkTestFunction('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[a-c]+/; function main(): SV2 { return "abc"<SV2>; }');  
+        checkTestFunction('const re2: Regex = /[a-z]+/; type SV1 = String of Main::re2; type SV2 = SV1 of /[a-c]+/; function main(): SV2 { return "abc"<SV2>; }');  
+    });
+
+    it("should fail type mismatch", function () {
+        checkTestFunctionError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[a-c]+/c; function main(): SV2 { return "abc"<SV2>; }', "Unable to resolve regex validator");  
+    });
+
+    it("should fail string constraints", function () {
+        checkTestFunctionError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[az]+/; function main(): SV2 { return "abc"<SV2>; }', 'Literal value "abc" does not match regex -- /[az]+/');  
     });
 });

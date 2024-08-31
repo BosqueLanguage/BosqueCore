@@ -25,6 +25,18 @@ class MemberLookupInfo<T> {
     }
 }
 
+function flattenAndOrderTypeList(topts: TypeSignature[]): TypeSignature[] {
+    const res: TypeSignature[] = [];
+    for(let i = 0; i < topts.length; ++i) {
+        const t = topts[i];
+        if(!topts.some((tt) => t.tkeystr === tt.tkeystr)) {
+            res.push(t);
+        }
+    }
+
+    return res;
+}
+
 class TypeCheckerRelations {
     readonly assembly: Assembly;
     readonly wellknowntypes: Map<string, TypeSignature>;
@@ -909,7 +921,7 @@ class TypeCheckerRelations {
         }
     }
 
-    //get all of the actual fields that are provided via inheritance
+    //get all of the types that are provided via inheritance
     resolveTransitiveProvidesDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeLookupInfo[] {
         const dprovides = this.resolveDirectProvidesDecls(ttype, tconstrain);
 
@@ -926,6 +938,20 @@ class TypeCheckerRelations {
         }
 
         return pdecls;
+    }
+
+    //get all of the types that are provided via type declarations (direct and transitive)
+    resolveTransitiveTypeDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeLookupInfo[] {
+        if(!(ttype instanceof NominalTypeSignature)) {
+            return [];
+        }
+
+        let pdecls: TypeLookupInfo[] = [];
+        if(ttype.decl instanceof TypedeclTypeDecl) {
+            pdecls = this.resolveTransitiveTypeDecls(ttype.decl.valuetype.remapTemplateBindings(this.generateTemplateMappingForTypeDecl(ttype)), tconstrain);
+        }
+
+        return [new TypeLookupInfo(ttype, this.generateTemplateMappingForTypeDecl(ttype)), ...pdecls];
     }
 
     //get all of the actual fields that are provided via inheritance
@@ -977,7 +1003,7 @@ class TypeCheckerRelations {
         return [...ibnames, ...mbnames];
     }
 
-    //get all of the actual fields that are provided via inheritance
+    //get all of the validation declarations that are provided via inheritance
     resolveAllInheritedValidatorDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): {invariants: MemberLookupInfo<InvariantDecl>[], validators: MemberLookupInfo<ValidateDecl>[]} {
         const pdecls = this.resolveTransitiveProvidesDecls(ttype, tconstrain);
 
@@ -993,13 +1019,56 @@ class TypeCheckerRelations {
         return {invariants: allinvariants, validators: allvalidators};
     }
 
-    hasChecksOnConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
+    hasChecksOnValidation(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
             return true;
         }
 
         const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
         return ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
+    }
+
+    hasChecksOnConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+            return true;
+        }
+
+        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
+        return ichecks.invariants.length !== 0;
+    }
+
+    //get all of the validations that are provided via type declarations (direct and transitive) 
+    resolveAllTypeDeclaredValidatorDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): {invariants: MemberLookupInfo<InvariantDecl>[], validators: MemberLookupInfo<ValidateDecl>[]} {
+        const pdecls = this.resolveTransitiveTypeDecls(ttype, tconstrain);
+
+        let allinvariants: MemberLookupInfo<InvariantDecl>[] = [];
+        let allvalidators: MemberLookupInfo<ValidateDecl>[] = [];
+        for(let i = 0; i < pdecls.length; ++i) {
+            const pdecl = pdecls[i];
+
+            allinvariants = allinvariants.concat(pdecl.tsig.decl.invariants.map((f) => new MemberLookupInfo<InvariantDecl>(pdecl, f)));
+            allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((f) => new MemberLookupInfo<ValidateDecl>(pdecl, f)));
+        }
+
+        return {invariants: allinvariants, validators: allvalidators};
+    }
+
+    hasChecksOnTypeDeclaredValidation(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+            return true;
+        }
+
+        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
+        return ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
+    }
+
+    hasChecksOnTypeDeclaredConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+            return true;
+        }
+
+        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
+        return ichecks.invariants.length !== 0;
     }
 
     convertTypeSignatureToTypeInferCtx(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeInferContext {
@@ -1013,6 +1082,7 @@ class TypeCheckerRelations {
 }
 
 export {
+    flattenAndOrderTypeList,
     TypeLookupInfo, MemberLookupInfo,
     TypeCheckerRelations
 };
