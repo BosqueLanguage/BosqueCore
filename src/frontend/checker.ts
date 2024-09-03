@@ -1117,7 +1117,7 @@ class TypeChecker {
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
-        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
         exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
@@ -3403,7 +3403,7 @@ class TypeChecker {
         }
     }
 
-    private checkInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
+    private checkInvariants(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], invariants: InvariantDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
@@ -3413,7 +3413,7 @@ class TypeChecker {
         }
     }
 
-    private checkValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
+    private checkValidates(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], validates: ValidateDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
@@ -3564,7 +3564,7 @@ class TypeChecker {
         }
     }
 
-    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature}[], fdecls: MemberFieldDecl[]) {
+    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], fdecls: MemberFieldDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
             const f = fdecls[i];
             
@@ -3605,7 +3605,7 @@ class TypeChecker {
         ////
     }
 
-    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
+    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
         this.file = tdecl.file;
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
@@ -3744,8 +3744,8 @@ class TypeChecker {
             this.checkError(tdecl.sinfo, !this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.emit()}`);
 
             //make sure all of the invariants on this typecheck
-            this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
-            this.checkValidates([{name: "value", type: tdecl.valuetype}], tdecl.validates);
+            this.checkInvariants([{name: "value", type: tdecl.valuetype, hasdefault: false}], tdecl.invariants);
+            this.checkValidates([{name: "value", type: tdecl.valuetype, hasdefault: false}], tdecl.validates);
         }
         
         const {invariants, validators} = this.relations.resolveAllTypeDeclaredValidatorDecls(rcvr, this.constraints);
@@ -3954,7 +3954,7 @@ class TypeChecker {
         }
 
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
+        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType, hasdefault: f.defaultValue !== undefined}; });
         tdecl.saturatedBFieldInfo = bnames;
 
         //make sure all of the invariants on this typecheck

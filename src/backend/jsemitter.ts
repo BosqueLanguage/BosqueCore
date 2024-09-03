@@ -1876,8 +1876,19 @@ class JSEmitter {
         return "[VTABLE -- NOT IMPLEMENTED]";
     }
 
-    private emitCreate(tdecl: AbstractNominalTypeDecl,fmt: JSCodeFormatter): string {
-        return "[CREATE -- NOT IMPLEMENTED]";
+    private emitCreate(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+        const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
+            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeKey(ns, fi.containingtype)}::_$default$${fi.name}(); }`);
+        
+        const cchks = tdecl.allInvariants.map((inv) => `_$checkinv(${inv.exp.emit(true, new CodeFormatter())}, ${this.getErrorInfo(inv.exp.emit(true, new CodeFormatter()), inv.sinfo, inv.diagnosticTag)});`);
+
+        const ccons = `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+
+        fmt.indentPush();
+        const bbody = [...ddecls, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        fmt.indentPop();
+
+        return `_$create: (${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${ddecls}\n${fmt.indent("}")}`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {

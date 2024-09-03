@@ -985,16 +985,7 @@ class TypeCheckerRelations {
         return allfields;
     }
 
-    generateAllFieldBNamesInfo(ttype: NominalTypeSignature, mfields: MemberFieldDecl[], tconstrain: TemplateConstraintScope): {name: string, type: TypeSignature}[] {
-        const ifields = this.resolveAllInheritedFieldDecls(ttype, tconstrain);
-
-        const ibnames = ifields.map((mf) => { return {name: mf.member.name, type: mf.member.declaredType.remapTemplateBindings(mf.typeinfo.mapping)}; });
-        const mbnames = mfields.map((mf) => { return {name: mf.name, type: mf.declaredType}; });
-
-        return [...ibnames, ...mbnames];
-    }
-
-    generateAllFieldBNamesInfoWOptInitializer(ttype: NominalTypeSignature, mfields: MemberFieldDecl[], tconstrain: TemplateConstraintScope): {name: string, type: TypeSignature, hasdefault: boolean}[] {
+    generateAllFieldBNamesInfo(ttype: NominalTypeSignature, mfields: MemberFieldDecl[], tconstrain: TemplateConstraintScope): {name: string, type: TypeSignature, hasdefault: boolean}[] {
         const ifields = this.resolveAllInheritedFieldDecls(ttype, tconstrain);
 
         const ibnames = ifields.map((mf) => { return {name: mf.member.name, type: mf.member.declaredType.remapTemplateBindings(mf.typeinfo.mapping), hasdefault: mf.member.defaultValue !== undefined}; });

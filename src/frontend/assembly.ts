@@ -598,10 +598,10 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly etag: AdditionalTypeDeclTag;
 
     saturatedProvides: TypeSignature[] = [];
-    saturatedBFieldInfo: {name: string, type: TypeSignature}[] = [];
+    saturatedBFieldInfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: TypeSignature}[] = [];
 
-    allInvariants: TypeSignature[] = [];
-    allValidates: TypeSignature[] = [];
+    allInvariants: {containingtype: TypeSignature, name: string | undefined}[] = [];
+    allValidates: {containingtype: TypeSignature, name: string | undefined}[] = [];
 
     hasDynamicInvokes: boolean = false;
 
