@@ -9,7 +9,7 @@ describe ("Exec -- type decl of strings w/o constraints", () => {
         runMainCode("type SV2 = CString; public function main(): CString { return 'ok'<SV2>.value; }", ["ok", "CString"]);  
     });
 });
-/*
+
 describe ("Exec -- type decl of strings w/ constraints", () => {
     it("should exec string options type decl", function () {
         runMainCode('type SV1 = String of /[a-z]+/; public function main(): String { return "abc"<SV1>.value; }', ["abc", "String"]);  
@@ -31,4 +31,3 @@ describe ("Exec -- type decl zipcode/css", () => {
         runMainCode('type CSSPt = String of /[0-9]+"pt"/; public function main(): String { return "3pt"<CSSPt>.value; }', ["3pt", "String"]);
     });
 });
-*/

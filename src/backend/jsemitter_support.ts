@@ -192,7 +192,7 @@ class EmitNameManager {
         const nns = this.emitNamespaceAccess(currentns, inns);
         const ans = nns !== "" ? (nns + ".") : "";
 
-        return `${ans}${cv}`;
+        return `${ans}${cv.name}()`;
     }
 
     static generateAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {

@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import { loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";\n' +
+'import { accepts } from "@bosque/jsbrex";\n' +
 'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
 '\n'
 ;
@@ -405,9 +405,7 @@ class JSEmitter {
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
         const cdecl = cns.consts.find((c) => c.name === exp.name) as NamespaceConstDecl;
-        const nsaccess = EmitNameManager.generateAccssorNameForNamespaceConstant(this.getCurrentNamespace(), cns, cdecl);
-
-        return `${nsaccess}${exp.name}()`;
+        return EmitNameManager.generateAccssorNameForNamespaceConstant(this.getCurrentNamespace(), cns, cdecl);
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
@@ -1838,11 +1836,11 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp}`);
+            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp})`);
         }
 
         if(cdecls.length !== 0) {
-            cdecls.push("_$consts: new JSMap()");
+            cdecls = ["_$consts: new JSMap()", ...cdecls];
         }
 
         return cdecls;
@@ -1885,13 +1883,12 @@ class JSEmitter {
         if(tdecl instanceof TypedeclTypeDecl) {
             rechks = tdecl.allOfExps.map((reexp) => {
                 if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    return `_$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as LiteralRegexExpression).value, reexp.sinfo, reexp.tag)});`;
+                    return `_$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else {
-                    const nsaccess = reexp as AccessNamespaceConstantExpression;
-                    const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
-                    const isunicode = (tdecl.primtivetype as NominalTypeSignature).tkeystr === "String";
-                    return `_$formatchk(runNamedRegexAccepts(${rename}, $value, ${isunicode}), ${this.getErrorInfo("failed regex -- " + (reexp as LiteralRegexExpression).value, reexp.sinfo, reexp.tag)});`;
+                    const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
+                    const retag = `${(reexp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(reexp as AccessNamespaceConstantExpression).name}`;
+                    return `_$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
                 }
             });
         }
@@ -1904,17 +1901,56 @@ class JSEmitter {
             return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "$value" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
 
         fmt.indentPush();``
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `_$create: (${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
+        return `_$create: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
-        return "[CREATE API VALIDATE -- NOT IMPLEMENTED]";
+        const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
+            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, fi.containingtype)}::_$default$${fi.name}(); }`);
+        
+        let rechks: string[] = [];
+        if(tdecl instanceof TypedeclTypeDecl) {
+            rechks = tdecl.allOfExps.map((reexp) => {
+                if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                    return `_$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                }
+                else {
+                    const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
+                    const retag = `${(reexp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(reexp as AccessNamespaceConstantExpression).name}`;
+                    return `_$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
+                }
+            });
+        }
+
+        const cchks = tdecl.allInvariants.map((inv) => {
+            const chkcall = `${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, inv.containingtype)}::_$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
+            const args = (tdecl instanceof TypedeclTypeDecl) ? "$value" : inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const info = this.getErrorInfo("failed invariant", inv.sinfo, inv.tag);
+
+            return `_$invariant(${chkcall}(${args}), ${info});`
+        });
+
+        const vchks = tdecl.allValidates.map((inv) => {
+            const chkcall = `${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, inv.containingtype)}::_$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
+            const args = (tdecl instanceof TypedeclTypeDecl) ? "$value" : inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const info = this.getErrorInfo("failed validation", inv.sinfo, inv.tag);
+
+            return `_$validate(${chkcall}(${args}), ${info});`
+        });
+
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+
+        fmt.indentPush();``
+        const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        fmt.indentPop();
+
+        return `_$createAPI: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[] | undefined, instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2280,10 +2316,14 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`export function ${m.name}() => _$memoconstval(this._$consts, "${m.name}", ${lexp};`);
+            cdecls.push(`export function ${m.name}() { _$memoconstval(_$consts, "${m.name}", ${lexp}); }`);
         }
 
-        return [...cdecls, `let _$consts = new JSMap();`];
+        if(cdecls.length !== 0) {
+            cdecls = ["let _$consts = new JSMap();", ...cdecls];
+        }
+
+        return cdecls;
     }
 
 
@@ -2295,7 +2335,7 @@ class JSEmitter {
         return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
     }
 
-    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], supers: string[], tests: string[]} {
         let ttdecls: string[] = [];
         let alldecls: string[] = [];
         let allsupertypes: string[] = [];
@@ -2453,7 +2493,7 @@ class JSEmitter {
             }
         }
 
-        return {decls: [...ttdecls, ...alldecls, ...allsupertypes], tests: alltests};
+        return {decls: [...ttdecls, ...alldecls], supers: allsupertypes, tests: alltests};
     }
 
     private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {contents: string, tests: string[]} {
@@ -2480,6 +2520,7 @@ class JSEmitter {
         decls.push(...taskdecls);
 
         const ddecls = decls.join("\n\n");
+        const supers = tdecls.supers.length !== 0 ? ("\n\n" + tdecls.supers.join("\n")) : "";
 
         let imports = "";
         if(decl.name !== "Core") {
@@ -2491,7 +2532,7 @@ class JSEmitter {
             mainop = "\n\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
         }
 
-        return {contents: prefix + imports + ddecls + mainop, tests: tests};
+        return {contents: prefix + imports + ddecls + supers + mainop, tests: tests};
     }
 
     static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
