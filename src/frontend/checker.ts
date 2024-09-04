@@ -5,7 +5,7 @@ import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
-import { flattenAndOrderTypeList, TypeCheckerRelations } from "./checker_relations.js";
+import { TypeCheckerRelations } from "./checker_relations.js";
 
 import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";
 
@@ -955,7 +955,7 @@ class TypeChecker {
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the base type (${TypeChecker.safeTypePrint(btype)})`);
 
         exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
-        exp.isDirect = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints);
+        exp.isDirectLiteral = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints, true);
         return exp.setType(exp.constype);
     }
 
@@ -1117,10 +1117,15 @@ class TypeChecker {
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
-        const bnames = this.relations.generateAllFieldBNamesInfoWOptInitializer(ctype, fields, this.constraints);
+        const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
-        exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
+        if(ctype.decl instanceof TypedeclTypeDecl) {
+            exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, false);
+        }
+        else {
+            exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
+        }
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
     }
@@ -3403,7 +3408,7 @@ class TypeChecker {
         }
     }
 
-    private checkInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
+    private checkInvariants(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], invariants: InvariantDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
@@ -3413,7 +3418,7 @@ class TypeChecker {
         }
     }
 
-    private checkValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
+    private checkValidates(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], validates: ValidateDecl[]) {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
@@ -3564,7 +3569,7 @@ class TypeChecker {
         }
     }
 
-    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature}[], fdecls: MemberFieldDecl[]) {
+    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], fdecls: MemberFieldDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
             const f = fdecls[i];
             
@@ -3605,7 +3610,7 @@ class TypeChecker {
         ////
     }
 
-    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
+    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
         this.file = tdecl.file;
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
@@ -3622,8 +3627,12 @@ class TypeChecker {
         this.checkValidates(bnames, tdecl.validates);
         
         const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
-        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
-        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+        tdecl.allInvariants = invariants.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
+        tdecl.allValidates = validators.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
@@ -3693,33 +3702,37 @@ class TypeChecker {
 
         const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
         const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
-        this.checkError(tdecl.sinfo, primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature), `could not resolve the value type -- ${tdecl.valuetype.emit()}`);
+        if(primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature)) {
+            this.reportError(tdecl.sinfo, `could not resolve the value type -- ${tdecl.valuetype.emit()}`);
+        }
+        else {
+            tdecl.primtivetype = primtivetype;
+            for(let i = 0; i < reexp.length; ++i) {
+                const checkerexp = reexp[i][0];
+                this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
 
-        for(let i = 0; i < reexp.length; ++i) {
-            const checkerexp = reexp[i][0];
-            this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
+                if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
+                    if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
+                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
+                    
+                        const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
+                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
+                    }
+                    else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
+                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
 
-            if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
-                if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
-                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
+                        const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
+                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
+                    }
+                    else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
+                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralPathGlobExpression, `of expression must be path glob`);
 
-                    const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
-                }
-                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
-                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
-
-                    const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
-                }
-                else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
-                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralPathGlobExpression, `of expression must be path glob`);
-
-                    const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
-                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
-                }
-                else {
-                    this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
+                        const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
+                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
+                    }
+                    else {
+                        this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
+                    }
                 }
             }
         }
@@ -3744,13 +3757,17 @@ class TypeChecker {
             this.checkError(tdecl.sinfo, !this.relations.isTypedeclableType(tdecl.valuetype), `Base type is not typedeclable -- ${tdecl.valuetype.emit()}`);
 
             //make sure all of the invariants on this typecheck
-            this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
-            this.checkValidates([{name: "value", type: tdecl.valuetype}], tdecl.validates);
+            this.checkInvariants([{name: "value", type: tdecl.valuetype, hasdefault: false}], tdecl.invariants);
+            this.checkValidates([{name: "value", type: tdecl.valuetype, hasdefault: false}], tdecl.validates);
         }
         
         const {invariants, validators} = this.relations.resolveAllTypeDeclaredValidatorDecls(rcvr, this.constraints);
-        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
-        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+        tdecl.allInvariants = invariants.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
+        tdecl.allValidates = validators.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);
@@ -3954,7 +3971,7 @@ class TypeChecker {
         }
 
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
-        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
+        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType, hasdefault: f.defaultValue !== undefined, containingtype: rcvr}; });
         tdecl.saturatedBFieldInfo = bnames;
 
         //make sure all of the invariants on this typecheck
@@ -3962,8 +3979,12 @@ class TypeChecker {
         this.checkValidates(bnames, tdecl.validates);
         
         const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
-        tdecl.allInvariants = flattenAndOrderTypeList(invariants.map((inv) => inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping)));
-        tdecl.allValidates = flattenAndOrderTypeList(validators.map((val) => val.typeinfo.tsig.remapTemplateBindings(val.typeinfo.mapping)));
+        tdecl.allInvariants = invariants.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
+        tdecl.allValidates = validators.map((inv) => {
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+        });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
         this.checkTypeFunctionDecls(tdecl, tdecl.functions);

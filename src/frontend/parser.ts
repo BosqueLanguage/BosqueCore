@@ -4880,7 +4880,6 @@ class Parser {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.env.pushStandardFunctionScope([], typeTerms, this.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
             const isvalidate = this.testToken(KW_validate);
             this.consumeToken();
@@ -4895,7 +4894,7 @@ class Parser {
             }
 
             if(isvalidate) {
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, this.env.getScope().boundtemplates);
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
 
                 if(vdates === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
@@ -4906,7 +4905,7 @@ class Parser {
             }
             else {
                 const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, this.env.getScope().boundtemplates);
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature, typeTerms);
 
                 if(invs === undefined) {
                     this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
@@ -4918,7 +4917,6 @@ class Parser {
 
             this.ensureAndConsumeTokenIf(SYM_semicolon, "invariant");
         }
-        this.env.popStandardFunctionScope();
     }
 
     private parseOOPMembersCommonAll(istask: boolean, specialConcept: InternalConceptTypeDecl | undefined, typeTerms: Set<string>,

@@ -192,7 +192,7 @@ class EmitNameManager {
         const nns = this.emitNamespaceAccess(currentns, inns);
         const ans = nns !== "" ? (nns + ".") : "";
 
-        return `${ans}${cv}`;
+        return `${ans}${cv.name}()`;
     }
 
     static generateAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, fv: NamespaceFunctionDecl, mapper: TemplateNameMapper | undefined): string {
@@ -255,6 +255,10 @@ class EmitNameManager {
 
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
         return `${this.emitTypeAccess(currentns, ttype)}.$tsym`;
+    }
+
+    static generateAccessorForTypeSpecialName(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, name: string): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.${name}`;
     }
 }
 

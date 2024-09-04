@@ -15,6 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
+const modules_path = path.join(bosque_dir, "node_modules");
 
 import { tmpdir } from 'node:os';
 
@@ -65,6 +66,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
     const nndir = path.normalize(outname);
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
+        fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
 
         for(let i = 0; i < jscode.length; ++i) {
             const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
@@ -106,7 +108,12 @@ function execMainCode(code: string): string {
         result = `[Unexpected error ${e}]`;
     }
     finally {
-        fs.rmSync(nndir, { recursive: true });
+        if(code.includes("0n + 1n")) {
+            console.log(nndir);
+        }
+        else {
+            fs.rmSync(nndir, { recursive: true });
+        }
     }
 
     return wsnorm(result);

@@ -386,7 +386,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     readonly constype: TypeSignature;
     
     optResolvedString: string | undefined = undefined;
-    isDirect: boolean = true;
+    isDirectLiteral: boolean = true;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);

@@ -30,3 +30,21 @@ describe ("Checker -- Entity Constructor", () => {
         checkTestFunctionInFileError('entity Foo { field f: Int = 0i; field g: Bool; } function main(): Foo { return Foo{true, false}; }', 'Argument f expected type Int but got Bool');
     });
 });
+
+
+describe ("Checker -- Entity w/ Invariant Constructor", () => {
+    it("should check positional", function () {
+        checkTestFunctionInFile('entity Foo { field f: Int; invariant $f > 3i; } function main(): Foo { return Foo{1i}; }');
+        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool; invariant $g ==> $f > 3i; } function main(): Foo { return Foo{1i, false}; }');
+
+        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool; invariant !$g; invariant $f != 0i; } function main(): Foo { return Foo{1i, false}; }');
+    });
+
+    it("should fail missing names", function () {
+        checkTestFunctionInFileError('entity Foo { field f: Int; invariant $g > 3i; } function main(): Foo { return Foo{1i}; }', 'Variable $g is not declared here');
+    });
+
+    it("should fail bool", function () {
+        checkTestFunctionInFileError('entity Foo { field f: Int; invariant $f; } function main(): Foo { return Foo{3i}; }', 'Invariant expression does not have a boolean type -- got Int');
+    });
+});
