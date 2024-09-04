@@ -478,7 +478,7 @@ class JSEmitter {
             return `{${iargs.join(", ")}}`;
         }
         else {
-            return `${taccess}(${exp.args.args.map((a) => this.emitExpression(a.exp, true)).join(", ")})`;
+            return `${taccess}(${aargs.join(", ")})`;
         }
     }
 
@@ -1864,7 +1864,14 @@ class JSEmitter {
 
         let initializers: string[] = [];
         for(let i = 0; i < inits.length; ++i) {
-            assert(false, "Not implemented -- emitMemberFieldInitializer");
+            const m = inits[i];
+            if(m.defaultValue !== undefined) {
+                const chkcall = `$default$${m.name}`;
+                const args = ""; //tdecl.saturatedBFieldInfo.map((fi) => "$" + fi.name).join(", "); --------- TODO: we need to compute dependencies and cycles
+
+                const body = this.emitExpression(m.defaultValue.exp, true);
+                initializers.push(`${chkcall}: (${args}) => ${body}`);
+            }
         }
 
         return initializers;
@@ -1985,11 +1992,11 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            if(tdecl.allInvariants.length !== 0) {
+            if(optfdecls || tdecl.allInvariants.length !== 0) {
                 decls.push(this.emitCreate(tdecl, fmt));
             }
 
-            if(tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
+            if(optfdecls || tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
                 decls.push(this.emitCreateAPIValidate(tdecl, fmt));
             }
         }
