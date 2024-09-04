@@ -25,18 +25,6 @@ class MemberLookupInfo<T> {
     }
 }
 
-function flattenAndOrderTypeList(topts: TypeSignature[]): TypeSignature[] {
-    const res: TypeSignature[] = [];
-    for(let i = 0; i < topts.length; ++i) {
-        const t = topts[i];
-        if(!topts.some((tt) => t.tkeystr === tt.tkeystr)) {
-            res.push(t);
-        }
-    }
-
-    return res;
-}
-
 class TypeCheckerRelations {
     readonly assembly: Assembly;
     readonly wellknowntypes: Map<string, TypeSignature>;
@@ -985,11 +973,11 @@ class TypeCheckerRelations {
         return allfields;
     }
 
-    generateAllFieldBNamesInfo(ttype: NominalTypeSignature, mfields: MemberFieldDecl[], tconstrain: TemplateConstraintScope): {name: string, type: TypeSignature, hasdefault: boolean}[] {
+    generateAllFieldBNamesInfo(ttype: NominalTypeSignature, mfields: MemberFieldDecl[], tconstrain: TemplateConstraintScope): {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] {
         const ifields = this.resolveAllInheritedFieldDecls(ttype, tconstrain);
 
-        const ibnames = ifields.map((mf) => { return {name: mf.member.name, type: mf.member.declaredType.remapTemplateBindings(mf.typeinfo.mapping), hasdefault: mf.member.defaultValue !== undefined}; });
-        const mbnames = mfields.map((mf) => { return {name: mf.name, type: mf.declaredType, hasdefault: mf.defaultValue !== undefined}; });
+        const ibnames = ifields.map((mf) => { return {name: mf.member.name, type: mf.member.declaredType.remapTemplateBindings(mf.typeinfo.mapping), hasdefault: mf.member.defaultValue !== undefined, containingtype: mf.typeinfo.tsig.remapTemplateBindings(mf.typeinfo.mapping) as NominalTypeSignature}; });
+        const mbnames = mfields.map((mf) => { return {name: mf.name, type: mf.declaredType, hasdefault: mf.defaultValue !== undefined, containingtype: ttype}; });
 
         return [...ibnames, ...mbnames];
     }
@@ -1073,7 +1061,6 @@ class TypeCheckerRelations {
 }
 
 export {
-    flattenAndOrderTypeList,
     TypeLookupInfo, MemberLookupInfo,
     TypeCheckerRelations
 };

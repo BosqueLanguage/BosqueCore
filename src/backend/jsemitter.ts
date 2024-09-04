@@ -1880,15 +1880,24 @@ class JSEmitter {
         const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
             map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeKey(ns, fi.containingtype)}::_$default$${fi.name}(); }`);
         
-        const cchks = tdecl.allInvariants.map((inv) => `_$checkinv(${inv.exp.emit(true, new CodeFormatter())}, ${this.getErrorInfo(inv.exp.emit(true, new CodeFormatter()), inv.sinfo, inv.diagnosticTag)});`);
+        const rechks = tdecl.allInvariants.map((inv) => {
+            xxxx;
+        });
+
+        const cchks = tdecl.allInvariants.map((inv) => {
+            const chkcall = `${EmitNameManager.generateAccessorForTypeKey(ns, inv.containingtype)}::_$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
+            const args = ;
+            const info = ;
+            return `_$invariant(_$checkinv(${args}), ${info});`
+        });
 
         const ccons = `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
 
-        fmt.indentPush();
-        const bbody = [...ddecls, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        fmt.indentPush();``
+        const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `_$create: (${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${ddecls}\n${fmt.indent("}")}`;
+        return `_$create: (${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
