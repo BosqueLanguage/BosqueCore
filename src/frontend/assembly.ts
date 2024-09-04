@@ -700,6 +700,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
+    primtivetype: TypeSignature | undefined;
     optofexp: LiteralExpressionValue | undefined; 
 
     allOfExps: Expression[] = [];

@@ -54,6 +54,11 @@ const $Unwind_PreCond = Symbol("PreCondFailed");
  **/
 const $Unwind_PostCond = Symbol("PostCondFailed");
 
+/**
+ * @constant
+ * @type {Symbol}
+ **/
+const $Unwind_Format = Symbol("FormatFailed");
 
 /**
  * @constant
@@ -456,6 +461,18 @@ function _$assert(cond, info) {
  * @param {string | undefined} info 
  * @throws {$Unwind}
  **/
+function _$formatchk(ok, info) {
+    if (!ok) {
+        throw new $Unwind($Unwind_Format, info);
+    }
+}
+
+/**
+ * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
 function _$invariant(cond, info) {
     if (!cond) {
         throw new $Unwind($Unwind_Invariant, info);
@@ -546,6 +563,6 @@ export {
     _$supertypes,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
-    _$abort, _$assert, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
+    _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval
 };

@@ -11,7 +11,8 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
+'import { loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";\n' +
+'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -1876,22 +1877,34 @@ class JSEmitter {
         return "[VTABLE -- NOT IMPLEMENTED]";
     }
 
-    private emitCreate(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+    private emitCreate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
         const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
-            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeKey(ns, fi.containingtype)}::_$default$${fi.name}(); }`);
+            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, fi.containingtype)}::_$default$${fi.name}(); }`);
         
-        const rechks = tdecl.allInvariants.map((inv) => {
-            xxxx;
-        });
+        let rechks: string[] = [];
+        if(tdecl instanceof TypedeclTypeDecl) {
+            rechks = tdecl.allOfExps.map((reexp) => {
+                if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                    return `_$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as LiteralRegexExpression).value, reexp.sinfo, reexp.tag)});`;
+                }
+                else {
+                    const nsaccess = reexp as AccessNamespaceConstantExpression;
+                    const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
+                    const isunicode = (tdecl.primtivetype as NominalTypeSignature).tkeystr === "String";
+                    return `_$formatchk(runNamedRegexAccepts(${rename}, $value, ${isunicode}), ${this.getErrorInfo("failed regex -- " + (reexp as LiteralRegexExpression).value, reexp.sinfo, reexp.tag)});`;
+                }
+            });
+        }
 
         const cchks = tdecl.allInvariants.map((inv) => {
-            const chkcall = `${EmitNameManager.generateAccessorForTypeKey(ns, inv.containingtype)}::_$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
-            const args = ;
-            const info = ;
-            return `_$invariant(_$checkinv(${args}), ${info});`
+            const chkcall = `${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, inv.containingtype)}::_$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
+            const args = (tdecl instanceof TypedeclTypeDecl) ? "$value" : inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const info = this.getErrorInfo("failed invariant", inv.sinfo, inv.tag);
+
+            return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "$value" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
 
         fmt.indentPush();``
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
