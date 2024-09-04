@@ -991,9 +991,12 @@ class TypeCheckerRelations {
         for(let i = 0; i < pdecls.length; ++i) {
             const pdecl = pdecls[i];
 
-            allinvariants = allinvariants.concat(pdecl.tsig.decl.invariants.map((f) => new MemberLookupInfo<InvariantDecl>(pdecl, f)));
-            allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((f) => new MemberLookupInfo<ValidateDecl>(pdecl, f)));
+            allinvariants = allinvariants.concat(pdecl.tsig.decl.invariants.map((inv) => new MemberLookupInfo<InvariantDecl>(pdecl, inv)));
+            allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(pdecl, inv)));
         }
+
+        allinvariants = allinvariants.concat(((ttype as NominalTypeSignature).decl.invariants.map((inv) => new MemberLookupInfo<InvariantDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
+        allvalidators = allvalidators.concat(((ttype as NominalTypeSignature).decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
 
         return {invariants: allinvariants, validators: allvalidators};
     }
@@ -1029,25 +1032,30 @@ class TypeCheckerRelations {
             allvalidators = allvalidators.concat(pdecl.tsig.decl.validates.map((f) => new MemberLookupInfo<ValidateDecl>(pdecl, f)));
         }
 
+        allinvariants = allinvariants.concat(((ttype as NominalTypeSignature).decl.invariants.map((inv) => new MemberLookupInfo<InvariantDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
+        allvalidators = allvalidators.concat(((ttype as NominalTypeSignature).decl.validates.map((inv) => new MemberLookupInfo<ValidateDecl>(new TypeLookupInfo(ttype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype as NominalTypeSignature)), inv))));
+
         return {invariants: allinvariants, validators: allvalidators};
     }
 
     hasChecksOnTypeDeclaredValidation(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+        if((ttype.decl as TypedeclTypeDecl).optofexp !== undefined || ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
             return true;
         }
 
-        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
-        return ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
+        const rchks = this.assembly.resolveAllValidatorLiterals(ttype.decl as TypedeclTypeDecl);
+        const ichecks = this.resolveAllTypeDeclaredValidatorDecls(ttype, tconstrain);
+        return rchks.length !== 0 || ichecks.invariants.length !== 0 || ichecks.validators.length !== 0;
     }
 
-    hasChecksOnTypeDeclaredConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        if(ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
+    hasChecksOnTypeDeclaredConstructor(ttype: NominalTypeSignature, tconstrain: TemplateConstraintScope, isliteralcons: boolean): boolean {
+        if((!isliteralcons && (ttype.decl as TypedeclTypeDecl).optofexp !== undefined) || ttype.decl.validates.length !== 0 || ttype.decl.invariants.length !== 0) {
             return true;
         }
 
-        const ichecks = this.resolveAllInheritedValidatorDecls(ttype, tconstrain);
-        return ichecks.invariants.length !== 0;
+        const rchks = !isliteralcons ? this.assembly.resolveAllValidatorLiterals(ttype.decl as TypedeclTypeDecl) : [];
+        const ichecks = this.resolveAllTypeDeclaredValidatorDecls(ttype, tconstrain);
+        return rchks.length !== 0 || ichecks.invariants.length !== 0;
     }
 
     convertTypeSignatureToTypeInferCtx(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeInferContext {

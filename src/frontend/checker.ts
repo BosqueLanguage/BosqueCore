@@ -955,7 +955,7 @@ class TypeChecker {
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the base type (${TypeChecker.safeTypePrint(btype)})`);
 
         exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
-        exp.isDirect = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints);
+        exp.isDirectLiteral = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints, true);
         return exp.setType(exp.constype);
     }
 
@@ -1120,7 +1120,12 @@ class TypeChecker {
         const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
-        exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
+        if(ctype.decl instanceof TypedeclTypeDecl) {
+            exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, false);
+        }
+        else {
+            exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
+        }
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
     }

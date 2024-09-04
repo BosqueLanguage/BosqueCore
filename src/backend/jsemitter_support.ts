@@ -256,6 +256,10 @@ class EmitNameManager {
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
         return `${this.emitTypeAccess(currentns, ttype)}.$tsym`;
     }
+
+    static generateAccessorForTypeSpecialName(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, name: string): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.${name}`;
+    }
 }
 
 export {
