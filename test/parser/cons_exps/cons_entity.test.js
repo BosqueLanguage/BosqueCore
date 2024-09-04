@@ -27,3 +27,19 @@ describe ("Parser -- Entity Constructor", () => {
         parseTestFunctionInFileError('entity Foo { field f: Int 0i; } function main(): Foo { return Foo{}; }', 'Expected ";" but got "0i" when parsing "member field"');
     });
 });
+
+
+describe ("Parser -- Entity w/ Invariants Constructor", () => {
+    it("should parse positional", function () {
+        parseTestFunctionInFile('entity Foo { field f: Int; invariant $f > 3i; } [FUNC]', 'function main(): Foo { return Foo{1i}; }');
+        parseTestFunctionInFile('entity Foo { field f: Int; field g: Bool; invariant $g ==> $f > 3i; } [FUNC]', 'function main(): Foo { return Foo{1i, false}; }');
+    });
+
+    it("should fail missing semi", function () {
+        parseTestFunctionInFileError('entity Foo { field f: Int; invariant $f > 3i } function main(): Foo { return Foo{1i}; }', 'Expected ";" but got "}" when parsing "invariant"');
+    });
+
+    it("should fail missing names", function () {
+        parseTestFunctionInFileError('entity Foo { field f: Int; invariant f > 3i; } function main(): Foo { return Foo{1i}; }', "Could not resolve 'f' in this context");
+    });
+});
