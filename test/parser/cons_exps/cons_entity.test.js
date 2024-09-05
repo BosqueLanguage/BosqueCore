@@ -28,7 +28,6 @@ describe ("Parser -- Entity Constructor", () => {
     });
 });
 
-
 describe ("Parser -- Entity w/ Invariants Constructor", () => {
     it("should parse positional", function () {
         parseTestFunctionInFile('entity Foo { field f: Int; invariant $f > 3i; } [FUNC]', 'function main(): Foo { return Foo{1i}; }');

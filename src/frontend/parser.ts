@@ -5337,8 +5337,8 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
-        this.ensureAndConsumeTokenAlways(KW_type, "typedecl declaration");
-        this.ensureToken(TokenStrings.IdentifierName, "typedecl declaration");
+        this.ensureAndConsumeTokenAlways(KW_type, "type alias declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "type alias declaration");
         const iname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
@@ -5366,7 +5366,7 @@ class Parser {
                 tdecl.terms.push(...terms);
             }
 
-            this.ensureAndConsumeTokenIf(SYM_eq, "typedecl declaration");
+            this.ensureAndConsumeTokenIf(SYM_eq, "type alias declaration");
             const ttype = this.parseTypedeclRHSSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
@@ -5376,7 +5376,7 @@ class Parser {
             }
 
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
-                this.ensureAndConsumeTokenIf(SYM_amp, "typedecl declaration");
+                this.ensureAndConsumeTokenIf(SYM_amp, "type alias declaration");
 
                const provides = this.parseProvides(sinfo, [SYM_lbrace]);
                 if(provides.length !== 0) {

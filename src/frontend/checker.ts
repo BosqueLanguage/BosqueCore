@@ -1114,6 +1114,31 @@ class TypeChecker {
         return exp.setType(ctype);
     }
 
+    private checkSpecialTypeDeclConstructor(env: TypeEnvironment, cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+        const ctype = exp.ctype as NominalTypeSignature;
+
+        if(exp.args.args.length !== 1) {
+            this.reportError(exp.sinfo, `${ctype.emit()} constructor expects 1 argument`);
+        }
+        else {
+            const vtype = this.relations.getTypeDeclValueType(ctype);
+            const ptype = this.relations.getTypeDeclBasePrimitiveType(ctype);
+            if(vtype !== undefined && ptype !== undefined) {
+                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ptype)); //both vtype and ptype are ok but if we infer a type then we should use the primitive type
+                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype) || this.relations.areSameTypes(etype, ptype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
+
+                if(this.relations.areSameTypes(etype, vtype)) {
+                    exp.hasChecks = cdecl.optofexp !== undefined || cdecl.invariants.length !== 0;
+                }
+                else {
+                    exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, true);
+                }
+            }
+        }
+        
+        return exp.setType(ctype);
+    }
+
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
@@ -1134,7 +1159,7 @@ class TypeChecker {
         this.checkTypeSignature(exp.ctype);
 
         if(!(exp.ctype instanceof NominalTypeSignature)) {
-            this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+            this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype.emit()}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1146,6 +1171,9 @@ class TypeChecker {
         else if(decl instanceof ConstructableTypeDecl) {
             return this.checkSpecialConstructableConstructor(env, decl, exp);
         }
+        else if(decl instanceof TypedeclTypeDecl) {
+            return this.checkSpecialTypeDeclConstructor(env, decl, exp);
+        }
         else {
             if(decl instanceof EntityTypeDecl) {
                 return this.checkStandardConstructor(env, decl.fields, exp);
@@ -1154,7 +1182,7 @@ class TypeChecker {
                 return this.checkStandardConstructor(env, decl.fields, exp);
             }
             else {
-                this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+                this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype.emit()}`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
         }
