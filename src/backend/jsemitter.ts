@@ -1926,7 +1926,10 @@ class JSEmitter {
         if(tdecl instanceof TypedeclTypeDecl) {
             rechks = tdecl.allOfExps.map((reexp) => {
                 if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    return `_$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                }
+                else if(reexp.tag === ExpressionTag.LiteralCRegexExpression) {
+                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else {
                     const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
@@ -1957,7 +1960,10 @@ class JSEmitter {
         let rechks: string[] = [];
         if(tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    rechks.push(`_$formatchk(accepts(${(tdecl.optofexp.exp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+            }
+            else if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
+                rechks.push(`_$formatchk(accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else {
                 const nsaccess = this.emitAccessNamespaceConstantExpression(tdecl.optofexp.exp as AccessNamespaceConstantExpression);
@@ -1991,7 +1997,10 @@ class JSEmitter {
         if(tdecl instanceof TypedeclTypeDecl) {
             rechks = tdecl.allOfExps.map((reexp) => {
                 if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    return `$formatchk(accepts(${(reexp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                }
+                else if(reexp.tag === ExpressionTag.LiteralCRegexExpression) {
+                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else {
                     const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
@@ -2392,7 +2401,7 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`export function ${m.name}() { _$memoconstval(_$consts, "${m.name}", ${lexp}); }`);
+            cdecls.push(`export function ${m.name}() { return _$memoconstval(_$consts, "${m.name}", ${lexp}); }`);
         }
 
         if(cdecls.length !== 0) {
