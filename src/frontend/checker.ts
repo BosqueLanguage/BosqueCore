@@ -108,6 +108,9 @@ class TypeChecker {
                     for(let i = 0; i < reexp.length; ++i) {
                         const vexp = reexp[i][1];
                         if(vexp.tag === ExpressionTag.LiteralCRegexExpression) {
+                            const acpt = accepts((vexp as LiteralRegexExpression).value, vs);
+                            console.log(acpt);
+                            
                             this.checkError(exp.sinfo, !accepts((vexp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${(vexp as LiteralRegexExpression).value}`);
                         }
                         else {
@@ -1144,7 +1147,7 @@ class TypeChecker {
                     exp.hasChecks = cdecl.optofexp !== undefined || cdecl.invariants.length !== 0;
                 }
                 else {
-                    exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, true);
+                    exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, false);
                 }
             }
         }
@@ -1158,12 +1161,7 @@ class TypeChecker {
         const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
 
-        if(ctype.decl instanceof TypedeclTypeDecl) {
-            exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, false);
-        }
-        else {
-            exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
-        }
+        exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
     }
