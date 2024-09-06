@@ -10,11 +10,15 @@ describe ("Checker -- Type Alias Constructor", () => {
 
     it("should fail positional", function () {
         checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{}.value; }', 'Foo constructor expects 1 argument');
-        checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{1i, 2i}.value; }', 'err222');
+        checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{1i, 2i}.value; }', 'Foo constructor expects 1 argument');
+    });
+
+    it("should fail named", function () {
+        checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{value=1i}; }', "Type alias constructor expects only positional arguments");
     });
 
     it("should fail type", function () {
-        checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{2n}.value; }', 'Nat constructor argument is not a compatible with Int');
+        checkTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo{2n}.value; }', 'Nat constructor argument is not compatible with Int');
     });
 });
 

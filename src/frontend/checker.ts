@@ -1015,6 +1015,11 @@ class TypeChecker {
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
+        if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof RefArgumentValue))) {
+            this.reportError(exp.sinfo, `Collection constructor expects only positional (or spread) arguments`);
+            return exp.setType(exp.ctype);
+        }
+
         let shuffleinfo: [number, string, TypeSignature][] = [];
         for(let i = 0; i < exp.args.args.length; ++i) {
             shuffleinfo.push([i, "_", etype]);
@@ -1027,7 +1032,7 @@ class TypeChecker {
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);
                 const argetype = this.relations.getExpandoableOfType(argtype);
-                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Rest argument ${i} expected to be container of type ${etype.emit()}`);
+                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Spread argument ${i} expected to be container of type ${etype.emit()}`);
             }
         }
 
@@ -1042,6 +1047,11 @@ class TypeChecker {
 
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
+
+        if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
+            this.reportError(exp.sinfo, `Special constructor expects only positional arguments`);
+            return exp.setType(ctype);
+        }
 
         if(cdecl instanceof OkTypeDecl) {
             if(exp.args.args.length !== 1) {
@@ -1119,6 +1129,9 @@ class TypeChecker {
 
         if(exp.args.args.length !== 1) {
             this.reportError(exp.sinfo, `${ctype.emit()} constructor expects 1 argument`);
+        }
+        else if(!(exp.args.args[0] instanceof PositionalArgumentValue)) {
+            this.reportError(exp.sinfo, `Type alias constructor expects only positional arguments`);
         }
         else {
             const vtype = this.relations.getTypeDeclValueType(ctype);

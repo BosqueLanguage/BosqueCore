@@ -936,10 +936,15 @@ class TypeCheckerRelations {
 
         let pdecls: TypeLookupInfo[] = [];
         if(ttype.decl instanceof TypedeclTypeDecl) {
-            pdecls = this.resolveTransitiveTypeDecls(ttype.decl.valuetype.remapTemplateBindings(this.generateTemplateMappingForTypeDecl(ttype)), tconstrain);
+            if(!(ttype.decl.valuetype instanceof NominalTypeSignature)) {
+                return [];
+            }
+
+            const oftype = new TypeLookupInfo(ttype.decl.valuetype as NominalTypeSignature, this.generateTemplateMappingForTypeDecl(ttype));
+            pdecls = [oftype, ...this.resolveTransitiveTypeDecls(ttype.decl.valuetype.remapTemplateBindings(this.generateTemplateMappingForTypeDecl(ttype)), tconstrain)];
         }
 
-        return [new TypeLookupInfo(ttype, this.generateTemplateMappingForTypeDecl(ttype)), ...pdecls];
+        return pdecls;
     }
 
     //get all of the actual fields that are provided via inheritance
