@@ -34,7 +34,7 @@ describe ("Exec -- type decl of strings w/ stacked constraints", () => {
         runMainCodeError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[az]+/; public function main(): String { return SV2{"abc"}.primitive; }', 'Error -- failed regex @ test.bsq:3'); 
         runMainCodeError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[az]+/; public function main(): String { return SV2{"abc"<SV1>}.primitive; }', 'Error -- failed regex @ test.bsq:3');
 
-        runMainCodeError('const re2: Regex = /[a-z]/; type SV1 = String of Main::re2; type SV2 = SV1 of /[a-c]+/; public function main(): String { return SV2{"abc"}.primitive; }', 'Error -- failed regex @ test.bsq:3');
+        runMainCodeError('const re2: Regex = /[a-z]/; type SV1 = String of Main::re2; type SV2 = SV1 of /[a-c]+/; public function main(): String { return SV2{"abc"}.primitive; }', "Error -- failed regex -- re2['Main::re2'] @ test.bsq:3");
 
         //runMainCodeError("const re2: Regex = /[a-z]/c; type SV1 = String of Main::re2; type SV2 = SV1 of /[a-c]+/c; public function main(): CString { return SV2{'abc'}.primitive; }", "Error -- failed regex -- re2['Main::re2'] @ test.bsq:3");
     });
