@@ -1015,6 +1015,11 @@ class TypeChecker {
     private checkCollectionConstructor(env: TypeEnvironment, cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const etype = this.relations.getExpandoableOfType(exp.ctype) as TypeSignature;
 
+        if(exp.args.args.some((arg) => (arg instanceof NamedArgumentValue) || (arg instanceof RefArgumentValue))) {
+            this.reportError(exp.sinfo, `Collection constructor expects only positional (or spread) arguments`);
+            return exp.setType(exp.ctype);
+        }
+
         let shuffleinfo: [number, string, TypeSignature][] = [];
         for(let i = 0; i < exp.args.args.length; ++i) {
             shuffleinfo.push([i, "_", etype]);
@@ -1027,7 +1032,7 @@ class TypeChecker {
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);
                 const argetype = this.relations.getExpandoableOfType(argtype);
-                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Rest argument ${i} expected to be container of type ${etype.emit()}`);
+                this.checkError(arg.exp.sinfo, argetype === undefined || !this.relations.areSameTypes(argetype, etype), `Spread argument ${i} expected to be container of type ${etype.emit()}`);
             }
         }
 
@@ -1042,6 +1047,11 @@ class TypeChecker {
 
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
+
+        if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
+            this.reportError(exp.sinfo, `Special constructor expects only positional arguments`);
+            return exp.setType(ctype);
+        }
 
         if(cdecl instanceof OkTypeDecl) {
             if(exp.args.args.length !== 1) {
@@ -1114,6 +1124,34 @@ class TypeChecker {
         return exp.setType(ctype);
     }
 
+    private checkSpecialTypeDeclConstructor(env: TypeEnvironment, cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+        const ctype = exp.ctype as NominalTypeSignature;
+
+        if(exp.args.args.length !== 1) {
+            this.reportError(exp.sinfo, `${ctype.emit()} constructor expects 1 argument`);
+        }
+        else if(!(exp.args.args[0] instanceof PositionalArgumentValue)) {
+            this.reportError(exp.sinfo, `Type alias constructor expects only positional arguments`);
+        }
+        else {
+            const vtype = this.relations.getTypeDeclValueType(ctype);
+            const ptype = this.relations.getTypeDeclBasePrimitiveType(ctype);
+            if(vtype !== undefined && ptype !== undefined) {
+                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ptype)); //both vtype and ptype are ok but if we infer a type then we should use the primitive type
+                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype) || this.relations.areSameTypes(etype, ptype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
+
+                if(this.relations.areSameTypes(etype, vtype)) {
+                    exp.hasChecks = cdecl.optofexp !== undefined || cdecl.invariants.length !== 0;
+                }
+                else {
+                    exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, true);
+                }
+            }
+        }
+        
+        return exp.setType(ctype);
+    }
+
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
@@ -1134,7 +1172,7 @@ class TypeChecker {
         this.checkTypeSignature(exp.ctype);
 
         if(!(exp.ctype instanceof NominalTypeSignature)) {
-            this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+            this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype.emit()}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1146,6 +1184,9 @@ class TypeChecker {
         else if(decl instanceof ConstructableTypeDecl) {
             return this.checkSpecialConstructableConstructor(env, decl, exp);
         }
+        else if(decl instanceof TypedeclTypeDecl) {
+            return this.checkSpecialTypeDeclConstructor(env, decl, exp);
+        }
         else {
             if(decl instanceof EntityTypeDecl) {
                 return this.checkStandardConstructor(env, decl.fields, exp);
@@ -1154,7 +1195,7 @@ class TypeChecker {
                 return this.checkStandardConstructor(env, decl.fields, exp);
             }
             else {
-                this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype}`);
+                this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype.emit()}`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
         }

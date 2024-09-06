@@ -453,6 +453,26 @@ class JSEmitter {
         }
     }
 
+    private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression, toplevel: boolean): string {
+        if(!exp.hasChecks) {
+            return this.emitExpression(exp.args.args[0].exp, toplevel);
+        }
+        else {
+            const etype = this.tproc(exp.args.args[0].exp.getType());
+            const ptype = cdecl.primtivetype as TypeSignature;
+
+            const earg = this.emitExpression(exp.args.args[0].exp, true);
+            if(etype.tkeystr === ptype.tkeystr) {
+                const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+                return `${taccess}(${earg})`;
+            }
+            else {
+                const taccess = EmitNameManager.generateAccessorForTypeConstructorOnValue(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+                return `${taccess}(${earg})`;
+            }
+        }
+    }
+
     private emitStandardConstructor(exp: ConstructorPrimaryExpression): string {
         const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
 
@@ -490,6 +510,9 @@ class JSEmitter {
         }
         else if(decl instanceof ConstructableTypeDecl) {
             return this.emitSpecialConstructableConstructor(decl, exp, toplevel);
+        }
+        else if(decl instanceof TypedeclTypeDecl) {
+            return this.emitTypeDeclConstructor(decl, exp, toplevel);
         }
         else {
             return this.emitStandardConstructor(exp);
@@ -1930,6 +1953,36 @@ class JSEmitter {
         return `$create: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
+    private emitCreateFromValue(rcvr: TypeSignature, tdecl: TypedeclTypeDecl, fmt: JSCodeFormatter): string {
+        let rechks: string[] = [];
+        if(tdecl.optofexp !== undefined) {
+            if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
+                    rechks.push(`_$formatchk(accepts(${(tdecl.optofexp.exp as LiteralRegexExpression).value}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+            }
+            else {
+                const nsaccess = this.emitAccessNamespaceConstantExpression(tdecl.optofexp.exp as AccessNamespaceConstantExpression);
+                const retag = `'${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).name}'`;
+                rechks.push(`_$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
+            }
+        }
+
+        const cchks = tdecl.invariants.map((inv) => {
+            const chkcall = `${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, rcvr as NominalTypeSignature, `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`)}`;
+            const args = "$value";
+            const info = this.getErrorInfo("failed invariant", inv.sinfo, inv.diagnosticTag);
+
+            return `_$invariant(${chkcall}(${args}), ${info});`
+        });
+
+        const ccons = "return $value;";
+
+        fmt.indentPush();
+        const bbody = [...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        fmt.indentPop();
+
+        return `$createV: ($value) => {\n${bbody}\n${fmt.indent("}")}`;
+    }
+
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
         const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
             map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(fi.containingtype) as NominalTypeSignature, `$default$${fi.name}`)}(); }`);
@@ -2104,7 +2157,6 @@ class JSEmitter {
         //make sure all of the invariants on this typecheck
         decls.push(...this.emitInvariants(rcvr, tdecl.saturatedBFieldInfo, tdecl.invariants));
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
-        
 
         if(tdecl.allOfExps.length !== 0 || tdecl.allInvariants.length !== 0) {
             decls.push(this.emitCreate(tdecl, fmt));
@@ -2112,6 +2164,10 @@ class JSEmitter {
 
         if(tdecl.allOfExps.length !== 0 || tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
             decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+        }
+
+        if(tdecl.optofexp !== undefined || tdecl.invariants.length !== 0) {
+            decls.push(this.emitCreateFromValue(rcvr, tdecl, fmt));
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
