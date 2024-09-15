@@ -13,7 +13,7 @@
     },
     "dependencies": {
         "@types/node": "20.14.2",
-        "@bosque/jsbrex": "0.8.0"
+        "@bosque/jsbrex": "0.9.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",

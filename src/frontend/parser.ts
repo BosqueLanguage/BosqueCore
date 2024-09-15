@@ -699,14 +699,14 @@ class Lexer {
 
     private tryLexBSQONLiteral(): boolean {
         let ncpos = this.jsStrPos;
-        if(this.input.startsWith("bsqon(|", this.jsStrPos)) {
-            ncpos += 7;
+        if(this.input.startsWith("bsqon`", this.jsStrPos)) {
+            ncpos += 6;
         }
         else {
             return false;
         }
 
-        let jepos = this.input.indexOf("|)", ncpos); //TODO: this is a bit of a hack for closed parens -- might be ok, just require internal escaping or maybe we rework a bit
+        let jepos = this.input.indexOf("`", ncpos); //TODO: this is a bit of a hack for closed parens -- might be ok, just require internal escaping or maybe we rework a bit
         if(jepos === -1) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated bsqon literal");
             this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
@@ -4628,6 +4628,7 @@ class Parser {
 
             const nsdecl = this.env.currentNamespace.subns.find((ns) => ns.name === nsname) as NamespaceDeclaration;
             this.env.currentNamespace = nsdecl;
+            xxxx;
             this.ensureAndConsumeTokenAlways(SYM_lbrace, "nested namespace declaration");
             this.parseNamespaceMembers(SYM_rbrace);
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "nested namespace declaration");
