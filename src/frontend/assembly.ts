@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression } from "./body.js";
+import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -1594,6 +1594,28 @@ class Assembly {
         }
 
         return curns;
+    }
+
+    resolveConstantRegexExpressionValue(exp: LiteralRegexExpression | AccessNamespaceConstantExpression): string | undefined {
+        if(exp instanceof LiteralRegexExpression) {
+            return exp.value;
+        }
+        else {
+            const nsconst = this.resolveNamespaceConstant(exp.ns, exp.name);
+            if(nsconst === undefined) {
+                return undefined;
+            }
+
+            if(nsconst.value.exp instanceof LiteralRegexExpression) {
+                return nsconst.value.exp.value;
+            }
+            else if(nsconst.value.exp instanceof AccessNamespaceConstantExpression) {
+                return this.resolveConstantRegexExpressionValue(nsconst.value.exp);
+            }
+            else {
+                return undefined;
+            }
+        }
     }
 
     resolveValidatorLiteral(exp: Expression): Expression | undefined {

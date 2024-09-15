@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, NSRegexREInfoEntry, NSRegexInfo, NSRegexNameInfo, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT } from "./assembly.js";
-import { SourceInfo } from "./build_decls.js";
+import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
@@ -22,9 +22,11 @@ class TypeError {
 }
 
 const CLEAR_FILENAME = "[GLOBAL]";
+const CLEAR_NSNAME = "[MISSING_NS]";
 
 class TypeChecker {
     private file: string = CLEAR_FILENAME;
+    private inns: string = CLEAR_NSNAME;
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
@@ -45,6 +47,22 @@ class TypeChecker {
         }
 
         return cond;
+    }
+
+    private doRegexValidation(sinfo: SourceInfo, ofexp: LiteralRegexExpression | AccessNamespaceConstantExpression, input: string): void {
+        try {
+            const pattern = this.relations.assembly.resolveConstantRegexExpressionValue(ofexp);
+            if(pattern === undefined) {
+                this.reportError(sinfo, `Unable to resolve regex pattern -- ${ofexp.emit(true, new CodeFormatter())}`);
+            }
+            else {
+                const isok = accepts(pattern, input, this.inns);
+                this.checkError(sinfo, !isok, `Value ${input} does not match regex pattern ${pattern}`);
+            }
+        }
+        catch(e) {
+            this.reportError(sinfo, `Invalid regex pattern -- ${(e as TypeError).msg}`);
+        }
     }
 
     private static safeTypePrint(tsig: TypeSignature | undefined): string {
@@ -81,13 +99,11 @@ class TypeChecker {
                 else {
                     for(let i = 0; i < reexp.length; ++i) {
                         const vexp = reexp[i][1];
-                        if(vexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                            this.checkError(exp.sinfo, !accepts((vexp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${(vexp as LiteralRegexExpression).value}`);
+                        if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                            this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                         }
                         else {
-                            const nsaccess = vexp as AccessNamespaceConstantExpression;
-                            const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
-                            this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, true), `Literal value ${(exp as LiteralSimpleExpression).value} does not match regex -- ${rename}`);
+                            this.doRegexValidation(exp.sinfo, vexp, vs);
                         }
                     }
                 }
@@ -107,16 +123,11 @@ class TypeChecker {
                 else {
                     for(let i = 0; i < reexp.length; ++i) {
                         const vexp = reexp[i][1];
-                        if(vexp.tag === ExpressionTag.LiteralCRegexExpression) {
-                            const acpt = accepts((vexp as LiteralRegexExpression).value, vs);
-                            console.log(acpt);
-                            
-                            this.checkError(exp.sinfo, !accepts((vexp as LiteralRegexExpression).value, vs), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${(vexp as LiteralRegexExpression).value}`);
+                        if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                            this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
                         }
                         else {
-                            const nsaccess = vexp as AccessNamespaceConstantExpression;
-                            const rename = nsaccess.ns.ns.join("::") + "::" + nsaccess.name;
-                            this.checkError(exp.sinfo, !runNamedRegexAccepts(rename, vs, false), `Literal value ${(exp as LiteralSimpleExpression).value} does not match cregex -- ${rename}`);
+                            this.doRegexValidation(exp.sinfo, vexp, vs);
                         }
                     }
                 }
@@ -4151,6 +4162,8 @@ class TypeChecker {
     }
 
     private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
+        this.inns = decl.fullnamespace.ns.join("::");
+
         //all usings should be resolved and valid so nothing to do there
 
         this.checkNamespaceConstDecls(decl.consts);
@@ -4168,6 +4181,8 @@ class TypeChecker {
         for(let i = 0; i < decl.subns.length; ++i) {
             this.checkNamespaceDeclaration(decl.subns[i]);
         }
+
+        this.inns = CLEAR_NSNAME;
     }
 
     private tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
