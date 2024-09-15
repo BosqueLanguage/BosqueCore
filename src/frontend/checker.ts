@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { TypeCheckerRelations } from "./checker_relations.js";
 
-import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts, runNamedRegexAccepts } from "@bosque/jsbrex";
+import { validateStringLiteral, validateCStringLiteral, loadConstAndValidateRESystem, accepts } from "@bosque/jsbrex";
 
 class TypeError {
     readonly file: string;
