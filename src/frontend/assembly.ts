@@ -1383,10 +1383,13 @@ class NamespaceConstDecl extends AbstractCoreDecl {
 class NamespaceUsing {
     readonly file: string;
 
-    readonly fromns: FullyQualifiedNamespace;
+    //
+    //TODO: want to add a module/package scope component here too!!
+    //
+    readonly fromns: string;
     readonly asns: string | undefined;
 
-    constructor(file: string, fromns: FullyQualifiedNamespace, asns: string | undefined) {
+    constructor(file: string, fromns: string, asns: string | undefined) {
         this.file = file;
 
         this.fromns = fromns;
@@ -1395,10 +1398,10 @@ class NamespaceUsing {
 
     emit(): string {
         if(this.asns === undefined) {
-            return `using ${this.fromns.emit()};`;
+            return `using ${this.fromns};`;
         }
         else {
-            return `using ${this.fromns.emit()} as ${this.asns};`;
+            return `using ${this.fromns} as ${this.asns};`;
         }
     }
 }
@@ -1419,8 +1422,8 @@ type NSRegexInfo = {
 }
 
 class NamespaceDeclaration {
-    readonly istoplevel: boolean;
     readonly name: string; 
+    readonly topnamespace: string;
     readonly fullnamespace: FullyQualifiedNamespace;
 
     usings: NamespaceUsing[] = [];
@@ -1438,10 +1441,14 @@ class NamespaceDeclaration {
     apis: APIDecl[] = [];
     tasks: TaskDecl[] = [];
 
-    constructor(istoplevel: boolean, name: string, fullnamespace: FullyQualifiedNamespace) {
-        this.istoplevel = istoplevel;
+    constructor(name: string, topnamespace: string, fullnamespace: FullyQualifiedNamespace) {
         this.name = name;
+        this.topnamespace = topnamespace;
         this.fullnamespace = fullnamespace;
+    }
+
+    isTopNamespace(): boolean {
+        return this.name === this.topnamespace;
     }
 
     checkDeclNameClashNS(rname: string): boolean {
@@ -1484,7 +1491,7 @@ class NamespaceDeclaration {
     emit(fmt: CodeFormatter): string {
         let res = "";
 
-        if(this.istoplevel) {
+        if(this.isTopNamespace()) {
             res += `declare namespace ${this.name}`;
         
             fmt.indentPush();
@@ -1548,7 +1555,7 @@ class NamespaceDeclaration {
             res = res.slice(0, res.length - 1);
         }
 
-        if(!this.istoplevel) {
+        if(!this.isTopNamespace()) {
             fmt.indentPop();
             res += fmt.indent("}\n");
         }
@@ -1574,7 +1581,7 @@ class Assembly {
 
     ensureToplevelNamespace(ns: string): NamespaceDeclaration {
         if (!this.hasToplevelNamespace(ns)) {
-            this.toplevelNamespaces.push(new NamespaceDeclaration(true, ns, new FullyQualifiedNamespace([ns])));
+            this.toplevelNamespaces.push(new NamespaceDeclaration(ns, ns, new FullyQualifiedNamespace([ns])));
         }
 
         return this.getToplevelNamespace(ns) as NamespaceDeclaration;

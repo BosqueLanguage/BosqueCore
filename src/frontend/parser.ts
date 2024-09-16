@@ -9,7 +9,7 @@ import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDecl
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
 
-import { lexAccepts, initializeLexer, lexFront } from "@bosque/jsbrex";
+import { initializeLexer, lexFront } from "@bosque/jsbrex";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -347,9 +347,9 @@ class Lexer {
         return true;
     }
 
-    private static readonly _s_templateNameRe = '/[A-Z]/';
+    private static readonly _s_templateNameRe = /^[A-Z]$/;
     private static isTemplateName(str: string): boolean {
-        return lexAccepts(Lexer._s_templateNameRe, str);
+        return Lexer._s_templateNameRe.test(str);
     }
 
     private static readonly _s_literalTDOnlyTagRE = `"<"`;
@@ -1451,6 +1451,15 @@ class Parser {
     ////
     //Misc parsing
 
+    ////////
+    //
+    // Namespace resolution:
+    // 1) Core namespace is always in scope and implicit
+    // 2) The current TOP-LEVEL namespace is always in scope and implicit
+    // 3) All other namespaces must be explicitly scoped -- so if I am in a sub-namespace I can either fully scope a name or drop the top-level name ONLY
+    //
+    ////////
+
     private identifierResolvesAsScopedConstOrFunction(name: string): [NamespaceDeclaration, NamespaceFunctionDecl | NamespaceConstDecl] | undefined {
         const coredecl = this.env.assembly.getCoreNamespace();
         const cdm = coredecl.functions.find((f) => f.name === name) || coredecl.consts.find((c) => c.name === name);
@@ -1458,7 +1467,9 @@ class Parser {
             return [coredecl, cdm];
         }
 
-        const nsdecl = this.env.currentNamespace;
+        //acording to rules I will only allow implicit refs to toplevel namespace, even if I am in a sub-namespace
+        const nsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+
         const ndm = nsdecl.functions.find((f) => f.name === name) || nsdecl.consts.find((c) => c.name === name);
         if(ndm !== undefined) {
             return [this.env.currentNamespace, ndm];
@@ -1473,7 +1484,7 @@ class Parser {
         }
         const tsroot = this.peekTokenData();
 
-        if(currentns.name === "Core" && (tsroot === "Result" || tsroot === "APIResult")) {
+        if(currentns.topnamespace === "Core" && (tsroot === "Result" || tsroot === "APIResult")) {
             this.consumeToken();
             const terms = this.parseTermList();
 
@@ -1549,27 +1560,17 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(false, coredecl, ["Core"]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
-        else if(this.env.currentNamespace.name === nsroot) {
+        else if(this.env.currentNamespace.topnamespace === nsroot) {
             this.consumeToken();
             
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), this.env.currentNamespace, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
-        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
-            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-        }
         else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
-            const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;
+            const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns;
             this.consumeToken();
 
-            let iidx = 1;
-            const rrns = this.env.assembly.getToplevelNamespace(uns[0]);
-            while(rrns !== undefined && iidx < uns.length) {
-                rrns.subns.find((sns) => sns.name === uns[iidx]);
-                iidx++;
-            }
-
+            const rrns = this.env.assembly.getToplevelNamespace(uns);
             if(rrns === undefined) {
                 return undefined;
             }
@@ -1577,32 +1578,34 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), rrns, [nsroot]);
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.fromns === nsroot) !== undefined) {
+            this.consumeToken();
+
+            const tlns = this.env.assembly.getToplevelNamespace(nsroot);
+            if(tlns === undefined) {
+                return undefined;
+            }
+                
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
+            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
         else {
             this.consumeToken();
 
-            const hasimport = this.env.currentNamespace.usings.find((nsuse) => nsuse.fromns.ns[0] === nsroot) !== undefined
-            if(hasimport) {
-                const tlns = this.env.assembly.getToplevelNamespace(nsroot);
-                if(tlns === undefined) {
-                    return undefined;
-                }
-                else {
-                    const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
-                    return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-                }
+            //hmm missing import -- see if it exists but not imported or just not there at all
+            const tlns = this.env.assembly.getToplevelNamespace(nsroot);
+            if(tlns === undefined) {
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown namespace ${nsroot}`);
             }
             else {
-                //hmm missing import -- see if it exists but not imported or just not there at all
-                const tlns = this.env.assembly.getToplevelNamespace(nsroot);
-                if(tlns === undefined) {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown namespace ${nsroot}`);
-                }
-                else {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Missing import for namespace ${nsroot}`);
-                }
-
-                return undefined;
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Missing import for namespace ${nsroot}`);
             }
+
+            return undefined;
         }
     }
 
@@ -4473,6 +4476,11 @@ class Parser {
             this.consumeToken();
         }
 
+        //TODO: support package name scope here
+        if(chain.length !== 1) {
+            this.recordErrorGeneral(sinfo, "Expected a single namespace identifier -- TODO support package name scope");
+        }
+
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(chain.length === 0) {
                 this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
@@ -4481,8 +4489,8 @@ class Parser {
             }
             else {
                 if(!this.testToken(KW_as)) {
-                    if(this.env.currentNamespace.istoplevel) {
-                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), undefined));
+                    if(this.env.currentNamespace.isTopNamespace()) {
+                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, chain[0], undefined));
                     }
                     else {
                         this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
@@ -4493,8 +4501,8 @@ class Parser {
                     this.ensureToken(TokenStrings.IdentifierName, "namespace import");
                     const asns = this.parseIdentifierAsNamespaceOrTypeName();
 
-                    if(this.env.currentNamespace.istoplevel) {
-                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), asns));
+                    if(this.env.currentNamespace.isTopNamespace()) {
+                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, chain[0], asns));
                     }
                     else {
                         this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
@@ -4609,7 +4617,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between namespace and other names -- ${nsname}`);
             }
 
-            const nsdecl = new NamespaceDeclaration(false, nsname, new FullyQualifiedNamespace([...this.env.currentNamespace.fullnamespace.ns, nsname]));
+            const nsdecl = new NamespaceDeclaration(nsname, this.env.currentNamespace.topnamespace, new FullyQualifiedNamespace([...this.env.currentNamespace.fullnamespace.ns, nsname]));
 
             this.env.currentNamespace.subns.push(nsdecl);
             this.env.currentNamespace.declaredSubNSNames.add(nsname);
@@ -4627,8 +4635,9 @@ class Parser {
             const ons = this.env.currentNamespace;
 
             const nsdecl = this.env.currentNamespace.subns.find((ns) => ns.name === nsname) as NamespaceDeclaration;
+            nsdecl.usings = ons.usings;
+
             this.env.currentNamespace = nsdecl;
-            xxxx;
             this.ensureAndConsumeTokenAlways(SYM_lbrace, "nested namespace declaration");
             this.parseNamespaceMembers(SYM_rbrace);
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "nested namespace declaration");

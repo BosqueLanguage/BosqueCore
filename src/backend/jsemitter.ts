@@ -11,8 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import { accepts } from "@bosque/jsbrex";\n' +
-'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval} from "./runtime.mjs";\n' +
+'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -48,6 +47,11 @@ class JSEmitter {
     private getCurrentNamespace(): NamespaceDeclaration {
         assert(this.currentns !== undefined, "Current namespace is not set");
         return this.currentns;
+    }
+
+    private getCurrentINNS(): string {
+        assert(this.currentns !== undefined, "Current namespace is not set");
+        return this.currentns.fullnamespace.ns.join("::");
     }
 
     private getErrorInfo(msg: string, sinfo: SourceInfo, diagnosticTag: string | undefined): string | undefined {
@@ -1926,15 +1930,15 @@ class JSEmitter {
         if(tdecl instanceof TypedeclTypeDecl) {
             rechks = tdecl.allOfExps.map((reexp) => {
                 if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    return `_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(_$accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else if(reexp.tag === ExpressionTag.LiteralCRegexExpression) {
-                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else {
                     const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
                     const retag = `'${(reexp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(reexp as AccessNamespaceConstantExpression).name}'`;
-                    return `_$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
+                    return `_$formatchk(accepts(${nsaccess}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
                 }
             });
         }
@@ -1960,15 +1964,15 @@ class JSEmitter {
         let rechks: string[] = [];
         if(tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                rechks.push(`_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
-                rechks.push(`_$formatchk(accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else {
                 const nsaccess = this.emitAccessNamespaceConstantExpression(tdecl.optofexp.exp as AccessNamespaceConstantExpression);
                 const retag = `'${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).name}'`;
-                rechks.push(`_$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
+                rechks.push(`_$formatchk(accepts(${nsaccess}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
             }
         }
 
@@ -1997,15 +2001,15 @@ class JSEmitter {
         if(tdecl instanceof TypedeclTypeDecl) {
             rechks = tdecl.allOfExps.map((reexp) => {
                 if(reexp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                    return `_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(accepts(${this.emitLiteralUnicodeRegexExpression(reexp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else if(reexp.tag === ExpressionTag.LiteralCRegexExpression) {
-                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
+                    return `_$formatchk(accepts(${this.emitLiteralCRegexExpression(reexp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", reexp.sinfo, undefined)});`;
                 }
                 else {
                     const nsaccess = this.emitAccessNamespaceConstantExpression(reexp as AccessNamespaceConstantExpression);
                     const retag = `'${(reexp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(reexp as AccessNamespaceConstantExpression).name}'`;
-                    return `$formatchk(accepts(${nsaccess}, $value), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
+                    return `$formatchk(accepts(${nsaccess}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (reexp as AccessNamespaceConstantExpression).name, reexp.sinfo, retag)});`;
                 }
             });
         }

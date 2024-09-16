@@ -4204,7 +4204,7 @@ class TypeChecker {
 
     private loadConstantsAndValidatorREs(nsdecl: NamespaceDeclaration): NSRegexInfo[] {
         const inns = nsdecl.fullnamespace.ns.join("::");
-        const nsmappings = nsdecl.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns.emit(), u.asns as string] as [string, string]);
+        const nsmappings = nsdecl.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns, u.asns as string] as [string, string]);
         const nsinfo: NSRegexNameInfo = {inns: inns, nsmappings: nsmappings};
 
         const reinfos: NSRegexREInfoEntry[] = [];
