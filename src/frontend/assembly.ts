@@ -1677,6 +1677,43 @@ class Assembly {
 
         return nsdecl.functions.find((c) => c.name === name);
     }
+
+
+    tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
+        if(exp instanceof LiteralRegexExpression) {
+            return exp;
+        }
+        else if (exp instanceof AccessNamespaceConstantExpression) {
+            const nsresl = this.resolveNamespaceConstant(exp.ns, exp.name);
+            if(nsresl === undefined) {
+                return undefined;
+            }
+
+            return this.tryReduceConstantExpressionToRE(nsresl.value.exp);
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    loadConstantsAndValidatorREs(nsdecl: NamespaceDeclaration): NSRegexInfo[] {
+        const inns = nsdecl.fullnamespace.ns.join("::");
+        const nsmappings = nsdecl.usings.filter((u) => u.asns !== undefined).map((u) => [u.fromns, u.asns as string] as [string, string]);
+        const nsinfo: NSRegexNameInfo = {inns: inns, nsmappings: nsmappings};
+
+        const reinfos: NSRegexREInfoEntry[] = [];
+        nsdecl.consts.forEach((c) => {
+            const re = this.tryReduceConstantExpressionToRE(c.value.exp);
+            if(re !== undefined) {
+                reinfos.push({name: c.name, restr: re.value});
+            }
+        });
+
+        const subnsinfo = nsdecl.subns.flatMap((ns) => this.loadConstantsAndValidatorREs(ns));
+
+        return [{nsinfo: nsinfo, reinfos: reinfos}, ...subnsinfo].filter((nsi) => nsi.reinfos.length !== 0);
+    }
+
 }
 
 export {
