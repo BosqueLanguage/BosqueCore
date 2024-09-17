@@ -1,5 +1,7 @@
 "use strict;"
 
+import { accepts } from "@bosque/jsbrex";
+
 /**
  * @constant
  * @type {string[]}
@@ -35,6 +37,12 @@ const $Unwind_NumericRange = Symbol("NumericRangeFailed");
  * @type {Symbol}
  **/
 const $Unwind_DivZero = Symbol("DivZeroFailed");
+
+/**
+ * @constant
+ * @type {Symbol}
+ **/
+const $Unwind_BadRegex = Symbol("BadRegexFailed");
 
 /**
  * @constant
@@ -558,11 +566,29 @@ function _$memoconstval(memmap, key, comp) {
     return nval;
 }
 
+/**
+ * @function
+ * @param {string} pattern
+ * @param {string} input
+ * @param {string} inns
+ * @throws {$Unwind}
+ * @returns {boolean}
+ **/
+function _$accepts(pattern, input, inns) {
+    try {
+        return accepts(pattern, input, inns);
+    }
+    catch(e) {
+        throw new $Unwind($Unwind_TypeAs, `Invalid regex pattern -- ${e.msg}`);
+    }
+}
+
 export {
     _$softfails,
     _$supertypes,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
-    _$memoconstval
+    _$memoconstval,
+    _$accepts
 };

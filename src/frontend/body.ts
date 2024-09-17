@@ -797,7 +797,7 @@ class ParseAsTypeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ttype.emit()}(${this.exp.emit(toplevel, fmt)})`;
+        return `<${this.ttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 

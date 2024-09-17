@@ -31,7 +31,7 @@ describe ("Checker -- type decl of strings w/ constraints", () => {
 
     it("should fail string constraints", function () {
         checkTestFunctionError('type SV1 = String of /[a-z]+/; function main(): SV1 { return "ab3"<SV1>; }', 'Literal value "ab3" does not match regex -- /[a-z]+/');  
-        checkTestFunctionError("const re2: CRegex = /[0-9]/c; type SV2 = CString of Main::re2; function main(): SV2 { return '345'<SV2>; }", "Literal value '345' does not match cregex -- Main::re2");  
+        checkTestFunctionError("const re2: CRegex = /[0-9]/c; type SV2 = CString of Main::re2; function main(): SV2 { return '345'<SV2>; }", 'Literal value "345" does not match regex -- /[0-9]/c');  
     });
 });
 
