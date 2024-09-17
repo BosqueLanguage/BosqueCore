@@ -1375,19 +1375,24 @@ class JSEmitter {
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
-        return `$_abort(${this.getErrorInfo("abort", stmt.sinfo, undefined)});`;
+        return `_$abort(${this.getErrorInfo("abort", stmt.sinfo, undefined)});`;
     }
 
     private emitAssertStatement(stmt: AssertStatement): string {
-        return `$_assert(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, undefined)});`;
+        if(!isBuildLevelEnabled(stmt.level, this.buildlevel)) {
+            return ";";
+        }
+        else {
+            return `_$assert(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, undefined)});`;
+        }
     }
 
     private emitValidateStatement(stmt: ValidateStatement): string {
-        return `$_validate(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, stmt.diagnosticTag)});`;
+        return `_$validate(${this.emitExpression(stmt.cond, true)}, ${this.getErrorInfo(stmt.cond.emit(true, new CodeFormatter()), stmt.sinfo, stmt.diagnosticTag)});`;
     }
 
     private emitDebugStatement(stmt: DebugStatement): string {
-        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch { console.log("Error evaluating debug statement @ ${this.currentfile}:${stmt.sinfo.line}"); }`;
+        return `try { console.log("_debug>> " + ${this.emitExpression(stmt.value, true)}); } catch { console.log("Error evaluating debug statement @ ${this.currentfile}:${stmt.sinfo.line}"); }`;
     }
 
     private emitVoidRefCallStatement(stmt: VoidRefCallStatement): string {
@@ -1430,7 +1435,7 @@ class JSEmitter {
         let stmtstrs: string[] = [];
 
         fmt.indentPush();
-        let prevskip = false;
+        let prevskip = true;
         for(let i = 0; i < stmts.length; ++i) {
             const stmti = stmts[i];
             const sstr = fmt.indent(this.emitStatement(stmti, fmt));
@@ -1685,11 +1690,13 @@ class JSEmitter {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
 
-            const chkcall = `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
-            const args = (rcvr.decl instanceof TypedeclTypeDecl) ? "$value" : bnames.map((fi) => "$" + fi.name).join(", ");
-            const body = this.emitExpression(inv.exp.exp, true);
+            if(isBuildLevelEnabled(inv.level, this.buildlevel)) {
+                const chkcall = `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`;
+                const args = (rcvr.decl instanceof TypedeclTypeDecl) ? "$value" : bnames.map((fi) => "$" + fi.name).join(", ");
+                const body = this.emitExpression(inv.exp.exp, true);
 
-            invexps.push(`${chkcall}: (${args}) => ${body}`);
+                invexps.push(`${chkcall}: (${args}) => ${body}`);
+            }
         }
 
         return invexps;

@@ -36,3 +36,4 @@ describe ("Exec -- Entity w/ Invariant Constructor", () => {
         runMainCode('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Int { return Foo{5i}.f; }', [5n, "Int"]);
     });
 });
+
