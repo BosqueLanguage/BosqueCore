@@ -3621,7 +3621,7 @@ class Parser {
     }
 
     private parseStatementExpression(isref: boolean): Statement {
-        if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
+        if(isref && this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
             const sinfo = this.peekToken().getSourceInfo();
             const name = this.parseIdentifierAsStdVariable();
             this.consumeToken();
@@ -3642,7 +3642,8 @@ class Parser {
             return new VariableRetypeStatement(sinfo, name, ttest);
         }
         else {
-            assert(false, "Not implemented -- statement expression");
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Unknown statment expression starting with -- " + this.peekToken().kind);
+            return new ErrorStatement(this.peekToken().getSourceInfo());
         }
     }
 
@@ -4071,9 +4072,7 @@ class Parser {
         else if (this.testToken(KW__debug)) {
             this.consumeToken();
 
-            this.ensureAndConsumeTokenAlways(SYM_lparen, "_debug statement");
             const value = this.parseExpression();
-            this.ensureAndConsumeTokenAlways(SYM_rparen, "_debug statement");
             
             return new DebugStatement(sinfo, value);
         }

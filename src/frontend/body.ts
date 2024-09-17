@@ -1938,7 +1938,7 @@ class AssertStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const level = (this.level !== "release") ? (this.level + " ") : "";
+        const level = (this.level !== "release") ? (" " + this.level) : "";
         return `assert${level} ${this.cond.emit(true, fmt)};`;
     }
 }
@@ -1954,7 +1954,7 @@ class ValidateStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttg = (this.tag !== undefined) ? "" : `[${this.diagnosticTag}]`;
+        const ttg = (this.diagnosticTag !== undefined) ? `[${this.diagnosticTag}]` : "";
         return `validate${ttg} ${this.cond.emit(true, fmt)};`;
     }
 }

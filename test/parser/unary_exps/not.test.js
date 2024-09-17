@@ -10,4 +10,3 @@ describe ("Parser -- Boolean not", () => {
     });
 });
 
-
