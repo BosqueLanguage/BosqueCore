@@ -2128,7 +2128,7 @@ class BlockStatement extends Statement {
         const bb = this.statements.map((stmt) => fmt.indent(stmt.emit(fmt))).join("\n");
         fmt.indentPop();
 
-        return this.isScoping ? `{${bb}}` : `{|${bb}|}`;
+        return this.isScoping ? `{${bb}${fmt.indent("}")}` : `{|${bb}${fmt.indent("|}")}`;
     }
 }
 
