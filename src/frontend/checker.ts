@@ -1819,9 +1819,11 @@ class TypeChecker {
             else {
                 exp.binder.scopename = env.getBindScopeName(exp.binder.srcname);
 
+                exp.trueBindType = splits.ttrue || eetype;
                 const tenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.ttrue || eetype);
                 ttrue = this.checkExpression(tenv, exp.trueValue, typeinfer);
 
+                exp.falseBindType = splits.tfalse || eetype;
                 const fenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.tfalse || eetype);
                 tfalse = this.checkExpression(fenv, exp.falseValue, typeinfer);
             }
