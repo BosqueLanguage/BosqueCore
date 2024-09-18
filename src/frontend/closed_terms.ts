@@ -448,6 +448,14 @@ class InstantiationPropagator {
         this.instantiateExpression(exp.trueValue);
         this.instantiateExpression(exp.falseValue);
 
+        if(exp.trueBindType !== undefined) {
+            this.instantiateTypeSignature(exp.trueBindType, this.currentMapping);
+        }
+
+        if(exp.trueBindType !== undefined) {
+            this.instantiateTypeSignature(exp.trueBindType, this.currentMapping);
+        }
+
         if(exp.test.itestopt !== undefined) {
             this.processITestAsConvert(exp.test.exp.getType(), exp.test.itestopt);
         }
@@ -769,6 +777,10 @@ class InstantiationPropagator {
         if(stmt.cond.itestopt !== undefined) {
             this.processITestAsConvert(stmt.cond.exp.getType(), stmt.cond.itestopt);
 
+            if(stmt.trueBindType !== undefined) {
+                this.instantiateTypeSignature(stmt.trueBindType, this.currentMapping);
+            }
+
             if(stmt.binder !== undefined && stmt.binder.refinefollowtype !== undefined) {
                 this.instantiateTypeSignature(stmt.binder.refinefollowtype, this.currentMapping);
             }
@@ -783,6 +795,13 @@ class InstantiationPropagator {
 
         if(stmt.cond.itestopt !== undefined) {
             this.processITestAsConvert(stmt.cond.exp.getType(), stmt.cond.itestopt);
+
+            if(stmt.trueBindType !== undefined) {
+                this.instantiateTypeSignature(stmt.trueBindType, this.currentMapping);
+            }
+            if(stmt.falseBindType !== undefined) {
+                this.instantiateTypeSignature(stmt.falseBindType, this.currentMapping);
+            }
 
             if(stmt.binder !== undefined && stmt.binder.refinefollowtype !== undefined) {
                 this.instantiateTypeSignature(stmt.binder.refinefollowtype, this.currentMapping);

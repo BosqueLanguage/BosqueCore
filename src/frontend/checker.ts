@@ -2765,28 +2765,28 @@ class TypeChecker {
         return env.setReturnFlow();
     }
 
-    private checkFlowRebinder(sinfo: SourceInfo, binfo: BinderInfo | undefined, env: TypeEnvironment) {
-        if(binfo === undefined || !binfo.refineonfollow) {
+    private checkFlowRebinder(sinfo: SourceInfo, binfo: BinderInfo, retypevname: string, env: TypeEnvironment) {
+        if(!binfo.refineonfollow) {
             return;
         }
 
-        const vinfo = env.resolveLocalVarInfoFromScopeName(binfo.scopename);
+        const vinfo = env.resolveLocalVarInfoFromScopeName(retypevname);
         if(vinfo === undefined) {
-            this.reportError(sinfo, `Variable ${binfo.srcname} is not declared`);
+            this.reportError(sinfo, `Variable ${retypevname} is not declared`);
             return
         }
         if(vinfo.isConst) {
-            this.reportError(sinfo, `Variable ${binfo.srcname} is declared as const and cannot be re-typed`);
+            this.reportError(sinfo, `Variable ${retypevname} is declared as const and cannot be re-typed`);
             return;
         }
         if(!vinfo.mustDefined) {
-            this.reportError(sinfo, `Variable ${binfo.srcname} is not defined`);
+            this.reportError(sinfo, `Variable ${retypevname} is not defined`);
             return;
         }
     }
 
-    private setFlowRebinderInfo(binfo: BinderInfo | undefined, fname: string, ftype: TypeSignature) {
-        if(binfo === undefined || !binfo.refineonfollow) {
+    private setFlowRebinderInfo(binfo: BinderInfo, fname: string, ftype: TypeSignature) {
+        if(!binfo.refineonfollow) {
             return;
         }
 
@@ -2819,14 +2819,16 @@ class TypeChecker {
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
-                stmt.binder.origtype = eetype;
+                stmt.trueBindType = splits.ttrue || eetype;
 
                 const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
 
                 const lubtype = ttrue.normalflow ? eetype : splits.tfalse;
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
-                this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), lubtype || eetype);
+                const retypename = stmt.binder.srcname.slice(1);
+
+                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
+                this.setFlowRebinderInfo(stmt.binder, retypename, lubtype || eetype);
 
                 return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
             }
@@ -2860,7 +2862,8 @@ class TypeChecker {
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
-                stmt.binder.origtype = eetype;
+                stmt.trueBindType = splits.ttrue || eetype;
+                stmt.falseBindType = splits.tfalse || eetype;
 
                 const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
@@ -2868,7 +2871,8 @@ class TypeChecker {
                 const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.tfalse || eetype);
                 const tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
 
-                this.checkFlowRebinder(stmt.sinfo, stmt.binder, env);
+                const retypename = stmt.binder.srcname.slice(1);
+                this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
                 if(ttrue.normalflow && tfalse.normalflow) {
                     this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
@@ -3099,7 +3103,7 @@ class TypeChecker {
             }
         }
 
-        return env;
+        return cenv;
     }
 
     /*

@@ -7,7 +7,6 @@ import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
-    origtype: TypeSignature | undefined; //the original type of the binder
     scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
@@ -1797,6 +1796,8 @@ class IfStatement extends Statement {
     readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
     
+    trueBindType: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
         this.cond = cond;
@@ -1822,6 +1823,9 @@ class IfElseStatement extends Statement {
     readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
     readonly falseBlock: BlockStatement;
+
+    trueBindType: TypeSignature | undefined = undefined;
+    falseBindType: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement,falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);

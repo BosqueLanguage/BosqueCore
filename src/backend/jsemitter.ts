@@ -1318,15 +1318,19 @@ class JSEmitter {
                 return `if(${test}) ${body}`;
             }
             else {
-                const bassign = `${stmt.binder.scopename} = ${this.emitExpression(stmt.cond.exp, true)};` + "\n" + fmt.indent("");
-                const test = this.processITestAsTest(stmt.binder.scopename, stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const vexp = this.emitExpression(stmt.cond.exp, false);
+                const test = this.processITestAsTest(vexp, stmt.cond.exp.getType(), stmt.cond.itestopt);
+
+                fmt.indentPush();
                 const body = this.emitBlockStatement(stmt.trueBlock, fmt);
+                const bassign = fmt.indent(`let ${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.trueBindType as TypeSignature)};`) + " " + body + "\n";
+                fmt.indentPop();
 
                 if(!stmt.binder.refineonfollow) {
-                    return `${bassign} if(${test}) ${body}`;
+                    return `if(${test}) {\n${bassign}${fmt.indent("}")}`;
                 }
                 else {
-                    return `${bassign} if(${test}) ${body} ${stmt.binder.refinefollowname} = ${this.emitBUAsNeeded(stmt.binder.scopename, this.tproc(stmt.binder.origtype as TypeSignature), this.tproc(stmt.binder.refinefollowtype as TypeSignature))};`;
+                    return `if(${test}) {\n${bassign}${fmt.indent("}")} ${stmt.binder.refinefollowname as string} = ${this.emitBUAsNeeded(stmt.binder.refinefollowname as string, stmt.cond.exp.getType(), stmt.binder.refinefollowtype as TypeSignature)};`;
                 }
             }
         }
@@ -1349,16 +1353,22 @@ class JSEmitter {
                 return `if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
             }
             else {
-                const bassign = `${stmt.binder.scopename} = ${this.emitExpression(stmt.cond.exp, true)};` + "\n" + fmt.indent("");
-                const test = this.processITestAsTest(stmt.binder.scopename, stmt.cond.exp.getType(), stmt.cond.itestopt);
+                const vexp = this.emitExpression(stmt.cond.exp, false);
+                const test = this.processITestAsTest(vexp, stmt.cond.exp.getType(), stmt.cond.itestopt);
+
+                fmt.indentPush();
                 const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
+                const tbassign = fmt.indent(`${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.trueBindType as TypeSignature)};`) + "\n" + tbody + "\n";
+
                 const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
+                const fbassign = fmt.indent(`${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.falseBindType as TypeSignature)};`) + "\n" + fbody + "\n";
+                fmt.indentPop();
 
                 if(!stmt.binder.refineonfollow) {
-                    return `${bassign} if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+                    return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")}`;
                 }
                 else {
-                    return `${bassign} if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}${stmt.binder.refinefollowname} = ${this.emitBUAsNeeded(stmt.binder.scopename, this.tproc(stmt.binder.origtype as TypeSignature), this.tproc(stmt.binder.refinefollowtype as TypeSignature))};`;
+                    return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")} ${stmt.binder.refinefollowname as string} = ${this.emitBUAsNeeded(stmt.binder.refinefollowname as string, stmt.cond.exp.getType(), stmt.binder.refinefollowtype as TypeSignature)};`;
                 }
             }
         }
