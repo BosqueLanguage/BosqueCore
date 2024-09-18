@@ -80,7 +80,7 @@ class JSEmitter {
     }
 
     private emitUnBoxOperation(val: string): string {
-        return `(${val})._$val`;
+        return `(${val}).$val`;
     }
 
     private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
@@ -611,7 +611,7 @@ class JSEmitter {
             bbase = `${val}`;
         }
         else {
-            bbase = `${val}._$val`;
+            bbase = `${val}.$val`;
         }
 
         const fdecl = exp.fieldDecl as MemberFieldDecl;
@@ -896,7 +896,7 @@ class JSEmitter {
             return !toplevel ? `(${eexp})` : eexp;
         }
         else {
-            const vval = this.emitExpression(exp.test.exp, true);
+            const vval = this.emitExpression(exp.test.exp, false);
         
             if(exp.binder === undefined) {
                 const ttest = this.processITestAsTest(vval, exp.test.exp.getType(), exp.test.itestopt);
@@ -906,8 +906,10 @@ class JSEmitter {
             else {
                 this.bindernames.add(exp.binder.scopename);
 
-                const ttest = this.processITestAsTest(exp.binder.scopename, exp.test.exp.getType(), exp.test.itestopt);
-                const eexp = `(${exp.binder.scopename} = ${vval}, ${ttest}) ? ${texp} : ${fexp}`;
+                const ttest = this.processITestAsTest(vval, exp.test.exp.getType(), exp.test.itestopt);
+                const tbindexp = this.emitBUAsNeeded(vval, exp.test.exp.getType(), exp.trueBindType as TypeSignature);
+                const fbindexp = this.emitBUAsNeeded(vval, exp.test.exp.getType(), exp.falseBindType as TypeSignature);
+                const eexp = `${ttest} ? (${exp.binder.scopename} = ${tbindexp}, ${texp}) : (${exp.binder.scopename} = ${fbindexp}, ${fexp})`;
                 return !toplevel ? `(${eexp})` : eexp;
             }
         }
@@ -1613,7 +1615,15 @@ class JSEmitter {
                 stmts = this.emitStatementArray(body.statements, fmt);
             }
 
-            if(this.bindernames.size === 0 && initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
+            if(this.bindernames.size !== 0) {
+                fmt.indentPush();
+                const bvars = fmt.indent(`var ${[...this.bindernames].join(", ")};\n\n`);
+                fmt.indentPop();
+
+                stmts = [bvars, ...stmts];
+            }
+
+            if(initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
                 return ["{\n", ...stmts, fmt.indent("}")].join("");
             }
             else {

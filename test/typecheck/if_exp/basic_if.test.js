@@ -18,7 +18,9 @@ describe ("Checker -- Simple if-expression", () => {
         checkTestFunction("function main(x: Option<Int>): Int { return if(x)@!none then $x else 3i; }");
         checkTestFunction("function main(x: Int): Option<Int> { return if(x < 3i) then none else some(x); }");
         checkTestFunction("function main(x: Int): Int { return if(if(x < 3i) then none else some(x))@!none then $_ else 3i; }");
+        
         checkTestFunction("function main(x: Option<Int>): Option<Int> { return if($y = x)@<Some<Int>> then $y else some(3i); }");
+        checkTestFunction("function main(x: Option<Int>): Int { return if($y = x)@some then $y else 3i; }");
     });
 
     it("should fail not bool test", function () {

@@ -1308,6 +1308,9 @@ class IfExpression extends Expression {
     readonly trueValue: Expression
     readonly falseValue: Expression;
 
+    trueBindType: TypeSignature | undefined = undefined;
+    falseBindType: TypeSignature | undefined = undefined
+
     constructor(sinfo: SourceInfo, test: IfTest, binder: BinderInfo | undefined, trueValue: Expression, falseValue: Expression) {
         super(ExpressionTag.IfExpression, sinfo);
         this.test = test;
