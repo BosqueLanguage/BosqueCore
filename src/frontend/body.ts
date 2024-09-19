@@ -7,12 +7,9 @@ import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
-    origtype: TypeSignature | undefined; //the original type of the binder
     scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
-    refinefollowname: string | undefined;
-    refinefollowtype: TypeSignature | undefined;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
@@ -197,8 +194,8 @@ enum ExpressionTag {
     LiteralCStringExpression = "LiteralCStringExpression",
     
     LiteralPathExpression = "LiteralPathExpression",
-    LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
-    LiteralPathGlobExpression = "LiteralPathGlobExpression",
+    LiteralPathItemExpression = "LiteralPathItemExpression",
+    LiteralGlobExpression = "LiteralGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
@@ -478,7 +475,8 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    scopename: string;    //maybe a different name that gets used for shadowing binders
+    layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
+    scopename: string; //maybe a different name that gets used for shadowing binders
     isCaptured: boolean;
 
     constructor(sinfo: SourceInfo, srcname: string) {
@@ -554,7 +552,7 @@ class LetExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
-        return `let ${dds} in ${this.body.emit(true, fmt)}`;
+        return `(let ${dds} in ${this.body.emit(true, fmt)})`;
     }
 }
 
@@ -1797,6 +1795,8 @@ class IfStatement extends Statement {
     readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
     
+    trueBindType: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
         this.cond = cond;
@@ -1822,6 +1822,9 @@ class IfElseStatement extends Statement {
     readonly binder: BinderInfo | undefined;
     readonly trueBlock: BlockStatement;
     readonly falseBlock: BlockStatement;
+
+    trueBindType: TypeSignature | undefined = undefined;
+    falseBindType: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement,falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
@@ -2124,7 +2127,7 @@ class BlockStatement extends Statement {
         const bb = this.statements.map((stmt) => fmt.indent(stmt.emit(fmt))).join("\n");
         fmt.indentPop();
 
-        return this.isScoping ? `{${bb}}` : `{|${bb}|}`;
+        return this.isScoping ? `{${bb}${fmt.indent("}")}` : `{|${bb}${fmt.indent("|}")}`;
     }
 }
 

@@ -6,26 +6,28 @@ import { BinderInfo } from "./body.js";
 class VarInfo {
     readonly srcname: string;
     readonly scopename: string;
-    readonly vtype: TypeSignature;
+    readonly decltype: TypeSignature;
+    readonly itype: TypeSignature;
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
 
-    constructor(srcname: string, scopename: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
+    constructor(srcname: string, scopename: string, decltype: TypeSignature, itype: TypeSignature, isConst: boolean, mustDefined: boolean) {
         this.srcname = srcname;
         this.scopename = scopename;
-        this.vtype = vtype;
+        this.decltype = decltype;
+        this.itype = itype;
 
         this.isConst = isConst;
         this.mustDefined = mustDefined;
     }
 
-    updateTypeAndDefine(ttype: TypeSignature): VarInfo {
-        return new VarInfo(this.srcname, this.scopename, ttype, this.isConst, true);
+    updateType(ttype: TypeSignature): VarInfo {
+        return new VarInfo(this.srcname, this.scopename, this.decltype, ttype, this.isConst, this.mustDefined);
     }
 
     updateDefine(): VarInfo {
-        return new VarInfo(this.srcname, this.scopename, this.vtype, this.isConst, true);
+        return new VarInfo(this.srcname, this.scopename, this.decltype, this.itype, this.isConst, true);
     }
 }
 
@@ -161,21 +163,21 @@ class TypeEnvironment {
 
     addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
         let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vname, vtype, isConst, mustDefined));
+        newlocals[newlocals.length - 1].push(new VarInfo(vname, vname, vtype, vtype, isConst, mustDefined));
 
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
     }
 
     addBinder(vname: string, vscope: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
         let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vscope, vtype, isConst, mustDefined));
+        newlocals[newlocals.length - 1].push(new VarInfo(vname, vscope, vtype, vtype, isConst, mustDefined));
 
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
     }
 
     addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], isConst: boolean): TypeEnvironment {
         let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        const newvars = vars.map((v) => new VarInfo(v.name, v.name, v.vtype, isConst, true));
+        const newvars = vars.map((v) => new VarInfo(v.name, v.name, v.vtype, v.vtype, isConst, true));
         newlocals[newlocals.length - 1].push(...newvars);
 
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
@@ -209,7 +211,7 @@ class TypeEnvironment {
                     frame.push(this.locals[i][j]);
                 }
                 else {
-                    frame.push(this.locals[i][j].updateTypeAndDefine(ttype));
+                    frame.push(this.locals[i][j].updateType(ttype));
                 }
             }
 
@@ -232,7 +234,7 @@ class TypeEnvironment {
     }
 
     pushNewLocalBinderScope(vname: string, scopename: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, scopename, vtype, true, true)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, scopename, vtype, vtype, true, true)]]);
     }
 
     popLocalScope(): TypeEnvironment {
@@ -247,13 +249,15 @@ class TypeEnvironment {
 
             for(let j = 0; j < origenv.locals[i].length; j++) {
                 const mdef = envs.every((e) => (e.resolveLocalVarInfoFromScopeName(origenv.locals[i][j].scopename) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].vtype, origenv.locals[i][j].isConst, mdef));
+                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].decltype, origenv.locals[i][j].itype, origenv.locals[i][j].isConst, mdef));
             }
 
             locals.push(frame);
         }
 
-        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
+        const normalflow = envs.some((e) => e.normalflow);
+        const returnflow = envs.every((e) => e.returnflow);
+        return new TypeEnvironment(normalflow, returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
     static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
