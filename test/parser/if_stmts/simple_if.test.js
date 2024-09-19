@@ -7,6 +7,8 @@ describe ("Parser -- If Statement", () => {
     it("should parse simple ifs", function () {
         parseTestFunction("function main(): Int { if(true) { return 3i; } return 1i; }", undefined);
 
+        parseTestFunctionError("function main(): Int { if(true) { }; return 1i; }", "Empty block statement -- should include a ';' to indicate intentionally empty block");
+
         parseTestFunctionError("function main(): Int { if(true) return 3i; return 1i; }", "Expected ITest");
         parseTestFunctionError("function main(): Int { if true return 3i; return 1i; }", 'Expected "(" but got "true" when parsing "if test"');
     });
