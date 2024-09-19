@@ -2806,7 +2806,7 @@ class TypeChecker {
             this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-            return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue);
+            return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
@@ -2815,7 +2815,7 @@ class TypeChecker {
 
             if(stmt.binder === undefined) {
                 const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue);
+                return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
@@ -2848,7 +2848,7 @@ class TypeChecker {
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
-            return TypeEnvironment.mergeEnvironmentsSimple(ttrue, tfalse);
+            return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
@@ -2858,7 +2858,7 @@ class TypeChecker {
             if(stmt.binder === undefined) {
                 const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
                 const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
-                return TypeEnvironment.mergeEnvironmentsSimple(ttrue, tfalse);
+                return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
             }
             else {
                 stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);

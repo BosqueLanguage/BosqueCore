@@ -253,7 +253,9 @@ class TypeEnvironment {
             locals.push(frame);
         }
 
-        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
+        const normalflow = envs.some((e) => e.normalflow);
+        const returnflow = envs.every((e) => e.returnflow);
+        return new TypeEnvironment(normalflow, returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
     static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
