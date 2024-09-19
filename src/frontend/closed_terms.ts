@@ -790,10 +790,6 @@ class InstantiationPropagator {
             if(stmt.trueBindType !== undefined) {
                 this.instantiateTypeSignature(stmt.trueBindType, this.currentMapping);
             }
-
-            if(stmt.binder !== undefined && stmt.binder.refinefollowtype !== undefined) {
-                this.instantiateTypeSignature(stmt.binder.refinefollowtype, this.currentMapping);
-            }
         }
     }
 
@@ -811,10 +807,6 @@ class InstantiationPropagator {
             }
             if(stmt.falseBindType !== undefined) {
                 this.instantiateTypeSignature(stmt.falseBindType, this.currentMapping);
-            }
-
-            if(stmt.binder !== undefined && stmt.binder.refinefollowtype !== undefined) {
-                this.instantiateTypeSignature(stmt.binder.refinefollowtype, this.currentMapping);
             }
         }
     }

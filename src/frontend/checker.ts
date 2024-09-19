@@ -2789,15 +2789,6 @@ class TypeChecker {
         }
     }
 
-    private setFlowRebinderInfo(binfo: BinderInfo, fname: string, ftype: TypeSignature) {
-        if(!binfo.refineonfollow) {
-            return;
-        }
-
-        binfo.refinefollowname = fname;
-        binfo.refinefollowtype = ftype;
-    }
-
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
         let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
         
@@ -2832,8 +2823,6 @@ class TypeChecker {
                 const retypename = stmt.binder.srcname.slice(1);
 
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                this.setFlowRebinderInfo(stmt.binder, retypename, lubtype || eetype);
-
                 return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
             }
         }
@@ -2878,19 +2867,15 @@ class TypeChecker {
                 const retypename = stmt.binder.srcname.slice(1);
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
                 if(ttrue.normalflow && tfalse.normalflow) {
-                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
                 }
                 else if(ttrue.normalflow) {
-                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.ttrue as TypeSignature);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.ttrue as TypeSignature, ttrue, tfalse);
                 }
                 else if(tfalse.normalflow) {
-                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), splits.tfalse as TypeSignature);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.tfalse as TypeSignature, ttrue, tfalse);
                 }
                 else {
-                    this.setFlowRebinderInfo(stmt.binder, stmt.binder.srcname.slice(1), eetype);
                     return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
                 }
             }

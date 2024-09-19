@@ -1272,9 +1272,10 @@ class JSEmitter {
     }
 
     private emitVariableRetypeStatement(stmt: VariableRetypeStatement): string {
-        const check = this.processITestAsConvert(stmt.sinfo, stmt.name, this.tproc(stmt.vtype as TypeSignature), stmt.ttest);
+        assert("Not Implemented -- emitVariableRetypeStatement");
 
-        return `${stmt.name} = ${check};`;
+        //TODO: add type check assertion
+        return "";
     }
 
     private emitReturnVoidStatement(stmt: ReturnVoidStatement): string {
@@ -1330,12 +1331,7 @@ class JSEmitter {
                 const bassign = fmt.indent(`let ${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.trueBindType as TypeSignature)};`) + " " + body + "\n";
                 fmt.indentPop();
 
-                if(!stmt.binder.refineonfollow) {
-                    return `if(${test}) {\n${bassign}${fmt.indent("}")}`;
-                }
-                else {
-                    return `if(${test}) {\n${bassign}${fmt.indent("}")} ${stmt.binder.refinefollowname as string} = ${this.emitBUAsNeeded(stmt.binder.refinefollowname as string, stmt.cond.exp.getType(), stmt.binder.refinefollowtype as TypeSignature)};`;
-                }
+                return `if(${test}) {\n${bassign}${fmt.indent("}")}`;
             }
         }
     }
@@ -1362,18 +1358,13 @@ class JSEmitter {
 
                 fmt.indentPush();
                 const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
-                const tbassign = fmt.indent(`${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.trueBindType as TypeSignature)};`) + "\n" + tbody + "\n";
+                const tbassign = fmt.indent(`let ${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.trueBindType as TypeSignature)};`) + " " + tbody + "\n";
 
                 const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
-                const fbassign = fmt.indent(`${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.falseBindType as TypeSignature)};`) + "\n" + fbody + "\n";
+                const fbassign = fmt.indent(`let ${stmt.binder.scopename} = ${this.emitBUAsNeeded(vexp, stmt.cond.exp.getType(), stmt.falseBindType as TypeSignature)};`) + " " + fbody + "\n";
                 fmt.indentPop();
 
-                if(!stmt.binder.refineonfollow) {
-                    return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")}`;
-                }
-                else {
-                    return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")} ${stmt.binder.refinefollowname as string} = ${this.emitBUAsNeeded(stmt.binder.refinefollowname as string, stmt.cond.exp.getType(), stmt.binder.refinefollowtype as TypeSignature)};`;
-                }
+                return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")}`;
             }
         }
     }

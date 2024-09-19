@@ -10,8 +10,6 @@ class BinderInfo {
     scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
-    refinefollowname: string | undefined;
-    refinefollowtype: TypeSignature | undefined;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
