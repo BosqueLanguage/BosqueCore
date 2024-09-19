@@ -115,7 +115,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
     "String", "CString", 
     "Regex", "CRegex", "PathRegex",
-    "Path", "Fragment", "Glob"
+    "Path", "PathItem", "Glob"
 ];
 
 class Token {
@@ -3089,7 +3089,7 @@ class Parser {
 
             let ptag = ExpressionTag.LiteralPathExpression;
             if(!sstr.startsWith("\\")) {
-                ptag = sstr.startsWith("g") ? ExpressionTag.LiteralPathGlobExpression : ExpressionTag.LiteralPathFragmentExpression;
+                ptag = sstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathItemExpression;
             }
 
             if(sstr.endsWith("[T]")) {
@@ -3118,15 +3118,18 @@ class Parser {
         else if(tk === SYM_rbrack) {
             return this.parseEListConstructorExpression();
         }
-        else if (tk === KW_let) {
-            return this.parseLetExpression();
-        }
         else if(tk === SYM_lparen) {
             const closeparen = this.scanMatchingParens(SYM_lbrack, SYM_rbrack);
             this.prepStateStackForNested("paren-type", closeparen);
 
             this.consumeToken();
-            let exp = this.parseExpression();
+            let exp: Expression;
+            if (this.testToken(KW_let)) {
+                exp = this.parseLetExpression();
+            }
+            else {
+                exp = this.parseExpression();
+            }
             
             if(this.testToken(SYM_rparen)) {
                 this.consumeToken();

@@ -1636,7 +1636,7 @@ class Assembly {
             return this.resolveValidatorLiteral(nsconst.value.exp);
         }
         else {
-            if(exp.tag === ExpressionTag.LiteralUnicodeRegexExpression || exp.tag === ExpressionTag.LiteralCRegexExpression || exp.tag === ExpressionTag.LiteralPathGlobExpression) {
+            if(exp.tag === ExpressionTag.LiteralUnicodeRegexExpression || exp.tag === ExpressionTag.LiteralCRegexExpression || exp.tag === ExpressionTag.LiteralGlobExpression) {
                 return exp;
             }
             else {

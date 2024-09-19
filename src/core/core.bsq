@@ -99,8 +99,8 @@ __internal entity PathRegex {
 __internal __typedeclable __keycomparable entity Path {
 }
 
-%** Primitive path fragment value. **%
-__internal __typedeclable __keycomparable entity Fragment {
+%** Primitive path item value. **%
+__internal __typedeclable __keycomparable entity PathItem {
 }
 
 %** Primitive path glob value. **%

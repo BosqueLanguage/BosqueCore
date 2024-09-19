@@ -196,8 +196,8 @@ enum ExpressionTag {
     LiteralCStringExpression = "LiteralCStringExpression",
     
     LiteralPathExpression = "LiteralPathExpression",
-    LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
-    LiteralPathGlobExpression = "LiteralPathGlobExpression",
+    LiteralPathItemExpression = "LiteralPathItemExpression",
+    LiteralGlobExpression = "LiteralGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
@@ -554,7 +554,7 @@ class LetExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
-        return `let ${dds} in ${this.body.emit(true, fmt)}`;
+        return `(let ${dds} in ${this.body.emit(true, fmt)})`;
     }
 }
 

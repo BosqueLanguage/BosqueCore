@@ -946,11 +946,11 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkLiteralPathExpression");
     }
 
-    private checkLiteralPathFragmentExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLiteralPathFragmentExpression");
+    private checkLiteralPathItemExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLiteralPathItemExpression");
     }
 
-    private checkLiteralPathGlobExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralGlobExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         assert(false, "Not Implemented -- checkLiteralPathGlobExpression");
     }
 
@@ -1941,11 +1941,11 @@ class TypeChecker {
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralPathFragmentExpression: {
-                return this.checkLiteralPathFragmentExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralPathItemExpression: {
+                return this.checkLiteralPathItemExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralPathGlobExpression: {
-                return this.checkLiteralPathGlobExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralGlobExpression: {
+                return this.checkLiteralGlobExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
                 return this.checkLiteralTypeDeclValueExpression(env, exp as LiteralTypeDeclValueExpression);
@@ -3785,7 +3785,7 @@ class TypeChecker {
                         this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
                     }
                     else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
-                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralPathGlobExpression, `of expression must be path glob`);
+                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralGlobExpression, `of expression must be path glob`);
 
                         const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
                         this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
