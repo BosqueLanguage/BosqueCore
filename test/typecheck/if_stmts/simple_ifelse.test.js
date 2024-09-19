@@ -28,9 +28,9 @@ describe ("Checker -- IfElse Statement", () => {
     });
 
     it("should check binder & reflow itest ifs", function () {
-        checkTestFunction("function main(): Int { var x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }");
+        checkTestFunction("function main(): Int { let x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }");
 
-        checkTestFunctionError("function main(): Int { var x: Option<Int> = some(3i); if(x)@!some { return 0i; } else { ; } return x; }", "Expected a return value of type Int but got Option<Int>");
-        checkTestFunctionError("function main(): Int { var x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { x = 2i; } return x; }", "Expression of type Int cannot be assigned to variable of type Option<Int>");
+        checkTestFunctionError("function main(): Int { let x: Option<Int> = some(3i); if(x)@!some { return 0i; } else { ; } return x; }", "Expected a return value of type Int but got Option<Int>");
+        checkTestFunctionError("function main(): Int { var x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }", "Variable x is declared as modifiable and cannot be re-typed");
     });
 });

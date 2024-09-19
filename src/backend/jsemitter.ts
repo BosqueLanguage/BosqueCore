@@ -418,20 +418,24 @@ class JSEmitter {
     }
     
     private emitAccessVariableExpression(exp: AccessVariableExpression): string {
+        let aname: string;
+
         if(!exp.isCaptured) {
             if(exp.srcname === "this") {
-                return "_$this";
+                aname = "_$this";
             }
             else if(exp.srcname === "self") {
-                return "_$self";
+                aname = "_$self";
             }
             else {
-                return exp.scopename;
+                aname = exp.scopename;
             }
         }
         else {
-            return exp.scopename;
+            aname = exp.scopename;
         }
+
+        return this.emitBUAsNeeded(aname, exp.layouttype as TypeSignature, exp.getType());
     }
     
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {

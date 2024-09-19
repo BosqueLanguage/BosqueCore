@@ -477,7 +477,8 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    scopename: string;    //maybe a different name that gets used for shadowing binders
+    layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
+    scopename: string; //maybe a different name that gets used for shadowing binders
     isCaptured: boolean;
 
     constructor(sinfo: SourceInfo, srcname: string) {
