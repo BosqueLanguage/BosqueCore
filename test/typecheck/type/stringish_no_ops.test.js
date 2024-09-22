@@ -10,7 +10,7 @@ describe ("Checker -- type decl of strings w/o constraints", () => {
     });
 
     it("should fail not string", function () {
-        checkTestFunctionError('type SV1 = String; function main(): SV1 { return 3n<SV1>; }', "Literal value is not the same type (Nat) as the base type (String)");
+        checkTestFunctionError('type SV1 = String; function main(): SV1 { return 3n<SV1>; }', "Literal value is not the same type (Nat) as the value type (String)");
     });
 
     it("should fail not type", function () {
@@ -25,7 +25,7 @@ describe ("Checker -- type decl of strings w/ constraints", () => {
     });
 
     it("should fail type mismatch", function () {
-        checkTestFunctionError('type SV1 = CString of /[a-z]+/c; function main(): SV1 { return "ab3"<SV1>; }', "Literal value is not the same type (String) as the base type (CString)");  
+        checkTestFunctionError('type SV1 = CString of /[a-z]+/c; function main(): SV1 { return "ab3"<SV1>; }', "Literal value is not the same type (String) as the value type (CString)");  
         checkTestFunctionError("const re2: Regex = /[0-9]/; type SV2 = CString of Main::re2; function main(): SV2 { return '345'<SV2>; }", "Unable to resolve cregex validator");  
     });
 
@@ -65,15 +65,15 @@ describe ("Checker -- type decl zipcode/css", () => {
 
 describe ("Checker -- type decl of strings w/ stacked constraints", () => {
     it("should check string options type decl", function () {
-        checkTestFunction('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[a-c]+/; function main(): SV2 { return "abc"<SV2>; }');  
-        checkTestFunction('const re2: Regex = /[a-z]+/; type SV1 = String of Main::re2; type SV2 = SV1 of /[a-c]+/; function main(): SV2 { return "abc"<SV2>; }');  
+        checkTestFunction('type SV2 = String of /[a-c]+ & [a-z]+/; function main(): SV2 { return "abc"<SV2>; }');  
+        checkTestFunction('const re2: Regex = /[a-z]+/; type SV2 = String of /${Main::re2} & [a-c]+/; function main(): SV2 { return "abc"<SV2>; }');  
     });
 
     it("should fail type mismatch", function () {
-        checkTestFunctionError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[a-c]+/c; function main(): SV2 { return "abc"<SV2>; }', "Unable to resolve regex validator");  
+        checkTestFunctionError('type SV2 = String of /[a-z]+/c; function main(): SV2 { return "abc"<SV2>; }', "Unable to resolve regex validator");  
     });
 
     it("should fail string constraints", function () {
-        checkTestFunctionError('type SV1 = String of /[a-z]+/; type SV2 = SV1 of /[az]+/; function main(): SV2 { return "abc"<SV2>; }', 'Literal value "abc" does not match regex -- /[az]+/');  
+        checkTestFunctionError('type SV2 = String of /[a-z]+ & [az]+/; function main(): SV2 { return "abc"<SV2>; }', 'Literal value "abc" does not match regex -- /[a-z]+ & [az]+/');  
     });
 });

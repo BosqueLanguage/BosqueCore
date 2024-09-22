@@ -22,11 +22,9 @@ class TypeError {
 }
 
 const CLEAR_FILENAME = "[GLOBAL]";
-const CLEAR_NSNAME = "[MISSING_NS]";
 
 class TypeChecker {
     private file: string = CLEAR_FILENAME;
-    private inns: string = CLEAR_NSNAME;
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
@@ -49,14 +47,14 @@ class TypeChecker {
         return cond;
     }
 
-    private doRegexValidation(sinfo: SourceInfo, ofexp: LiteralRegexExpression | AccessNamespaceConstantExpression, input: string, literalstring: string): void {
+    private doRegexValidation(sinfo: SourceInfo, ofexp: LiteralRegexExpression | AccessNamespaceConstantExpression, inns: string, input: string, literalstring: string): void {
         try {
             const pattern = this.relations.assembly.resolveConstantRegexExpressionValue(ofexp);
             if(pattern === undefined) {
                 this.reportError(sinfo, `Unable to resolve regex pattern -- ${ofexp.emit(true, new CodeFormatter())}`);
             }
             else {
-                const isok = accepts(pattern, input, this.inns);
+                const isok = accepts(pattern, input, inns);
                 this.checkError(sinfo, !isok, `Literal value "${literalstring}" does not match regex -- ${pattern}`);
             }
         }
@@ -91,20 +89,18 @@ class TypeChecker {
             const vs = validateStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
             this.checkError(exp.sinfo, vs === null, `Invalid string literal value ${(exp as LiteralSimpleExpression).value}`);
 
-            if(vs !== null) {
-                const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
-                if(reexp.some((rev) => rev[0] === undefined || rev[0].tag !== ExpressionTag.LiteralUnicodeRegexExpression)) {
+            if(vs !== null && tdecl.optofexp !== undefined) {
+                const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp);
+
+                if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression) {
                     this.reportError(exp.sinfo, `Unable to resolve regex validator`);
                 }
                 else {
-                    for(let i = 0; i < reexp.length; ++i) {
-                        const vexp = reexp[i][1];
-                        if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
-                            this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
-                        }
-                        else {
-                            this.doRegexValidation(exp.sinfo, vexp, vs, (exp as LiteralSimpleExpression).value.slice(1, -1));
-                        }
+                    if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                        this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
+                    }
+                    else {
+                        this.doRegexValidation(exp.sinfo, vexp, tdecl.ns.ns.join("::"), vs, (exp as LiteralSimpleExpression).value.slice(1, -1));
                     }
                 }
             }
@@ -115,20 +111,17 @@ class TypeChecker {
             const vs = validateCStringLiteral((exp as LiteralSimpleExpression).value.slice(1, -1));
             this.checkError(exp.sinfo, vs === null, `Invalid cstring literal value ${(exp as LiteralSimpleExpression).value}`);
 
-            if(vs !== null) {
-                const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
-                if(reexp.some((rev) => rev[0] === undefined || rev[0].tag !== ExpressionTag.LiteralCRegexExpression)) {
+            if(vs !== null && tdecl.optofexp !== undefined) {
+                const vexp = this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp);
+                if(vexp === undefined || vexp.tag !== ExpressionTag.LiteralCRegexExpression) {
                     this.reportError(exp.sinfo, `Unable to resolve cregex validator`);
                 }
                 else {
-                    for(let i = 0; i < reexp.length; ++i) {
-                        const vexp = reexp[i][1];
-                        if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
-                            this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
-                        }
-                        else {
-                            this.doRegexValidation(exp.sinfo, vexp, vs, (exp as LiteralSimpleExpression).value.slice(1, -1));
-                        }
+                    if(!(vexp instanceof LiteralRegexExpression) && !(vexp instanceof AccessNamespaceConstantExpression)) {
+                        this.reportError(exp.sinfo, `Invalid regex validator -- expected literal or namespace constant`);
+                    }
+                    else {
+                        this.doRegexValidation(exp.sinfo, vexp, tdecl.ns.ns.join("::"), vs, (exp as LiteralSimpleExpression).value.slice(1, -1));
                     }
                 }
             }
@@ -964,9 +957,9 @@ class TypeChecker {
             return exp.setType(exp.constype);
         }
 
-        const btype = this.relations.getTypeDeclBasePrimitiveType(exp.constype);
+        const btype = this.relations.getTypeDeclValueType(exp.constype);
         const bvalue = this.checkExpression(env, exp.value, btype !== undefined ? new SimpleTypeInferContext(btype) : undefined);
-        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the base type (${TypeChecker.safeTypePrint(btype)})`);
+        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the value type (${TypeChecker.safeTypePrint(btype)})`);
 
         exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
         exp.isDirectLiteral = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints, true);
@@ -1153,10 +1146,9 @@ class TypeChecker {
         }
         else {
             const vtype = this.relations.getTypeDeclValueType(ctype);
-            const ptype = this.relations.getTypeDeclBasePrimitiveType(ctype);
-            if(vtype !== undefined && ptype !== undefined) {
-                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ptype)); //both vtype and ptype are ok but if we infer a type then we should use the primitive type
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype) || this.relations.areSameTypes(etype, ptype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
+            if(vtype !== undefined) {
+                const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(vtype));
+                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
 
                 if(this.relations.areSameTypes(etype, vtype)) {
                     exp.hasChecks = cdecl.optofexp !== undefined || cdecl.invariants.length !== 0;
@@ -1502,7 +1494,7 @@ class TypeChecker {
             return ttype;
         }
         else if(this.relations.isTypeDeclType(ttype)) {
-            return this.relations.getTypeDeclBasePrimitiveType(ttype);
+            return this.relations.getTypeDeclValueType(ttype);
         }
         else {
             return undefined;
@@ -1572,14 +1564,14 @@ class TypeChecker {
             res = tlhs;
         }
         else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
-            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
+            const baselhs = this.relations.getTypeDeclValueType(tlhs);
             if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
         else if(this.relations.isPrimitiveType(tlhs) && this.relations.isTypeDeclType(trhs)) {
-            const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs);
+            const baserhs = this.relations.getTypeDeclValueType(trhs);
             if(this.checkError(exp.sinfo, baserhs === undefined || !this.relations.areSameTypes(tlhs, baserhs), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
@@ -1608,7 +1600,7 @@ class TypeChecker {
             res = tlhs;
         }
         else if(this.relations.isTypeDeclType(tlhs) && this.relations.isPrimitiveType(trhs)) {
-            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs);
+            const baselhs = this.relations.getTypeDeclValueType(tlhs);
             if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
@@ -1618,7 +1610,7 @@ class TypeChecker {
             if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
-            const basetype = this.relations.getTypeDeclBasePrimitiveType(trhs);
+            const basetype = this.relations.getTypeDeclValueType(trhs);
             if(this.checkError(exp.sinfo, basetype === undefined, "Division operator requires matching types on the arguments")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
@@ -3734,57 +3726,49 @@ class TypeChecker {
 
     private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl) {
         this.file = tdecl.file;
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
-        }
 
         const okvalue = this.checkTypeSignature(tdecl.valuetype);
         if(!okvalue) {
             return;
         }
 
-        const reexp = this.relations.assembly.resolveAllValidatorLiterals(tdecl);
-        const primtivetype = this.relations.getTypeDeclBasePrimitiveType(tdecl.valuetype);
-        if(primtivetype === undefined || !(primtivetype instanceof NominalTypeSignature)) {
-            this.reportError(tdecl.sinfo, `could not resolve the value type -- ${tdecl.valuetype.emit()}`);
+        const isvalueok = (tdecl.valuetype instanceof NominalTypeSignature) && (tdecl.valuetype as NominalTypeSignature).decl.attributes.some((attr) => attr.name === "__typedeclable");
+        if(!isvalueok) {
+            this.reportError(tdecl.sinfo, `In type declaration value type must be simple primitive -- Bool, Int, etc.`);
+            return;
         }
-        else {
-            tdecl.primtivetype = primtivetype;
-            for(let i = 0; i < reexp.length; ++i) {
-                const checkerexp = reexp[i][0];
-                this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
 
-                if(checkerexp !== undefined && primtivetype !== undefined && (primtivetype instanceof NominalTypeSignature)) {
-                    if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "String") {
-                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
+        if(tdecl.optofexp !== undefined) {
+            const checkerexp = tdecl.optofexp !== undefined ? this.relations.assembly.resolveValidatorLiteral(tdecl.optofexp.exp) : undefined;
+            this.checkError(tdecl.sinfo, checkerexp === undefined, `of expression must be regex or glob`);
+
+            const typevaluename = (tdecl.valuetype as NominalTypeSignature).decl.name;
+            if(checkerexp !== undefined) {
+                if(typevaluename === "String") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralUnicodeRegexExpression, `of expression must be unicode regex`);
                     
-                        const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
-                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
-                    }
-                    else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "CString") {
-                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
+                    const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
+                }
+                else if(typevaluename === "CString") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
 
-                        const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
-                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
-                    }
-                    else if(primtivetype.decl instanceof PrimitiveEntityTypeDecl && primtivetype.decl.name === "Path") {
-                        this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralGlobExpression, `of expression must be path glob`);
+                    const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
+                }
+                else if(typevaluename === "Path") {
+                    this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralGlobExpression, `of expression must be path glob`);
 
-                        const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
-                        this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
-                    }
-                    else {
-                        this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
-                    }
+                    const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
+                }
+                else {
+                    this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);
                 }
             }
         }
 
-        tdecl.allOfExps = reexp.map((re) => re[1]);
-
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
 
         this.checkProvides(tdecl.provides);
         tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
@@ -4157,8 +4141,6 @@ class TypeChecker {
     }
 
     private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
-        this.inns = decl.fullnamespace.ns.join("::");
-
         //all usings should be resolved and valid so nothing to do there
 
         this.checkNamespaceConstDecls(decl.consts);
@@ -4176,8 +4158,6 @@ class TypeChecker {
         for(let i = 0; i < decl.subns.length; ++i) {
             this.checkNamespaceDeclaration(decl.subns[i]);
         }
-
-        this.inns = CLEAR_NSNAME;
     }
 
     private processConstsAndValidatorREs(assembly: Assembly) {

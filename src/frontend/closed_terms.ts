@@ -1250,21 +1250,7 @@ class InstantiationPropagator {
     }
 
     private instantiateTypedeclTypeDecl(tdecl: TypedeclTypeDecl, pdecl: PendingNominalTypeDecl) {
-        let mapping: TemplateNameMapper | undefined = undefined;
-        if(tdecl.terms.length !== 0) {
-            let tmap = new Map<string, TypeSignature>();
-            tdecl.terms.forEach((t, ii) => {
-                tmap.set(t.name, pdecl.instantiation[ii])
-            });
-
-            mapping = new TemplateNameMapper([tmap])
-        }
-        
-        const etypes = [
-            mapping !== undefined ? tdecl.valuetype.remapTemplateBindings(mapping) : tdecl.valuetype
-        ];
-
-        this.instantiateAbstractNominalTypeDeclHelper(pdecl, tdecl.terms.map((t) => t.name), undefined, etypes);
+        this.instantiateAbstractNominalTypeDeclHelper(pdecl, [], undefined, [tdecl.valuetype]);
     }
 
     private instantiateInteralSimpleTypeDeclHelper(pdecl: PendingNominalTypeDecl, terms: string[], optreqtypes: TypeSignature[] | undefined) {

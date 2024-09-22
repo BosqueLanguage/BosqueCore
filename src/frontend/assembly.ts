@@ -700,10 +700,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
-    primtivetype: TypeSignature | undefined;
     optofexp: LiteralExpressionValue | undefined; 
-
-    allOfExps: Expression[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -1645,21 +1642,6 @@ class Assembly {
         }
     }
 
-    //pairs of [ResolvedRegex, ValidatorExp]
-    resolveAllValidatorLiterals(tdecl: TypedeclTypeDecl): [Expression | undefined, Expression][] {
-        let vexps: [Expression | undefined, Expression] [] = [];
-        if(tdecl.valuetype instanceof NominalTypeSignature && tdecl.valuetype.decl instanceof TypedeclTypeDecl) {
-            vexps = this.resolveAllValidatorLiterals(tdecl.valuetype.decl);
-        }
-
-        if(tdecl.optofexp !== undefined) {
-            const vexp = this.resolveValidatorLiteral(tdecl.optofexp.exp);
-            vexps.push([vexp, tdecl.optofexp.exp]);
-        }
-
-        return vexps;
-    }
-
     resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
         const nsdecl = this.resolveNamespaceDecl(ns.ns);
         if(nsdecl === undefined) {
@@ -1713,7 +1695,6 @@ class Assembly {
 
         return [{nsinfo: nsinfo, reinfos: reinfos}, ...subnsinfo].filter((nsi) => nsi.reinfos.length !== 0);
     }
-
 }
 
 export {

@@ -20,7 +20,7 @@ describe ("Parser -- Type Alias w/ Invariants Constructor", () => {
 
     it("should fail missing tokens", function () {
         parseTestFunctionInFile('type Foo = Int & { invariant $value > 3i } [FUNC]', 'Expected ";" but got "}" when parsing "invariant"');
-        parseTestFunctionInFile('type Foo = Int  { invariant $value > 3i; } [FUNC]', 'Expected "&" but got "{" when parsing "type alias declaration"');
+        parseTestFunctionInFile('type Foo = Int  { invariant $value > 3i; } [FUNC]', 'Expected "&" but got "{" when parsing "type declaration"');
         parseTestFunctionInFile('type Foo = Int &  invariant $value > 3i; } [FUNC]', 'Expected "{" but got "invariant" when parsing "type members"');
     });
 
