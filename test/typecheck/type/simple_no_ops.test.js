@@ -9,7 +9,7 @@ describe ("Checker -- type decl of bool", () => {
     });
 
     it("should fail not bool", function () {
-        checkTestFunctionError("type Flag = Bool; function main(): Flag { return 3i<Flag>; }", "Literal value is not the same type (Int) as the base type (Bool)");
+        checkTestFunctionError("type Flag = Bool; function main(): Flag { return 3i<Flag>; }", "Literal value is not the same type (Int) as the value type (Bool)");
     });
 });
 
@@ -20,7 +20,7 @@ describe ("Checker -- type decl of number", () => {
     });
 
     it("should fail not int", function () {
-        checkTestFunctionError("type NVal = Int; function main(): NVal { return 3n<NVal>; }", "Literal value is not the same type (Nat) as the base type (Int)");
+        checkTestFunctionError("type NVal = Int; function main(): NVal { return 3n<NVal>; }", "Literal value is not the same type (Nat) as the value type (Int)");
     });
 });
 

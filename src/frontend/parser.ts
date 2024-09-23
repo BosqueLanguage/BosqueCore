@@ -5358,7 +5358,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${iname}`);
             }
 
-            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, [...attributes, new DeclarationAttibute("__typedeclable", [], undefined)], this.env.currentNamespace.fullnamespace, iname, etag, new ErrorTypeSignature(sinfo, undefined));
+            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, iname, etag, new ErrorTypeSignature(sinfo, undefined));
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(iname);
@@ -5371,14 +5371,9 @@ class Parser {
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === iname);
-            assert(tdecl !== undefined && (tdecl instanceof TypedeclTypeDecl), "Failed to find typedecl type");
+            assert(tdecl !== undefined && (tdecl instanceof TypedeclTypeDecl), "Failed to find type type");
 
-            const terms = this.parseTypeTemplateTerms();
-            if(terms.length !== 0) {
-                tdecl.terms.push(...terms);
-            }
-
-            this.ensureAndConsumeTokenIf(SYM_eq, "type alias declaration");
+            this.ensureAndConsumeTokenIf(SYM_eq, "type declaration");
             const ttype = this.parseTypedeclRHSSignature();
             (tdecl as TypedeclTypeDecl).valuetype = ttype;
 
@@ -5388,14 +5383,14 @@ class Parser {
             }
 
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
-                this.ensureAndConsumeTokenIf(SYM_amp, "type alias declaration");
+                this.ensureAndConsumeTokenIf(SYM_amp, "type declaration");
 
                const provides = this.parseProvides(sinfo, [SYM_lbrace]);
                 if(provides.length !== 0) {
                     tdecl.provides.push(...provides);
                 }
 
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
             }
         }
     }
