@@ -580,7 +580,7 @@ class JSEmitter {
             }
         }
 
-        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, this.mapper)}(${argl.join(", ")})`;
+        return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1624,24 +1624,36 @@ class JSEmitter {
                 return ["{\n", ...stmts, fmt.indent("}")].join("");
             }
             else {
-                return ["{\n", ...(initializers || []), ...(preconds || []), ...(refsaves || []), ...stmts, fmt.indent("}")].join("");
+                fmt.indentPush();
+                const ideclstr = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                const precondstr = preconds.map((ii) => fmt.indent(ii)).join("\n");
+                const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join("\n");
+                fmt.indentPop();
+
+                return ["{\n", ideclstr, (initializers.length !== 0 ? "\n\n" : ""), precondstr, (preconds.length !== 0 ? "\n\n" : ""), refsavestr, (refsaves.length !== 0 ? "\n\n" : ""), ...stmts, fmt.indent("}")].join("");
             }
         }
     }
 
     private emitParameterInitializers(params: InvokeParameterDecl[]): string[] {
-        //TODO: we need to compute the dependency order here and check for cycles later
+        //TODO: we need to compute the dependency order here and check for cycles later -- right now just do left to right
 
         let inits: string[] = [];
         for(let i = 0; i < params.length; ++i) {
             const p = params[i];
             
             if(p.optDefaultValue !== undefined) {
-                inits.push(`if(${p.name} === undefined) { ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
+                inits.push(`if(${p.name} === undefined) { $${p.name} = ${p.name} = ${this.emitExpression(p.optDefaultValue.exp, true)}; }`);
             }
         }
 
-        return inits;
+        if(inits.length === 0) {
+            return [];
+        }
+        else {
+            const iidecl = "let " + params.map((p) => `$${p.name} = ${p.name}`).join(", ") + ";";
+            return [iidecl, ...inits];
+        }
     }
 
     private emitRequires(requires: PreConditionDecl[]): string[] {
@@ -1759,7 +1771,11 @@ class JSEmitter {
     private checkExplicitFunctionInvokeDeclMetaData(idecl: FunctionInvokeDecl, inits: string[], preconds: string[], refsaves: string[], tests: string[]): string[] {
         inits.push(...this.emitParameterInitializers(idecl.params));
         preconds.push(...this.emitRequires(idecl.preconditions));
-        refsaves.push(...this.emitRefSaves(idecl.params));
+
+        if(inits.length !== 0) {
+            //if we did inits then we already generated the $y = ... binds
+            refsaves.push(...this.emitRefSaves(idecl.params));
+        }
 
         tests.push(...this.emitExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples));
 
@@ -1794,7 +1810,7 @@ class JSEmitter {
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = undefined;
 
-        const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
+        const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
         return {body: `${nf}${sig}${nss ? " => " : " "}${body}`, resfimpl: resfimpl, tests: tests};
     }
 
@@ -1826,15 +1842,15 @@ class JSEmitter {
                         const {body, resfimpl, tests} = this.emitFunctionDecl(fdecl, optenclosingtype, fii.binds[j], fmt);
             
                         if(resfimpl !== undefined) {
-                            idecls.push(resfimpl);
+                            idecls.push(fmt.indent(resfimpl));
                         }
-                        idecls.push(body);
+                        idecls.push(fmt.indent(body));
 
                         tests.push(...tests);
                     }
                     fmt.indentPop();
 
-                    const fobj = `${fdecl.name}: {\n${idecls.map((dd) => fmt.indent(dd)).join(", ")}${fmt.indent("}")}`;
+                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(", ")}${fmt.indent("\n}")}`;
                     decls.push(fobj);
                 }
             }

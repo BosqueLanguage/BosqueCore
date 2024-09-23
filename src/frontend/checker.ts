@@ -409,7 +409,12 @@ class TypeChecker {
             return true;
         }
         else if(type instanceof TemplateTypeSignature) {
-            return this.constraints.resolveConstraint(type.name) !== undefined;
+            const resolved = this.constraints.resolveConstraint(type.name);
+            if(resolved === undefined) {
+                this.reportError(type.sinfo, `Template type ${type.name} is not defined`);
+                return false;
+            }
+            return true;
         }
         else if(type instanceof NominalTypeSignature) {
             const typesok = type.alltermargs.every((targ) => this.checkTypeSignature(targ));
@@ -560,7 +565,7 @@ class TypeChecker {
         const ptype = param.type.remapTemplateBindings(imapper);
 
         const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
-        this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${param.type.emit()} but got ${argtype.emit()}`);
+        this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${ptype.emit()} but got ${argtype.emit()}`);
 
         return argtype;
     }
@@ -1326,15 +1331,16 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, fdecl); 
-
-        if(imapper !== undefined) {
-            const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, fdecl.params, imapper);
-            exp.shuffleinfo = arginfo.shuffleinfo;
-            exp.restinfo = arginfo.restinfo;
+        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, fdecl);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        return exp.setType(fdecl.resultType);
+        const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, fdecl.params, imapper);
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.restinfo = arginfo.restinfo;
+
+        return exp.setType(fdecl.resultType.remapTemplateBindings(imapper));
     }
 
     private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression): TypeSignature {
@@ -3424,7 +3430,7 @@ class TypeChecker {
             const eventlisttype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, eldecl, [eventtype]);
             eev = eev.addLocalVar(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
         }
-
+        
         for(let i = 0; i < refvars.length; ++i) {
             const v = refvars[i];
             eev = eev.addLocalVar("$" + v, (env.resolveLocalVarInfoFromSrcName(v) as VarInfo).decltype, true, true);
@@ -3488,7 +3494,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
         let argnames = new Set<string>();
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, "$" + p.name, p.type, p.type, true, true, p.isRefParam))];
         for(let i = 0; i < idecl.params.length; ++i) {
             const p = idecl.params[i];
             this.checkError(idecl.sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
@@ -3508,7 +3514,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
         const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam))];
-        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
+        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => "$" + p.name)];
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
         this.checkRequires(ienv, idecl.preconditions);
