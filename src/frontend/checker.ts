@@ -2767,10 +2767,6 @@ class TypeChecker {
             this.reportError(sinfo, `Variable ${retypevname} is not declared`);
             return
         }
-        if(!vinfo.isConst) {
-            this.reportError(sinfo, `Variable ${retypevname} is declared as modifiable and cannot be re-typed`);
-            return;
-        }
         if(!vinfo.mustDefined) {
             this.reportError(sinfo, `Variable ${retypevname} is not defined`);
             return;
