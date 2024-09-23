@@ -11,8 +11,9 @@ class VarInfo {
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
+    readonly isRef: boolean;
 
-    constructor(srcname: string, scopename: string, decltype: TypeSignature, itype: TypeSignature, isConst: boolean, mustDefined: boolean) {
+    constructor(srcname: string, scopename: string, decltype: TypeSignature, itype: TypeSignature, isConst: boolean, mustDefined: boolean, isRef: boolean) {
         this.srcname = srcname;
         this.scopename = scopename;
         this.decltype = decltype;
@@ -20,14 +21,15 @@ class VarInfo {
 
         this.isConst = isConst;
         this.mustDefined = mustDefined;
+        this.isRef = isRef;
     }
 
     updateType(ttype: TypeSignature): VarInfo {
-        return new VarInfo(this.srcname, this.scopename, this.decltype, ttype, this.isConst, this.mustDefined);
+        return new VarInfo(this.srcname, this.scopename, this.decltype, ttype, this.isConst, this.mustDefined, this.isRef);
     }
 
     updateDefine(): VarInfo {
-        return new VarInfo(this.srcname, this.scopename, this.decltype, this.itype, this.isConst, true);
+        return new VarInfo(this.srcname, this.scopename, this.decltype, this.itype, this.isConst, true, this.isRef);
     }
 }
 
@@ -163,21 +165,14 @@ class TypeEnvironment {
 
     addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
         let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vname, vtype, vtype, isConst, mustDefined));
-
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
-    }
-
-    addBinder(vname: string, vscope: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        newlocals[newlocals.length - 1].push(new VarInfo(vname, vscope, vtype, vtype, isConst, mustDefined));
+        newlocals[newlocals.length - 1].push(new VarInfo(vname, vname, vtype, vtype, isConst, mustDefined, false));
 
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
     }
 
     addLocalVarSet(vars: {name: string, vtype: TypeSignature}[], isConst: boolean): TypeEnvironment {
         let newlocals = TypeEnvironment.cloneLocals(this.locals);
-        const newvars = vars.map((v) => new VarInfo(v.name, v.name, v.vtype, v.vtype, isConst, true));
+        const newvars = vars.map((v) => new VarInfo(v.name, v.name, v.vtype, v.vtype, isConst, true, false));
         newlocals[newlocals.length - 1].push(...newvars);
 
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, newlocals);
@@ -234,7 +229,7 @@ class TypeEnvironment {
     }
 
     pushNewLocalBinderScope(vname: string, scopename: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, scopename, vtype, vtype, true, true)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, scopename, vtype, vtype, true, true, false)]]);
     }
 
     popLocalScope(): TypeEnvironment {
@@ -249,7 +244,7 @@ class TypeEnvironment {
 
             for(let j = 0; j < origenv.locals[i].length; j++) {
                 const mdef = envs.every((e) => (e.resolveLocalVarInfoFromScopeName(origenv.locals[i][j].scopename) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].decltype, origenv.locals[i][j].itype, origenv.locals[i][j].isConst, mdef));
+                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].decltype, origenv.locals[i][j].itype, origenv.locals[i][j].isConst, mdef, origenv.locals[i][j].isRef));
             }
 
             locals.push(frame);
