@@ -958,7 +958,7 @@ class PostfixAssignFields extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.updates.emit(fmt, "[", "]")}`;
+        return `${this.updates.emit(fmt, "[|", "|]")}`;
     }
 }
 
@@ -997,7 +997,7 @@ class PostfixLiteralKeyAccess extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `[|${this.kexp.emit(true, fmt)}|]`;
+        return `[${this.kexp.emit(true, fmt)}]`;
     }
 }
 
@@ -1439,7 +1439,7 @@ class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
 
     emit(fmt: CodeFormatter): string {
         const updatel = this.updates.map((arg) => `${arg.envkey.exp.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
-        return `[ ${updatel} ]`;
+        return `[| ${updatel} |]`;
     }
 }
 
@@ -1776,20 +1776,6 @@ class ReturnSingleStatement extends Statement {
     }
 }
 
-class ReturnMultiStatement extends Statement {
-    readonly value: Expression[]; //array is implicitly converted to EList
-    rtypes: TypeSignature[] = [];
-
-    constructor(sinfo: SourceInfo, value: Expression[]) {
-        super(StatementTag.ReturnMultiStatement, sinfo);
-        this.value = value;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
-    }
-}
-
 class IfStatement extends Statement {
     readonly cond: IfTest;
     readonly binder: BinderInfo | undefined;
@@ -2045,7 +2031,7 @@ class EnvironmentUpdateStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const updates = this.updates.map(([name, exp]) => `${name.emit(true, fmt)} = ${exp.emit(true, fmt)}`).join(", ");
-        return `env[${updates}];`;
+        return `env[|${updates}|];`;
     }
 }
 
@@ -2307,7 +2293,7 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
-    ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
+    ReturnVoidStatement, ReturnSingleStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
