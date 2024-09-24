@@ -5387,8 +5387,6 @@ class Parser {
     private parseDatatypeMemberEntityTypeDecl(attributes: DeclarationAttibute[], parenttype: DatatypeTypeDecl, hasterms: boolean, etag: AdditionalTypeDeclTag) {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.consumeTokenIf(SYM_bar);
-
         this.ensureToken(TokenStrings.IdentifierName, "datatype member entity declaration");
         const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
@@ -5409,7 +5407,7 @@ class Parser {
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
-            assert(tdecl !== undefined && !(tdecl instanceof DatatypeMemberEntityTypeDecl), "Failed to find datatype entry type");
+            assert(tdecl !== undefined && (tdecl instanceof DatatypeMemberEntityTypeDecl), "Failed to find datatype entry type");
 
             if(parenttype.terms.length !== 0) {
                 tdecl.terms.push(...parenttype.terms);
@@ -5462,7 +5460,7 @@ class Parser {
         }
         else {
             const ddecl = this.env.currentNamespace.typedecls.find((td) => td.name === dname);
-            assert(ddecl !== undefined && !(ddecl instanceof DatatypeTypeDecl), "Failed to find datatype type");
+            assert(ddecl !== undefined && (ddecl instanceof DatatypeTypeDecl), "Failed to find datatype type");
 
             tdecl = ddecl as DatatypeTypeDecl;
 
@@ -5494,7 +5492,13 @@ class Parser {
 
         this.ensureAndConsumeTokenIf(KW_of, "datatype");
 
+        let firstMember = true;
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
+            if(!firstMember) {
+                this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
+            }
+            firstMember = false;
+
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
