@@ -127,7 +127,7 @@ class EmitNameManager {
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return [`"${fv.name}${termstr}": `, true];
+                return [`"${termstr}": `, true];
             }
         }
         else {
@@ -136,7 +136,7 @@ class EmitNameManager {
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return [`"${fv.name}${termstr}": `, true];
+                return [`"${termstr}": `, true];
             }
         }
     }
@@ -150,7 +150,7 @@ class EmitNameManager {
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return [`"${fv.name}${termstr}$OnReturn": `, true];
+                return [`"${termstr}$OnReturn": `, true];
             }
         }
         else {
@@ -159,7 +159,7 @@ class EmitNameManager {
             }
             else {
                 const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-                return [`"${fv.name}${termstr}$OnReturn": `, true];
+                return [`"${termstr}$OnReturn": `, true];
             }
         }
     }
@@ -174,7 +174,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-            return `"${fv.name}${termstr}": `;
+            return `"${termstr}": `;
         }
     }
 
@@ -184,7 +184,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
-            return `"${fv.name}${termstr}$OnReturn": `;
+            return `"${termstr}$OnReturn": `;
         }
     }
 
@@ -204,7 +204,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${ans}${fv.name}["${fv.name}${termstr}"]`;
+            return `${ans}${fv.name}["${termstr}"]`;
         }
     }
 
@@ -217,7 +217,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${ans}${fv.name}["${fv.name}${termstr}$OnReturn"]`;
+            return `${ans}${fv.name}["${termstr}$OnReturn"]`;
         }
     }
 
@@ -233,7 +233,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${tas}["${fv.name}${termstr}"]`;
+            return `${tas}["${termstr}"]`;
         }
     }
 
@@ -245,7 +245,7 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${tas}["${fv.name}${termstr}$OnReturn"]`;
+            return `${tas}["${termstr}$OnReturn"]`;
         }
     }
 

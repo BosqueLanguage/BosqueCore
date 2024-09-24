@@ -1850,7 +1850,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(", ")}${fmt.indent("\n}")}`;
+                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}${fmt.indent("\n}")}`;
                     decls.push(fobj);
                 }
             }
