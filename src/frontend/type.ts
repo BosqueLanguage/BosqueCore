@@ -36,7 +36,7 @@ class TemplateConstraintScope {
     }
 
     resolveConstraint(name: string): TemplateTermDecl | undefined {
-        for(let i = this.constraints.length - 1; i >= 0; ++i) {
+        for(let i = this.constraints.length - 1; i >= 0; --i) {
             const res = this.constraints[i].find((cc) => cc.name === name);
             if(res !== undefined) {
                 return res;

@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { SourceInfo } from "./build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
-    return (tbinds.length !== 0) ? `<${tbinds.map(t => t.toString()).join(", ")}>` : "";
+    return (tbinds.length !== 0) ? `<${tbinds.map(t => t.tkeystr).join(", ")}>` : "";
 }
 
 class PendingNamespaceFunction {

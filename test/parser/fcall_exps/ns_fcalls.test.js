@@ -88,3 +88,9 @@ describe ("Parser -- NamespaceFunction explicit (no template)", () => {
         parseTestFunctionInFilePlusError('declare namespace Main; function main(x: Int): Int { return NSOther::foo(x); }', "Missing import for namespace NSOther", ...ctxcode);  //NS exists but not imported
     });
 });
+
+describe ("Parser -- NamespaceFunction Implicit (with template)", () => {
+    it("should parse positional", function () {
+        parseTestFunctionInFile('function foo<T>(x: T): Int { return x; } [FUNC]', 'function main(): Int { return foo<Int>(3i); }'); 
+    });
+});
