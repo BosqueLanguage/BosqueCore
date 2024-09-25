@@ -763,7 +763,7 @@ class TypeChecker {
 
                 const ftype = bnames[i].type.remapTemplateBindings(imapper);
 
-                this.checkError(argexp.sinfo, !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${bnames[i].type.emit()} but got ${argtype.emit()}`);
+                this.checkError(argexp.sinfo, !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${ftype.emit()} but got ${argtype.emit()}`);
             }
         }
 
@@ -4134,6 +4134,9 @@ class TypeChecker {
             }
             else if(tt instanceof EntityTypeDecl) {
                 this.checkEntityTypeDecl(ns, tt);
+            }
+            else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+                this.checkDatatypeMemberEntityTypeDecl(ns, tt.parentTypeDecl, tt);
             }
             else if(tt instanceof OptionTypeDecl) {
                 this.checkOptionTypeDecl(ns, tt);

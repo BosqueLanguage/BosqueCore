@@ -2018,7 +2018,7 @@ class JSEmitter {
         return `$createAPI: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
-    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[] | undefined, instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
         }
@@ -2028,7 +2028,7 @@ class JSEmitter {
         let tests: string[] = [];
 
         decls.push(this.emitTypeSymbol(rcvr));
-        if(optfdecls !== undefined) {
+        if(optfdecls.some((ff) => ff.defaultValue !== undefined)) {
             decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls, fmt));
         }
 
@@ -2037,11 +2037,11 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            if(optfdecls || tdecl.allInvariants.length !== 0) {
+            if(optfdecls.some((ff) => ff.defaultValue !== undefined) || tdecl.allInvariants.length !== 0) {
                 decls.push(this.emitCreate(tdecl, fmt));
             }
 
-            if(optfdecls || tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
+            if(optfdecls.some((ff) => ff.defaultValue !== undefined) || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
                 decls.push(this.emitCreateAPIValidate(tdecl, fmt));
             }
         }
@@ -2154,7 +2154,7 @@ class JSEmitter {
             decls.push(this.emitCreate(tdecl, fmt));
         }
 
-        if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0 || tdecl.validates.length !== 0) {
+        if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
             decls.push(this.emitCreateAPIValidate(tdecl, fmt));
         }
 
@@ -2307,7 +2307,7 @@ class JSEmitter {
         const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
-            return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
+            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
@@ -2325,7 +2325,7 @@ class JSEmitter {
         const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
-            return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
+            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
@@ -2343,7 +2343,7 @@ class JSEmitter {
         const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
-            return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
+            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
@@ -2394,6 +2394,15 @@ class JSEmitter {
         return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
     }
 
+    private isMultiEmitDecl(tdecl: AbstractNominalTypeDecl): boolean {
+        if(tdecl.terms.length !== 0) {
+            return true;
+        }
+        else {
+            return tdecl.isSpecialResultEntity() || tdecl.isSpecialAPIResultEntity() || (tdecl instanceof SomeTypeDecl);
+        }
+    }
+
     private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], supers: string[], tests: string[]} {
         let ttdecls: string[] = [];
         let alldecls: string[] = [];
@@ -2408,7 +2417,10 @@ class JSEmitter {
             }
 
             this.currentfile = tt.file;
-
+            if(this.isMultiEmitDecl(tt)) {
+                fmt.indentPush();
+            }
+            
             let ddecls: string[] = [];
             for(let j = 0; j < iinsts.length; ++j) {
                 const instantiation = iinsts[j];
@@ -2537,11 +2549,14 @@ class JSEmitter {
                 }
             }
 
-            if(tt.terms.length === 0) {
+            if(!this.isMultiEmitDecl(tt)) {
                 alldecls.push(fmt.indent(ddecls[0] + ";"));
             }
             else {
-                alldecls.push(`export const ${tt.name} = {\n${ddecls.map((dd) => fmt.indent(dd)).join(",\n")}\n${fmt.indent("}")}`);
+                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join(",\n");
+                
+                fmt.indentPop();
+                alldecls.push(`export const ${tt.name} = {\n${dclstr}\n${fmt.indent("}")}`);
             }
         }
 
