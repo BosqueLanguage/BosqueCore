@@ -32,7 +32,8 @@ function doneop(iserror, msg) {
 
 const mode = process.argv[2] || "debug";
 
-exec("tsc -p tsconfig.json", {cwd: tscdir}, (err, stdout, stderr) => {
+const tscpath = path.join(tscdir, "node_modules/typescript/bin/tsc");
+exec(`${tscpath} -p tsconfig.json`, {cwd: tscdir}, (err, stdout, stderr) => {
     donets = true;
     doneop(err !== null, err !== null ? err + stderr + stdout : "done tsc..."); 
 });

@@ -5387,8 +5387,6 @@ class Parser {
     private parseDatatypeMemberEntityTypeDecl(attributes: DeclarationAttibute[], parenttype: DatatypeTypeDecl, hasterms: boolean, etag: AdditionalTypeDeclTag) {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.consumeTokenIf(SYM_bar);
-
         this.ensureToken(TokenStrings.IdentifierName, "datatype member entity declaration");
         const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
@@ -5409,7 +5407,7 @@ class Parser {
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
-            assert(tdecl !== undefined && !(tdecl instanceof DatatypeMemberEntityTypeDecl), "Failed to find datatype entry type");
+            assert(tdecl !== undefined && (tdecl instanceof DatatypeMemberEntityTypeDecl), "Failed to find datatype entry type");
 
             if(parenttype.terms.length !== 0) {
                 tdecl.terms.push(...parenttype.terms);
@@ -5462,7 +5460,7 @@ class Parser {
         }
         else {
             const ddecl = this.env.currentNamespace.typedecls.find((td) => td.name === dname);
-            assert(ddecl !== undefined && !(ddecl instanceof DatatypeTypeDecl), "Failed to find datatype type");
+            assert(ddecl !== undefined && (ddecl instanceof DatatypeTypeDecl), "Failed to find datatype type");
 
             tdecl = ddecl as DatatypeTypeDecl;
 
@@ -5477,24 +5475,38 @@ class Parser {
             }
 
             if(this.testAndConsumeTokenIf(KW_using)) {
-                const cusing = this.parseListOf<MemberFieldDecl>("datatype", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const sinfo = this.peekToken().getSourceInfo();
-
-                    this.ensureToken(TokenStrings.IdentifierName, "datatype field");
-                    const name = this.parseIdentifierAsStdVariable();
-                    this.ensureAndConsumeTokenIf(SYM_colon, "datatype field");
-
-                    const ttype = this.parseStdTypeSignature();
-                    return new MemberFieldDecl(this.env.currentFile, sinfo, [], name, ttype, undefined, false);
-                });
-
-                tdecl.fields.push(...cusing);
+                if(this.testFollows(SYM_lbrace, TokenStrings.IdentifierName, SYM_colon)) {
+                    const fields = this.parseListOf<MemberFieldDecl>("datatype member", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                        const mfinfo = this.peekToken().getSourceInfo();
+    
+                        this.ensureToken(TokenStrings.IdentifierName, "datatype POD member field");
+                        const name = this.parseIdentifierAsStdVariable();
+                        this.ensureAndConsumeTokenIf(SYM_colon, "datatype POD member field");
+    
+                        const ttype = this.parseStdTypeSignature();
+                        return new MemberFieldDecl(this.env.currentFile, mfinfo, [], name, ttype, undefined, false);
+                    });
+    
+                    tdecl.fields.push(...fields);
+                }
+                else {
+                    this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
+                    if(tdecl.functions.length !== 0 || tdecl.methods.length !== 0) {
+                        this.recordErrorGeneral(sinfo, "Using component cannot include functions or methods");
+                    }
+                }
             }
         }
 
         this.ensureAndConsumeTokenIf(KW_of, "datatype");
 
-        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
+        let firstMember = true;
+        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
+            if(!firstMember) {
+                this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
+            }
+            firstMember = false;
+
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
