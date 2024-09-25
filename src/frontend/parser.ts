@@ -5493,7 +5493,7 @@ class Parser {
         this.ensureAndConsumeTokenIf(KW_of, "datatype");
 
         let firstMember = true;
-        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
+        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
             if(!firstMember) {
                 this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
             }
