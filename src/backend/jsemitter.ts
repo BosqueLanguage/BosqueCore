@@ -1910,7 +1910,7 @@ class JSEmitter {
             const m = inits[i];
             if(m.defaultValue !== undefined) {
                 const chkcall = `$default$${m.name}`;
-                const args = ""; //tdecl.saturatedBFieldInfo.map((fi) => "$" + fi.name).join(", "); --------- TODO: we need to compute dependencies and cycles
+                const args = tdecl.saturatedBFieldInfo.map((fi) => "$" + fi.name).join(", "); // --------- TODO: we need to compute dependencies and cycles
 
                 const body = this.emitExpression(m.defaultValue.exp, true);
                 initializers.push(`${chkcall}: (${args}) => ${body}`);
@@ -1938,10 +1938,32 @@ class JSEmitter {
         return "[VTABLE -- NOT IMPLEMENTED]";
     }
 
+    private emitDefaultFieldInitializers(tdecl: AbstractNominalTypeDecl): string[] {
+        //TODO: we need to compute the dependency order here and check for cycles later -- right now just do left to right
+
+        let inits: string[] = [];
+        for(let i = 0; i < tdecl.saturatedBFieldInfo.length; ++i) {
+            const f = tdecl.saturatedBFieldInfo[i];
+            
+            if(f.hasdefault) {
+                const aargs = tdecl.saturatedBFieldInfo.map((fi) => `$${fi.name}`).join(", ");
+                const icall = `${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(f.containingtype) as NominalTypeSignature, `$default$${f.name}`)}(${aargs})`;
+                inits.push(`if(${f.name} === undefined) { $${f.name} = ${f.name} = ${icall}; }`);
+            }
+        }
+
+        if(inits.length === 0) {
+            return [];
+        }
+        else {
+            const iidecl = "let " + tdecl.saturatedBFieldInfo.map((f) => `$${f.name} = ${f.name}`).join(", ") + ";";
+            return [iidecl, ...inits];
+        }
+    }
+
     private emitCreate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
-        const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
-            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(fi.containingtype) as NominalTypeSignature, `$default$${fi.name}`)}(); }`);
-        
+        const ddecls = this.emitDefaultFieldInitializers(tdecl);
+
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
@@ -1975,9 +1997,8 @@ class JSEmitter {
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
-        const ddecls = tdecl.saturatedBFieldInfo.filter((fi) => fi.hasdefault).
-            map((fi) => `if(${fi.name} === undefined) { ${fi.name} = ${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(fi.containingtype) as NominalTypeSignature, `$default$${fi.name}`)}(); }`);
-        
+        const ddecls = this.emitDefaultFieldInitializers(tdecl);
+
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
@@ -2028,7 +2049,9 @@ class JSEmitter {
         let tests: string[] = [];
 
         decls.push(this.emitTypeSymbol(rcvr));
-        if(optfdecls.some((ff) => ff.defaultValue !== undefined)) {
+
+        const hasoptFields = optfdecls.some((ff) => ff.defaultValue !== undefined);
+        if(hasoptFields) {
             decls.push(...this.emitMemberFieldInitializers(tdecl, optfdecls, fmt));
         }
 
@@ -2037,11 +2060,11 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            if(optfdecls.some((ff) => ff.defaultValue !== undefined) || tdecl.allInvariants.length !== 0) {
+            if(hasoptFields || tdecl.allInvariants.length !== 0) {
                 decls.push(this.emitCreate(tdecl, fmt));
             }
 
-            if(optfdecls.some((ff) => ff.defaultValue !== undefined) || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
+            if(hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
                 decls.push(this.emitCreateAPIValidate(tdecl, fmt));
             }
         }

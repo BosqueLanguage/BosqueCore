@@ -19,7 +19,6 @@ describe ("Checker -- Entity Simple", () => {
     });
 });
 
-
 describe ("Checker -- entity decl with default fields", () => {
     it("should check entity with default fields", function () {
         checkTestFunctionInFile('entity Foo { field f: Int = 3i; } function main(): Int { return Foo{3i}.f; }'); 
