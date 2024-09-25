@@ -549,6 +549,40 @@ class TypeChecker {
         return TemplateNameMapper.createInitialMapping(tmap);
     }
 
+    private checkTemplateBindingsOnConstructor(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], cdecl: AbstractNominalTypeDecl): TemplateNameMapper | undefined {
+        if(targs.length !== cdecl.terms.length) {
+            this.reportError(sinfo, `Constructor ${cdecl.name} expected ${cdecl.terms.length} terms but got ${targs.length}`);
+            return undefined;
+        }
+
+        let tmap = new Map<string, TypeSignature>();
+        for(let i = 0; i < targs.length; ++i) {
+            const targ = targs[i];
+            const tdecl = cdecl.terms[i];
+
+            const trestrict = tdecl.tconstraint;
+            if(trestrict !== undefined && !this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
+                this.reportError(sinfo, `Template argument ${tdecl.name} is not a subtype of constraint type`);
+                return undefined;
+            }
+
+            if(tdecl.extraTags.length !== 0) {
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                    this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
+                    return undefined;
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                    this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
+                    return undefined;
+                }
+            }
+
+            tmap.set(tdecl.name, targ);
+        }
+
+        return TemplateNameMapper.createInitialMapping(tmap);
+    }
+
     private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, param: InvokeParameterDecl, imapper: TemplateNameMapper): TypeSignature {
         if(arg instanceof SpreadArgumentValue) {
             this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
@@ -678,7 +712,7 @@ class TypeChecker {
         return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
     }
 
-    private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[]): [number, string, TypeSignature][] {
+    private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < args.length; ++i) {
@@ -726,11 +760,14 @@ class TypeChecker {
             else {
                 const argexp = (argsuffle[i] as ArgumentValue).exp;
                 const argtype = this.checkExpression(env, argexp, new SimpleTypeInferContext(bnames[i].type));
-                this.checkError(argexp.sinfo, !this.relations.isSubtypeOf(argtype, bnames[i].type, this.constraints), `Argument ${bnames[i].name} expected type ${bnames[i].type.emit()} but got ${argtype.emit()}`);
+
+                const ftype = bnames[i].type.remapTemplateBindings(imapper);
+
+                this.checkError(argexp.sinfo, !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${bnames[i].type.emit()} but got ${argtype.emit()}`);
             }
         }
 
-        return argsuffleidx.map((idx, i) => [idx, bnames[i].name, bnames[i].type]);
+        return argsuffleidx.map((idx, i) => [idx, bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);
     }
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
@@ -1170,8 +1207,13 @@ class TypeChecker {
     private checkStandardConstructor(env: TypeEnvironment, fields: MemberFieldDecl[], exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
+        const imapper = this.checkTemplateBindingsOnConstructor(exp.sinfo, env, ctype.alltermargs, ctype.decl);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        
         const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
-        const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames);
+        const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames, imapper);
 
         exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
         exp.shuffleinfo = shuffleinfo;

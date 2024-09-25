@@ -2098,7 +2098,7 @@ class JSEmitter {
         }
         else {
             if(tdecl.terms.length !== 0) {
-                return `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`;
+                return `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`;
             }
             else {
                 return `export const ${tdecl.name} = ${obj}`;
@@ -2262,7 +2262,7 @@ class JSEmitter {
         const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
 
         if(tdecl.terms.length !== 0) {
-            return {decl: `${tdecl.name}[${EmitNameManager.emitTypeTermKey(rcvr)}] = ${obj}`, tests: rr.tests};
+            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
@@ -2400,7 +2400,6 @@ class JSEmitter {
         let allsupertypes: string[] = [];
         let alltests: string[] = [];
 
-        let emittedtdecls = new Set<string>();
         for(let i = 0; i < tdecl.length; ++i) {
             const tt = tdecl[i];
             const iinsts = asminstantiation.typebinds.get(tt.name);
@@ -2409,12 +2408,6 @@ class JSEmitter {
             }
 
             this.currentfile = tt.file;
-
-            if(!emittedtdecls.has(tt.name) && iinsts.some((ii) => ii.binds !== undefined)) {
-                ttdecls.push(`export const ${tt.name} = {};`);
-
-                emittedtdecls.add(tt.name);
-            }
 
             let ddecls: string[] = [];
             for(let j = 0; j < iinsts.length; ++j) {
@@ -2544,7 +2537,7 @@ class JSEmitter {
                 }
             }
 
-            if(ddecls.length === 1) {
+            if(tt.terms.length === 0) {
                 alldecls.push(fmt.indent(ddecls[0] + ";"));
             }
             else {

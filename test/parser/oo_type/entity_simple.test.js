@@ -18,3 +18,10 @@ describe ("Parser -- entity decl", () => {
     });
 });
 
+describe ("Parser -- entity decl with default fields", () => {
+    it("should parse entity with default fields", function () {
+        parseTestFunctionInFile('entity Foo { field f: Int = 3i; } [FUNC]', 'function main(): Int { return Foo{3i}.f; }'); 
+        parseTestFunctionInFile('entity Foo { field f: Int; field g: Int = $f; } [FUNC]', 'function main(): Int { return Foo{3i}.g; }'); 
+    });
+});
+
