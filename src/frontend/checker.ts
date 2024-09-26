@@ -3514,7 +3514,26 @@ class TypeChecker {
 
     private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
         for(let i = 0; i < mdecls.length; ++i) {   
-            assert(false, "Not implemented -- checkMethodDecl");
+            const mdecl = mdecls[i];
+    
+            this.checkExplicitInvokeDeclTermInfo(mdecl);
+
+            if(mdecl.terms.length !== 0) {
+                this.constraints.pushConstraintScope(mdecl.terms);
+            }
+
+            const thisvinfo = new VarInfo("this", "this", rcvr, rcvr, true, true, mdecl.isThisRef);
+
+            this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
+            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["$this"] : [], undefined);
+
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType, this.constraints);
+            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam))], mdecl.resultType, infertype);
+            this.checkBodyImplementation(env, mdecl.body);
+
+            if(mdecl.terms.length !== 0) {
+                this.constraints.popConstraintScope();
+            }
         }
     }
 
