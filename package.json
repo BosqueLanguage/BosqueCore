@@ -21,7 +21,7 @@
     "scripts": {
         "build": "node ./build/build_all.js",
         "test": "node ./build/build_all.js &&  node --test ./test/*/*/*.test.js",
-        "test-coverage": "node ./build/build_all.js &&  node --experimental-test-coverage --test-coverage-include=./bin/src/**/*.js --test ./test/*/*/*.test.js"
+        "test-coverage": "node ./build/build_all.js &&  node --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=/tmp/** --test test/*/*/*.test.js"
     },
     "files": [
         "bin/*"
