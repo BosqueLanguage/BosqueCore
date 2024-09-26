@@ -818,7 +818,7 @@ class TypeCheckerRelations {
         }
 
         const cci = tn.decl.methods.find((c) => c.name === name);
-        if(cci !== undefined && cci.attributes.every((attr) => attr.name !== "virtual" && attr.name !== "abstract")) {
+        if(cci !== undefined && cci.attributes.every((attr) => attr.name !== "abstract")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }

@@ -969,6 +969,10 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    resolvedTrgt: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
         this.specificResolve = specificResolve;

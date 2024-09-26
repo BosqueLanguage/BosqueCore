@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
-import { EListTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 import { SourceInfo } from "./build_decls.js";
 
@@ -140,26 +140,60 @@ class InstantiationPropagator {
         }
     }
 
-    private isAlreadySeenNamespaceFunction(fkey: string, fdecl: NamespaceFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
-        const isdonef = this.instantiation.some((ainfo) => {
-            if(!ainfo.functionbinds.has(fdecl.name)) {
-                return false;
-            }
+    private isAlreadySeenNamespaceFunction(ns: FullyQualifiedNamespace, fkey: string, fdecl: NamespaceFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
+        const nsopt = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
+        if(nsopt === undefined) {
+            return false;
+        }
+            
+        if(!nsopt.functionbinds.has(fdecl.name)) {
+            return false;
+        }
 
-            const bop = ainfo.functionbinds.get(fdecl.name) as FunctionInstantiationInfo;
-            if(bop.binds === undefined) {
-                return true;
-            }
-            else {
-                return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-            }
-        });
-
-        if(isdonef) {
+        const bop = nsopt.functionbinds.get(fdecl.name) as FunctionInstantiationInfo;
+        if(bop.binds === undefined) {
+            return true;
+        }
+        
+        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
+        if(okbinds) {
             return true;
         }
         
         return this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
+    }
+
+    private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {
+        const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
+        if(nsinst === undefined) {
+            return false;
+        }
+
+        const tinsts = nsinst.typebinds.get(tname);
+        if(tinsts === undefined) {
+            return false;
+        }
+
+        const tinst = tinsts.find((t) => t.tkey === tkey);
+        if(tinst === undefined) {
+            return false;
+        }
+
+        if(!tinst.methodbinds.has(mdecl.name)) {
+            return false;
+        }
+
+        const bop = tinst.methodbinds.get(mdecl.name) as MethodInstantiationInfo;
+        if(bop.binds === undefined) {
+            return true;
+        }
+        
+        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
+        if(okbinds) {
+            return true;
+        }
+
+        return this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
     }
 
     //Given a namespace function -- instantiate it
@@ -167,9 +201,8 @@ class InstantiationPropagator {
         const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
         const fkey = `${ns.fullnamespace.emit()}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
-
         if(tterms.length === 0) {
-            if(this.isAlreadySeenNamespaceFunction(fkey, fdecl, undefined)) {
+            if(this.isAlreadySeenNamespaceFunction(ns.fullnamespace, fkey, fdecl, undefined)) {
                 return;
             }
     
@@ -181,11 +214,38 @@ class InstantiationPropagator {
                 fmapping.set(fdecl.terms[i].name, tterms[i]);
             }
 
-            if(this.isAlreadySeenNamespaceFunction(fkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
+            if(this.isAlreadySeenNamespaceFunction(ns.fullnamespace, fkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
                 return;
             }
 
             this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
+        }
+    }
+
+    //Given a namespace function -- instantiate it
+    private instantiateSpecificResolvedMemberMethod(ns: FullyQualifiedNamespace, enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
+        const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
+        const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
+        const mkey = `${retype.emit()}@${fdecl.name}${computeTBindsKey(tterms)}`;
+
+        if(tterms.length === 0) {
+            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, mapping)) {
+                return;
+            }
+    
+            this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, []));
+        }
+        else {
+            let fmapping = new Map<string, TypeSignature>();
+            for(let i = 0; i < fdecl.terms.length; ++i) {
+                fmapping.set(fdecl.terms[i].name, tterms[i]);
+            }
+
+            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, TemplateNameMapper.merge(mapping !== undefined ? mapping : TemplateNameMapper.createEmpty(), TemplateNameMapper.createInitialMapping(fmapping)))) {
+                return;
+            }
+
+            this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, tterms));
         }
     }
 
@@ -316,7 +376,18 @@ class InstantiationPropagator {
     }
 
     private instantiatePostfixInvoke(exp: PostfixInvoke) {
-        assert(false, "Not Implemented -- instantiatePostfixInvoke");
+        this.instantiateArgumentList(exp.args.args);
+
+        if(exp.resolvedTrgt !== undefined) {
+            this.instantiateTypeSignature(exp.resolvedTrgt, this.currentMapping);
+
+            const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
+            const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => !m.isThisRef && m.name === exp.name) as MethodDecl;
+            this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt, mm, exp.terms, this.currentMapping);
+        }
+        else {
+            assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
+        }
     }
 
     private instantiatePostfixLiteralKeyAccess(exp: PostfixLiteralKeyAccess) {
@@ -1527,6 +1598,7 @@ class InstantiationPropagator {
         }
         this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey) as NamespaceInstantiationInfo;
 
+        xxxx;
         this.instantiateNamespaceConstDecls(decl.consts);
     }
 
