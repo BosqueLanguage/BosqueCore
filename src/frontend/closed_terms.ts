@@ -229,7 +229,7 @@ class InstantiationPropagator {
         const mkey = `${retype.emit()}@${fdecl.name}${computeTBindsKey(tterms)}`;
 
         if(tterms.length === 0) {
-            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, mapping)) {
+            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, undefined)) {
                 return;
             }
     
@@ -241,7 +241,7 @@ class InstantiationPropagator {
                 fmapping.set(fdecl.terms[i].name, tterms[i]);
             }
 
-            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, TemplateNameMapper.merge(mapping !== undefined ? mapping : TemplateNameMapper.createEmpty(), TemplateNameMapper.createInitialMapping(fmapping)))) {
+            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
                 return;
             }
 
@@ -1198,7 +1198,7 @@ class InstantiationPropagator {
                 tmap.set(t.name, fdecl.instantiation[ii])
             });
 
-            this.currentMapping = new TemplateNameMapper([tmap])
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap)
         }
 
         this.instantiateExplicitInvokeDeclSignature(fdecl.function);
@@ -1213,18 +1213,45 @@ class InstantiationPropagator {
 
         if(fdecl.function.terms.length !== 0) {
             ((cnns.functionbinds.get(fdecl.function.name) as FunctionInstantiationInfo).binds as TemplateNameMapper[]).push(this.currentMapping as TemplateNameMapper);
-            this.currentMapping = undefined;
         }
+
+        this.currentMapping = undefined;
     }
 
-    private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, tfd: PendingTypeFunction) {
+    private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: PendingTypeFunction) {
         assert(false, "Not implemented -- instantiateTypeFunctionDecl");
     }
 
     private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) { 
-        //TODO: dont forget to add any virtual or override methods here....
+        const typeinst = ((this.currentNSInstantiation as NamespaceInstantiationInfo).typebinds.get(tdecl.name) as TypeInstantiationInfo[]).find((ti) => ti.tkey === mdecl.type.tkeystr) as TypeInstantiationInfo;
 
-        assert(false, "Not implemented -- instantiateMethodDecl");
+        this.currentMapping = undefined;
+        if(mdecl.method.terms.length === 0) {
+            this.currentMapping = typeinst.binds;
+        }
+        else {
+            let tmap = new Map<string, TypeSignature>();
+            mdecl.method.terms.forEach((t, ii) => {
+                tmap.set(t.name, mdecl.instantiation[ii])
+            });
+
+            this.currentMapping = TemplateNameMapper.merge(typeinst.binds !== undefined ? typeinst.binds : TemplateNameMapper.createEmpty(), TemplateNameMapper.createInitialMapping(tmap));
+        }
+
+        this.instantiateExplicitInvokeDeclSignature(mdecl.method);
+        this.instantiateExplicitInvokeDeclMetaData(mdecl.method, undefined);
+
+        this.instantiateBodyImplementation(mdecl.method.body);
+
+        if(!typeinst.methodbinds.has(mdecl.method.name)) {
+            typeinst.methodbinds.set(mdecl.method.name, new MethodInstantiationInfo(mdecl.method.terms.length !== 0 ? [] : undefined));
+        }
+
+        if(mdecl.method.terms.length !== 0) {
+            ((typeinst.methodbinds.get(mdecl.method.name) as MethodInstantiationInfo).binds as TemplateNameMapper[]).push(this.currentMapping as TemplateNameMapper);
+        }
+
+        this.currentMapping = undefined;
     }
 
     private instantiateTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) {
@@ -1270,7 +1297,7 @@ class InstantiationPropagator {
                 tmap.set(t, pdecl.instantiation[ii])
             });
 
-            this.currentMapping = new TemplateNameMapper([tmap])
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap)
         }
 
         this.instantiateProvides(pdecl.type.provides);
@@ -1453,7 +1480,7 @@ class InstantiationPropagator {
                 tmap.set(tdecl.name, pdecl.instantiation[ii])
             });
 
-            this.currentMapping = new TemplateNameMapper([tmap])
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap)
         }
 
         this.instantiateProvides(pdecl.type.provides);
@@ -1593,13 +1620,16 @@ class InstantiationPropagator {
 
     private instantiateNamespaceDeclaration(decl: NamespaceDeclaration) {
         const nskey = decl.fullnamespace.emit();
-        if(this.instantiation.find((nsi) => nsi.ns.emit() === nskey) === undefined) {
-            this.instantiation.push(new NamespaceInstantiationInfo(decl.fullnamespace));
+        const nns = this.instantiation.find((nsi) => nsi.ns.emit() === nskey);
+        if(nns !== undefined) {
+            this.currentNSInstantiation = nns;
         }
-        this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey) as NamespaceInstantiationInfo;
+        else {
+            this.currentNSInstantiation = new NamespaceInstantiationInfo(decl.fullnamespace);
+            this.instantiation.push(this.currentNSInstantiation);
 
-        xxxx;
-        this.instantiateNamespaceConstDecls(decl.consts);
+            this.instantiateNamespaceConstDecls(decl.consts);
+        }
     }
 
     private shouldInstantiateAsRootType(tdecl: AbstractNominalTypeDecl): boolean {
