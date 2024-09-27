@@ -390,7 +390,7 @@ class JSEmitter {
             return this.emitExpression(exp.value, toplevel);
         }
         else {
-            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.constype) as NominalTypeSignature);
+            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.constype) as NominalTypeSignature, false);
             return `${taccess}(${this.emitExpression(exp.value, true)})`;
         }
     }
@@ -421,15 +421,7 @@ class JSEmitter {
         let aname: string;
 
         if(!exp.isCaptured) {
-            if(exp.srcname === "this") {
-                aname = "_$this";
-            }
-            else if(exp.srcname === "self") {
-                aname = "_$self";
-            }
-            else {
-                aname = exp.scopename;
-            }
+            aname = exp.srcname;
         }
         else {
             aname = exp.scopename;
@@ -467,15 +459,13 @@ class JSEmitter {
         }
         else {
             const earg = this.emitExpression(exp.args.args[0].exp, true);
-            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature, false);
             
             return `${taccess}(${earg})`;
         }
     }
 
     private emitStandardConstructor(exp: ConstructorPrimaryExpression): string {
-        const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
-
         const aargs: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
@@ -488,18 +478,10 @@ class JSEmitter {
             }
         }
 
-        if(!exp.hasChecks && exp.shuffleinfo.every((ii) => ii[0] !== -1)) {
-            let iargs: string[] = [];
+        const candirect = !exp.hasChecks && exp.shuffleinfo.every((ii) => ii[0] !== -1);
+        const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature, candirect);
 
-            for(let i = 0; i < aargs.length; ++i) {
-                iargs.push(`${exp.shuffleinfo[i][1]}: ${aargs[i]}`);
-            }
-
-            return `{${iargs.join(", ")}}`;
-        }
-        else {
-            return `${taccess}(${aargs.join(", ")})`;
-        }
+        return `${taccess}(${aargs.join(", ")})`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression, toplevel: boolean): string {
@@ -698,7 +680,12 @@ class JSEmitter {
             }
         }
 
-        return `${vval}.${EmitNameManager.generateAccssorNameForMethod(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+        if(EmitNameManager.isMethodCallObjectRepr(rcvrtype)) {
+            return `${vval}.${exp.name}(${argl.join(", ")})`;
+        }
+        else {
+            return `${EmitNameManager.generateAccssorNameForMethod(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}, ${argl.join(", ")})`;
+        }
     }
 
     private emitVirtualPostfixInvoke(val: string, exp: PostfixInvoke): string {
@@ -945,7 +932,7 @@ class JSEmitter {
     }
     
     private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
-        return `[${this.emitExpression(exp.kexp, true)}, ${this.emitExpression(exp.vexp, true)}]`;
+        assert(false, "Not implemented -- MapEntryConstructor");
     }
 
     private emitIfExpression(exp: IfExpression, toplevel: boolean): string {
@@ -1961,7 +1948,7 @@ class JSEmitter {
         this.mapper = undefined;
 
         const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
-        return {body: `${nf}${sig} => ${body}`, resfimpl: resfimpl, tests: tests};
+        return {body: `${nf}function${sig} ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
     private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2107,7 +2094,24 @@ class JSEmitter {
         }
     }
 
-    private emitCreate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+    private generateObjectCreationExp(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string {
+        const paramargs = tdecl.saturatedBFieldInfo.map((fi) => `${fi.name}: { value: ${fi.name}, writable: false, configurable: false, enumerable: true }`).join(", ");
+        const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
+
+        return `return Object.create(${protoref}, { ${paramargs} });`;
+    }
+
+    private emitCreateDirect(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
+        const consargs = `(${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")})`;
+
+        fmt.indentPush();
+        const bcreate = fmt.indent(this.generateObjectCreationExp(tdecl, rcvr));
+        fmt.indentPop();
+
+        return `$create: ${consargs} => {\n${bcreate}\n${fmt.indent("}")}`;
+    }
+
+    private emitCreate(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
         const ddecls = this.emitDefaultFieldInitializers(tdecl);
 
         let rechks: string[] = [];
@@ -2133,16 +2137,16 @@ class JSEmitter {
             return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : this.generateObjectCreationExp(tdecl, rcvr);
 
         fmt.indentPush();
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$create: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
+        return `$kreate: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
-    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
         const ddecls = this.emitDefaultFieldInitializers(tdecl);
 
         let rechks: string[] = [];
@@ -2176,7 +2180,7 @@ class JSEmitter {
             return `_$validate(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : this.generateObjectCreationExp(tdecl, rcvr);
 
         fmt.indentPush();``
         const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
@@ -2206,12 +2210,16 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
+            if(tdecl.allInvariants.length === 0) {
+                decls.push(this.emitCreateDirect(tdecl, rcvr, fmt));
+            }
+
             if(hasoptFields || tdecl.allInvariants.length !== 0) {
-                decls.push(this.emitCreate(tdecl, fmt));
+                decls.push(this.emitCreate(tdecl, rcvr, fmt));
             }
 
             if(hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
-                decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+                decls.push(this.emitCreateAPIValidate(tdecl, rcvr, fmt));
             }
         }
 
@@ -2320,11 +2328,11 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
 
         if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0) {
-            decls.push(this.emitCreate(tdecl, fmt));
+            decls.push(this.emitCreate(tdecl, rcvr, fmt));
         }
 
         if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
-            decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+            decls.push(this.emitCreateAPIValidate(tdecl, rcvr, fmt));
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));

@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
@@ -50,6 +50,15 @@ class EmitNameManager {
 
     static isBoxedTypeRepr(ttype: TypeSignature): boolean {
         return !this.isNakedTypeRepr(ttype);
+    }
+
+    static isMethodCallObjectRepr(ttype: TypeSignature): boolean {
+        if(!(ttype instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        const tdecl = ttype.decl;
+        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof ConceptTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl) || (tdecl instanceof AbstractConceptTypeDecl);
     }
 
     static generateTypeKey(ttype: NominalTypeSignature): string {
@@ -281,8 +290,8 @@ class EmitNameManager {
         }
     }
 
-    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
-        return `${this.emitTypeAccess(currentns, ttype)}.$create`;
+    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, directVersion: boolean): string {
+        return this.emitTypeAccess(currentns, ttype) + (directVersion ? ".$create" : ".$kreate");
     }
 
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
@@ -291,6 +300,10 @@ class EmitNameManager {
 
     static generateAccessorForTypeSpecialName(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, name: string): string {
         return `${this.emitTypeAccess(currentns, ttype)}.${name}`;
+    }
+
+    static generateAccessorForTypeConstructorProto(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}`;
     }
 }
 
