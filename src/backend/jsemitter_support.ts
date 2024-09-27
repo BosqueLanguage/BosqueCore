@@ -266,7 +266,17 @@ class EmitNameManager {
         }
     }
 
-    static generateAccssorNameForMethod(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
+    static generateAccssorNameForMethodImplicit(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
+        if(mv.terms.length === 0) {
+            return `${mv.name}`;
+        }
+        else {
+            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            return `${mv.name}["${termstr}"]`;
+        }
+    }
+
+    static generateAccssorNameForMethodFull(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
         const tas = this.emitTypeAccess(currentns, rcvrtype);
 
         if(mv.terms.length === 0) {

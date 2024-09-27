@@ -681,10 +681,10 @@ class JSEmitter {
         }
 
         if(EmitNameManager.isMethodCallObjectRepr(rcvrtype)) {
-            return `${vval}.${exp.name}(${argl.join(", ")})`;
+            return `${vval}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
         }
         else {
-            return `${EmitNameManager.generateAccssorNameForMethod(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}, ${argl.join(", ")})`;
+            return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}, ${argl.join(", ")})`;
         }
     }
 
@@ -1842,7 +1842,7 @@ class JSEmitter {
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
             let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
-            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}${fmt.indent("\n")}}`;
+            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
@@ -1888,7 +1888,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}${fmt.indent("\n}")}`;
+                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
                     decls.push(fobj);
                 }
             }
@@ -1941,7 +1941,7 @@ class JSEmitter {
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
             let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
-            resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}${fmt.indent("\n")}}`;
+            resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
         }
 
         const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
@@ -1987,7 +1987,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `${mdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}${fmt.indent("\n}")}`;
+                    const fobj = `${mdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
                     decls.push(fobj);
                 }
             }
