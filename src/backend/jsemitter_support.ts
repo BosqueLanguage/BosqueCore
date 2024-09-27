@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
@@ -178,7 +178,27 @@ class EmitNameManager {
         }
     }
 
+    static generateDeclarationNameForMethod(ttype: NominalTypeSignature, fv: MethodDecl, mapper: TemplateNameMapper | undefined): string {
+        if(fv.terms.length === 0) {
+            return `${fv.name}: `;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `"${termstr}": `;
+        }
+    }
+
     static generateOnCompleteDeclarationNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        if(fv.terms.length === 0) {
+            return `${fv.name}$OnReturn: `;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `"${termstr}$OnReturn": `;
+        }
+    }
+
+    static generateOnCompleteDeclarationNameForMethod(ttype: NominalTypeSignature, fv: MethodDecl, mapper: TemplateNameMapper | undefined): string {
         if(fv.terms.length === 0) {
             return `${fv.name}$OnReturn: `;
         }
@@ -233,7 +253,19 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${tas}["${termstr}"]`;
+            return `${tas}.${fv.name}["${termstr}"]`;
+        }
+    }
+
+    static generateAccssorNameForMethod(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
+        const tas = this.emitTypeAccess(currentns, rcvrtype);
+
+        if(mv.terms.length === 0) {
+            return `${tas}.${mv.name}`;
+        }
+        else {
+            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            return `${tas}.${mv.name}["${termstr}"]`;
         }
     }
 

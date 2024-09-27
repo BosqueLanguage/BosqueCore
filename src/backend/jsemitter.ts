@@ -569,8 +569,7 @@ class JSEmitter {
                 }
             }
 
-            const invk = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
-            const rparams = invk.params[invk.params.length - 1];
+            const rparams = ffinv.params[ffinv.params.length - 1];
             if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
                 assert(false, "Not implemented -- List");
                 //argl.push(`[${restl.join(", ")}]`);
@@ -645,8 +644,74 @@ class JSEmitter {
         assert(false, "Not Implemented -- emitPostfixAssignFields");
     }
 
+    private emitResolvedPostfixInvoke(val: string, exp: PostfixInvoke): string {
+        const rcvrtype = this.tproc(exp.getRcvrType()) as NominalTypeSignature;
+        const rtrgt = (this.tproc(exp.resolvedTrgt as TypeSignature) as NominalTypeSignature);
+        const mdecl = rtrgt.decl.methods.find((m) => m.name === exp.name) as MethodDecl;
+
+        let vval: string;
+        if(mdecl.attributes.some((attr) => attr.name === "virtual" || attr.name === "override")) {
+            if(EmitNameManager.isNakedTypeRepr(rcvrtype)) {
+                vval = this.emitBoxOperation(val, rcvrtype);
+            }
+            else {
+                vval = val;
+            }
+        }
+        else {
+            vval = val;
+        }
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                argl.push("undefined");
+            }
+            else {
+                const aaexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[ii[0]].exp, true), exp.args.args[ii[0]].exp.getType(), ii[1] as TypeSignature);
+                argl.push(aaexp);
+            }
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: string[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    const rrexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[rri[0]].exp, true), exp.args.args[rri[0]].exp.getType(), rri[2] as TypeSignature);
+                    restl.push(rrexp);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            const rparams = mdecl.params[mdecl.params.length - 1];
+            if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
+                assert(false, "Not implemented -- List");
+                //argl.push(`[${restl.join(", ")}]`);
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
+        }
+
+        return `${vval}.${EmitNameManager.generateAccssorNameForMethod(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+    }
+
+    private emitVirtualPostfixInvoke(val: string, exp: PostfixInvoke): string {
+        assert(false, "Not Implemented -- emitResolvedPostfixInvoke Virtual");
+    }
+
     private emitPostfixInvoke(val: string, exp: PostfixInvoke): string {
-        assert(false, "Not Implemented -- emitPostfixInvoke");
+        if(exp.resolvedTrgt !== undefined) {
+            return this.emitResolvedPostfixInvoke(val, exp);
+        }
+        else {
+            return this.emitVirtualPostfixInvoke(val, exp);
+        }
     }
 
     private emitPostfixLiteralKeyAccess(val: string, exp: PostfixLiteralKeyAccess): string {
@@ -1845,6 +1910,60 @@ class JSEmitter {
         return {decls: decls, tests: tests};
     }
 
+    private emitExplicitMethodDeclSignature(idecl: MethodDecl): string {
+        return `(${idecl.params.map((p) => p.name).join(", ")})`;
+    }
+
+    private checkExplicitMethodDeclMetaData(rcvrtype: NominalTypeSignature, idecl: MethodDecl, inits: string[], preconds: string[], refsaves: string[], tests: string[]): string[] {
+        inits.push(...this.emitParameterInitializers(idecl.params));
+        preconds.push(...this.emitRequires(idecl.preconditions));
+
+        if(idecl.isThisRef) {
+            inits.push(`const $this = this;`);
+        }
+
+        if(inits.length !== 0) {
+            //if we did inits then we already generated the $y = ... binds
+            refsaves.push(...this.emitRefSaves(idecl.params));
+        }
+
+        tests.push(...this.emitExamples(idecl.sinfo, [rcvrtype, ...idecl.params.map((p) => p.type)], idecl.resultType, idecl.examples));
+
+        return this.emitEnsures(idecl.postconditions);
+    }
+
+    private emitMethodDecl(rcvrtype: NominalTypeSignature, mdecl: MethodDecl,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+        if(optmapping !== undefined) {
+            this.mapper = optmapping;
+        }
+
+        const sig = this.emitExplicitMethodDeclSignature(mdecl);
+
+        let initializers: string[] = [];
+        let preconds: string[] = [];
+        let refsaves: string[] = [];
+        let tests: string[] = [];
+        const ensures = this.checkExplicitMethodDeclMetaData(rcvrtype, mdecl, initializers, preconds, refsaves, tests);
+
+        let resf: string | undefined = undefined;
+        let resfimpl: string | undefined = undefined;
+        if(ensures.length !== 0) {
+            //TODO: we will need to handle ref params here too
+            assert(!mdecl.isThisRef && mdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
+
+            const resb = ensures.map((e) => fmt.indent(e)).join("\n");
+
+            let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+            resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}${fmt.indent("\n")}}`;
+        }
+
+        const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
+        this.mapper = undefined;
+
+        const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+        return {body: `${nf}${sig} => ${body}`, resfimpl: resfimpl, tests: tests};
+    }
+
     private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
@@ -1856,7 +1975,34 @@ class JSEmitter {
             this.currentfile = mdecl.file;
 
             if(mii !== undefined) {
-                assert(false, "Not implemented -- checkMethodDecl");
+                if(mii.binds === undefined) {
+                    const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, undefined, fmt);
+            
+                    if(resfimpl !== undefined) {
+                        decls.push(resfimpl);
+                    }
+                    decls.push(body);
+                
+                    tests.push(...tests);
+                }
+                else {
+                    fmt.indentPush();
+                    let idecls: string[] = []
+                    for(let j = 0; j < mii.binds.length; ++j) {
+                        const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, mii.binds[j], fmt);
+            
+                        if(resfimpl !== undefined) {
+                            idecls.push(fmt.indent(resfimpl));
+                        }
+                        idecls.push(fmt.indent(body));
+
+                        tests.push(...tests);
+                    }
+                    fmt.indentPop();
+
+                    const fobj = `${mdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}${fmt.indent("\n}")}`;
+                    decls.push(fobj);
+                }
             }
         }
 
