@@ -1219,10 +1219,13 @@ class InstantiationPropagator {
     }
 
     private instantiateTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: PendingTypeFunction) {
+        //make sure to set current namespace here
         assert(false, "Not implemented -- instantiateTypeFunctionDecl");
     }
 
     private instantiateMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: PendingTypeMethod) { 
+        const nskey = tdecl.ns.emit();
+        this.currentNSInstantiation = this.instantiation.find((nsi) => nsi.ns.emit() === nskey);
         const typeinst = ((this.currentNSInstantiation as NamespaceInstantiationInfo).typebinds.get(tdecl.name) as TypeInstantiationInfo[]).find((ti) => ti.tkey === mdecl.type.tkeystr) as TypeInstantiationInfo;
 
         this.currentMapping = undefined;

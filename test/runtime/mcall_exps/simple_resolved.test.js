@@ -8,7 +8,7 @@ describe ("Exec -- entity methods", () => {
         runMainCode('entity Foo { field f: Int; method foo(): Int { return this.f; }} public function main(): Int { return Foo{3i}.foo(); }', [3n, "Int"]); 
         runMainCode('entity Foo { field f: Int; method foo(): Int { return this.f; }} public function main(): Int { let x = Foo{3i}; return x.foo(); }', [3n, "Int"]); 
     });
-/*
+
     it("should exec simple entity methods with args", function () {
         runMainCode('entity Foo { field f: Int; method foo(x: Int): Int { return this.f + x; }} public function main(): Int { return Foo{3i}.foo(1i); }', [4n, "Int"]); 
         runMainCode('entity Foo { field f: Int; method foo(x: Int = 1i): Int { return this.f + x; }} public function main(): Int { let x = Foo{3i}; return x.foo(); }', [4n, "Int"]); 
@@ -32,5 +32,4 @@ describe ("Exec -- entity methods", () => {
         runMainCode('entity Foo<T> { field f: T; method foo<U>(u: U): U { return if (this.f)@<U> then $_ else u; }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', [3n, "Nat"]); 
         runMainCode('entity Foo<T> { field f: T; method foo<U>(t: T): T { return if (t)<U> then t else this.f; }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', [3n, "Int"]); 
     });
-*/
 });
