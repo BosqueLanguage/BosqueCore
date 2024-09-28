@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import {_$softfails, _$supertypes, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
+'import {_$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -107,12 +107,22 @@ class JSEmitter {
         }
     }
 
-    private emitITestAsTest_None(val: string, isnot: boolean): string {
-        return val + (isnot ? "._$isSome()" : "._$isNone()");
+    private emitITestAsTest_None(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return vtype.tkeystr === "None" ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
+        }
+        else {
+            return val + (isnot ? "._$isSome()" : "._$isNone()");
+        }
     }
 
-    private emitITestAsTest_Some(val: string, isnot: boolean): string {
-        return val + (isnot ? "._$isNone()" : "._$isSome()");
+    private emitITestAsTest_Some(val: string, vtype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return vtype.tkeystr.startsWith("Some") ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
+        }
+        else {
+            return val + (isnot ? "._$isNone()" : "._$isSome()");
+        }
     }
 
     private emitITestAsTest_Ok(val: string, vtype: TypeSignature, isnot: boolean): string {
@@ -120,7 +130,12 @@ class JSEmitter {
         const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
         const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
 
-        return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? failtype : oktype)})`;
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return vtype.tkeystr === oktype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
+        }
+        else {
+            return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? failtype : oktype)})`;
+        }
     }
 
     private emitITestAsTest_Fail(val: string, vtype: TypeSignature, isnot: boolean): string {
@@ -128,15 +143,30 @@ class JSEmitter {
         const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
         const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
 
-        return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? oktype : failtype)})`;
-    }
-
-    private emitITestAsTest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
-        if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
-            return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)})`;
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            return vtype.tkeystr === failtype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
-            return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), this.tproc(oftype) as NominalTypeSignature)})`;
+            return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? oktype : failtype)})`;
+        }
+    }
+
+    private emitITestAsTest_Type(val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
+        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+            if(EmitNameManager.isNakedTypeRepr(oftype)) {
+                return vtype.tkeystr === oftype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
+            }
+            else {
+                return `_$fis${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)})`;
+            }
+        }
+        else {
+            if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
+                return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
+            }
+            else {
+                return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
+            }
         }
     }
     
@@ -144,14 +174,14 @@ class JSEmitter {
         const vvtype = this.tproc(vtype);
         
         if(tt instanceof ITestType) {
-            return this.emitITestAsTest_Type(val, tt.ttype, tt.isnot);
+            return this.emitITestAsTest_Type(val, vvtype, this.tproc(tt.ttype), tt.isnot);
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.emitITestAsTest_None(val, tt.isnot);
+                return this.emitITestAsTest_None(val, vvtype, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                return this.emitITestAsTest_Some(val, tt.isnot);
+                return this.emitITestAsTest_Some(val, vvtype, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
                 return this.emitITestAsTest_Ok(val, vvtype, tt.isnot);
@@ -165,7 +195,8 @@ class JSEmitter {
 
     private emitITestAsConvert_None(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return val;
+            const mfail = `_$abort(${this.getErrorInfo("Failed type convert", sinfo, undefined)})`
+            return vtype.tkeystr === "None" ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
             const emsg = this.getErrorInfo(isnot ? "expected None but got Some" : "expected Some but got None", sinfo, undefined);
@@ -175,7 +206,8 @@ class JSEmitter {
 
     private emitITestAsConvert_Some(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return val;
+            const mfail = `_$abort(${this.getErrorInfo("Failed type convert", sinfo, undefined)})`
+            return vtype.tkeystr.startsWith("Some") ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
             const emsg = this.getErrorInfo(isnot ? "expected Some but got None" : "expected None but got Some", sinfo, undefined);
@@ -184,28 +216,30 @@ class JSEmitter {
     }
 
     private emitITestAsConvert_Ok(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
+        const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+        const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+        const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
+
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return val;
+            const mfail = `_$abort(${this.getErrorInfo("Failed type convert", sinfo, undefined)})`
+            return vtype.tkeystr === oktype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
-            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
-            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
-            const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
-
             const emsg = this.getErrorInfo(isnot ? "expected Err but got Ok" : "expected Ok but got Err", sinfo, undefined);
             return `${val}._$as(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? failtype : oktype)}, true, ${emsg})`;
         }
     }
 
     private emitITestAsConvert_Fail(sinfo: SourceInfo, val: string, vtype: TypeSignature, isnot: boolean): string {
+        const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
+        const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
+        const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
+
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return val;
+            const mfail = `_$abort(${this.getErrorInfo("Failed type convert", sinfo, undefined)})`
+            return vtype.tkeystr === failtype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
-            const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
-            const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
-            const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
-
             const emsg = this.getErrorInfo(isnot ? "expected Ok but got Err" : "expected Err but got Ok", sinfo, undefined);
             return `${val}._$as(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? oktype : failtype)}, true, ${emsg})`;
         }
@@ -213,19 +247,23 @@ class JSEmitter {
 
     private emitITestAsConvert_Type(sinfo: SourceInfo, val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
         if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            return EmitNameManager.isBoxedTypeRepr(oftype) ? `_$b${val}` : val;
+            const mfail = `_$abort(${this.getErrorInfo("Failed type convert", sinfo, undefined)})`
+            if(EmitNameManager.isNakedTypeRepr(oftype)) {
+                return vtype.tkeystr === oftype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
+            }
+            else {
+                return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, ${false}, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
+            }
         }
         else {
             const ubx = EmitNameManager.isNakedTypeRepr(oftype);
             if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
-                const toftype = this.tproc(oftype) as NominalTypeSignature;
-                const emsg = this.getErrorInfo(isnot ? `expected different type than ${toftype.tkeystr}` : `expected type ${toftype.tkeystr}`, sinfo, undefined);
-                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), toftype)}, ${ubx}, ${emsg})`;
+                const emsg = this.getErrorInfo(isnot ? `expected different type than ${oftype.tkeystr}` : `expected type ${oftype.tkeystr}`, sinfo, undefined);
+                return `${val}._$as${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)}, ${ubx}, ${emsg})`;
             }
             else {
-                const toftype = this.tproc(oftype) as NominalTypeSignature;
-                const emsg = this.getErrorInfo(isnot ? `expected not subtype of ${toftype.tkeystr}` : `expected subtytype of ${toftype.tkeystr}`, sinfo, undefined);
-                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), toftype)}, ${ubx}, ${emsg})`;
+                const emsg = this.getErrorInfo(isnot ? `expected not subtype of ${oftype.tkeystr}` : `expected subtytype of ${oftype.tkeystr}`, sinfo, undefined);
+                return `${val}._$as${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)}, ${ubx}, ${emsg})`;
             }
         }
     }
@@ -390,7 +428,7 @@ class JSEmitter {
             return this.emitExpression(exp.value, toplevel);
         }
         else {
-            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.constype) as NominalTypeSignature);
+            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.constype) as NominalTypeSignature, false);
             return `${taccess}(${this.emitExpression(exp.value, true)})`;
         }
     }
@@ -421,15 +459,7 @@ class JSEmitter {
         let aname: string;
 
         if(!exp.isCaptured) {
-            if(exp.srcname === "this") {
-                aname = "_$this";
-            }
-            else if(exp.srcname === "self") {
-                aname = "_$self";
-            }
-            else {
-                aname = exp.scopename;
-            }
+            aname = exp.srcname;
         }
         else {
             aname = exp.scopename;
@@ -467,15 +497,13 @@ class JSEmitter {
         }
         else {
             const earg = this.emitExpression(exp.args.args[0].exp, true);
-            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
+            const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature, false);
             
             return `${taccess}(${earg})`;
         }
     }
 
     private emitStandardConstructor(exp: ConstructorPrimaryExpression): string {
-        const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature);
-
         const aargs: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
@@ -488,18 +516,10 @@ class JSEmitter {
             }
         }
 
-        if(!exp.hasChecks && exp.shuffleinfo.every((ii) => ii[0] !== -1)) {
-            let iargs: string[] = [];
+        const candirect = !exp.hasChecks && exp.shuffleinfo.every((ii) => ii[0] !== -1);
+        const taccess = EmitNameManager.generateAccessorForTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype) as NominalTypeSignature, candirect);
 
-            for(let i = 0; i < aargs.length; ++i) {
-                iargs.push(`${exp.shuffleinfo[i][1]}: ${aargs[i]}`);
-            }
-
-            return `{${iargs.join(", ")}}`;
-        }
-        else {
-            return `${taccess}(${aargs.join(", ")})`;
-        }
+        return `${taccess}(${aargs.join(", ")})`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression, toplevel: boolean): string {
@@ -569,8 +589,7 @@ class JSEmitter {
                 }
             }
 
-            const invk = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
-            const rparams = invk.params[invk.params.length - 1];
+            const rparams = ffinv.params[ffinv.params.length - 1];
             if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
                 assert(false, "Not implemented -- List");
                 //argl.push(`[${restl.join(", ")}]`);
@@ -645,8 +664,68 @@ class JSEmitter {
         assert(false, "Not Implemented -- emitPostfixAssignFields");
     }
 
+    private emitResolvedPostfixInvoke(val: string, exp: PostfixInvoke): string {
+        const rcvrtype = this.tproc(exp.getRcvrType()) as NominalTypeSignature;
+        const rtrgt = (this.tproc(exp.resolvedTrgt as TypeSignature) as NominalTypeSignature);
+        const mdecl = rtrgt.decl.methods.find((m) => m.name === exp.name) as MethodDecl;
+
+        const vval = this.emitBUAsNeeded(val, rcvrtype, rtrgt);
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                argl.push("undefined");
+            }
+            else {
+                const aaexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[ii[0]].exp, true), exp.args.args[ii[0]].exp.getType(), ii[1] as TypeSignature);
+                argl.push(aaexp);
+            }
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: string[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    const rrexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[rri[0]].exp, true), exp.args.args[rri[0]].exp.getType(), rri[2] as TypeSignature);
+                    restl.push(rrexp);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            const rparams = mdecl.params[mdecl.params.length - 1];
+            if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
+                assert(false, "Not implemented -- List");
+                //argl.push(`[${restl.join(", ")}]`);
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
+        }
+
+        if(EmitNameManager.isMethodCallObjectRepr(rtrgt)) {
+            return `${vval}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+        }
+        else {
+            return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
+        }
+    }
+
+    private emitVirtualPostfixInvoke(val: string, exp: PostfixInvoke): string {
+        assert(false, "Not Implemented -- emitResolvedPostfixInvoke Virtual");
+    }
+
     private emitPostfixInvoke(val: string, exp: PostfixInvoke): string {
-        assert(false, "Not Implemented -- emitPostfixInvoke");
+        if(exp.resolvedTrgt !== undefined) {
+            return this.emitResolvedPostfixInvoke(val, exp);
+        }
+        else {
+            return this.emitVirtualPostfixInvoke(val, exp);
+        }
     }
 
     private emitPostfixLiteralKeyAccess(val: string, exp: PostfixLiteralKeyAccess): string {
@@ -880,7 +959,7 @@ class JSEmitter {
     }
     
     private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
-        return `[${this.emitExpression(exp.kexp, true)}, ${this.emitExpression(exp.vexp, true)}]`;
+        assert(false, "Not implemented -- MapEntryConstructor");
     }
 
     private emitIfExpression(exp: IfExpression, toplevel: boolean): string {
@@ -1611,7 +1690,11 @@ class JSEmitter {
             }
             else {
                 fmt.indentPush();
-                const ideclstr = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                fmt.indentPush()
+                const ideclops = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                fmt.indentPop()
+                const ideclstr = `${fmt.indent("{")}\n${ideclops}\n${fmt.indent("}")}`;
+
                 const precondstr = preconds.map((ii) => fmt.indent(ii)).join("\n");
                 const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join("\n");
                 fmt.indentPop();
@@ -1665,7 +1748,7 @@ class JSEmitter {
         for(let i = 0; i < params.length; ++i) {
             const p = params[i];
             if(p.isRefParam) {
-                refsaves.push(`const $${p.name} = ${p.name};`);
+                refsaves.push(`$${p.name} = ${p.name}`);
             }
         }
 
@@ -1758,14 +1841,14 @@ class JSEmitter {
         inits.push(...this.emitParameterInitializers(idecl.params));
         preconds.push(...this.emitRequires(idecl.preconditions));
 
-        if(inits.length !== 0) {
-            //if we did inits then we already generated the $y = ... binds
+        const ensurescc = this.emitEnsures(idecl.postconditions);
+        if(ensurescc.length !== 0) {
             refsaves.push(...this.emitRefSaves(idecl.params));
         }
 
         tests.push(...this.emitExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples));
 
-        return this.emitEnsures(idecl.postconditions);
+        return ensurescc;
     }
 
     private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: NominalTypeSignature | undefined,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
@@ -1790,7 +1873,7 @@ class JSEmitter {
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
             let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
-            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}${fmt.indent("\n")}}`;
+            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
@@ -1836,13 +1919,67 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}${fmt.indent("\n}")}`;
+                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
                     decls.push(fobj);
                 }
             }
         }
 
         return {decls: decls, tests: tests};
+    }
+
+    private emitExplicitMethodDeclSignature(idecl: MethodDecl): string {
+        return `(${idecl.params.map((p) => p.name).join(", ")})`;
+    }
+
+    private checkExplicitMethodDeclMetaData(rcvrtype: NominalTypeSignature, idecl: MethodDecl, inits: string[], preconds: string[], refsaves: string[], tests: string[]): string[] {
+        inits.push(...this.emitParameterInitializers(idecl.params));
+        preconds.push(...this.emitRequires(idecl.preconditions));
+
+        if(idecl.isThisRef) {
+            inits.push(`const $this = this;`);
+        }
+
+        const ensurescc = this.emitEnsures(idecl.postconditions);
+        if(ensurescc.length !== 0) {
+            refsaves.push(...this.emitRefSaves(idecl.params));
+        }
+
+        tests.push(...this.emitExamples(idecl.sinfo, [rcvrtype, ...idecl.params.map((p) => p.type)], idecl.resultType, idecl.examples));
+
+        return ensurescc;
+    }
+
+    private emitMethodDecl(rcvrtype: NominalTypeSignature, mdecl: MethodDecl,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+        if(optmapping !== undefined) {
+            this.mapper = optmapping;
+        }
+
+        const sig = this.emitExplicitMethodDeclSignature(mdecl);
+
+        let initializers: string[] = [];
+        let preconds: string[] = [];
+        let refsaves: string[] = [];
+        let tests: string[] = [];
+        const ensures = this.checkExplicitMethodDeclMetaData(rcvrtype, mdecl, initializers, preconds, refsaves, tests);
+
+        let resf: string | undefined = undefined;
+        let resfimpl: string | undefined = undefined;
+        if(ensures.length !== 0) {
+            //TODO: we will need to handle ref params here too
+            assert(!mdecl.isThisRef && mdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
+
+            const resb = ensures.map((e) => fmt.indent(e)).join("\n");
+
+            let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+            resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
+        }
+
+        const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
+        this.mapper = undefined;
+
+        const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+        return {body: `${nf}function${sig} ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
     private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -1856,7 +1993,34 @@ class JSEmitter {
             this.currentfile = mdecl.file;
 
             if(mii !== undefined) {
-                assert(false, "Not implemented -- checkMethodDecl");
+                if(mii.binds === undefined) {
+                    const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, undefined, fmt);
+            
+                    if(resfimpl !== undefined) {
+                        decls.push(resfimpl);
+                    }
+                    decls.push(body);
+                
+                    tests.push(...tests);
+                }
+                else {
+                    fmt.indentPush();
+                    let idecls: string[] = []
+                    for(let j = 0; j < mii.binds.length; ++j) {
+                        const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, mii.binds[j], fmt);
+            
+                        if(resfimpl !== undefined) {
+                            idecls.push(fmt.indent(resfimpl));
+                        }
+                        idecls.push(fmt.indent(body));
+
+                        tests.push(...tests);
+                    }
+                    fmt.indentPop();
+
+                    const fobj = `${mdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                    decls.push(fobj);
+                }
             }
         }
 
@@ -1961,7 +2125,24 @@ class JSEmitter {
         }
     }
 
-    private emitCreate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+    private generateObjectCreationExp(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string {
+        const paramargs = tdecl.saturatedBFieldInfo.map((fi) => `${fi.name}: { value: ${fi.name}, writable: false, configurable: false, enumerable: true }`).join(", ");
+        const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
+
+        return `return Object.create(${protoref}, { ${paramargs} });`;
+    }
+
+    private emitCreateDirect(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
+        const consargs = `(${tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")})`;
+
+        fmt.indentPush();
+        const bcreate = fmt.indent(this.generateObjectCreationExp(tdecl, rcvr));
+        fmt.indentPop();
+
+        return `$create: ${consargs} => {\n${bcreate}\n${fmt.indent("}")}`;
+    }
+
+    private emitCreate(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
         const ddecls = this.emitDefaultFieldInitializers(tdecl);
 
         let rechks: string[] = [];
@@ -1987,16 +2168,16 @@ class JSEmitter {
             return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : this.generateObjectCreationExp(tdecl, rcvr);
 
         fmt.indentPush();
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$create: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
+        return `$kreate: (${(tdecl instanceof TypedeclTypeDecl) ? "$value" : tdecl.saturatedBFieldInfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}`;
     }
 
-    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
+    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
         const ddecls = this.emitDefaultFieldInitializers(tdecl);
 
         let rechks: string[] = [];
@@ -2030,7 +2211,7 @@ class JSEmitter {
             return `_$validate(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : `return { ${tdecl.saturatedBFieldInfo.map((fi) => fi.name + ": " + fi.name).join(", ")} };`;
+        const ccons = (tdecl instanceof TypedeclTypeDecl) ? "return $value;" : this.generateObjectCreationExp(tdecl, rcvr);
 
         fmt.indentPush();``
         const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
@@ -2060,12 +2241,16 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
+            if(tdecl.allInvariants.length === 0) {
+                decls.push(this.emitCreateDirect(tdecl, rcvr, fmt));
+            }
+
             if(hasoptFields || tdecl.allInvariants.length !== 0) {
-                decls.push(this.emitCreate(tdecl, fmt));
+                decls.push(this.emitCreate(tdecl, rcvr, fmt));
             }
 
             if(hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
-                decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+                decls.push(this.emitCreateAPIValidate(tdecl, rcvr, fmt));
             }
         }
 
@@ -2174,11 +2359,11 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
 
         if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0) {
-            decls.push(this.emitCreate(tdecl, fmt));
+            decls.push(this.emitCreate(tdecl, rcvr, fmt));
         }
 
         if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
-            decls.push(this.emitCreateAPIValidate(tdecl, fmt));
+            decls.push(this.emitCreateAPIValidate(tdecl, rcvr, fmt));
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
@@ -2410,11 +2595,16 @@ class JSEmitter {
 
 
     private emitTypeSubtypeRelation(tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): string {
-        this.mapper = instantiation.binds;
-        const supers = tdecl.saturatedProvides.map((ss) => `Symbol.for("${this.tproc(ss).tkeystr}")`).join(", ");
-        this.mapper = undefined;
+        if((tdecl instanceof PrimitiveEntityTypeDecl) && tdecl.name === "None") {
+            return "//_$supertypes for none is a special case later"
+        }
+        else {
+            this.mapper = instantiation.binds;
+            const supers = tdecl.saturatedProvides.map((ss) => `Symbol.for("${this.tproc(ss).tkeystr}")`).join(", ");
+            this.mapper = undefined;
 
-        return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
+            return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
+        }
     }
 
     private isMultiEmitDecl(tdecl: AbstractNominalTypeDecl): boolean {
@@ -2631,6 +2821,22 @@ class JSEmitter {
         return {contents: prefix + imports + ddecls + supers + loadop + mainop, tests: tests};
     }
 
+    private emitSpecialNoneSuperType(instantiation: NamespaceInstantiationInfo): string {
+        const optinsts = instantiation.typebinds.get("Option");
+        if(optinsts === undefined) {
+            return `_$supertypes[Symbol.for("None")] = [];`;
+        }
+
+        const optiondecl = this.assembly.getCoreNamespace().typedecls.find((tdcl) => tdcl.name === "Option") as OptionTypeDecl;
+        const supertypes = optinsts.map((inst) => {
+            const oftype = (inst.binds as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), "T"));
+            const optiontype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, optiondecl, [oftype]);
+            return `Symbol.for("${optiontype.tkeystr}")`;
+        });
+
+        return `_$supertypes[Symbol.for("None")] = [${supertypes.join(", ")}];`;
+    }
+
     static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
         const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
 
@@ -2644,6 +2850,10 @@ class JSEmitter {
             if(nsii !== undefined) {
                 emitter.currentns = nsdecl;
                 const code = emitter.emitNamespaceDeclaration(nsdecl, nsii);
+
+                if(nsdecl.name === "Core") {
+                    code.contents = code.contents + emitter.emitSpecialNoneSuperType(nsii);
+                }
 
                 results.push({ns: nsdecl.fullnamespace, contents: code.contents});
                 tests.push(...code.tests);

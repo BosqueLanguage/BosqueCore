@@ -122,7 +122,7 @@ const $SymbolNone = Symbol.for("None");
  * @constant
  * @type {$Boxed}
  **/
-const $BoxedNone = new $Boxed(Symbol.for("None"), null);
+const _$BoxedNone = new $Boxed(Symbol.for("None"), null);
 
 /**
  * @method
@@ -193,6 +193,26 @@ $Boxed.prototype._$isSubtype = function(tsym) {
 $Boxed.prototype._$isNotSubtype = function(tsym) {
     return !_$supertypes.get(this.$tag).has(tsym);
 };
+
+/**
+ * @function
+ * @param {Symbol} tag 
+ * @param {Symbol} tsym 
+ * @returns {boolean}
+ */
+function _$fisSubtype(tag, tsym) {
+    return _$supertypes.get(tag).has(tsym);
+}
+
+/**
+ * @function
+ * @param {Symbol} tag 
+ * @param {Symbol} tsym 
+ * @returns {boolean}
+ */
+function _$fisNotSubtype(tag, tsym) {
+    return !_$supertypes.get(tag).has(tsym);
+}
 
 /**
  * @method
@@ -290,12 +310,48 @@ $Boxed.prototype._$asNotSubtype = function(tsym, ubx, info) {
 
 /**
  * @function
+ * @param {any} val
+ * @param {Symbol} tag
+ * @param {Symbol} tsym
+ * @param {boolean} ubx
+ * @param {string | undefined} info
+ * @returns {any}
+ * @throws {$Unwind}
+ **/
+function _$fasSubtype(val, tag, tsym, ubx, info) {
+    if (_$fisSubtype(tag, tsym)) {
+        return ubx ? val : _$b(tag, val);
+    } else {
+        throw new $Unwind($Unwind_TypeAs, info);
+    }
+};
+
+/**
+ * @function
+ * @param {any} val
+ * @param {Symbol} tag
+ * @param {Symbol} tsym
+ * @param {boolean} ubx
+ * @param {string | undefined} info
+ * @returns {any}
+ * @throws {$Unwind}
+ **/
+function _$fasNotSubtype(val, tag, tsym, ubx, info) {
+    if (_$fisNotSubtype(tag, tsym)) {
+        return ubx ? val : _$b(tag, val);
+    } else {
+        throw new $Unwind($Unwind_TypeAs, info);
+    }
+};
+
+/**
+ * @function
  * @param {Symbol} tsym
  * @returns {any}
  * @returns {$Boxed}
  **/ 
 function _$b(t, v) {
-    return v !== null ? new $Boxed(t, v) : $BoxedNone;
+    return v !== null ? new $Boxed(t, v) : _$BoxedNone;
 }
 
 /**
@@ -586,6 +642,7 @@ function _$accepts(pattern, input, inns) {
 export {
     _$softfails,
     _$supertypes,
+    _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,

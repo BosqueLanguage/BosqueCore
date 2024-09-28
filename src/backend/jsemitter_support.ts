@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
@@ -50,6 +50,15 @@ class EmitNameManager {
 
     static isBoxedTypeRepr(ttype: TypeSignature): boolean {
         return !this.isNakedTypeRepr(ttype);
+    }
+
+    static isMethodCallObjectRepr(ttype: TypeSignature): boolean {
+        if(!(ttype instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        const tdecl = ttype.decl;
+        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl);
     }
 
     static generateTypeKey(ttype: NominalTypeSignature): string {
@@ -178,7 +187,27 @@ class EmitNameManager {
         }
     }
 
+    static generateDeclarationNameForMethod(ttype: NominalTypeSignature, fv: MethodDecl, mapper: TemplateNameMapper | undefined): string {
+        if(fv.terms.length === 0) {
+            return `${fv.name}: `;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `"${termstr}": `;
+        }
+    }
+
     static generateOnCompleteDeclarationNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+        if(fv.terms.length === 0) {
+            return `${fv.name}$OnReturn: `;
+        }
+        else {
+            const termstr = `<${fv.terms.map((t) => (mapper as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), t.name)).tkeystr).join(", ")}>`;
+            return `"${termstr}$OnReturn": `;
+        }
+    }
+
+    static generateOnCompleteDeclarationNameForMethod(ttype: NominalTypeSignature, fv: MethodDecl, mapper: TemplateNameMapper | undefined): string {
         if(fv.terms.length === 0) {
             return `${fv.name}$OnReturn: `;
         }
@@ -233,7 +262,29 @@ class EmitNameManager {
         }
         else {
             const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
-            return `${tas}["${termstr}"]`;
+            return `${tas}.${fv.name}["${termstr}"]`;
+        }
+    }
+
+    static generateAccssorNameForMethodImplicit(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
+        if(mv.terms.length === 0) {
+            return `${mv.name}`;
+        }
+        else {
+            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            return `${mv.name}["${termstr}"]`;
+        }
+    }
+
+    static generateAccssorNameForMethodFull(currentns: NamespaceDeclaration, rcvrtype: NominalTypeSignature, mv: MethodDecl, terms: TypeSignature[]): string {
+        const tas = this.emitTypeAccess(currentns, rcvrtype);
+
+        if(mv.terms.length === 0) {
+            return `${tas}.${mv.name}`;
+        }
+        else {
+            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            return `${tas}.${mv.name}["${termstr}"]`;
         }
     }
 
@@ -249,8 +300,8 @@ class EmitNameManager {
         }
     }
 
-    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
-        return `${this.emitTypeAccess(currentns, ttype)}.$create`;
+    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, directVersion: boolean): string {
+        return this.emitTypeAccess(currentns, ttype) + (directVersion ? ".$create" : ".$kreate");
     }
 
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
@@ -259,6 +310,10 @@ class EmitNameManager {
 
     static generateAccessorForTypeSpecialName(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, name: string): string {
         return `${this.emitTypeAccess(currentns, ttype)}.${name}`;
+    }
+
+    static generateAccessorForTypeConstructorProto(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}`;
     }
 }
 

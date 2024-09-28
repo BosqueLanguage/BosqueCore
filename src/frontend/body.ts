@@ -969,6 +969,10 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    resolvedTrgt: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
         this.specificResolve = specificResolve;
@@ -984,7 +988,12 @@ class PostfixInvoke extends PostfixOperation {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
 
-        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
+
+        return `.${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 

@@ -1660,7 +1660,6 @@ class Assembly {
         return nsdecl.functions.find((c) => c.name === name);
     }
 
-
     tryReduceConstantExpressionToRE(exp: Expression): LiteralRegexExpression | undefined {
         if(exp instanceof LiteralRegexExpression) {
             return exp;

@@ -405,6 +405,32 @@ class TypeCheckerRelations {
     }
 
     private mustDisjointCheckForSplit(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        if(t1 instanceof TemplateTypeSignature) {
+            const t1l = tconstrain.resolveConstraint(t1.name);
+            if(t1l === undefined) {
+                return false; //if not mapped then just safely assume overlap
+            }
+
+            if(t1l.tconstraint === undefined) {
+                return false;
+            }
+            
+            t1 = t1l.tconstraint;
+        }
+
+        if(t2 instanceof TemplateTypeSignature) {
+            const t2l = tconstrain.resolveConstraint(t2.name);
+            if(t2l === undefined) {
+                return false; //if not mapped then just safely assume overlap
+            }
+
+            if(t2l.tconstraint === undefined) {
+                return false;
+            }
+            
+            t2 = t2l.tconstraint;
+        }
+
         if(this.isUniqueSplitCheckType(t1) || this.isUniqueSplitCheckType(t2)) {
             //in case of datatype we need to check both ways
             return !this.isSubtypeOf(t1, t2, tconstrain) && !this.isSubtypeOf(t2, t1, tconstrain);
@@ -791,7 +817,7 @@ class TypeCheckerRelations {
         }
 
         const cci = tn.decl.methods.find((c) => c.name === name);
-        if(cci !== undefined && cci.attributes.every((attr) => attr.name !== "override") === undefined) {
+        if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "override")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
@@ -818,7 +844,7 @@ class TypeCheckerRelations {
         }
 
         const cci = tn.decl.methods.find((c) => c.name === name);
-        if(cci !== undefined && cci.attributes.every((attr) => attr.name !== "virtual" && attr.name !== "abstract")) {
+        if(cci !== undefined && !cci.attributes.some((attr) => attr.name === "abstract")) {
             const tlinfo = new TypeLookupInfo(tn, this.generateTemplateMappingForTypeDecl(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
