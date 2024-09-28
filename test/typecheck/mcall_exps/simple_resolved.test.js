@@ -55,6 +55,18 @@ describe ("Checker -- eADT methods", () => {
     it("should check simple eADT methods with type template", function () {
         checkTestFunction('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }'); 
     });
+
+    it("should check simple ROOT eADT methods", function () {
+        checkTestFunction('datatype Foo of F1 { } | F2 { } & { method foo(): Int { return if(this)<F1> then 1i else 0i; } } function main(): Int { return F1{}.foo(); }'); 
+
+        checkTestFunction('datatype Foo of F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } function main(): Int { return F1{3i}.foo(); }'); 
+    });
+
+    it("should check template ROOT eADT methods", function () {
+        checkTestFunction('datatype Foo<T> of F1 { } | F2 { } & { method foo(): Int { return if(this)<F1<T>> then 1i else 0i; } } function main(): Int { return F1<Bool>{}.foo(); }'); 
+
+        checkTestFunction('datatype Foo<T> of F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } function main(): Int { return F1<Int>{3i}.foo(); }'); 
+    });
 });
 
 describe ("Checker -- type alias methods", () => {
