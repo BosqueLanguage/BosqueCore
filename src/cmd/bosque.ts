@@ -63,12 +63,12 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
         //TODO -- need to do filename in error and sort nicely
         perrors.sort((a, b) => a.sinfo.line - b.sinfo.line);
         for(let i = 0; i < perrors.length; ++i) {
-            Status.error(`Parser Error: ${perrors[i].message}\n`);
+            Status.error(`Parser Error @ ${perrors[i].sinfo.line}: ${perrors[i].message}\n`);
         }
 
         terrors.sort((a, b) => (a.file !== b.file) ? a.file.localeCompare(b.file) : a.line - b.line);
         for(let i = 0; i < terrors.length; ++i) {
-            Status.error(`Type Error: ${terrors[i].msg}\n`);
+            Status.error(`Type Error @ ${terrors[i].line}: ${terrors[i].msg}\n`);
         }
 
         return undefined;
