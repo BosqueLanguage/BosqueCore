@@ -669,18 +669,7 @@ class JSEmitter {
         const rtrgt = (this.tproc(exp.resolvedTrgt as TypeSignature) as NominalTypeSignature);
         const mdecl = rtrgt.decl.methods.find((m) => m.name === exp.name) as MethodDecl;
 
-        let vval: string;
-        if(mdecl.attributes.some((attr) => attr.name === "virtual" || attr.name === "override")) {
-            if(EmitNameManager.isNakedTypeRepr(rcvrtype)) {
-                vval = this.emitBoxOperation(val, rcvrtype);
-            }
-            else {
-                vval = val;
-            }
-        }
-        else {
-            vval = val;
-        }
+        const vval = this.emitBUAsNeeded(val, rcvrtype, rtrgt);
 
         const argl: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
@@ -718,7 +707,7 @@ class JSEmitter {
             }
         }
 
-        if(EmitNameManager.isMethodCallObjectRepr(rcvrtype)) {
+        if(EmitNameManager.isMethodCallObjectRepr(rtrgt)) {
             return `${vval}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
         }
         else {
@@ -1701,7 +1690,11 @@ class JSEmitter {
             }
             else {
                 fmt.indentPush();
-                const ideclstr = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                fmt.indentPush()
+                const ideclops = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                fmt.indentPop()
+                const ideclstr = `${fmt.indent("{")}\n${ideclops}\n${fmt.indent("}")}`;
+
                 const precondstr = preconds.map((ii) => fmt.indent(ii)).join("\n");
                 const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join("\n");
                 fmt.indentPop();
@@ -1755,7 +1748,7 @@ class JSEmitter {
         for(let i = 0; i < params.length; ++i) {
             const p = params[i];
             if(p.isRefParam) {
-                refsaves.push(`const $${p.name} = ${p.name};`);
+                refsaves.push(`$${p.name} = ${p.name}`);
             }
         }
 
@@ -1848,14 +1841,14 @@ class JSEmitter {
         inits.push(...this.emitParameterInitializers(idecl.params));
         preconds.push(...this.emitRequires(idecl.preconditions));
 
-        if(inits.length !== 0) {
-            //if we did inits then we already generated the $y = ... binds
+        const ensurescc = this.emitEnsures(idecl.postconditions);
+        if(ensurescc.length !== 0) {
             refsaves.push(...this.emitRefSaves(idecl.params));
         }
 
         tests.push(...this.emitExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples));
 
-        return this.emitEnsures(idecl.postconditions);
+        return ensurescc;
     }
 
     private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: NominalTypeSignature | undefined,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
@@ -1947,14 +1940,14 @@ class JSEmitter {
             inits.push(`const $this = this;`);
         }
 
-        if(inits.length !== 0) {
-            //if we did inits then we already generated the $y = ... binds
+        const ensurescc = this.emitEnsures(idecl.postconditions);
+        if(ensurescc.length !== 0) {
             refsaves.push(...this.emitRefSaves(idecl.params));
         }
 
         tests.push(...this.emitExamples(idecl.sinfo, [rcvrtype, ...idecl.params.map((p) => p.type)], idecl.resultType, idecl.examples));
 
-        return this.emitEnsures(idecl.postconditions);
+        return ensurescc;
     }
 
     private emitMethodDecl(rcvrtype: NominalTypeSignature, mdecl: MethodDecl,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {

@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
@@ -58,7 +58,7 @@ class EmitNameManager {
         }
 
         const tdecl = ttype.decl;
-        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof ConceptTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl) || (tdecl instanceof AbstractConceptTypeDecl);
+        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl);
     }
 
     static generateTypeKey(ttype: NominalTypeSignature): string {
