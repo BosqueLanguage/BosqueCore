@@ -15,7 +15,7 @@ describe ("Exec -- entity methods", () => {
     });
 
     it("should exec simple entity methods with template", function () {
-        runMainCode('entity Foo { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} public function main(): Bool { let x = Foo{3i}; return x.foo<Nat>(); }', [true, "Bool"]); 
+        runMainCode('entity Foo { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} public function main(): Bool { let x = Foo{3i}; return x.foo<Nat>(); }', [false, "Bool"]); 
         runMainCode('entity Foo { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} public function main(): Bool { let x = Foo{3i}; return x.foo<Int>(); }', [true, "Bool"]); 
     });
 
@@ -24,7 +24,7 @@ describe ("Exec -- entity methods", () => {
     });
 
     it("should exec simple entity methods with both template", function () {
-        runMainCode('entity Foo<T> { field f: T; method foo<U>(): Bool { return this.f?<U>; }} public function main(): Bool { let x = Foo<Int>{3i}; return x.foo<Nat>(); }', [true, "Bool"]); 
+        runMainCode('entity Foo<T> { field f: T; method foo<U>(): Bool { return this.f?<U>; }} public function main(): Bool { let x = Foo<Int>{3i}; return x.foo<Nat>(); }', [false, "Bool"]); 
         runMainCode('entity Foo<T> { field f: T; method foo<U>(): Bool { return this.f?<U>; }} public function main(): Bool { let x = Foo<Int>{3i}; return x.foo<Int>(); }', [true, "Bool"]); 
     });
 
