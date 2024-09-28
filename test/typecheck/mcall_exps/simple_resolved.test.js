@@ -40,3 +40,31 @@ describe ("Checker -- entity methods", () => {
         checkTestFunctionError('entity Foo<T> { field f: T; method foo<U>(t: T, u: U): U { return if (this.f)@<U> then $_ else t; }} function main(): Bool { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "Argument t expected type Int but got Nat"); 
     });
 });
+
+describe ("Checker -- eADT methods", () => {
+    it("should check simple eADT methods", function () {
+        checkTestFunction('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; function main(): Int { return Foo1{3i}.foo(); }'); 
+        checkTestFunction('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; function main(): Int { return Foo1{3i}.foo(1i); }'); 
+    });
+
+    it("should check simple eADT methods with template", function () {
+        checkTestFunction('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }'); 
+        checkTestFunction('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }'); 
+    });
+
+    it("should check simple eADT methods with type template", function () {
+        checkTestFunction('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }'); 
+    });
+});
+
+describe ("Checker -- type alias methods", () => {
+    it("should check simple type alias methods", function () {
+        checkTestFunction('type Foo = Int & { method foo(): Int { return this.value; }} function main(): Int { return 3i<Foo>.foo(); }'); 
+        checkTestFunction('type Foo = Int & { method foo(x: Int): Int { return this.value + x; }} function main(): Int { return 3i<Foo>.foo(1i); }'); 
+    });
+
+    it("should check simple type alias methods with template", function () {
+        checkTestFunction('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} function main(): Bool { let x = 3i<Foo>; return x.foo<Nat>(); }'); 
+        checkTestFunction('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} function main(): Bool { let x = 3i<Foo>; return x.foo<Int>(); }'); 
+    });
+});

@@ -33,3 +33,31 @@ describe ("Exec -- entity methods", () => {
         runMainCode('entity Foo<T> { field f: T; method foo<U>(t: T): T { return if (t)<U> then t else this.f; }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', [3n, "Int"]); 
     });
 });
+
+describe ("Exec -- eADT methods", () => {
+    it("should exec simple eADT methods", function () {
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', [3n, "Int"]); 
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', [4n, "Int"]); 
+    });
+
+    it("should exec simple eADT methods with template", function () {
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }', [false, "Bool"]); 
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }', [true, "Bool"]); 
+    });
+
+    it("should exec simple eADT methods with type template", function () {
+        runMainCode('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; public function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }', [2n, "Int"]); 
+    });
+});
+
+describe ("Exec -- type alias methods", () => {
+    it("should exec simple type alias methods", function () {
+        runMainCode('type Foo = Int & { method foo(): Int { return this.value; }} public function main(): Int { return 3i<Foo>.foo(); }', [3n, "Int"]); 
+        runMainCode('type Foo = Int & { method foo(x: Int): Int { return this.value + x; }} public function main(): Int { return 3i<Foo>.foo(1i); }', [4n, "Int"]); 
+    });
+
+    it("should exec simple type alias methods with template", function () {
+        runMainCode('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Nat>(); }', [false, "Bool"]); 
+        runMainCode('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Int>(); }', [true, "Bool"]); 
+    });
+});

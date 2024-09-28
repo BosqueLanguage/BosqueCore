@@ -722,7 +722,7 @@ class JSEmitter {
             return `${vval}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
         }
         else {
-            return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}, ${argl.join(", ")})`;
+            return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${vval}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
         }
     }
 

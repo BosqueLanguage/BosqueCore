@@ -36,3 +36,30 @@ describe ("Parser -- entity methods", () => {
     });
 });
 
+describe ("Parser -- eADT methods", () => {
+    it("should parse simple eADT methods", function () {
+        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(); }'); 
+        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(1i); }'); 
+    });
+
+    it("should parse simple eADT methods with template", function () {
+        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }'); 
+        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }'); 
+    });
+
+    it("should parse simple eADT methods with type template", function () {
+        parseTestFunctionInFile('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; [FUNC]', 'function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }'); 
+    });
+});
+
+describe ("parser -- type alias methods", () => {
+    it("should parse simple type alias methods", function () {
+        parseTestFunctionInFile('type Foo = Int & { method foo(): Int { return this.value; }} [FUNC]', 'function main(): Int { return 3i<Foo>.foo(); }'); 
+        parseTestFunctionInFile('type Foo = Int & { method foo(x: Int): Int { return this.value + x; }} [FUNC]', 'function main(): Int { return 3i<Foo>.foo(1i); }'); 
+    });
+
+    it("should parse simple type alias methods with template", function () {
+        parseTestFunctionInFile('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} [FUNC]', 'function main(): Bool { let x = 3i<Foo>; return x.foo<Nat>(); }'); 
+        parseTestFunctionInFile('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} [FUNC]', 'function main(): Bool { let x = 3i<Foo>; return x.foo<Int>(); }'); 
+    });
+});
