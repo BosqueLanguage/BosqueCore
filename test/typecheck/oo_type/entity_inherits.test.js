@@ -18,15 +18,15 @@ describe ("Checker -- entity decl inherits", () => {
         checkTestFunctionInFileError('concept Foo { field f: Int; } entity Bar provides Foo { } function main(): Nat { return Bar{3i}.f; }', "Expected a return value of type Nat but got Int"); 
 
         checkTestFunctionInFileError('concept Foo { field f: Int; } concept Baz { field g: Bool; } entity Bar provides Foo, Baz { } function main(): Int { return Bar{true, 3i}.f; }', "Argument f expected type Int but got Bool");
-        checkTestFunctionInFileError('concept Foo { field f: Int; } concept Baz { field g: Bool; } entity Bar provides Foo, Baz { } function main(): Int { return Bar{3i, true}.h; }', "err4"); 
+        checkTestFunctionInFileError('concept Foo { field f: Int; } concept Baz { field g: Bool; } entity Bar provides Foo, Baz { } function main(): Int { return Bar{3i, true}.h; }', "Could not find field h in type Bar"); 
 
-        checkTestFunctionInFileError('concept Foo<T> { field f: T; } entity Bar<T> provides Foo<T> { } function main(): Int { return Bar<Int>{3i}.f; }', "errabc"); 
-        checkTestFunctionInFileError('concept Foo<U> { field f: U; } entity Bar<T> provides Foo<T> { } function main(): Int { return Bar<Int>{3i}.f; }', "errdec"); 
+        checkTestFunctionInFileError('concept Foo<T> { field f: T; } entity Bar<T> provides Foo<T> { } function main(): Nat { return Bar<Int>{3i}.f; }', "Expected a return value of type Nat but got Int"); 
+        checkTestFunctionInFileError('concept Foo<U> { field f: U; } entity Bar<T> provides Foo<T> { } function main(): Int { return Bar<Int>{3n}.f; }', "Argument f expected type Int but got Nat"); 
     });
 
     it("should check fail template entity inherits fields", function () {
         checkTestFunctionInFileError('concept Foo<T> { field f: T; } entity Bar<T> provides Foo<T> { } function main(): Int { return Bar<Int>{3n}.f; }', "Argument f expected type Int but got Nat"); 
-        checkTestFunctionInFileError('concept Foo<U> { field f: U; } entity Bar<T> provides Foo<T> { } function main(): Nat { return Bar<Int>{3i}.f; }', "err9"); 
+        checkTestFunctionInFileError('concept Foo<U> { field f: U; } entity Bar<T> provides Foo<T> { } function main(): Nat { return Bar<Int>{3i}.f; }', "Expected a return value of type Nat but got Int"); 
     });
 
     it("should check simple entity inherits fields and invariants", function () {
