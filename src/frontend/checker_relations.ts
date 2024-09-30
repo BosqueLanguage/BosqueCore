@@ -63,6 +63,7 @@ class TypeCheckerRelations {
             return [];
         }
 
+        const tnmapping = this.generateTemplateMappingForTypeDecl(tn);
         const pdecls: TypeLookupInfo[] = [];
         for(let i = 0; i < tn.decl.provides.length; ++i) {
             const ptype = tn.decl.provides[i];
@@ -74,7 +75,9 @@ class TypeCheckerRelations {
                 continue;
             }
 
-            pdecls.push(new TypeLookupInfo(ptype, this.generateTemplateMappingForTypeDecl(tn)));
+            const ptmapping = this.generateTemplateMappingForTypeDecl(ptype);
+            const fullmapping = TemplateNameMapper.merge(tnmapping, ptmapping);
+            pdecls.push(new TypeLookupInfo(ptype, fullmapping));
         }
 
         return pdecls;
@@ -910,12 +913,12 @@ class TypeCheckerRelations {
         for(let i = 0; i < dprovides.length; ++i) {
             const pinfo = dprovides[i];
             
-            TypeCheckerRelations.addResolvedTLookup(pinfo, pdecls);
-
             const tprovides = this.resolveTransitiveProvidesDecls(pinfo.tsig.remapTemplateBindings(pinfo.mapping), tconstrain);
             for(let j = 0; j < tprovides.length; ++j) {
                 TypeCheckerRelations.addResolvedTLookup(tprovides[j], pdecls);
             }
+
+            TypeCheckerRelations.addResolvedTLookup(pinfo, pdecls);
         }
 
         return pdecls;

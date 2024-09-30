@@ -83,7 +83,6 @@ const TokenStrings = {
     EndOfStream: "[EOS]"
 };
 
-
 const NAMESPACE_DECL_FIRSTS = [
     TokenStrings.Attribute,
     TokenStrings.DocComment,
@@ -91,7 +90,7 @@ const NAMESPACE_DECL_FIRSTS = [
     KW_function, KW_predicate, 
     KW_namespace, KW_api,
     KW_const,
-    KW_enum, KW_entity, KW_concept, KW_type, KW_task,
+    KW_enum, KW_entity, KW_concept, KW_type, KW_datatype, KW_task,
     KW_event, KW_status,
     KW_errtest, KW_chktest
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
@@ -4655,13 +4654,25 @@ class Parser {
         }
     }
 
-    private parseProvides(sinfo: SourceInfo, endtoken: string[]): TypeSignature[] {
+    private parseProvides(): TypeSignature[] {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
+        let first = true;
         let provides: TypeSignature[] = [];
         if (this.testAndConsumeTokenIf(KW_provides)) {
-            while (!endtoken.some((tok) => this.testToken(tok))) {
-                this.consumeTokenIf(SYM_coma);
+            while(this.testToken(TokenStrings.IdentifierName) || this.testToken(SYM_coma)) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    if(this.testToken(SYM_coma)) {
+                        this.consumeToken();
+                    }
+                    else {
+                        this.recordErrorGeneral(this.peekToken(), "Expected a comma between provided interfaces");
+                    }
+                }
+
                 provides.push(this.parseProvidesTypeSignature());
             }
         }
@@ -4974,7 +4985,7 @@ class Parser {
         if(ename === "Ok" || ename === "Fail") {
             const tdecl = (specialConcept as ResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
 
-            const provides = this.parseProvides(this.peekToken().getSourceInfo(), [SYM_lbrace]);
+            const provides = this.parseProvides();
             if(provides.length !== 0) {
                 tdecl.provides.push(...provides);
             }
@@ -4984,7 +4995,7 @@ class Parser {
         else {
             const tdecl = (specialConcept as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === ename) as InternalEntityTypeDecl;
 
-            const provides = this.parseProvides(this.peekToken().getSourceInfo(), [SYM_lbrace]);
+            const provides = this.parseProvides();
             if(provides.length !== 0) {
                 tdecl.provides.push(...provides);
             }
@@ -5049,7 +5060,7 @@ class Parser {
             tdecl.terms.push(...terms);
         }
 
-        const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+        const provides = this.parseProvides();
         if(provides.length !== 0) {
             tdecl.provides.push(...provides);
         }
@@ -5201,7 +5212,7 @@ class Parser {
             tdecl.terms.push(...terms);
         }
 
-        const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+        const provides = this.parseProvides();
         if(provides.length !== 0) {
             tdecl.provides.push(...provides);
         }
@@ -5320,7 +5331,7 @@ class Parser {
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
                 this.ensureAndConsumeTokenIf(SYM_amp, "type declaration");
 
-               const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+               const provides = this.parseProvides();
                 if(provides.length !== 0) {
                     tdecl.provides.push(...provides);
                 }
@@ -5415,7 +5426,7 @@ class Parser {
                 tdecl.terms.push(...terms);
             }
 
-            const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+            const provides = this.parseProvides();
             if(provides.length !== 0) {
                 tdecl.provides.push(...provides);
             }
@@ -5444,7 +5455,15 @@ class Parser {
             }
         }
 
-        this.ensureAndConsumeTokenIf(KW_of, "datatype");
+        if(this.testToken(KW_of) || this.testToken(SYM_amp) || this.testToken(SYM_semicolon)) {
+            this.ensureAndConsumeTokenIf(KW_of, "datatype");
+        }
+        else {
+            //missing something so skip to known position
+            this.recordErrorGeneral(sinfo, "Missing clause in datatype declaration");
+            this.scanOverCodeTo(SYM_amp, SYM_semicolon);
+        }
+        
 
         let firstMember = true;
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
@@ -5502,7 +5521,7 @@ class Parser {
                 tdecl.terms.push(...terms);
             }
 
-            const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+            const provides = this.parseProvides();
             if(provides.length !== 0) {
                 this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
             }
