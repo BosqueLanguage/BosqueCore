@@ -240,6 +240,9 @@ enum ExpressionTag {
     BinKeyEqExpression = "BinKeyEqExpression",
     BinKeyNeqExpression = "BinKeyNeqExpression",
 
+    KeyCompareEqExpression = "KeyCompareEqExpression",
+    KeyCompareLessExpression = "KeyCompareLessExpression",
+
     NumericEqExpression = "NumericEqExpression",
     NumericNeqExpression = "NumericNeqExpression",
     NumericLessExpression = "NumericLessExpression",
@@ -1147,6 +1150,40 @@ class BinKeyNeqExpression extends BinaryKeyExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.bkopEmit(toplevel, fmt, "!==");
+    }
+}
+
+class KeyCompareEqExpression extends Expression {
+    readonly ktype: TypeSignature;
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.KeyCompareEqExpression, sinfo);
+        this.ktype = ktype;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `KeyComparator::equal<${this.ktype.emit()}>(${this.lhs.emit(false, fmt)}, ${this.rhs.emit(false, fmt)})`;
+    }
+}
+
+class KeyCompareLessExpression extends Expression {
+    readonly ktype: TypeSignature;
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.KeyCompareLessExpression, sinfo);
+        this.ktype = ktype;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `KeyComparator::less<${this.ktype.emit()}>(${this.lhs.emit(false, fmt)}, ${this.rhs.emit(false, fmt)})`;
     }
 }
 
@@ -2289,7 +2326,7 @@ export {
     PostfixLiteralKeyAccess,
     UnaryExpression, PrefixNotOpExpression, PrefixNegateOrPlusOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
-    BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,
+    BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression, KeyCompareEqExpression, KeyCompareLessExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
     MapEntryConstructorExpression,
