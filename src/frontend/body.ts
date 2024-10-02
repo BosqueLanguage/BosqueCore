@@ -1822,6 +1822,20 @@ class ReturnSingleStatement extends Statement {
     }
 }
 
+class ReturnMultiStatement extends Statement {
+    readonly value: Expression[]; //array is implicitly converted to EList
+    rtypes: TypeSignature[] = [];
+
+    constructor(sinfo: SourceInfo, value: Expression[]) {
+        super(StatementTag.ReturnMultiStatement, sinfo);
+        this.value = value;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
+    }
+}
+
 class IfStatement extends Statement {
     readonly cond: IfTest;
     readonly binder: BinderInfo | undefined;
@@ -2339,7 +2353,7 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
-    ReturnVoidStatement, ReturnSingleStatement,
+    ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,

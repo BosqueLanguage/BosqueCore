@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -1768,11 +1768,31 @@ class TypeChecker {
     }
 
     private checkKeyCompareEqExpression(env: TypeEnvironment, exp: KeyCompareEqExpression): TypeSignature {
-        xxxx;
+        const ktypeok = this.checkTypeSignature(exp.ktype);
+
+        const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
+        const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
+
+        if(ktypeok) {
+            this.checkError(exp.sinfo, this.relations.isKeyType(tlhs, this.constraints) && this.relations.isSubtypeOf(tlhs, exp.ktype, this.constraints), `Type ${tlhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, this.relations.isKeyType(trhs, this.constraints) && this.relations.isSubtypeOf(trhs, exp.ktype, this.constraints), `Type ${trhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+        }
+
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkKeyCompareLessExpression(env: TypeEnvironment, exp: KeyCompareLessExpression): TypeSignature {
-        xxxx;
+        const ktypeok = this.checkTypeSignature(exp.ktype);
+
+        const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
+        const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
+
+        if(ktypeok) {
+            this.checkError(exp.sinfo, this.relations.isKeyType(tlhs, this.constraints) && this.relations.isSubtypeOf(tlhs, exp.ktype, this.constraints), `Type ${tlhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, this.relations.isKeyType(trhs, this.constraints) && this.relations.isSubtypeOf(trhs, exp.ktype, this.constraints), `Type ${trhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+        }
+
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {
@@ -2720,6 +2740,27 @@ class TypeChecker {
         return env.setReturnFlow();
     }
 
+    private checkReturnMultiStatement(env: TypeEnvironment, stmt: ReturnMultiStatement): TypeEnvironment {
+        if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit()}`)) {
+            return env.setReturnFlow();
+        }
+
+        const rtypes = TypeInferContext.asEListOptions(env.inferReturn) as (TypeSignature | undefined)[];
+        this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
+
+        for(let i = 0; i < stmt.value.length; ++i) {
+            const rtype = i < rtypes.length ? rtypes[i] : undefined;
+            const etype = this.checkExpression(env, stmt.value[i], rtype);
+
+            const rtname = rtype !== undefined ? rtype.emit() : "skip";
+            this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit()}`);
+
+            stmt.rtypes.push(rtype || etype);
+        }
+
+        return env.setReturnFlow();
+    }
+
     private checkFlowRebinder(sinfo: SourceInfo, binfo: BinderInfo, retypevname: string, env: TypeEnvironment) {
         if(!binfo.refineonfollow) {
             return;
@@ -3281,6 +3322,9 @@ class TypeChecker {
             }
             case StatementTag.ReturnSingleStatement: {
                 return this.checkReturnSingleStatement(env, stmt as ReturnSingleStatement);
+            }
+            case StatementTag.ReturnMultiStatement: {
+                return this.checkReturnMultiStatement(env, stmt as ReturnMultiStatement);
             }
             case StatementTag.IfStatement: {
                 return this.checkIfStatement(env, stmt as IfStatement);
