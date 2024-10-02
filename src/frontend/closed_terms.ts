@@ -360,12 +360,14 @@ class InstantiationPropagator {
     }
 
     private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {
-        assert(false, "Not Implemented -- instantiateParseAsTypeExpression");
+        this.instantiateTypeSignature(exp.ttype, this.currentMapping);
+        this.instantiateExpression(exp.exp);
     }
 
     private instantiateSafeConvertExpression(exp: SafeConvertExpression) {
-        xxxx;
-        assert(false, "Not Implemented -- instantiateSafeConvertExpression");
+        this.instantiateTypeSignature(exp.srctype, this.currentMapping);
+        this.instantiateTypeSignature(exp.trgttype, this.currentMapping);
+        this.instantiateExpression(exp.exp);
     }
 
     private instantiatePostfixIsTest(exp: PostfixIsTest) {

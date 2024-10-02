@@ -252,7 +252,7 @@ class JSEmitter {
                 return vtype.tkeystr === oftype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
             }
             else {
-                return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, ${false}, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
+                return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, false, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
             }
         }
         else {
@@ -267,7 +267,7 @@ class JSEmitter {
             }
         }
     }
-    
+
     private processITestAsConvert(sinfo: SourceInfo, val: string, vtype: TypeSignature, tt: ITest): string {
         const vvtype = this.tproc(vtype);
         
@@ -614,13 +614,13 @@ class JSEmitter {
         assert(false, "Not implemented -- LogicActionOr");
     }
     
-    private emitParseAsTypeExpression(exp: ParseAsTypeExpression): string {
-        assert(false, "Not implemented -- ParseAsType");
+    private emitParseAsTypeExpression(exp: ParseAsTypeExpression, toplevel: boolean): string {
+        return this.emitExpression(exp.exp, toplevel);
     }
 
-    private emitSafeConvertExpression(exp: SafeConvertExpression): string {
-        xxxx;
-        assert(false, "Not implemented -- SafeConvert");
+    private emitSafeConvertExpression(exp: SafeConvertExpression, toplevel: boolean): string {
+        const val = this.emitExpression(exp.exp, toplevel);
+        return this.emitBUAsNeeded(val, exp.exp.getType(), exp.trgttype);
     }
 
     private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
@@ -1141,10 +1141,10 @@ class JSEmitter {
                 return this.emitLogicActionOrExpression(exp as LogicActionOrExpression);
             }
             case ExpressionTag.ParseAsTypeExpression: {
-                return this.emitParseAsTypeExpression(exp as ParseAsTypeExpression);
+                return this.emitParseAsTypeExpression(exp as ParseAsTypeExpression, toplevel);
             }
             case ExpressionTag.SafeConvertExpression: {
-                return this.emitSafeConvertExpression(exp as SafeConvertExpression);
+                return this.emitSafeConvertExpression(exp as SafeConvertExpression, toplevel);
             }
             case ExpressionTag.PostfixOpExpression: {
                 return this.emitPostfixOp(exp as PostfixOp, toplevel);
