@@ -76,10 +76,6 @@ class TypeChecker {
         return this.relations.wellknowntypes.get(name) as TypeSignature;
     }
 
-    private isBooleanType(t: TypeSignature): boolean {
-        return (t.tkeystr === "Bool");
-    }
-
     private isVoidType(t: TypeSignature): boolean {
         return (t.tkeystr === "Void");
     }
@@ -1398,12 +1394,31 @@ class TypeChecker {
     }
 
     private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkParseAsTypeExpression");
+        const oktype = this.checkTypeSignature(exp.ttype);
+        const etype = this.checkExpression(env, exp.exp, oktype ? new SimpleTypeInferContext(exp.ttype) : undefined);
+        if(!oktype) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, exp.ttype, this.constraints), `ParseAsType expression is not a subtype of ${exp.ttype.emit()}`);
+        return exp.setType(exp.ttype);
     }
 
     private checkSafeConvertExpression(env: TypeEnvironment, exp: SafeConvertExpression): TypeSignature {
-        xxxx;
-        assert(false, "Not Implemented -- checkSafeConvertExpression");
+        const oksrctype = this.checkTypeSignature(exp.srctype);
+        const oktrgttype = this.checkTypeSignature(exp.trgttype);
+
+        const etype = this.checkExpression(env, exp.exp, oksrctype ? new SimpleTypeInferContext(exp.srctype) : undefined);
+        if(oksrctype) {
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, exp.srctype, this.constraints), `SafeConvert expression is not a subtype of ${exp.srctype.emit()}`);
+        }
+
+        if(oktrgttype) {
+            return exp.setType(exp.trgttype);
+        }
+        else {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
     }
 
     ////////
@@ -1574,9 +1589,8 @@ class TypeChecker {
             return exp.setType(etype);
         }
 
-        xxxx;
-        this.checkError(exp.sinfo, !this.isBooleanType(etype), "Prefix Not operator requires a Bool type");
-        return exp.setType(this.getWellKnownType("Bool"));
+        this.checkError(exp.sinfo, !this.relations.isBooleanType(etype), "Prefix Not operator requires a Bool based type");
+        return exp.setType(etype);
     }
 
     private checkPrefixNegateOrPlusOpExpression(env: TypeEnvironment, exp: PrefixNegateOrPlusOpExpression): TypeSignature {
@@ -1873,48 +1887,71 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression) {
+    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression, strict: boolean): TypeSignature | undefined {
         const tlhs = this.checkExpression(env, lhs, undefined);
         if(tlhs instanceof ErrorTypeSignature) {
-            return;
+            return undefined;
         }
 
         const trhs = this.checkExpression(env, rhs, undefined);
         if(trhs instanceof ErrorTypeSignature) {
-            return;
+            return undefined;
         }
 
-        if(this.checkError(lhs.sinfo, !this.isBooleanType(tlhs), "Binary operator requires a Bool type")) {
-            return;
+        if(this.checkError(lhs.sinfo, !this.relations.isBooleanType(tlhs), "Binary operator requires a Bool type")) {
+            return undefined;
         }
-        if(this.checkError(rhs.sinfo, !this.isBooleanType(trhs), "Binary operator requires a Bool type")) {
-            return;
+        if(this.checkError(rhs.sinfo, !this.relations.isBooleanType(trhs), "Binary operator requires a Bool type")) {
+            return undefined;
         }
 
-        return;
+        if(strict) {
+            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
+                return this.getWellKnownType("Bool");
+            }
+            else {
+                this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
+                return undefined;
+            }
+        }
+        else {
+            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
+                return this.getWellKnownType("Bool");
+            }
+            else if(tlhs.tkeystr === "Bool") {
+                return trhs;
+            }
+            else if(trhs.tkeystr === "Bool") {
+                return tlhs;
+            }
+            else {
+                if(!this.relations.areSameTypes(tlhs, trhs)) {
+                    this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
+                    return undefined;
+                }
+
+                return tlhs;
+            }
+        }
     }
 
     private checkBinLogicAndExpression(env: TypeEnvironment, exp: BinLogicAndExpression): TypeSignature {
-        xxxx;
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
-        return exp.setType(this.getWellKnownType("Bool"));
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: BinLogicOrExpression): TypeSignature {
-        xxxx;
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
-        return exp.setType(this.getWellKnownType("Bool"));
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicImpliesExpression(env: TypeEnvironment, exp: BinLogicImpliesExpression): TypeSignature {
-        xxxx;
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicIFFExpression(env: TypeEnvironment, exp: BinLogicIFFExpression): TypeSignature {
-        xxxx;
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1933,7 +1970,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(exp.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(exp.sinfo, exp.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkExpression(env, exp.trueValue, typeinfer);
@@ -2798,7 +2835,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -2837,7 +2874,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -2892,7 +2929,7 @@ class TypeChecker {
                 etype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.condflow[i].cond.sinfo, !this.isBooleanType(etype), `Expected a boolean expression but got ${etype.emit()}`);
+            this.checkError(stmt.condflow[i].cond.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean expression but got ${etype.emit()}`);
             
             const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
             branchflows.push(resenv);
@@ -3021,7 +3058,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.emit()}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.emit()}`);
         return env;
     }
 
@@ -3031,7 +3068,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.emit()}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.emit()}`);
         return env;
     }
 
@@ -3428,7 +3465,7 @@ class TypeChecker {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
             const etype = this.checkExpression(env, precond.exp, undefined);
-            this.checkError(precond.sinfo, !this.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3450,7 +3487,7 @@ class TypeChecker {
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
             const etype = this.checkExpression(eev, postcond.exp, undefined);
-            this.checkError(postcond.sinfo, !this.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3460,7 +3497,7 @@ class TypeChecker {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
             const etype = this.checkExpression(env, inv.exp.exp, undefined);
-            this.checkError(invariants[i].sinfo, !this.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3470,7 +3507,7 @@ class TypeChecker {
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
             const etype = this.checkExpression(env, validate.exp.exp, undefined);
-            this.checkError(validates[i].sinfo, !this.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
