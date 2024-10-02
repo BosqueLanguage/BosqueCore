@@ -226,6 +226,7 @@ enum ExpressionTag {
     LogicActionOrExpression = "LogicActionOrExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
+    SafeConvertExpression = "SafeConvertExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -802,6 +803,23 @@ class ParseAsTypeExpression extends Expression {
     }
 }
 
+class SafeConvertExpression extends Expression {
+    readonly exp: Expression;
+    readonly srctype: TypeSignature;
+    readonly trgttype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
+        super(ExpressionTag.SafeConvertExpression, sinfo);
+        this.exp = exp;
+        this.srctype = srctype;
+        this.trgttype = trgttype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
+    }
+}
+
 enum PostfixOpTag {
     PostfixError = "PostfixError",
 
@@ -1022,7 +1040,7 @@ abstract class UnaryExpression extends Expression {
     }
 
     uopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
-        let ee = `${this.exp.emit(false, fmt)}`;
+        let ee = `${this.exp.emit(toplevel, fmt)}`;
         if(op === "-" || op === "+") {
             ee = `(${ee})`;
         }
@@ -2331,7 +2349,7 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
-    ParseAsTypeExpression,
+    ParseAsTypeExpression, SafeConvertExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
