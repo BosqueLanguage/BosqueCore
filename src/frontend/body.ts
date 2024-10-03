@@ -1040,7 +1040,7 @@ abstract class UnaryExpression extends Expression {
     }
 
     uopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
-        let ee = `${this.exp.emit(toplevel, fmt)}`;
+        let ee = `${this.exp.emit(false, fmt)}`;
         if(op === "-" || op === "+") {
             ee = `(${ee})`;
         }

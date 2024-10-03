@@ -6,14 +6,14 @@ import { describe, it } from "node:test";
 describe ("Checker -- Simple Boolean not", () => {
     it("should check simple not", function () {
         checkTestExp("!false", "Bool");
-        checkTestExp("!!true", "Bool");
+        checkTestExp("!(!true)", "Bool");
     });
 
     it("should fail not boolean type", function () {
-        checkTestExpError("!none", "Bool", "Prefix Not operator requires a Bool type");
+        checkTestExpError("!none", "Bool", "Prefix Not operator requires a Bool based type");
     });
 
     it("should fail paren not boolean type", function () {
-        checkTestExpError("!(5i)", "Bool", "Prefix Not operator requires a Bool type");
+        checkTestExpError("!(5i)", "Bool", "Prefix Not operator requires a Bool based type");
     });
 });
