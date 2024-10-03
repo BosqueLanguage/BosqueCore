@@ -1555,9 +1555,13 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), coredecl, ["Core"]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        else if(coredecl.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
         else if(coredecl.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, ["Core"]);
-            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.topnamespace === nsroot) {
             this.consumeToken();
@@ -1587,6 +1591,10 @@ class Parser {
                 
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
             const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
@@ -2793,10 +2801,12 @@ class Parser {
         if(ns.name === "KeyComparator") {
             if(targs.length !== 1) {
                 this.recordErrorGeneral(sinfo, "KeyComparator expects exactly one (keytype) template argument");
+                return undefined;
             }
 
-            if(args.args.length !== 2 || args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
+            if(args.args.length !== 2 || !args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
                 this.recordErrorGeneral(sinfo, "KeyComparator expects exactly two positional arguments");
+                return undefined;
             }
 
             if(name === "equal") {

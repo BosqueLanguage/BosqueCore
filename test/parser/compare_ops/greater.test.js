@@ -15,7 +15,6 @@ describe ("Parser -- basic >", () => {
     });
 });
 
-
 describe ("Parser -- basic >=", () => {
     it("should compare simple nats", function () {
         parseTestExp("0n >= 1n", undefined, "Bool");
