@@ -13,18 +13,18 @@ describe ("Checker -- basic KeyComparator equals/less", () => {
     });
 
     it("should check fail KeyComparator operations", function () {
-        checkTestExpError("KeyComparator::equal<Int>(0n, 1n)", "Bool", "err1");
-        checkTestExpError("KeyComparator::equal<Int>(0i, 1n)", "Bool", "err2");
-        checkTestExpError("KeyComparator::equal<Nat>(0n, 1n)", "Int", "err3");
+        checkTestExpError("KeyComparator::equal<Int>(0n, 1n)", "Bool", "Type Nat is not a (keytype) of Int");
+        checkTestExpError("KeyComparator::equal<Int>(0i, 1n)", "Bool", "Type Nat is not a (keytype) of Int");
+        checkTestExpError("KeyComparator::equal<Nat>(0n, 1n)", "Int", "Expected a return value of type Int but got Bool");
         
-        checkTestExpError("KeyComparator::less<Int>(0n, 1n)", "Bool", "err4");
-        checkTestExpError("KeyComparator::less<Int>(0i, 1n)", "Bool", "err5");
-        checkTestExpError("KeyComparator::less<Nat>(0n, 1n)", "Int", "err6");
+        checkTestExpError("KeyComparator::less<Int>(0n, 1n)", "Bool", "Type Nat is not a (keytype) of Int");
+        checkTestExpError("KeyComparator::less<Int>(0i, 1n)", "Bool", "Type Nat is not a (keytype) of Int");
+        checkTestExpError("KeyComparator::less<Nat>(0n, 1n)", "Int", "Expected a return value of type Int but got Bool");
     });
 
     it("should check fail (bad K) KeyComparator operations", function () {
-        checkTestExpError("KeyComparator::equal<Float>(0.0f, 1.0f)", "Bool", "err91");
-        checkTestExpError("KeyComparator::equal<Some<Int>>(Some<Int>{0i}, Some<Int>{1i})", "Bool", "err92");
+        checkTestExpError("KeyComparator::equal<Float>(0.0f, 1.0f)", "Bool", "Type Float is not a (keytype) of Float");
+        checkTestExpError("KeyComparator::equal<Some<Int>>(Some<Int>{0i}, Some<Int>{1i})", "Bool", "Type Some<Int> is not a (keytype) of Some<Int>");
     });
 });
 
@@ -34,10 +34,10 @@ describe ("Checker -- type alias KeyComparator equals/less", () => {
     });
 
     it("should check fail KeyComparator operations", function () {
-        checkTestFunctionError("type Foo = Int; function main(): Bool { return KeyComparator::equal<Foo>(0i<Foo>, 1i); }", "errX");
+        checkTestFunctionError("type Foo = Int; function main(): Bool { return KeyComparator::equal<Foo>(0i<Foo>, 1i); }", "Type Int is not a (keytype) of Foo");
     });
 
     it("should check fail (bad K) KeyComparator operations", function () {
-        checkTestFunctionError("type Foo = Float; function main(): Bool { return KeyComparator::equal<Foo>(0.0f<Foo>, 1.0f<Foo>); }", "errY");
+        checkTestFunctionError("type Foo = Float; function main(): Bool { return KeyComparator::equal<Foo>(0.0f<Foo>, 1.0f<Foo>); }", "Type Foo is not a (keytype) of Foo");
     });
 });

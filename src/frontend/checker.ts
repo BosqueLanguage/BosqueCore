@@ -478,31 +478,33 @@ class TypeChecker {
             return "err";
         }
         else if(lhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isKeyType(rhs, this.constraints)) {
-                return "err";
-            }
-
             if(rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
                 return "rhsnone";
             }
             else {
-                return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
+                if(!this.relations.isKeyType(rhs, this.constraints)) {
+                    return "err";
+                }
+                else {
+                    return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
+                }
             }
         }
         else if(rhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isKeyType(lhs, this.constraints)) {
-                return "err";
-            }
-
             if(lhsexp.tag === ExpressionTag.LiteralNoneExpression) {
                 return "lhsnone";
             }
             else {
-                return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
+                if(!this.relations.isKeyType(lhs, this.constraints)) {
+                    return "err";
+                }
+                else {
+                    return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
+                }
             }
         }
         else {
-            if(!this.relations.isKeyType(lhs, this.constraints) && !this.relations.isKeyType(rhs, this.constraints)) {
+            if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
                 return "err";
             }
 
@@ -1750,11 +1752,6 @@ class TypeChecker {
         if (lhstype instanceof ErrorTypeSignature || rhstype instanceof ErrorTypeSignature) {
             return exp.setType(this.getWellKnownType("Bool"));
         }
-        
-        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable -- one must be subtype of the other`);
-            return exp.setType(this.getWellKnownType("Bool"));
-        }
 
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
@@ -1773,11 +1770,6 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
         
-        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable -- one must be subtype of the other`);
-            return exp.setType(this.getWellKnownType("Bool"));
-        }
-
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
@@ -1794,8 +1786,8 @@ class TypeChecker {
         const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
 
         if(ktypeok) {
-            this.checkError(exp.sinfo, this.relations.isKeyType(tlhs, this.constraints) && this.relations.isSubtypeOf(tlhs, exp.ktype, this.constraints), `Type ${tlhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
-            this.checkError(exp.sinfo, this.relations.isKeyType(trhs, this.constraints) && this.relations.isSubtypeOf(trhs, exp.ktype, this.constraints), `Type ${trhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1808,8 +1800,8 @@ class TypeChecker {
         const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
 
         if(ktypeok) {
-            this.checkError(exp.sinfo, this.relations.isKeyType(tlhs, this.constraints) && this.relations.isSubtypeOf(tlhs, exp.ktype, this.constraints), `Type ${tlhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
-            this.checkError(exp.sinfo, this.relations.isKeyType(trhs, this.constraints) && this.relations.isSubtypeOf(trhs, exp.ktype, this.constraints), `Type ${trhs.emit()} is not a (keytype) subtype of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
