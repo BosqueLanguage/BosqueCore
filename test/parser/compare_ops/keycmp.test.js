@@ -3,7 +3,7 @@
 import { parseTestExp, parseTestExpError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Parser -- basic equals", () => {
+describe ("Parser -- basic KeyComparator equals", () => {
     it("should parse KeyComparator operations", function () {
         parseTestExp("KeyComparator::equal<Nat>(0n, 1n)", undefined, "Bool");
         parseTestExp("KeyComparator::less<Nat>(0n, 1n)", undefined, "Bool");
