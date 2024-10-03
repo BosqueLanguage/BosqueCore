@@ -15,7 +15,6 @@ describe ("Parser -- basic equals", () => {
     });
 });
 
-
 describe ("Parser -- basic !equals", () => {
     it("should compare simple nats", function () {
         parseTestExp("0n != 1n", undefined, "Bool");

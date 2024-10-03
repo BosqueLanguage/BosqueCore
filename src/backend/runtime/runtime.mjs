@@ -125,12 +125,42 @@ const $SymbolNone = Symbol.for("None");
 const _$BoxedNone = new $Boxed(Symbol.for("None"), null);
 
 /**
+ * @function
+ * @param {any} v1
+ * @param {any} v2
+ * @returns {boolean}
+ **/
+function _$feqraw(v1, v2) {
+    return v1 === v2;
+}
+
+/**
+ * @function
+ * @param {any} v1
+ * @param {any} v2
+ * @returns {boolean}
+ **/
+function _$fneqraw(v1, v2) {
+    return v1 !== v2;
+}
+
+/**
+ * @function
+ * @param {any} v1
+ * @param {any} v2
+ * @returns {boolean}
+ **/
+function _$flessraw(v1, v2) {
+    return v1 < v2;
+}
+
+/**
  * @method
  * @param {any} v
  * @returns {boolean}
  **/
 $Boxed.prototype._$keyEqOf = function(v) {
-    return !this._$isNone() && this.$val === v;
+    return _$feqraw(this.$val, v);
 };
 
 /**
@@ -139,7 +169,7 @@ $Boxed.prototype._$keyEqOf = function(v) {
  * @returns {boolean}
  **/
 $Boxed.prototype._$keyNeqOf = function(v) {
-    return this._$isNone() || this.$val !== v;
+    return !_$feqraw(this.$val, v);
 };
 
 /**
@@ -148,6 +178,14 @@ $Boxed.prototype._$keyNeqOf = function(v) {
  **/
 $Boxed.prototype._$isNone = function() {
     return this.$tag === $SymbolNone;
+};
+
+/**
+ * @method
+ * @returns {boolean}
+ **/
+$Boxed.prototype._$isNotNone = function() {
+    return this.$tag !== $SymbolNone;
 };
 
 /**
@@ -642,6 +680,7 @@ function _$accepts(pattern, input, inns) {
 export {
     _$softfails,
     _$supertypes,
+    _$feqraw, _$fneqraw, _$flessraw,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,

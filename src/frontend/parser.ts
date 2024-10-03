@@ -4,7 +4,7 @@ import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
@@ -1555,9 +1555,13 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), coredecl, ["Core"]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        else if(coredecl.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
         else if(coredecl.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, ["Core"]);
-            return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+            const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.topnamespace === nsroot) {
             this.consumeToken();
@@ -1587,6 +1591,10 @@ class Parser {
                 
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
             const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
@@ -2771,6 +2779,49 @@ class Parser {
         }
     }
 
+    private trySpecialNamespaceCall(sinfo: SourceInfo, ns: NamespaceDeclaration, name: string, targs: TypeSignature[], args: ArgumentList): Expression | undefined {
+        if(ns.fullnamespace.ns[0] !== "Core") {
+            return undefined;
+        }
+
+        if(ns.name === "XCore") {
+            if(name === "s_safeas") {
+                if(targs.length !== 2) {
+                    this.recordErrorGeneral(sinfo, "SafeAs expects exactly two template arguments");
+                }
+    
+                if(args.args.length !== 1 || args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                    this.recordErrorGeneral(sinfo, "SafeAs expects exactly one positional arguments");
+                }
+
+                return new SafeConvertExpression(sinfo, (args.args[0] as PositionalArgumentValue).exp, targs[0], targs[1]);
+            }
+        }
+
+        if(ns.name === "KeyComparator") {
+            if(targs.length !== 1) {
+                this.recordErrorGeneral(sinfo, "KeyComparator expects exactly one (keytype) template argument");
+                return undefined;
+            }
+
+            if(args.args.length !== 2 || !args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                this.recordErrorGeneral(sinfo, "KeyComparator expects exactly two positional arguments");
+                return undefined;
+            }
+
+            if(name === "equal") {
+                return new KeyCompareEqExpression(sinfo, targs[0], (args.args[0] as PositionalArgumentValue).exp, (args.args[1] as PositionalArgumentValue).exp);
+            }
+            else {
+                assert(name === "less");
+
+                return new KeyCompareLessExpression(sinfo, targs[0], (args.args[0] as PositionalArgumentValue).exp, (args.args[1] as PositionalArgumentValue).exp);
+            }
+        }
+
+        return undefined;
+    }
+
     private parseImplicitNamespaceScopedConstOrFunc(ns: NamespaceDeclaration, decl: NamespaceFunctionDecl | NamespaceConstDecl): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -2784,7 +2835,13 @@ class Parser {
             const rec = this.parseInvokeRecursiveArgs();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
 
-            return new CallNamespaceFunctionExpression(sinfo, true, ns.fullnamespace, idname, targs, rec, args);
+            const specialop = this.trySpecialNamespaceCall(sinfo, ns, idname, targs, args);
+            if(specialop !== undefined) {
+                return specialop;
+            }
+            else {
+                return new CallNamespaceFunctionExpression(sinfo, true, ns.fullnamespace, idname, targs, rec, args);
+            }
         }
     }
 
@@ -2806,7 +2863,13 @@ class Parser {
             const rec = this.parseInvokeRecursiveArgs();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
 
-            return new CallNamespaceFunctionExpression(sinfo, false, nspace.fullnamespace, idname, targs, rec, args);
+            const specialop = this.trySpecialNamespaceCall(sinfo, nspace, idname, targs, args);
+            if(specialop !== undefined) {
+                return specialop;
+            }
+            else {
+                return new CallNamespaceFunctionExpression(sinfo, false, nspace.fullnamespace, idname, targs, rec, args);
+            }
         }
         else {
             this.recordErrorGeneral(sinfo, `Name '${nspace.fullnamespace.emit()}::${idname}' is not defined in this context`);
@@ -2826,10 +2889,6 @@ class Parser {
             
             const ename = this.parseIdentifierAsEnumMember();
             return new AccessEnumExpression(sinfo, tsig, ename);
-        }
-        else if(this.testToken(SYM_lparen)) {
-            const exp = this.parseExpression();
-            return new ParseAsTypeExpression(sinfo, exp, tsig);
         }
         else if(this.testToken(SYM_lbrace)) {
             const isContainer = tsig instanceof NominalTypeSignature && tsig.decl instanceof AbstractCollectionTypeDecl;
@@ -2903,6 +2962,20 @@ class Parser {
 
         const argl = new ArgumentList(exps.map((arg) => new PositionalArgumentValue(arg)));
         return new ConstructorEListExpression(this.peekToken().getSourceInfo(), argl);
+    }
+
+    private parseParseAsTypeExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(SYM_langle, "parse as type expression");
+        const tsig = this.parseStdTypeSignature();
+        this.ensureAndConsumeTokenAlways(SYM_rangle, "parse as type expression");
+
+        this.ensureAndConsumeTokenAlways(SYM_lparen, "parse as type expression");
+        const exp = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_rparen, "parse as type expression");
+
+        return new ParseAsTypeExpression(sinfo, exp, tsig);
     }
 
     private parseLetExpression(): Expression {
@@ -3116,6 +3189,9 @@ class Parser {
         }
         else if(tk === SYM_rbrack) {
             return this.parseEListConstructorExpression();
+        }
+        else if(tk === SYM_langle) {
+            return this.parseParseAsTypeExpression();
         }
         else if(tk === SYM_lparen) {
             const closeparen = this.scanMatchingParens(SYM_lbrack, SYM_rbrack);
@@ -3929,7 +4005,18 @@ class Parser {
             }
             else {
                 const rexp = this.parseRHSExpression();
-                return new ReturnSingleStatement(sinfo, rexp);
+                if(this.testToken(SYM_semicolon)) {
+                    return new ReturnSingleStatement(sinfo, rexp);
+                }
+                else {
+                    let rexps = [rexp];
+                    while(this.testToken(SYM_coma)) {
+                        this.consumeToken();
+                        rexps.push(this.parseRHSExpression());
+                    }
+
+                    return new ReturnMultiStatement(sinfo, rexps);
+                }
             }
         }
         /*

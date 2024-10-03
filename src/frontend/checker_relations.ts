@@ -286,6 +286,17 @@ class TypeCheckerRelations {
         }
     }
 
+    isBooleanType(t: TypeSignature): boolean {
+        if(t instanceof NominalTypeSignature) {
+            const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;
+            
+            return oftype !== undefined && (oftype instanceof NominalTypeSignature) && oftype.decl.name === "Bool";
+        }
+        else {
+            return false;
+        }
+    }
+
     isKeyType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t instanceof NominalTypeSignature) {
             const oftype = (t.decl instanceof TypedeclTypeDecl) ? this.getTypeDeclValueType(t) : t;

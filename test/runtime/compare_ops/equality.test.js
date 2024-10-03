@@ -10,7 +10,6 @@ describe ("Exec -- basic equals", () => {
     });
 });
 
-
 describe ("Exec -- basic !equal", () => {
     it("should exec compare simple types", function () {
         runMainCode("public function main(): Bool { return 0n != 1n; }", [true, "Bool"]);

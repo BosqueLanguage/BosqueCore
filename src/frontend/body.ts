@@ -226,6 +226,7 @@ enum ExpressionTag {
     LogicActionOrExpression = "LogicActionOrExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
+    SafeConvertExpression = "SafeConvertExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -239,6 +240,9 @@ enum ExpressionTag {
 
     BinKeyEqExpression = "BinKeyEqExpression",
     BinKeyNeqExpression = "BinKeyNeqExpression",
+
+    KeyCompareEqExpression = "KeyCompareEqExpression",
+    KeyCompareLessExpression = "KeyCompareLessExpression",
 
     NumericEqExpression = "NumericEqExpression",
     NumericNeqExpression = "NumericNeqExpression",
@@ -799,6 +803,23 @@ class ParseAsTypeExpression extends Expression {
     }
 }
 
+class SafeConvertExpression extends Expression {
+    readonly exp: Expression;
+    readonly srctype: TypeSignature;
+    readonly trgttype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
+        super(ExpressionTag.SafeConvertExpression, sinfo);
+        this.exp = exp;
+        this.srctype = srctype;
+        this.trgttype = trgttype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `s_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
+    }
+}
+
 enum PostfixOpTag {
     PostfixError = "PostfixError",
 
@@ -1147,6 +1168,40 @@ class BinKeyNeqExpression extends BinaryKeyExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.bkopEmit(toplevel, fmt, "!==");
+    }
+}
+
+class KeyCompareEqExpression extends Expression {
+    readonly ktype: TypeSignature;
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.KeyCompareEqExpression, sinfo);
+        this.ktype = ktype;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `KeyComparator::equal<${this.ktype.emit()}>(${this.lhs.emit(false, fmt)}, ${this.rhs.emit(false, fmt)})`;
+    }
+}
+
+class KeyCompareLessExpression extends Expression {
+    readonly ktype: TypeSignature;
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.KeyCompareLessExpression, sinfo);
+        this.ktype = ktype;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `KeyComparator::less<${this.ktype.emit()}>(${this.lhs.emit(false, fmt)}, ${this.rhs.emit(false, fmt)})`;
     }
 }
 
@@ -1785,6 +1840,20 @@ class ReturnSingleStatement extends Statement {
     }
 }
 
+class ReturnMultiStatement extends Statement {
+    readonly value: Expression[]; //array is implicitly converted to EList
+    rtypes: TypeSignature[] = [];
+
+    constructor(sinfo: SourceInfo, value: Expression[]) {
+        super(StatementTag.ReturnMultiStatement, sinfo);
+        this.value = value;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
+    }
+}
+
 class IfStatement extends Statement {
     readonly cond: IfTest;
     readonly binder: BinderInfo | undefined;
@@ -2280,7 +2349,7 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
-    ParseAsTypeExpression,
+    ParseAsTypeExpression, SafeConvertExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
@@ -2289,7 +2358,7 @@ export {
     PostfixLiteralKeyAccess,
     UnaryExpression, PrefixNotOpExpression, PrefixNegateOrPlusOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
-    BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,
+    BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression, KeyCompareEqExpression, KeyCompareLessExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
     MapEntryConstructorExpression,
@@ -2302,7 +2371,7 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
-    ReturnVoidStatement, ReturnSingleStatement,
+    ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,

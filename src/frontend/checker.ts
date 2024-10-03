@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -74,10 +74,6 @@ class TypeChecker {
     private getWellKnownType(name: string): TypeSignature {
         assert(this.relations.wellknowntypes.has(name), `Well known type ${name} not found`);
         return this.relations.wellknowntypes.get(name) as TypeSignature;
-    }
-
-    private isBooleanType(t: TypeSignature): boolean {
-        return (t.tkeystr === "Bool");
     }
 
     private isVoidType(t: TypeSignature): boolean {
@@ -482,31 +478,33 @@ class TypeChecker {
             return "err";
         }
         else if(lhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isKeyType(rhs, this.constraints)) {
-                return "err";
-            }
-
             if(rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
                 return "rhsnone";
             }
             else {
-                return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
+                if(!this.relations.isKeyType(rhs, this.constraints)) {
+                    return "err";
+                }
+                else {
+                    return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
+                }
             }
         }
         else if(rhs.decl instanceof OptionTypeDecl) {
-            if(!this.relations.isKeyType(lhs, this.constraints)) {
-                return "err";
-            }
-
             if(lhsexp.tag === ExpressionTag.LiteralNoneExpression) {
                 return "lhsnone";
             }
             else {
-                return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
+                if(!this.relations.isKeyType(lhs, this.constraints)) {
+                    return "err";
+                }
+                else {
+                    return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
+                }
             }
         }
         else {
-            if(!this.relations.isKeyType(lhs, this.constraints) && !this.relations.isKeyType(rhs, this.constraints)) {
+            if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
                 return "err";
             }
 
@@ -1398,7 +1396,31 @@ class TypeChecker {
     }
 
     private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkParseAsTypeExpression");
+        const oktype = this.checkTypeSignature(exp.ttype);
+        const etype = this.checkExpression(env, exp.exp, oktype ? new SimpleTypeInferContext(exp.ttype) : undefined);
+        if(!oktype) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, exp.ttype, this.constraints), `ParseAsType expression is not a subtype of ${exp.ttype.emit()}`);
+        return exp.setType(exp.ttype);
+    }
+
+    private checkSafeConvertExpression(env: TypeEnvironment, exp: SafeConvertExpression): TypeSignature {
+        const oksrctype = this.checkTypeSignature(exp.srctype);
+        const oktrgttype = this.checkTypeSignature(exp.trgttype);
+
+        const etype = this.checkExpression(env, exp.exp, oksrctype ? new SimpleTypeInferContext(exp.srctype) : undefined);
+        if(oksrctype) {
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, exp.srctype, this.constraints), `SafeConvert expression is not a subtype of ${exp.srctype.emit()}`);
+        }
+
+        if(oktrgttype) {
+            return exp.setType(exp.trgttype);
+        }
+        else {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
     }
 
     ////////
@@ -1569,8 +1591,8 @@ class TypeChecker {
             return exp.setType(etype);
         }
 
-        this.checkError(exp.sinfo, !this.isBooleanType(etype), "Prefix Not operator requires a Bool type");
-        return exp.setType(this.getWellKnownType("Bool"));
+        this.checkError(exp.sinfo, !this.relations.isBooleanType(etype), "Prefix Not operator requires a Bool based type");
+        return exp.setType(etype);
     }
 
     private checkPrefixNegateOrPlusOpExpression(env: TypeEnvironment, exp: PrefixNegateOrPlusOpExpression): TypeSignature {
@@ -1730,11 +1752,6 @@ class TypeChecker {
         if (lhstype instanceof ErrorTypeSignature || rhstype instanceof ErrorTypeSignature) {
             return exp.setType(this.getWellKnownType("Bool"));
         }
-        
-        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable -- one must be subtype of the other`);
-            return exp.setType(this.getWellKnownType("Bool"));
-        }
 
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
@@ -1753,17 +1770,40 @@ class TypeChecker {
             return exp.setType(this.getWellKnownType("Bool"));
         }
         
-        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
-            this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable -- one must be subtype of the other`);
-            return exp.setType(this.getWellKnownType("Bool"));
-        }
-
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
         if (action === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
         }
 
         exp.operkind = action;
+        return exp.setType(this.getWellKnownType("Bool"));
+    }
+
+    private checkKeyCompareEqExpression(env: TypeEnvironment, exp: KeyCompareEqExpression): TypeSignature {
+        const ktypeok = this.checkTypeSignature(exp.ktype);
+
+        const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
+        const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
+
+        if(ktypeok) {
+            this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+        }
+
+        return exp.setType(this.getWellKnownType("Bool"));
+    }
+
+    private checkKeyCompareLessExpression(env: TypeEnvironment, exp: KeyCompareLessExpression): TypeSignature {
+        const ktypeok = this.checkTypeSignature(exp.ktype);
+
+        const tlhs = this.checkExpression(env, exp.lhs, ktypeok ? exp.ktype : undefined);
+        const trhs = this.checkExpression(env, exp.rhs, ktypeok ? exp.ktype : undefined);
+
+        if(ktypeok) {
+            this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+            this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+        }
+
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1839,44 +1879,71 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression) {
+    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression, strict: boolean): TypeSignature | undefined {
         const tlhs = this.checkExpression(env, lhs, undefined);
         if(tlhs instanceof ErrorTypeSignature) {
-            return;
+            return undefined;
         }
 
         const trhs = this.checkExpression(env, rhs, undefined);
         if(trhs instanceof ErrorTypeSignature) {
-            return;
+            return undefined;
         }
 
-        if(this.checkError(lhs.sinfo, !this.isBooleanType(tlhs), "Binary operator requires a Bool type")) {
-            return;
+        if(this.checkError(lhs.sinfo, !this.relations.isBooleanType(tlhs), "Binary operator requires a Bool type")) {
+            return undefined;
         }
-        if(this.checkError(rhs.sinfo, !this.isBooleanType(trhs), "Binary operator requires a Bool type")) {
-            return;
+        if(this.checkError(rhs.sinfo, !this.relations.isBooleanType(trhs), "Binary operator requires a Bool type")) {
+            return undefined;
         }
 
-        return;
+        if(strict) {
+            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
+                return this.getWellKnownType("Bool");
+            }
+            else {
+                this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
+                return undefined;
+            }
+        }
+        else {
+            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
+                return this.getWellKnownType("Bool");
+            }
+            else if(tlhs.tkeystr === "Bool") {
+                return trhs;
+            }
+            else if(trhs.tkeystr === "Bool") {
+                return tlhs;
+            }
+            else {
+                if(!this.relations.areSameTypes(tlhs, trhs)) {
+                    this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
+                    return undefined;
+                }
+
+                return tlhs;
+            }
+        }
     }
 
     private checkBinLogicAndExpression(env: TypeEnvironment, exp: BinLogicAndExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
-        return exp.setType(this.getWellKnownType("Bool"));
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: BinLogicOrExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
-        return exp.setType(this.getWellKnownType("Bool"));
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicImpliesExpression(env: TypeEnvironment, exp: BinLogicImpliesExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicIFFExpression(env: TypeEnvironment, exp: BinLogicIFFExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1895,7 +1962,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(exp.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(exp.sinfo, exp.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             ttrue = this.checkExpression(env, exp.trueValue, typeinfer);
@@ -2097,6 +2164,9 @@ class TypeChecker {
             case ExpressionTag.ParseAsTypeExpression: {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
             }
+            case ExpressionTag.SafeConvertExpression: {
+                return this.checkSafeConvertExpression(env, exp as SafeConvertExpression);
+            }
             case ExpressionTag.PostfixOpExpression: {
                 return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);
             }
@@ -2123,6 +2193,12 @@ class TypeChecker {
             }
             case ExpressionTag.BinKeyNeqExpression: {
                 return this.checkBinKeyNeqExpression(env, exp as BinKeyNeqExpression);
+            }
+            case ExpressionTag.KeyCompareEqExpression: {
+                return this.checkKeyCompareEqExpression(env, exp as KeyCompareEqExpression);
+            }
+            case ExpressionTag.KeyCompareLessExpression: {
+                return this.checkKeyCompareLessExpression(env, exp as KeyCompareLessExpression);
             }
             case ExpressionTag.NumericEqExpression: {
                 return this.checkNumericEqExpression(env, exp as NumericEqExpression);
@@ -2706,6 +2782,27 @@ class TypeChecker {
         return env.setReturnFlow();
     }
 
+    private checkReturnMultiStatement(env: TypeEnvironment, stmt: ReturnMultiStatement): TypeEnvironment {
+        if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit()}`)) {
+            return env.setReturnFlow();
+        }
+
+        const rtypes = TypeInferContext.asEListOptions(env.inferReturn) as (TypeSignature | undefined)[];
+        this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
+
+        for(let i = 0; i < stmt.value.length; ++i) {
+            const rtype = i < rtypes.length ? rtypes[i] : undefined;
+            const etype = this.checkExpression(env, stmt.value[i], rtype);
+
+            const rtname = rtype !== undefined ? rtype.emit() : "skip";
+            this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit()}`);
+
+            stmt.rtypes.push(rtype || etype);
+        }
+
+        return env.setReturnFlow();
+    }
+
     private checkFlowRebinder(sinfo: SourceInfo, binfo: BinderInfo, retypevname: string, env: TypeEnvironment) {
         if(!binfo.refineonfollow) {
             return;
@@ -2730,7 +2827,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -2769,7 +2866,7 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
             this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -2824,7 +2921,7 @@ class TypeChecker {
                 etype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.condflow[i].cond.sinfo, !this.isBooleanType(etype), `Expected a boolean expression but got ${etype.emit()}`);
+            this.checkError(stmt.condflow[i].cond.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean expression but got ${etype.emit()}`);
             
             const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
             branchflows.push(resenv);
@@ -2953,7 +3050,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.emit()}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for assert condition but got ${etype.emit()}`);
         return env;
     }
 
@@ -2963,7 +3060,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.emit()}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype), `Expected a boolean type for validate condition but got ${etype.emit()}`);
         return env;
     }
 
@@ -3268,6 +3365,9 @@ class TypeChecker {
             case StatementTag.ReturnSingleStatement: {
                 return this.checkReturnSingleStatement(env, stmt as ReturnSingleStatement);
             }
+            case StatementTag.ReturnMultiStatement: {
+                return this.checkReturnMultiStatement(env, stmt as ReturnMultiStatement);
+            }
             case StatementTag.IfStatement: {
                 return this.checkIfStatement(env, stmt as IfStatement);
             }
@@ -3357,7 +3457,7 @@ class TypeChecker {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
             const etype = this.checkExpression(env, precond.exp, undefined);
-            this.checkError(precond.sinfo, !this.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype), `Requires expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3379,7 +3479,7 @@ class TypeChecker {
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
             const etype = this.checkExpression(eev, postcond.exp, undefined);
-            this.checkError(postcond.sinfo, !this.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype), `Ensures expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3389,7 +3489,7 @@ class TypeChecker {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
             const etype = this.checkExpression(env, inv.exp.exp, undefined);
-            this.checkError(invariants[i].sinfo, !this.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype), `Invariant expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 
@@ -3399,7 +3499,7 @@ class TypeChecker {
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
             const etype = this.checkExpression(env, validate.exp.exp, undefined);
-            this.checkError(validates[i].sinfo, !this.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.emit()}`);
+            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype), `Validate expression does not have a boolean type -- got ${etype.emit()}`);
         }
     }
 

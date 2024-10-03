@@ -20,7 +20,7 @@ describe ("Parser -- Entity Constructor", () => {
     });
 
     it("should fail positional", function () {
-        parseTestFunctionInFileError('entity Foo { field f: Int; } function main(): Foo { return Foo(); }', 'Unexpected token in expression -- )');
+        parseTestFunctionInFileError('entity Foo { field f: Int; } function main(): Foo { return Foo(); }', 'Unknown type scoped expression');
     });
 
     it("should fail default", function () {

@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 import { SourceInfo } from "./build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
@@ -360,7 +360,14 @@ class InstantiationPropagator {
     }
 
     private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {
-        assert(false, "Not Implemented -- instantiateParseAsTypeExpression");
+        this.instantiateTypeSignature(exp.ttype, this.currentMapping);
+        this.instantiateExpression(exp.exp);
+    }
+
+    private instantiateSafeConvertExpression(exp: SafeConvertExpression) {
+        this.instantiateTypeSignature(exp.srctype, this.currentMapping);
+        this.instantiateTypeSignature(exp.trgttype, this.currentMapping);
+        this.instantiateExpression(exp.exp);
     }
 
     private instantiatePostfixIsTest(exp: PostfixIsTest) {
@@ -466,6 +473,20 @@ class InstantiationPropagator {
     }
 
     private instantiateBinKeyNeqExpression(exp: BinKeyNeqExpression) {
+        this.instantiateExpression(exp.lhs);
+        this.instantiateExpression(exp.rhs);
+    }
+
+    private instantiateKeyCompareEqExpression(exp: KeyCompareEqExpression) {
+        this.instantiateTypeSignature(exp.ktype, this.currentMapping);
+
+        this.instantiateExpression(exp.lhs);
+        this.instantiateExpression(exp.rhs);
+    }
+
+    private instantiateKeyCompareLessExpression(exp: KeyCompareLessExpression) {
+        this.instantiateTypeSignature(exp.ktype, this.currentMapping);
+
         this.instantiateExpression(exp.lhs);
         this.instantiateExpression(exp.rhs);
     }
@@ -618,6 +639,10 @@ class InstantiationPropagator {
                 this.instantiateParseAsTypeExpression(exp as ParseAsTypeExpression);
                 break;
             }
+            case ExpressionTag.SafeConvertExpression: {
+                this.instantiateSafeConvertExpression(exp as SafeConvertExpression);
+                break;
+            }
             case ExpressionTag.PostfixOpExpression: {
                 this.instantiatePostfixOp(exp as PostfixOp);
                 break;
@@ -652,6 +677,14 @@ class InstantiationPropagator {
             }
             case ExpressionTag.BinKeyNeqExpression: {
                 this.instantiateBinKeyNeqExpression(exp as BinKeyNeqExpression);
+                break;
+            }
+            case ExpressionTag.KeyCompareEqExpression: {
+                this.instantiateKeyCompareEqExpression(exp as KeyCompareEqExpression);
+                break;
+            }
+            case ExpressionTag.KeyCompareLessExpression: {
+                this.instantiateKeyCompareLessExpression(exp as KeyCompareLessExpression);
                 break;
             }
             case ExpressionTag.NumericEqExpression: {
@@ -844,6 +877,18 @@ class InstantiationPropagator {
         this.instantiateExpressionRHS(stmt.value);
     }
 
+    private instantiateReturnMultiStatement(stmt: ReturnMultiStatement) {
+        for(let i = 0; i < stmt.value.length; ++i) {
+            this.instantiateExpression(stmt.value[i]);
+        }
+
+        for(let i = 0; i < stmt.rtypes.length; ++i) {
+           this.instantiateTypeSignature(stmt.rtypes[i], this.currentMapping);
+        }
+
+        this.instantiateTypeSignature(new EListTypeSignature(stmt.sinfo, stmt.rtypes), this.currentMapping);
+    }
+
     private instantiateIfStatement(stmt: IfStatement) {
         this.instantiateExpression(stmt.cond.exp);
         
@@ -1009,6 +1054,10 @@ class InstantiationPropagator {
             }
             case StatementTag.ReturnSingleStatement: {
                 this.instantiateReturnSingleStatement(stmt as ReturnSingleStatement);
+                break;
+            }
+            case StatementTag.ReturnMultiStatement: {
+                this.instantiateReturnMultiStatement(stmt as ReturnMultiStatement);
                 break;
             }
             case StatementTag.IfStatement: {

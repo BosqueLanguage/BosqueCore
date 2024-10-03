@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnSingleStatement, ReturnVoidStatement, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import {_$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
+'import {_$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -252,7 +252,7 @@ class JSEmitter {
                 return vtype.tkeystr === oftype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
             }
             else {
-                return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, ${false}, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
+                return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, false, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
             }
         }
         else {
@@ -267,7 +267,7 @@ class JSEmitter {
             }
         }
     }
-    
+
     private processITestAsConvert(sinfo: SourceInfo, val: string, vtype: TypeSignature, tt: ITest): string {
         const vvtype = this.tproc(vtype);
         
@@ -614,8 +614,13 @@ class JSEmitter {
         assert(false, "Not implemented -- LogicActionOr");
     }
     
-    private emitParseAsTypeExpression(exp: ParseAsTypeExpression): string {
-        assert(false, "Not implemented -- ParseAsType");
+    private emitParseAsTypeExpression(exp: ParseAsTypeExpression, toplevel: boolean): string {
+        return this.emitExpression(exp.exp, toplevel);
+    }
+
+    private emitSafeConvertExpression(exp: SafeConvertExpression, toplevel: boolean): string {
+        const val = this.emitExpression(exp.exp, toplevel);
+        return this.emitBUAsNeeded(val, exp.exp.getType(), exp.trgttype);
     }
 
     private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
@@ -860,12 +865,10 @@ class JSEmitter {
         const kcop = exp.operkind;
 
         if(kcop === "lhsnone") {
-            const eexp = `${this.emitExpression(exp.rhs, false)} === null`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `${this.emitExpression(exp.rhs, false)}._$isNone()`;
         }
         else if(kcop === "rhsnone") {
-            const eexp = `${this.emitExpression(exp.lhs, false)} === null`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `${this.emitExpression(exp.lhs, false)}._$isNone()`;
         }
         else if(kcop === "lhskeyeqoption") {
             return `${this.emitExpression(exp.rhs, false)}._$keyEqOf(${this.emitExpression(exp.lhs, true)})`;
@@ -874,8 +877,7 @@ class JSEmitter {
             return `${this.emitExpression(exp.lhs, false)}._$keyEqOf(${this.emitExpression(exp.rhs, true)})`;
         }
         else if(kcop === "stricteq") {
-            const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `_$feqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else {
             assert(false, "Unknown key eq kind");
@@ -886,12 +888,10 @@ class JSEmitter {
         const kcop = exp.operkind;
 
         if(kcop === "lhsnone") {
-            const eexp = `${this.emitExpression(exp.rhs, false)} !== null`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `${this.emitExpression(exp.rhs, false)}._$isNotNone()`;
         }
         else if(kcop === "rhsnone") {
-            const eexp = `${this.emitExpression(exp.lhs, false)} !== null`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `${this.emitExpression(exp.lhs, false)}._$isNotNone()`;
         }
         else if(kcop === "lhskeyeqoption") {
             return `${this.emitExpression(exp.rhs, false)}._$keyNeqOf(${this.emitExpression(exp.lhs, true)})`;
@@ -900,12 +900,19 @@ class JSEmitter {
             return `${this.emitExpression(exp.lhs, false)}._$keyNeqOf(${this.emitExpression(exp.rhs, true)})`;
         }
         else if(kcop === "stricteq") {
-            const eexp = `${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)}`;
-            return !toplevel ? `(${eexp})` : eexp;
+            return `_$fneqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else {
             assert(false, "Unknown key eq kind");
         }
+    }
+
+    private emitKeyCompareEqExpression(exp: KeyCompareEqExpression, toplevel: boolean): string {
+        return `_$feqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+    }
+
+    private emitKeyCompareLessExpression(exp: KeyCompareLessExpression, toplevel: boolean): string {
+        return `_$flessraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
@@ -1134,7 +1141,10 @@ class JSEmitter {
                 return this.emitLogicActionOrExpression(exp as LogicActionOrExpression);
             }
             case ExpressionTag.ParseAsTypeExpression: {
-                return this.emitParseAsTypeExpression(exp as ParseAsTypeExpression);
+                return this.emitParseAsTypeExpression(exp as ParseAsTypeExpression, toplevel);
+            }
+            case ExpressionTag.SafeConvertExpression: {
+                return this.emitSafeConvertExpression(exp as SafeConvertExpression, toplevel);
             }
             case ExpressionTag.PostfixOpExpression: {
                 return this.emitPostfixOp(exp as PostfixOp, toplevel);
@@ -1162,6 +1172,12 @@ class JSEmitter {
             }
             case ExpressionTag.BinKeyNeqExpression: {
                 return this.emitBinKeyNeqExpression(exp as BinKeyNeqExpression, toplevel);
+            }
+            case ExpressionTag.KeyCompareEqExpression: {
+                return this.emitKeyCompareEqExpression(exp as KeyCompareEqExpression, toplevel);
+            }
+            case ExpressionTag.KeyCompareLessExpression: {
+                return this.emitKeyCompareLessExpression(exp as KeyCompareLessExpression, toplevel);
             }
             case ExpressionTag.NumericEqExpression: {
                 return this.emitNumericEqExpression(exp as NumericEqExpression, toplevel);
@@ -1367,6 +1383,17 @@ class JSEmitter {
         }
         else {
             return `return ${this.returncompletecall.replace("$[RESULT ARG]$", this.emitExpressionRHS(stmt.value))};`;
+        }
+    }
+
+    private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
+        const rexp = `[${stmt.value.map((vv, ii) => this.emitBUAsNeeded(this.emitExpression(vv, true), vv.getType(), stmt.rtypes[ii])).join(", ")}]`;
+
+        if(this.returncompletecall === undefined) {
+            return `return ${rexp};`;
+        }
+        else {
+            return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
         }
     }
 
@@ -1586,6 +1613,9 @@ class JSEmitter {
             }
             case StatementTag.ReturnSingleStatement: {
                 return this.emitReturnSingleStatement(stmt as ReturnSingleStatement);
+            }
+            case StatementTag.ReturnMultiStatement: {
+                return this.emitReturnMultiStatement(stmt as ReturnMultiStatement);
             }
             case StatementTag.IfStatement: {
                 return this.emitIfStatement(stmt as IfStatement, fmt);

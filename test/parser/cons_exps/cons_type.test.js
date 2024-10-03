@@ -9,7 +9,7 @@ describe ("Parser -- Type Alias Constructor", () => {
     });
 
     it("should fail positional", function () {
-        parseTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo(); }', 'Unexpected token in expression -- )');
+        parseTestFunctionInFileError('type Foo = Int; function main(): Foo { return Foo(); }', 'Unknown type scoped expression');
     });
 });
 
