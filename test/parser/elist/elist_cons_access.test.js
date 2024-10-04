@@ -8,6 +8,12 @@ describe ("Parser -- elist decl and access", () => {
         parseTestFunctionInFile('[FUNC]', 'function main(): Int { return (|2i, true|).0; }'); 
     });
 
+    it("should parse fail illegal elist", function () {
+        parseTestFunctionInFileError('function main(): Int { return (||).0; }', 'Empty elist constructor');
+        parseTestFunctionInFileError('function main(): Int { return (|2i|)0; }', 'Singleton elist constructor');
+        parseTestFunctionInFileError('function main(): Int { return (| |).0; }', 'Empty elist constructor');
+    });
+
     it("should parse fail simple elist", function () {
         parseTestFunctionInFileError('function main(): Int { return (|2i, true|).0n; }', 'Expected "[IDENTIFIER]" but got "0n" when parsing "postfix access/invoke"');
         parseTestFunctionInFileError('function main(): Int { return (|2i, true|)0; }', 'Expected ";" but got "0" when parsing "line statement"');
