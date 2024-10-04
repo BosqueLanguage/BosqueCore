@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
-import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 
@@ -540,7 +540,14 @@ class JSEmitter {
     }
     
     private emitConstructorEListExpression(exp: ConstructorEListExpression): string {
-        assert(false, "Not implemented -- ConstructorEList");
+        const eltype = this.tproc(exp.getType()) as EListTypeSignature;
+
+        const vals = exp.args.args.map((ee, ii) => {
+            const val = this.emitExpression(ee.exp, true);
+            return this.emitBUAsNeeded(val, ee.exp.getType(), eltype.entries[ii]);
+        });
+
+        return `[${vals.join(", ")}]`;
     }
     
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
@@ -592,7 +599,6 @@ class JSEmitter {
             const rparams = ffinv.params[ffinv.params.length - 1];
             if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
                 assert(false, "Not implemented -- List");
-                //argl.push(`[${restl.join(", ")}]`);
             }
             else {
                 assert(false, "Not implemented -- CallNamespaceFunction -- rest");
@@ -654,7 +660,7 @@ class JSEmitter {
     }
 
     private emitPostfixAccessFromIndex(val: string, exp: PostfixAccessFromIndex): string {
-        assert(false, "Not Implemented -- emitPostfixAccessFromIndex");
+        return `${val}[${exp.idx}]`;
     }
 
     private emitPostfixIsTest(val: string, exp: PostfixIsTest): string {
@@ -705,7 +711,6 @@ class JSEmitter {
             const rparams = mdecl.params[mdecl.params.length - 1];
             if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
                 assert(false, "Not implemented -- List");
-                //argl.push(`[${restl.join(", ")}]`);
             }
             else {
                 assert(false, "Not implemented -- CallNamespaceFunction -- rest");

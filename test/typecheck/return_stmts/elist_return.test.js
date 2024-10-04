@@ -3,7 +3,6 @@
 import { checkTestFunction, checkTestFunctionError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("Checker -- elist return", () => {
     it("should check elist returns", function () {
         checkTestFunction('function foo(): (|Int, Bool|) { return (|2i, false|); } function main(): Int { return foo().0; }');
