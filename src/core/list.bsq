@@ -4,6 +4,22 @@ namespace List {
 }
 
 __internal entity List<T> {
+#if __STRIPPED_CORE__
+#else
+
+#if EXEC_LIBS
+    field data: ListOps::Tree<T>;
+
+    method empty(): Bool {
+        return ListOps::s_list_empty<T>(this);
+    }
+
+    method size(): Nat {
+        return ListOps::s_list_size<T>(this);
+    }
+#else
+#endif
+
 %*
     method size(): Nat {
         if(ListOps::s_list_empty<T>(this)) {
@@ -36,4 +52,5 @@ __internal entity List<T> {
         return ListOps::s_list_get<T>(this, i);
     }
 *%
+#endif %% __STRIPPED_CORE__ 
 }

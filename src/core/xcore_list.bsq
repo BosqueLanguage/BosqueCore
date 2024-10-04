@@ -1,81 +1,66 @@
 namespace Core;
 
-%*
+#if __STRIPPED_CORE__
+#else
 #if EXEC_LIBS
 namespace ListOps {
-    __safe function s_list_value<T>(l: List<T>): ListRepr<T>? = s_list_value;
-    __safe function s_list_create<T>(lr: ListRepr<T>?): List<T> = s_list_create;
-
-    __safe function s_list_empty<T>(l: List<T>): Bool {
-        return ListOps::s_list_value<T>(l)?none;
+    function s_list_empty<T>(l: List<T>): Bool {
+        return l.data?BBLeaf;
     } 
 
-    __safe function s_list_size<T>(l: List<T>): Nat {
-        return ListRepr<T>::csize(ListOps::s_list_value<T>(l));
-    } 
-
-    function s_list_get<T>(l: List<T>, i: Nat): T {
-        return ListOps::s_list_value<T>(l)@!none.get(i);
+    function s_list_size<T>(l: List<T>): Nat {
+        return l.data.size[recursive]();
     }
 
-    function s_list_back<T>(l: List<T>): T {
-        let ll = ListOps::s_list_value<T>(l);
-        return ll!none::get(ListRepr<T>::csize(ll) - 1n);
+    enum Color = {
+        Red,
+        Black,
+        BB,
+        NB
     }
 
-    function s_list_front<T>(l: List<T>): T {
-        let ll = ListOps::s_list_value<T>(l);
-        return ll!none.get(0n);
-    }
-}
+    function blacken(c: Color): Color {
+        assert c !== Color#BB;
 
-protected datatype ListRepr<T> 
-of
-ListReprLeaf { 
-    field value: T; 
-}
-| ListReprNode { 
-    field count: Nat = ListRepr<T>::csize($l) + ListRepr<T>::csize($r);
-    field l: ListRepr<T>?;
-    field r: ListRepr<T>?;
-}
-& {
-    function csize(l: ListRepr<T>?): Nat {
-        if (l)none {
-            return 0n;
+        if(c === Color#Black) {
+            return Color#BB;
+        }
+        else if(c === Color#Red) {
+            return Color#Black;
         }
         else {
-            match (l)@ {
-                ListReprLeaf<T>   => return 1n;
-                | ListReprNode<T> => return $l.count;
-            }
+            return Color#Red;
         }
     }
 
-    method get(i: Nat): T {
-        match (this)@ {
-            ListReprLeaf<T> => {
-                assert i == 0n;
-                return $this.value;
-            }
-            | ListReprNode<T> => {
-                if ($l = $this.l)@none {
-                    return $this.r@!none.get(i);
-                }
-                else {
-                    let lcount = ListRepr<T>::csize($l);
-                    if (i < lcount) {
-                        return $l.get(i);
-                    }
-                    else {
-                        return $this.r@!none.get(i - lcount);
-                    }
-                }
+    function redden(c: Color): Color {
+        assert c !== Color#NB;
+
+        if(c === Color#Black) {
+            return Color#BB;
+        }
+        else if(c === Color#Red) {
+            return Color#Black;
+        }
+        else {
+            return Color#Red;
+        }
+    }
+
+    datatype Tree<T> of 
+        BBLeaf {}
+        | Leaf { v: T; }
+        | Node { c: Color; count: Nat; l: Tree<T>; r: Tree<T>; }
+    & {
+        recursive method size(): Nat {
+            match(this) {
+                BBLeaf => { return 0n; }
+                | Leaf => { return 1n; }
+                | Node => { return l.size() + r.size(); }
             }
         }
     }
 }
-
 #else
 namespace ListOps {
     __safe function s_list_empty<T>(l: List<T>): Bool = s_list_empty; 
@@ -85,5 +70,6 @@ namespace ListOps {
     __assume_safe function s_list_back<T>(l: List<T>): T = s_list_back;
     __assume_safe function s_list_front<T>(l: List<T>): T = s_list_front;
 }
-#endif
-*%
+#endif %% EXEC_LIBS
+
+#endif %% __STRIPPED_CORE__ 
