@@ -1787,7 +1787,7 @@ class VariableMultiAssignmentStatement extends Statement {
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
     constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
-        super(StatementTag.VariableAssignmentStatement, sinfo);
+        super(StatementTag.VariableMultiAssignmentStatement, sinfo);
         this.names = names;
         this.exp = exp;
     }

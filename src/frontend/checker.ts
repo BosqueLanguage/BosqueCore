@@ -1251,8 +1251,43 @@ class TypeChecker {
         }
     }
     
-    private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeSignature | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkConstructorEListExpression");
+    private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeInferContext | undefined): TypeSignature {
+        if(infertype === undefined) {
+            const ttypes = exp.args.args.map((arg) => this.checkExpression(env, (arg as PositionalArgumentValue).exp, undefined));
+            const rel = new EListTypeSignature(exp.sinfo, ttypes);
+
+            return exp.setType(rel);
+        }
+        else {
+            let iopts: (TypeSignature | undefined)[] = [];
+            if(infertype instanceof EListStyleTypeInferContext) {
+                let itype = infertype as EListStyleTypeInferContext;
+                iopts = itype.elist;
+            }
+            else {
+                const itype = (infertype as SimpleTypeInferContext).ttype;
+                if(!(itype instanceof EListTypeSignature)) {
+                    this.reportError(exp.sinfo, `Invalid type for list constructor -- ${itype.emit()}`);
+                    return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+                }
+
+                iopts = itype.entries;
+            }
+
+            if(iopts.length !== exp.args.args.length) {
+                this.reportError(exp.sinfo, `List constructor expects ${iopts.length} arguments but got ${exp.args.args.length}`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            let ttypes: TypeSignature[] = [];
+            for(let i = 0; i < exp.args.args.length; ++i) {
+                const etype = this.checkExpression(env, (exp.args.args[i] as PositionalArgumentValue).exp, i < iopts.length ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined);
+                ttypes.push(etype);
+            }
+
+            const rel = new EListTypeSignature(exp.sinfo, ttypes);
+            return exp.setType(rel);
+        }
     }
 
     private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature | undefined): TypeSignature {
@@ -1295,7 +1330,7 @@ class TypeChecker {
             if(exp.rop === "some") {
                 if(ninfer.decl instanceof SomeTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
@@ -1303,7 +1338,7 @@ class TypeChecker {
                 }
                 else if(ninfer.decl instanceof OptionTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [ttype]);
@@ -1316,7 +1351,7 @@ class TypeChecker {
             else if(exp.rop === "ok") {
                 if(ninfer.decl instanceof OkTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
@@ -1324,7 +1359,7 @@ class TypeChecker {
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
                     const ttype = ninfer.alltermargs[0];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getOkType(), [ttype, ninfer.alltermargs[1]]);
@@ -1338,7 +1373,7 @@ class TypeChecker {
             else {
                 if(ninfer.decl instanceof FailTypeDecl) {
                     const ttype = ninfer.alltermargs[1];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Fail constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = ninfer;
@@ -1346,7 +1381,7 @@ class TypeChecker {
                 }
                 else if(ninfer.decl instanceof ResultTypeDecl) {
                     const ttype = ninfer.alltermargs[1];
-                    const etype = this.checkExpression(env, exp.arg, ttype);
+                    const etype = this.checkExpression(env, exp.arg, new SimpleTypeInferContext(ttype));
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
@@ -1444,7 +1479,17 @@ class TypeChecker {
     }
 
     private checkPostfixAccessFromIndex(env: TypeEnvironment, exp: PostfixAccessFromIndex, rcvrtype: TypeSignature): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
+        if(!(rcvrtype instanceof EListTypeSignature)) {
+            this.reportError(exp.sinfo, `Cannot access index from non-elist type ${rcvrtype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(exp.idx >= rcvrtype.entries.length) {
+            this.reportError(exp.sinfo, `Index ${exp.idx} out of bounds for elist type ${rcvrtype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return exp.setType(rcvrtype.entries[exp.idx]);
     }
 
     private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
@@ -2132,7 +2177,7 @@ class TypeChecker {
                 return this.checkConstructorPrimaryExpression(env, exp as ConstructorPrimaryExpression);
             }
             case ExpressionTag.ConstructorEListExpression: {
-                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, TypeInferContext.asSimpleType(typeinfer));
+                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, typeinfer);
             }
             case ExpressionTag.ConstructorLambdaExpression: {
                 return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, TypeInferContext.asSimpleType(typeinfer));
