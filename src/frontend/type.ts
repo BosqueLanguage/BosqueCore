@@ -257,7 +257,7 @@ class EListTypeSignature extends TypeSignature {
     }
 
     emit(): string {
-        return `( | ${this.entries.map((tt) => tt.emit()).join(", ")} | )`;
+        return `(|${this.entries.map((tt) => tt.emit()).join(", ")}|)`;
     }
 }
 
