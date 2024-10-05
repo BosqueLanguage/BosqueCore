@@ -4,7 +4,7 @@ namespace List {
 }
 
 __internal entity List<T> {
-#if __STRIPPED_CORE__
+#if STRIPPED_CORE
 #else
 
 #if EXEC_LIBS
@@ -52,5 +52,5 @@ __internal entity List<T> {
         return ListOps::s_list_get<T>(this, i);
     }
 *%
-#endif %% __STRIPPED_CORE__ 
+#endif %% STRIPPED_CORE 
 }

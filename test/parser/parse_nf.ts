@@ -13,7 +13,7 @@ function parseFunction(ff: string): string {
         return "**ERROR**";
     }
 
-    const rr = Parser.test_parseSFunction(src, ["EXEC_LIBS"], ff);
+    const rr = Parser.test_parseSFunction(src, ["EXEC_LIBS", "STRIPPED_CORE"], ff);
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
@@ -23,7 +23,7 @@ function parseFunctionInFile(code: string): string {
         return "**ERROR**";
     }
 
-    const rr = Parser.test_parseSFunctionInFile(src, ["EXEC_LIBS"], code, "main");
+    const rr = Parser.test_parseSFunctionInFile(src, ["EXEC_LIBS", "STRIPPED_CORE"], code, "main");
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
@@ -41,7 +41,7 @@ function parseFunctionInFilePlus(code: string, ctxcode: string[]): string {
         };
     });
 
-    const rr = Parser.test_parseSFunctionInFilePlus(src, ["EXEC_LIBS"], ctxfiles, code, "main");
+    const rr = Parser.test_parseSFunctionInFilePlus(src, ["EXEC_LIBS", "STRIPPED_CORE"], ctxfiles, code, "main");
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 
 }

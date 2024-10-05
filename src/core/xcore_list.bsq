@@ -1,6 +1,6 @@
 namespace Core;
 
-#if __STRIPPED_CORE__
+#if STRIPPED_CORE
 #else
 #if EXEC_LIBS
 namespace ListOps {
@@ -72,4 +72,4 @@ namespace ListOps {
 }
 #endif %% EXEC_LIBS
 
-#endif %% __STRIPPED_CORE__ 
+#endif %% STRIPPED_CORE
