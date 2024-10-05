@@ -5360,7 +5360,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between enum and other names -- ${ename}`);
             }
 
-            const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
+            const members = this.parseListOf<string>("enum members", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 this.ensureToken(TokenStrings.IdentifierName, "enum member");
                 return this.parseIdentifierAsEnumMember();
             });
@@ -5375,7 +5375,8 @@ class Parser {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
             assert(tdecl !== undefined, "Failed to find entity type");
 
-            this.namespaceParseScanCover(endtok);
+            xxxx;
+            this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
         }
     }
 
@@ -5565,6 +5566,7 @@ class Parser {
 
         if(this.testAndConsumeTokenIf(SYM_amp)) {
             if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+                xxxx;
                 this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
             }
             else {

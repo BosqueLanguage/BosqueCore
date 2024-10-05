@@ -12,7 +12,7 @@ namespace ListOps {
         return l.data.size[recursive]();
     }
 
-    enum Color = {
+    enum Color {
         Red,
         Black,
         BB,
