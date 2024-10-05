@@ -1460,6 +1460,7 @@ class Parser {
     ////////
 
     private identifierResolvesAsScopedConstOrFunction(name: string): [NamespaceDeclaration, NamespaceFunctionDecl | NamespaceConstDecl] | undefined {
+        xxxx;
         const coredecl = this.env.assembly.getCoreNamespace();
         const cdm = coredecl.functions.find((f) => f.name === name) || coredecl.consts.find((c) => c.name === name);
         if(cdm !== undefined) {
@@ -2853,6 +2854,7 @@ class Parser {
 
         const idname = this.parseIdentifierAsStdVariable();
 
+        xxxx;
         const constOpt = nspace.consts.find((c) => c.name === idname);
         const funOpt = nspace.functions.find((f) => f.name === idname);
         if(constOpt !== undefined) {
@@ -5375,8 +5377,8 @@ class Parser {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
             assert(tdecl !== undefined, "Failed to find entity type");
 
-            xxxx;
-            this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+            const endpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+            this.currentState().skipToPosition(endpos);
         }
     }
 
@@ -5566,8 +5568,8 @@ class Parser {
 
         if(this.testAndConsumeTokenIf(SYM_amp)) {
             if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-                xxxx;
-                this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+                const endpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+                this.currentState().skipToPosition(endpos);
             }
             else {
                 if(tdecl.fields.length !== 0) {
@@ -5938,23 +5940,31 @@ class Parser {
 
     static parsefiles(iscore: boolean, code: CodeFileInfo[], macrodefs: string[], assembly: Assembly, registeredNamespaces: Set<string>): ParserError[] {
         let errors: ParserError[] = [];
+        let pass1errors: Set<string> = new Set<string>();
 
         //load all the names and make sure every top-level namespace is declared
         for(let i = 0; i < code.length; ++i) {
             const cunit = Parser.parseCompilationUnit(iscore, ParsePhase_RegisterNames, code[i].srcpath, code[i].contents, macrodefs, assembly);
-        
+            if(cunit.errors.length !== 0) {
+                pass1errors.add(code[i].srcpath);
+            }
+
             if(cunit.isdecl) {
                 if(registeredNamespaces.has(cunit.ns)) {
                     errors.push(new ParserError(code[i].srcpath, SourceInfo.implicitSourceInfo(), `Duplicate namespace declaration -- ${cunit.ns}`));
                 }
                 registeredNamespaces.add(cunit.ns);
             }
+
+            errors.push(...cunit.errors);
         }
 
         //parse the code
         for(let i = 0; i < code.length; ++i) {
-            const cunit = Parser.parseCompilationUnit(iscore, ParsePhase_CompleteParsing, code[i].srcpath, code[i].contents, macrodefs, assembly);
-            errors.push(...cunit.errors);
+            if(!pass1errors.has(code[i].srcpath)) {
+                const cunit = Parser.parseCompilationUnit(iscore, ParsePhase_CompleteParsing, code[i].srcpath, code[i].contents, macrodefs, assembly);
+                errors.push(...cunit.errors);
+            }
         }
 
         return errors;

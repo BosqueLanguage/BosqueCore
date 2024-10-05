@@ -5,11 +5,11 @@ namespace Core;
 #if EXEC_LIBS
 namespace ListOps {
     function s_list_empty<T>(l: List<T>): Bool {
-        return l.data?BBLeaf;
+        return l.value?BBLeaf;
     } 
 
     function s_list_size<T>(l: List<T>): Nat {
-        return l.data.size[recursive]();
+        return l.value.size[recursive]();
     }
 
     enum Color {
@@ -56,7 +56,7 @@ namespace ListOps {
             match(this) {
                 BBLeaf => { return 0n; }
                 | Leaf => { return 1n; }
-                | Node => { return l.size() + r.size(); }
+                | Node => { return $this.l.count + $this.r.count; }
             }
         }
     }
@@ -71,5 +71,4 @@ namespace ListOps {
     __assume_safe function s_list_front<T>(l: List<T>): T = s_list_front;
 }
 #endif %% EXEC_LIBS
-
 #endif %% STRIPPED_CORE

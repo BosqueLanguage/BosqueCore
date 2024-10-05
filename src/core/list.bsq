@@ -6,10 +6,7 @@ namespace List {
 __internal entity List<T> {
 #if STRIPPED_CORE
 #else
-
 #if EXEC_LIBS
-    field data: ListOps::Tree<T>;
-
     method empty(): Bool {
         return ListOps::s_list_empty<T>(this);
     }
@@ -18,7 +15,7 @@ __internal entity List<T> {
         return ListOps::s_list_size<T>(this);
     }
 #else
-#endif
+#endif %% EXEC_LIBS
 
 %*
     method size(): Nat {

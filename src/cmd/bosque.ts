@@ -49,7 +49,7 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
         return;
     }
 
-    const userpackage = new PackageConfig(["EXEC_LIBS"], usersrcinfo)
+    const userpackage = new PackageConfig([], usersrcinfo)
     const [asm, perrors, terrors] = generateASM(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
