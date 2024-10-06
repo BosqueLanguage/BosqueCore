@@ -14,7 +14,7 @@ function loadContents(ff: string): Assembly | string {
 
     const maintest: CodeFileInfo[]  = [{srcpath: "test", filename: "test", contents: ff}];
 
-    const rr = Parser.parse(src, maintest, ["EXEC_LIBS"]);
+    const rr = Parser.parse(src, maintest, ["EXEC_LIBS", "STRIPPED_CORE"]);
     return Array.isArray(rr) ? rr[0].message : rr;
 }
 

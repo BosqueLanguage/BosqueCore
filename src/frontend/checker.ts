@@ -1030,7 +1030,24 @@ class TypeChecker {
     }
 
     private checkAccessEnumExpression(env: TypeEnvironment, exp: AccessEnumExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAccessEnumExpression");
+        const oktype = this.checkTypeSignature(exp.stype);
+        if(!oktype) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(!(exp.stype instanceof NominalTypeSignature) || !(exp.stype.decl instanceof EnumTypeDecl)) {
+            this.reportError(exp.sinfo, `Invalid type for enum access expression -- ${exp.stype.emit()}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const edecl = exp.stype.decl as EnumTypeDecl;
+        if(edecl.members.includes(exp.name)) {
+            return exp.setType(exp.stype);
+        }
+        else {
+            this.reportError(exp.sinfo, `Enum ${exp.stype.decl.name} does not have member ${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
     }
 
     private checkAccessStaticFieldExpression(env: TypeEnvironment, exp: AccessStaticFieldExpression): TypeSignature {
@@ -3009,7 +3026,6 @@ class TypeChecker {
                 results.push(cenv);
             }
         }
-        this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
         
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }
@@ -3070,7 +3086,7 @@ class TypeChecker {
                     if(stmt.sval[1] !== undefined) {
                         cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, mtype);
                     }
-                    cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+                    cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
 
                     if(stmt.sval[1] !== undefined) {
                         cenv = cenv.popLocalScope();
@@ -3080,7 +3096,6 @@ class TypeChecker {
                 }
             }
         }
-        this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
         
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }

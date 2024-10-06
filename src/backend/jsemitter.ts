@@ -199,7 +199,7 @@ class JSEmitter {
             return vtype.tkeystr === "None" ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
-            const emsg = this.getErrorInfo(isnot ? "expected None but got Some" : "expected Some but got None", sinfo, undefined);
+            const emsg = this.getErrorInfo(isnot ? "expected Some but got None" : "expected None but got Some", sinfo, undefined);
             return val + (isnot ? `._$asSome(${emsg})` : `._$asNone(${emsg})`);
         }
     }
@@ -210,7 +210,7 @@ class JSEmitter {
             return vtype.tkeystr.startsWith("Some") ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
-            const emsg = this.getErrorInfo(isnot ? "expected Some but got None" : "expected None but got Some", sinfo, undefined);
+            const emsg = this.getErrorInfo(isnot ? "expected None but got Some" : "expected Some but got None", sinfo, undefined);
             return val + (isnot ? `._$asNone(${emsg})` : `._$asSome(${emsg})`);
         }
     }

@@ -48,7 +48,7 @@ function fromBSONHelper(val: any, type: string): string {
 }
 
 function buildAssembly(srcfile: string): Assembly | undefined {
-    const userpackage = new PackageConfig([], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
+    const userpackage = new PackageConfig(["EXEC_LIBS", "STRIPPED_CORE"], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
     const [asm, perrors, terrors] = generateASM(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
