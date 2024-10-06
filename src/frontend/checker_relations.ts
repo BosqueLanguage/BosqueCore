@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, NamespaceDeclaration } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -797,6 +797,14 @@ class TypeCheckerRelations {
                 }
                 if(name === "value") {
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", tn.alltermargs[1], undefined, true);
+                }
+            }
+            else if(tn.decl instanceof ListTypeDecl) {
+                if(name === "value") {
+                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Tree") as DatatypeTypeDecl;
+                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, [tn.alltermargs[0]]);
+                    
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
                 }
             }
             else {

@@ -1427,7 +1427,9 @@ class NamespaceDeclaration {
     declaredNames: Set<string> = new Set<string>();
     declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, and tasks
     declaredSubNSNames: Set<string> = new Set<string>();
-    declaredMemberNames: Set<string> = new Set<string>(); //functions, apis, and consts
+    declaredConstNames: Set<string> = new Set<string>(); 
+    declaredFunctionNames: Set<string> = new Set<string>(); //functions, apis, and consts
+    declaredAPINames: Set<string> = new Set<string>(); //functions, apis, and consts
 
     subns: NamespaceDeclaration[] = [];
 
@@ -1454,7 +1456,7 @@ class NamespaceDeclaration {
         }
 
         //namespace always clashes with other namespaces and with simple member names
-        if(this.declaredSubNSNames.has(rname) || this.declaredMemberNames.has(rname)) {
+        if(this.declaredSubNSNames.has(rname) || this.declaredConstNames.has(rname) || this.declaredFunctionNames.has(rname) || this.declaredAPINames.has(rname)) {
             return true;
         }
 
@@ -1468,11 +1470,11 @@ class NamespaceDeclaration {
         }
 
         //types always simple member names
-        if(this.declaredMemberNames.has(rname)) {
+        if(this.declaredConstNames.has(rname) || this.declaredFunctionNames.has(rname) || this.declaredAPINames.has(rname)) {
             return true;
         }
 
-        //they also clash with each other even if they differ in termplates
+        //they also clash with each other even if they differ in templates
         if(this.declaredTypeNames.find((tn) => tn.name === rname) !== undefined) {
             return true;
         }

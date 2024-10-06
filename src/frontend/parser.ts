@@ -4,8 +4,8 @@ import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression } from "./body.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
 
@@ -1459,20 +1459,23 @@ class Parser {
     //
     ////////
 
-    private identifierResolvesAsScopedConstOrFunction(name: string): [NamespaceDeclaration, NamespaceFunctionDecl | NamespaceConstDecl] | undefined {
-        xxxx;
+    private identifierResolvesAsScopedConstOrFunction(name: string): [NamespaceDeclaration, "isfunction" | "isconstant"] | undefined {
         const coredecl = this.env.assembly.getCoreNamespace();
-        const cdm = coredecl.functions.find((f) => f.name === name) || coredecl.consts.find((c) => c.name === name);
-        if(cdm !== undefined) {
-            return [coredecl, cdm];
+        if(coredecl.declaredFunctionNames.has(name)) {
+            return [coredecl, "isfunction"];
+        }
+        if(coredecl.declaredConstNames.has(name)) {
+            return [coredecl, "isconstant"];
         }
 
         //acording to rules I will only allow implicit refs to toplevel namespace, even if I am in a sub-namespace
         const nsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
 
-        const ndm = nsdecl.functions.find((f) => f.name === name) || nsdecl.consts.find((c) => c.name === name);
-        if(ndm !== undefined) {
-            return [this.env.currentNamespace, ndm];
+        if(nsdecl.declaredFunctionNames.has(name)) {
+            return [this.env.currentNamespace, "isfunction"];
+        }
+        if(nsdecl.declaredConstNames.has(name)) {
+            return [this.env.currentNamespace, "isconstant"];
         }
 
         return undefined;
@@ -2564,7 +2567,7 @@ class Parser {
     }
 
     private parseMatchTypeGuard(): TypeSignature | undefined {
-        if (this.testToken(KW_under)) {
+        if (this.testAndConsumeTokenIf(KW_under)) {
             return undefined;
         }
         else {
@@ -2573,11 +2576,17 @@ class Parser {
     }
 
     private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
-        if (this.testToken(KW_under)) {
+        if (this.testAndConsumeTokenIf(KW_under)) {
             return undefined;
         }
         else {
-            return this.parseLiteralExpression();
+            const exp = this.parseExpression();
+    
+            if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression) && !(exp instanceof AccessEnumExpression)) {
+                this.recordErrorGeneral(exp.sinfo, "Expected literal expression")
+            }
+
+            return new LiteralExpressionValue(exp);
         }
     }
 
@@ -2735,18 +2744,6 @@ class Parser {
         return new ConstructorLambdaExpression(sinfo, ldecl);
     }
 
-    private parseLiteralExpression(): LiteralExpressionValue {
-        this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, undefined);        
-        const exp = this.parseExpression();
-        this.env.popStandardFunctionScope();
-
-        if(!exp.isLiteralExpression()) {
-            this.recordErrorGeneral(exp.sinfo, "Expected literal expression")
-        }
-
-        return new LiteralExpressionValue(exp);
-    }
-
     private parseConstExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): ConstantExpressionValue {
         this.env.pushStandardFunctionScope([], boundtemplates, etype);
         this.env.pushBlockScope();
@@ -2823,12 +2820,12 @@ class Parser {
         return undefined;
     }
 
-    private parseImplicitNamespaceScopedConstOrFunc(ns: NamespaceDeclaration, decl: NamespaceFunctionDecl | NamespaceConstDecl): Expression {
+    private parseImplicitNamespaceScopedConstOrFunc(ns: NamespaceDeclaration, decl: "isfunction" | "isconstant"): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
         const idname = this.parseIdentifierAsStdVariable();
 
-        if(decl instanceof NamespaceConstDecl) {
+        if(decl === "isconstant") {
             return new AccessNamespaceConstantExpression(sinfo, true, ns.fullnamespace, idname);
         }
         else {
@@ -2854,13 +2851,12 @@ class Parser {
 
         const idname = this.parseIdentifierAsStdVariable();
 
-        xxxx;
-        const constOpt = nspace.consts.find((c) => c.name === idname);
-        const funOpt = nspace.functions.find((f) => f.name === idname);
-        if(constOpt !== undefined) {
+        const isConstOpt = nspace.declaredConstNames.has(idname);
+        const isFunOpt = nspace.declaredFunctionNames.has(idname);
+        if(isConstOpt) {
             return new AccessNamespaceConstantExpression(sinfo, false, nspace.fullnamespace, idname);
         }
-        else if(funOpt !== undefined) {
+        else if(isFunOpt) {
             const targs = this.parseInvokeTemplateArguments();
             const rec = this.parseInvokeRecursiveArgs();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
@@ -4275,6 +4271,8 @@ class Parser {
             }
         }
         else {
+            this.ensureAndConsumeTokenIf(KW_else, "if-elif-else statement");
+
             if(binder !== undefined) {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
@@ -4553,7 +4551,6 @@ class Parser {
             }
 
             this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "namespace using");
         }
     }
 
@@ -4685,7 +4682,7 @@ class Parser {
             }
 
             this.env.currentNamespace.declaredNames.add(sname);
-            this.env.currentNamespace.declaredMemberNames.add(sname);
+            this.env.currentNamespace.declaredConstNames.add(sname);
 
             this.scanOverCodeTo(SYM_semicolon);
             this.ensureAndConsumeTokenIf(SYM_semicolon, "const member");
@@ -4717,7 +4714,7 @@ class Parser {
             }
 
             this.env.currentNamespace.declaredNames.add(fname);
-            this.env.currentNamespace.declaredMemberNames.add(fname);
+            this.env.currentNamespace.declaredFunctionNames.add(fname);
 
             this.namespaceParseScanCover(endtok);
         }
@@ -5402,7 +5399,7 @@ class Parser {
             this.env.currentNamespace.declaredTypeNames.push({name: iname, hasterms: this.testToken(SYM_langle)});
 
             this.scanOverCodeTo(SYM_lbrace, SYM_semicolon);
-            if(!this.testToken(SYM_semicolon)) {
+            if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
                 this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
             }
         }
@@ -5742,7 +5739,7 @@ class Parser {
             }
 
             this.env.currentNamespace.declaredNames.add(apiname);
-            this.env.currentNamespace.declaredMemberNames.add(apiname);
+            this.env.currentNamespace.declaredAPINames.add(apiname);
 
             this.namespaceParseScanCover(SYM_semicolon);
         }
@@ -5916,7 +5913,7 @@ class Parser {
         pp.ensureAndConsumeTokenAlways(TokenStrings.IdentifierName, "namespace declaration");
 
         if(pp.testToken(SYM_lbrace)) {
-            pp.parseListOf<boolean>("namespace", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            pp.parseListOf<boolean>("namespace", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
                 pp.parseNamespaceUsing();
                 return true;
             });
