@@ -1726,7 +1726,7 @@ class Parser {
 
     private parseIdentifierAsNamespaceOrTypeName(): string {
         const vv = this.consumeTokenAndGetValue();
-        if(!/^[A-Z][_a-zA-Z0-9]+/.test(vv)) {
+        if(!/^[A-Z][_a-zA-Z0-9]+$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid namespace or type name -- must start with an uppercase letter");
         }
 
@@ -1735,7 +1735,11 @@ class Parser {
 
     private parseIdentifierAsEnumMember(): string {
         const vv = this.consumeTokenAndGetValue();
-        if(!/^[A-Z][_a-zA-Z0-9]+/.test(vv)) {
+        if(vv === "_") {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
+        }
+        
+        if(!/^[_a-zA-Z][_a-zA-Z0-9]*$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid enum member name -- must start with an uppercase letter");
         }
 
@@ -1748,7 +1752,7 @@ class Parser {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
         }
 
-        if(!/^[$][_a-z][_a-zA-Z0-9]*/.test(vv)) {
+        if(!/^[$][_a-z][_a-zA-Z0-9]*$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid binder name -- must start with $ followed by a valid identifier name");
         }
 
@@ -1761,7 +1765,7 @@ class Parser {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
         }
 
-        if(!/^[_a-z][_a-zA-Z0-9]*/.test(vv)) {
+        if(!/^[_a-z][_a-zA-Z0-9]*$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid identifier name -- must start with a lowercase letter or _");
         }
 
@@ -1771,7 +1775,7 @@ class Parser {
     private parseIdentifierAsIgnoreableVariable(): string {
         const vv = this.consumeTokenAndGetValue();
         
-        if(!/^[_a-z][_a-zA-Z0-9]*/.test(vv)) {
+        if(!/^[_a-z][_a-zA-Z0-9]*$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid identifier name -- must start with a lowercase letter or _");
         }
 

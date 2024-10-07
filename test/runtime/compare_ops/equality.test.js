@@ -16,3 +16,13 @@ describe ("Exec -- basic !equal", () => {
         runMainCode("public function main(): Bool { return +2i != 2i; }", [false, "Bool"]);
     });
 });
+
+describe ("Exec -- enum strict equals", () => {
+    it("should exec enum strict equals operations", function () {
+        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#f; }", [true, "Bool"]);
+        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#f; }", [false, "Bool"]);
+
+        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#g; }", [false, "Bool"]);
+        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#g; }", [true, "Bool"]);
+    });
+});

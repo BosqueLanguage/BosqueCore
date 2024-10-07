@@ -47,3 +47,14 @@ describe ("Checker -- type alias strict equals", () => {
         checkTestFunctionError("type Foo = Int; function main(): Bool { return 1i<Foo> === 1i; }", "Types Foo and Int are not comparable");
     });
 });
+
+describe ("Checker -- enum strict equals", () => {
+    it("should check enum strict equals operations", function () {
+        checkTestFunction("enum Foo { f, g } function main(): Bool { return Foo#f === Foo#f; }");
+        checkTestFunction("enum Foo { f, g } function main(): Bool { return Foo#f !== Foo#f; }");
+    });
+
+    it("should check enum fail strict equals operations", function () {
+        checkTestFunctionError("enum Foo { f, g } function main(): Bool { return Foo#f !== 1i; }", "Types Foo and Int are not comparable");
+    });
+});

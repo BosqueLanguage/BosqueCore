@@ -250,8 +250,12 @@ class EmitNameManager {
         }
     }
 
+    static generateAccssorNameForEnumMember(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, ename: string): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.${ename}`;
+    }
+
     static generateAccssorNameForTypeConstant(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
-        return `${this.emitTypeAccess(currentns, ttype)}.${cv.name}`;
+        return `${this.emitTypeAccess(currentns, ttype)}.${cv.name}()`;
     }
 
     static generateAccssorNameForTypeFunction(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, fv: TypeFunctionDecl, terms: TypeSignature[]): string {
