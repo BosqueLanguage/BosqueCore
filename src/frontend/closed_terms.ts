@@ -303,7 +303,7 @@ class InstantiationPropagator {
     }
 
     private instantiateAccessEnumExpression(exp: AccessEnumExpression) {
-        assert(false, "Not Implemented -- instantiateAccessEnumExpression");
+        this.instantiateTypeSignature(exp.stype, this.currentMapping);
     }
 
     private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {

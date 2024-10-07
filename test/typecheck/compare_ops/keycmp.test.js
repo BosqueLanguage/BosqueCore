@@ -33,11 +33,22 @@ describe ("Checker -- type alias KeyComparator equals/less", () => {
         checkTestFunction("type Foo = Int; function main(): Bool { return KeyComparator::equal<Foo>(0i<Foo>, 1i<Foo>); }");
     });
 
-    it("should check fail KeyComparator operations", function () {
+    it("should check fail type alias KeyComparator operations", function () {
         checkTestFunctionError("type Foo = Int; function main(): Bool { return KeyComparator::equal<Foo>(0i<Foo>, 1i); }", "Type Int is not a (keytype) of Foo");
     });
 
     it("should check fail (bad K) KeyComparator operations", function () {
         checkTestFunctionError("type Foo = Float; function main(): Bool { return KeyComparator::equal<Foo>(0.0f<Foo>, 1.0f<Foo>); }", "Type Foo is not a (keytype) of Foo");
+    });
+});
+
+describe ("Checker -- enum KeyComparator equals/less", () => {
+    it("should check KeyComparator operations", function () {
+        checkTestFunction("enum Foo { f, g } function main(): Bool { return KeyComparator::equal<Foo>(Foo#f, Foo#g); }");
+        checkTestFunction("enum Foo { f, g } function main(): Bool { return KeyComparator::less<Foo>(Foo#f, Foo#g); }");
+    });
+
+    it("should check fail enum KeyComparator operations", function () {
+        checkTestFunctionError("enum Foo { f, g } function main(): Bool { return KeyComparator::equal<Foo>(Foo#f, 1i); }", "Type Int is not a (keytype) of Foo");
     });
 });

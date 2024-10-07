@@ -3811,19 +3811,8 @@ class TypeChecker {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
 
         this.checkProvides(tdecl.provides);
-        tdecl.saturatedProvides = this.relations.resolveTransitiveProvidesDecls(rcvr, this.constraints).map((tli) => tli.tsig.remapTemplateBindings(tli.mapping));
- 
-        //Make sure that any provides types are not adding on fields, consts, or functions
-        const etype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        const providesdecls = this.relations.resolveTransitiveProvidesDecls(etype, this.constraints);
-        for(let i = 0; i < providesdecls.length; ++i) {
-            const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).invariants.length !== 0 || (pdecl.tsig.decl as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.tsig.decl.name}`);
-            this.checkError(tdecl.sinfo, (pdecl.tsig.decl as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.tsig.decl.name}`);
-        }
-
+        this.checkError(tdecl.sinfo, tdecl.provides.length !== 0, "Enums cannot have provides types");
+        
         this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
 
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
