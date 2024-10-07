@@ -3026,7 +3026,9 @@ class TypeChecker {
                 results.push(cenv);
             }
         }
-        
+
+        //TODO: once we have exhaustive for enums (and bools) then we should do a type check for exhaustive too
+
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }
 

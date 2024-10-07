@@ -1955,7 +1955,7 @@ class SwitchStatement extends Statement {
         const iil = fmt.indent(ttmf[0]);
         const iir = ttmf.slice(1).map((cc) => fmt.indent("| " + cc));
 
-        return `${mheader}{\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
+        return `${mheader} {\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
@@ -1983,7 +1983,7 @@ class MatchStatement extends Statement {
         const iil = fmt.indent(ttmf[0]);
         const iir = ttmf.slice(1).map((cc) => fmt.indent("| " + cc));
 
-        return `${mheader}{\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
+        return `${mheader} {\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
