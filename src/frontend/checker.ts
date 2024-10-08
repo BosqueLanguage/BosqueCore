@@ -3026,6 +3026,7 @@ class TypeChecker {
                 results.push(cenv);
             }
         }
+        stmt.mustExhaustive = exhaustive;
 
         //TODO: once we have exhaustive for enums (and bools) then we should do a type check for exhaustive too
 
@@ -3055,13 +3056,15 @@ class TypeChecker {
                 this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
                 exhaustive = true;
 
+                const lubattempt = this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints);
+                const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
+                stmt.implicitFinalType = defaulttype;
+
                 let cenv = env;
                 if(stmt.sval[1] !== undefined) {
-                    const lubattempt = this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints);
-                    const defaulttype = (lubattempt instanceof ErrorTypeSignature) ? eetype : lubattempt;
-
                     cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, defaulttype)
                 }
+                
                 cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
 
                 if(stmt.sval[1] !== undefined) {
@@ -3099,6 +3102,7 @@ class TypeChecker {
             }
         }
         
+        stmt.mustExhaustive = exhaustive;
         return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }
 

@@ -1940,6 +1940,8 @@ class SwitchStatement extends Statement {
     readonly sval: Expression;
     readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[];
 
+    mustExhaustive: boolean = false;
+
     constructor(sinfo: SourceInfo, sval: Expression, flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);
         this.sval = sval;
@@ -1962,6 +1964,9 @@ class SwitchStatement extends Statement {
 class MatchStatement extends Statement {
     readonly sval: [Expression, BinderInfo | undefined];
     readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
+
+    mustExhaustive: boolean = false;
+    implicitFinalType: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);

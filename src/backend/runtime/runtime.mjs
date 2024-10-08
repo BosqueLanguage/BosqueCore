@@ -86,6 +86,13 @@ const $Unwind_Validate = Symbol("ValidateFailed");
  **/
 const $Unwind_TypeAs = Symbol("TypeAsFailed");
 
+
+/**
+ * @constant
+ * @type {Symbol}
+ **/
+const $Unwind_NonExhaustive = Symbol("ExhaustiveFailed");
+
 /**
  * @constructor
  * @param {Symbol} tag
@@ -538,6 +545,18 @@ function _$dc_f(v, d, infod) {
 
 /**
  * @function
+ * @param {boolean} cond 
+ * @param {string | undefined} info 
+ * @throws {$Unwind}
+ **/
+function _$exhaustive(cond, info) {
+    if (!cond) {
+        throw new $Unwind($Unwind_NonExhaustive, info);
+    }
+}
+
+/**
+ * @function
  * @param {string | undefined} info 
  * @throws {$Unwind}
  **/
@@ -684,6 +703,7 @@ export {
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
+    _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval,
     _$accepts

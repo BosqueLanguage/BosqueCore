@@ -12,6 +12,7 @@ describe ("Parser -- switch Statement", () => {
         parseTestFunctionError("function main(): Int { let x = 3i; switch(x) { | 0i => { return 0i; } | _ => { return 1i; } } }", "Unexpected token in expression -- |");
         parseTestFunctionError("function main(): Int { let x = 3i; switch(x) { 0i => return 0i; | _ => return 1i; } }", 'Expected "{" but got "return" when parsing "block statement"');
         parseTestFunctionError("function main(): Int { let x = 3i; switch(x) { 0i => { return 0i; } _ => { return 1i; } } }", 'Expected "}" but got "_" when parsing "switch statement options"');
+        parseTestFunctionError("function main(): Int { let x = 3i; switch(x) { (1i + 2i) => { return 0i; } | _ => { return 1i; } } }", 'Expected literal expression');
     });
 
     it("should parse enum switch", function () {

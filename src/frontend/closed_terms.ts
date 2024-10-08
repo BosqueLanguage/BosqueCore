@@ -959,6 +959,10 @@ class InstantiationPropagator {
                 this.instantiateTypeSignature(mtype, this.currentMapping);
             }
         }
+
+        if(stmt.implicitFinalType !== undefined) {
+            this.instantiateTypeSignature(stmt.implicitFinalType, this.currentMapping);
+        }
     }
 
     private instantiateAbortStatement(stmt: AbortStatement) {
