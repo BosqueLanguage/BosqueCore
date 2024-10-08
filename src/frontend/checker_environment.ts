@@ -239,11 +239,12 @@ class TypeEnvironment {
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
         let locals: VarInfo[][] = [];
+        const normalenvs = envs.filter((e) => e.normalflow);
         for(let i = 0; i < origenv.locals.length; i++) {
             let frame: VarInfo[] = [];
 
             for(let j = 0; j < origenv.locals[i].length; j++) {
-                const mdef = envs.every((e) => (e.resolveLocalVarInfoFromScopeName(origenv.locals[i][j].scopename) as VarInfo).mustDefined);
+                const mdef = normalenvs.every((e) => (e.resolveLocalVarInfoFromScopeName(origenv.locals[i][j].scopename) as VarInfo).mustDefined);
                 frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].scopename, origenv.locals[i][j].decltype, origenv.locals[i][j].itype, origenv.locals[i][j].isConst, mdef, origenv.locals[i][j].isRef));
             }
 

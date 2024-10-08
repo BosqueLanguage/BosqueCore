@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'const JSMap = Map;\n' +
 '\n' +
-'import {_$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
+'import {_$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -1473,11 +1473,74 @@ class JSEmitter {
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: JSCodeFormatter): string {
-        assert(false, "Not implemented -- Switch");
+        const val = this.emitExpression(stmt.sval, true);
+        const ecases = stmt.switchflow.slice(0, -1).map((cc, ii) => {
+            const cval = this.emitExpression((cc.lval as LiteralExpressionValue).exp, true);
+            const cbody = this.emitBlockStatement(cc.value, fmt);
+            return (ii !== 0 ? fmt.indent("else ") : "") + `if (_$feqraw(${val}, ${cval})) ${cbody}`;
+        });
+
+        const finalop = stmt.switchflow[stmt.switchflow.length - 1];
+        let elseval: string = "";
+        if(stmt.mustExhaustive) {
+            elseval = fmt.indent(`else ${this.emitBlockStatement(finalop.value, fmt)}`);
+        }
+        else {
+            fmt.indentPush();
+            const relseval = fmt.indent(this.emitBlockStatement(finalop.value, fmt));
+            const cval = this.emitExpression((finalop.lval as LiteralExpressionValue).exp, true);
+            const chkstmt = fmt.indent(`_$exhaustive(_$feqraw(${val}, ${cval}), ${this.getErrorInfo("exhaustive switch", stmt.sinfo, undefined)});`);
+            fmt.indentPop();
+
+            elseval = fmt.indent(`else {\n${chkstmt}\n${relseval}\n${fmt.indent("}")}`);
+        }
+
+        return [...ecases, elseval].join("\n");
+    }
+
+    private emitMatchCase(mtype: TypeSignature, value: BlockStatement, vval: string, vtype: TypeSignature, binderinfo: BinderInfo | undefined, fmt: JSCodeFormatter): [string, string] {
+        const ttest = `(${this.emitITestAsTest_Type(vval, vtype, mtype, false)})`;
+        
+        if(binderinfo === undefined) {
+            return [ttest, this.emitBlockStatement(value, fmt)];
+        }
+        else {
+            this.bindernames.add(binderinfo.scopename);
+            const bindexp = this.emitBUAsNeeded(vval, vtype, mtype);
+
+            fmt.indentPush();
+            const blck = this.emitBlockStatement(value, fmt);
+            fmt.indentPop();
+
+            return [ttest, `{ let ${binderinfo.scopename} = ${bindexp}; ${blck}\n${fmt.indent("}")}`];
+        }
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: JSCodeFormatter): string {
-        assert(false, "Not implemented -- Match");
+        const val = this.emitExpression(stmt.sval[0], true);
+        const ecases = stmt.matchflow.slice(0, -1).map((cc, ii) => {
+            const ccase = this.emitMatchCase(cc.mtype as TypeSignature, cc.value, val, stmt.sval[0].getType(), stmt.sval[1], fmt);
+            return (ii !== 0 ? fmt.indent("else if ") : "if ") + ccase[0] + " " + ccase[1];
+        });
+
+        const finalop = stmt.matchflow[stmt.matchflow.length - 1];    
+        let elseval: string = "";
+        if(stmt.mustExhaustive) {
+            const ccase = this.emitMatchCase((finalop.mtype || stmt.implicitFinalType) as TypeSignature, finalop.value, val, stmt.sval[0].getType(), stmt.sval[1], fmt);
+            elseval = fmt.indent(`else ${ccase[1]}`);
+        }
+        else {
+            
+            fmt.indentPush();
+            const ccase = this.emitMatchCase((finalop.mtype || stmt.implicitFinalType) as TypeSignature, finalop.value, val, stmt.sval[0].getType(), stmt.sval[1], fmt);
+            const chkstmt = fmt.indent(`_$exhaustive(${ccase[0]}, ${this.getErrorInfo("exhaustive switch", stmt.sinfo, undefined)});`);
+            const bbody = fmt.indent(ccase[1]);
+            fmt.indentPop();
+
+            elseval = fmt.indent(`else {\n${chkstmt}\n${bbody}\n${fmt.indent("}")}`);
+        }
+
+        return [...ecases, elseval].join("\n");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
