@@ -293,7 +293,7 @@ class DeclarationAttibute {
     }
 
     emit(): string {
-        if(this.text === undefined) {
+        if(this.name === "doc") {
             return `%** ${this.text} **%`;
         }
         else {
