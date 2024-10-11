@@ -9,7 +9,15 @@ namespace ListOps {
     } 
 
     function s_list_size<T>(l: List<T>): Nat {
-        return l.value.size();
+        return size(l.value);
+    }
+
+    function s_list_get<T>(l: List<T>, idx: Nat): T {
+        return get(l, idx);
+    }
+
+    function s_list_push_back<T>(l: List<T>, v: T): List<T> {
+        return pushBack(l.value, v);
     }
 
     enum Color {
@@ -17,6 +25,55 @@ namespace ListOps {
         Black,
         BB,
         NB
+    }
+
+    function computeColor<T>(t: Tree<T>): Color {
+        match(t)@ {
+            BBLeaf<T> => { return Color#Black; }
+            | Leaf<T> => { return Color#Black; }
+            | Node<T> => { return $t.c; }
+        }
+    }
+
+    recursive function checkRBChildColorInvariant<T>(t: Tree<T>): Bool {
+        if(t)@@!<Node<T>> {
+            return true;
+        }
+
+        if(t.c === Color#Red) {
+            let islred = if(t.l)@<Node<T>> then $_.c === Color#Red  else false;
+            let isrred = if(t.r)@<Node<T>> then $_.c === Color#Red  else false;
+
+            return \/(islred, isrred);
+        }
+        
+        return checkRBChildColorInvariant[recursive]<T>(t.l) && checkRBChildColorInvariant[recursive]<T>(t.r);
+    }
+
+    recursive function checkRBPathLengthInvariant<T>(t: Tree<T>): Int {
+        if(t)@@!<Node<T>> {
+            return 0;
+        }
+
+        let lc = checkRBPathLengthInvariant[recursive]<T>(t.l);
+        if(lc == -1) {
+            return -1;
+        }
+
+        let rc = checkRBPathLengthInvariant[recursive]<T>(t.r);
+        if(rc == -1) {
+            return -1;
+        }
+
+        if(lc != rc) {
+            return -1; %% we have a black height mismatch return sentinel value
+        }
+
+        return if(t.c === Color#Black) then lc + 1i else lc;
+    }
+
+    function checkRBInvariants<T>(t: Tree<T>): Bool {
+       return checkRBChildColorInvariant<T>(t) && checkRBPathLengthInvariant<T>(t) >= 0;
     }
 
     function blacken(c: Color): Color {
@@ -250,11 +307,39 @@ namespace ListOps {
         return Tree<T>::createNode(c, tleft, tright);
     }
 
+    function size<T>(t: Tree<T>): Nat {
+        match(t)@ {
+            BBLeaf<T> => { return 0n; }
+            | Leaf<T> => { return 1n; }
+            | Node<T> => { return $t.count; }
+        }
+    }
+
+    recursive function get<T>(t: Tree<T>, idx: Nat): T {
+        if(t)@<Leaf<T>> {
+            return $t.v;
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+
+            let count = size<T>(nn.l);
+            if(idx < count) {
+                return get[recursive]<T>(nn.l, idx);
+            }
+            else {
+                return get[recursive]<T>(nn.r, idx - count);
+            }
+        }
+    }
+
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(this)@ {
             BBLeaf<T> => { return Tree<T>::createLeaf(v); }
             | Leaf<T> => { return balance<T>(Color#Black, $this, Tree<T>::createLeaf(v)); }
-            | Node<T> => { return balance<T>(Color#Black, $this, Tree<T>::createLeaf(v)); }
+            | Node<T> => { 
+                let nr = pushBack_helper[recursive]<T>($this.r, v);
+                return balance<T>(Color#Black, $this.l, nr); 
+            }
         }
     }
 
@@ -280,15 +365,7 @@ namespace ListOps {
         }
 
         function createNode(c: Color, l: Tree<T>, r: Tree<T>): Node<T> {
-            return Node<T>{c, l.size() + r.size(), l, r};
-        }
-
-        method size(): Nat {
-            match(this)@ {
-                BBLeaf<T> => { return 0n; }
-                | Leaf<T> => { return 1n; }
-                | Node<T> => { return $this.count; }
-            }
+            return Node<T>{c, size<T>(l) + size<T>(r), l, r};
         }
     }
 }
