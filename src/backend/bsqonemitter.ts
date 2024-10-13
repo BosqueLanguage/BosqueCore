@@ -1,18 +1,20 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../frontend/assembly.js";
+import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
-import { TypeInstantiationInfo } from "../frontend/instantiation_map.js";
+import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../frontend/body.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 
 class BSQONTypeInfoEmitter {
     readonly assembly: Assembly;
-
+    readonly instantiation: NamespaceInstantiationInfo;
+    
     mapper: TemplateNameMapper | undefined;
 
-    constructor(assembly: Assembly) {
+    constructor(assembly: Assembly, instantiation: NamespaceInstantiationInfo) {
         this.assembly = assembly;
+        this.instantiation = instantiation;
     }
 
     private static generateRcvrForNominalAndBinds(ntype: AbstractNominalTypeDecl, binds: TemplateNameMapper | undefined, implicitbinds: string[] | undefined): NominalTypeSignature {
@@ -34,12 +36,8 @@ class BSQONTypeInfoEmitter {
         return this.mapper !== undefined ? ttype.remapTemplateBindings(this.getTemplateMapper()) : ttype;
     }
 
-    private emitTypeAttributes(attrs: DeclarationAttibute[], isrecursive: boolean): any {
+    private emitTypeAttributes(attrs: DeclarationAttibute[]): any {
         let attr: any = {};
-
-        if(isrecursive) {
-            attr.isrecursive = true;
-        }
 
         const docattr = attrs.find((aa) => aa.name === "doc");
         if(docattr !== undefined) {
@@ -55,14 +53,41 @@ class BSQONTypeInfoEmitter {
     }
 
     private emitFieldAttributes(attrs: DeclarationAttibute[]): any {
-        xxxx;
+        let attr: any = {};
+
+        const docattr = attrs.find((aa) => aa.name === "doc");
+        if(docattr !== undefined) {
+            attr.docstring = docattr.text;
+        }
+
+        const sensattr = attrs.find((aa) => aa.name === "sensitive");
+        if(sensattr !== undefined) {
+            attr.sensitive = sensattr.tags.map((aa) => [aa.enumType.tkeystr, aa.tag]);
+        }
+
+        return attr;
     }
 
     private emitSuperTypes(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string[] {
-        xxxx;
+        if(tdecl.name !== "None") {
+            return tdecl.saturatedProvides.map((ss) => ss.tkeystr);
+        }
+        else {
+            const optinsts = this.instantiation.typebinds.get("Option");
+            if(optinsts === undefined) {
+                return [];
+            }
+
+            const optiondecl = this.assembly.getCoreNamespace().typedecls.find((tdcl) => tdcl.name === "Option") as OptionTypeDecl;
+            return optinsts.map((inst) => {
+                const oftype = (inst.binds as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), "T"));
+                const optiontype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, optiondecl, [oftype]);
+                return optiontype.tkeystr
+            });
+        }
     }
 
-    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, tag: string, isentity: boolean, isrecursive: boolean): any {
+    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, tag: string, isentity: boolean): any {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
         }
@@ -71,7 +96,7 @@ class BSQONTypeInfoEmitter {
 
         decl.tag = tag;
         if(tdecl.attributes.length !== 0) {
-            decl.attributes = this.emitTypeAttributes(tdecl.attributes, isrecursive);
+            decl.attributes = this.emitTypeAttributes(tdecl.attributes);
         }
         
         decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
@@ -93,13 +118,14 @@ class BSQONTypeInfoEmitter {
         }
 
         decl.tkey = rcvr.tkeystr;
+        decl.name = decl.name;
 
         this.mapper = undefined;
 
         return decl;
     }
 
-    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, rcvr: NominalTypeSignature, instantiation: TypeInstantiationInfo, tag: string, isrecursive: boolean): any {
+    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, rcvr: NominalTypeSignature, instantiation: TypeInstantiationInfo, tag: string): any {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
         }
@@ -108,11 +134,12 @@ class BSQONTypeInfoEmitter {
 
         decl.tag = tag;
         if(tdecl.attributes.length !== 0) {
-            decl.attributes = this.emitTypeAttributes(tdecl.attributes, isrecursive);
+            decl.attributes = this.emitTypeAttributes(tdecl.attributes);
         }
 
         decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
         decl.tkey = rcvr.tkeystr;
+        decl.name = decl.name;
 
         this.mapper = undefined;
         
@@ -121,7 +148,7 @@ class BSQONTypeInfoEmitter {
 
     private emitPrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "PrimitiveEntity", false);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "PrimitiveEntity");
     }
 
     private emitEnumTypeDecl(tdecl: EnumTypeDecl): any {
@@ -131,27 +158,28 @@ class BSQONTypeInfoEmitter {
 
         decl.tag = "EnumEntity";
         if(tdecl.attributes.length !== 0) {
-            decl.attributes = this.emitTypeAttributes(tdecl.attributes, false);
+            decl.attributes = this.emitTypeAttributes(tdecl.attributes);
         }
 
         decl.variants = tdecl.members;
 
         decl.supertypes = [];
         decl.tkey = rcvr.tkeystr;
+        decl.name = decl.name;
 
         this.mapper = undefined;
         
         return decl;
     }
 
-    private emitTypedeclTypeDecl(tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo): any {
+    private emitTypedeclTypeDecl(tdecl: TypedeclTypeDecl): any {
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
 
         let decl: any = {};
 
         decl.tag = "TypeDecl";
         if(tdecl.attributes.length !== 0) {
-            decl.attributes = this.emitTypeAttributes(tdecl.attributes, false);
+            decl.attributes = this.emitTypeAttributes(tdecl.attributes);
         }
 
         if(tdecl.optofexp !== undefined) {
@@ -169,22 +197,23 @@ class BSQONTypeInfoEmitter {
 
         decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
         decl.tkey = rcvr.tkeystr;
+        decl.name = decl.name;
 
         return decl;
     }
 
-    private emitOkTypeDecl(tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitOkTypeDecl(tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
-        const okdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result::Ok", isrecursive);
+        const okdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result::Ok");
         okdecl.ttype = rcvr.alltermargs[0].tkeystr;
         okdecl.etype = rcvr.alltermargs[1].tkeystr;
 
         return okdecl;
     }
 
-    private emitFailTypeDecl(tdecl: FailTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitFailTypeDecl(tdecl: FailTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
-        const faildecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result::Fail", isrecursive);
+        const faildecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result::Fail");
         faildecl.ttype = rcvr.alltermargs[0].tkeystr;
         faildecl.etype = rcvr.alltermargs[1].tkeystr;
 
@@ -193,7 +222,7 @@ class BSQONTypeInfoEmitter {
 
     private emitAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
-        const rejecteddecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Rejected", false);
+        const rejecteddecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Rejected");
         rejecteddecl.ttype = rcvr.alltermargs[0].tkeystr;
 
         return rejecteddecl;
@@ -201,7 +230,7 @@ class BSQONTypeInfoEmitter {
 
     private emitAPIFailedTypeDecl(tdecl: APIFailedTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
-        const faileddecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Failed", false);
+        const faileddecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Failed");
         faileddecl.ttype = rcvr.alltermargs[0].tkeystr;
 
         return faileddecl;
@@ -209,7 +238,7 @@ class BSQONTypeInfoEmitter {
 
     private emitAPIErrorTypeDecl(tdecl: APIErrorTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
-        const errordecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Error", false);
+        const errordecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Error");
         errordecl.ttype = rcvr.alltermargs[0].tkeystr;
 
         return errordecl;
@@ -217,155 +246,221 @@ class BSQONTypeInfoEmitter {
 
     private emitAPISuccessTypeDecl(tdecl: APISuccessTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
-        const successdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Success", false);
+        const successdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult::Success");
         successdecl.ttype = rcvr.alltermargs[0].tkeystr;
 
         return successdecl;
     }
 
-    private emitSomeTypeDecl(tdecl: SomeTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitSomeTypeDecl(tdecl: SomeTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const somedecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Some", isrecursive);
+        const somedecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Some");
         somedecl.oftype = rcvr.alltermargs[0].tkeystr;
 
         return somedecl;
     }
 
-    private emitMapEntryTypeDecl(tdecl: MapEntryTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitMapEntryTypeDecl(tdecl: MapEntryTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const medecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "MapEntry", isrecursive);
+        const medecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "MapEntry");
         medecl.ktype = rcvr.alltermargs[0].tkeystr;
         medecl.vtype = rcvr.alltermargs[1].tkeystr;
 
         return medecl;
     }
 
-    private emitListTypeDecl(tdecl: ListTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitListTypeDecl(tdecl: ListTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const ldecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "List", isrecursive);
+        const ldecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "List");
         ldecl.oftype = rcvr.alltermargs[0].tkeystr;
 
         return ldecl;
     }
 
-    private emitStackTypeDecl(tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitStackTypeDecl(tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const sdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Stack", isrecursive);
+        const sdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Stack");
         sdecl.oftype = rcvr.alltermargs[0].tkeystr;
 
         return sdecl;
     }
 
-    private emitQueueTypeDecl(tdecl: QueueTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitQueueTypeDecl(tdecl: QueueTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const qdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Queue", isrecursive);
+        const qdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Queue");
         qdecl.oftype = rcvr.alltermargs[0].tkeystr;
 
         return qdecl;
     }
 
-    private emitSetTypeDecl(tdecl: SetTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitSetTypeDecl(tdecl: SetTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const sdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Set", isrecursive);
+        const sdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Set");
         sdecl.oftype = rcvr.alltermargs[0].tkeystr;
 
         return sdecl;
     }
 
-    private emitMapTypeDecl(tdecl: MapTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitMapTypeDecl(tdecl: MapTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const mdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Map", isrecursive);
+        const mdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Map");
         mdecl.ktype = rcvr.alltermargs[0].tkeystr;
         mdecl.vtype = rcvr.alltermargs[1].tkeystr;
 
         return mdecl;
     }
 
-    private emitEntityTypeDecl(tdecl: EntityTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
-        const rcvr = JSEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        
-        const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
-        fmt.indentPop();
-
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
-
-        if(tdecl.terms.length !== 0) {
-            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
-        }
-        else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
-        }
-    }
-
-    private emitOptionTypeDecl(tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
-        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [], undefined);
-    }
-
-    private emitResultTypeDecl(tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
-        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [okdecl, faildecl], undefined);
-    }
-
-    private emitAPIResultTypeDecl(tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
-        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [rejecteddecl, faileddecl, errordecl, successdecl], undefined);
-    }
-
-    private emitConceptTypeDecl(tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitEntityTypeDecl(tdecl: EntityTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
-        fmt.indentPop();
-
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
-
-        if(tdecl.terms.length !== 0) {
-            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
-        }
-        else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
-        }
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdEntity", true);
     }
 
-    private emitDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitOptionTypeDecl(tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        
-        const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
-        fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
-        fmt.indentPop();
-
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
-
-        if(tdecl.terms.length !== 0) {
-            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
-        }
-        else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
-        }
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Option");
     }
 
-    private emitDatatypeTypeDecl(tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, isrecursive: boolean): any {
+    private emitResultTypeDecl(tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result");
+    }
+
+    private emitAPIResultTypeDecl(tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "APIResult");
+    }
+
+    private emitConceptTypeDecl(tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
-        fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
-        fmt.indentPop();
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdConcept", false);
+    }
 
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
+    private emitDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdEntity", true);
+    }
 
-        if(tdecl.terms.length !== 0) {
-            return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
+    private emitDatatypeTypeDecl(tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdConcept", false);
+    }
+
+    private emitTypes(tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo): any[] {
+        let alldecls: any[] = [];
+        
+        for(let i = 0; i < tdecl.length; ++i) {
+            const tt = tdecl[i];
+            const iinsts = asminstantiation.typebinds.get(tt.name);
+            if(iinsts === undefined) {
+                continue;
+            }
+
+            for(let j = 0; j < iinsts.length; ++j) {
+                const instantiation = iinsts[j];
+
+                if(tt instanceof EnumTypeDecl) {
+                    alldecls.push(this.emitEnumTypeDecl(tt));
+                }
+                else if(tt instanceof TypedeclTypeDecl) {
+                    alldecls.push(this.emitTypedeclTypeDecl(tt));
+                }
+                else if(tt instanceof PrimitiveEntityTypeDecl) {
+                    alldecls.push(this.emitPrimitiveEntityTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof OkTypeDecl) {
+                    alldecls.push(this.emitOkTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof FailTypeDecl) {
+                    alldecls.push(this.emitFailTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof APIRejectedTypeDecl) {
+                    alldecls.push(this.emitAPIRejectedTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof APIFailedTypeDecl) {
+                    alldecls.push(this.emitAPIFailedTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof APIErrorTypeDecl) {
+                    alldecls.push(this.emitAPIErrorTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof APISuccessTypeDecl) {
+                    alldecls.push(this.emitAPISuccessTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof SomeTypeDecl) {
+                    alldecls.push(this.emitSomeTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof MapEntryTypeDecl) {
+                    alldecls.push(this.emitMapEntryTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof ListTypeDecl) {
+                    alldecls.push(this.emitListTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof StackTypeDecl) {
+                    alldecls.push(this.emitStackTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof QueueTypeDecl) {
+                    alldecls.push(this.emitQueueTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof SetTypeDecl) {
+                    alldecls.push(this.emitSetTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof MapTypeDecl) {
+                    alldecls.push(this.emitMapTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof EventListTypeDecl) {
+                    ; //no-op for parsing as we don't emit these
+                }
+                else if(tt instanceof EntityTypeDecl) {
+                    alldecls.push(this.emitEntityTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof OptionTypeDecl) {
+                    alldecls.push(this.emitOptionTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof ResultTypeDecl) {
+                    alldecls.push(this.emitResultTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof APIResultTypeDecl) {
+                    alldecls.push(this.emitAPIResultTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof ConceptTypeDecl) {
+                    alldecls.push(this.emitConceptTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+                    alldecls.push(this.emitDatatypeMemberEntityTypeDecl(tt, instantiation));
+                }
+                else if(tt instanceof DatatypeTypeDecl) {
+                    alldecls.push(this.emitDatatypeTypeDecl(tt, instantiation));
+                }
+                else {
+                    assert(false, "Unknown type decl kind");
+                }
+            }
         }
-        else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
-        }
+
+        return alldecls;
+    }
+
+    private emitNamespace(nsdecl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {ns: any, types: any[]} {
+        let decl: any = {};
+
+        decl.istoplevel = nsdecl.isTopNamespace;
+
+        decl.imports = nsdecl.usings.map((usd) => [usd.fromns, usd.asns || usd.fromns]);
+        decl.ns = nsdecl.name;
+
+        decl.subns = nsdecl.subns.map((snd) => [snd.name, snd.fullnamespace.emit()]);
+        
+        const tdecls = this.emitTypes(decl.typedecls, asminstantiation);
+        decl.types = tdecls.map((td) => [td.name, td.tkey]);
+        
+        //
+        //TODO: later something with APIS too!
+        //
+        
+        return {ns: decl, types: tdecls};
     }
 }
 
