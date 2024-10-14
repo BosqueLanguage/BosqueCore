@@ -370,13 +370,5 @@ namespace ListOps {
     }
 }
 #else
-namespace ListOps {
-    __safe function s_list_empty<T>(l: List<T>): Bool = s_list_empty; 
-    __safe function s_list_size<T>(l: List<T>): Nat = s_list_size; 
-
-    __assume_safe function s_list_get<T>(l: List<T>, i: Nat): T = s_list_get;
-    __assume_safe function s_list_back<T>(l: List<T>): T = s_list_back;
-    __assume_safe function s_list_front<T>(l: List<T>): T = s_list_front;
-}
 #endif %% EXEC_LIBS
 #endif %% STRIPPED_CORE
