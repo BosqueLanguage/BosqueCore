@@ -8,13 +8,13 @@ import { SourceInfo } from "../frontend/build_decls.js";
 
 class BSQONTypeInfoEmitter {
     readonly assembly: Assembly;
-    readonly instantiation: NamespaceInstantiationInfo;
+    readonly coreinstantiation: NamespaceInstantiationInfo;
     
     mapper: TemplateNameMapper | undefined;
 
-    constructor(assembly: Assembly, instantiation: NamespaceInstantiationInfo) {
+    constructor(assembly: Assembly, coreinstantiation: NamespaceInstantiationInfo) {
         this.assembly = assembly;
-        this.instantiation = instantiation;
+        this.coreinstantiation = coreinstantiation;
     }
 
     private static generateRcvrForNominalAndBinds(ntype: AbstractNominalTypeDecl, binds: TemplateNameMapper | undefined, implicitbinds: string[] | undefined): NominalTypeSignature {
@@ -73,7 +73,7 @@ class BSQONTypeInfoEmitter {
             return tdecl.saturatedProvides.map((ss) => ss.tkeystr);
         }
         else {
-            const optinsts = this.instantiation.typebinds.get("Option");
+            const optinsts = this.coreinstantiation.typebinds.get("Option");
             if(optinsts === undefined) {
                 return [];
             }
@@ -461,6 +461,45 @@ class BSQONTypeInfoEmitter {
         //
         
         return {ns: decl, types: tdecls};
+    }
+
+    private emitElistInfo(): any[] {
+        assert(false, "TODO: handle EList type info in assembly instantiations");
+    }
+
+    static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
+        let decl: any = {};
+
+        const nscore = asminstantiation.find((ai) => ai.ns.emit() === "Core") as NamespaceInstantiationInfo;
+        const emitter = new BSQONTypeInfoEmitter(assembly, nscore);
+
+        decl.namespaces = [];
+        decl.typerefs = [];
+        let nsworklist: NamespaceDeclaration[] = [...assembly.toplevelNamespaces];
+        while(nsworklist.length !== 0) {
+            const nsdecl = nsworklist.pop() as NamespaceDeclaration;
+            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                const nsemit = emitter.emitNamespace(nsdecl, nsii);
+
+                decl.namespaces.push(nsemit.ns);
+                decl.typerefs.push(...nsemit.types);
+                decl.typerefs.push(...emitter.emitElistInfo());
+
+                nsworklist.push(...nsdecl.subns);
+            }
+        }
+        
+        //
+        //TODO: Recursive Sets here!!!
+        //
+
+        if(includeregexinfo) {
+            decl.resystem = assembly.toplevelNamespaces.flatMap((ns) => assembly.loadConstantsAndValidatorREs(ns));
+        }
+
+        return decl;
     }
 }
 
