@@ -1729,7 +1729,7 @@ class InstantiationPropagator {
         }
 
         for(let i = 0; i < decl.subns.length; ++i) {
-            this. instantiateRootNamespaceDeclaration(decl.subns[i]);
+            this.instantiateRootNamespaceDeclaration(decl.subns[i]);
         }
     }
 
