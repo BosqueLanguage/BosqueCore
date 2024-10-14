@@ -2714,7 +2714,6 @@ class JSEmitter {
     }
 
     private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], supers: string[], tests: string[]} {
-        let ttdecls: string[] = [];
         let alldecls: string[] = [];
         let allsupertypes: string[] = [];
         let alltests: string[] = [];
@@ -2870,7 +2869,7 @@ class JSEmitter {
             }
         }
 
-        return {decls: [...ttdecls, ...alldecls], supers: allsupertypes, tests: alltests};
+        return {decls: alldecls, supers: allsupertypes, tests: alltests};
     }
 
     private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {contents: string, tests: string[]} {
