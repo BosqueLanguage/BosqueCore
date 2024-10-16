@@ -4831,7 +4831,7 @@ class Parser {
         return provides;
     }
 
-    private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+    private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.peekToken().getSourceInfo();
@@ -4844,7 +4844,7 @@ class Parser {
         const stype = this.parseStdTypeSignature();
 
         this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-        const value = this.parseConstExpression(stype, this.env.getScope().boundtemplates);
+        const value = this.parseConstExpression(stype, typeTerms);
 
         if(constMembers === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
@@ -5056,7 +5056,7 @@ class Parser {
                 this.parseInvariantsInto(invariants, validates, typeTerms);
             }
             else if (this.testToken(KW_const)) {
-                this.parseConstMember(constMembers, allMemberNames, attributes);
+                this.parseConstMember(constMembers, allMemberNames, attributes, typeTerms);
             }
             else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
                 if(attributes.length !== 0) {

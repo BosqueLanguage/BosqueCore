@@ -1051,7 +1051,19 @@ class TypeChecker {
     }
 
     private checkAccessStaticFieldExpression(env: TypeEnvironment, exp: AccessStaticFieldExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkAccessStaticFieldExpression");
+        const tok = this.checkTypeSignature(exp.stype);
+        if(!tok) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const cconst = this.relations.resolveTypeConstant(exp.stype, exp.name, this.constraints);
+        if(cconst !== undefined) {
+            return exp.setType(cconst.member.declaredType.remapTemplateBindings(cconst.typeinfo.mapping));
+        }
+        else {
+            this.reportError(exp.sinfo, `Type ${exp.stype.emit()} does not have const field ${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
     }
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
@@ -1440,11 +1452,21 @@ class TypeChecker {
     }
     
     private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLogicActionAndExpression");
+        for(let i = 0; i < exp.args.length; ++i) {
+            const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `And expression is not a subtype of Bool`);
+        }
+
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkLogicActionOrExpression(env: TypeEnvironment, exp: LogicActionOrExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLogicActionOrExpression");
+        for(let i = 0; i < exp.args.length; ++i) {
+            const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `Or expression is not a subtype of Bool`);
+        }
+
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
@@ -2369,244 +2391,6 @@ class TypeChecker {
             }
         }
     }
-
-    /*
-    private checkAccessEnvValue(env: ExpressionTypeEnvironment, exp: AccessEnvValueExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk !== "write", `Can only access "environment" variables in task actions`);
-
-        const valtype = this.normalizeTypeOnly(exp.valtype, env.binds);
-        const restype = this.normalizeTypeOnly(new UnionTypeSignature(exp.sinfo, [exp.valtype, new NominalTypeSignature(exp.sinfo, "Core", ["None"])]), env.binds);
-
-        return env.setResultExpressionInfo(new TIRAccessEnvValueExpression(exp.sinfo, exp.keyname, this.toTIRTypeKey(valtype), this.toTIRTypeKey(restype), exp.orNoneMode), restype);
-    }
-
-    private checkAccessStaticField(env: ExpressionTypeEnvironment, exp: AccessStaticFieldExpression): ExpressionTypeEnvironment {
-        const oftype = this.normalizeTypeOnly(exp.stype, env.binds);
-        const cmf = this.resolveMemberConst(exp.sinfo, oftype, exp.name);
-        this.raiseErrorIf(exp.sinfo, cmf === undefined, `const ${exp.name} not defined on type ${oftype.typeID}`);
-
-        const cdecl = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
-        this.raiseErrorIf(exp.sinfo, (cdecl.decl.value as ConstantExpressionValue).captured.size !== 0, "Expression uses unbound variables");
-
-        const tirdecltype = this.toTIRTypeKey(cdecl.ttype);
-        const rtype = this.normalizeTypeOnly(cdecl.decl.declaredType, TemplateBindScope.createBaseBindScope(cdecl.oobinds));
-        
-        if (cdecl.ootype.attributes.includes("__enum_type")) {
-            this.m_pendingConstMemberDecls.push(cdecl);
-            return env.setResultExpressionInfo(new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, this.toTIRTypeKey(rtype)), rtype);
-        }
-        else {
-            const cexp = this.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.binds);
-
-            if (cexp !== undefined) {
-                return this.emitCoerceIfNeeded(this.checkExpression(env, cexp, rtype), exp.sinfo, rtype);
-            }
-            else {
-                this.m_pendingConstMemberDecls.push(cdecl);
-                return env.setResultExpressionInfo(new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, this.toTIRTypeKey(rtype)), rtype);
-            }
-        }
-    }
-
-    private checkPCodeInvokeExpression(env: ExpressionTypeEnvironment, exp: PCodeInvokeExpression): ExpressionTypeEnvironment {
-        const pco = env.argpcodes.get(exp.pcode);
-        if (pco !== undefined) {
-            const pcload = new TIRAccessVariableExpression(exp.sinfo, exp.pcode, pco.pcode.codekey);
-            const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pco.ftype.params[ii].type as ResolvedType), arg.sinfo, pco.ftype.params[ii].type as ResolvedType).expressionResult);
-            const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pco.ftype.resultType), pco.pcode, [pcload, ...args]);
-
-            return env.setResultExpressionInfo(pci, pco.ftype.resultType);
-        }
-        else {
-            const pcotry = env.capturedpcodes.get(exp.pcode);
-            this.raiseErrorIf(exp.sinfo, pcotry === undefined, `missing binding for lambda invoke -- ${exp.pcode}`);
-            const pco = pcotry as { pcode: TIRCodePack, ftype: ResolvedFunctionType };
-
-            const pcload = new TIRAccessCapturedVariableExpression(exp.sinfo, exp.pcode, pco.pcode.codekey);
-            const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pco.ftype.params[ii].type as ResolvedType), arg.sinfo, pco.ftype.params[ii].type as ResolvedType).expressionResult);
-            const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pco.ftype.resultType), pco.pcode, [pcload, ...args]);
-
-            return env.setResultExpressionInfo(pci, pco.ftype.resultType);
-        }
-    }
-
-    private checkCallStaticFunctionExpression(env: ExpressionTypeEnvironment, exp: CallStaticFunctionExpression): ExpressionTypeEnvironment {
-        const oftype = this.normalizeTypeOnly(exp.ttype, env.binds);
-
-        const fdecltry = this.resolveMemberFunction(exp.sinfo, oftype, exp.name);
-        this.raiseErrorIf(exp.sinfo, (fdecltry === undefined), `Static function/operator not defined for type ${oftype.typeID}`);
-
-        const fdecl = fdecltry as OOMemberLookupInfo<StaticFunctionDecl>;
-        this.raiseErrorIf(exp.sinfo, fdecl.decl.invoke.terms.length !== exp.terms.length, "missing template types");
-        let binds = new Map<string, ResolvedType>();
-        for(let i = 0; i < fdecl.decl.invoke.terms.length; ++i) {
-            binds.set(fdecl.decl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
-        }
-        this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.decl.invoke.terms, TemplateBindScope.createBaseBindScope(fdecl.oobinds), binds, fdecl.decl.invoke.termRestrictions);
-
-        const fdeclscope = TemplateBindScope.createBaseBindScope(fdecl.oobinds).pushScope(binds);
-        const rtype = this.normalizeTypeOnly(fdecl.decl.invoke.resultType, fdeclscope);
-        const tirrtype = this.toTIRTypeKey(rtype);
-
-        if(oftype.typeID === "KeyType" && (exp.name === "less" || exp.name === "equal")) {
-            const ktype = binds.get("K") as ResolvedType;
-            this.raiseErrorIf(exp.sinfo, !this.subtypeOf(ktype, this.getSpecialKeyTypeConceptType()) || !ResolvedType.isGroundedType(ktype.options), "Invalid Key type argument");
-
-            this.raiseErrorIf(exp.sinfo, exp.args.length !== 2, "expected 2 arguments");
-            const lhsenv = this.checkExpression(env, exp.args[0], ktype);
-            this.raiseErrorIf(exp.sinfo, !this.subtypeOf(lhsenv.trepr, ktype), `expected arg of type ${ktype.typeID} but got ${lhsenv.trepr.typeID}`);
-            const rhsenv = this.checkExpression(env, exp.args[1], ktype);
-            this.raiseErrorIf(exp.sinfo, !this.subtypeOf(rhsenv.trepr, ktype), `expected arg of type ${ktype.typeID} but got ${rhsenv.trepr.typeID}`);
-
-            const tlhs = this.emitCoerceIfNeeded_NoCheck(lhsenv, exp.sinfo, ktype);
-            const trhs = this.emitCoerceIfNeeded_NoCheck(rhsenv, exp.sinfo, ktype);
-
-            if (exp.name === "equal") {
-                if(ResolvedType.isUniqueType(ktype)) {
-                    return env.setResultExpressionInfo(new TIRBinKeyEqBothUniqueExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
-                }
-                else {
-                    return env.setResultExpressionInfo(new TIRBinKeyEqGeneralExpression(exp.sinfo, this.toTIRTypeKey(ktype), tlhs.expressionResult, this.toTIRTypeKey(ktype), trhs.expressionResult), this.getSpecialBoolType());
-                }
-            }
-            else {
-                if(ResolvedType.isUniqueType(ktype)) {
-                    return env.setResultExpressionInfo(new TIRBinKeyUniqueLessExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
-                }
-                else {
-                    return env.setResultExpressionInfo(new TIRBinKeyGeneralLessExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
-                }
-            }
-        }
-        else if ((oftype.typeID === "String" || oftype.typeID === "ASCIIString") && exp.name === "interpolate") {
-            this.raiseError(exp.sinfo, "interpolate is not implemented yet");
-            return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, tirrtype), rtype);
-        }
-        else {
-            const [argexps, fargs, pcl] = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.decl.invoke.params, fdeclscope);
-
-            if (fdecl.decl.invoke.body !== undefined && fdecl.decl.invoke.body.body === "special_inject") {
-                return env.setResultExpressionInfo(new TIRInjectExpression(exp.sinfo, argexps[0], tirrtype), rtype);
-            }
-            else {
-                const fkey = TIRIDGenerator.generateInvokeForMemberFunction(this.toTIRTypeKey(fdecl.ttype), exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), pcl);
-            
-                let pcodes = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
-                fargs.forEach((ee) => {
-                    pcodes.set(ee[0], {iscapture: false, pcode: ee[2], ftype: ee[1]});
-                });
-                this.m_pendingFunctionMemberDecls.push({fkey: fkey, decl: fdecl, binds: binds, pcodes: pcodes});
-
-                const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, this.toTIRTypeKey(fdecl.ttype), exp.name, fkey, tirrtype, argexps);
-                return env.setResultExpressionInfo(tircall, rtype);
-            }
-        }
-    }
-
-    private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex): ExpressionTypeEnvironment {
-        this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => !(atom instanceof ResolvedTupleAtomType)), "Base of index expression must be of Tuple type");
-        this.raiseErrorIf(op.sinfo, op.index < 0, "Index cannot be negative");
-        this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => (atom as ResolvedTupleAtomType).types.length <= op.index), "Index may not be defined for tuple");
-
-        this.raiseErrorIf(op.sinfo, env.trepr.options.length !== 1, "only a single tuple is permitted -- todo: later want to generalize this")
-        const tiroftype = this.toTIRTypeKey(env.trepr);
-
-        const idxtype = (env.trepr.options[0] as ResolvedTupleAtomType).types[op.index];
-        const tiridxtype = this.toTIRTypeKey(idxtype);
-
-        return env.setResultExpressionInfo(new TIRLoadIndexExpression(op.sinfo, env.expressionResult, tiroftype, op.index, tiridxtype), idxtype);
-    }
-
-    private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName): ExpressionTypeEnvironment {
-        const isrecord = env.trepr.options.every((atom) => atom instanceof ResolvedRecordAtomType);
-        const isobj = env.trepr.options.every((atom) => atom instanceof ResolvedEntityAtomType || atom instanceof ResolvedConceptAtomType);
-
-        this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${env.trepr.typeID}`);
-        const tiroftype = this.toTIRTypeKey(env.trepr);
-
-        if (isrecord) {
-            this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => (atom as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) === undefined), `Property "${op.name}" not be defined for record`);
-
-            const rtype = ((env.trepr.options[0] as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) as {pname: string, ptype: ResolvedType}).ptype;
-            const tirrtype = this.toTIRTypeKey(rtype);
-
-            this.raiseErrorIf(op.sinfo, env.trepr.options.length === 0, "only non-virtual property loads are supported for now");
-            return env.setResultExpressionInfo(new TIRLoadPropertyExpression(op.sinfo, env.expressionResult, tiroftype, op.name, tirrtype), rtype);
-        }
-        else {
-            const fftry = this.resolveMemberField(op.sinfo, env.trepr, op.name);
-            this.raiseErrorIf(op.sinfo, fftry === undefined, `Could not resolve field "${op.name}" on type ${env.trepr.typeID}`);
-            const ff = fftry as OOMemberLookupInfo<MemberFieldDecl>;
-
-            const fftype = this.normalizeTypeOnly(ff.decl.declaredType, TemplateBindScope.createBaseBindScope(ff.oobinds));
-            const tirfftype = this.toTIRTypeKey(fftype);
-
-            const fkey = TIRIDGenerator.generateMemberFieldID(this.toTIRTypeKey(ff.ttype), op.name);
-
-            if(ff.ootype instanceof EntityTypeDecl) {
-                return env.setResultExpressionInfo(new TIRLoadFieldExpression(op.sinfo, tiroftype, env.expressionResult, fkey, tirfftype), fftype);
-            }
-            else {
-                return env.setResultExpressionInfo(new TIRLoadFieldVirtualExpression(op.sinfo, tirfftype, env.expressionResult, fkey, tirfftype), fftype);
-            }
-        }
-    }
-
-    private checkTaskSelfAction(env: ExpressionTypeEnvironment, exp: TaskSelfActionExpression, refop: boolean): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk !== "write", "This code does not permit task operations (not a task method/action)");
-        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
-
-        const mresolvetry = tsk.taskdecl.memberMethods.find((mm) => mm.name === exp.name);
-        this.raiseErrorIf(exp.sinfo, mresolvetry === undefined, `Could not resolve method name "${exp.name}" from type ${tasktype.typeID}`);
-        const mresolve = mresolvetry as MemberMethodDecl;
-
-        this.raiseErrorIf(exp.sinfo, refop !== mresolve.invoke.isThisRef, "Cannot call a action/ref function in this expression position");
-
-        this.raiseErrorIf(exp.sinfo, mresolve.invoke.terms.length !== exp.terms.length, "missing template types");
-        let binds = new Map<string, ResolvedType>();
-        for (let i = 0; i < mresolve.invoke.terms.length; ++i) {
-            binds.set(mresolve.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
-        }
-        this.checkTemplateTypesOnInvoke(exp.sinfo, mresolve.invoke.terms, TemplateBindScope.createBaseBindScope(tsk.taskbinds), binds, mresolve.invoke.termRestrictions);
-
-        const fdeclscope = TemplateBindScope.createBaseBindScope(tsk.taskbinds).pushScope(binds);
-        const rtype = this.normalizeTypeOnly(mresolve.invoke.resultType, fdeclscope);
-        const tirrtype = this.toTIRTypeKey(rtype);
-
-        const tirdecltype = this.toTIRTypeKey(tasktype);
-
-        const [argexps, fargs, pcl] = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params, fdeclscope);
-        let pcodes = new Map<string, { iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType }>();
-        fargs.forEach((ee) => {
-            pcodes.set(ee[0], { iscapture: false, pcode: ee[2], ftype: ee[1] });
-        });
-
-        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), pcl);
-        const mldecl = new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve);
-        this.m_pendingMethodMemberDecls.push({fkey: fkey, decl: mldecl, declaredecl: mldecl, binds: binds, pcodes: pcodes});
-
-        this.raiseErrorIf(exp.sinfo, exp.isSelfRef !== mresolve.hasAttribute("ref"), `mismatch on self/this ref at callsite ${mresolve.name}`);
-
-        if(mresolve.invoke.attributes.includes("task_action")) {
-            return env.setResultExpressionInfo(new TIRCallMemberActionExpression(exp.sinfo, this.m_scratchCtr++, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
-        }
-        else if (mresolve.invoke.isThisRef) {
-            return env.setResultExpressionInfo(new TIRCallMemberFunctionTaskSelfRefExpression(exp.sinfo, this.m_scratchCtr++, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
-        }
-        else {
-            return env.setResultExpressionInfo(new TIRCallMemberFunctionTaskExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
-        }
-    }
-
-    private checkTaskGetIDExpression(env: ExpressionTypeEnvironment, exp: TaskGetIDExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations");
-        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
-
-        return env.setResultExpressionInfo(new TIRTaskGetIDExpression(exp.sinfo, this.toTIRTypeKey(tasktype),  this.toTIRTypeKey(this.getSpecialTaskIDType())), this.getSpecialTaskIDType());
-    }
-    */
 
     private checkEmptyStatement(env: TypeEnvironment, stmt: EmptyStatement): TypeEnvironment {
         return env;

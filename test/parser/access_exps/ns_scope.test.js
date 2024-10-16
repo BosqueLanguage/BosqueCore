@@ -32,17 +32,17 @@ describe ("Parser -- access nested namespace functions", () => {
     });
 
     it("should parse nested cross", function () {
-        parseTestFunctionInFile("namespace NSX { function bar(): Int { return NSX::foo(); } function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
-        parseTestFunctionInFile("namespace NSX { function bar(): Int { return foo(); } function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
+        parseTestFunctionInFile("namespace NSX { function bar(): Int { return NSX::foo(); } function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
+        parseTestFunctionInFile("namespace NSX { function bar(): Int { return foo(); } function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
     });
 
     it("should parse nested up", function () {
-        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
-        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function bar(): Int { return Main::foo(); } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
+        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
+        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function bar(): Int { return Main::foo(); } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
     });
 
     it("should parse nested internal first", function () {
-        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function foo(): Int { return 0i; } function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
-        parseTestFunctionInFile("function foo(): Nat { return 3n; } namespace NSX { function foo(): Int { return 3i; } function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return NSX::bar(); }');
+        parseTestFunctionInFile("function foo(): Int { return 3i; } namespace NSX { function foo(): Int { return 0i; } function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
+        parseTestFunctionInFile("function foo(): Nat { return 3n; } namespace NSX { function foo(): Int { return 3i; } function bar(): Int { return foo(); } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::bar(); }');
     });
 });

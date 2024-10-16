@@ -11,7 +11,7 @@ describe ("Check -- op or", () => {
     });
 
     it("should fail bad type", function () {
-        checkTestExpError("\\/(false, 5i)", "Bool", "or_err1");
+        checkTestExpError("\\/(false, 5i)", "Bool", "Or expression is not a subtype of Bool");
         checkTestExpError("\\/(true)", "Int", "or_err2");
     });
 });

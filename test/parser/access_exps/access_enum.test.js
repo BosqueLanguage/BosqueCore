@@ -16,7 +16,7 @@ describe ("Parser -- Access Enum Simple", () => {
     });
 
     it("should fail bad :: vs # lookup", function () {
-        parseTestFunctionInFileError('enum Foo {f1, F2, _f3} function main(): Int { return Foo::F1; }', 'Unknown type scoped expression');
+        parseTestFunctionInFileError('enum Foo {f1, F2, _f3} function main(): Int { return Foo::F1; }', 'Invalid identifier name -- must start with a lowercase letter or _');
         parseTestFunctionInFileError('enum Foo {f1, F2, _f3} function main(): Int { return Foo.f1; }', 'Unknown type scoped expression');
     });
 });
