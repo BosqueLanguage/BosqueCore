@@ -28,7 +28,7 @@ describe ("Parser -- entity decl with default fields", () => {
 describe ("Parser -- entity decl with consts", () => {
     it("should parse entity with consts", function () {
         parseTestFunctionInFile('entity Foo { const c: Int = 3i; } [FUNC]', 'function main(): Int { return Foo::c; }'); 
-        parseTestFunctionInFile('entity Foo<T> { const c: Int = 3i; } [FUNC]', 'function main(): Int { return Foo.g; }'); 
+        parseTestFunctionInFile('entity Foo<T> { const c: Int = 3i; } [FUNC]', 'function main(): Int { return Foo::c; }'); 
     });
 
     it("should parse entity with consts errors", function () {

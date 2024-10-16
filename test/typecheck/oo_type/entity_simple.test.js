@@ -33,3 +33,26 @@ describe ("Checker -- entity decl with default fields", () => {
         checkTestFunctionInFileError('entity Foo { field f: Int; field g: Nat = $f; } function main(): Nat { return Foo{3i}.g; }', "Field initializer does not match declared type -- expected Nat but got Int");
     });
 });
+
+describe ("Checker -- entity decl with consts", () => {
+    it("should check entity with consts", function () {
+        checkTestFunctionInFile('entity Foo { const c: Int = 3i; } function main(): Int { return Foo::c; }'); 
+        checkTestFunctionInFile('entity Foo<T> { const c: Int = 3i; } function main(): Int { return Foo<Nat>::c; }'); 
+    });
+
+    it("should parse entity with consts errors", function () {
+        checkTestFunctionInFileError('entity Foo { field c: Int; const c: Int = 3i; } function main(): Nat { return Foo::c; }', "xerro9"); 
+
+        checkTestFunctionInFileError('entity Foo { const c: Int = 3i; } function main(): Nat { return Foo::c; }', "xerro3"); 
+        checkTestFunctionInFileError('entity Foo<T> { const c: Int = 3n; } function main(): Int { return Foo<Nat>::c; }', "xerro4"); 
+    });
+});
+
+describe ("Checker -- entity decl with functions", () => {
+    it("should check entity with consts", function () {
+        checkTestFunctionInFile('entity Foo { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }');
+
+        checkTestFunctionInFile('entity Foo<T> { function foo(x: T): T { return x; } } function main(): Int { return Foo<Int>::foo(3i); }');
+        checkTestFunctionInFile('entity Foo { function foo<T>(x: T): T { return x; } } function main(): Int { return Foo::foo<Int>(3i); }');
+    });
+});
