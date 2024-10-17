@@ -1454,8 +1454,9 @@ class Parser {
     //
     // Namespace resolution:
     // 1) Core namespace is always in scope and implicit
-    // 2) The current TOP-LEVEL namespace is always in scope and implicit
-    // 3) All other namespaces must be explicitly scoped -- so if I am in a sub-namespace I can either fully scope a name or drop the top-level name ONLY
+    // 2) I'll look in my (exact) namespce for the name
+    // 3) The current TOP-LEVEL namespace is always in scope and implicit
+    // 4) All other namespaces must be explicitly scoped -- so if I am in a sub-namespace I can either fully scope a name or drop the top-level name ONLY
     //
     ////////
 
@@ -1468,14 +1469,20 @@ class Parser {
             return [coredecl, "isconstant"];
         }
 
-        //acording to rules I will only allow implicit refs to toplevel namespace, even if I am in a sub-namespace
-        const nsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
-
-        if(nsdecl.declaredFunctionNames.has(name)) {
-            return [this.env.currentNamespace, "isfunction"];
+        const currnsdecl = this.env.currentNamespace
+        if(currnsdecl.declaredFunctionNames.has(name)) {
+            return [currnsdecl, "isfunction"];
         }
-        if(nsdecl.declaredConstNames.has(name)) {
-            return [this.env.currentNamespace, "isconstant"];
+        if(currnsdecl.declaredConstNames.has(name)) {
+            return [currnsdecl, "isconstant"];
+        }
+        
+        const topnsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+        if(topnsdecl.declaredFunctionNames.has(name)) {
+            return [topnsdecl, "isfunction"];
+        }
+        if(topnsdecl.declaredConstNames.has(name)) {
+            return [topnsdecl, "isconstant"];
         }
 
         return undefined;
@@ -1552,6 +1559,7 @@ class Parser {
             return undefined; //not a valid namespace or type name
         }
 
+        //<---- First check if the name/namespace is in Core ---->
         const coredecl = this.env.assembly.getCoreNamespace();
         if (nsroot === "Core") {
             this.consumeToken();
@@ -1567,12 +1575,32 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        //<---- Now see if we are explicitly refering to the current ROOT ---->
         else if(this.env.currentNamespace.topnamespace === nsroot) {
             this.consumeToken();
             
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), this.env.currentNamespace, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        //<---- See if the name/namespace is in the current namespace (implicitly nested)---->
+        else if(this.env.currentNamespace.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        //<---- See if the name/namespace is in the current ROOT namespace (implicitly nested)---->
+        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, (this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration), []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        //<---- Finally resolve names through usings ---->
         else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
             const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns;
             this.consumeToken();
@@ -1595,14 +1623,6 @@ class Parser {
                 
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-        }
-        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
-            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-        }
-        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
-            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else {
             this.consumeToken();
