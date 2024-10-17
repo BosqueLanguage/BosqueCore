@@ -222,6 +222,11 @@ class InstantiationPropagator {
         }
     }
 
+    //Given a type function -- instantiate it
+    private instantiateTypeFunction(ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
+        assert(false, "Not Implemented: instantiateTypeFunction");
+    }
+
     //Given a namespace function -- instantiate it
     private instantiateSpecificResolvedMemberMethod(ns: FullyQualifiedNamespace, enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
@@ -350,15 +355,21 @@ class InstantiationPropagator {
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
-        assert(false, "Not Implemented -- instantiateCallTypeFunctionExpression");
+        this.instantiateTypeSignature(exp.ttype, this.currentMapping);
+        this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
+
+        const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
+        const imapping = this.currentMapping !== undefined ? TemplateNameMapper.merge(this.currentMapping as TemplateNameMapper, exp.resolvedDeclMapping as TemplateNameMapper) : exp.resolvedDeclMapping as TemplateNameMapper;
+
+        this.instantiateTypeFunction((exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
     }
     
     private instantiateLogicActionAndExpression(exp: LogicActionAndExpression) {
-        assert(false, "Not Implemented -- instantiateLogicActionAndExpression");
+        exp.args.forEach((arg) => this.instantiateExpression(arg));
     }
 
     private instantiateLogicActionOrExpression(exp: LogicActionOrExpression) {
-        assert(false, "Not Implemented -- instantiateLogicActionOrExpression");
+        exp.args.forEach((arg) => this.instantiateExpression(arg));
     }
 
     private instantiateParseAsTypeExpression(exp: ParseAsTypeExpression) {

@@ -1466,6 +1466,7 @@ class TypeChecker {
 
         const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
         const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, fdecl.member.params, fullmapper);
+        exp.resolvedDeclType = fdecl.typeinfo.tsig;
         exp.shuffleinfo = arginfo.shuffleinfo;
         exp.restinfo = arginfo.restinfo;
 

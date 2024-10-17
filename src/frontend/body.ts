@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
@@ -658,6 +658,8 @@ class CallTypeFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    resolvedDeclType: TypeSignature | undefined = undefined;
+    resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
     shuffleinfo: [number, TypeSignature | undefined][] = [];
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
