@@ -658,6 +658,9 @@ class CallTypeFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+
     constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallTypeFunctionExpression, sinfo);
         this.ttype = ttype;

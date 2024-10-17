@@ -24,8 +24,8 @@ describe ("Parser -- eADT decl", () => {
     });
 
     it("should parse eADT function", function () {
-        parseTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo: Int { return 3i; } } [FUNC]', 'function main(): Int { return F1::foo(); }'); 
-        parseTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo: Int { return 3i; } } [FUNC]', 'function main(): Int { return Foo::foo(); }'); 
+        parseTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } [FUNC]', 'function main(): Int { return F1::foo(); }'); 
+        parseTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } [FUNC]', 'function main(): Int { return Foo::foo(); }'); 
     });
 });
 

@@ -1431,7 +1431,7 @@ class TypeChecker {
     private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression): TypeSignature {
         const fdecl = this.relations.assembly.resolveNamespaceFunction(exp.ns, exp.name);
         if(fdecl === undefined) {
-            this.reportError(exp.sinfo, `Could not find namespace function ${exp.ns}::${exp.name}`);
+            this.reportError(exp.sinfo, `Could not find namespace function ${exp.ns.emit()}::${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1448,7 +1448,28 @@ class TypeChecker {
     }
 
     private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkCallTypeFunctionExpression");
+        const oktype = this.checkTypeSignature(exp.ttype);
+        if(!oktype) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints);
+        if(fdecl === undefined) {
+            this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, fdecl.member);
+        if(imapper === undefined) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
+        const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, fdecl.member.params, fullmapper);
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.restinfo = arginfo.restinfo;
+
+        return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
     }
     
     private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {

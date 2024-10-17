@@ -32,8 +32,10 @@ describe ("Parser -- entity decl with consts", () => {
     });
 
     it("should parse entity with consts errors", function () {
-        parseTestFunctionInFileError('entity Foo { const c: Int; } function main(): Int { return Foo::c; }', "erro3"); 
-        parseTestFunctionInFileError('entity Foo { const c = 3i; } function main(): Int { return Foo::c; }', "erro3"); 
+        parseTestFunctionInFileError('entity Foo { field c: Int; const c: Int = 3i; } function main(): Nat { return Foo::c; }', "Duplicate const member c"); 
+
+        parseTestFunctionInFileError('entity Foo { const c: Int; } function main(): Int { return Foo::c; }', 'Expected "=" but got ";" when parsing "const member"'); 
+        parseTestFunctionInFileError('entity Foo { const c = 3i; } function main(): Int { return Foo::c; }', 'Expected ":" but got "=" when parsing "const member"'); 
     });
 });
 

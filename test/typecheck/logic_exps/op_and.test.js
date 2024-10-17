@@ -12,6 +12,6 @@ describe ("Check -- op and", () => {
 
     it("should check bad type", function () {
         checkTestExpError("/\\(true, 5i)", "Bool", "And expression is not a subtype of Bool");
-        checkTestExpError("/\\(true, false)", "None", "and_err2");
+        checkTestExpError("/\\(true, false)", "None", "Expected a return value of type None but got Bool");
     });
 });

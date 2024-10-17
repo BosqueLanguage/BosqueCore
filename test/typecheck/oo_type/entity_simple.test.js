@@ -40,10 +40,8 @@ describe ("Checker -- entity decl with consts", () => {
         checkTestFunctionInFile('entity Foo<T> { const c: Int = 3i; } function main(): Int { return Foo<Nat>::c; }'); 
     });
 
-    it("should parse entity with consts errors", function () {
-        checkTestFunctionInFileError('entity Foo { field c: Int; const c: Int = 3i; } function main(): Nat { return Foo::c; }', "xerro9"); 
-
-        checkTestFunctionInFileError('entity Foo { const c: Int = 3i; } function main(): Nat { return Foo::c; }', "xerro3"); 
+    it("should check entity with consts errors", function () {
+        checkTestFunctionInFileError('entity Foo { const c: Int = 3i; } function main(): Nat { return Foo::c; }', "Expected a return value of type Nat but got Int"); 
         checkTestFunctionInFileError('entity Foo<T> { const c: Int = 3n; } function main(): Int { return Foo<Nat>::c; }', "xerro4"); 
     });
 });

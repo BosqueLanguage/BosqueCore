@@ -25,11 +25,11 @@ describe ("Checker -- eADT decl", () => {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } function main(): Int { return F1::c; }'); 
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } function main(): Int { return Foo::c; }'); 
 
-        checkTestFunctionInFileError('datatype Foo of F1 { field f: Int; } | F2 { field: c: Nat; } & { const c: Int = 3i; } function main(): Int { return Foo::c; }', "cerr111"); 
+        checkTestFunctionInFileError('datatype Foo of F1 { field f: Int; } | F2 { field c: Nat; } & { const c: Int = 3i; } function main(): Int { return Foo::c; }', "cerr111"); 
     });
 
     it("should check eADT function", function () {
-        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo: Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
-        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo: Int { return 3i; } } function main(): Int { return Foo::foo(); }'); 
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return F1::foo(); }'); 
+        checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } function main(): Int { return Foo::foo(); }'); 
     });
 });

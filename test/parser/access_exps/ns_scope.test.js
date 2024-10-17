@@ -28,7 +28,7 @@ describe ("Parser -- access argument", () => {
 
 describe ("Parser -- access nested namespace functions", () => {
     it("should parse top to nested", function () {
-        parseTestFunctionInFile("namespace NSX { function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return NSX::foo(); }');
+        parseTestFunctionInFile("namespace NSX { function foo(): Int { return 3i; } } [FUNC]", 'function main(x: Int): Int { return Main::NSX::foo(); }');
     });
 
     it("should parse nested cross", function () {
