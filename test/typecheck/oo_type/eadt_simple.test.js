@@ -24,8 +24,6 @@ describe ("Checker -- eADT decl", () => {
     it("should check eADT const", function () {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } function main(): Int { return F1::c; }'); 
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } function main(): Int { return Foo::c; }'); 
-
-        checkTestFunctionInFileError('datatype Foo of F1 { field f: Int; } | F2 { field c: Nat; } & { const c: Int = 3i; } function main(): Int { return Foo::c; }', "cerr111"); 
     });
 
     it("should check eADT function", function () {

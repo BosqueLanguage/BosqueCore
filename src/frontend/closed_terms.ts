@@ -312,7 +312,8 @@ class InstantiationPropagator {
     }
 
     private instantiateAccessStaticFieldExpression(exp: AccessStaticFieldExpression) {
-        assert(false, "Not Implemented -- instantiateAccessStaticFieldExpression");
+        this.instantiateTypeSignature(exp.stype, this.currentMapping);
+        this.instantiateTypeSignature(exp.resolvedDeclType as NominalTypeSignature, this.currentMapping);
     }
 
     private instantiateConstructorPrimaryExpression(exp: ConstructorPrimaryExpression) {

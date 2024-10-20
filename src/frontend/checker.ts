@@ -1058,6 +1058,7 @@ class TypeChecker {
 
         const cconst = this.relations.resolveTypeConstant(exp.stype, exp.name, this.constraints);
         if(cconst !== undefined) {
+            exp.resolvedDeclType = cconst.typeinfo.tsig;
             return exp.setType(cconst.member.declaredType.remapTemplateBindings(cconst.typeinfo.mapping));
         }
         else {

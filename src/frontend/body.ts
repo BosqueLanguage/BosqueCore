@@ -451,6 +451,8 @@ class AccessStaticFieldExpression extends Expression {
     readonly stype: TypeSignature;
     readonly name: string;
 
+    resolvedDeclType: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, stype: TypeSignature, name: string) {
         super(ExpressionTag.AccessStaticFieldExpression, sinfo);
         this.stype = stype;
