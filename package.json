@@ -20,7 +20,10 @@
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js &&  node --test ./test/*/*/*.test.js",
+        "test": "npm run-script test-parser && npm run-script test-typecheck && npm run-script test-runtime",
+        "test-parser": "node ./build/build_all.js &&  node --test ./test/parser/*/*.test.js",
+        "test-typecheck": "node ./build/build_all.js &&  node --test ./test/typecheck/*/*.test.js",
+        "test-runtime": "node ./build/build_all.js &&  node --test ./test/runtime/*/*.test.js",
         "test-coverage": "node ./build/build_all.js &&  node --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=/tmp/** --test test/*/*/*.test.js"
     },
     "files": [
