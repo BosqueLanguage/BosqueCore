@@ -1559,8 +1559,10 @@ class Parser {
             return undefined; //not a valid namespace or type name
         }
 
-        //<---- First check if the name/namespace is in Core ---->
         const coredecl = this.env.assembly.getCoreNamespace();
+        const topdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+
+        //<---- First check if the name/namespace is in Core ---->
         if (nsroot === "Core") {
             this.consumeToken();
             
@@ -1576,10 +1578,10 @@ class Parser {
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         //<---- Now see if we are explicitly refering to the current ROOT ---->
-        else if(this.env.currentNamespace.topnamespace === nsroot) {
+        else if(topdecl.name === nsroot) {
             this.consumeToken();
             
-            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), this.env.currentNamespace, [nsroot]);
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), topdecl, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         //<---- See if the name/namespace is in the current namespace (implicitly nested)---->
@@ -1592,12 +1594,12 @@ class Parser {
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         //<---- See if the name/namespace is in the current ROOT namespace (implicitly nested)---->
-        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
+        else if(topdecl.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, topdecl, []);
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
-        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, (this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration), []);
+        else if(topdecl.declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, topdecl, []);
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         //<---- Finally resolve names through usings ---->
