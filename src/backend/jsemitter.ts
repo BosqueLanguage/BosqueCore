@@ -452,7 +452,9 @@ class JSEmitter {
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
-        assert(false, "Not implemented -- AccessStaticField");
+        const ctt = this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature;
+        const cdecl = ctt.decl.consts.find((c) => c.name === exp.name) as ConstMemberDecl;
+        return EmitNameManager.generateAccssorNameForTypeConstant(this.getCurrentNamespace(), ctt, cdecl);
     }
     
     private emitAccessEnumExpression(exp: AccessEnumExpression): string {
@@ -2161,7 +2163,7 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp})`);
+            cdecls.push(`${m.name}: function () { return _$memoconstval(this._$consts, "${m.name}", ${lexp}); }`);
         }
 
         if(cdecls.length !== 0) {
@@ -2877,6 +2879,12 @@ class JSEmitter {
 
         let decls: string[] = [];
         let tests: string[] = [];
+
+        for(let i = 0; i < decl.subns.length; ++i) {
+            const snsdecl = this.emitNamespaceDeclaration(decl.subns[i], asminstantiation);
+            decls.push("-----" + snsdecl.contents + "-----");
+            tests.push(...snsdecl.tests);
+        }
 
         const cdecls = this.emitNamespaceConstDecls(decl.consts);
         decls.push(...cdecls);
