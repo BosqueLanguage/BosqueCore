@@ -8,6 +8,7 @@ import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
 import { fileURLToPath } from 'url';
+import { BSQONTypeInfoEmitter } from "../backend/bsqonemitter.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
@@ -37,6 +38,24 @@ function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug",
     }
 
     Status.output(`Code generation successful -- JS emitted to ${nndir}\n`);
+}
+
+function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
+    Status.output("generating Type Info assembly...\n");
+    const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
+    const tinfo = BSQONTypeInfoEmitter.emitAssembly(assembly, iim, true);
+
+    Status.output("writing Type Info to disk...\n");
+    const nndir = path.normalize(outname);
+    try {
+        const fname = path.join(nndir, "typeinfo.json");
+        fs.writeFileSync(fname, JSON.stringify(tinfo, undefined, 4));
+    }
+    catch(e) {      
+        Status.error("Failed to write type info file!\n");
+    }
+
+    Status.output(`Code generation successful -- Type Info emitted to ${nndir}\n`);
 }
 
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
@@ -83,6 +102,7 @@ if(asm !== undefined) {
     fs.rmSync(outdir, { recursive: true, force: true });
     fs.mkdirSync(outdir);
 
+    buildTypeInfo(asm, "Main", outdir);
     buildExeCode(asm, "debug", "debug", "Main", outdir);
 }
 

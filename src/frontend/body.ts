@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
@@ -451,6 +451,8 @@ class AccessStaticFieldExpression extends Expression {
     readonly stype: TypeSignature;
     readonly name: string;
 
+    resolvedDeclType: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, stype: TypeSignature, name: string) {
         super(ExpressionTag.AccessStaticFieldExpression, sinfo);
         this.stype = stype;
@@ -657,6 +659,11 @@ class CallTypeFunctionExpression extends Expression {
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
+
+    resolvedDeclType: TypeSignature | undefined = undefined;
+    resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.CallTypeFunctionExpression, sinfo);

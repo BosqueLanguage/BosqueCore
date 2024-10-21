@@ -25,3 +25,26 @@ describe ("Parser -- entity decl with default fields", () => {
     });
 });
 
+describe ("Parser -- entity decl with consts", () => {
+    it("should parse entity with consts", function () {
+        parseTestFunctionInFile('entity Foo { const c: Int = 3i; } [FUNC]', 'function main(): Int { return Foo::c; }'); 
+        parseTestFunctionInFile('entity Foo<T> { const c: Int = 3i; } [FUNC]', 'function main(): Int { return Foo::c; }'); 
+    });
+
+    it("should parse entity with consts errors", function () {
+        parseTestFunctionInFileError('entity Foo { field c: Int; const c: Int = 3i; } function main(): Nat { return Foo::c; }', "Duplicate const member c"); 
+
+        parseTestFunctionInFileError('entity Foo { const c: Int; } function main(): Int { return Foo::c; }', 'Expected "=" but got ";" when parsing "const member"'); 
+        parseTestFunctionInFileError('entity Foo { const c = 3i; } function main(): Int { return Foo::c; }', 'Expected ":" but got "=" when parsing "const member"'); 
+    });
+});
+
+describe ("Parser -- entity decl with functions", () => {
+    it("should parse entity with consts", function () {
+        parseTestFunctionInFile('entity Foo { function foo(): Int { return 3i; } } [FUNC]', 'function main(): Int { return Foo::foo(); }');
+
+        parseTestFunctionInFile('entity Foo<T> { function foo(x: T): T { return x; } } [FUNC]', 'function main(): Int { return Foo<Int>::foo(3i); }');
+        parseTestFunctionInFile('entity Foo { function foo<T>(x: T): T { return x; } } [FUNC]', 'function main(): Int { return Foo::foo<Int>(3i); }');
+    });
+});
+

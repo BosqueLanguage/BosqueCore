@@ -453,7 +453,7 @@ class BSQONTypeInfoEmitter {
 
         decl.subns = nsdecl.subns.map((snd) => [snd.name, snd.fullnamespace.emit()]);
         
-        const tdecls = this.emitTypes(decl.typedecls, asminstantiation);
+        const tdecls = this.emitTypes(nsdecl.typedecls, asminstantiation);
         decl.types = tdecls.map((td) => [td.name, td.tkey]);
         
         //
@@ -485,7 +485,9 @@ class BSQONTypeInfoEmitter {
 
                 decl.namespaces.push(nsemit.ns);
                 decl.typerefs.push(...nsemit.types);
-                decl.typerefs.push(...emitter.emitElistInfo());
+                if(nsii.elists.size !== 0) {
+                    decl.typerefs.push(...emitter.emitElistInfo());
+                }
 
                 nsworklist.push(...nsdecl.subns);
             }

@@ -9,7 +9,7 @@ import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiat
 
 const prefix = 
 '"use strict";\n' +
-'const JSMap = Map;\n' +
+'let _$consts = new Map();\n' +
 '\n' +
 'import {_$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
@@ -452,7 +452,9 @@ class JSEmitter {
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
-        assert(false, "Not implemented -- AccessStaticField");
+        const ctt = this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature;
+        const cdecl = ctt.decl.consts.find((c) => c.name === exp.name) as ConstMemberDecl;
+        return EmitNameManager.generateAccssorNameForTypeConstant(this.getCurrentNamespace(), ctt, cdecl);
     }
     
     private emitAccessEnumExpression(exp: AccessEnumExpression): string {
@@ -2161,7 +2163,7 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`${m.name}: () => _$memoconstval(this._$consts, "${m.name}", ${lexp})`);
+            cdecls.push(`${m.name}: function () { return _$memoconstval(this._$consts, "${m.name}", ${lexp}); }`);
         }
 
         if(cdecls.length !== 0) {
@@ -2655,7 +2657,7 @@ class JSEmitter {
         }
     }
 
-    private emitAPIDecls(ns: NamespaceDeclaration, adecls: APIDecl[]): string[] {
+    private emitAPIDecls(ns: NamespaceDeclaration, adecls: APIDecl[], fmt: JSCodeFormatter): string[] {
         if(adecls.length !== 0) {
             assert(false, "Not implemented -- checkAPIDecl");
         }
@@ -2663,7 +2665,7 @@ class JSEmitter {
         return [];
     }
 
-    private emitTaskDecls(ns: NamespaceDeclaration, tdecls: TaskDecl[]): string[] {
+    private emitTaskDecls(ns: NamespaceDeclaration, tdecls: TaskDecl[], fmt: JSCodeFormatter): string[] {
         if(tdecls.length !== 0) {
             assert(false, "Not implemented -- checkTaskDecl");
         }
@@ -2671,7 +2673,7 @@ class JSEmitter {
         return [];
     }
 
-    private emitNamespaceConstDecls(decls: NamespaceConstDecl[]): string[] {
+    private emitNamespaceConstDecls(inns: NamespaceDeclaration, decls: NamespaceConstDecl[], fmt: JSCodeFormatter): string[] {
         let cdecls: string[] = [];
         for(let i = 0; i < decls.length; ++i) {
             const m = decls[i];
@@ -2680,16 +2682,12 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             const lexp = `() => ${eexp}`;
 
-            cdecls.push(`export function ${m.name}() { return _$memoconstval(_$consts, "${m.name}", ${lexp}); }`);
-        }
-
-        if(cdecls.length !== 0) {
-            cdecls = ["let _$consts = new JSMap();", ...cdecls];
+            const fmtstyle = inns.isTopNamespace() ? `export function ${m.name}()` : `${m.name}: () =>`;
+            cdecls.push(`${fmtstyle} { return _$memoconstval(_$consts, "${inns.fullnamespace.emit() + "::" + m.name}", ${lexp}); }`);
         }
 
         return cdecls;
     }
-
 
     private emitTypeSubtypeRelation(tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): string {
         if((tdecl instanceof PrimitiveEntityTypeDecl) && tdecl.name === "None") {
@@ -2872,49 +2870,90 @@ class JSEmitter {
         return {decls: alldecls, supers: allsupertypes, tests: alltests};
     }
 
-    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {contents: string, tests: string[]} {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, tests: string[], nestedsupers: string[]} {
         //all usings should be resolved and valid so nothing to do there
 
         let decls: string[] = [];
         let tests: string[] = [];
+        let nestedsupers: string[] = [];
 
-        const cdecls = this.emitNamespaceConstDecls(decl.consts);
+        if(!decl.isTopNamespace()) {
+            fmt.indentPush();
+        }
+
+        for(let i = 0; i < decl.subns.length; ++i) {
+            const subdecl = decl.subns[i];
+            const nsii = aainsts.find((ai) => ai.ns.emit() === subdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                const cdecl = this.currentns;
+
+                this.currentns = subdecl;
+                const snsdecl = this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, fmt, decl.isTopNamespace());
+                
+                decls.push(snsdecl.contents);
+                tests.push(...snsdecl.tests);
+                nestedsupers.push(...snsdecl.nestedsupers);
+
+                this.currentns = cdecl;
+            }
+        }
+
+        const cdecls = this.emitNamespaceConstDecls(decl, decl.consts, fmt);
         decls.push(...cdecls);
 
-        const fdecls = this.emitFunctionDecls(undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), new JSCodeFormatter(0));
+        const fdecls = this.emitFunctionDecls(undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
         tests.push(...fdecls.tests);
 
-        const tdecls = this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, new JSCodeFormatter(0));
+        const tdecls = this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, fmt);
         decls.push(...tdecls.decls);
         tests.push(...tdecls.tests);
 
-        const apidecls = this.emitAPIDecls(decl, decl.apis);
+        const apidecls = this.emitAPIDecls(decl, decl.apis, fmt);
         decls.push(...apidecls);
 
-        const taskdecls = this.emitTaskDecls(decl, decl.tasks);
+        const taskdecls = this.emitTaskDecls(decl, decl.tasks, fmt);
         decls.push(...taskdecls);
 
-        const ddecls = decls.join("\n\n");
-        const supers = tdecls.supers.length !== 0 ? ("\n\n" + tdecls.supers.join("\n")) : "";
+        if(decl.isTopNamespace()) {
+            const ddecls = decls.join("\n\n");
+            let supers = "";
+            if(tdecls.supers.length !== 0 || nestedsupers.length !== 0) {
+                supers = "\n\n" + [...tdecls.supers, ...nestedsupers].join("\n");
+            }
 
-        let imports = "";
-        if(decl.name !== "Core") {
-            imports = `import * as $Core from "./Core.mjs";\n\n`;
+            let imports = "";
+            if(decl.name !== "Core") {
+                imports = `import * as $Core from "./Core.mjs";\n\n`;
+            }
+
+            let loadop = "";
+            let mainop = "\n";
+            if(decl.name === "Main") {
+                const asmreinfo = this.assembly.toplevelNamespaces.flatMap((ns) => this.assembly.loadConstantsAndValidatorREs(ns));
+
+                //Now process the regexs
+                loadop = `\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
+                mainop = "\n\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
+            }
+
+            return {contents: prefix + imports + ddecls + supers + loadop + mainop, tests: tests, nestedsupers: []};
         }
+        else {
+            const idecls = decls.map((dd) => fmt.indent(dd)).join(",\n");
+            fmt.indentPop();
 
-        let loadop = "";
-        let mainop = "\n";
-        if(decl.name === "Main") {
+            let ddecls = "";
+            if(isparentTop) {
+                ddecls = fmt.indent(`export const ${decl.name} = {\n${idecls}\n${fmt.indent("};")}`);
+            }
+            else {
+                ddecls = fmt.indent(`${decl.name}: {\n${idecls}\n${fmt.indent("}")}`);
+            }
 
-            const asmreinfo = this.assembly.toplevelNamespaces.flatMap((ns) => this.assembly.loadConstantsAndValidatorREs(ns));
-
-            //Now process the regexs
-            loadop = `\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
-            mainop = "\n\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
+            return {contents: ddecls, tests: tests, nestedsupers: tdecls.supers};
         }
-
-        return {contents: prefix + imports + ddecls + supers + loadop + mainop, tests: tests};
     }
 
     private emitSpecialNoneSuperType(instantiation: NamespaceInstantiationInfo): string {
@@ -2945,7 +2984,7 @@ class JSEmitter {
             
             if(nsii !== undefined) {
                 emitter.currentns = nsdecl;
-                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii);
+                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new JSCodeFormatter(0), true);
 
                 if(nsdecl.name === "Core") {
                     code.contents = code.contents + emitter.emitSpecialNoneSuperType(nsii);

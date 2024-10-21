@@ -4,10 +4,10 @@ import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LogicActionAndExpression, LogicActionOrExpression } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, SYM_land, SYM_lor } from "./parser_kw.js";
 
 import { initializeLexer, lexFront } from "@bosque/jsbrex";
 
@@ -1454,8 +1454,9 @@ class Parser {
     //
     // Namespace resolution:
     // 1) Core namespace is always in scope and implicit
-    // 2) The current TOP-LEVEL namespace is always in scope and implicit
-    // 3) All other namespaces must be explicitly scoped -- so if I am in a sub-namespace I can either fully scope a name or drop the top-level name ONLY
+    // 2) I'll look in my (exact) namespce for the name
+    // 3) The current TOP-LEVEL namespace is always in scope and implicit
+    // 4) All other namespaces must be explicitly scoped -- so if I am in a sub-namespace I can either fully scope a name or drop the top-level name ONLY
     //
     ////////
 
@@ -1468,14 +1469,20 @@ class Parser {
             return [coredecl, "isconstant"];
         }
 
-        //acording to rules I will only allow implicit refs to toplevel namespace, even if I am in a sub-namespace
-        const nsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
-
-        if(nsdecl.declaredFunctionNames.has(name)) {
-            return [this.env.currentNamespace, "isfunction"];
+        const currnsdecl = this.env.currentNamespace
+        if(currnsdecl.declaredFunctionNames.has(name)) {
+            return [currnsdecl, "isfunction"];
         }
-        if(nsdecl.declaredConstNames.has(name)) {
-            return [this.env.currentNamespace, "isconstant"];
+        if(currnsdecl.declaredConstNames.has(name)) {
+            return [currnsdecl, "isconstant"];
+        }
+        
+        const topnsdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+        if(topnsdecl.declaredFunctionNames.has(name)) {
+            return [topnsdecl, "isfunction"];
+        }
+        if(topnsdecl.declaredConstNames.has(name)) {
+            return [topnsdecl, "isconstant"];
         }
 
         return undefined;
@@ -1553,6 +1560,9 @@ class Parser {
         }
 
         const coredecl = this.env.assembly.getCoreNamespace();
+        const topdecl = this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration;
+
+        //<---- First check if the name/namespace is in Core ---->
         if (nsroot === "Core") {
             this.consumeToken();
             
@@ -1567,12 +1577,32 @@ class Parser {
             const ach = this.parseIdentifierAccessChainHelper(false, coredecl, []);
             return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
-        else if(this.env.currentNamespace.topnamespace === nsroot) {
+        //<---- Now see if we are explicitly refering to the current ROOT ---->
+        else if(topdecl.name === nsroot) {
             this.consumeToken();
             
-            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), this.env.currentNamespace, [nsroot]);
+            const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), topdecl, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
+        //<---- See if the name/namespace is in the current namespace (implicitly nested)---->
+        else if(this.env.currentNamespace.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        //<---- See if the name/namespace is in the current ROOT namespace (implicitly nested)---->
+        else if(topdecl.subns.find((ns) => ns.name === nsroot) !== undefined) {
+            const ach = this.parseIdentifierAccessChainHelper(false, topdecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        else if(topdecl.declaredNames.has(nsroot)) {
+            const ach = this.parseIdentifierAccessChainHelper(false, topdecl, []);
+            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
+        }
+        //<---- Finally resolve names through usings ---->
         else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
             const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns;
             this.consumeToken();
@@ -1595,14 +1625,6 @@ class Parser {
                 
             const ach = this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), tlns, [nsroot]);
             return ach !== undefined ? {altScope: undefined, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-        }
-        else if((this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration).subns.find((ns) => ns.name === nsroot) !== undefined) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.assembly.getToplevelNamespace(this.env.currentNamespace.topnamespace) as NamespaceDeclaration, []);
-            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
-        }
-        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
-            const ach = this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
-            return ach !== undefined ? {altScope: ach.scopeTokens, nsScope: ach.nsScope, typeTokens: ach.typeTokens} : undefined;
         }
         else {
             this.consumeToken();
@@ -2899,6 +2921,30 @@ class Parser {
 
             return new ConstructorPrimaryExpression(sinfo, tsig, args);
         }
+        else if(this.testToken(SYM_coloncolon)) {
+            this.consumeToken();
+            const idname = this.parseIdentifierAsStdVariable();
+
+            //We can always safely parse these as they are optional but check below to make sure they are valid
+            const hasrec = this.testToken(SYM_lbrack);
+            const isrecursive = this.parseInvokeRecursiveArgs();
+
+            const hastargs = this.testToken(SYM_langle);
+            const targs = this.parseInvokeTemplateArguments();
+
+            if(this.testToken(SYM_lparen)) {
+                const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, false, true, false, false, true);
+
+                return new CallTypeFunctionExpression(sinfo, tsig, idname, targs, isrecursive, args);
+            }
+            else {
+                if(hasrec || hastargs) {
+                    this.recordErrorGeneral(sinfo, "Invalid static field access -- cannot have recursive or template arguments");
+                }
+
+                return new AccessStaticFieldExpression(sinfo, tsig, idname);
+            }
+        }
         else {
             this.recordErrorGeneral(sinfo, "Unknown type scoped expression");
             return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: tsig}, undefined);
@@ -2964,6 +3010,36 @@ class Parser {
 
         const argl = new ArgumentList(exps.map((arg) => new PositionalArgumentValue(arg)));
         return new ConstructorEListExpression(this.peekToken().getSourceInfo(), argl);
+    }
+
+    private parseLogicActionAndExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+        this.ensureAndConsumeTokenAlways(SYM_land, "logical and expression");
+
+        const aargs = this.parseListOf<Expression>("logical and expression", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseExpression();
+        });
+
+        if(aargs.length === 0) {
+            this.recordErrorGeneral(sinfo, "empty logical and-expression is not allowed");
+        }
+
+        return aargs.length === 1 ? aargs[0] : new LogicActionAndExpression(sinfo, aargs);
+    }
+
+    private parseLogicActionOrExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+        this.ensureAndConsumeTokenAlways(SYM_lor, "logical or expression");
+
+        const aargs = this.parseListOf<Expression>("logical or expression", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseExpression();
+        });
+
+        if(aargs.length === 0) {
+            this.recordErrorGeneral(sinfo, "empty logical or-expression is not allowed");
+        }
+
+        return aargs.length === 1 ? aargs[0] : new LogicActionOrExpression(sinfo, aargs);
     }
 
     private parseParseAsTypeExpression(): Expression {
@@ -3191,6 +3267,12 @@ class Parser {
         }
         else if(tk === SYM_lparenbar) {
             return this.parseEListConstructorExpression();
+        }
+        else if(tk === SYM_land) {
+            return this.parseLogicActionAndExpression();
+        }
+        else if (tk === SYM_lor) {
+            return this.parseLogicActionOrExpression();
         }
         else if(tk === SYM_langle) {
             return this.parseParseAsTypeExpression();
@@ -4771,7 +4853,7 @@ class Parser {
         return provides;
     }
 
-    private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+    private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.peekToken().getSourceInfo();
@@ -4784,7 +4866,7 @@ class Parser {
         const stype = this.parseStdTypeSignature();
 
         this.ensureAndConsumeTokenIf(SYM_eq, "const member");
-        const value = this.parseConstExpression(stype, this.env.getScope().boundtemplates);
+        const value = this.parseConstExpression(stype, typeTerms);
 
         if(constMembers === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
@@ -4996,7 +5078,7 @@ class Parser {
                 this.parseInvariantsInto(invariants, validates, typeTerms);
             }
             else if (this.testToken(KW_const)) {
-                this.parseConstMember(constMembers, allMemberNames, attributes);
+                this.parseConstMember(constMembers, allMemberNames, attributes, typeTerms);
             }
             else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
                 if(attributes.length !== 0) {
