@@ -2683,12 +2683,11 @@ class JSEmitter {
             const lexp = `() => ${eexp}`;
 
             const fmtstyle = inns.isTopNamespace() ? `export function ${m.name}()` : `${m.name}: () =>`;
-            cdecls.push(fmt.indent(`${fmtstyle} { return _$memoconstval(_$consts, "${m.name}", ${lexp}); }`));
+            cdecls.push(`${fmtstyle} { return _$memoconstval(_$consts, "${inns.fullnamespace.emit() + "::" + m.name}", ${lexp}); }`);
         }
 
         return cdecls;
     }
-
 
     private emitTypeSubtypeRelation(tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): string {
         if((tdecl instanceof PrimitiveEntityTypeDecl) && tdecl.name === "None") {
