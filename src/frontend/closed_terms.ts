@@ -163,6 +163,39 @@ class InstantiationPropagator {
         return this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
     }
 
+    private isAlreadySeenTypeFunction(ns: FullyQualifiedNamespace, tname: string, tkey: string, fkey: string, fdecl: TypeFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
+        const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
+        if(nsinst === undefined) {
+            return false;
+        }
+
+        const tinsts = nsinst.typebinds.get(tname);
+        if(tinsts === undefined) {
+            return false;
+        }
+
+        const tinst = tinsts.find((t) => t.tkey === tkey);
+        if(tinst === undefined) {
+            return false;
+        }
+
+        if(!tinst.functionbinds.has(fdecl.name)) {
+            return false;
+        }
+
+        const bop = tinst.functionbinds.get(fdecl.name) as FunctionInstantiationInfo;
+        if(bop.binds === undefined) {
+            return true;
+        }
+        
+        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
+        if(okbinds) {
+            return true;
+        }
+
+        return this.pendingTypeMethods.some((ptm) => ptm.mkey === fkey);
+    }
+
     private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {
         const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
         if(nsinst === undefined) {
@@ -223,8 +256,35 @@ class InstantiationPropagator {
     }
 
     //Given a type function -- instantiate it
-    private instantiateTypeFunction(ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
-        assert(false, "Not Implemented: instantiateTypeFunction");
+    private instantiateTypeFunction(resolvedtype: TypeSignature, ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
+        const rcvrtype = this.currentMapping !== undefined ? resolvedtype.remapTemplateBindings(this.currentMapping) : resolvedtype;
+        
+        const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
+        const fkey = `${rcvrtype.tkeystr}::${fdecl.name}${computeTBindsKey(tterms)}`;
+
+        if(tterms.length === 0) {
+            if(this.isAlreadySeenTypeFunction(ns.fullnamespace, ttype.name, rcvrtype.tkeystr, fkey, fdecl, undefined)) {
+                return;
+            }
+    
+            this.pendingTypeFunctions.push(new PendingNamespaceFunction(ns, fdecl, []));
+        }
+        else {
+            let fmapping = new Map<string, TypeSignature>();
+            for(let i = 0; i < fdecl.terms.length; ++i) {
+                fmapping.set(fdecl.terms[i].name, tterms[i]);
+            }
+
+            xxxx;
+            TemplateNameMapper.createInitialMapping(fmapping);
+
+            if(this.isAlreadySeenTypeFunction(ns.fullnamespace, ttype.name, rcvrtype.tkeystr, fkey, fdecl, xmapping)) {
+                return;
+            }
+
+            this.pendingTypeFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
+        }
+        xxxx;
     }
 
     //Given a namespace function -- instantiate it
@@ -362,7 +422,7 @@ class InstantiationPropagator {
         const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
         const imapping = this.currentMapping !== undefined ? TemplateNameMapper.merge(this.currentMapping as TemplateNameMapper, exp.resolvedDeclMapping as TemplateNameMapper) : exp.resolvedDeclMapping as TemplateNameMapper;
 
-        this.instantiateTypeFunction((exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
+        this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
     }
     
     private instantiateLogicActionAndExpression(exp: LogicActionAndExpression) {

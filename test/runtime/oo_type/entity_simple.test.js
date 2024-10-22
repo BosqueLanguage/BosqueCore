@@ -24,3 +24,19 @@ describe ("Exec -- entity simple with default fields", () => {
     });
 });
 
+describe ("Exec -- entity decl with consts", () => {
+    it("should exec entity with consts", function () {
+        runMainCode('entity Foo { const c: Int = 3i; } public function main(): Int { return Foo::c; }', [3n, "Int"]); 
+        runMainCode('entity Foo<T> { const c: Int = 3i; } public function main(): Int { return Foo<Nat>::c; }', [3n, "Int"]); 
+    });
+});
+
+describe ("Exec -- entity decl with functions", () => {
+    it("should exec entity with consts", function () {
+        runMainCode('entity Foo { function foo(): Int { return 3i; } } public function main(): Int { return Foo::foo(); }', [3n, "Int"]);
+
+        runMainCode('entity Foo<T> { function foo(x: T): T { return x; } } public function main(): Int { return Foo<Int>::foo(3i); }', [3n, "Int"]);
+        runMainCode('entity Foo { function foo<T>(x: T): T { return x; } } public function main(): Int { return Foo::foo<Int>(3i); }', [3n, "Int"]);
+    });
+});
+

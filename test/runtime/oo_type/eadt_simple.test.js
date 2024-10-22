@@ -13,4 +13,14 @@ describe ("Exec -- eADT simple", () => {
     it("should exec invariant fail simple eADT", function () {
         runMainCodeError("datatype Foo of F1 { field f: Int; invariant $f >= 0i; } | F2 { field g: Bool; }; public function main(): Int { return F1{-1i}.f; }", "Error -- failed invariant @ test.bsq:3"); 
     });
+
+    it("should exec eADT const", function () {
+        runMainCode('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } public function main(): Int { return F1::c; }', [3n, "Int"]); 
+        runMainCode('datatype Foo of F1 { field f: Int; } | F2 { } & { const c: Int = 3i; } public function main(): Int { return Foo::c; }', [3n, "Int"]); 
+    });
+
+    it("should exec eADT function", function () {
+        runMainCode('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } public function main(): Int { return F1::foo(); }', [3n, "Int"]); 
+        runMainCode('datatype Foo of F1 { field f: Int; } | F2 { } & { function foo(): Int { return 3i; } } public function main(): Int { return Foo::foo(); }', [3n, "Int"]); 
+    });
 });
