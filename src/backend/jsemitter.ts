@@ -619,11 +619,13 @@ class JSEmitter {
     }
     
     private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {
-        assert(false, "Not implemented -- LogicActionAnd");
+        const exps = exp.args.map((ee) => this.emitExpression(ee, true));
+        return `[${exps.join(", ")}].every((ee) => ee)`;
     }
     
     private emitLogicActionOrExpression(exp: LogicActionOrExpression): string {
-        assert(false, "Not implemented -- LogicActionOr");
+        const exps = exp.args.map((ee) => this.emitExpression(ee, true));
+        return `(![${exps.join(", ")}].every((ee) => !ee))`;
     }
     
     private emitParseAsTypeExpression(exp: ParseAsTypeExpression, toplevel: boolean): string {
