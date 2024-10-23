@@ -108,12 +108,7 @@ function execMainCode(code: string): string {
         result = `[Unexpected error ${e}]`;
     }
     finally {
-        if(code.includes("0n + 1n")) {
-            console.log(nndir);
-        }
-        else {
-            fs.rmSync(nndir, { recursive: true });
-        }
+        fs.rmSync(nndir, { recursive: true });
     }
 
     return wsnorm(result);
