@@ -2066,7 +2066,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    if(fdecl instanceof NamespaceFunctionDecl) {
+                    if(fdecl instanceof NamespaceFunctionDecl && this.getCurrentNamespace().isTopNamespace()) {
                         const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
                         decls.push(fobj);
                     }
@@ -2492,7 +2492,12 @@ class JSEmitter {
 
         const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
-        return {decl: `export const ${tdecl.name} = ${obj}`, tests: []};
+        if(ns.isTopNamespace()) {
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: []};
+        }
+        else {
+            return {decl: `${tdecl.name}: ${obj}`, tests: []};
+        }
     }
 
     private emitTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): {decl: string, tests: string[]} {
@@ -2536,7 +2541,12 @@ class JSEmitter {
 
         const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
 
-        return {decl: `export const ${tdecl.name} = ${obj}`, tests: tests};
+        if(ns.isTopNamespace()) {
+            return {decl: `export const ${tdecl.name} = ${obj}`, tests: tests};
+        }
+        else {
+            return {decl: `${tdecl.name}: ${obj}`, tests: tests};
+        }
     }
 
     private emitOkTypeDecl(ns: NamespaceDeclaration, tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter): string {
@@ -2623,7 +2633,12 @@ class JSEmitter {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            if(ns.isTopNamespace()) {
+                return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            }
+            else {
+                return {decl: `${tdecl.name}: ${obj}`, tests: rr.tests};
+            }
         }
     }
 
@@ -2668,7 +2683,12 @@ class JSEmitter {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            if(ns.isTopNamespace()) {
+                return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            }
+            else {
+                return {decl: `${tdecl.name}: ${obj}`, tests: rr.tests};
+            }
         }
     }
 
@@ -2686,7 +2706,12 @@ class JSEmitter {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            if(ns.isTopNamespace()) {
+                return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            }
+            else {
+                return {decl: `${tdecl.name}: ${obj}`, tests: rr.tests};
+            }
         }
     }
 
@@ -2704,7 +2729,12 @@ class JSEmitter {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
         }
         else {
-            return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            if(ns.isTopNamespace()) {
+                return {decl: `export const ${tdecl.name} = ${obj}`, tests: rr.tests};
+            }
+            else {
+                return {decl: `${tdecl.name}: ${obj}`, tests: rr.tests};
+            }
         }
     }
 
@@ -2908,13 +2938,23 @@ class JSEmitter {
             }
 
             if(!this.isMultiEmitDecl(tt)) {
-                alldecls.push(fmt.indent(ddecls[0] + ";"));
+                if(ns.isTopNamespace()) {
+                    alldecls.push(fmt.indent(ddecls[0] + ";"));
+                }
+                else {
+                    alldecls.push(ddecls[0]);
+                }
             }
             else {
-                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join(",\n");
+                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join("\n");
                 
                 fmt.indentPop();
-                alldecls.push(`export const ${tt.name} = {\n${dclstr}\n${fmt.indent("}")}`);
+                if(ns.isTopNamespace()) {
+                    alldecls.push(`export const ${tt.name} = {\n${dclstr}\n${fmt.indent("}")}`);
+                }
+                else {
+                    alldecls.push(`${tt.name}: {\n${dclstr}\n${fmt.indent("}")}`);
+                }
             }
         }
 
