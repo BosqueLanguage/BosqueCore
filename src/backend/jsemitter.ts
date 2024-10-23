@@ -615,7 +615,45 @@ class JSEmitter {
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
-        assert(false, "Not implemented -- CallTypeFunction");
+        const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
+        const fdecl = rtrgt.decl.functions.find((m) => m.name === exp.name) as FunctionInvokeDecl;
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                argl.push("undefined");
+            }
+            else {
+                const aaexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[ii[0]].exp, true), exp.args.args[ii[0]].exp.getType(), ii[1] as TypeSignature);
+                argl.push(aaexp);
+            }
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: string[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    const rrexp = this.emitBUAsNeeded(this.emitExpression(exp.args.args[rri[0]].exp, true), exp.args.args[rri[0]].exp.getType(), rri[2] as TypeSignature);
+                    restl.push(rrexp);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            const rparams = fdecl.params[fdecl.params.length - 1];
+            if((rparams.type as NominalTypeSignature).decl instanceof ListTypeDecl) {
+                assert(false, "Not implemented -- List");
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
+        }
+
+        return `${EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), rtrgt, fdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
     }
     
     private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {
@@ -2028,8 +2066,14 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
-                    decls.push(fobj);
+                    if(fdecl instanceof NamespaceFunctionDecl) {
+                        const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                        decls.push(fobj);
+                    }
+                    else {
+                        const fobj = `${fdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                        decls.push(fobj);                      
+                    }
                 }
             }
         }
