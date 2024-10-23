@@ -3,7 +3,6 @@
 import { checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("Checker -- eADT decl", () => {
     it("should check simple eADT", function () {
         checkTestFunctionInFile('datatype Foo of F1 { field f: Int; } | F2 { }; function main(): Int { return F1{3i}.f; }'); 

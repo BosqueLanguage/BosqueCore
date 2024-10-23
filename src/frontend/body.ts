@@ -353,7 +353,7 @@ class LiteralNoneExpression extends Expression {
 
 class LiteralSimpleExpression extends Expression {
     readonly value: string;
-    resolvedValue: any = undefined; //e.g. for string and regex types after unescaping
+    resolvedValue: any = undefined; //e.g. for string types after unescaping
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
