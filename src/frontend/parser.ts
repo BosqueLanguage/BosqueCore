@@ -83,29 +83,6 @@ const TokenStrings = {
     EndOfStream: "[EOS]"
 };
 
-const NAMESPACE_DECL_FIRSTS = [
-    TokenStrings.Attribute,
-    TokenStrings.DocComment,
-    KW_recursive, KW_recursive_q, 
-    KW_function, KW_predicate, 
-    KW_namespace, KW_api,
-    KW_const,
-    KW_enum, KW_entity, KW_concept, KW_type, KW_datatype, KW_task,
-    KW_event, KW_status,
-    KW_errtest, KW_chktest
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
-const TYPE_DECL_FIRSTS = [
-    TokenStrings.Attribute,
-    TokenStrings.DocComment,
-    KW_recursive, KW_recursive_q, 
-    KW_ref,
-    KW_field, KW_const, KW_invariant, KW_validate, 
-    KW_function, KW_method, KW_action,
-    KW_env, KW_event, KW_status, KW_resource,
-    KW_entity
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
 const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "None", "Bool", 
     "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", "DecimalDegree", "LatLongCoordinate", "Complex",
@@ -292,7 +269,7 @@ class Lexer {
         let jepos = this.input.indexOf("\n", this.jsStrPos);
 
         if (jepos === -1) {
-            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.updatePositionInfo(this.jsStrPos, this.jsStrEnd);
             this.advancePosition(this.jsStrEnd);
         }
         else {
@@ -333,7 +310,7 @@ class Lexer {
         if (jepos === -1) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated span comment");
             
-            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.updatePositionInfo(this.jsStrPos, this.jsStrEnd);
             this.advancePosition(this.jsStrEnd);
         }
         else {
@@ -751,6 +728,7 @@ class Lexer {
             return false;
         }
 
+        this.updatePositionInfo(this.jsStrPos, this.jsStrPos + rem.length);
         this.recordLexTokenWData(this.jsStrPos + rem.length, TokenStrings.Regex, rem);
         return true;
     }
@@ -995,6 +973,7 @@ class Lexer {
             return undefined;
         }
 
+        this.updatePositionInfo(this.jsStrPos, this.jsStrPos + m.length);
         this.advancePosition(this.jsStrPos + m.length);
 
         if(m.slice(0, "#if".length) === "#if") {
@@ -1044,9 +1023,6 @@ class Lexer {
                 else if(this.tryLexDateLike()) {
                     //continue
                 }
-                else if (this.tryLexPath() || this.tryLexRegex()) {
-                    //continue
-                }
                 else if(this.tryLexStringLike()) {
                     //continue
                 }
@@ -1060,6 +1036,9 @@ class Lexer {
                     //continue
                 }
                 else if (this.tryLexSymbol() || this.tryLexName()) {
+                    //continue
+                }
+                else if (this.tryLexPath() || this.tryLexRegex()) {
                     //continue
                 }
                 else {
@@ -1282,7 +1261,7 @@ class Parser {
                 pscount = pscount + 1;
             }
             else if (tok.kind === rp) {
-                pscount = Math.max(pscount - 1, 0);
+                pscount = pscount - 1;
             }
             else {
                 //nop
@@ -1318,7 +1297,7 @@ class Parser {
                 pscount = pscount + 1;
             }
             else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount = Math.max(pscount - 1, 0);
+                pscount = pscount - 1;
             }
             else {
                 //nop
@@ -1333,68 +1312,66 @@ class Parser {
         return undefined;
     }
 
-    private scanToSyncPos(...tsync: string[]): number | undefined {
-        this.prepStateStackForNested("scan-to-sync", undefined);
+    //scan until we find a balanaced xxx { ... } declaration -- eat the parens
+    private scanOverBraceDelimitedDeclaration(usesemi?: boolean) {
         let pscount = 0;
 
-        let tpos = this.currentState().cpos;
         let tok = this.peekToken();
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if(tsync.includes(tok.kind) && pscount === 0) {
-                this.popStateReset();
-                return tpos;
+            if(tok.kind === SYM_rbrace && pscount === 1) {
+                this.consumeToken();
+                return;
+            }
+
+            if(usesemi && pscount === 0 && tok.kind === SYM_semicolon) {
+                this.consumeToken();
+                return;
+            }
+
+            if (tok.kind === SYM_lbrace) {
+                pscount = pscount + 1;
+            }
+            else if (tok.kind === SYM_rbrace) {
+                pscount = pscount - 1;
+            }
+            else {
+                //nop
+            }
+
+            this.consumeToken();
+            tok = this.peekToken();
+        }
+    }
+
+    //scan to and consume the end token
+    private scanOverSemiDelimitedDeclaration() {
+        this.scanToKWOptsInDeclaration(SYM_semicolon);
+        this.testAndConsumeTokenIf(SYM_semicolon);
+    }
+
+    //given some possible follow kw/sym token scan until we find one of them
+    private scanToKWOptsInDeclaration(...kwopts: string[]) {
+        let pscount = 0;
+
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if(kwopts.includes(tok.kind) && pscount === 0) {
+                break;
             }
 
             if (LeftScanParens.indexOf(tok.kind) !== -1) {
                 pscount = pscount + 1;
             }
             else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount = Math.max(pscount - 1, 0);
+                pscount = pscount - 1;
             }
             else {
                 //nop
             }
 
-            tpos++;
             this.consumeToken();
             tok = this.peekToken();
         }
-
-        this.popStateReset();
-        return undefined;
-    }
-
-    private scanToSyncEatParens(lp: string, rp: string): number | undefined {
-        this.prepStateStackForNested("scan-to-sync-eat-parens", undefined);
-
-        this.ensureAndConsumeTokenAlways(lp, "sync-eat-parens");
-        let pscount = 1;
-
-        let tpos = this.currentState().cpos;
-        let tok = this.peekToken();
-        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (tok.kind === lp) {
-                pscount = pscount + 1;
-            }
-            else if (tok.kind === rp) {
-                pscount = Math.max(pscount - 1, 0);
-            }
-            else {
-                //nop
-            }
-
-            if (pscount === 0) {
-                this.popStateReset();
-                return tpos + 1;
-            }
-
-            tpos++;
-            this.consumeToken();
-            tok = this.peekToken();
-        }
-
-        this.popStateReset();
-        return undefined;
     }
 
     private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
@@ -4561,16 +4538,6 @@ class Parser {
         return terms;
     }
 
-    private scanOverCodeTo(...tsync: string[]) {
-        const spoc = this.scanToSyncPos(...tsync);
-        this.currentState().skipToPosition(spoc);
-    }
-
-    private scanOverCodeParenSet(lp: string, rp: string) {
-        const spoc = this.scanToSyncEatParens(lp, rp);
-        this.currentState().skipToPosition(spoc);
-    }
-
     private parseNamespaceUsing() {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -4594,8 +4561,7 @@ class Parser {
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(chain.length === 0) {
                 this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
-
-                this.scanOverCodeTo(SYM_semicolon);
+                this.scanOverSemiDelimitedDeclaration();
             }
             else {
                 if(!this.testToken(KW_as)) {
@@ -4618,6 +4584,8 @@ class Parser {
                         this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
                     }
                 }
+
+                this.ensureAndConsumeTokenAlways(SYM_semicolon, "namespace using");
             }
         }
         else {
@@ -4636,64 +4604,51 @@ class Parser {
                 }
             }
 
-            this.scanOverCodeTo(SYM_semicolon);
+            this.scanOverSemiDelimitedDeclaration();
         }
     }
 
-    //scan (or recover) to the next declaration or end brace
-    private namespaceParseScanCover(endtok: string) {
-        const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-        if(rpos === undefined) {
-            this.currentState().moveToRecoverPosition();
-        }
-        else {
-            this.currentState().skipToPosition(rpos);
-        }
-    }
-
-    private parseNamespaceMembers(endtok: string) {
-        const rpos = this.scanToRecover(endtok);
+    private parseNamespaceMembers() {
+        const rpos = this.scanToRecover(SYM_rbrace);
         this.prepStateStackForNested("namespace", rpos);
 
-        while (!this.testToken(endtok) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
+        while (!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
             let attributes: DeclarationAttibute[] = [];
             while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
                 const attr = this.parseAttribute();
                 attributes.push(attr);
             }
 
-            this.prepStateStackForNested("namespace-member", undefined);
-
             const sinfo = this.peekToken().getSourceInfo();
             if (this.testToken(KW_const)) {
                 this.parseNamespaceConstant(attributes);
             }
             else if(this.testFollows(KW_function) || this.testFollows(KW_recursive, KW_function) || this.testFollows(KW_recursive_q, KW_function)) {
-                this.parseNamespaceFunction(attributes, endtok);
+                this.parseNamespaceFunction(attributes);
             }
             else if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
-                this.parseNamespaceFunction(attributes, endtok);
+                this.parseNamespaceFunction(attributes);
             }
             else if(this.testFollows(KW_chktest) || this.testFollows(KW_errtest)) {
-                this.parseNamespaceFunction(attributes, endtok);
+                this.parseNamespaceFunction(attributes);
             }
             else if(this.testFollows(KW_entity) || this.testFollows(KW_status, KW_entity) || this.testFollows(KW_event, KW_entity)) {
-                this.parseEntity(attributes, endtok);
+                this.parseEntity(attributes);
             }
             else if(this.testFollows(KW_concept) || this.testFollows(KW_status, KW_concept) || this.testFollows(KW_event, KW_concept)) {
-                this.parseConcept(attributes, endtok);
+                this.parseConcept(attributes);
             }
             else if(this.testFollows(KW_enum) || this.testFollows(KW_status, KW_enum) || this.testFollows(KW_event, KW_enum)) {
-                this.parseEnum(attributes, endtok);
+                this.parseEnum(attributes);
             }
             else if(this.testFollows(KW_type) || this.testFollows(KW_status, KW_type) || this.testFollows(KW_event, KW_type)) {
-                this.parseTypeDecl(attributes, endtok);
+                this.parseTypeDecl(attributes);
             }
             else if(this.testFollows(KW_datatype) || this.testFollows(KW_status, KW_datatype) || this.testFollows(KW_event, KW_datatype)) {
                 this.parseDataTypeDecl(attributes);
             }
             else if(this.testToken(KW_task)) {
-                this.parseTask(attributes, endtok);
+                this.parseTask(attributes);
             }
             else if(this.testToken(KW_api)) {
                 this.parseAPI(attributes);
@@ -4704,11 +4659,8 @@ class Parser {
             else {
                 this.recordErrorGeneral(sinfo, `Unknown member ${this.peekTokenData()}`);
 
-                this.consumeToken();
-                this.namespaceParseScanCover(endtok);
+                this.currentState().skipToPosition(rpos);
             }
-
-            this.popStateIntoParentOk();
         }
 
         this.popStateIntoParentOk();
@@ -4735,7 +4687,7 @@ class Parser {
 
             this.env.currentNamespace = nsdecl;
             this.ensureAndConsumeTokenAlways(SYM_lbrace, "nested namespace declaration");
-            this.parseNamespaceMembers(SYM_rbrace);
+            this.parseNamespaceMembers();
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "nested namespace declaration");
 
             this.env.currentNamespace = ons;
@@ -4748,7 +4700,7 @@ class Parser {
 
             this.env.currentNamespace = nsdecl;
             this.ensureAndConsumeTokenAlways(SYM_lbrace, "nested namespace declaration");
-            this.parseNamespaceMembers(SYM_rbrace);
+            this.parseNamespaceMembers();
             this.ensureAndConsumeTokenAlways(SYM_rbrace, "nested namespace declaration");
 
             this.env.currentNamespace = ons;
@@ -4770,8 +4722,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(sname);
             this.env.currentNamespace.declaredConstNames.add(sname);
 
-            this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "const member");
+            this.scanOverSemiDelimitedDeclaration();
         }
         else {
             this.ensureAndConsumeTokenIf(SYM_colon, "const member");
@@ -4786,7 +4737,7 @@ class Parser {
         }
     }
 
-    private parseNamespaceFunction(attributes: DeclarationAttibute[], endtok: string) {
+    private parseNamespaceFunction(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
@@ -4802,7 +4753,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(fname);
             this.env.currentNamespace.declaredFunctionNames.add(fname);
 
-            this.namespaceParseScanCover(endtok);
+            this.scanOverBraceDelimitedDeclaration(true);
         }
         else {
             let fkind: "namespace" | "predicate" | "chktest" | "errtest" = "namespace";
@@ -5058,7 +5009,9 @@ class Parser {
         taskmain: string | undefined) {
         let allMemberNames = new Set<string>();
 
-        this.prepStateStackForNested("type", undefined);
+        const rpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+        this.prepStateStackForNested("oop-members", rpos);
+
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "type members");
 
         while (!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
@@ -5067,8 +5020,6 @@ class Parser {
                 const attr = this.parseAttribute();
                 attributes.push(attr);
             }
-
-            this.prepStateStackForNested("type-member", undefined);
 
             const sinfo = this.peekToken().getSourceInfo();
             if (this.testToken(KW_field)) {
@@ -5114,15 +5065,9 @@ class Parser {
                     this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have nested entities on this type");
 
                     //scan to the next declaration or end brace
-                    this.consumeToken();
-                    const rpos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
-                    if(rpos === undefined) {
-                        this.currentState().moveToRecoverPosition();
-                        return; 
-                    }
-                    else {
-                        this.currentState().skipToPosition(rpos);
-                    }
+                    this.currentState().moveToRecoverPosition();
+                    this.popStateIntoParentOk();
+                    return;
                 }
                 else {
                     this.parseNestedEntity(specialConcept, attributes, typeTerms);
@@ -5130,20 +5075,10 @@ class Parser {
             }
             else {
                 this.recordErrorGeneral(sinfo, `Unknown member ${this.peekTokenData()}`);
-
-                //scan to the next declaration or end brace
-                this.consumeToken();
-                const rpos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
-                if(rpos === undefined) {
-                    this.currentState().moveToRecoverPosition();
-                    return; 
-                }
-                else {
-                    this.currentState().skipToPosition(rpos);
-                }
+                this.currentState().moveToRecoverPosition();
+                this.popStateIntoParentOk();
+                return;
             }
-
-            this.popStateIntoParentOk();
         }
 
         this.popStateIntoParentOk();
@@ -5262,7 +5197,7 @@ class Parser {
         }
     }
 
-    private parseEntity(attributes: DeclarationAttibute[], endtok: string) {
+    private parseEntity(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
@@ -5282,7 +5217,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
 
-            this.namespaceParseScanCover(endtok);
+            this.scanOverBraceDelimitedDeclaration();
         }
         else {
             this.parseEntityCompleteParse(sinfo, ename);
@@ -5327,8 +5262,7 @@ class Parser {
             }   
         }
 
-        this.scanOverCodeTo(SYM_lbrace);
-        this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
+        this.scanOverBraceDelimitedDeclaration();
     }
 
     private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
@@ -5341,25 +5275,25 @@ class Parser {
             else if(name === "Result") {
                 tdecl = new ResultTypeDecl(this.env.currentFile, sinfo, attributes, "Result");
 
-                this.scanOverCodeTo(SYM_lbrace);
+                this.scanToKWOptsInDeclaration(SYM_lbrace);
                 this.consumeToken();
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
 
-                this.scanOverCodeTo(SYM_rbrace);
+                this.scanToKWOptsInDeclaration(SYM_rbrace);
                 this.consumeToken();
             }
             else if(name === "APIResult") {
                 tdecl = new APIResultTypeDecl(this.env.currentFile, sinfo, attributes, "APIResult");
 
-                this.scanOverCodeTo(SYM_lbrace);
+                this.scanToKWOptsInDeclaration(SYM_lbrace);
                 this.consumeToken();
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
                 this.parseNestedEntityRegisterType(tdecl);
 
-                this.scanOverCodeTo(SYM_rbrace);
+                this.scanToKWOptsInDeclaration(SYM_rbrace);
                 this.consumeToken();
             }
             else {
@@ -5405,7 +5339,7 @@ class Parser {
         }
     }
 
-    private parseConcept(attributes: DeclarationAttibute[], endtok: string) {
+    private parseConcept(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
@@ -5425,14 +5359,14 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
 
-            this.namespaceParseScanCover(endtok);
+            this.scanOverBraceDelimitedDeclaration();
         }
         else {
             this.parseConceptCompleteParse(sinfo, ename);
         }
     }
     
-    private parseEnum(attributes: DeclarationAttibute[], endtok: string) {
+    private parseEnum(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
@@ -5460,12 +5394,11 @@ class Parser {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
             assert(tdecl !== undefined, "Failed to find entity type");
 
-            const endpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
-            this.currentState().skipToPosition(endpos);
+            this.scanOverBraceDelimitedDeclaration();
         }
     }
 
-    private parseTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
+    private parseTypeDecl(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
@@ -5484,9 +5417,9 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(iname);
             this.env.currentNamespace.declaredTypeNames.push({name: iname, hasterms: this.testToken(SYM_langle)});
 
-            this.scanOverCodeTo(SYM_lbrace, SYM_semicolon);
+            this.scanToKWOptsInDeclaration(SYM_lbrace, SYM_semicolon);
             if(!this.testAndConsumeTokenIf(SYM_semicolon)) {
-                this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
+                this.scanOverBraceDelimitedDeclaration();
             }
         }
         else {
@@ -5534,7 +5467,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
 
-            this.scanOverCodeParenSet(SYM_lbrace, SYM_rbrace);
+            this.scanOverBraceDelimitedDeclaration();
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
@@ -5587,7 +5520,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(dname);
             this.env.currentNamespace.declaredTypeNames.push({name: dname, hasterms: hasTerms});
 
-            this.scanOverCodeTo(KW_of, SYM_amp, SYM_semicolon);
+            this.scanToKWOptsInDeclaration(KW_of);
         }
         else {
             const ddecl = this.env.currentNamespace.typedecls.find((td) => td.name === dname);
@@ -5629,15 +5562,13 @@ class Parser {
             }
         }
 
-        if(this.testToken(KW_of) || this.testToken(SYM_amp) || this.testToken(SYM_semicolon)) {
-            this.ensureAndConsumeTokenIf(KW_of, "datatype");
-        }
-        else {
+        if(!this.testAndConsumeTokenIf(KW_of)) {
             //missing something so skip to known position
             this.recordErrorGeneral(sinfo, "Missing clause in datatype declaration");
-            this.scanOverCodeTo(SYM_amp, SYM_semicolon);
+            
+            this.currentState().moveToRecoverPosition();
+            return;
         }
-        
 
         let firstMember = true;
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
@@ -5665,7 +5596,7 @@ class Parser {
         this.testAndConsumeTokenIf(SYM_semicolon);
     }
 
-    private parseTask(attributes: DeclarationAttibute[], endtok: string) {
+    private parseTask(attributes: DeclarationAttibute[]) {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_task, "task declaration");
@@ -5685,7 +5616,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(tname);
             this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: hasterms});
 
-            this.namespaceParseScanCover(endtok);
+            this.scanOverBraceDelimitedDeclaration();
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === tname);
@@ -5708,7 +5639,7 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "Invalid expression -- could not resolve name");
                     
                     //something went very wrong
-                    this.namespaceParseScanCover(endtok);
+                    this.currentState().moveToRecoverPosition();
                     return;
                 }
 
@@ -5827,7 +5758,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(apiname);
             this.env.currentNamespace.declaredAPINames.add(apiname);
 
-            this.namespaceParseScanCover(SYM_semicolon);
+            this.scanOverSemiDelimitedDeclaration();
         }
         else {
             const okdecl = this.testToken(SYM_lparen);
@@ -5991,7 +5922,7 @@ class Parser {
 
         const ll = new Lexer(iscore, file, tcontents, macrodefs);
         const toks = ll.lex();
-
+        
         const pp = new Parser(file, ns, toks, assembly, phase);
 
         pp.testAndConsumeTokenIf(KW_declare);
@@ -6013,7 +5944,7 @@ class Parser {
             pp.loadWellKnownType("Bool");
         }
 
-        pp.parseNamespaceMembers(TokenStrings.EndOfStream);
+        pp.parseNamespaceMembers();
 
         return {ns: ns, isdecl: isdeclared, errors: [...ll.errors, ...pp.currentState().errors]};
     }
