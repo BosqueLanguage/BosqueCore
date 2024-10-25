@@ -4,20 +4,24 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace ListOps {
+    function s_list_get_empty<T>(): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::emptyTree);
+    }
+
     function s_list_empty<T>(l: List<T>): Bool {
         return l.value?<BBLeaf<T>>;
     } 
 
     function s_list_size<T>(l: List<T>): Nat {
-        return size(l.value);
+        return size<T>(l.value);
     }
 
     function s_list_get<T>(l: List<T>, idx: Nat): T {
-        return get(l, idx);
+        return get<T>(l.value, idx);
     }
 
     function s_list_push_back<T>(l: List<T>, v: T): List<T> {
-        return pushBack(l.value, v);
+        return XCore::s_createDirect<Tree<T>, List<T>>(pushBack<T>(l.value, v));
     }
 
     enum Color {
@@ -52,28 +56,28 @@ namespace ListOps {
 
     recursive function checkRBPathLengthInvariant<T>(t: Tree<T>): Int {
         if(t)@@!<Node<T>> {
-            return 0;
+            return 0i;
         }
 
         let lc = checkRBPathLengthInvariant[recursive]<T>(t.l);
-        if(lc == -1) {
-            return -1;
+        if(lc == -1i) {
+            return -1i;
         }
 
         let rc = checkRBPathLengthInvariant[recursive]<T>(t.r);
-        if(rc == -1) {
-            return -1;
+        if(rc == -1i) {
+            return -1i;
         }
 
         if(lc != rc) {
-            return -1; %% we have a black height mismatch return sentinel value
+            return -1i; %% we have a black height mismatch return sentinel value
         }
 
         return if(t.c === Color#Black) then lc + 1i else lc;
     }
 
     function checkRBInvariants<T>(t: Tree<T>): Bool {
-       return checkRBChildColorInvariant<T>(t) && checkRBPathLengthInvariant<T>(t) >= 0;
+       return checkRBChildColorInvariant<T>(t) && checkRBPathLengthInvariant<T>(t) >= 0i;
     }
 
     function blacken(c: Color): Color {
@@ -97,7 +101,7 @@ namespace ListOps {
     }
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
-    function balanceHelper_RR_LL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    function balanceHelper_RR_LL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
@@ -111,17 +115,17 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tleft.color !== Color#Red, lleft.color !== Color#Red)) {
+        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, lleft.l, lleft.r);
-        let nr = Tree<T>::createNode(Color#Black, left.r, tright);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        let nr = Tree<T>::createNode(Color#Black, tleft.r, tright);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
-    function balanceHelper_RR_LR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    function balanceHelper_RR_LR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
@@ -135,17 +139,17 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tleft.color !== Color#Red, lright.color !== Color#Red)) {
+        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft.l, lright.l);
         let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
-    function balanceHelper_RR_RL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    function balanceHelper_RR_RL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
@@ -159,17 +163,17 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tright.color !== Color#Red, rleft.color !== Color#Red)) {
+        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
         let nr = Tree<T>::createNode(Color#Black, rleft.r, tright.r);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
-    function balanceHelper_RR_RR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    function balanceHelper_RR_RR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
@@ -179,21 +183,21 @@ namespace ListOps {
         }
 
         let rright = tright.r;
-        if(rleft)@@!<Node<T>> {
+        if(rright)@@!<Node<T>> {
             return none;
         }
             
-        if(\/(tright.color !== Color#Red, rright.color !== Color#Red)) {
+        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft, tright.l);
         let nr = Tree<T>::createNode(Color#Black, rright.l, rright.r);
-        return Tree<T>::createNode(redden(n.c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
     
     %% Case where we have negative blacks on L side -- tleft = Node{NB, _, Node{Black, _, a, b}, Node{Black, _, c, d}}
-    recursive function balanceHelper_DB_L<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    recursive function balanceHelper_DB_L<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(c !== Color#BB) {
             return none;
         }
@@ -222,11 +226,11 @@ namespace ListOps {
 
         let nl = balance[recursive]<T>(Color#Black, Tree<T>::createNode(Color#Red, lleft.l, lleft.r), lright.l);
         let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return Tree<T>::createNode(Color::Black, nl, nr)
+        return some(Tree<T>::createNode(Color#Black, nl, nr));
     }
 
     %% Case where we have negative blacks on R side -- tright = Node{NB, _, Node{Black, _, b, c}, Node{Black, _, d, e}}}
-    recursive function balanceHelper_DB_R<T>(c: Color, tleft: Tree<T>, tright: Tree<T>) Option<Node<T>> {
+    recursive function balanceHelper_DB_R<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
         if(c !== Color#BB) {
             return none;
         }
@@ -255,7 +259,7 @@ namespace ListOps {
 
         let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
         let nr = balance[recursive]<T>(Color#Black, rleft.r, Tree<T>::createNode(Color#Red, rright.l, rright.r));
-        return Tree<T>::createNode(Color::Black, nl, nr)
+        return some(Tree<T>::createNode(Color#Black, nl, nr));
     }
 
     recursive function balance<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
@@ -293,14 +297,14 @@ namespace ListOps {
     }
 
     function bubble<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
-        if(/\(tleft?<Node<T>>, tright?<Node<T>)) {
+        if(/\(tleft?<Node<T>>, tright?<Node<T>>)) {
             let tl = tleft@<Node<T>>;
             let tr = tright@<Node<T>>;
 
             if(tl.c === Color#BB || tr.c === Color#BB) {
                 let nl = Tree<T>::createNode(redden(tl.c), tl.l, tl.r);
                 let nr = Tree<T>::createNode(redden(tr.c), tr.l, tr.r);
-                return balance<T>(blacken($tleft.c), nl, nr);
+                return balance<T>(blacken(tl.c), nl, nr);
             }
         }
         
@@ -333,12 +337,12 @@ namespace ListOps {
     }
 
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
-        match(this)@ {
+        match(t)@ {
             BBLeaf<T> => { return Tree<T>::createLeaf(v); }
-            | Leaf<T> => { return balance<T>(Color#Black, $this, Tree<T>::createLeaf(v)); }
+            | Leaf<T> => { return balance<T>(Color#Black, $t, Tree<T>::createLeaf(v)); }
             | Node<T> => { 
-                let nr = pushBack_helper[recursive]<T>($this.r, v);
-                return balance<T>(Color#Black, $this.l, nr); 
+                let nr = pushBack_helper[recursive]<T>($t.r, v);
+                return balance<T>(Color#Black, $t.l, nr); 
             }
         }
     }

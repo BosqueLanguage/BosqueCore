@@ -12,7 +12,7 @@ describe ("Parser -- Constructable Constructor (Option)", () => {
         parseTestFunctionError("function main(): Option<Int> { return Some<>{}; }", 'Template term list cannot be empty');
         
         parseTestFunctionError("function main(): Option<Int> { return Some<Int>{; }", 'Unexpected token in expression -- ;');
-        parseTestFunctionError("function main(): Option<Int> { return Some<Int>2i, false}; }", 'Unknown type scoped expression');
+        parseTestFunctionError("function main(): Option<Int> { return Some<Int>2i, false}; }", 'Unknown member ;');
     });
 });
 

@@ -132,6 +132,7 @@ namespace XCore {
 #endif
 
     __assume_safe internal function s_safeas<T, U>(v: T): U = special_function;
+    __assume_safe internal function s_createDirect<T, U>(t: T): U = special_function;
 }
 
 
