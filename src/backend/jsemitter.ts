@@ -475,8 +475,16 @@ class JSEmitter {
     }
     
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
+        const ctype = exp.ctype as NominalTypeSignature;
+
         if(cdecl instanceof ListTypeDecl) {
-            assert(false, "Not implemented -- List"); //TODO: need to implement list in Bosque core + have way well known way to call constructor here!!!!
+            if(exp.args.args.length === 0) {
+                const cc = cdecl.consts.find((c) => c.name === "empty") as ConstMemberDecl;
+                return EmitNameManager.generateAccssorNameForTypeConstant(this.getCurrentNamespace(), ctype, cc);
+            }
+            else {
+                assert(false, "Not implemented -- List values"); //TODO: need to implement list in Bosque core + have way well known way to call constructor here!!!!
+            }
         }
         else {
             assert(false, "Unknown collection type -- emitCollectionConstructor");
@@ -485,7 +493,7 @@ class JSEmitter {
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression, toplevel: boolean): string {
         if(cdecl instanceof MapEntryTypeDecl) {
-            const metype = exp.ctype as NominalTypeSignature;
+            const metype = this.tproc(exp.ctype) as NominalTypeSignature;
             const meargs = exp.args.args;
             const m0exp = this.emitBUAsNeeded(this.emitExpression(meargs[0].exp, true),  meargs[0].exp.getType(), metype.alltermargs[0]);
             const m1exp = this.emitBUAsNeeded(this.emitExpression(meargs[1].exp, true),  meargs[1].exp.getType(), metype.alltermargs[1]);
@@ -2213,7 +2221,9 @@ class JSEmitter {
         for(let i = 0; i < decls.length; ++i) {
             const m = decls[i];
 
-            const eexp = this.emitExpression(m.value.exp, true);
+            const eexpraw = this.emitExpression(m.value.exp, true);
+            const eexp = this.emitBUAsNeeded(eexpraw, m.value.exp.getType(), m.declaredType);
+            
             if(m.value.exp instanceof LiteralNoneExpression || m.value.exp instanceof LiteralSimpleExpression || m.value.exp instanceof LiteralRegexExpression) {
                 cdecls.push(`${m.name}: function () { return ${eexp}; }`);
 
@@ -2767,7 +2777,8 @@ class JSEmitter {
             const m = decls[i];
 
             this.currentfile = m.file;
-            const eexp = this.emitExpression(m.value.exp, true);
+            const eexpraw = this.emitExpression(m.value.exp, true);
+            const eexp = this.emitBUAsNeeded(eexpraw, m.value.exp.getType(), m.declaredType);
             const lexp = `() => ${eexp}`;
 
             const fmtstyle = inns.isTopNamespace() ? `export function ${m.name}()` : `${m.name}: () =>`;

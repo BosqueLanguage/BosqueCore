@@ -4,6 +4,10 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace ListOps {
+    function s_list_get_empty<T>(): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::emptyTree);
+    }
+
     function s_list_empty<T>(l: List<T>): Bool {
         return l.value?<BBLeaf<T>>;
     } 
