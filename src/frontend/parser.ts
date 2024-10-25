@@ -2791,7 +2791,7 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "SafeAs expects exactly two template arguments");
                 }
     
-                if(args.args.length !== 1 || args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                if(args.args.length !== 1 || !args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
                     this.recordErrorGeneral(sinfo, "SafeAs expects exactly one positional arguments");
                 }
 
@@ -2832,8 +2832,8 @@ class Parser {
             return new AccessNamespaceConstantExpression(sinfo, true, ns.fullnamespace, idname);
         }
         else {
-            const targs = this.parseInvokeTemplateArguments();
             const rec = this.parseInvokeRecursiveArgs();
+            const targs = this.parseInvokeTemplateArguments();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
 
             const specialop = this.trySpecialNamespaceCall(sinfo, ns, idname, targs, args);
@@ -2860,8 +2860,8 @@ class Parser {
             return new AccessNamespaceConstantExpression(sinfo, false, nspace.fullnamespace, idname);
         }
         else if(isFunOpt) {
-            const targs = this.parseInvokeTemplateArguments();
             const rec = this.parseInvokeRecursiveArgs();
+            const targs = this.parseInvokeTemplateArguments();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
 
             const specialop = this.trySpecialNamespaceCall(sinfo, nspace, idname, targs, args);
@@ -3344,8 +3344,8 @@ class Parser {
                         ops.push(new PostfixAccessFromName(sinfo, name));
                     }
                     else {
-                        const targs = this.parseInvokeTemplateArguments();
                         const rec = this.parseInvokeRecursiveArgs();
+                        const targs = this.parseInvokeTemplateArguments();
                         const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, false, true, false, false, true);
 
                         ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
@@ -5271,6 +5271,8 @@ class Parser {
         if(this.env.currentNamespace.fullnamespace.ns[0] === "Core") {
             if(name === "Option") {
                 tdecl = new OptionTypeDecl(this.env.currentFile, sinfo, attributes, "Option");
+
+                this.scanOverBraceDelimitedDeclaration();
             }
             else if(name === "Result") {
                 tdecl = new ResultTypeDecl(this.env.currentFile, sinfo, attributes, "Result");
@@ -5304,6 +5306,8 @@ class Parser {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive concept parse");
 
             tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, name, etag);
+
+            this.scanOverBraceDelimitedDeclaration();
         }
 
         assert(tdecl !== undefined, "Failed to register entity type");
@@ -5358,8 +5362,6 @@ class Parser {
 
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
-
-            this.scanOverBraceDelimitedDeclaration();
         }
         else {
             this.parseConceptCompleteParse(sinfo, ename);
@@ -5582,8 +5584,7 @@ class Parser {
 
         if(this.testAndConsumeTokenIf(SYM_amp)) {
             if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-                const endpos = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
-                this.currentState().skipToPosition(endpos);
+                this.scanOverBraceDelimitedDeclaration();
             }
             else {
                 if(tdecl.fields.length !== 0) {
