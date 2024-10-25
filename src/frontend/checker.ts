@@ -597,7 +597,7 @@ class TypeChecker {
         const ptype = param.type.remapTemplateBindings(imapper);
 
         const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
-        this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${ptype.emit()} but got ${argtype.emit()}`);
+        this.checkError(arg.exp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${ptype.emit()} but got ${argtype.emit()}`);
 
         return argtype;
     }
@@ -2707,10 +2707,6 @@ class TypeChecker {
             this.reportError(sinfo, `Variable ${retypevname} is not defined`);
             return;
         }
-        if(vinfo.isRef) {
-            this.reportError(sinfo, `Cannot reflow type for ref variables`);
-            return;
-        }
     }
 
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
@@ -2867,6 +2863,10 @@ class TypeChecker {
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
         const eetype = this.checkExpression(env, stmt.sval[0], undefined);
+        if(eetype instanceof ErrorTypeSignature) {
+            return env;
+        }
+
         let ctype = this.relations.decomposeType(eetype) || [];
         if(ctype.length === 0) {
             this.reportError(stmt.sval[0].sinfo, `Match statement requires a decomposable type but got ${eetype.emit()}`);

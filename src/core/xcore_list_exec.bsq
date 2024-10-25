@@ -111,13 +111,13 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tleft.color !== Color#Red, lleft.color !== Color#Red)) {
+        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, lleft.l, lleft.r);
         let nr = Tree<T>::createNode(Color#Black, tleft.r, tright);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
@@ -135,13 +135,13 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tleft.color !== Color#Red, lright.color !== Color#Red)) {
+        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft.l, lright.l);
         let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
@@ -159,13 +159,13 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tright.color !== Color#Red, rleft.color !== Color#Red)) {
+        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
         let nr = Tree<T>::createNode(Color#Black, rleft.r, tright.r);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
@@ -183,13 +183,13 @@ namespace ListOps {
             return none;
         }
             
-        if(\/(tright.color !== Color#Red, rright.color !== Color#Red)) {
+        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
             return none;
         }
 
         let nl = Tree<T>::createNode(Color#Black, tleft, tright.l);
         let nr = Tree<T>::createNode(Color#Black, rright.l, rright.r);
-        return Tree<T>::createNode(redden(c), nl, nr);
+        return some(Tree<T>::createNode(redden(c), nl, nr));
     }
     
     %% Case where we have negative blacks on L side -- tleft = Node{NB, _, Node{Black, _, a, b}, Node{Black, _, c, d}}
@@ -222,7 +222,7 @@ namespace ListOps {
 
         let nl = balance[recursive]<T>(Color#Black, Tree<T>::createNode(Color#Red, lleft.l, lleft.r), lright.l);
         let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return Tree<T>::createNode(Color#Black, nl, nr);
+        return some(Tree<T>::createNode(Color#Black, nl, nr));
     }
 
     %% Case where we have negative blacks on R side -- tright = Node{NB, _, Node{Black, _, b, c}, Node{Black, _, d, e}}}
@@ -255,7 +255,7 @@ namespace ListOps {
 
         let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
         let nr = balance[recursive]<T>(Color#Black, rleft.r, Tree<T>::createNode(Color#Red, rright.l, rright.r));
-        return Tree<T>::createNode(Color#Black, nl, nr);
+        return some(Tree<T>::createNode(Color#Black, nl, nr));
     }
 
     recursive function balance<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
@@ -300,7 +300,7 @@ namespace ListOps {
             if(tl.c === Color#BB || tr.c === Color#BB) {
                 let nl = Tree<T>::createNode(redden(tl.c), tl.l, tl.r);
                 let nr = Tree<T>::createNode(redden(tr.c), tr.l, tr.r);
-                return balance<T>(blacken($tleft.c), nl, nr);
+                return balance<T>(blacken(tl.c), nl, nr);
             }
         }
         
@@ -333,12 +333,12 @@ namespace ListOps {
     }
 
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
-        match(this)@ {
+        match(t)@ {
             BBLeaf<T> => { return Tree<T>::createLeaf(v); }
-            | Leaf<T> => { return balance<T>(Color#Black, $this, Tree<T>::createLeaf(v)); }
+            | Leaf<T> => { return balance<T>(Color#Black, $t, Tree<T>::createLeaf(v)); }
             | Node<T> => { 
-                let nr = pushBack_helper[recursive]<T>($this.r, v);
-                return balance<T>(Color#Black, $this.l, nr); 
+                let nr = pushBack_helper[recursive]<T>($t.r, v);
+                return balance<T>(Color#Black, $t.l, nr); 
             }
         }
     }
