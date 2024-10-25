@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
 
@@ -513,9 +513,9 @@ class TypeChecker {
         }
     }
 
-    private checkTemplateBindingsOnInvoke(env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl): TemplateNameMapper | undefined {
+    private checkTemplateBindingsOnInvoke(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl): TemplateNameMapper | undefined {
         if(targs.length !== decl.terms.length) {
-            this.reportError(decl.sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
+            this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
             return undefined;
         }
 
@@ -1436,7 +1436,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, fdecl);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, fdecl);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1460,7 +1460,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, fdecl.member);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1505,6 +1505,23 @@ class TypeChecker {
     }
 
     private checkSafeConvertExpression(env: TypeEnvironment, exp: SafeConvertExpression): TypeSignature {
+        const oksrctype = this.checkTypeSignature(exp.srctype);
+        const oktrgttype = this.checkTypeSignature(exp.trgttype);
+
+        const etype = this.checkExpression(env, exp.exp, oksrctype ? new SimpleTypeInferContext(exp.srctype) : undefined);
+        if(oksrctype) {
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, exp.srctype, this.constraints), `SafeConvert expression is not a subtype of ${exp.srctype.emit()}`);
+        }
+
+        if(oktrgttype) {
+            return exp.setType(exp.trgttype);
+        }
+        else {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+    }
+
+    private checkCreateDirectExpression(env: TypeEnvironment, exp: CreateDirectExpression): TypeSignature {
         const oksrctype = this.checkTypeSignature(exp.srctype);
         const oktrgttype = this.checkTypeSignature(exp.trgttype);
 
@@ -1603,7 +1620,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(env, exp.terms, mresolve.member);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -2275,6 +2292,9 @@ class TypeChecker {
             case ExpressionTag.SafeConvertExpression: {
                 return this.checkSafeConvertExpression(env, exp as SafeConvertExpression);
             }
+            case ExpressionTag.CreateDirectExpression: {
+                return this.checkCreateDirectExpression(env, exp as CreateDirectExpression);
+            }
             case ExpressionTag.PostfixOpExpression: {
                 return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);
             }
@@ -2685,6 +2705,10 @@ class TypeChecker {
         }
         if(!vinfo.mustDefined) {
             this.reportError(sinfo, `Variable ${retypevname} is not defined`);
+            return;
+        }
+        if(vinfo.isRef) {
+            this.reportError(sinfo, `Cannot reflow type for ref variables`);
             return;
         }
     }

@@ -120,6 +120,7 @@ class TypeEnvironment {
         let pp = this.parent;
         while(pp !== undefined) {
             depth += pp.getBindScopeDepth(vname);
+            pp = pp.parent;
         }
 
         return depth;
@@ -213,7 +214,17 @@ class TypeEnvironment {
             locals = [frame, ...locals];
         }
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, locals);
+        let reflowargs: VarInfo[] = [];
+        for(let i = 0; i < this.args.length; i++) {
+            if(this.args[i].srcname !== vname) {
+                reflowargs.push(this.args[i]);
+            }
+            else {
+                reflowargs.push(this.args[i].updateType(ttype));
+            }
+        }
+
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, reflowargs, this.declReturnType, this.inferReturn, locals);
     }
 
     setDeadFlow(): TypeEnvironment {

@@ -227,6 +227,7 @@ enum ExpressionTag {
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
     SafeConvertExpression = "SafeConvertExpression",
+    CreateDirectExpression = "CreateDirectExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -824,6 +825,23 @@ class SafeConvertExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `s_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
+    }
+}
+
+class CreateDirectExpression extends Expression {
+    readonly exp: Expression;
+    readonly srctype: TypeSignature;
+    readonly trgttype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
+        super(ExpressionTag.CreateDirectExpression, sinfo);
+        this.exp = exp;
+        this.srctype = srctype;
+        this.trgttype = trgttype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `s_createDirect<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
     }
 }
 
@@ -2361,7 +2379,7 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
-    ParseAsTypeExpression, SafeConvertExpression,
+    ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
