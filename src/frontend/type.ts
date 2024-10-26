@@ -89,6 +89,21 @@ class TemplateNameMapper {
         return new TemplateNameMapper([...m1.mapper, ...m2.mapper]);
     }
 
+    static tryMerge(m1: TemplateNameMapper | undefined, m2: TemplateNameMapper | undefined): TemplateNameMapper | undefined {
+        if(m1 === undefined && m2 === undefined) {
+            return undefined;
+        }
+        else if(m1 === undefined) {
+            return m2;
+        }
+        else if(m2 === undefined) {
+            return m1;
+        }
+        else {
+            return new TemplateNameMapper([...m1.mapper, ...m2.mapper]);
+        }
+    }
+
     resolveTemplateMapping(ttype: TemplateTypeSignature): TypeSignature {
         for(let i = this.mapper.length - 1; i >= 0; --i) {
             const res = this.mapper[i].get(ttype.name);

@@ -2013,9 +2013,10 @@ class JSEmitter {
         return ensurescc;
     }
 
-    private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: NominalTypeSignature | undefined,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+    private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined] | undefined, optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+        const omap = this.mapper;
         if(optmapping !== undefined) {
-            this.mapper = optmapping;
+            this.mapper = TemplateNameMapper.tryMerge(optenclosingtype !== undefined ? optenclosingtype[1] : undefined, optmapping);
         }
 
         const sig = this.emitExplicitInvokeFunctionDeclSignature(fdecl);
@@ -2034,18 +2035,18 @@ class JSEmitter {
 
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
-            let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(optenclosingtype as NominalTypeSignature, fdecl as TypeFunctionDecl, optmapping), true];
+            let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
             resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
-        this.mapper = undefined;
+        this.mapper = omap;
 
         const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
         return {body: `${nf}${sig}${nss ? " => " : " "}${body}`, resfimpl: resfimpl, tests: tests};
     }
 
-    private emitFunctionDecls(optenclosingtype: NominalTypeSignature | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitFunctionDecls(optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined] | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
@@ -2118,9 +2119,10 @@ class JSEmitter {
         return ensurescc;
     }
 
-    private emitMethodDecl(rcvrtype: NominalTypeSignature, mdecl: MethodDecl,  optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+    private emitMethodDecl(rcvrtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined, tests: string[]} {
+        const omap = this.mapper;
         if(optmapping !== undefined) {
-            this.mapper = optmapping;
+            this.mapper = TemplateNameMapper.tryMerge(rcvrtype[1], optmapping);
         }
 
         const sig = this.emitExplicitMethodDeclSignature(mdecl);
@@ -2129,7 +2131,7 @@ class JSEmitter {
         let preconds: string[] = [];
         let refsaves: string[] = [];
         let tests: string[] = [];
-        const ensures = this.checkExplicitMethodDeclMetaData(rcvrtype, mdecl, initializers, preconds, refsaves, tests);
+        const ensures = this.checkExplicitMethodDeclMetaData(rcvrtype[0], mdecl, initializers, preconds, refsaves, tests);
 
         let resf: string | undefined = undefined;
         let resfimpl: string | undefined = undefined;
@@ -2139,18 +2141,18 @@ class JSEmitter {
 
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
-            let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+            let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
             resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
         }
 
         const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
-        this.mapper = undefined;
+        this.mapper = omap;
 
-        const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype, mdecl, optmapping);
+        const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
         return {body: `${nf}function${sig} ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
-    private emitMethodDecls(rcvr: TypeSignature, mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
+    private emitMethodDecls(rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
         let decls: string[] = [];
         let tests: string[] = [];
 
@@ -2162,7 +2164,7 @@ class JSEmitter {
 
             if(mii !== undefined) {
                 if(mii.binds === undefined) {
-                    const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, undefined, fmt);
+                    const {body, resfimpl, tests} = this.emitMethodDecl(rcvr, mdecl, undefined, fmt);
             
                     if(resfimpl !== undefined) {
                         decls.push(resfimpl);
@@ -2175,7 +2177,7 @@ class JSEmitter {
                     fmt.indentPush();
                     let idecls: string[] = []
                     for(let j = 0; j < mii.binds.length; ++j) {
-                        const {body, resfimpl, tests} = this.emitMethodDecl(this.tproc(rcvr) as NominalTypeSignature, mdecl, mii.binds[j], fmt);
+                        const {body, resfimpl, tests} = this.emitMethodDecl(rcvr, mdecl, mii.binds[j], fmt);
             
                         if(resfimpl !== undefined) {
                             idecls.push(fmt.indent(resfimpl));
@@ -2431,11 +2433,11 @@ class JSEmitter {
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
-        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+        const fdecls = this.emitFunctionDecls([rcvr, instantiation.binds], tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
         tests.push(...fdecls.tests);
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        const mdecls = this.emitMethodDecls([rcvr, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
         tests.push(...mdecls.tests);
 
@@ -2463,10 +2465,10 @@ class JSEmitter {
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
-        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+        const fdecls = this.emitFunctionDecls([rcvr, instantiation.binds], tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        const mdecls = this.emitMethodDecls([rcvr, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
         const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n");
@@ -2540,11 +2542,11 @@ class JSEmitter {
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
-        const fdecls = this.emitFunctionDecls(rcvr, tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+        const fdecls = this.emitFunctionDecls([rcvr, undefined], tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
         decls.push(...fdecls.decls);
         tests.push(...fdecls.tests);
 
-        const mdecls = this.emitMethodDecls(rcvr, tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        const mdecls = this.emitMethodDecls([rcvr, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
         tests.push(...mdecls.tests);
 

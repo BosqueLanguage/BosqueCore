@@ -470,7 +470,7 @@ class BSQONTypeInfoEmitter {
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
         let decl: any = {};
 
-        const nscore = asminstantiation.find((ai) => ai.ns.emit() === "Core") as NamespaceInstantiationInfo;
+        const nscore = asminstantiation.find((ai) => ai.ns.ns.join("::") === "Core") as NamespaceInstantiationInfo;
         const emitter = new BSQONTypeInfoEmitter(assembly, nscore);
 
         decl.namespaces = [];

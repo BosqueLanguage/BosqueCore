@@ -197,7 +197,7 @@ class EmitNameManager {
         }
     }
 
-    static generateOnCompleteDeclarationNameForTypeFunction(ttype: NominalTypeSignature, fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
+    static generateOnCompleteDeclarationNameForTypeFunction(fv: TypeFunctionDecl, mapper: TemplateNameMapper | undefined): string {
         if(fv.terms.length === 0) {
             return `${fv.name}$OnReturn: `;
         }
