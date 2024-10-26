@@ -957,6 +957,7 @@ class InstantiationPropagator {
 
     private instantiateReturnSingleStatement(stmt: ReturnSingleStatement) {
         this.instantiateExpressionRHS(stmt.value);
+        this.instantiateTypeSignature(stmt.rtype as TypeSignature, this.currentMapping);
     }
 
     private instantiateReturnMultiStatement(stmt: ReturnMultiStatement) {

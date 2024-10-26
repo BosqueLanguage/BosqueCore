@@ -2667,6 +2667,8 @@ class TypeChecker {
 
     private checkReturnSingleStatement(env: TypeEnvironment, stmt: ReturnSingleStatement): TypeEnvironment {
         const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
+
+        stmt.rtype = env.declReturnType;
         this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit()} but got ${rtype.emit()}`);
         
         return env.setReturnFlow();

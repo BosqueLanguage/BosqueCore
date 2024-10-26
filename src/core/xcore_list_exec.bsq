@@ -16,6 +16,14 @@ namespace ListOps {
         return size<T>(l.value);
     }
 
+    function s_list_front<T>(l: List<T>): T {
+        return front<T>(l.value);
+    }
+
+    function s_list_back<T>(l: List<T>): T {
+        return back<T>(l.value);
+    }
+
     function s_list_get<T>(l: List<T>, idx: Nat): T {
         return get<T>(l.value, idx);
     }
@@ -316,6 +324,26 @@ namespace ListOps {
             BBLeaf<T> => { return 0n; }
             | Leaf<T> => { return 1n; }
             | Node<T> => { return $t.count; }
+        }
+    }
+
+    recursive function front<T>(t: Tree<T>): T {
+        if(t)@<Leaf<T>> {
+            return $t.v;
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+            return front[recursive]<T>(nn.l);
+        }
+    }
+
+    recursive function back<T>(t: Tree<T>): T {
+        if(t)@<Leaf<T>> {
+            return $t.v;
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+            return back[recursive]<T>(nn.r);
         }
     }
 

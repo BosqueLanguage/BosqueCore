@@ -1445,7 +1445,7 @@ class JSEmitter {
 
     private emitReturnSingleStatement(stmt: ReturnSingleStatement): string {
         //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just return on this if it does)
-        const rexp = this.emitExpressionRHS(stmt.value);
+        const rexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.value), stmt.value.getType(), stmt.rtype as TypeSignature);
 
         if(this.returncompletecall === undefined) {
             return `return ${rexp};`;
@@ -1556,14 +1556,17 @@ class JSEmitter {
     }
 
     private emitMatchCase(mtype: TypeSignature, value: BlockStatement, vval: string, vtype: TypeSignature, binderinfo: BinderInfo | undefined, fmt: JSCodeFormatter): [string, string] {
-        const ttest = `(${this.emitITestAsTest_Type(vval, vtype, mtype, false)})`;
+        const tmtype = this.tproc(mtype) as TypeSignature;
+        const tvtype = this.tproc(vtype) as TypeSignature;
+        
+        const ttest = `(${this.emitITestAsTest_Type(vval, tvtype, tmtype, false)})`;
         
         if(binderinfo === undefined) {
             return [ttest, this.emitBlockStatement(value, fmt)];
         }
         else {
             this.bindernames.add(binderinfo.scopename);
-            const bindexp = this.emitBUAsNeeded(vval, vtype, mtype);
+            const bindexp = this.emitBUAsNeeded(vval, tvtype, tmtype);
 
             fmt.indentPush();
             const blck = this.emitBlockStatement(value, fmt);
@@ -1846,6 +1849,7 @@ class JSEmitter {
 
                 stmts = [bvars, ...stmts];
             }
+            this.bindernames.clear();
 
             if(initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
                 return ["{\n", ...stmts, fmt.indent("}")].join("");

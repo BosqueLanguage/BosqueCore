@@ -1854,6 +1854,7 @@ class ReturnVoidStatement extends Statement {
 
 class ReturnSingleStatement extends Statement {
     readonly value: Expression;
+    rtype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, value: Expression) {
         super(StatementTag.ReturnSingleStatement, sinfo);
