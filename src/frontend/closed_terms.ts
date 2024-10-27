@@ -266,7 +266,7 @@ class InstantiationPropagator {
                 return;
             }
     
-            this.pendingTypeFunctions.push(new PendingTypeFunction(resolvedtype, fdecl, []));
+            this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, []));
         }
         else {
             let fmapping = new Map<string, TypeSignature>();
@@ -278,7 +278,7 @@ class InstantiationPropagator {
                 return;
             }
 
-            this.pendingTypeFunctions.push(new PendingTypeFunction(resolvedtype, fdecl, tterms));
+            this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms));
         }
     }
 
@@ -415,7 +415,7 @@ class InstantiationPropagator {
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
 
         const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
-        const imapping = this.currentMapping !== undefined ? TemplateNameMapper.merge(this.currentMapping as TemplateNameMapper, exp.resolvedDeclMapping as TemplateNameMapper) : exp.resolvedDeclMapping as TemplateNameMapper;
+        const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
 
         this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
     }
@@ -957,6 +957,7 @@ class InstantiationPropagator {
 
     private instantiateReturnSingleStatement(stmt: ReturnSingleStatement) {
         this.instantiateExpressionRHS(stmt.value);
+        this.instantiateTypeSignature(stmt.rtype as TypeSignature, this.currentMapping);
     }
 
     private instantiateReturnMultiStatement(stmt: ReturnMultiStatement) {
@@ -1368,7 +1369,7 @@ class InstantiationPropagator {
                 tmap.set(t.name, fdecl.instantiation[ii])
             });
 
-            this.currentMapping = TemplateNameMapper.merge(typeinst.binds !== undefined ? typeinst.binds : TemplateNameMapper.createEmpty(), TemplateNameMapper.createInitialMapping(tmap));
+            this.currentMapping = TemplateNameMapper.tryMerge(typeinst.binds, TemplateNameMapper.createInitialMapping(tmap));
         }
 
         this.instantiateExplicitInvokeDeclSignature(fdecl.function);
@@ -1402,7 +1403,7 @@ class InstantiationPropagator {
                 tmap.set(t.name, mdecl.instantiation[ii])
             });
 
-            this.currentMapping = TemplateNameMapper.merge(typeinst.binds !== undefined ? typeinst.binds : TemplateNameMapper.createEmpty(), TemplateNameMapper.createInitialMapping(tmap));
+            this.currentMapping = TemplateNameMapper.tryMerge(typeinst.binds, TemplateNameMapper.createInitialMapping(tmap));
         }
 
         this.instantiateExplicitInvokeDeclSignature(mdecl.method);

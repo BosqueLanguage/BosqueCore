@@ -22,6 +22,18 @@ __internal entity List<T> {
         return ListOps::s_list_size<T>(this) - 1n;
     }
 
+    method front(): T 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_front<T>(this);
+    }
+
+    method back(): T 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_back<T>(this);
+    }
+
     method get(i: Nat): T 
         requires i < ListOps::s_list_size<T>(this);
     {

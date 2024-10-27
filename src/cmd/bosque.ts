@@ -17,6 +17,10 @@ const modules_path = path.join(bosque_dir, "node_modules");
 
 let fullargs = [...process.argv].slice(2);
 
+function getSimpleFilename(fn: string): string {
+    return path.basename(fn);
+}
+
 function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
     Status.output("generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
@@ -80,14 +84,16 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
         Status.error("Failed to generate assembly!\n");
 
         //TODO -- need to do filename in error and sort nicely
-        perrors.sort((a, b) => a.sinfo.line - b.sinfo.line);
+        perrors.sort((a, b) => (a.srcfile !== b.srcfile) ? a.srcfile.localeCompare(b.srcfile) : a.sinfo.line - b.sinfo.line);
         for(let i = 0; i < perrors.length; ++i) {
-            Status.error(`Parser Error @ ${perrors[i].sinfo.line}: ${perrors[i].message}\n`);
+            Status.error(`Parser Error @ ${getSimpleFilename(perrors[i].srcfile)}#${perrors[i].sinfo.line}: ${perrors[i].message}\n`);
         }
 
         terrors.sort((a, b) => (a.file !== b.file) ? a.file.localeCompare(b.file) : a.line - b.line);
-        for(let i = 0; i < terrors.length; ++i) {
-            Status.error(`Type Error @ ${terrors[i].line}: ${terrors[i].msg}\n`);
+        if(terrors.length !== 0) {
+            for(let i = 0; i < terrors.length; ++i) {
+                Status.error(`Type Error @ ${getSimpleFilename(terrors[i].file)}#${terrors[i].line}: ${terrors[i].msg}\n`);
+            }
         }
 
         return undefined;
