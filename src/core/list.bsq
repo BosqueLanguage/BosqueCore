@@ -6,9 +6,9 @@ namespace List {
 __internal entity List<T> {
 #if STRIPPED_CORE
 #else
-    const empty: List<T> = ListOps::s_list_get_empty<T>();
+    const emptylist: List<T> = ListOps::s_list_get_empty<T>();
 
-    method isEmpty(): Bool {
+    method empty(): Bool {
         return ListOps::s_list_empty<T>(this);
     }
 

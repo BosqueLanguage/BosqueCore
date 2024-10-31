@@ -479,7 +479,7 @@ class JSEmitter {
 
         if(cdecl instanceof ListTypeDecl) {
             if(exp.args.args.length === 0) {
-                const cc = cdecl.consts.find((c) => c.name === "empty") as ConstMemberDecl;
+                const cc = cdecl.consts.find((c) => c.name === "emptylist") as ConstMemberDecl;
                 return EmitNameManager.generateAccssorNameForTypeConstant(this.getCurrentNamespace(), ctype, cc);
             }
             else {
