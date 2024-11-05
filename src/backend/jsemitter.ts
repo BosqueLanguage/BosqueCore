@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'let _$consts = new Map();\n' +
 '\n' +
-'import {_$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
+'import { $VRepr, _$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$BoxedNone, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -75,17 +75,21 @@ class JSEmitter {
     }
 
     private emitBoxOperation(val: string, oftype: NominalTypeSignature): string {
+        xxxx;
         const taccess = EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype);
         return `_$b(${taccess}, ${val})`;
     }
 
     private emitUnBoxOperation(val: string): string {
+        xxxx;
         return `(${val}).$val`;
     }
 
     private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
         const oftypet = this.tproc(oftype);
         const totypet = this.tproc(totype);
+
+        xxxx;
 
         if(EmitNameManager.isNakedTypeRepr(oftypet)) {
             if(EmitNameManager.isNakedTypeRepr(totypet)) {
@@ -112,7 +116,7 @@ class JSEmitter {
             return vtype.tkeystr === "None" ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
-            return val + (isnot ? "._$isSome()" : "._$isNone()");
+            return val + (isnot ? "._$isNotNone()" : "._$isNone()");
         }
     }
 
@@ -121,7 +125,7 @@ class JSEmitter {
             return vtype.tkeystr.startsWith("Some") ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
-            return val + (isnot ? "._$isNone()" : "._$isSome()");
+            return val + (isnot ? "._$isNotSome()" : "._$isSome()");
         }
     }
 
@@ -199,6 +203,7 @@ class JSEmitter {
             return vtype.tkeystr === "None" ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
+            xxxx;
             const emsg = this.getErrorInfo(isnot ? "expected Some but got None" : "expected None but got Some", sinfo, undefined);
             return val + (isnot ? `._$asSome(${emsg})` : `._$asNone(${emsg})`);
         }
@@ -210,6 +215,7 @@ class JSEmitter {
             return vtype.tkeystr.startsWith("Some") ? (isnot ? mfail : val) : (isnot ? val : mfail);
         }
         else {
+            xxxx;
             const emsg = this.getErrorInfo(isnot ? "expected None but got Some" : "expected Some but got None", sinfo, undefined);
             return val + (isnot ? `._$asNone(${emsg})` : `._$asSome(${emsg})`);
         }
@@ -252,6 +258,7 @@ class JSEmitter {
                 return vtype.tkeystr === oftype.tkeystr ? (isnot ? mfail : val) : (isnot ? val : mfail);
             }
             else {
+                xxxx;
                 return `_$fas${isnot ? "Not" : ""}Subtype(${val}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)}, false, ${this.getErrorInfo("Failed type convert", sinfo, undefined)})`;
             }
         }
@@ -940,6 +947,7 @@ class JSEmitter {
             return `${this.emitExpression(exp.lhs, false)}._$keyEqOf(${this.emitExpression(exp.rhs, true)})`;
         }
         else if(kcop === "stricteq") {
+            xxxx;
             return `_$feqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else {

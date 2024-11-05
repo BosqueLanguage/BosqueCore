@@ -1,7 +1,7 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
-import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
+import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
 class JSCodeFormatter {
     private level: number;
@@ -36,11 +36,8 @@ class EmitNameManager {
         return (ttype instanceof NominalTypeSignature) && !(ttype.decl instanceof AbstractConceptTypeDecl);
     }
 
-    static isNakedTypeRepr(ttype: TypeSignature): boolean {
-        if(ttype instanceof EListTypeSignature) {
-            return true;
-        }
-        else if(ttype instanceof NominalTypeSignature) {
+    static isSingleTypeRepr(ttype: TypeSignature): boolean {
+        if(ttype instanceof NominalTypeSignature) {
             return !(ttype.decl instanceof AbstractConceptTypeDecl);
         }
         else {
@@ -48,8 +45,8 @@ class EmitNameManager {
         }
     }
 
-    static isBoxedTypeRepr(ttype: TypeSignature): boolean {
-        return !this.isNakedTypeRepr(ttype);
+    static isMultipleTypeRepr(ttype: TypeSignature): boolean {
+        return !this.isSingleTypeRepr(ttype);
     }
 
     static isMethodCallObjectRepr(ttype: TypeSignature): boolean {
@@ -58,7 +55,7 @@ class EmitNameManager {
         }
 
         const tdecl = ttype.decl;
-        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl);
+        return !(tdecl instanceof PrimitiveEntityTypeDecl);
     }
 
     static generateTypeKey(ttype: NominalTypeSignature): string {

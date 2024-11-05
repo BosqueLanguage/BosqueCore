@@ -86,7 +86,6 @@ const $Unwind_Validate = Symbol("ValidateFailed");
  **/
 const $Unwind_TypeAs = Symbol("TypeAsFailed");
 
-
 /**
  * @constant
  * @type {Symbol}
@@ -108,28 +107,6 @@ function $Unwind(tag, info) {
  * @type {object}
  */
 let _$supertypes = {};
-
-/**
- * @constructor
- * @param {Symbol} t 
- * @param {any} v 
- **/
-function $Boxed(t, v) {
-    this.$tag = t;
-    this.$val = v;
-}
-
-/**
- * @constant
- * @type {Symbol}
- **/
-const $SymbolNone = Symbol.for("None");
-
-/**
- * @constant
- * @type {$Boxed}
- **/
-const _$BoxedNone = new $Boxed(Symbol.for("None"), null);
 
 /**
  * @function
@@ -162,84 +139,6 @@ function _$flessraw(v1, v2) {
 }
 
 /**
- * @method
- * @param {any} v
- * @returns {boolean}
- **/
-$Boxed.prototype._$keyEqOf = function(v) {
-    return _$feqraw(this.$val, v);
-};
-
-/**
- * @method
- * @param {any} v
- * @returns {boolean}
- **/
-$Boxed.prototype._$keyNeqOf = function(v) {
-    return !_$feqraw(this.$val, v);
-};
-
-/**
- * @method
- * @returns {boolean}
- **/
-$Boxed.prototype._$isNone = function() {
-    return this.$tag === $SymbolNone;
-};
-
-/**
- * @method
- * @returns {boolean}
- **/
-$Boxed.prototype._$isNotNone = function() {
-    return this.$tag !== $SymbolNone;
-};
-
-/**
- * @method
- * @returns {boolean}
- **/
-$Boxed.prototype._$isSome = function() {
-    return this.$tag !== $SymbolNone;
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @returns {boolean}
- **/
-$Boxed.prototype._$is = function(tsym) {
-    return this.$tag === tsym;
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @returns {boolean}
- **/
-$Boxed.prototype._$isNot = function(tsym) {
-    return this.$tag !== tsym;
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @returns {boolean}
- **/
-$Boxed.prototype._$isSubtype = function(tsym) {
-    return _$supertypes.get(this.$tag).has(tsym);
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @returns {boolean}
- **/
-$Boxed.prototype._$isNotSubtype = function(tsym) {
-    return !_$supertypes.get(this.$tag).has(tsym);
-};
-
-/**
  * @function
  * @param {Symbol} tag 
  * @param {Symbol} tsym 
@@ -258,100 +157,6 @@ function _$fisSubtype(tag, tsym) {
 function _$fisNotSubtype(tag, tsym) {
     return !_$supertypes.get(tag).has(tsym);
 }
-
-/**
- * @method
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$asNone = function(info) {
-    if (this._$isNone()) {
-        return null;
-    }
-    else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
-
-/**
- * @method
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$asSome = function(info) {
-    if (this._$isSome()) {
-        return this.$val;
-    }
-    else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @param {boolean} ubx
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$as = function(tsym, ubx, info) {
-    if (this._$is(tsym)) {
-        return ubx ? this.$val : this;
-    } else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @param {boolean} ubx
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$asNot = function(tsym, ubx, info) {
-    if (this._$isNot(tsym)) {
-        return ubx ? this.$val : this;
-    } else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @param {boolean} ubx
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$asSubtype = function(tsym, ubx, info) {
-    if (this._$isSubtype(tsym)) {
-        return ubx ? this.$val : this;
-    } else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
-
-/**
- * @method
- * @param {Symbol} tsym
- * @param {boolean} ubx
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
-$Boxed.prototype._$asNotSubtype = function(tsym, ubx, info) {
-    if (this._$isNotSubtype(tsym)) {
-        return ubx ? this.$val : this;
-    } else {
-        throw new $Unwind($Unwind_TypeAs, info);
-    }
-};
 
 /**
  * @function
@@ -390,13 +195,70 @@ function _$fasNotSubtype(val, tag, tsym, ubx, info) {
 };
 
 /**
+ * @constant
+ * @type {Symbol}
+ **/
+const $SymbolNone = Symbol.for("None");
+
+const $VRepr = {
+    _$isNone: function() { return this.$tag === $SymbolNone; },
+    _$isNotNone: function() { return this.$tag !== $SymbolNone; },
+
+    _$isSome: function() { return this.$tag !== $SymbolNone; },
+    _$isNotSome: function() { return this.$tag === $SymbolNone; },
+
+    _$is: function(tsym) { return this.$tag === tsym; },
+    _$isNot: function(tsym) { return this.$tag !== tsym; },
+
+    _$isSubtype: function(tsym) { return _$fisSubtype(this.$tag, tsym); },
+    _$isNotSubtype: function(tsym) { return !_$fisNotSubtype(this.$tag, tsym); },
+
+    _$asNone: function(info) { if (this._$isNotNone()) { throw new $Unwind($Unwind_TypeAs, info); } return null; },
+    _$asNotNone: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+
+    _$asSome: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotSome: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return null; },
+
+    _$as: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asUnbox: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    
+    _$asNot: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotUnbox: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+
+    _$asSubtype: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asSubtypeUnbox: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+
+    _$asNotSubtype: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotSubtypeUnbox: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
+};
+
+const $BoxedRepr = Object.create($VRepr, {
+    _$asUnbox: { value: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
+    _$asNotUnbox: { value: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
+    _$asSubtypeUnbox: { value: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
+    _$asNotSubtypeUnbox: { value: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true }
+});
+
+/**
+ * @constant
+ * @type {$Boxed}
+ **/
+const _$BoxedNone = Object.create($BoxedRepr, { 
+    $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }, 
+    $val: { value: null, writable: false, configurable: false, enumerable: true }
+});
+
+/**
  * @function
  * @param {Symbol} tsym
  * @returns {any}
  * @returns {$Boxed}
  **/ 
 function _$b(t, v) {
-    return v !== null ? new $Boxed(t, v) : _$BoxedNone;
+    return Object.create($BoxedRepr, { 
+        $tag: { value: t, writable: false, configurable: false, enumerable: true }, 
+        $val: { value: v, writable: false, configurable: false, enumerable: true }
+    });
 }
 
 /**
@@ -697,10 +559,12 @@ function _$accepts(pattern, input, inns) {
 }
 
 export {
+    $VRepr,
     _$softfails,
     _$supertypes,
     _$feqraw, _$fneqraw, _$flessraw,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
+    _$BoxedNone,
     _$b, 
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
     _$exhaustive,
