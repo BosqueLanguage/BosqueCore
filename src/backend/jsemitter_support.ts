@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
@@ -32,25 +32,16 @@ class JSCodeFormatter {
 }
 
 class EmitNameManager {
+    static isNoneType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl) && (ttype.decl.name === "None");
+    }
+
+    static isOptionType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof OptionTypeDecl);
+    }
+
     static isUniqueTypeForSubtypeChecking(ttype: TypeSignature): boolean {
         return (ttype instanceof NominalTypeSignature) && !(ttype.decl instanceof AbstractConceptTypeDecl);
-    }
-
-    static isExplicitBoxingRequired(ttype: TypeSignature): boolean {
-        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
-    }
-
-    static isSingleTypeRepr(ttype: TypeSignature): boolean {
-        if(ttype instanceof NominalTypeSignature) {
-            return !(ttype.decl instanceof AbstractConceptTypeDecl);
-        }
-        else {
-            return false;
-        }
-    }
-
-    static isMultipleTypeRepr(ttype: TypeSignature): boolean {
-        return !this.isSingleTypeRepr(ttype);
     }
 
     static isMethodCallObjectRepr(ttype: TypeSignature): boolean {

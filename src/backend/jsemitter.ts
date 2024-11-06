@@ -74,49 +74,8 @@ class JSEmitter {
         return this.mapper;
     }
 
-    private emitBoxOperation(val: string, oftype: NominalTypeSignature): string {
-        const taccess = EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype);
-        return `_$b(${taccess}, ${val})`;
-    }
-
-    private emitUnBoxOperation(val: string): string {
-        return `_$ub(${val})`;
-    }
-
-    private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
-        const oftypet = this.tproc(oftype);
-        const totypet = this.tproc(totype);
-
-        if(EmitNameManager.isSingleTypeRepr(oftypet)) {
-            if(EmitNameManager.isSingleTypeRepr(totypet)) {
-                return val;
-            }
-            else {
-                if(!EmitNameManager.isExplicitBoxingRequired(oftype)) {
-                    return val;
-                }
-                else {
-                    return this.emitBoxOperation(val, oftypet as NominalTypeSignature);
-                }
-            }
-        }
-        else {
-            if(EmitNameManager.isMultipleTypeRepr(totypet)) {
-                return val;
-            }
-            else {
-                if(!EmitNameManager.isExplicitBoxingRequired(totypet)) {
-                    return val;
-                }
-                else {
-                    return this.emitUnBoxOperation(val);
-                }
-            }
-        }
-    }
-
     private emitITestAsTest_None(val: string, vtype: TypeSignature, isnot: boolean): string {
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(vtype)) {
             return vtype.tkeystr === "None" ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
@@ -125,7 +84,7 @@ class JSEmitter {
     }
 
     private emitITestAsTest_Some(val: string, vtype: TypeSignature, isnot: boolean): string {
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(vtype)) {
             return vtype.tkeystr.startsWith("Some") ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
@@ -136,44 +95,59 @@ class JSEmitter {
     private emitITestAsTest_Ok(val: string, vtype: TypeSignature, isnot: boolean): string {
         const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
         const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
-        const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
 
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(vtype)) {
             return vtype.tkeystr === oktype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
-            return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? failtype : oktype)})`;
+            return val + (isnot ? "._$isNot" : "._$is") + `(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oktype)})`;
         }
     }
 
     private emitITestAsTest_Fail(val: string, vtype: TypeSignature, isnot: boolean): string {
         const rdcel = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl;
-        const oktype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getOkType(), (vtype as NominalTypeSignature).alltermargs);
         const failtype = new NominalTypeSignature(vtype.sinfo, undefined, rdcel.getFailType(), (vtype as NominalTypeSignature).alltermargs);
 
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(vtype)) {
             return vtype.tkeystr === failtype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
         }
         else {
-            return `${val}._$is(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), isnot ? oktype : failtype)})`;
+            return val + (isnot ? "._$isNot" : "._$is") + `(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), failtype)})`;
         }
     }
 
     private emitITestAsTest_Type(val: string, vtype: TypeSignature, oftype: TypeSignature, isnot: boolean): string {
-        if(EmitNameManager.isNakedTypeRepr(vtype)) {
-            if(EmitNameManager.isNakedTypeRepr(oftype)) {
+        if(EmitNameManager.isUniqueTypeForSubtypeChecking(vtype)) {
+            if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
                 return vtype.tkeystr === oftype.tkeystr ? (isnot ? "false" : "true") : (isnot ? "true" : "false");
             }
             else {
-                return `_$fis${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)})`;
+                if(!EmitNameManager.isMethodCallObjectRepr(vtype)) {
+                    const testop = isnot ? "_$isNotSubtype" : "_$isSubtype";
+                    return `${val}.${testop}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`; 
+                }                    
+                else {
+                    if(EmitNameManager.isNoneType(vtype)) {
+                        xxxx;
+                    }
+   
+                    const testop = isnot ? "_$fisNotSubtype" : "_$fisSubtype";
+                    return `${testop}(${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, vtype as NominalTypeSignature)}, ${EmitNameManager.generateAccessorForTypeKey(this.currentns as NamespaceDeclaration, oftype as NominalTypeSignature)})`;
+                }
             }
         }
         else {
             if(EmitNameManager.isUniqueTypeForSubtypeChecking(oftype)) {
-                return `${val}._$is${isnot ? "Not" : ""}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
+                const testop = isnot ? "_$isNot" : "_$is";
+                return `${val}.${testop}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
             }
             else {
-                return `${val}._$is${isnot ? "Not" : ""}Subtype(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
+                if(EmitNameManager.isOptionType(vtype)) {
+                    xxxx;
+                }
+
+                const testop = isnot ? "_$isNotSubtype" : "_$isSubtype";
+                return `${val}.${testop}(${EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype as NominalTypeSignature)})`;
             }
         }
     }
