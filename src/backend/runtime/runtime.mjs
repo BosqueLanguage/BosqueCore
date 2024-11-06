@@ -220,46 +220,26 @@ const $VRepr = {
     _$asNotSome: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return null; },
 
     _$as: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asUnbox: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    
     _$asNot: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asNotUnbox: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-
+    
     _$asSubtype: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asSubtypeUnbox: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-
-    _$asNotSubtype: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asNotSubtypeUnbox: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
+    _$asNotSubtype: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
 };
 
-const $BoxedRepr = Object.create($VRepr, {
-    _$asUnbox: { value: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
-    _$asNotUnbox: { value: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
-    _$asSubtypeUnbox: { value: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true },
-    _$asNotSubtypeUnbox: { value: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this.$val; }, writable: false, configurable: false, enumerable: true }
+xxxx;
+const $OptionRepr = Object.create($VRepr, {
+    $tag: { value: null, writable: true, configurable: false, enumerable: false },
+    $val: { value: null, writable: true, configurable: false, enumerable: false }
 });
 
 /**
  * @constant
- * @type {$Boxed}
+ * @type {any}
  **/
 const _$BoxedNone = Object.create($BoxedRepr, { 
     $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }, 
     $val: { value: null, writable: false, configurable: false, enumerable: true }
 });
-
-/**
- * @function
- * @param {Symbol} tsym
- * @returns {any}
- * @returns {$Boxed}
- **/ 
-function _$b(t, v) {
-    return Object.create($BoxedRepr, { 
-        $tag: { value: t, writable: false, configurable: false, enumerable: true }, 
-        $val: { value: v, writable: false, configurable: false, enumerable: true }
-    });
-}
 
 /**
  * @function
@@ -565,7 +545,7 @@ export {
     _$feqraw, _$fneqraw, _$flessraw,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$BoxedNone,
-    _$b, 
+    _$b, _$ub,
     _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
     _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,

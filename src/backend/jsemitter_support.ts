@@ -36,6 +36,10 @@ class EmitNameManager {
         return (ttype instanceof NominalTypeSignature) && !(ttype.decl instanceof AbstractConceptTypeDecl);
     }
 
+    static isExplicitBoxingRequired(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
+    }
+
     static isSingleTypeRepr(ttype: TypeSignature): boolean {
         if(ttype instanceof NominalTypeSignature) {
             return !(ttype.decl instanceof AbstractConceptTypeDecl);

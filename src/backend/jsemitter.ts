@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'let _$consts = new Map();\n' +
 '\n' +
-'import { $VRepr, _$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$BoxedNone, _$b, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
+'import { $VRepr, _$softfails, _$supertypes, _$feqraw, _$fneqraw, _$flessraw, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$BoxedNone, _$b, _$ub, _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts} from "./runtime.mjs";\n' +
 '\n'
 ;
 
@@ -75,38 +75,42 @@ class JSEmitter {
     }
 
     private emitBoxOperation(val: string, oftype: NominalTypeSignature): string {
-        xxxx;
         const taccess = EmitNameManager.generateAccessorForTypeKey(this.getCurrentNamespace(), oftype);
         return `_$b(${taccess}, ${val})`;
     }
 
     private emitUnBoxOperation(val: string): string {
-        xxxx;
-        return `(${val}).$val`;
+        return `_$ub(${val})`;
     }
 
     private emitBUAsNeeded(val: string, oftype: TypeSignature, totype: TypeSignature): string {
         const oftypet = this.tproc(oftype);
         const totypet = this.tproc(totype);
 
-        xxxx;
-
-        if(EmitNameManager.isNakedTypeRepr(oftypet)) {
-            if(EmitNameManager.isNakedTypeRepr(totypet)) {
+        if(EmitNameManager.isSingleTypeRepr(oftypet)) {
+            if(EmitNameManager.isSingleTypeRepr(totypet)) {
                 return val;
             }
             else {
-                return this.emitBoxOperation(val, oftypet as NominalTypeSignature);
+                if(!EmitNameManager.isExplicitBoxingRequired(oftype)) {
+                    return val;
+                }
+                else {
+                    return this.emitBoxOperation(val, oftypet as NominalTypeSignature);
+                }
             }
         }
         else {
-            assert(EmitNameManager.isBoxedTypeRepr(oftypet), "expected boxed type repr");
-
-            if(EmitNameManager.isBoxedTypeRepr(totypet)) {
+            if(EmitNameManager.isMultipleTypeRepr(totypet)) {
                 return val;
             }
             else {
-                return this.emitUnBoxOperation(val);
+                if(!EmitNameManager.isExplicitBoxingRequired(totypet)) {
+                    return val;
+                }
+                else {
+                    return this.emitUnBoxOperation(val);
+                }
             }
         }
     }
