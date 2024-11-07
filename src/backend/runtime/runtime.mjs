@@ -163,17 +163,16 @@ function _$fisNotSubtype(tag, tsym) {
  * @param {any} val
  * @param {Symbol} tag
  * @param {Symbol} tsym
- * @param {boolean} ubx
  * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-function _$fasSubtype(val, tag, tsym, ubx, info) {
-    if (_$fisSubtype(tag, tsym)) {
-        return ubx ? val : _$b(tag, val);
-    } else {
+function _$fasSubtype(val, tag, tsym, info) {
+    if (_$fisNotSubtype(tag, tsym)) {
         throw new $Unwind($Unwind_TypeAs, info);
     }
+        
+    return val;
 };
 
 /**
@@ -181,17 +180,16 @@ function _$fasSubtype(val, tag, tsym, ubx, info) {
  * @param {any} val
  * @param {Symbol} tag
  * @param {Symbol} tsym
- * @param {boolean} ubx
  * @param {string | undefined} info
  * @returns {any}
  * @throws {$Unwind}
  **/
-function _$fasNotSubtype(val, tag, tsym, ubx, info) {
-    if (_$fisNotSubtype(tag, tsym)) {
-        return ubx ? val : _$b(tag, val);
-    } else {
+function _$fasNotSubtype(val, tag, tsym, info) {
+    if (_$fisSubtype(tag, tsym)) {
         throw new $Unwind($Unwind_TypeAs, info);
     }
+        
+    return val;
 };
 
 /**
@@ -201,42 +199,42 @@ function _$fasNotSubtype(val, tag, tsym, ubx, info) {
 const $SymbolNone = Symbol.for("None");
 
 const $VRepr = {
+    _$isNone: function() { return this.$tag === $SymbolNone; },
+    _$isNotNone: function() { return this.$tag !== $SymbolNone; },
+
+    _$isSome: function() { return this.$tag !== $SymbolNone; },
+    _$isNotSome: function() { return this.$tag === $SymbolNone; },
+
+    _$asNone: function(info) { if (this._$isNotNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotNone: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    
+    _$asSome: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotSome: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+
     _$is: function(tsym) { return this.$tag === tsym; },
     _$isNot: function(tsym) { return this.$tag !== tsym; },
 
     _$isSubtype: function(tsym) { return _$fisSubtype(this.$tag, tsym); },
-    _$isNotSubtype: function(tsym) { return !_$fisNotSubtype(this.$tag, tsym); },
+    _$isNotSubtype: function(tsym) { return _$fisNotSubtype(this.$tag, tsym); },
 
     _$as: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     _$asNot: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     
-    _$asSubtype: function(tsym, info) { if (this._$isNotSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asNotSubtype: function(tsym, info) { if (this._$isSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
+    _$asSubtype: function(tsym, info) { return _$fasSubtype(this, this.$tag, tsym, info); },
+    _$asNotSubtype: function(tsym, info) { return _$fasNotSubtype(this, this.$tag, tsym, info); },
+
+    _$isOptionSubtype: function(tsym) { return this._$isNone() || _$fisSubtype(this.$tag, tsym); },
+    _$isNotOptionSubtype: function(tsym) { return this._$isNotNone() && _$fisNotSubtype(this.$tag, tsym); },
+
+    _$asOptionSubtype: function(tsym, info) { if (this._$isNotOptionSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotOptionSubtype: function(tsym, info) { if (this._$isOptionSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
 };
-
-const $OptionRepr = Object.create($VRepr, {
-    _$isNone: { value: function() { return this.$tag === $SymbolNone; }, writable: true, configurable: false, enumerable: false },
-    _$isNotNone: { value: function() { return this.$tag !== $SymbolNone; }, writable: true, configurable: false, enumerable: false },
-    
-    _$isSome: { value: function() { return this.$tag !== $SymbolNone; }, writable: true, configurable: false, enumerable: false },
-    _$isNotSome: { value: function() { return this.$tag === $SymbolNone; }, writable: true, configurable: false, enumerable: false },
-
-    _$asNone: { value: function(info) { if (this._$isNotNone()) { throw new $Unwind($Unwind_TypeAs, info); } return null; }, writable: true, configurable: false, enumerable: false },
-    _$asNotNone: { value: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; }, writable: true, configurable: false, enumerable: false },
-    
-    _$asSome: { value: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; }, writable: true, configurable: false, enumerable: false },
-    _$asNotSome: { value: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return null; }, writable: true, configurable: false, enumerable: false },
-});
-
-const $ResultRepr = Object.create($VRepr, { });
-
-const $APIResultRepr = Object.create($VRepr, { });
 
 /**
  * @constant
  * @type {any}
  **/
-const _$None = Object.create($OptionRepr, { 
+const _$None = Object.create($VRepr, { 
     $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }
 });
 
@@ -538,7 +536,7 @@ function _$accepts(pattern, input, inns) {
 }
 
 export {
-    $VRepr, $OptionRepr, $ResultRepr, $APIResultRepr,
+    $VRepr,
     _$softfails,
     _$supertypes,
     _$feqraw, _$fneqraw, _$flessraw,
