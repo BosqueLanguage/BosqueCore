@@ -1002,7 +1002,6 @@ class TypeChecker {
         this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype), `Literal value is not the same type (${bvalue.emit()}) as the value type (${TypeChecker.safeTypePrint(btype)})`);
 
         exp.optResolvedString = this.checkTypeDeclOfRestrictions(exp.constype.decl, exp.value);
-        exp.isDirectLiteral = !this.relations.hasChecksOnTypeDeclaredConstructor(exp.constype, this.constraints, true);
         return exp.setType(exp.constype);
     }
 
@@ -1117,10 +1116,6 @@ class TypeChecker {
             }
         }
 
-        if((cdecl instanceof SetTypeDecl) || (cdecl instanceof MapTypeDecl)) {
-            exp.hasChecks = true;
-        }
-
         exp.elemtype = etype;
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(exp.ctype);
@@ -1219,13 +1214,6 @@ class TypeChecker {
             if(vtype !== undefined) {
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(vtype));
                 this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
-
-                if(this.relations.areSameTypes(etype, vtype)) {
-                    exp.hasChecks = cdecl.optofexp !== undefined || cdecl.invariants.length !== 0;
-                }
-                else {
-                    exp.hasChecks = this.relations.hasChecksOnTypeDeclaredConstructor(ctype, this.constraints, false);
-                }
             }
         }
         
@@ -1243,7 +1231,6 @@ class TypeChecker {
         const bnames = this.relations.generateAllFieldBNamesInfo(ctype, fields, this.constraints);
         const shuffleinfo = this.checkConstructorArgumentList(exp.sinfo, env, exp.args.args, bnames, imapper);
 
-        exp.hasChecks = this.relations.hasChecksOnConstructor(ctype, this.constraints);
         exp.shuffleinfo = shuffleinfo;
         return exp.setType(ctype);
     }

@@ -110,36 +110,6 @@ let _$supertypes = {};
 
 /**
  * @function
- * @param {any} v1
- * @param {any} v2
- * @returns {boolean}
- **/
-function _$feqraw(v1, v2) {
-    return v1 === v2;
-}
-
-/**
- * @function
- * @param {any} v1
- * @param {any} v2
- * @returns {boolean}
- **/
-function _$fneqraw(v1, v2) {
-    return v1 !== v2;
-}
-
-/**
- * @function
- * @param {any} v1
- * @param {any} v2
- * @returns {boolean}
- **/
-function _$flessraw(v1, v2) {
-    return v1 < v2;
-}
-
-/**
- * @function
  * @param {Symbol} tag 
  * @param {Symbol} tsym 
  * @returns {boolean}
@@ -238,149 +208,112 @@ const _$None = Object.create($VRepr, {
     $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }
 });
 
-/**
- * @function
- * @param {bigint} v
- * @param {string | undefined} info
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$rc_i(v, info) {
-    if (v < MIN_SAFE_INT || MAX_SAFE_INT < v) {
-        throw new $Unwind($Unwind_NumericRange, info);
+function _$opubx(v) { return (typeof(v) === "object") ? v.value : v; }
+
+function _$checkbounds(v, cc, low, high) {
+    if (v < low) {
+        throw new $Unwind($Unwind_NumericRange, "Overflow");
     }
 
-    return v;
+    if(high !== undefined && high < v) {
+        throw new $Unwind($Unwind_NumericRange, "Overflow");
+    }
+
+    return cc !== undefined ? cc(v) : v;
 }
 
-/**
- * @function
- * @param {bigint} v
- * @param {string|undefined} info
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$rc_n(v, info) {
-    if (v < 0n || MAX_SAFE_NAT < v) {
-        throw new $Unwind($Unwind_NumericRange, info);
-    }
-
-    return v;
+function _$opcreate(v, cc) {
+    return cc !== undefined ? cc(v) : v;
 }
 
-/**
- * @function
- * @param {bigint} v
- * @param {string | undefined} info
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$rc_N(v, info) {
-    if (v < 0n) {
-        throw new $Unwind($Unwind_NumericRange, info);
+function _$not(v, cc) { return _$opcreate(!_$opubx(v), cc); }
+
+function _$addtt(v1, v2) { return _$opubx(v1) + _$opubx(v2); }
+function _$subtt(v1, v2) { return _$opubx(v1) - _$opubx(v2); }
+function _$multt(v1, v2) { return _$opubx(v1) * _$opubx(v2); }
+
+function _$divtt(n, d) { 
+    const dd = _$opubx(v2);
+    if (dd === 0n) {
+        throw new $Unwind($Unwind_DivZero, "Division by 0");
     }
 
-    return v;
+    return _$opubx(v1) / dd; 
 }
 
-/**
- * @function
- * @param {number} v
- * @param {string | undefined} info
- * @returns {number}
- * @throws {$Unwind}
- **/
-function _$rc_f(v, info) {
-    if (Number.isNaN(v)) {
-        throw new $Unwind($Unwind_NumericRange, info.replace("[EVALUE]", "NaN"));
-    }
+const _$negate = {
+    "Int": function(v, cc) { return _$opcreate(-v, cc); },
+    "BigInt": function(v, cc) { return _$opcreate(-v, cc); },
+    "Float": function(v, cc) { return _$opcreate(-v, cc); }
+};
 
-    if (!Number.isFinite(v)) {
-        throw new $Unwind($Unwind_NumericRange, info.replace("[EVALUE]", "Infinite"));
-    }
+const _$add = {
+    "Int": function(v1, v2, cc) { return _$checkbounds(_$addtt(v1, v2), cc, MIN_SAFE_INT, MAX_SAFE_INT); },
+    "Nat": function(v1, v2, cc) { return _$checkbounds(_$addtt(v1, v2), cc, 0n, MAX_SAFE_NAT); },
+    "BigInt": function(v1, v2, cc) { return _$opcreate(_$addtt(v1, v2), cc); },
+    "BigNat": function(v1, v2, cc) { return _$opcreate(_$addtt(v1, v2), cc); },
+    "Float": function(v1, v2, cc) { return _$opcreate(_$addtt(v1, v2), cc); }
+};
 
-    return v;
+const _$sub = {
+    "Int": function(v1, v2, cc) { return _$checkbounds(_$subtt(v1, v2), cc, MIN_SAFE_INT, MAX_SAFE_INT); },
+    "Nat": function(v1, v2, cc) { return _$checkbounds(_$subtt(v1, v2), cc, 0n, MAX_SAFE_NAT); },
+    "BigInt": function(v1, v2, cc) { return _$opcreate(_$subtt(v1, v2), cc); },
+    "BigNat": function(v1, v2, cc) { return _$checkbounds(_$subtt(v1, v2), cc, 0n, undefined); },
+    "Float": function(v1, v2, cc) { return _$opcreate(_$subtt(v1, v2), cc); }
+};
+
+const _$mult = {
+    "Int": function(v1, v2, cc) { return _$checkbounds(_$multt(v1, v2), cc, MIN_SAFE_INT, MAX_SAFE_INT); },
+    "Nat": function(v1, v2, cc) { return _$checkbounds(_$multt(v1, v2), cc, 0n, MAX_SAFE_NAT); },
+    "BigInt": function(v1, v2, cc) { return _$opcreate(_$multt(v1, v2), cc); },
+    "BigNat": function(v1, v2, cc) { return _$opcreate(_$multt(v1, v2), cc); },
+    "Float": function(v1, v2, cc) { return _$opcreate(_$multt(v1, v2), cc); }
+};
+
+const _$div = {
+    "Int": function(v1, v2, cc) { return _$opcreate(_$divtt(v1, v2), cc); },
+    "Nat": function(v1, v2, cc) { return _$opcreate(_$divtt(v1, v2), cc); },
+    "BigInt": function(v1, v2, cc) { return _$opcreate(_$divtt(v1, v2), cc); },
+    "BigNat": function(v1, v2, cc) { return _$opcreate(_$divtt(v1, v2), cc); },
+    "Float": function(v1, v2, cc) { return _$opcreate(_$divtt(v1, v2), cc); }
+};
+
+function _$bval(v) {
+    return _$opubx(v);
 }
 
-/**
- * @function
- * @param {bigint} v
- * @param {bigint} d
- * @param {string | undefined} infod
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$dc_i(v, d, infod) {
-    if (d === 0n) {
-        throw new $Unwind($Unwind_DivZero, infod);
-    }
+const _$fkeq = {
+    "Bool": function(v1, v2) { return _$opubx(v1) && _$opubx(v2); },
+    "Int": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "String": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "CString": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); }
+};
 
-    return v / d;
-}
+const _$fkneq = {
+    "Bool": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "Int": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "String": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "CString": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); }
+};
 
-/**
- * @function
- * @param {bigint} v
- * @param {bigint} d
- * @param {string | undefined} infod
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$dc_n(v, d, infod) {
-    if (d === 0n) {
-        throw new $Unwind($Unwind_DivZero, infod);
-    }
 
-    return v / d;
-}
+const _$fkless = {
+    "Bool": function(v1, v2) { return !_$opubx(v1) && _$opubx(v2); },
+    "Int": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "String": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "CString": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
+};
 
-/**
- * @function
- * @param {bigint} v
- * @param {bigint} d
- * @param {string | undefined} infod
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$dc_I(v, d, infod) {
-    if (d === 0n) {
-        throw new $Unwind($Unwind_DivZero, infod);
-    }
-
-    return v / d;
-}
-
-/**
- * @function
- * @param {bigint} v
- * @param {bigint} d
- * @param {string | undefined} infod
- * @returns {bigint}
- * @throws {$Unwind}
- **/
-function _$dc_N(v, d, infod) {
-    if (d === 0n) {
-        throw new $Unwind($Unwind_DivZero, infod);
-    }
-
-    return v / d;
-}
-
-/**
- * @function
- * @param {number} v
- * @param {number} d
- * @param {string | undefined} infod
- * @returns {number}
- * @throws {$Unwind}
- **/
-function _$dc_f(v, d, infod) {
-    if (d === 0) {
-        throw new $Unwind($Unwind_DivZero, infod);
-    }
-
-    return v / d;
-}
 
 /**
  * @function
@@ -542,7 +475,10 @@ export {
     _$feqraw, _$fneqraw, _$flessraw,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$None,
-    _$rc_i, _$rc_n, _$rc_N, _$rc_f, _$dc_i, _$dc_n, _$dc_I, _$dc_N, _$dc_f,
+    _$bval,
+    _$not, _$negate,
+    _$add, _$sub, _$mult, _$div,
+    _$fkeq, _$fkneq, _$fkless,
     _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval,

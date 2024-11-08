@@ -296,8 +296,16 @@ class EmitNameManager {
         }
     }
 
-    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, directVersion: boolean): string {
-        return this.emitTypeAccess(currentns, ttype) + (directVersion ? ".$create" : ".$kreate");
+    static generateAccessorForStdTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
+    }
+
+    static generateAccessorForTypedeclTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
+    }
+
+    static generateAccessorForSpecialTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
     }
 
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {

@@ -388,7 +388,6 @@ class LiteralTypeDeclValueExpression extends Expression {
     readonly constype: TypeSignature;
     
     optResolvedString: string | undefined = undefined;
-    isDirectLiteral: boolean = true;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
@@ -512,7 +511,6 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
 
     elemtype: TypeSignature | undefined = undefined;
     shuffleinfo: [number, string, TypeSignature][] = [];
-    hasChecks: boolean = false;
     
     constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
