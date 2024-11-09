@@ -2,141 +2,43 @@
 
 import { accepts } from "@bosque/jsbrex";
 
-/**
- * @constant
- * @type {string[]}
- **/
 let _$softfails = [];
 
-/**
- * @constant
- * @type {bigint}
- **/
 const MIN_SAFE_INT = -9223372036854775807n;
-
-/**
- * @constant
- * @type {bigint}
- **/
 const MAX_SAFE_INT = 9223372036854775807n;
 
-/**
- * @constant
- * @type {bigint}
- **/
 const MAX_SAFE_NAT = 9223372036854775807n;
 
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_NumericRange = Symbol("NumericRangeFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_DivZero = Symbol("DivZeroFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_BadRegex = Symbol("BadRegexFailed");
 
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_Assert = Symbol("AssertFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_PreCond = Symbol("PreCondFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_PostCond = Symbol("PostCondFailed");
 
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_Format = Symbol("FormatFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_Invariant = Symbol("InvariantFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_Validate = Symbol("ValidateFailed");
 
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_TypeAs = Symbol("TypeAsFailed");
-
-/**
- * @constant
- * @type {Symbol}
- **/
 const $Unwind_NonExhaustive = Symbol("ExhaustiveFailed");
 
-/**
- * @constructor
- * @param {Symbol} tag
- * @param {string | undefined} info
- **/
 function $Unwind(tag, info) {
     this.$tag = tag;
     this.$info = info;
 }
 
-/**
- * @constant
- * @type {object}
- */
 let _$supertypes = {};
 
-/**
- * @function
- * @param {Symbol} tag 
- * @param {Symbol} tsym 
- * @returns {boolean}
- */
 function _$fisSubtype(tag, tsym) {
     return _$supertypes.get(tag).has(tsym);
 }
 
-/**
- * @function
- * @param {Symbol} tag 
- * @param {Symbol} tsym 
- * @returns {boolean}
- */
 function _$fisNotSubtype(tag, tsym) {
     return !_$supertypes.get(tag).has(tsym);
 }
 
-/**
- * @function
- * @param {any} val
- * @param {Symbol} tag
- * @param {Symbol} tsym
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
 function _$fasSubtype(val, tag, tsym, info) {
     if (_$fisNotSubtype(tag, tsym)) {
         throw new $Unwind($Unwind_TypeAs, info);
@@ -145,15 +47,6 @@ function _$fasSubtype(val, tag, tsym, info) {
     return val;
 };
 
-/**
- * @function
- * @param {any} val
- * @param {Symbol} tag
- * @param {Symbol} tsym
- * @param {string | undefined} info
- * @returns {any}
- * @throws {$Unwind}
- **/
 function _$fasNotSubtype(val, tag, tsym, info) {
     if (_$fisSubtype(tag, tsym)) {
         throw new $Unwind($Unwind_TypeAs, info);
@@ -162,10 +55,6 @@ function _$fasNotSubtype(val, tag, tsym, info) {
     return val;
 };
 
-/**
- * @constant
- * @type {Symbol}
- **/
 const $SymbolNone = Symbol.for("None");
 
 const $VRepr = {
@@ -293,6 +182,16 @@ const _$fkeq = {
     "CString": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); }
 };
 
+const _$fkeqopt = {
+    "Bool": function(v1, v2) { return v1._$isSome() && _$fkeq.Bool(v1, v2); },
+    "Int": function(v1, v2) { return v1._$isSome() && _$fkeq.Int(v1, v2); },
+    "Nat": function(v1, v2) { return v1._$isSome() && _$fkeq.Nat(v1, v2); },
+    "BigInt": function(v1, v2) { return v1._$isSome() && _$fkeq.BigInt(v1, v2); },
+    "BigNat": function(v1, v2) { return v1._$isSome() && _$fkeq.BigNat(v1, v2); },
+    "String": function(v1, v2) { return v1._$isSome() && _$fkeq.String(v1, v2); },
+    "CString": function(v1, v2) { return v1._$isSome() && _$fkeq.CString(v1, v2); }
+};
+
 const _$fkneq = {
     "Bool": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "Int": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
@@ -303,6 +202,15 @@ const _$fkneq = {
     "CString": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); }
 };
 
+const _$fkneqopt = {
+    "Bool": function(v1, v2) { return v1._$isNone() || _$fkneq.Bool(v1, v2); },
+    "Int": function(v1, v2) { return v1._$isNone() || _$fkneq.Int(v1, v2); },
+    "Nat": function(v1, v2) { return v1._$isNone() || _$fkneq.Nat(v1, v2); },
+    "BigInt": function(v1, v2) { return v1._$isNone() || _$fkneq.BigInt(v1, v2); },
+    "BigNat": function(v1, v2) { return v1._$isNone() || _$fkneq.BigNat(v1, v2); },
+    "String": function(v1, v2) { return v1._$isNone() || _$fkneq.String(v1, v2); },
+    "CString": function(v1, v2) { return v1._$isNone() || _$fkneq.CString(v1, v2); }
+};
 
 const _$fkless = {
     "Bool": function(v1, v2) { return !_$opubx(v1) && _$opubx(v2); },
@@ -314,131 +222,66 @@ const _$fkless = {
     "CString": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
 };
 
-
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
 function _$exhaustive(cond, info) {
     if (!cond) {
         throw new $Unwind($Unwind_NonExhaustive, info);
     }
 }
 
-/**
- * @function
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
-function _$abort(info) {
-    throw new $Unwind($Unwind_Assert, info);
-}
-
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
-function _$assert(cond, info) {
-    if (!cond) {
-        throw new $Unwind($Unwind_Assert, info);
-    }
-}
-
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
 function _$formatchk(ok, info) {
     if (!ok) {
         throw new $Unwind($Unwind_Format, info);
     }
 }
 
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
+function _$abort(info) {
+    throw new $Unwind($Unwind_Assert, info);
+}
+
+function _$assert(cond, info) {
+    if (!_$opubx(cond)) {
+        throw new $Unwind($Unwind_Assert, info);
+    }
+}
+
 function _$invariant(cond, info) {
-    if (!cond) {
+    if (!_$opubx(cond)) {
         throw new $Unwind($Unwind_Invariant, info);
     }
 }
 
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
 function _$validate(cond, info) {
-    if (!cond) {
+    if (!_$opubx(cond)) {
         throw new $Unwind($Unwind_Validate, info);
     }
 }
 
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
 function _$precond(cond, info) {
-    if (!cond) {
+    if (!_$opubx(cond)) {
         throw new $Unwind($Unwind_PreCond, info);
     }
 }
 
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info
- **/
 function _$softprecond(cond, info) {
-   if (!cond) {
+   if (!_$opubx(cond)) {
         //TODO: later we need to do this in a task-local context
         _$softfails.push(info);
     }
 }
 
-
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- * @throws {$Unwind}
- **/
 function _$postcond(cond, info) {
-    if (!cond) {
+    if (!_$opubx(cond)) {
         throw new $Unwind($Unwind_PostCond, info);
     }
 }
 
-/**
- * @function
- * @param {boolean} cond 
- * @param {string | undefined} info 
- **/
 function _$softpostcond(cond, info) {
-   if (!cond) {
+   if (!_$opubx(cond)) {
         //TODO: later we need to do this in a task-local context
         _$softfails.push(info);
     }
 }
 
-/**
- * @function
- * @param {Map<string, any>} memmap
- * @param {string} key
- * @param {function(): any} comp
- **/ 
 function _$memoconstval(memmap, key, comp) {
     const vval = memmap.get(key);
     if(vval !== undefined) {
@@ -451,20 +294,12 @@ function _$memoconstval(memmap, key, comp) {
     return nval;
 }
 
-/**
- * @function
- * @param {string} pattern
- * @param {string} input
- * @param {string} inns
- * @throws {$Unwind}
- * @returns {boolean}
- **/
 function _$accepts(pattern, input, inns) {
     try {
         return accepts(pattern, input, inns);
     }
     catch(e) {
-        throw new $Unwind($Unwind_TypeAs, `Invalid regex pattern -- ${e.msg}`);
+        throw new $Unwind($Unwind_BadRegex, `Invalid regex pattern -- ${e.msg}`);
     }
 }
 
@@ -478,7 +313,7 @@ export {
     _$bval,
     _$not, _$negate,
     _$add, _$sub, _$mult, _$div,
-    _$fkeq, _$fkneq, _$fkless,
+    _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless,
     _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval,

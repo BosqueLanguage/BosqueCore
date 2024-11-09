@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
@@ -958,7 +958,6 @@ class JSEmitter {
     private emitBinKeyEqExpression(exp: BinKeyEqExpression, toplevel: boolean): string {
         const kcop = exp.operkind;
 
-        xxxx;
         if(kcop === "lhsnone") {
             return `${this.emitExpression(exp.rhs, false)}._$isNone()`;
         }
@@ -966,14 +965,13 @@ class JSEmitter {
             return `${this.emitExpression(exp.lhs, false)}._$isNone()`;
         }
         else if(kcop === "lhskeyeqoption") {
-            return `${this.emitExpression(exp.rhs, false)}._$keyEqOf(${this.emitExpression(exp.lhs, true)})`;
+            return `_$fkeqopt(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
         }
         else if(kcop === "rhskeyeqoption") {
-            return `${this.emitExpression(exp.lhs, false)}._$keyEqOf(${this.emitExpression(exp.rhs, true)})`;
+            return `_$fkeqopt(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else if(kcop === "stricteq") {
-            xxxx;
-            return `_$feqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$fkeq(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else {
             assert(false, "Unknown key eq kind");
@@ -983,7 +981,6 @@ class JSEmitter {
     private emitBinKeyNeqExpression(exp: BinKeyNeqExpression, toplevel: boolean): string {
         const kcop = exp.operkind;
 
-        xxxx;
         if(kcop === "lhsnone") {
             return `${this.emitExpression(exp.rhs, false)}._$isNotNone()`;
         }
@@ -991,13 +988,13 @@ class JSEmitter {
             return `${this.emitExpression(exp.lhs, false)}._$isNotNone()`;
         }
         else if(kcop === "lhskeyeqoption") {
-            return `${this.emitExpression(exp.rhs, false)}._$keyNeqOf(${this.emitExpression(exp.lhs, true)})`;
+            return `_$fkneqopt(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
         }
         else if(kcop === "rhskeyeqoption") {
-            return `${this.emitExpression(exp.lhs, false)}._$keyNeqOf(${this.emitExpression(exp.rhs, true)})`;
+            return `_$fkneqopt(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else if(kcop === "stricteq") {
-            return `_$fneqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+            return `_$fkneq(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         }
         else {
             assert(false, "Unknown key eq kind");
@@ -1005,14 +1002,15 @@ class JSEmitter {
     }
 
     private emitKeyCompareEqExpression(exp: KeyCompareEqExpression, toplevel: boolean): string {
-        return `_$feqraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `_$fkeq(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitKeyCompareLessExpression(exp: KeyCompareLessExpression, toplevel: boolean): string {
-        return `_$flessraw(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `_$fkless(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
+        xxxx;
         const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
         return !toplevel ? `(${eexp})` : eexp;
     }
