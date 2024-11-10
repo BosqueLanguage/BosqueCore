@@ -1074,6 +1074,8 @@ abstract class UnaryExpression extends Expression {
 }
 
 class PrefixNotOpExpression extends UnaryExpression {
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
@@ -1309,6 +1311,8 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
 abstract class BinLogicExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    purebool: boolean = true;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);

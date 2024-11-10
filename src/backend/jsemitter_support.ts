@@ -36,6 +36,10 @@ class EmitNameManager {
         return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl) && (ttype.decl.name === "None");
     }
 
+    static isPrimitiveType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
+    }
+
     static isOptionType(ttype: TypeSignature): boolean {
         return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof OptionTypeDecl);
     }

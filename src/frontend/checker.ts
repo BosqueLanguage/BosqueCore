@@ -1704,6 +1704,8 @@ class TypeChecker {
         }
 
         this.checkError(exp.sinfo, !this.relations.isBooleanType(etype), "Prefix Not operator requires a Bool based type");
+        
+        exp.opertype = etype;
         return exp.setType(etype);
     }
 
@@ -1991,7 +1993,7 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression, strict: boolean): TypeSignature | undefined {
+    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression): TypeSignature | undefined {
         const tlhs = this.checkExpression(env, lhs, undefined);
         if(tlhs instanceof ErrorTypeSignature) {
             return undefined;
@@ -2009,53 +2011,39 @@ class TypeChecker {
             return undefined;
         }
 
-        if(strict) {
-            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
-                return this.getWellKnownType("Bool");
-            }
-            else {
-                this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
-                return undefined;
-            }
+        if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
+            return this.getWellKnownType("Bool");
         }
         else {
-            if(tlhs.tkeystr === "Bool" && trhs.tkeystr === "Bool") {
-                return this.getWellKnownType("Bool");
-            }
-            else if(tlhs.tkeystr === "Bool") {
-                return trhs;
-            }
-            else if(trhs.tkeystr === "Bool") {
-                return tlhs;
-            }
-            else {
-                if(!this.relations.areSameTypes(tlhs, trhs)) {
-                    this.reportError(lhs.sinfo, `Types ${tlhs.emit()} and ${trhs.emit()} are not logically compatible`);
-                    return undefined;
-                }
-
-                return tlhs;
-            }
+            return this.relations.areSameTypes(tlhs, trhs) ? tlhs : undefined;
         }
     }
 
     private checkBinLogicAndExpression(env: TypeEnvironment, exp: BinLogicAndExpression): TypeSignature {
-        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+
+        exp.purebool = etype !== undefined;;
         return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: BinLogicOrExpression): TypeSignature {
-        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, false);
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+
+        exp.purebool = etype !== undefined;
         return exp.setType(etype || this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicImpliesExpression(env: TypeEnvironment, exp: BinLogicImpliesExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+
+        exp.purebool = etype !== undefined;
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicIFFExpression(env: TypeEnvironment, exp: BinLogicIFFExpression): TypeSignature {
-        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs, true);
+        const etype = this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+
+        exp.purebool = etype !== undefined;
         return exp.setType(this.getWellKnownType("Bool"));
     }
 

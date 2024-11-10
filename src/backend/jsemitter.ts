@@ -873,7 +873,9 @@ class JSEmitter {
     }
 
     private emitPrefixNotOpExpression(exp: PrefixNotOpExpression, toplevel: boolean): string {
-        if(exp.exp.getType().tkeystr === "Bool") {
+        const optype = exp.opertype as TypeSignature;
+
+        if(EmitNameManager.isPrimitiveType(optype)) {
             const eexp = `!${this.emitExpression(exp.exp, false)}`;
             return !toplevel ? `(${eexp})` : eexp;
         }
@@ -890,11 +892,9 @@ class JSEmitter {
             return this.emitExpression(exp.exp, toplevel);
         }
         else {
-            const optype = (exp.opertype as TypeSignature).tkeystr;
-            const ctype = exp.getType() as NominalTypeSignature;
-
+            const optype = exp.opertype as TypeSignature;
             
-            if(ctype.tkeystr === optype) {
+            if(EmitNameManager.isPrimitiveType(optype)) {
                 const eexp = `-${exp.op}${this.emitExpression(exp.exp, false)}`;
                 return !toplevel ? `(${eexp})` : eexp;
             }
@@ -902,17 +902,16 @@ class JSEmitter {
                 const eexp = this.emitExpression(exp.exp, true);
                 const cc = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
 
-                return `_$negate.${optype}(${eexp}, ${cc})`;
+                return `_$negate.${optype.tkeystr}(${eexp}, ${cc})`;
             }
         }
     }
 
     private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
         const optype = (exp.opertype as TypeSignature).tkeystr;
-        const ctype = exp.getType() as NominalTypeSignature;
-
+        
         let ccepr = "";
-        if(ctype.tkeystr !== optype) {
+        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
             ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
         }
 
@@ -921,10 +920,9 @@ class JSEmitter {
 
     private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
         const optype = (exp.opertype as TypeSignature).tkeystr;
-        const ctype = exp.getType() as NominalTypeSignature;
-
+        
         let ccepr = "";
-        if(ctype.tkeystr !== optype) {
+        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
             ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
         }
 
@@ -933,10 +931,9 @@ class JSEmitter {
     
     private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
         const optype = (exp.opertype as TypeSignature).tkeystr;
-        const ctype = exp.getType() as NominalTypeSignature;
-
+        
         let ccepr = "";
-        if(ctype.tkeystr !== optype) {
+        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
             ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
         }
 
@@ -945,10 +942,9 @@ class JSEmitter {
     
     private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
         const optype = (exp.opertype as TypeSignature).tkeystr;
-        const ctype = exp.getType() as NominalTypeSignature;
-
+        
         let ccepr = "";
-        if(ctype.tkeystr !== optype) {
+        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
             ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
         }
 
@@ -1010,39 +1006,85 @@ class JSEmitter {
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
-        xxxx;
-        const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `_$fnumeq.${optype.tkeystr}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitNumericNeqExpression(exp: NumericNeqExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `(!_$fnumeq.${optype.tkeystr}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}))`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
     
     private emitNumericLessExpression(exp: NumericLessExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} < ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `_$fnumless.${optype.tkeystr}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} < ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
     
     private emitNumericLessEqExpression(exp: NumericLessEqExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} <= ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `_$fnumlesseq.${optype.tkeystr}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} <= ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
     
     private emitNumericGreaterExpression(exp: NumericGreaterExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} > ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `_$fnumless.${optype.tkeystr}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} > ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitNumericGreaterEqExpression(exp: NumericGreaterEqExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} >= ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        const optype = exp.opertype as TypeSignature;
+
+        if(!EmitNameManager.isPrimitiveType(optype)) {
+            return `_$fnumlesseq.${optype.tkeystr}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} >= ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitBinLogicAndExpression(exp: BinLogicAndExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} && ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        if(!exp.purebool) {
+            xxxx;
+        }
+        else {
+            const eexp = `${this.emitExpression(exp.lhs, false)} && ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
     }
 
     private emitBinLogicOrExpression(exp: BinLogicOrExpression, toplevel: boolean): string {

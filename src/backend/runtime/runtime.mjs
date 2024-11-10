@@ -222,6 +222,30 @@ const _$fkless = {
     "CString": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
 };
 
+const _$fnumeq = {
+    "Int": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "Float": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); }
+};
+
+const _$fnumless = {
+    "Int": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "Float": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
+};
+
+const _$fnumlesseq = {
+    "Int": function(v1, v2) { return _$opubx(v1) <= _$opubx(v2); },
+    "Nat": function(v1, v2) { return _$opubx(v1) <= _$opubx(v2); },
+    "BigInt": function(v1, v2) { return _$opubx(v1) <= _$opubx(v2); },
+    "BigNat": function(v1, v2) { return _$opubx(v1) <= _$opubx(v2); },
+    "Float": function(v1, v2) { return _$opubx(v1) <= _$opubx(v2); }
+};
+
 function _$exhaustive(cond, info) {
     if (!cond) {
         throw new $Unwind($Unwind_NonExhaustive, info);
@@ -314,6 +338,7 @@ export {
     _$not, _$negate,
     _$add, _$sub, _$mult, _$div,
     _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless,
+    _$fnumeq, _$fnumless, _$fnumlesseq,
     _$exhaustive,
     _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond,
     _$memoconstval,
