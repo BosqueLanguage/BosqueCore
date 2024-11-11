@@ -1078,28 +1078,55 @@ class JSEmitter {
     }
 
     private emitBinLogicAndExpression(exp: BinLogicAndExpression, toplevel: boolean): string {
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
         if(!exp.purebool) {
-            xxxx;
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
         }
-        else {
-            const eexp = `${this.emitExpression(exp.lhs, false)} && ${this.emitExpression(exp.rhs, false)}`;
-            return !toplevel ? `(${eexp})` : eexp;
-        }
+        
+        const eexp = `${ee1} && ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
     }
 
     private emitBinLogicOrExpression(exp: BinLogicOrExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} || ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eexp = `${ee1} || ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
     }
 
     private emitBinLogicImpliesExpression(exp: BinLogicImpliesExpression, toplevel: boolean): string {
-        const eeexp = `!${this.emitExpression(exp.lhs, false)} || ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eeexp})` : eeexp;
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eeexp = `!${ee1} || ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eeexp})` : eeexp;
     }
 
     private emitBinLogicIFFExpression(exp: BinLogicIFFExpression, toplevel: boolean): string {
-        const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
-        return !toplevel ? `(${eexp})` : eexp;
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eexp = `${ee1} === ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
     }
     
     private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
@@ -1107,11 +1134,17 @@ class JSEmitter {
     }
 
     private emitIfExpression(exp: IfExpression, toplevel: boolean): string {
-        const texp = this.emitBUAsNeeded(this.emitExpression(exp.trueValue, false), exp.trueValue.getType(), exp.getType());
-        const fexp = this.emitBUAsNeeded(this.emitExpression(exp.falseValue, false), exp.falseValue.getType(), exp.getType());
+        const texp = this.emitExpression(exp.trueValue, false);
+        const fexp = this.emitExpression(exp.falseValue, false);
 
         if(exp.test.itestopt === undefined) {
-            const eexp = `${this.emitExpression(exp.test.exp, false)} ? ${texp} : ${fexp}`;
+            const purebool = exp.test.exp.getType().tkeystr === "Bool";
+            let texp = this.emitExpression(exp.trueValue, !purebool);
+            if(!purebool) {
+                texp = `_$bval${texp}`;
+            }
+
+            const eexp = `${texp} ? ${texp} : ${fexp}`;
             return !toplevel ? `(${eexp})` : eexp;
         }
         else {
@@ -1126,9 +1159,7 @@ class JSEmitter {
                 this.bindernames.add(exp.binder.scopename);
 
                 const ttest = this.processITestAsTest(vval, exp.test.exp.getType(), exp.test.itestopt);
-                const tbindexp = this.emitBUAsNeeded(vval, exp.test.exp.getType(), exp.trueBindType as TypeSignature);
-                const fbindexp = this.emitBUAsNeeded(vval, exp.test.exp.getType(), exp.falseBindType as TypeSignature);
-                const eexp = `${ttest} ? (${exp.binder.scopename} = ${tbindexp}, ${texp}) : (${exp.binder.scopename} = ${fbindexp}, ${fexp})`;
+                const eexp = `${ttest} ? (${exp.binder.scopename} = ${vval}, ${texp}) : (${exp.binder.scopename} = ${vval}, ${fexp})`;
                 return !toplevel ? `(${eexp})` : eexp;
             }
         }
@@ -1444,8 +1475,8 @@ class JSEmitter {
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
-        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just cast on this if it does)
-        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.actualtype as TypeSignature);
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits
+        const rhsexp = this.emitExpressionRHS(stmt.exp);
         
         if(stmt.name === "_") {
             return `${rhsexp};`;
@@ -1460,13 +1491,13 @@ class JSEmitter {
             const eexp = this.emitExpressionRHS(stmt.exp);
             const idecls = stmt.decls.map((dd) => dd.name === "_" ? " " : dd.name);
 
-            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
+            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits
             return `${stmt.isConst ? "const": "let"} [${idecls.join(", ")}] = ${eexp};`;
         }
         else {
             //TODO: need to check if there are deps between the defs and uses in the expressions here!!!
             
-            const eexps = stmt.exp.map((ee, ii) => this.emitBUAsNeeded(this.emitExpression(ee, true), ee.getType(), stmt.actualtypes[ii]));
+            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
             const idecls = stmt.decls.map((dd, ii) => `${dd.name} = ${eexps[ii]}`);
 
             return `${stmt.isConst ? "const": "let"} ${idecls.join(", ")};`;
@@ -1475,8 +1506,8 @@ class JSEmitter {
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
-        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
-        const rhsexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.exp), stmt.exp.getType(), stmt.vtype as TypeSignature);
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits
+        const rhsexp = this.emitExpressionRHS(stmt.exp);
 
         if(stmt.name === "_") {
             return `${rhsexp};`;
@@ -1491,11 +1522,11 @@ class JSEmitter {
             const eexp = this.emitExpressionRHS(stmt.exp);
             const names = stmt.names.map((nn) => nn === "_" ? " " : nn);
 
-            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just assign on this if it does)
+            //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits
             return `[${names.join(", ")}] = ${eexp};`;
         }
         else {
-            const eexps = stmt.exp.map((ee, ii) => this.emitBUAsNeeded(this.emitExpression(ee, true), ee.getType(), stmt.vtypes[ii]));
+            const eexps = stmt.exp.map((ee) => this.emitExpression(ee, true));
 
             return `${stmt.names.map((nn, ii) => `${nn} = ${eexps[ii]}`).join(", ")};`;            
         }
@@ -1518,8 +1549,8 @@ class JSEmitter {
     }
 
     private emitReturnSingleStatement(stmt: ReturnSingleStatement): string {
-        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits (can't just return on this if it does)
-        const rexp = this.emitBUAsNeeded(this.emitExpressionRHS(stmt.value), stmt.value.getType(), stmt.rtype as TypeSignature);
+        //TODO: we will need to fix this up when RHS can do stuff like ref updates and early exits 
+        const rexp = this.emitExpressionRHS(stmt.value);
 
         if(this.returncompletecall === undefined) {
             return `return ${rexp};`;
@@ -1530,7 +1561,7 @@ class JSEmitter {
     }
 
     private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
-        const rexp = `[${stmt.value.map((vv, ii) => this.emitBUAsNeeded(this.emitExpression(vv, true), vv.getType(), stmt.rtypes[ii])).join(", ")}]`;
+        const rexp = `[${stmt.value.map((vv) => this.emitExpression(vv, true)).join(", ")}]`;
 
         if(this.returncompletecall === undefined) {
             return `return ${rexp};`;
@@ -1542,6 +1573,7 @@ class JSEmitter {
 
     private emitIfStatement(stmt: IfStatement, fmt: JSCodeFormatter): string {
         if(stmt.cond.itestopt === undefined) {
+            xxxx;
             const test = this.emitExpression(stmt.cond.exp, true);
             const body = this.emitBlockStatement(stmt.trueBlock, fmt);
             return `if(${test}) ${body}`;
