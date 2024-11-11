@@ -89,10 +89,6 @@ const $VRepr = {
     _$asNotOptionSubtype: function(tsym, info) { if (this._$isOptionSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
 };
 
-/**
- * @constant
- * @type {any}
- **/
 const _$None = Object.create($VRepr, { 
     $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }
 });
@@ -173,6 +169,7 @@ function _$bval(v) {
 }
 
 const _$fkeq = {
+    "Enum": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "Bool": function(v1, v2) { return _$opubx(v1) && _$opubx(v2); },
     "Int": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "Nat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
@@ -183,6 +180,7 @@ const _$fkeq = {
 };
 
 const _$fkeqopt = {
+    "Enum": function(v1, v2) { return v1._$isNone() || _$fkeq.Enum(v1, v2); },
     "Bool": function(v1, v2) { return v1._$isSome() && _$fkeq.Bool(v1, v2); },
     "Int": function(v1, v2) { return v1._$isSome() && _$fkeq.Int(v1, v2); },
     "Nat": function(v1, v2) { return v1._$isSome() && _$fkeq.Nat(v1, v2); },
@@ -193,6 +191,7 @@ const _$fkeqopt = {
 };
 
 const _$fkneq = {
+    "Enum": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "Bool": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "Int": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "Nat": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
@@ -203,6 +202,7 @@ const _$fkneq = {
 };
 
 const _$fkneqopt = {
+    "Enum": function(v1, v2) { return v1._$isNone() || _$fkneq.Enum(v1, v2); },
     "Bool": function(v1, v2) { return v1._$isNone() || _$fkneq.Bool(v1, v2); },
     "Int": function(v1, v2) { return v1._$isNone() || _$fkneq.Int(v1, v2); },
     "Nat": function(v1, v2) { return v1._$isNone() || _$fkneq.Nat(v1, v2); },
@@ -213,6 +213,7 @@ const _$fkneqopt = {
 };
 
 const _$fkless = {
+    "Enum": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
     "Bool": function(v1, v2) { return !_$opubx(v1) && _$opubx(v2); },
     "Int": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
     "Nat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
@@ -331,12 +332,11 @@ export {
     $VRepr,
     _$softfails,
     _$supertypes,
-    _$feqraw, _$fneqraw, _$flessraw,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,
     _$None,
-    _$bval,
     _$not, _$negate,
     _$add, _$sub, _$mult, _$div,
+    _$bval,
     _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless,
     _$fnumeq, _$fnumless, _$fnumlesseq,
     _$exhaustive,

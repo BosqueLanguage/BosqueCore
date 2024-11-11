@@ -469,46 +469,46 @@ class TypeChecker {
         }
     }
 
-    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" {
+    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): ["err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption", TypeSignature] {
         if(!(lhs instanceof NominalTypeSignature) || !(rhs instanceof NominalTypeSignature)) {
-            return "err";
+            return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
         }
 
         if((lhs.decl instanceof OptionTypeDecl) && (rhs.decl instanceof OptionTypeDecl)) {
-            return "err";
+            return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
         }
         else if(lhs.decl instanceof OptionTypeDecl) {
             if(rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
-                return "rhsnone";
+                return ["rhsnone", rhs];
             }
             else {
                 if(!this.relations.isKeyType(rhs, this.constraints)) {
-                    return "err";
+                    return ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
                 }
                 else {
-                    return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? "rhskeyeqoption" : "err";
+                    return this.relations.areSameTypes(rhs, lhs.alltermargs[0]) ? ["rhskeyeqoption", rhs] : ["err", new ErrorTypeSignature(rhsexp.sinfo, undefined)];
                 }
             }
         }
         else if(rhs.decl instanceof OptionTypeDecl) {
             if(lhsexp.tag === ExpressionTag.LiteralNoneExpression) {
-                return "lhsnone";
+                return ["lhsnone", lhs];
             }
             else {
                 if(!this.relations.isKeyType(lhs, this.constraints)) {
-                    return "err";
+                    return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
                 }
                 else {
-                    return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? "lhskeyeqoption" : "err";
+                    return this.relations.areSameTypes(lhs, rhs.alltermargs[0]) ? ["lhskeyeqoption", lhs] : ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
                 }
             }
         }
         else {
             if(!this.relations.isKeyType(lhs, this.constraints) || !this.relations.isKeyType(rhs, this.constraints)) {
-                return "err";
+                return ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
             }
 
-            return this.relations.areSameTypes(lhs, rhs) ? "stricteq" : "err";
+            return this.relations.areSameTypes(lhs, rhs) ? ["stricteq", lhs] : ["err", new ErrorTypeSignature(lhsexp.sinfo, undefined)];
 
         }
     }
@@ -1868,11 +1868,12 @@ class TypeChecker {
         }
 
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
-        if (action === "err") {
+        if (action[0] === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
         }
         
-        exp.operkind = action;
+        exp.operkind = action[0];
+        exp.opertype = action[1];
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1885,11 +1886,12 @@ class TypeChecker {
         }
         
         const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
-        if (action === "err") {
+        if (action[0] === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
         }
 
-        exp.operkind = action;
+        exp.operkind = action[0];
+        exp.opertype = action[1];
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1902,6 +1904,8 @@ class TypeChecker {
         if(ktypeok) {
             this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
             this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+        
+            exp.optype = this.resolveUnderlyingType(exp.ktype);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1916,6 +1920,8 @@ class TypeChecker {
         if(ktypeok) {
             this.checkError(exp.sinfo, !this.relations.isKeyType(tlhs, this.constraints) || !this.relations.areSameTypes(tlhs, exp.ktype), `Type ${tlhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
             this.checkError(exp.sinfo, !this.relations.isKeyType(trhs, this.constraints) || !this.relations.areSameTypes(trhs, exp.ktype), `Type ${trhs.emit()} is not a (keytype) of ${exp.ktype.emit()}`);
+
+            exp.optype = this.resolveUnderlyingType(exp.ktype);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
@@ -2824,7 +2830,11 @@ class TypeChecker {
                 }
                 else {
                     const cmpok = this.checkValueEq(stmt.sval, ctype, slitexp, littype);
-                    this.checkError(slitexp.sinfo, cmpok === "err", `Cannot compare arguments in switch statement ${littype.emit()}`);
+                    this.checkError(slitexp.sinfo, cmpok[0] === "err", `Cannot compare arguments in switch statement ${littype.emit()}`);
+
+                    if(cmpok[0] !== "err") {
+                        stmt.optypes.push(this.resolveUnderlyingType(littype) as TypeSignature);
+                    }
                 }
 
                 const cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);

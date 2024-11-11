@@ -1163,6 +1163,7 @@ abstract class BinaryKeyExpression extends Expression {
     readonly rhs: Expression;
 
     operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | undefined;
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1201,6 +1202,8 @@ class KeyCompareEqExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
+    optype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
         super(ExpressionTag.KeyCompareEqExpression, sinfo);
         this.ktype = ktype;
@@ -1217,6 +1220,8 @@ class KeyCompareLessExpression extends Expression {
     readonly ktype: TypeSignature;
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    optype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
         super(ExpressionTag.KeyCompareLessExpression, sinfo);
@@ -1969,6 +1974,7 @@ class SwitchStatement extends Statement {
     readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
+    optypes: TypeSignature[] = [];
 
     constructor(sinfo: SourceInfo, sval: Expression, flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);
