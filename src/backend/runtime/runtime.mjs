@@ -65,10 +65,16 @@ const $VRepr = {
     _$isNotSome: function() { return this.$tag === $SymbolNone; },
 
     _$asNone: function(info) { if (this._$isNotNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
-    _$asNotNone: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asNotNone: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
     
-    _$asSome: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+    _$asSome: function(info) { if (this._$isNotSome()) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
     _$asNotSome: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
+
+    _$asOk: function(oktype, info) { if (this._$isNot(oktype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
+    _$asNotOk: function(oktype, info) { if (this._$is(oktype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
+    
+    _$asFail: function(failtype, info) { if (this._$is(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
+    _$asNotFail: function(failtype, info) { if (this._$isNot(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
 
     _$is: function(tsym) { return this.$tag === tsym; },
     _$isNot: function(tsym) { return this.$tag !== tsym; },
