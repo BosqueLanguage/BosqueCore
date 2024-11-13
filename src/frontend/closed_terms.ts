@@ -360,6 +360,10 @@ class InstantiationPropagator {
         if(exp.layouttype !== undefined) {
             this.instantiateTypeSignature(exp.layouttype, this.currentMapping);
         }
+
+        for(let i = 0; i < exp.specialaccess.length; ++i) {
+            this.instantiateTypeSignature(exp.specialaccess[i].ttype, this.currentMapping);
+        }
     }
 
     private instantiateAccessEnumExpression(exp: AccessEnumExpression) {

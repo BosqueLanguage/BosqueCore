@@ -500,24 +500,10 @@ class JSEmitter {
             aname = exp.scopename;
         }
 
-        const storagetype = this.tproc(exp.layouttype as TypeSignature);
-        const trgttype = this.tproc(exp.getType());
-
-        //Check for special case where we need to do a type conversion -- Option/Result to value
-        if(storagetype.tkeystr === trgttype.tkeystr) {
-            if((storagetype instanceof NominalTypeSignature) && storagetype.decl instanceof OptionTypeDecl) {
-                if(storagetype.alltermargs[0].tkeystr === trgttype.tkeystr) {
-                    return `${aname}.value`;
-                }
-            }
-
-            if((storagetype instanceof NominalTypeSignature) && storagetype.decl instanceof ResultTypeDecl) {
-                if(storagetype.alltermargs[0].tkeystr === trgttype.tkeystr) {
-                    return `${aname}.value`;
-                }
-
-                if(storagetype.alltermargs[1].tkeystr === trgttype.tkeystr) {
-                    return `${aname}.info`;
+        if(exp.specialaccess.length !== 0) {
+            for(let i = 0; i < exp.specialaccess.length; ++i) {
+                if(exp.specialaccess[i].specialaccess !== undefined) {
+                    aname = `${aname}.${exp.specialaccess[i]}`;
                 }
             }
         }
@@ -2316,17 +2302,30 @@ class JSEmitter {
 
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
-            xxxx;
             let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
-            resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
+            const decl = `(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
+            if(optmapping !== undefined) {
+                resfimpl = `${resf}${decl}`;
+            }
+            else {
+                resfimpl = `${resf} { value: ${decl} }`;
+            }
         }
 
         const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = omap;
 
         const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
-        xxxx;
-        return {body: `${nf}function${sig} ${body}`, resfimpl: resfimpl, tests: tests};
+        const decl = `function${sig} ${body}`;
+        let bdecl: string;
+        if(optmapping !== undefined) {
+            bdecl = `${nf}${decl}`;
+        }
+        else {
+            bdecl = `${nf} { value: ${decl} }`;
+        }
+        
+        return {body: bdecl, resfimpl: resfimpl, tests: tests};
     }
 
     private emitMethodDecls(rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {

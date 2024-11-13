@@ -133,98 +133,98 @@ class TypeChecker {
         return undefined;
     }
 
-    private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_None(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, tspecialfubx: string | undefined, bindfalse: TypeSignature | undefined, fspecialfubx: string | undefined } {
         //!none === some
         if(isnot) {
             const rinfo = this.relations.splitOnSome(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined};
+                return { bindtrue: rinfo.overlapSomeT, tspecialfubx: "value", bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined, fspecialfubx: undefined};
             }
         }
         else {
             const rinfo = this.relations.splitOnNone(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT };
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, tspecialfubx: undefined, bindfalse: rinfo.remainSomeT, fspecialfubx: "value" };
             }
         }
     }
 
-    private processITest_Some(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_Some(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, tspecialfubx: string | undefined, bindfalse: TypeSignature | undefined, fspecialfubx: string | undefined } {
         //!some === none
         if(isnot) {
             const rinfo = this.relations.splitOnNone(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to none-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, bindfalse: rinfo.remainSomeT};
+                return { bindtrue: rinfo.hasnone ? this.getWellKnownType("None") : undefined, tspecialfubx: undefined, bindfalse: rinfo.remainSomeT, fspecialfubx: "value"};
             }
         }
         else {
             const rinfo = this.relations.splitOnSome(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to some-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapSomeT, bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined };
+                return { bindtrue: rinfo.overlapSomeT, tspecialfubx: "value", bindfalse: rinfo.hasnone ? this.getWellKnownType("None") : undefined, fspecialfubx: undefined };
             }
         }
     }
 
-    private processITest_Ok(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_Ok(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, tspecialfubx: string | undefined, bindfalse: TypeSignature | undefined, fspecialfubx: string | undefined } {
         //!ok === err
         if(isnot) {
             const rinfo = this.relations.splitOnErr(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT};
+                return { bindtrue: rinfo.overlapErrE, tspecialfubx: "info", bindfalse: rinfo.remainOkT, fspecialfubx: "value" };
             }
         }
         else {
             const rinfo = this.relations.splitOnOk(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE };
+                return { bindtrue: rinfo.overlapOkT, tspecialfubx: "value", bindfalse: rinfo.remainErrE, fspecialfubx: "info" };
             }
         }
     }
 
-    private processITest_Err(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, bindfalse: TypeSignature | undefined } {
+    private processITest_Err(src: TypeSignature, isnot: boolean): { bindtrue: TypeSignature | undefined, tspecialfubx: string | undefined, bindfalse: TypeSignature | undefined, fspecialfubx: string | undefined } {
         //!err === ok
         if(isnot) {
             const rinfo = this.relations.splitOnOk(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to err-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapOkT, bindfalse: rinfo.remainErrE};
+                return { bindtrue: rinfo.overlapOkT, tspecialfubx: "value", bindfalse: rinfo.remainErrE, fspecialfubx: "info" };
             }
         }
         else {
             const rinfo = this.relations.splitOnErr(src, this.constraints);
             if(rinfo === undefined) {
                 this.reportError(src.sinfo, `Unable to nothing-split type ${src.emit()}`);
-                return { bindtrue: undefined, bindfalse: undefined };
+                return { bindtrue: undefined, tspecialfubx: undefined, bindfalse: undefined, fspecialfubx: undefined };
             }
             else {
-                return { bindtrue: rinfo.overlapErrE, bindfalse: rinfo.remainOkT };
+                return { bindtrue: rinfo.overlapErrE, tspecialfubx: "info", bindfalse: rinfo.remainOkT, fspecialfubx: "value" };
             }
         }
     }
@@ -298,10 +298,10 @@ class TypeChecker {
         }
     }
 
-    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+    private processITestAsConvert(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tspecialfubx: string | undefined, tfalse: TypeSignature | undefined, fspecialfubx: string | undefined } {
         if(tt instanceof ITestType) {
             if(!this.checkTypeSignature(tt.ttype)) {
-                return { ttrue: undefined, tfalse: undefined };
+                return { ttrue: undefined, tspecialfubx: undefined, tfalse: undefined, fspecialfubx: undefined };
             }
             else {
                 const tres = this.processITest_Type(src, tt.ttype);
@@ -309,33 +309,33 @@ class TypeChecker {
                     const ttrue = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //negate takes the remain and lubs to the src
                     const tfalse = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //overlap and passes as the user spec type -- does not matter now but short circuiting return will use this
 
-                    return { ttrue: ttrue, tfalse: tfalse };
+                    return { ttrue: ttrue, tspecialfubx: undefined, tfalse: tfalse, fspecialfubx: undefined };
                 }
                 else {
                     const ttrue = tres.ttrue.length !== 0 ? this.processITestConvertForce(tres.ttrue, tt.ttype) : undefined; //always cast to what the user asked for
                     const tfalse = tres.tfalse.length !== 0 ? this.processITestConvertLUB(sinfo, tres.tfalse, src) : undefined; //cast to the LUB of the remaining types (with src as a default option)
 
-                    return { ttrue: ttrue, tfalse: tfalse };
+                    return { ttrue: ttrue, tspecialfubx: undefined, tfalse: tfalse, fspecialfubx: undefined };
                 }
             }
         }
         else {
             if(tt instanceof ITestNone) {
                 const tres = this.processITest_None(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return { ttrue: tres.bindtrue, tspecialfubx: tres.tspecialfubx, tfalse: tres.bindfalse, fspecialfubx: tres.fspecialfubx };
             }
             else if(tt instanceof ITestSome) {
                 const tres = this.processITest_Some(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return { ttrue: tres.bindtrue, tspecialfubx: tres.tspecialfubx, tfalse: tres.bindfalse, fspecialfubx: tres.fspecialfubx };
             }
             else if(tt instanceof ITestOk) {
                 const tres = this.processITest_Ok(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return { ttrue: tres.bindtrue, tspecialfubx: tres.tspecialfubx, tfalse: tres.bindfalse, fspecialfubx: tres.fspecialfubx };
             }
             else {
                 assert(tt instanceof ITestFail, "missing case in ITest");
                 const tres = this.processITest_Err(src, tt.isnot);
-                return { ttrue: tres.bindtrue, tfalse: tres.bindfalse };
+                return { ttrue: tres.bindtrue, tspecialfubx: tres.tspecialfubx, tfalse: tres.bindfalse, fspecialfubx: tres.fspecialfubx };
             }
         }
     }
@@ -1073,7 +1073,8 @@ class TypeChecker {
 
             exp.scopename = vinfo.scopename;
             exp.layouttype = vinfo.decltype;
-            return exp.setType(vinfo.itype);
+            exp.specialaccess = [...vinfo.itype];
+            return exp.setType(vinfo.itype.length !== 0 ? vinfo.itype[vinfo.itype.length - 1].ttype : vinfo.decltype);
         }
         else {
             const cinfo = env.resolveLambdaCaptureVarInfoFromSrcName(exp.srcname);
@@ -1087,7 +1088,8 @@ class TypeChecker {
                 exp.isCaptured = true;
                 exp.scopename = cinfo.scopename;
                 exp.layouttype = cinfo.decltype;
-                return exp.setType(cinfo.itype);
+                exp.specialaccess = [...cinfo.itype];
+                return exp.setType(cinfo.itype.length !== 0 ? cinfo.itype[cinfo.itype.length - 1].ttype : cinfo.decltype);
             }
         }
     }
@@ -2631,13 +2633,21 @@ class TypeChecker {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is not defined`);
             return env;
         }
+        if(!vinfo.isConst) {
+            this.reportError(stmt.sinfo, `Variable ${stmt.name} is assignable and cannot be refine-typed`);
+            return env;
+        }
+        if(vinfo.isRef) {
+            this.reportError(stmt.sinfo, `Variable ${stmt.name} is a reference and cannot be refine-typed`);
+            return env;
+        }
 
         const splits = this.processITestAsConvert(stmt.sinfo, env, vinfo.decltype, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
 
         stmt.vtype = vinfo.decltype;
         stmt.newvtype = splits.ttrue || vinfo.decltype;
-        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.decltype);
+        return env.retypeLocalVariable(stmt.name, [...vinfo.itype, { ttype: splits.ttrue || vinfo.decltype, specialaccess: splits.tspecialfubx }]);
     }
 
     private checkReturnVoidStatement(env: TypeEnvironment, stmt: ReturnVoidStatement): TypeEnvironment {
@@ -2690,6 +2700,14 @@ class TypeChecker {
             this.reportError(sinfo, `Variable ${retypevname} is not defined`);
             return;
         }
+        if(!vinfo.isConst) {
+            this.reportError(sinfo, `Variable ${retypevname} is assignable and cannot be refine-typed`);
+            return;
+        }
+        if(vinfo.isRef) {
+            this.reportError(sinfo, `Variable ${retypevname} is a reference and cannot be refine-typed`);
+            return;
+        }
     }
 
     private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
@@ -2722,11 +2740,20 @@ class TypeChecker {
                 const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
 
-                const lubtype = ttrue.normalflow ? eetype : splits.tfalse;
                 const retypename = stmt.binder.srcname.slice(1);
-
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
-                return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, lubtype, env, ttrue);
+                if(ttrue.normalflow && splits.tfalse !== undefined) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue);
+                }
+                else if(ttrue.normalflow) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, env, ttrue);
+                }
+                else if(splits.tfalse !== undefined) {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, env, ttrue);    
+                }
+                else {
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue);    
+                }
             }
         }
     }
@@ -2770,16 +2797,16 @@ class TypeChecker {
                 const retypename = stmt.binder.srcname.slice(1);
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
                 if(ttrue.normalflow && tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
                 }
                 else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.ttrue as TypeSignature, ttrue, tfalse);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, ttrue, tfalse);
                 }
                 else if(tfalse.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, splits.tfalse as TypeSignature, ttrue, tfalse);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, ttrue, tfalse);
                 }
                 else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, eetype, ttrue, tfalse);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, ttrue, tfalse);
                 }
             }
         }
@@ -3007,7 +3034,7 @@ class TypeChecker {
             }
         }
 
-        return cenv;
+        return cenv.resetRetypes(env);
     }
 
     /*
@@ -3369,7 +3396,7 @@ class TypeChecker {
     }
 
     private checkInvariants(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], invariants: InvariantDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, bn.type, true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
@@ -3379,7 +3406,7 @@ class TypeChecker {
     }
 
     private checkValidates(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], validates: ValidateDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, bn.type, true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
@@ -3419,7 +3446,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
         let argnames = new Set<string>();
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, "$" + p.name, p.type, p.type, true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, "$" + p.name, p.type, [], true, true, p.isRefParam))];
         for(let i = 0; i < idecl.params.length; ++i) {
             const p = idecl.params[i];
             this.checkError(idecl.sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
@@ -3438,7 +3465,7 @@ class TypeChecker {
     }
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))];
         const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => "$" + p.name)];
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
@@ -3463,7 +3490,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3488,7 +3515,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3507,13 +3534,13 @@ class TypeChecker {
                 this.constraints.pushConstraintScope(mdecl.terms);
             }
 
-            const thisvinfo = new VarInfo("this", "this", rcvr, rcvr, true, true, mdecl.isThisRef);
+            const thisvinfo = new VarInfo("this", "this", rcvr, [], true, true, mdecl.isThisRef);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
             this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["$this"] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, p.type, true, true, p.isRefParam))], mdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);
             this.checkBodyImplementation(env, mdecl.body);
 
             if(mdecl.terms.length !== 0) {
@@ -3555,7 +3582,7 @@ class TypeChecker {
             if(this.checkTypeSignature(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
                     const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
-                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, bn.type, true, true, false)), f.declaredType, infertype);
+                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);
