@@ -500,6 +500,28 @@ class JSEmitter {
             aname = exp.scopename;
         }
 
+        const storagetype = this.tproc(exp.layouttype as TypeSignature);
+        const trgttype = this.tproc(exp.getType());
+
+        //Check for special case where we need to do a type conversion -- Option/Result to value
+        if(storagetype.tkeystr === trgttype.tkeystr) {
+            if((storagetype instanceof NominalTypeSignature) && storagetype.decl instanceof OptionTypeDecl) {
+                if(storagetype.alltermargs[0].tkeystr === trgttype.tkeystr) {
+                    return `${aname}.value`;
+                }
+            }
+
+            if((storagetype instanceof NominalTypeSignature) && storagetype.decl instanceof ResultTypeDecl) {
+                if(storagetype.alltermargs[0].tkeystr === trgttype.tkeystr) {
+                    return `${aname}.value`;
+                }
+
+                if(storagetype.alltermargs[1].tkeystr === trgttype.tkeystr) {
+                    return `${aname}.info`;
+                }
+            }
+        }
+
         return aname;
     }
     
@@ -2168,14 +2190,29 @@ class JSEmitter {
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
             let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
-            resfimpl = `${resf}(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
+            const decl = `(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
+            if(fdecl instanceof NamespaceFunctionDecl || optmapping !== undefined) {
+                resfimpl = `${resf}${decl}`;
+            }
+            else {
+                resfimpl = `${resf} { value: ${decl} }`;
+            }
         }
 
         const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
         this.mapper = omap;
 
         const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
-        return {body: `${nf}${sig}${nss ? " => " : " "}${body}`, resfimpl: resfimpl, tests: tests};
+        const decl = `${sig}${nss ? " => " : " "}${body}`;
+        let bdecl: string;
+        if(fdecl instanceof NamespaceFunctionDecl || optmapping !== undefined) {
+            bdecl = `${nf}${decl}`;
+        }
+        else {
+            bdecl = `${nf} { value: ${decl} }`;
+        }
+        
+        return {body: bdecl, resfimpl: resfimpl, tests: tests};
     }
 
     private emitFunctionDecls(optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined] | undefined, fdecls: [FunctionInvokeDecl, FunctionInstantiationInfo | undefined][], fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2225,7 +2262,7 @@ class JSEmitter {
                         }
                     }
                     else {
-                        const fobj = `${fdecl.name}: { value: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}, writable: false, configurable: false, enumerable: true }`;
+                        const fobj = `${fdecl.name}: { value: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")} }`;
                         decls.push(fobj);                      
                     }
                 }
@@ -2326,7 +2363,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `${mdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                    const fobj = `${mdecl.name}: { value: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")} }`;
                     decls.push(fobj);
                 }
             }
@@ -2369,7 +2406,7 @@ class JSEmitter {
             }
             else {
                 const lexp = `() => ${eexp}`;
-                cdecls.push(`${m.name}: { value: function () { return _$memoconstval(this._$consts, "${m.name}", ${lexp}); }, writable: false, configurable: false, enumerable: true }`);
+                cdecls.push(`${m.name}: { value: function () { return _$memoconstval(this._$consts, "${m.name}", ${lexp}); } }`);
             }
         }
 
@@ -2391,7 +2428,7 @@ class JSEmitter {
                 const args = tdecl.saturatedBFieldInfo.map((fi) => "$" + fi.name).join(", "); // --------- TODO: we need to compute dependencies and cycles
 
                 const body = this.emitExpression(m.defaultValue.exp, true);
-                initializers.push(`${chkcall}: { value: (${args}) => ${body}, writable: false, configurable: false, enumerable: true }`);
+                initializers.push(`${chkcall}: { value: (${args}) => ${body} }`);
             }
         }
 
@@ -2409,7 +2446,7 @@ class JSEmitter {
     }
 
     private emitTypeSymbol(rcvr: NominalTypeSignature): string {
-        return `$tsym: { value: Symbol.for("${rcvr.tkeystr}"), writable: false, configurable: false, enumerable: true }`;
+        return `$tsym: { value: Symbol.for("${rcvr.tkeystr}") }`;
     }
 
     private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
@@ -2440,7 +2477,7 @@ class JSEmitter {
     }
 
     private generateObjectCreationExp(ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature): string {
-        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name}, writable: false, configurable: false, enumerable: true }`).join(", ");
+        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name} }`).join(", ");
         const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
 
         return `return Object.create(${protoref}, { ${paramargs} });`;
@@ -2478,7 +2515,7 @@ class JSEmitter {
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$create: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}, writable: false, configurable: false, enumerable: false }`;
+        return `$create: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
@@ -2521,7 +2558,7 @@ class JSEmitter {
         const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$createAPI: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")}, writable: false, configurable: false, enumerable: false }`;
+        return `$createAPI: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2637,7 +2674,7 @@ class JSEmitter {
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create(Object.prototype, {\n${declsentry}\n${fmt.indent("})")}`;
 
         return `export const ${tdecl.name} = ${obj}`;
     }
@@ -2650,7 +2687,7 @@ class JSEmitter {
 
         decls.push(this.emitTypeSymbol(rcvr));
         decls.push(...tdecl.members.map((mm, ii) => {
-            const paramargs = `value: { value: ${ii}, writable: false, configurable: false, enumerable: true }`;
+            const paramargs = `value: { value: ${ii} }`;
             const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
 
             return `${mm}: Object.create(${protoref}, { ${paramargs} })`;
@@ -2660,7 +2697,7 @@ class JSEmitter {
 
         fmt.indentPop();
 
-        const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
+        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
 
         if(ns.isTopNamespace()) {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: []};
@@ -2709,7 +2746,7 @@ class JSEmitter {
 
         fmt.indentPop();
 
-        const obj = `{\n${declsentry}\n${fmt.indent("}")}`;
+        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
 
         if(ns.isTopNamespace()) {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: tests};
@@ -2805,7 +2842,7 @@ class JSEmitter {
         const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
         fmt.indentPop();
 
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
+        const obj = `Object.create($VRepr, {\n${declsfmt}\n${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -2878,7 +2915,7 @@ class JSEmitter {
         const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
         fmt.indentPop();
 
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
+        const obj = `Object.create($VRepr, {\n${declsfmt}\n${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};

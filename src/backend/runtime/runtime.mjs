@@ -96,7 +96,7 @@ const $VRepr = {
 };
 
 const _$None = Object.create($VRepr, { 
-    $tag: { value: Symbol.for("None"), writable: false, configurable: false, enumerable: true }
+    $tag: { value: Symbol.for("None") }
 });
 
 function _$opubx(v) { return (typeof(v) === "object") ? v.value : v; }
