@@ -2743,16 +2743,16 @@ class TypeChecker {
                 const retypename = stmt.binder.srcname.slice(1);
                 this.checkFlowRebinder(stmt.sinfo, stmt.binder, retypename, env);
                 if(ttrue.normalflow && splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);
                 }
                 else if(ttrue.normalflow) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, env, ttrue);
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.ttrue as TypeSignature, specialaccess: splits.tspecialfubx }, env, ttrue, nenv);
                 }
                 else if(splits.tfalse !== undefined) {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, env, ttrue);    
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: splits.tfalse as TypeSignature, specialaccess: splits.fspecialfubx }, env, ttrue, nenv);
                 }
                 else {
-                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue);    
+                    return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.binder, { ttype: eetype, specialaccess: undefined }, env, ttrue, nenv);    
                 }
             }
         }

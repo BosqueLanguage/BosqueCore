@@ -300,14 +300,14 @@ class TypeEnvironment {
     static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo, refinetype: { ttype: TypeSignature, specialaccess: string | undefined }, ...envs: TypeEnvironment[]): TypeEnvironment {
         const menv = TypeEnvironment.mergeEnvironmentsSimple(origenv, ...envs);
 
-        if(!binfo.refineonfollow || refinetype === undefined) {
+        if(!binfo.refineonfollow) {
             return menv;
         }
         else {
             const refinevar = binfo.scopename.slice(1);
             const vinfo = origenv.resolveLocalVarInfoFromSrcName(refinevar) as VarInfo;
             
-            return menv.retypeLocalVariable(refinevar.slice(1), [...vinfo.itype, refinetype]);
+            return menv.retypeLocalVariable(refinevar, [...vinfo.itype, refinetype]);
         }
     }
 }
