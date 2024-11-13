@@ -2316,6 +2316,7 @@ class JSEmitter {
 
             const resb = ensures.map((e) => fmt.indent(e)).join("\n");
 
+            xxxx;
             let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
             resfimpl = `${resf}(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
         }
@@ -2324,6 +2325,7 @@ class JSEmitter {
         this.mapper = omap;
 
         const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
+        xxxx;
         return {body: `${nf}function${sig} ${body}`, resfimpl: resfimpl, tests: tests};
     }
 
