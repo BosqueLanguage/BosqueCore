@@ -1729,6 +1729,9 @@ class TypeChecker {
         if(this.relations.isPrimitiveType(ttype)) {
             return ttype;
         }
+        else if(this.relations.isEnumType(ttype)) {
+            return ttype;
+        }
         else if(this.relations.isTypeDeclType(ttype)) {
             return this.relations.getTypeDeclValueType(ttype);
         }
@@ -1875,7 +1878,7 @@ class TypeChecker {
         }
         
         exp.operkind = action[0];
-        exp.opertype = action[1];
+        exp.opertype = this.resolveUnderlyingType(action[1]);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1893,7 +1896,7 @@ class TypeChecker {
         }
 
         exp.operkind = action[0];
-        exp.opertype = action[1];
+        exp.opertype = this.resolveUnderlyingType(action[1]);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 

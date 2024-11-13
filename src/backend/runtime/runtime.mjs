@@ -58,11 +58,11 @@ function _$fasNotSubtype(val, tag, tsym, info) {
 const $SymbolNone = Symbol.for("None");
 
 const $VRepr = {
-    _$isNone: function() { return this.$tag === $SymbolNone; },
-    _$isNotNone: function() { return this.$tag !== $SymbolNone; },
+    _$isNone: function() { return this.$tsym === $SymbolNone; },
+    _$isNotNone: function() { return this.$tsym !== $SymbolNone; },
 
-    _$isSome: function() { return this.$tag !== $SymbolNone; },
-    _$isNotSome: function() { return this.$tag === $SymbolNone; },
+    _$isSome: function() { return this.$tsym !== $SymbolNone; },
+    _$isNotSome: function() { return this.$tsym === $SymbolNone; },
 
     _$asNone: function(info) { if (this._$isNotNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     _$asNotNone: function(info) { if (this._$isNone()) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
@@ -76,27 +76,27 @@ const $VRepr = {
     _$asFail: function(failtype, info) { if (this._$is(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
     _$asNotFail: function(failtype, info) { if (this._$isNot(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
 
-    _$is: function(tsym) { return this.$tag === tsym; },
-    _$isNot: function(tsym) { return this.$tag !== tsym; },
+    _$is: function(tsym) { return this.$tsym === tsym; },
+    _$isNot: function(tsym) { return this.$tsym !== tsym; },
 
-    _$isSubtype: function(tsym) { return _$fisSubtype(this.$tag, tsym); },
-    _$isNotSubtype: function(tsym) { return _$fisNotSubtype(this.$tag, tsym); },
+    _$isSubtype: function(tsym) { return _$fisSubtype(this.$tsym, tsym); },
+    _$isNotSubtype: function(tsym) { return _$fisNotSubtype(this.$tsym, tsym); },
 
     _$as: function(tsym, info) { if (this._$isNot(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     _$asNot: function(tsym, info) { if (this._$is(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     
-    _$asSubtype: function(tsym, info) { return _$fasSubtype(this, this.$tag, tsym, info); },
-    _$asNotSubtype: function(tsym, info) { return _$fasNotSubtype(this, this.$tag, tsym, info); },
+    _$asSubtype: function(tsym, info) { return _$fasSubtype(this, this.$tsym, tsym, info); },
+    _$asNotSubtype: function(tsym, info) { return _$fasNotSubtype(this, this.$tsym, tsym, info); },
 
-    _$isOptionSubtype: function(tsym) { return this._$isNone() || _$fisSubtype(this.$tag, tsym); },
-    _$isNotOptionSubtype: function(tsym) { return this._$isNotNone() && _$fisNotSubtype(this.$tag, tsym); },
+    _$isOptionSubtype: function(tsym) { return this._$isNone() || _$fisSubtype(this.$tsym, tsym); },
+    _$isNotOptionSubtype: function(tsym) { return this._$isNotNone() && _$fisNotSubtype(this.$tsym, tsym); },
 
     _$asOptionSubtype: function(tsym, info) { if (this._$isNotOptionSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
     _$asNotOptionSubtype: function(tsym, info) { if (this._$isOptionSubtype(tsym)) { throw new $Unwind($Unwind_TypeAs, info); } return this; }
 };
 
 const _$None = Object.create($VRepr, { 
-    $tag: { value: Symbol.for("None") }
+    $tsym: { value: Symbol.for("None") }
 });
 
 function _$opubx(v) { return (typeof(v) === "object") ? v.value : v; }
@@ -124,12 +124,12 @@ function _$subtt(v1, v2) { return _$opubx(v1) - _$opubx(v2); }
 function _$multt(v1, v2) { return _$opubx(v1) * _$opubx(v2); }
 
 function _$divtt(n, d) { 
-    const dd = _$opubx(v2);
+    const dd = _$opubx(d);
     if (dd === 0n) {
         throw new $Unwind($Unwind_DivZero, "Division by 0");
     }
 
-    return _$opubx(v1) / dd; 
+    return _$opubx(n) / dd; 
 }
 
 const _$negate = {
@@ -186,14 +186,14 @@ const _$fkeq = {
 };
 
 const _$fkeqopt = {
-    "Enum": function(v1, v2) { return v1._$isNone() || _$fkeq.Enum(v1, v2); },
-    "Bool": function(v1, v2) { return v1._$isSome() && _$fkeq.Bool(v1, v2); },
-    "Int": function(v1, v2) { return v1._$isSome() && _$fkeq.Int(v1, v2); },
-    "Nat": function(v1, v2) { return v1._$isSome() && _$fkeq.Nat(v1, v2); },
-    "BigInt": function(v1, v2) { return v1._$isSome() && _$fkeq.BigInt(v1, v2); },
-    "BigNat": function(v1, v2) { return v1._$isSome() && _$fkeq.BigNat(v1, v2); },
-    "String": function(v1, v2) { return v1._$isSome() && _$fkeq.String(v1, v2); },
-    "CString": function(v1, v2) { return v1._$isSome() && _$fkeq.CString(v1, v2); }
+    "Enum": function(v1, v2) { return v1._$isNone() && _$fkeq.Enum(v1.value, v2); },
+    "Bool": function(v1, v2) { return v1._$isSome() && _$fkeq.Bool(v1.value, v2); },
+    "Int": function(v1, v2) { return v1._$isSome() && _$fkeq.Int(v1.value, v2); },
+    "Nat": function(v1, v2) { return v1._$isSome() && _$fkeq.Nat(v1.value, v2); },
+    "BigInt": function(v1, v2) { return v1._$isSome() && _$fkeq.BigInt(v1.value, v2); },
+    "BigNat": function(v1, v2) { return v1._$isSome() && _$fkeq.BigNat(v1.value, v2); },
+    "String": function(v1, v2) { return v1._$isSome() && _$fkeq.String(v1.value, v2); },
+    "CString": function(v1, v2) { return v1._$isSome() && _$fkeq.CString(v1.value, v2); }
 };
 
 const _$fkneq = {
@@ -208,14 +208,14 @@ const _$fkneq = {
 };
 
 const _$fkneqopt = {
-    "Enum": function(v1, v2) { return v1._$isNone() || _$fkneq.Enum(v1, v2); },
-    "Bool": function(v1, v2) { return v1._$isNone() || _$fkneq.Bool(v1, v2); },
-    "Int": function(v1, v2) { return v1._$isNone() || _$fkneq.Int(v1, v2); },
-    "Nat": function(v1, v2) { return v1._$isNone() || _$fkneq.Nat(v1, v2); },
-    "BigInt": function(v1, v2) { return v1._$isNone() || _$fkneq.BigInt(v1, v2); },
-    "BigNat": function(v1, v2) { return v1._$isNone() || _$fkneq.BigNat(v1, v2); },
-    "String": function(v1, v2) { return v1._$isNone() || _$fkneq.String(v1, v2); },
-    "CString": function(v1, v2) { return v1._$isNone() || _$fkneq.CString(v1, v2); }
+    "Enum": function(v1, v2) { return v1._$isNone() || _$fkneq.Enum(v1.value, v2); },
+    "Bool": function(v1, v2) { return v1._$isNone() || _$fkneq.Bool(v1.value, v2); },
+    "Int": function(v1, v2) { return v1._$isNone() || _$fkneq.Int(v1.value, v2); },
+    "Nat": function(v1, v2) { return v1._$isNone() || _$fkneq.Nat(v1.value, v2); },
+    "BigInt": function(v1, v2) { return v1._$isNone() || _$fkneq.BigInt(v1.value, v2); },
+    "BigNat": function(v1, v2) { return v1._$isNone() || _$fkneq.BigNat(v1.value, v2); },
+    "String": function(v1, v2) { return v1._$isNone() || _$fkneq.String(v1.value, v2); },
+    "CString": function(v1, v2) { return v1._$isNone() || _$fkneq.CString(v1.value, v2); }
 };
 
 const _$fkless = {

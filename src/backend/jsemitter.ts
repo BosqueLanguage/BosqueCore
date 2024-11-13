@@ -503,7 +503,7 @@ class JSEmitter {
         if(exp.specialaccess.length !== 0) {
             for(let i = 0; i < exp.specialaccess.length; ++i) {
                 if(exp.specialaccess[i].specialaccess !== undefined) {
-                    aname = `${aname}.${exp.specialaccess[i]}`;
+                    aname = `${aname}.${exp.specialaccess[i].specialaccess}`;
                 }
             }
         }
@@ -2402,7 +2402,7 @@ class JSEmitter {
             const eexp = this.emitExpression(m.value.exp, true);
             
             if(m.value.exp instanceof LiteralNoneExpression || m.value.exp instanceof LiteralSimpleExpression || m.value.exp instanceof LiteralRegexExpression) {
-                cdecls.push(`${m.name}: function () { return ${eexp}; }`);
+                cdecls.push(`${m.name}: { value: function() { return ${eexp}; } }`);
 
             }
             else {
@@ -2412,7 +2412,7 @@ class JSEmitter {
         }
 
         if(cdecls.length !== 0) {
-            cdecls = ["_$consts: new Map()", ...cdecls];
+            cdecls = ["_$consts: { value: new Map() }", ...cdecls];
         }
 
         return cdecls;
@@ -2687,11 +2687,14 @@ class JSEmitter {
         let decls: string[] = [];
 
         decls.push(this.emitTypeSymbol(rcvr));
+
+        decls.push("_$memomap: { value: new Map() }");
         decls.push(...tdecl.members.map((mm, ii) => {
-            const paramargs = `value: { value: ${ii} }`;
+            const paramargs = `value: { value: ${ii}n }`;
             const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
 
-            return `${mm}: Object.create(${protoref}, { ${paramargs} })`;
+            const lexp = `() => Object.create(${protoref}, { ${paramargs} })`;
+            return `${mm}: {value: function() { return _$memoconstval(this._$memomap, "${mm}", ${lexp}); } }`;
         }));
 
         const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
@@ -2721,9 +2724,7 @@ class JSEmitter {
         decls.push(...this.emitInvariants(rcvr, tdecl.saturatedBFieldInfo, tdecl.invariants));
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
 
-        if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0) {
-            decls.push(this.emitCreate(tdecl, [{name: "value", type: this.tproc(tdecl.valuetype), hasdefault: false, containingtype: rcvr}], rcvr, fmt));
-        }
+        decls.push(this.emitCreate(tdecl, [{name: "value", type: this.tproc(tdecl.valuetype), hasdefault: false, containingtype: rcvr}], rcvr, fmt));
 
         if(tdecl.optofexp !== undefined || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
             decls.push(this.emitCreateAPIValidate(tdecl, [{name: "value", type: this.tproc(tdecl.valuetype), hasdefault: false, containingtype: rcvr}], rcvr, fmt));
