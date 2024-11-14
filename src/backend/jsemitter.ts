@@ -518,7 +518,7 @@ class JSEmitter {
         const allsimple = args.every((aa) => aa instanceof PositionalArgumentValue);
 
         if(argc === 0) {
-            return `$Core.ListOps.s_list_create_empty["${ttype.tkeystr}"]()`;
+            return `$Core.ListOps.s_list_create_empty["<${ttype.tkeystr}>"]()`;
         }
         else if(argc <= 4 && allsimple) {
             let opr: string;
@@ -537,7 +537,7 @@ class JSEmitter {
             }
 
             const llargs = args.map((ee) => this.emitExpression(ee.exp, true));
-            return `$Core.ListOps.${opr}["${ttype.tkeystr}"](${llargs.join(", ")})`;
+            return `$Core.ListOps.${opr}["<${ttype.tkeystr}>"](${llargs.join(", ")})`;
         }
         else {
             if(argc === 1) {
@@ -2245,7 +2245,7 @@ class JSEmitter {
                             decls.push(fobj);
                         }
                         else {
-                            const fobj = `${fdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}, `;
+                            const fobj = `${fdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
                             decls.push(fobj);
                         }
                     }

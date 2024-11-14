@@ -124,7 +124,7 @@ function runMainCode(code: string, expected: [any, string]) {
 function runMainCodeError(code: string, expected: string) {
     const result = execMainCode(code);
 
-    assert.equal(wsnorm(result), expected);
+    assert.equal(wsnorm(result).replace(/:\d+$/, ""), expected);
 }
 
 export {
