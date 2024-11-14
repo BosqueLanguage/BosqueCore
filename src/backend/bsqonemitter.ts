@@ -68,23 +68,12 @@ class BSQONTypeInfoEmitter {
         return attr;
     }
 
-    private emitSuperTypes(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string[] {
-        if(tdecl.name !== "None") {
-            return tdecl.saturatedProvides.map((ss) => ss.tkeystr);
+    private emitSuperTypes(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string[] | undefined {
+        if(tdecl.name === "None" || tdecl.saturatedProvides.length === 0) {
+            return undefined;
         }
-        else {
-            const optinsts = this.coreinstantiation.typebinds.get("Option");
-            if(optinsts === undefined) {
-                return [];
-            }
-
-            const optiondecl = this.assembly.getCoreNamespace().typedecls.find((tdcl) => tdcl.name === "Option") as OptionTypeDecl;
-            return optinsts.map((inst) => {
-                const oftype = (inst.binds as TemplateNameMapper).resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), "T"));
-                const optiontype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, optiondecl, [oftype]);
-                return optiontype.tkeystr
-            });
-        }
+        
+        return tdecl.saturatedProvides.map((ss) => ss.tkeystr);
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, tag: string, isentity: boolean): any {

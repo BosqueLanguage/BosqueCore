@@ -10,6 +10,6 @@ describe ("Exec -- Simple division", () => {
     });
 
     it("should fail div 0", function () {
-        runMainCodeError("public function main(): Int { return 2i // 0i; }", "Error -- division by zero @ test.bsq:3");
+        runMainCodeError("public function main(): Int { return 2i // 0i; }", "Error -- Division by 0");
     });
 });

@@ -10,6 +10,6 @@ describe ("Exec -- Simple subtraction", () => {
     });
 
     it("should fail underflow", function () {
-        runMainCodeError("public function main(): Nat { return 1n - 5n; }", "Error -- operation results in numeric out-of-bounds @ test.bsq:3");
+        runMainCodeError("public function main(): Nat { return 1n - 5n; }", "Error -- Overflow");
     });
 });

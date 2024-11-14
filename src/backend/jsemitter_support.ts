@@ -1,7 +1,7 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, DatatypeMemberEntityTypeDecl, EntityTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, TypeFunctionDecl } from "../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, EnumTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../frontend/assembly.js";
 import { SourceInfo } from "../frontend/build_decls.js";
-import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
+import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
 class JSCodeFormatter {
     private level: number;
@@ -32,24 +32,20 @@ class JSCodeFormatter {
 }
 
 class EmitNameManager {
+    static isNoneType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl) && (ttype.decl.name === "None");
+    }
+
+    static isPrimitiveType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
+    }
+
+    static isOptionType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof OptionTypeDecl);
+    }
+
     static isUniqueTypeForSubtypeChecking(ttype: TypeSignature): boolean {
         return (ttype instanceof NominalTypeSignature) && !(ttype.decl instanceof AbstractConceptTypeDecl);
-    }
-
-    static isNakedTypeRepr(ttype: TypeSignature): boolean {
-        if(ttype instanceof EListTypeSignature) {
-            return true;
-        }
-        else if(ttype instanceof NominalTypeSignature) {
-            return !(ttype.decl instanceof AbstractConceptTypeDecl);
-        }
-        else {
-            return false;
-        }
-    }
-
-    static isBoxedTypeRepr(ttype: TypeSignature): boolean {
-        return !this.isNakedTypeRepr(ttype);
     }
 
     static isMethodCallObjectRepr(ttype: TypeSignature): boolean {
@@ -58,7 +54,16 @@ class EmitNameManager {
         }
 
         const tdecl = ttype.decl;
-        return (tdecl instanceof EntityTypeDecl) || (tdecl instanceof DatatypeMemberEntityTypeDecl);
+        return !(tdecl instanceof PrimitiveEntityTypeDecl);
+    }
+
+    static generateFunctionLookupKeyForOperators(ttype: TypeSignature): string {
+        if((ttype as NominalTypeSignature).decl instanceof EnumTypeDecl) {
+            return `Enum`;
+        }
+        else {
+            return ttype.tkeystr;
+        }
     }
 
     static generateTypeKey(ttype: NominalTypeSignature): string {
@@ -251,7 +256,7 @@ class EmitNameManager {
     }
 
     static generateAccssorNameForEnumMember(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, ename: string): string {
-        return `${this.emitTypeAccess(currentns, ttype)}.${ename}`;
+        return `${this.emitTypeAccess(currentns, ttype)}.${ename}()`;
     }
 
     static generateAccssorNameForTypeConstant(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
@@ -304,8 +309,16 @@ class EmitNameManager {
         }
     }
 
-    static generateAccessorForTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, directVersion: boolean): string {
-        return this.emitTypeAccess(currentns, ttype) + (directVersion ? ".$create" : ".$kreate");
+    static generateAccessorForStdTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
+    }
+
+    static generateAccessorForTypedeclTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
+    }
+
+    static generateAccessorForSpecialTypeConstructor(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return this.emitTypeAccess(currentns, ttype) + ".$create";
     }
 
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {

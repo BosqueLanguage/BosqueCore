@@ -388,7 +388,6 @@ class LiteralTypeDeclValueExpression extends Expression {
     readonly constype: TypeSignature;
     
     optResolvedString: string | undefined = undefined;
-    isDirectLiteral: boolean = true;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
@@ -482,6 +481,8 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
+
+    specialaccess: { ttype: TypeSignature, specialaccess: string | undefined }[] = []; //field name to access to a special re-typed variable (specifically extracting an option or result value)
     layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
     scopename: string; //maybe a different name that gets used for shadowing binders
     isCaptured: boolean;
@@ -512,7 +513,6 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
 
     elemtype: TypeSignature | undefined = undefined;
     shuffleinfo: [number, string, TypeSignature][] = [];
-    hasChecks: boolean = false;
     
     constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
@@ -1076,6 +1076,8 @@ abstract class UnaryExpression extends Expression {
 }
 
 class PrefixNotOpExpression extends UnaryExpression {
+    opertype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
@@ -1163,6 +1165,7 @@ abstract class BinaryKeyExpression extends Expression {
     readonly rhs: Expression;
 
     operkind: "err" | "lhsnone" | "rhsnone" | "stricteq" | "lhskeyeqoption" | "rhskeyeqoption" | undefined;
+    opertype: TypeSignature | undefined = undefined;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1201,6 +1204,8 @@ class KeyCompareEqExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
+    optype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
         super(ExpressionTag.KeyCompareEqExpression, sinfo);
         this.ktype = ktype;
@@ -1217,6 +1222,8 @@ class KeyCompareLessExpression extends Expression {
     readonly ktype: TypeSignature;
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    optype: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ktype: TypeSignature, lhs: Expression, rhs: Expression) {
         super(ExpressionTag.KeyCompareLessExpression, sinfo);
@@ -1311,6 +1318,8 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
 abstract class BinLogicExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
+
+    purebool: boolean = true;
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(tag, sinfo);
@@ -1967,6 +1976,7 @@ class SwitchStatement extends Statement {
     readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
+    optypes: TypeSignature[] = [];
 
     constructor(sinfo: SourceInfo, sval: Expression, flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);

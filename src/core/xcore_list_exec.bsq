@@ -4,10 +4,6 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace ListOps {
-    function s_list_get_empty<T>(): List<T> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::emptyTree);
-    }
-
     function s_list_empty<T>(l: List<T>): Bool {
         return l.value?<BBLeaf<T>>;
     } 
@@ -30,6 +26,26 @@ namespace ListOps {
 
     function s_list_push_back<T>(l: List<T>, v: T): List<T> {
         return XCore::s_createDirect<Tree<T>, List<T>>(pushBack<T>(l.value, v));
+    }
+
+    function s_list_create_empty<T>(): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::emptyTree);
+    }
+
+    function s_list_create_1<T>(v1: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create1(v1));
+    }
+
+    function s_list_create_2<T>(v1: T, v2: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create2(v1, v2));
+    }
+
+    function s_list_create_3<T>(v1: T, v2: T, v3: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create3(v1, v2, v3));
+    }
+
+    function s_list_create_4<T>(v1: T, v2: T, v3: T, v4: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create4(v1, v2, v3, v4));
     }
 
     enum Color {
@@ -398,6 +414,22 @@ namespace ListOps {
 
         function createNode(c: Color, l: Tree<T>, r: Tree<T>): Node<T> {
             return Node<T>{c, size<T>(l) + size<T>(r), l, r};
+        }
+
+        function create1(v1: T): Tree<T> {
+            return Tree<T>::createLeaf(v1);
+        }
+
+        function create2(v1: T, v2: T): Tree<T> {
+            return Tree<T>::createNode(Color#Black, Tree<T>::createLeaf(v1), Tree<T>::createLeaf(v2));
+        }
+
+        function create3(v1: T, v2: T, v3: T): Tree<T> {
+            return Tree<T>::createNode(Color#Black, Tree<T>::createLeaf(v1), Tree<T>::create2(v2, v3));
+        }
+
+        function create4(v1: T, v2: T, v3: T, v4: T): Tree<T> {
+            return Tree<T>::createNode(Color#Black, Tree<T>::create2(v1, v2), Tree<T>::create2(v3, v4));
         }
     }
 }

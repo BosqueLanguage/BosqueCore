@@ -28,6 +28,6 @@ describe ("Parser -- IfElse Statement", () => {
     });
 
     it("should parse binder & reflow itest ifs", function () {
-        parseTestFunction("function main(): Int { var x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }", undefined);
+        parseTestFunction("function main(): Int { let x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }", undefined);
     });
 });
