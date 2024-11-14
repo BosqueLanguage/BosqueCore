@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl, AbstractCollectionTypeDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { AutoTypeSignature, EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 import { SourceInfo } from "./build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
@@ -375,7 +375,7 @@ class InstantiationPropagator {
         this.instantiateTypeSignature(exp.resolvedDeclType as NominalTypeSignature, this.currentMapping);
     }
 
-    private instantiateCollectionConstructor(decl: AbstractCollectionTypeDecl, t: NominalTypeSignature) {
+    private instantiateCollectionConstructor(decl: AbstractCollectionTypeDecl, t: NominalTypeSignature, args: ArgumentValue[]) {
         let ists: TypeSignature | undefined = undefined;
 
         if(decl instanceof ListTypeDecl) {
@@ -383,6 +383,28 @@ class InstantiationPropagator {
             if(lops !== undefined) {
                 const mtree = lops.typedecls.find((tt) => tt.name === "Tree");
                 ists = (mtree !== undefined) ? new NominalTypeSignature(t.sinfo, undefined, mtree, [t.alltermargs[0]]) : undefined;
+
+                if(ists !== undefined) {
+                    this.instantiateTypeSignature(ists, this.currentMapping);
+                }
+
+                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                    if(args.length === 0) {
+                        const ff = lops.functions.find((f) => f.name === "s_list_create_empty") as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                    }
+                    else if(args.length <= 4) {
+                        const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`) as NamespaceFunctionDecl;
+ 
+                            this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                    }
+                    else {
+                        assert(false, "Not Implemented -- list constructors");
+                    }
+                }
+                else {
+                    assert(false, "Not Implemented -- list constructors");
+                }
             }
         }
         else if(decl instanceof StackTypeDecl) {
@@ -404,10 +426,12 @@ class InstantiationPropagator {
                 const mtree = mops.typedecls.find((tt) => tt.name === "Tree");
                 ists = (mtree !== undefined) ? new NominalTypeSignature(t.sinfo, undefined, mtree, [t.alltermargs[0], t.alltermargs[1]]) : undefined;
             }
-        }
 
-        if(ists !== undefined) {
-            this.instantiateTypeSignature(ists, this.currentMapping);
+            if(ists !== undefined) {
+                this.instantiateTypeSignature(ists, this.currentMapping);
+
+                assert(false, "Not Implemented -- map constructors");
+            }
         }
     }
 
@@ -417,7 +441,7 @@ class InstantiationPropagator {
         const ctype = (exp.ctype as NominalTypeSignature);
         const decl = ctype.decl;
         if(decl instanceof AbstractCollectionTypeDecl) {
-            return this.instantiateCollectionConstructor(decl, ctype);
+            return this.instantiateCollectionConstructor(decl, ctype, exp.args.args);
         }
     }
     
@@ -460,9 +484,10 @@ class InstantiationPropagator {
         this.instantiateTypeSignature(exp.ttype, this.currentMapping);
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
 
+        this.instantiateArgumentList(exp.args.args);
+
         const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
         const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
-
         this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
     }
     
