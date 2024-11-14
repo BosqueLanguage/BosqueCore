@@ -71,10 +71,10 @@ const $VRepr = {
     _$asNotSome: function(info) { if (this._$isSome()) { throw new $Unwind($Unwind_TypeAs, info); } return this; },
 
     _$asOk: function(oktype, info) { if (this._$isNot(oktype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
-    _$asNotOk: function(oktype, info) { if (this._$is(oktype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
+    _$asNotOk: function(oktype, info) { if (this._$is(oktype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.info; },
     
-    _$asFail: function(failtype, info) { if (this._$is(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
-    _$asNotFail: function(failtype, info) { if (this._$isNot(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
+    _$asFail: function(failtype, info) { if (this._$isNot(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.info; },
+    _$asNotFail: function(failtype, info) { if (this._$is(failtype)) { throw new $Unwind($Unwind_TypeAs, info); } return this.value; },
 
     _$is: function(tsym) { return this.$tsym === tsym; },
     _$isNot: function(tsym) { return this.$tsym !== tsym; },

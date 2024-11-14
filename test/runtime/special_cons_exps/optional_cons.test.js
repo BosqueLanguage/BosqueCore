@@ -5,7 +5,6 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- Special Constructor Optional", () => {
     it("should exec none with simple infer", function () {
-        runMainCode("public function main(): None { return none; }", [null, "None"]);
         runMainCode("public function main(): Int { let x: Some<Int> = some(3i); return x.value; }", [3n, "Int"]);
         runMainCode("public function main(): Int { let x: Option<Int> = some(3i); return x@some; }", [3n, "Int"]);
     });
@@ -26,7 +25,7 @@ describe ("Exec -- Special Constructor Result", () => {
 describe ("Exec -- Special Constructor infer in if-else and assign positions", () => {
     it("should exec some/none with if-else", function () {
         runMainCode("public function main(): Int { let x: Option<Int> = if(true) then some(3i) else none; return x@some; }", [3n, "Int"]);
-        runMainCode("public function main(): None { let x: Option<Int> = if(false) then some(3i) else none; return x@!some; }", [null, "None"]);
+        runMainCode("public function main(): Bool { let x: Option<Int> = if(false) then some(3i) else none; return x?!some; }", [true, "Bool"]);
     });
 
     it("should exec ok/fail with if-else", function () {

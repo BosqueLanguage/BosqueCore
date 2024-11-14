@@ -1876,9 +1876,11 @@ class TypeChecker {
         if (action[0] === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
         }
-        
-        exp.operkind = action[0];
-        exp.opertype = this.resolveUnderlyingType(action[1]);
+        else {
+            exp.operkind = action[0];
+            exp.opertype = this.resolveUnderlyingType(action[1]);
+        }
+
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
@@ -1894,9 +1896,11 @@ class TypeChecker {
         if (action[0] === "err") {
             this.reportError(exp.sinfo, `Types ${lhstype.emit()} and ${rhstype.emit()} are not comparable`);
         }
+        else {
+            exp.operkind = action[0];
+            exp.opertype = this.resolveUnderlyingType(action[1]);
+        }
 
-        exp.operkind = action[0];
-        exp.opertype = this.resolveUnderlyingType(action[1]);
         return exp.setType(this.getWellKnownType("Bool"));
     }
 

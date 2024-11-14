@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
@@ -906,7 +906,7 @@ class JSEmitter {
             const optype = exp.opertype as TypeSignature;
             
             if(EmitNameManager.isPrimitiveType(optype)) {
-                const eexp = `-${exp.op}${this.emitExpression(exp.exp, false)}`;
+                const eexp = `-${this.emitExpression(exp.exp, false)}`;
                 return !toplevel ? `(${eexp})` : eexp;
             }
             else {
@@ -1153,12 +1153,12 @@ class JSEmitter {
 
         if(exp.test.itestopt === undefined) {
             const purebool = this.tproc(exp.test.exp.getType()).tkeystr === "Bool";
-            let texp = this.emitExpression(exp.trueValue, !purebool);
+            let test = this.emitExpression(exp.test.exp, !purebool);
             if(!purebool) {
-                texp = `_$bval${texp}`;
+                test = `_$bval(${test})`;
             }
 
-            const eexp = `${texp} ? ${texp} : ${fexp}`;
+            const eexp = `${test} ? ${texp} : ${fexp}`;
             return !toplevel ? `(${eexp})` : eexp;
         }
         else {
@@ -2085,7 +2085,7 @@ class JSEmitter {
                 const args = (rcvr.decl instanceof TypedeclTypeDecl) ? "$value" : bnames.map((fi) => "$" + fi.name).join(", ");
                 const body = this.emitExpression(inv.exp.exp, true);
 
-                invexps.push(`${chkcall}: (${args}) => ${body}`);
+                invexps.push(`${chkcall}: { value: (${args}) => ${body} }`);
             }
         }
 
@@ -2101,7 +2101,7 @@ class JSEmitter {
             const args = (rcvr.decl instanceof TypedeclTypeDecl) ? "$value" : bnames.map((fi) => "$" + fi.name).join(", ");
             const body = this.emitExpression(inv.exp.exp, true);
 
-            vexps.push(`${chkcall}: (${args}) => ${body}`);
+            vexps.push(`${chkcall}: { value: (${args}) => ${body} }`);
         }
 
         return vexps;
@@ -2484,8 +2484,8 @@ class JSEmitter {
         return `return Object.create(${protoref}, { ${paramargs} });`;
     }
 
-    private emitCreate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
-        const ddecls = this.emitDefaultFieldInitializers(ffinfo);
+    private emitCreate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
+        const ddecls = ffinfo === undefined ? this.emitDefaultFieldInitializers(tdecl.saturatedBFieldInfo) : [];
 
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
@@ -2504,23 +2504,23 @@ class JSEmitter {
 
         const cchks = tdecl.allInvariants.map((inv) => {
             const chkcall = `${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(inv.containingtype) as NominalTypeSignature, `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`)}`;
-            const args = inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const args = (ffinfo || inv.containingtype.decl.saturatedBFieldInfo).map((fi) => fi.name).join(", ");
             const info = this.getErrorInfo("failed invariant", inv.sinfo, inv.tag);
 
             return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons =  this.generateObjectCreationExp(ffinfo, rcvr);
+        const ccons =  this.generateObjectCreationExp(ffinfo || tdecl.saturatedBFieldInfo, rcvr);
 
         fmt.indentPush();
         const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$create: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
+        return `$create: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
     }
 
-    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
-        const ddecls = this.emitDefaultFieldInitializers(ffinfo);
+    private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
+        const ddecls = ffinfo === undefined ? this.emitDefaultFieldInitializers(tdecl.saturatedBFieldInfo) : [];
 
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
@@ -2539,7 +2539,7 @@ class JSEmitter {
 
         const cchks = tdecl.allInvariants.map((inv) => {
             const chkcall = `${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(inv.containingtype) as NominalTypeSignature, `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`)}`;
-            const args = inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const args = (ffinfo || inv.containingtype.decl.saturatedBFieldInfo).map((fi) => fi.name).join(", ");
             const info = this.getErrorInfo("failed invariant", inv.sinfo, inv.tag);
 
             return `_$invariant(${chkcall}(${args}), ${info});`
@@ -2547,19 +2547,19 @@ class JSEmitter {
 
         const vchks = tdecl.allValidates.map((inv) => {
             const chkcall = `${EmitNameManager.generateAccessorForTypeSpecialName(this.currentns as NamespaceDeclaration, this.tproc(inv.containingtype) as NominalTypeSignature, `$checkinv_${inv.sinfo.line}_${inv.sinfo.pos}`)}`;
-            const args = inv.containingtype.decl.saturatedBFieldInfo.map((fi) => fi.name).join(", ");
+            const args = (ffinfo || inv.containingtype.decl.saturatedBFieldInfo).map((fi) => fi.name).join(", ");
             const info = this.getErrorInfo("failed validation", inv.sinfo, inv.tag);
 
             return `_$validate(${chkcall}(${args}), ${info});`
         });
 
-        const ccons =  this.generateObjectCreationExp(ffinfo, rcvr);
+        const ccons =  this.generateObjectCreationExp(ffinfo || tdecl.saturatedBFieldInfo, rcvr);
 
         fmt.indentPush();``
         const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
         fmt.indentPop();
 
-        return `$createAPI: { value: (${ffinfo.map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
+        return `$createAPI: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2583,10 +2583,10 @@ class JSEmitter {
         decls.push(...this.emitValidates(rcvr, tdecl.saturatedBFieldInfo, tdecl.validates));
         
         if(isentity) {
-            decls.push(this.emitCreate(tdecl, tdecl.saturatedBFieldInfo, rcvr, fmt));
+            decls.push(this.emitCreate(tdecl, undefined, rcvr, fmt));
 
             if(hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
-                decls.push(this.emitCreateAPIValidate(tdecl, tdecl.saturatedBFieldInfo, rcvr, fmt));
+                decls.push(this.emitCreateAPIValidate(tdecl, undefined, rcvr, fmt));
             }
         }
 
@@ -2601,9 +2601,7 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         if(isentity) {
-            if(tdecl.hasDynamicInvokes) {
-                decls.push(this.emitVTable(tdecl, fmt));
-            }
+            decls.push(this.emitVTable(tdecl, fmt));
         }
 
         this.mapper = undefined;
@@ -2612,7 +2610,7 @@ class JSEmitter {
         return {decls: decls, tests: tests};
     }
 
-    private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, rcvr: NominalTypeSignature, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter, ifields: {fname: string, ftype: TypeSignature}[] | undefined, extradecls: string[], nested: string | undefined): string {
+    private emitInteralSimpleTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, instantiation: TypeInstantiationInfo, fmt: JSCodeFormatter, ifields: {fname: string, ftype: TypeSignature}[] | undefined, extradecls: string[], nested: string | undefined): string {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
         }
@@ -2634,15 +2632,19 @@ class JSEmitter {
         const mdecls = this.emitMethodDecls([rcvr, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
+        if(tdecl instanceof AbstractEntityTypeDecl) {
+            decls.push(this.emitVTable(tdecl, fmt));
+        }
+
         const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n");
 
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create(${tdecl instanceof AbstractEntityTypeDecl ? "$VRepr" : "Object.prototype"}, {\n${declsentry}\n${fmt.indent("})")}`;
 
         if(nested !== undefined) {
-            return `${tdecl.name}: ${obj}`;
+            return `${tdecl.name}: { value: ${obj} }`;
         }
         else {
             if(tdecl.terms.length !== 0) {
@@ -2894,7 +2896,7 @@ class JSEmitter {
         const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
         fmt.indentPop();
 
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
+        const obj = `Object.create(Object.prototype, {\n${declsfmt}\n${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -2940,7 +2942,7 @@ class JSEmitter {
         const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
         fmt.indentPop();
 
-        const obj = `{\n${declsfmt}\n${fmt.indent("}")}`;
+        const obj = `Object.create(Object.prototype, {\n${declsfmt}\n${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
