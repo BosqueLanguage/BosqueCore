@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
@@ -710,6 +710,80 @@ class TypeChecker {
         return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
     }
 
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: LambdaParameterSignature[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], restinfo: [number, boolean, TypeSignature][] | undefined } {
+        let argsuffle: (ArgumentValue | undefined)[] = [];
+        let argsuffleidx: number[] = [];
+        let argsuffletype: (TypeSignature | undefined)[] = [];
+        for(let i = 0; i < args.length; ++i) {
+            argsuffle.push(undefined);
+            argsuffleidx.push(-1);
+            argsuffletype.push(undefined);
+        }
+
+        //fill in all the named arguments
+        for(let i = 0; i < args.length; ++i) {
+            if(args[i] instanceof NamedArgumentValue) {
+                const narg = args[i] as NamedArgumentValue;
+                const paramidx = params.findIndex((p) => p.name === narg.name);
+                if(paramidx === -1) {
+                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} not found in parameter list`);
+                }
+                else if(params[paramidx].isRestParam) {
+                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} cannot be assigned to rest parameter`);
+                }
+                else {
+                    argsuffle[paramidx] = narg;
+                    argsuffleidx[paramidx] = i;
+                }
+            }
+        }
+
+        const nonrestparams = params.filter((p) => !p.isRestParam);
+        const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
+
+        let ppos = argsuffle.findIndex((av) => av === undefined);
+        let apos = args.findIndex((av) => !(av instanceof NamedArgumentValue));
+        while(ppos !== -1 && ppos < nonrestparams.length && apos !== -1 && apos < args.length) {
+            argsuffle[ppos] = args[apos];
+            argsuffleidx[ppos] = apos;
+
+            ppos = argsuffle.findIndex((av, j) => j > ppos && av === undefined);
+            apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
+        }
+
+        let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+        if(restparam === undefined) {
+            if(args.length > params.length) {
+                this.reportError(sinfo, `Too many arguments provided to function`);
+            }
+
+            for(let i = argsuffleidx.length; i < params.length; ++i) {
+                argsuffleidx.push(-1);
+            }
+
+            for(let i = 0; i < params.length; ++i) {
+                if(argsuffle[i] === undefined) {
+                    this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
+                }
+                else {
+                    argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, params[i], imapper);
+                }
+            }
+        }
+        else {
+            let restargs = args.slice(nonrestparams.length);
+            const restypes = this.checkRestParam(env, restargs, restparam, imapper);
+
+            restinfo = [];
+            for(let i = nonrestparams.length; i < args.length; ++i) {
+                const rri = restypes[i - nonrestparams.length] as [boolean, TypeSignature];
+                restinfo.push([i, rri[0], rri[1]]);
+            }
+        }
+
+        return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
+    }
+
     private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
@@ -1318,6 +1392,25 @@ class TypeChecker {
     }
 
     private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression): TypeSignature {
+        const llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
+        if(llvar === undefined) {
+            this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(!(llvar.decltype instanceof LambdaTypeSignature)) {
+            this.reportError(exp.sinfo, `Variable ${exp.name} is not a lambda value`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const lsig = llvar.decltype as LambdaTypeSignature;
+
+        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, exp.args.args, lsig.params, imapper);
+        exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.restinfo = arginfo.restinfo;
+
+        return exp.setType(fdecl.resultType.remapTemplateBindings(imapper));
+
         assert(false, "Not Implemented -- checkLambdaInvokeExpression");
     }
 
