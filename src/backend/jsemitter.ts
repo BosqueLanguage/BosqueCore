@@ -17,6 +17,7 @@ const prefix =
 
 class JSEmitter {
     readonly assembly: Assembly;
+    readonly asminstantiation: NamespaceInstantiationInfo[];
     readonly mode: "release" | "debug";
     readonly buildlevel: BuildLevel;
     readonly generateTestInfo: boolean;
@@ -29,10 +30,11 @@ class JSEmitter {
 
     bindernames: Set<string> = new Set();
 
-    constructor(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean) {
+    constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean) {
         this.assembly = assembly;
+        this.asminstantiation = asminstantiation;
+
         this.mode = mode;
-        
         this.buildlevel = buildlevel;
         this.generateTestInfo = generateTestInfo;
 
@@ -2450,8 +2452,52 @@ class JSEmitter {
         return `$tsym: { value: Symbol.for("${rcvr.tkeystr}") }`;
     }
 
-    private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string {
-        return "[VTABLE -- NOT IMPLEMENTED]";
+    private tryLookupBindsFor(ptype: NominalTypeSignature, mdecl: MethodDecl): MethodInstantiationInfo | undefined {
+        const inns = ptype.decl.ns.emit();
+        const nsii = this.asminstantiation.find((ai) => ai.ns.emit() === inns);
+        if(nsii === undefined) {
+            return undefined;
+        }
+
+        const tii = nsii.typebinds.get(ptype.decl.name);
+        if(tii === undefined) {
+            return undefined;
+        }
+
+        const btti = tii.find((ii) => ii.tkey === ptype.tkeystr);
+        if(btti === undefined) {
+            return undefined;
+        }
+
+        return btti.methodbinds.get(mdecl.name);
+    }
+
+    private emitStaticInherits(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string[] {
+        let pcalls: string[] = [];
+
+        for(let i = 0; i < tdecl.saturatedProvides.length; ++i) {
+            const ptype = this.tproc(tdecl.saturatedProvides[i]) as NominalTypeSignature;
+
+            const smethods = ptype.decl.methods.filter((m) => !m.attributes.some((attr) => attr.name === "override" || attr.name === "virtual" || attr.name === "abstract"));
+            for(let j = 0; j < smethods.length; ++j) {
+                const mbind = this.tryLookupBindsFor(ptype, smethods[j]);
+
+                if(mbind !== undefined) {
+                    if(mbind.binds === undefined) {
+                        pcalls.push(`${smethods[j].name}: { value: ${EmitNameManager.generateAccssorNameForMethodFull(this.currentns as NamespaceDeclaration, ptype, smethods[j], [])} }`);
+                    }
+                    else {
+                        assert(false, "Not implemented -- emitStaticInherits");
+                    }
+                }
+            }
+        }
+
+        return pcalls;
+    }
+
+    private emitVTable(tdecl: AbstractNominalTypeDecl, fmt: JSCodeFormatter): string[] {
+        return ["[VTABLE -- NOT IMPLEMENTED]"];
     }
 
     private emitDefaultFieldInitializers(ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[]): string[] {
@@ -2601,7 +2647,11 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         if(isentity) {
-            decls.push(this.emitVTable(tdecl, fmt));
+            decls.push(...this.emitStaticInherits(tdecl, rcvr));
+
+            if(tdecl.hasDynamicInvokes) {
+                decls.push(...this.emitVTable(tdecl, fmt));
+            }
         }
 
         this.mapper = undefined;
@@ -2633,7 +2683,11 @@ class JSEmitter {
         decls.push(...mdecls.decls);
 
         if(tdecl instanceof AbstractEntityTypeDecl) {
-            decls.push(this.emitVTable(tdecl, fmt));
+            decls.push(...this.emitStaticInherits(tdecl, rcvr));
+
+            if(tdecl.hasDynamicInvokes) {
+                decls.push(...this.emitVTable(tdecl, fmt));
+            }
         }
 
         const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n");
@@ -2742,8 +2796,9 @@ class JSEmitter {
         decls.push(...mdecls.decls);
         tests.push(...mdecls.tests);
 
+        decls.push(...this.emitStaticInherits(tdecl, rcvr));
         if(tdecl.hasDynamicInvokes) {
-            decls.push(this.emitVTable(tdecl, fmt));
+            decls.push(...this.emitVTable(tdecl, fmt));
         }
 
         const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
@@ -3267,7 +3322,7 @@ class JSEmitter {
     }
 
     static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
-        const emitter = new JSEmitter(assembly, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
+        const emitter = new JSEmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
 
         //emit each of the assemblies
         let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
