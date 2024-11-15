@@ -1344,7 +1344,38 @@ class TypeChecker {
     }
 
     private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+        let itype: LambdaTypeSignature | undefined = undefined;
+        if(infertype !== undefined && infertype instanceof LambdaTypeSignature && infertype.params.length === exp.invoke.params.length) {
+            itype = infertype;
+        }
+        
+        let args: VarInfo[] = [];
+        let params: LambdaParameterSignature[] = [];
+        let rtype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
+        let ltype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
+
+        if(exp.invoke.isAuto) {
+            xxxx;
+        }
+        else {
+            for(let i = 0; i < exp.invoke.params.length; ++i) {
+                xxxx;
+            }
+
+            rtype = xxxx;
+            ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+        }
+
+        if(rtype instanceof ErrorTypeSignature) {
+            return exp.setType(rtype);
+        }
+        else {
+            const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype, this.constraints);
+            const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
+            this.checkBodyImplementation(lenv, exp.invoke.body);
+
+            return exp.setType(ltype);
+        }
     }
 
     private checkLetExpression(env: TypeEnvironment, exp: LetExpression): TypeSignature {
