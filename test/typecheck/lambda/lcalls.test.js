@@ -1,6 +1,6 @@
 "use strict";
 
-import { checkTestFunction, checkTestFunctionError, checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
+import { checkTestFunctionInFile, checkTestFunctionInFileError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Checker -- Lambda calls (no template)", () => {
@@ -31,7 +31,7 @@ describe ("Checker -- Lambda calls (no template)", () => {
 });
 
 describe ("Checker -- Lambda calls (with template)", () => {
-    it("should check simple positional", function () {
+    it("should check simple lambda template", function () {
         checkTestFunctionInFile("function foo<T>(x: T, f: fn(T) -> T): T { return f(x); } function main(): Int { return foo<Int>(3i, fn(x) => x); }");
     });
 });
