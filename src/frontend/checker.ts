@@ -1414,7 +1414,12 @@ class TypeChecker {
     }
 
     private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression): TypeSignature {
-        const llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
+        let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
+        if(llvar === undefined) {
+            exp.isCapturedLambda = true;
+            llvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
+        }
+
         if(llvar === undefined) {
             this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -3473,7 +3478,7 @@ class TypeChecker {
 
         if(body instanceof ExpressionBodyImplementation) {
             const etype = this.checkExpression(env, body.exp, env.inferReturn);
-            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit()} but got ${etype.emit()}`);
+            this.checkError(body.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit()} but got ${etype.emit()}`);
         }
         else {
             assert(body instanceof StandardBodyImplementation);

@@ -600,6 +600,7 @@ class LambdaInvokeExpression extends Expression {
     readonly rec: RecursiveAnnotation;
     readonly args: ArgumentList;
 
+    isCapturedLambda: boolean = false;
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
