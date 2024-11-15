@@ -392,10 +392,24 @@ class LambdaDecl extends AbstractInvokeDecl {
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
 
+    override emitSig(fmt: CodeFormatter): [string, string] {
+        const attrs = this.emitAttributes();
+
+        let rec = "";
+        if (this.recursive !== "no") {
+            rec = this.recursive === "yes" ? "recursive " : "recursive? ";
+        }
+
+        let params = this.params.map((p) => p.emit(fmt)).join(", ");
+        let result = (this.resultType instanceof AutoTypeSignature) ? "" : (": " + this.resultType.emit());
+
+        return [`${attrs}${rec}`, `(${params})${result}`];
+    }
+
     emit(fmt: CodeFormatter): string {
         const ssig = this.emitSig(fmt);
 
-        return `${ssig[0]}${this.name}${ssig[1]} ${this.body.emit(fmt, undefined)}`;
+        return `${ssig[0]}${this.name}${ssig[1]} => ${this.body.emit(fmt, undefined)}`;
     }
 }
 

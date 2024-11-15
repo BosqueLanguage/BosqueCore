@@ -2529,7 +2529,7 @@ class Parser {
         }
 
         let name: "fn" | "pred" = "fn";
-        if(this.testToken(KW_fn) && this.testToken(KW_pred)) {
+        if(this.testToken(KW_fn) || this.testToken(KW_pred)) {
             name = this.consumeTokenAndGetValue() as "fn" | "pred";
         }
         else {

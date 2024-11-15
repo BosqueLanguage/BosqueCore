@@ -462,6 +462,11 @@ class TypeChecker {
                 }
             }
 
+            if(type.name === "pred" && type.resultType.tkeystr !== "Bool") {
+                this.reportError(type.sinfo, `Lambda pred must have a boolean return type`);
+                return false;
+            }
+
             return refct <= 1;
         }
         else {

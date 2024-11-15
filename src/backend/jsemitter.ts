@@ -621,7 +621,7 @@ class JSEmitter {
     
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
         const params = `(${exp.invoke.params.map((pp) => pp.name).join(", ")})`;
-        const body = this.emitBodyImplementation(exp.invoke.body, [], [], [], undefined, new JSCodeFormatter(0));
+        const body = this.emitBodyImplementation(exp.invoke.body, [], [], [], undefined, new JSCodeFormatter(undefined));
 
         return `${params} => ${body}`;
     }
@@ -1647,10 +1647,10 @@ class JSEmitter {
 
                 fmt.indentPush();
                 const body = this.emitBlockStatement(stmt.trueBlock, fmt);
-                const bassign = fmt.indent(`let ${stmt.binder.scopename} = ${bexp};`) + " " + body + "\n";
+                const bassign = fmt.indent(`let ${stmt.binder.scopename} = ${bexp};`) + " " + body + fmt.nl();
                 fmt.indentPop();
 
-                return `if(${test}) {\n${bassign}${fmt.indent("}")}`;
+                return `if(${test}) {${fmt.nl()}${bassign}${fmt.indent("}")}`;
             }
         }
     }
@@ -1665,7 +1665,7 @@ class JSEmitter {
             const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
             const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
 
-            return `if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+            return `if(${test}) ${tbody}${fmt.nl()}${fmt.indent("")}else ${fbody}`;
         }
         else {
             if(stmt.binder === undefined) {
@@ -1673,7 +1673,7 @@ class JSEmitter {
                 const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
                 const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
 
-                return `if(${test}) ${tbody}\n${fmt.indent("")}else ${fbody}`;
+                return `if(${test}) ${tbody}${fmt.nl()}${fmt.indent("")}else ${fbody}`;
             }
             else {
                 const vexp = this.emitExpression(stmt.cond.exp, false);
@@ -1684,13 +1684,13 @@ class JSEmitter {
 
                 fmt.indentPush();
                 const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
-                const tbassign = fmt.indent(`let ${stmt.binder.scopename} = ${btrue};`) + " " + tbody + "\n";
+                const tbassign = fmt.indent(`let ${stmt.binder.scopename} = ${btrue};`) + " " + tbody + fmt.nl();
 
                 const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
-                const fbassign = fmt.indent(`let ${stmt.binder.scopename} = ${bfalse};`) + " " + fbody + "\n";
+                const fbassign = fmt.indent(`let ${stmt.binder.scopename} = ${bfalse};`) + " " + fbody + fmt.nl();
                 fmt.indentPop();
 
-                return `if(${test}) {\n${tbassign}${fmt.indent("}")}\n${fmt.indent("else {")}\n${fbassign}${fmt.indent("}")}`;
+                return `if(${test}) {${fmt.nl()}${tbassign}${fmt.indent("}")}${fmt.nl()}${fmt.indent("else {")}${fmt.nl()}${fbassign}${fmt.indent("}")}`;
             }
         }
     }
@@ -1723,10 +1723,10 @@ class JSEmitter {
             const chkstmt = fmt.indent(`_$exhaustive(_$fkeq.${optype}(${val}, ${cval}), ${this.getErrorInfo("exhaustive switch", stmt.sinfo, undefined)});`);
             fmt.indentPop();
 
-            elseval = fmt.indent(`else {\n${chkstmt}\n${relseval}\n${fmt.indent("}")}`);
+            elseval = fmt.indent(`else {${fmt.nl()}${chkstmt}${fmt.nl()}${relseval}${fmt.nl()}${fmt.indent("}")}`);
         }
 
-        return [...ecases, elseval].join("\n");
+        return [...ecases, elseval].join(fmt.nl());
     }
 
     private emitMatchCase(mtype: TypeSignature, value: BlockStatement, vval: string, vtype: TypeSignature, binderinfo: BinderInfo | undefined, fmt: JSCodeFormatter): [string, string] {
@@ -1745,7 +1745,7 @@ class JSEmitter {
             const blck = this.emitBlockStatement(value, fmt);
             fmt.indentPop();
 
-            return [ttest, `{ let ${binderinfo.scopename} = ${vval}; ${blck}\n${fmt.indent("}")}`];
+            return [ttest, `{ let ${binderinfo.scopename} = ${vval}; ${blck}${fmt.nl()}${fmt.indent("}")}`];
         }
     }
 
@@ -1770,10 +1770,10 @@ class JSEmitter {
             const bbody = fmt.indent(ccase[1]);
             fmt.indentPop();
 
-            elseval = fmt.indent(`else {\n${chkstmt}\n${bbody}\n${fmt.indent("}")}`);
+            elseval = fmt.indent(`else {${fmt.nl()}${chkstmt}${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")}`);
         }
 
-        return [...ecases, elseval].join("\n");
+        return [...ecases, elseval].join(fmt.nl());
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
@@ -1844,17 +1844,17 @@ class JSEmitter {
 
             if(i === stmts.length - 1) {
                 stmtstrs.push(sstr);
-                stmtstrs.push("\n");
+                stmtstrs.push(fmt.nl());
             }
             else {
                 const stag = stmti.tag;
                 switch(stag) {
                     case StatementTag.BlockStatement: {
                         if(!prevskip) {
-                            stmtstrs.push("\n");
+                            stmtstrs.push(fmt.nl());
                         }
                         stmtstrs.push(sstr);
-                        stmtstrs.push("\n");
+                        stmtstrs.push(fmt.nl());
                         prevskip = true;
                         break;
                     }
@@ -1864,10 +1864,10 @@ class JSEmitter {
                     case StatementTag.SwitchStatement:
                     case StatementTag.MatchStatement: {
                         if(!prevskip) {
-                            stmtstrs.push("\n");
+                            stmtstrs.push(fmt.nl());
                         }
                         stmtstrs.push(sstr);
-                        stmtstrs.push("\n");
+                        stmtstrs.push(fmt.nl());
                         prevskip = true;
                         break;
                     }
@@ -1876,7 +1876,7 @@ class JSEmitter {
                         prevskip = false;
                     }
                 }
-                stmtstrs.push("\n");
+                stmtstrs.push(fmt.nl());
             }
         }
         fmt.indentPop();
@@ -1887,7 +1887,7 @@ class JSEmitter {
     private emitBlockStatement(stmt: BlockStatement, fmt: JSCodeFormatter): string {
         const stmts = this.emitStatementArray(stmt.statements, fmt);
 
-        return ["{\n", ...stmts, fmt.indent("}")].join("");
+        return ["{", fmt.nl(), ...stmts, fmt.indent("}")].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: JSCodeFormatter): string {
@@ -2005,7 +2005,7 @@ class JSEmitter {
             let stmts: string[] = [];
             if(body instanceof ExpressionBodyImplementation) {
                 fmt.indentPush();
-                stmts.push(fmt.indent(`return ${this.emitExpression(body.exp, true)};`));
+                stmts.push(`return ${this.emitExpression(body.exp, true)};`);
                 fmt.indentPop();
             }
             else {
@@ -2017,7 +2017,7 @@ class JSEmitter {
 
             if(this.bindernames.size !== 0) {
                 fmt.indentPush();
-                const bvars = fmt.indent(`var ${[...this.bindernames].join(", ")};\n\n`);
+                const bvars = fmt.indent(`var ${[...this.bindernames].join(", ")};${fmt.nl(2)}`);
                 fmt.indentPop();
 
                 stmts = [bvars, ...stmts];
@@ -2025,20 +2025,20 @@ class JSEmitter {
             this.bindernames.clear();
 
             if(initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
-                return ["{\n", ...stmts, fmt.indent("}")].join("");
+                return ["{", fmt.nl(), ...stmts, fmt.indent("}")].join("");
             }
             else {
                 fmt.indentPush();
                 fmt.indentPush()
-                const ideclops = initializers.map((ii) => fmt.indent(ii)).join("\n");
+                const ideclops = initializers.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 fmt.indentPop()
-                const ideclstr = `${fmt.indent("{")}\n${ideclops}\n${fmt.indent("}")}`;
+                const ideclstr = `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}")}`;
 
-                const precondstr = preconds.map((ii) => fmt.indent(ii)).join("\n");
-                const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join("\n");
+                const precondstr = preconds.map((ii) => fmt.indent(ii)).join(fmt.nl());
+                const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 fmt.indentPop();
 
-                return ["{\n", ideclstr, (initializers.length !== 0 ? "\n\n" : ""), precondstr, (preconds.length !== 0 ? "\n\n" : ""), refsavestr, (refsaves.length !== 0 ? "\n\n" : ""), ...stmts, fmt.indent("}")].join("");
+                return ["{", fmt.nl(), ideclstr, (initializers.length !== 0 ? fmt.nl(2) : ""), precondstr, (preconds.length !== 0 ? fmt.nl(2) : ""), refsavestr, (refsaves.length !== 0 ? fmt.nl(2) : ""), ...stmts, fmt.indent("}")].join("");
             }
         }
     }
@@ -2210,10 +2210,10 @@ class JSEmitter {
             //TODO: we will need to handle ref params here too
             assert(fdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
 
-            const resb = ensures.map((e) => fmt.indent(e)).join("\n");
+            const resb = ensures.map((e) => fmt.indent(e)).join(fmt.nl());
 
             let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
-            const decl = `(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{\n${resb}\n${fmt.indent("}")}`;
+            const decl = `(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{${fmt.nl()}${resb}${fmt.nl()}${fmt.indent("}")}`;
             if(fdecl instanceof NamespaceFunctionDecl || optmapping !== undefined) {
                 resfimpl = `${resf}${decl}`;
             }
@@ -2276,16 +2276,16 @@ class JSEmitter {
 
                     if(fdecl instanceof NamespaceFunctionDecl) {
                         if(this.getCurrentNamespace().isTopNamespace()) {
-                            const fobj = `export const ${fdecl.name} = {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                            const fobj = `export const ${fdecl.name} = {${fmt.nl()}${idecls.map((dd) => dd).join("," + fmt.nl())}${fmt.nl()}${fmt.indent("}")}`;
                             decls.push(fobj);
                         }
                         else {
-                            const fobj = `${fdecl.name}: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")}`;
+                            const fobj = `${fdecl.name}: {${fmt.nl()}${idecls.map((dd) => dd).join("," + fmt.nl())}${fmt.nl()}${fmt.indent("}")}`;
                             decls.push(fobj);
                         }
                     }
                     else {
-                        const fobj = `${fdecl.name}: { value: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")} }`;
+                        const fobj = `${fdecl.name}: { value: {${fmt.nl()}${idecls.map((dd) => dd).join("," + fmt.nl())}${fmt.nl()}${fmt.indent("}")} }`;
                         decls.push(fobj);                      
                     }
                 }
@@ -2337,10 +2337,10 @@ class JSEmitter {
             //TODO: we will need to handle ref params here too
             assert(!mdecl.isThisRef && mdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
 
-            const resb = ensures.map((e) => fmt.indent(e)).join("\n");
+            const resb = ensures.map((e) => fmt.indent(e)).join(fmt.nl());
 
             let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
-            const decl = `(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {\n${resb}\n${fmt.indent("}")}`;
+            const decl = `(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {${fmt.nl()}${resb}${fmt.nl()}${fmt.indent("}")}`;
             if(optmapping !== undefined) {
                 resfimpl = `${resf}${decl}`;
             }
@@ -2401,7 +2401,7 @@ class JSEmitter {
                     }
                     fmt.indentPop();
 
-                    const fobj = `${mdecl.name}: { value: {\n${idecls.map((dd) => dd).join(",\n")}\n${fmt.indent("}")} }`;
+                    const fobj = `${mdecl.name}: { value: {${fmt.nl()}${idecls.map((dd) => dd).join("," + fmt.nl())}${fmt.nl()}${fmt.indent("}")} }`;
                     decls.push(fobj);
                 }
             }
@@ -2594,10 +2594,10 @@ class JSEmitter {
         const ccons =  this.generateObjectCreationExp(ffinfo || tdecl.saturatedBFieldInfo, rcvr);
 
         fmt.indentPush();
-        const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        const bbody = [...ddecls, ...rechks, ...cchks, ccons].map((ee) => fmt.indent(ee)).join(fmt.nl());
         fmt.indentPop();
 
-        return `$create: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
+        return `$create: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")} }`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
@@ -2637,10 +2637,10 @@ class JSEmitter {
         const ccons =  this.generateObjectCreationExp(ffinfo || tdecl.saturatedBFieldInfo, rcvr);
 
         fmt.indentPush();``
-        const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join("\n");
+        const bbody = [...ddecls, ...rechks, ...cchks, ...vchks, ccons].map((ee) => fmt.indent(ee)).join(fmt.nl());
         fmt.indentPop();
 
-        return `$createAPI: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {\n${bbody}\n${fmt.indent("}")} }`;
+        return `$createAPI: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")} }`;
     }
 
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): {decls: string[], tests: string[]} {
@@ -2725,12 +2725,12 @@ class JSEmitter {
             }
         }
 
-        const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join(",\n");
+        const declsentry = [...decls, ...extradecls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `Object.create(${tdecl instanceof AbstractEntityTypeDecl ? "$VRepr" : "Object.prototype"}, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create(${tdecl instanceof AbstractEntityTypeDecl ? "$VRepr" : "Object.prototype"}, {${fmt.nl()}${declsentry}${fmt.nl()}${fmt.indent("})")}`;
 
         if(nested !== undefined) {
             return `${tdecl.name}: { value: ${obj} }`;
@@ -2761,12 +2761,12 @@ class JSEmitter {
         const mdecls = this.emitMethodDecls([rcvr, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
         decls.push(...mdecls.decls);
 
-        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
+        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
         this.mapper = undefined;
         fmt.indentPop();
 
-        const obj = `Object.create(Object.prototype, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create(Object.prototype, {${fmt.nl()}${declsentry}${fmt.nl()}${fmt.indent("})")}`;
 
         return `export const ${tdecl.name} = ${obj}`;
     }
@@ -2788,11 +2788,11 @@ class JSEmitter {
             return `${mm}: {value: function() { return _$memoconstval(this._$memomap, "${mm}", ${lexp}); } }`;
         }));
 
-        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
+        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create($VRepr, {${fmt.nl()}${declsentry}${fmt.nl()}${fmt.indent("})")}`;
 
         if(ns.isTopNamespace()) {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: []};
@@ -2836,11 +2836,11 @@ class JSEmitter {
             decls.push(...this.emitVTable(tdecl, fmt));
         }
 
-        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join(",\n");
+        const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsentry}\n${fmt.indent("})")}`;
+        const obj = `Object.create($VRepr, {${fmt.nl()}${declsentry}${fmt.nl()}${fmt.indent("})")}`;
 
         if(ns.isTopNamespace()) {
             return {decl: `export const ${tdecl.name} = ${obj}`, tests: tests};
@@ -2933,10 +2933,10 @@ class JSEmitter {
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
         fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsfmt}\n${fmt.indent("})")}`;
+        const obj = `Object.create($VRepr, {${fmt.nl()}${declsfmt}${fmt.nl()}${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -2983,10 +2983,10 @@ class JSEmitter {
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
         fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
         fmt.indentPop();
 
-        const obj = `Object.create(Object.prototype, {\n${declsfmt}\n${fmt.indent("})")}`;
+        const obj = `Object.create(Object.prototype, {${fmt.nl()}${declsfmt}${fmt.nl()}${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -3006,10 +3006,10 @@ class JSEmitter {
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, true, fmt);
         fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
         fmt.indentPop();
 
-        const obj = `Object.create($VRepr, {\n${declsfmt}\n${fmt.indent("})")}`;
+        const obj = `Object.create($VRepr, {${fmt.nl()}${declsfmt}${fmt.nl()}${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -3029,10 +3029,10 @@ class JSEmitter {
         
         const rr = this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, false, fmt);
         fmt.indentPush();
-        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join(",\n");
+        const declsfmt = rr.decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
         fmt.indentPop();
 
-        const obj = `Object.create(Object.prototype, {\n${declsfmt}\n${fmt.indent("})")}`;
+        const obj = `Object.create(Object.prototype, {${fmt.nl()}${declsfmt}${fmt.nl()}${fmt.indent("})")}`;
 
         if(tdecl.terms.length !== 0) {
             return {decl: `${EmitNameManager.emitTypeTermKey(rcvr)}: ${obj}`, tests: rr.tests};
@@ -3255,14 +3255,14 @@ class JSEmitter {
                 }
             }
             else {
-                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join("\n");
+                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join(fmt.nl());
                 
                 fmt.indentPop();
                 if(ns.isTopNamespace()) {
-                    alldecls.push(`export const ${tt.name} = {\n${dclstr}\n${fmt.indent("}")}`);
+                    alldecls.push(`export const ${tt.name} = {${fmt.nl()}${dclstr}${fmt.nl()}${fmt.indent("}")}`);
                 }
                 else {
-                    alldecls.push(`${tt.name}: {\n${dclstr}\n${fmt.indent("}")}`);
+                    alldecls.push(`${tt.name}: {${fmt.nl()}${dclstr}${fmt.nl()}${fmt.indent("}")}`);
                 }
             }
         }
@@ -3317,39 +3317,39 @@ class JSEmitter {
         decls.push(...taskdecls);
 
         if(decl.isTopNamespace()) {
-            const ddecls = decls.join("\n\n");
+            const ddecls = decls.join(fmt.nl(2));
             let supers = "";
             if(tdecls.supers.length !== 0 || nestedsupers.length !== 0) {
-                supers = "\n\n" + [...tdecls.supers, ...nestedsupers].join("\n");
+                supers = fmt.nl(2) + [...tdecls.supers, ...nestedsupers].join(fmt.nl());
             }
 
             let imports = "";
             if(decl.name !== "Core") {
-                imports = `import * as $Core from "./Core.mjs";\n\n`;
+                imports = `import * as $Core from "./Core.mjs";${fmt.nl(2)}`;
             }
 
             let loadop = "";
-            let mainop = "\n";
+            let mainop = fmt.nl();
             if(decl.name === "Main") {
                 const asmreinfo = this.assembly.toplevelNamespaces.flatMap((ns) => this.assembly.loadConstantsAndValidatorREs(ns));
 
                 //Now process the regexs
-                loadop = `\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
-                mainop = "\n\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
+                loadop = `\n\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";${fmt.nl()}loadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
+                mainop = "\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
             }
 
             return {contents: prefix + imports + ddecls + supers + loadop + mainop, tests: tests, nestedsupers: []};
         }
         else {
-            const idecls = decls.map((dd) => fmt.indent(dd)).join(",\n");
+            const idecls = decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
             fmt.indentPop();
 
             let ddecls = "";
             if(isparentTop) {
-                ddecls = fmt.indent(`export const ${decl.name} = {\n${idecls}\n${fmt.indent("};")}`);
+                ddecls = fmt.indent(`export const ${decl.name} = {${fmt.nl()}${idecls}${fmt.nl()}${fmt.indent("};")}`);
             }
             else {
-                ddecls = fmt.indent(`${decl.name}: {\n${idecls}\n${fmt.indent("}")}`);
+                ddecls = fmt.indent(`${decl.name}: {${fmt.nl()}${idecls}${fmt.nl()}${fmt.indent("}")}`);
             }
 
             return {contents: ddecls, tests: tests, nestedsupers: tdecls.supers};

@@ -452,11 +452,6 @@ class InstantiationPropagator {
     }
 
     private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression) {
-        for(let i = 0; i < exp.invoke.params.length; ++i) {
-            this.instantiateTypeSignature(exp.invoke.params[i].type, this.currentMapping);
-        }
-        this.instantiateTypeSignature(exp.invoke.resultType, this.currentMapping);
-
         this.instantiateBodyImplementation(exp.invoke.body);
     }
 
@@ -477,8 +472,6 @@ class InstantiationPropagator {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
             }
         }
-
-        assert(false, "Not Implemented -- instantiateLambdaInvokeExpression");
     }
 
     private instantiateSpecialConstructorExpression(exp: SpecialConstructorExpression) {
