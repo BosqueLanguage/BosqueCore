@@ -1349,31 +1349,57 @@ class TypeChecker {
             itype = infertype;
         }
         
+        let argsok = true;
         let args: VarInfo[] = [];
         let params: LambdaParameterSignature[] = [];
         let rtype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
-        let ltype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
 
         if(exp.invoke.isAuto) {
-            xxxx;
+            if(itype == undefined || itype.params.length !== exp.invoke.params.length) {
+                argsok = false;
+                this.reportError(exp.sinfo, `Cannot infer type for lambda constructor`);
+            }
+            else {
+                for(let i = 0; i < itype.params.length; ++i) {
+                    const iptype = itype.params[i];
+                    const ipdecl = exp.invoke.params[i];
+
+                    args.push(new VarInfo(ipdecl.name, ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
+                    params.push(new LambdaParameterSignature(iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                }
+            }
         }
         else {
             for(let i = 0; i < exp.invoke.params.length; ++i) {
-                xxxx;
-            }
+                const ipdecl = exp.invoke.params[i];
 
-            rtype = xxxx;
-            ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+                args.push(new VarInfo(ipdecl.name, ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
+                params.push(new LambdaParameterSignature(ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
+            }
         }
 
-        if(rtype instanceof ErrorTypeSignature) {
-            return exp.setType(rtype);
+        if(!(exp.invoke.resultType instanceof AutoTypeSignature)) {
+            rtype = exp.invoke.resultType;
         }
         else {
+            if(itype !== undefined) {
+                rtype = itype.resultType;
+            }
+            else {
+                this.reportError(exp.sinfo, `Cannot infer type for lambda constructor`);
+            }
+        }
+
+        if(!argsok || (rtype instanceof ErrorTypeSignature)) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        else {
+            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+
             const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype, this.constraints);
             const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
             this.checkBodyImplementation(lenv, exp.invoke.body);
-
+            
             return exp.setType(ltype);
         }
     }
@@ -1397,6 +1423,7 @@ class TypeChecker {
         const lsig = llvar.decltype as LambdaTypeSignature;
 
         const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, exp.args.args, lsig.params);
+        exp.lambda = llvar.decltype;
         exp.arginfo = arginfo.arginfo;
         exp.restinfo = arginfo.restinfo;
 

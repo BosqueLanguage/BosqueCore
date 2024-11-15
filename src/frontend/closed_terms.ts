@@ -452,7 +452,12 @@ class InstantiationPropagator {
     }
 
     private instantiateConstructorLambdaExpression(exp: ConstructorLambdaExpression) {
-        assert(false, "Not Implemented -- instantiateConstructorLambdaExpression");
+        for(let i = 0; i < exp.invoke.params.length; ++i) {
+            this.instantiateTypeSignature(exp.invoke.params[i].type, this.currentMapping);
+        }
+        this.instantiateTypeSignature(exp.invoke.resultType, this.currentMapping);
+
+        this.instantiateBodyImplementation(exp.invoke.body);
     }
 
     private instantiateLetExpression(exp: LetExpression) {
@@ -460,6 +465,19 @@ class InstantiationPropagator {
     }
 
     private instantiateLambdaInvokeExpression(exp: LambdaInvokeExpression) {
+        this.instantiateTypeSignature(exp.lambda as LambdaTypeSignature, this.currentMapping);
+
+        this.instantiateArgumentList(exp.args.args);
+
+        for(let i = 0; i < exp.arginfo.length; ++i) {
+            this.instantiateTypeSignature(exp.arginfo[i], this.currentMapping);
+        }
+        if(exp.restinfo !== undefined) {
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+            }
+        }
+
         assert(false, "Not Implemented -- instantiateLambdaInvokeExpression");
     }
 
@@ -475,6 +493,17 @@ class InstantiationPropagator {
     private instantiateCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression) {
         this.instantiateArgumentList(exp.args.args);
 
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            if(exp.shuffleinfo[i][1] !== undefined) {
+                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
+            }
+        }
+        if(exp.restinfo !== undefined) {
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+            }
+        }
+
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
         const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name) as NamespaceFunctionDecl;
         this.instantiateNamespaceFunction(nns, nfd, exp.terms, this.currentMapping);
@@ -485,6 +514,17 @@ class InstantiationPropagator {
         this.instantiateTypeSignature(exp.resolvedDeclType as TypeSignature, this.currentMapping);
 
         this.instantiateArgumentList(exp.args.args);
+
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            if(exp.shuffleinfo[i][1] !== undefined) {
+                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
+            }
+        }
+        if(exp.restinfo !== undefined) {
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+            }
+        }
 
         const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
         const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
@@ -530,6 +570,17 @@ class InstantiationPropagator {
 
     private instantiatePostfixInvoke(exp: PostfixInvoke) {
         this.instantiateArgumentList(exp.args.args);
+
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            if(exp.shuffleinfo[i][1] !== undefined) {
+                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
+            }
+        }
+        if(exp.restinfo !== undefined) {
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+            }
+        }
 
         if(exp.resolvedTrgt !== undefined) {
             this.instantiateTypeSignature(exp.resolvedTrgt, this.currentMapping);

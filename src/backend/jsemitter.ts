@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl } from "../frontend/assembly.js";
-import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
 
@@ -620,7 +620,10 @@ class JSEmitter {
     }
     
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
-        assert(false, "Not implemented -- ConstructorLambda");
+        const params = `(${exp.invoke.params.map((pp) => pp.name).join(", ")})`;
+        const body = this.emitBodyImplementation(exp.invoke.body, [], [], [], undefined, new JSCodeFormatter(0));
+
+        return `${params} => ${body}`;
     }
 
     private emitLetExpression(exp: LetExpression): string {
@@ -628,7 +631,39 @@ class JSEmitter {
     }
 
     private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
-        assert(false, "Not implemented -- LambdaInvoke");
+        const lambda = exp.lambda as LambdaTypeSignature;
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.arginfo.length; ++i) {
+            const arg = exp.args.args[i].exp;
+            const aaexp = this.emitExpression(arg, true);
+            argl.push(aaexp);
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: ArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    restl.push(exp.args.args[rri[0]]);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            const rparams = lambda.params[lambda.params.length - 1];
+            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            if(rtype.decl instanceof ListTypeDecl) {
+                argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
+        }
+
+        return `${exp.name}(${argl.join(", ")})`;
     }
 
     private emitSpecialConstructorExpression(exp: SpecialConstructorExpression, toplevel: boolean): string {
@@ -1955,7 +1990,7 @@ class JSEmitter {
         }
     }
 
-    private emitBodyImplementation(body: BodyImplementation, returntype: TypeSignature, initializers: string[], preconds: string[], refsaves: string[], returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
+    private emitBodyImplementation(body: BodyImplementation, initializers: string[], preconds: string[], refsaves: string[], returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
@@ -2187,7 +2222,7 @@ class JSEmitter {
             }
         }
 
-        const body = this.emitBodyImplementation(fdecl.body, fdecl.resultType, initializers, preconds, refsaves, resf, fmt);
+        const body = this.emitBodyImplementation(fdecl.body, initializers, preconds, refsaves, resf, fmt);
         this.mapper = omap;
 
         const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
@@ -2314,7 +2349,7 @@ class JSEmitter {
             }
         }
 
-        const body = this.emitBodyImplementation(mdecl.body, mdecl.resultType, initializers, preconds, refsaves, resf, fmt);
+        const body = this.emitBodyImplementation(mdecl.body, initializers, preconds, refsaves, resf, fmt);
         this.mapper = omap;
 
         const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
