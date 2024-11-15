@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { MemberLookupInfo, TypeCheckerRelations } from "./checker_relations.js";
@@ -462,6 +462,11 @@ class TypeChecker {
                 }
             }
 
+            if(type.name === "pred" && type.resultType.tkeystr !== "Bool") {
+                this.reportError(type.sinfo, `Lambda pred must have a boolean return type`);
+                return false;
+            }
+
             return refct <= 1;
         }
         else {
@@ -581,32 +586,32 @@ class TypeChecker {
         return TemplateNameMapper.createInitialMapping(tmap);
     }
 
-    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, param: InvokeParameterDecl, imapper: TemplateNameMapper): TypeSignature {
+    private checkSingleParam(env: TypeEnvironment, arg: ArgumentValue, paramname: string, paramtype: TypeSignature, isRefParam: boolean, imapper: TemplateNameMapper): TypeSignature {
         if(arg instanceof SpreadArgumentValue) {
             this.reportError(arg.exp.sinfo, `Spread argument cannot be used except as part of rest args`);
         }
 
-        if(param.isRefParam) {
-            this.checkError(arg.exp.sinfo, !(arg instanceof RefArgumentValue), `Parameter ${param.name} is a reference parameter and must be passed by reference`);
+        if(isRefParam) {
+            this.checkError(arg.exp.sinfo, !(arg instanceof RefArgumentValue), `Parameter ${paramname} is a reference parameter and must be passed by reference`);
         }
 
         if(arg instanceof NamedArgumentValue) {
-            this.checkError(arg.exp.sinfo, arg.name !== param.name, `Named argument ${arg.name} does not match parameter name ${param.name}`);
+            this.checkError(arg.exp.sinfo, arg.name !== paramname, `Named argument ${arg.name} does not match parameter name ${paramname}`);
         }
 
-        const ptype = param.type.remapTemplateBindings(imapper);
+        const ptype = paramtype.remapTemplateBindings(imapper);
 
         const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ptype));
-        this.checkError(arg.exp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${param.name} expected type ${ptype.emit()} but got ${argtype.emit()}`);
+        this.checkError(arg.exp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ptype, this.constraints), `Argument ${paramname} expected type ${ptype.emit()} but got ${argtype.emit()}`);
 
         return argtype;
     }
 
-    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], param: InvokeParameterDecl, imapper: TemplateNameMapper): [boolean, TypeSignature][] {
-        const ptype = param.type.remapTemplateBindings(imapper);
+    private checkRestParam(env: TypeEnvironment, args: ArgumentValue[], paramname: string, paramtype: TypeSignature, imapper: TemplateNameMapper): [boolean, TypeSignature][] {
+        const ptype = paramtype.remapTemplateBindings(imapper);
         const etype = this.relations.getExpandoableOfType(ptype);
         if(etype === undefined) {
-            this.reportError(args[args.length - 1].exp.sinfo, `Rest parameter ${param.name} must be of type Expandoable`);
+            this.reportError(args[args.length - 1].exp.sinfo, `Rest parameter ${paramname} must be of type Expandoable`);
             return [];
         }
 
@@ -692,13 +697,14 @@ class TypeChecker {
                     this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
                 }
                 else {
-                    argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, params[i], imapper);
+                    const pp = params[i];
+                    argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.isRefParam, imapper);
                 }
             }
         }
         else {
             let restargs = args.slice(nonrestparams.length);
-            const restypes = this.checkRestParam(env, restargs, restparam, imapper);
+            const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
 
             restinfo = [];
             for(let i = nonrestparams.length; i < args.length; ++i) {
@@ -708,6 +714,39 @@ class TypeChecker {
         }
 
         return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
+    }
+
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], restinfo: [number, boolean, TypeSignature][] | undefined } {
+        if(args.some((av) => av instanceof NamedArgumentValue)) {
+            this.reportError(sinfo, `Named arguments not allowed in lambda argument list`);
+        }
+
+        const nonrestparams = params.filter((p) => !p.isRestParam);
+        const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
+
+        if(nonrestparams.length > args.length) {
+            this.reportError(sinfo, `Too few arguments provided to lambda`);
+        }
+
+        let arginfo: TypeSignature[] = [];
+        for(let i = 0; i < nonrestparams.length && i < args.length; ++i) {
+            const argtype = this.checkSingleParam(env, args[i], "[lambda_param]", nonrestparams[i].type, nonrestparams[i].isRefParam, TemplateNameMapper.createEmpty());
+            arginfo.push(argtype);
+        }
+
+        let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+        if(restparam !== undefined) {
+            let restargs = args.slice(nonrestparams.length);
+            const restypes = this.checkRestParam(env, restargs, "[lambda_param]", restparam.type, TemplateNameMapper.createEmpty());
+
+            restinfo = [];
+            for(let i = nonrestparams.length; i < args.length; ++i) {
+                const rri = restypes[i - nonrestparams.length] as [boolean, TypeSignature];
+                restinfo.push([i, rri[0], rri[1]]);
+            }
+        }
+
+        return { arginfo: arginfo, restinfo: restinfo };
     }
 
     private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
@@ -1310,7 +1349,64 @@ class TypeChecker {
     }
 
     private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkConstructorLambdaExpression");
+        let itype: LambdaTypeSignature | undefined = undefined;
+        if(infertype !== undefined && infertype instanceof LambdaTypeSignature && infertype.params.length === exp.invoke.params.length) {
+            itype = infertype;
+        }
+        
+        let argsok = true;
+        let args: VarInfo[] = [];
+        let params: LambdaParameterSignature[] = [];
+        let rtype: TypeSignature = new ErrorTypeSignature(exp.sinfo, undefined);
+
+        if(exp.invoke.isAuto) {
+            if(itype == undefined || itype.params.length !== exp.invoke.params.length) {
+                argsok = false;
+                this.reportError(exp.sinfo, `Cannot infer type for lambda constructor`);
+            }
+            else {
+                for(let i = 0; i < itype.params.length; ++i) {
+                    const iptype = itype.params[i];
+                    const ipdecl = exp.invoke.params[i];
+
+                    args.push(new VarInfo(ipdecl.name, ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
+                    params.push(new LambdaParameterSignature(iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                }
+            }
+        }
+        else {
+            for(let i = 0; i < exp.invoke.params.length; ++i) {
+                const ipdecl = exp.invoke.params[i];
+
+                args.push(new VarInfo(ipdecl.name, ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
+                params.push(new LambdaParameterSignature(ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
+            }
+        }
+
+        if(!(exp.invoke.resultType instanceof AutoTypeSignature)) {
+            rtype = exp.invoke.resultType;
+        }
+        else {
+            if(itype !== undefined) {
+                rtype = itype.resultType;
+            }
+            else {
+                this.reportError(exp.sinfo, `Cannot infer type for lambda constructor`);
+            }
+        }
+
+        if(!argsok || (rtype instanceof ErrorTypeSignature)) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        else {
+            const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
+
+            const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype, this.constraints);
+            const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
+            this.checkBodyImplementation(lenv, exp.invoke.body);
+            
+            return exp.setType(ltype);
+        }
     }
 
     private checkLetExpression(env: TypeEnvironment, exp: LetExpression): TypeSignature {
@@ -1318,7 +1414,30 @@ class TypeChecker {
     }
 
     private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkLambdaInvokeExpression");
+        let llvar = env.resolveLocalVarInfoFromSrcName(exp.name);
+        if(llvar === undefined) {
+            exp.isCapturedLambda = true;
+            llvar = env.resolveLambdaCaptureVarInfoFromSrcName(exp.name);
+        }
+
+        if(llvar === undefined) {
+            this.reportError(exp.sinfo, `Could not find lambda variable ${exp.name}`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(!(llvar.decltype instanceof LambdaTypeSignature)) {
+            this.reportError(exp.sinfo, `Variable ${exp.name} is not a lambda value`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const lsig = llvar.decltype as LambdaTypeSignature;
+
+        const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, exp.args.args, lsig.params);
+        exp.lambda = llvar.decltype;
+        exp.arginfo = arginfo.arginfo;
+        exp.restinfo = arginfo.restinfo;
+
+        return exp.setType(lsig.resultType);
     }
 
     private checkSpecialConstructorExpressionNoInfer(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
@@ -3359,7 +3478,7 @@ class TypeChecker {
 
         if(body instanceof ExpressionBodyImplementation) {
             const etype = this.checkExpression(env, body.exp, env.inferReturn);
-            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit()} but got ${etype.emit()}`);
+            this.checkError(body.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit()} but got ${etype.emit()}`);
         }
         else {
             assert(body instanceof StandardBodyImplementation);

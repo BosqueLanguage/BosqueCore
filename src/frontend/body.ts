@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper } from "./type.js";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper, LambdaTypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
@@ -599,6 +599,11 @@ class LambdaInvokeExpression extends Expression {
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly args: ArgumentList;
+
+    isCapturedLambda: boolean = false;
+    lambda: LambdaTypeSignature | undefined = undefined;
+    arginfo: TypeSignature[] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);

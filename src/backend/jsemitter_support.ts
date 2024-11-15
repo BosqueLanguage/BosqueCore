@@ -4,22 +4,42 @@ import { SourceInfo } from "../frontend/build_decls.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
 
 class JSCodeFormatter {
-    private level: number;
+    private level: number | undefined;
 
-    constructor(iidnt: number) {
+    constructor(iidnt: number | undefined) {
         this.level = iidnt;
     }
 
     indentPush() {
-        this.level++;
+        if(this.level !== undefined) {
+            this.level++;
+        }
     }
     
     indentPop() {
-        this.level--;
+        if(this.level !== undefined) {
+            this.level--;
+        }
     }
     
+    nl(ct?: number): string {
+        let cc = ct !== undefined ? ct : 1;
+
+        if(cc === 1) {
+            return this.level !== undefined ? "\n" : " ";
+        }
+        else {
+            return this.level !== undefined ? "\n".repeat(cc) : " ";
+        }
+    }
+
     indent(code: string): string {
-        return "    ".repeat(this.level) + code;
+        if(this.level === undefined) {
+            return " " + code;
+        }
+        else {
+            return "    ".repeat(this.level) + code;
+        }
     }
 
     static isEscapeFreeString(str: string): boolean {
