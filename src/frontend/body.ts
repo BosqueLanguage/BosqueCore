@@ -600,6 +600,9 @@ class LambdaInvokeExpression extends Expression {
     readonly rec: RecursiveAnnotation;
     readonly args: ArgumentList;
 
+    arginfo: TypeSignature[] = [];
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
         super(ExpressionTag.LambdaInvokeExpression, sinfo);
         this.name = name;
