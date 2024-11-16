@@ -48,6 +48,10 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create4(v1, v2, v3, v4));
     }
 
+    recursive? function s_list_map<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> {
+        return XCore::s_createDirect<Tree<U>, List<U>>(Tree<T>::map[recursive?]<U>(l.value, f));
+    }
+
     enum Color {
         Red,
         Black,
@@ -430,6 +434,17 @@ namespace ListOps {
 
         function create4(v1: T, v2: T, v3: T, v4: T): Tree<T> {
             return Tree<T>::createNode(Color#Black, Tree<T>::create2(v1, v2), Tree<T>::create2(v3, v4));
+        }
+
+        recursive? function map<U>(t: Tree<T>, f: recursive? fn(T) -> U): Tree<U> {
+            match(t)@ {
+                Leaf<T> => { return Leaf<U>{f[recursive?]($t.v)}; }
+                | Node<T> => { 
+                    let nl = Tree<T>::map[recursive?]<U>($t.l, f);
+                    let nr = Tree<T>::map[recursive?]<U>($t.r, f);
+                    return Node<U>{$t.c, $t.count, nl, nr};
+                }
+            }
         }
     }
 }

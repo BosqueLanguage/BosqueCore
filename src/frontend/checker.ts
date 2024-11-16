@@ -800,7 +800,7 @@ class TypeChecker {
 
                 const ftype = bnames[i].type.remapTemplateBindings(imapper);
 
-                this.checkError(argexp.sinfo, !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${ftype.emit()} but got ${argtype.emit()}`);
+                this.checkError(argexp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${ftype.emit()} but got ${argtype.emit()}`);
             }
         }
 

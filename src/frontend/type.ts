@@ -319,7 +319,7 @@ class LambdaTypeSignature extends TypeSignature {
             recstr = "recursive ";
         }
         else if(this.recursive === "cond") {
-            recstr = "recursive?";
+            recstr = "recursive? ";
         }
         
         return `${recstr}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}) -> ${this.resultType.emit()}`;

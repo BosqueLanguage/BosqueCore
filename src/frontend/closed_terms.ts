@@ -193,7 +193,7 @@ class InstantiationPropagator {
             return true;
         }
 
-        return this.pendingTypeMethods.some((ptm) => ptm.mkey === fkey);
+        return this.pendingTypeFunctions.some((ptm) => ptm.fkey === fkey);
     }
 
     private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {

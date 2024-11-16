@@ -847,7 +847,12 @@ class JSEmitter {
         }
 
         if(EmitNameManager.isMethodCallObjectRepr(rtrgt)) {
-            return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+            if(exp.terms.length === 0) {
+                return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+            }
+            else {
+                return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${val}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
+            }
         }
         else {
             return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${val}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
@@ -3255,7 +3260,7 @@ class JSEmitter {
                 }
             }
             else {
-                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join(fmt.nl());
+                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
                 
                 fmt.indentPop();
                 if(ns.isTopNamespace()) {
