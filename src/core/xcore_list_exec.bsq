@@ -48,6 +48,18 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create4(v1, v2, v3, v4));
     }
 
+    recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
+        return Tree<T>::allof[recursive?](l.value, p);
+    }
+
+    recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
+        return Tree<T>::noneof[recursive?](l.value, p);
+    }
+
+    recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
+        return Tree<T>::someof[recursive?](l.value, p);
+    }
+
     recursive? function s_list_map<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> {
         return XCore::s_createDirect<Tree<U>, List<U>>(Tree<T>::map[recursive?]<U>(l.value, f));
     }
@@ -434,6 +446,54 @@ namespace ListOps {
 
         function create4(v1: T, v2: T, v3: T, v4: T): Tree<T> {
             return Tree<T>::createNode(Color#Black, Tree<T>::create2(v1, v2), Tree<T>::create2(v3, v4));
+        }
+
+        recursive? function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+            match(t)@ {
+                Leaf<T> => { return p[recursive?]($t.v); }
+                | Node<T> => { 
+                    let nl = Tree<T>::allof[recursive?]($t.l, p);
+                    if(!nl) { 
+                        return false; 
+                    }
+                    else {
+                        let nr = Tree<T>::allof[recursive?]($t.r, p);
+                        return nr;
+                    }
+                }
+            }
+        }
+
+        recursive? function noneof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+            match(t)@ {
+                Leaf<T> => { return !p[recursive?]($t.v); }
+                | Node<T> => { 
+                    let nl = Tree<T>::noneof[recursive?]($t.l, p);
+                    if(!nl) { 
+                        return false; 
+                    }
+                    else {
+                        let nr = Tree<T>::noneof[recursive?]($t.r, p);
+                        return nr;
+                    }
+                }
+            }
+        }
+
+        recursive? function someof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+            match(t)@ {
+                Leaf<T> => { return p[recursive?]($t.v); }
+                | Node<T> => { 
+                    let nl = Tree<T>::someof[recursive?]($t.l, p);
+                    if(nl) { 
+                        return true; 
+                    }
+                    else {
+                        let nr = Tree<T>::someof[recursive?]($t.r, p);
+                        return nr;
+                    }
+                }
+            }
         }
 
         recursive? function map<U>(t: Tree<T>, f: recursive? fn(T) -> U): Tree<U> {
