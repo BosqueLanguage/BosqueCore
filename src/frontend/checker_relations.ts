@@ -140,7 +140,7 @@ class TypeCheckerRelations {
             res = this.areSameTypeSignatureLists(t1.entries, t2.entries);
         }
         else if(t1 instanceof LambdaTypeSignature && t2 instanceof LambdaTypeSignature) {
-            if(t1.recursive !== t2.recursive || t1.name !== t2.name) {
+            if(t1.name !== t2.name) {
                 res = false;
             }
             else {

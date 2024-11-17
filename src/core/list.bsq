@@ -41,37 +41,41 @@ __internal entity List<T> {
     method pushBack(v: T): List<T> {
         return ListOps::s_list_push_back<T>(this, v);
     }
-%*
-    method size(): Nat {
+
+    recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
-            return 0n;
+            return true;
         }
         else {
-            return ListOps::s_list_size<T>(this);
+            return ListOps::s_list_allof[recursive?]<T>(this, p);
         }
     }
 
-    method empty(): Bool {
-        return ListOps::s_list_empty<T>(this);
+    recursive? method noneOf(p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return ListOps::s_list_noneof[recursive?]<T>(this, p);
+        }
     }
 
-    method front(): T 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_front<T>(this);
+    recursive? method someOf(p: recursive? pred(T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_someof[recursive?]<T>(this, p);
+        }
     }
-
-    method back(): T 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_back<T>(this);
+    
+    recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map[recursive?]<T, U>(this, f);
+        }
     }
-
-    method get(i: Nat): T
-        requires i < ListOps::s_list_size<T>(this);
-    {
-        return ListOps::s_list_get<T>(this, i);
-    }
-*%
 #endif %% STRIPPED_CORE 
 }

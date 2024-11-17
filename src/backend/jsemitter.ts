@@ -517,8 +517,10 @@ class JSEmitter {
         const argc = args.length;
         const allsimple = args.every((aa) => aa instanceof PositionalArgumentValue);
 
+        const coreprefix = this.getCurrentNamespace().fullnamespace.ns[0] !== "Core" ? "$Core." : "";
+
         if(argc === 0) {
-            return `$Core.ListOps.s_list_create_empty["<${ttype.tkeystr}>"]()`;
+            return `${coreprefix}ListOps.s_list_create_empty["<${ttype.tkeystr}>"]()`;
         }
         else if(argc <= 4 && allsimple) {
             let opr: string;
@@ -537,7 +539,7 @@ class JSEmitter {
             }
 
             const llargs = args.map((ee) => this.emitExpression(ee.exp, true));
-            return `$Core.ListOps.${opr}["<${ttype.tkeystr}>"](${llargs.join(", ")})`;
+            return `${coreprefix}ListOps.${opr}["<${ttype.tkeystr}>"](${llargs.join(", ")})`;
         }
         else {
             if(argc === 1) {
@@ -847,7 +849,12 @@ class JSEmitter {
         }
 
         if(EmitNameManager.isMethodCallObjectRepr(rtrgt)) {
-            return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+            if(exp.terms.length === 0) {
+                return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+            }
+            else {
+                return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${val}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
+            }
         }
         else {
             return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${val}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
@@ -3255,7 +3262,7 @@ class JSEmitter {
                 }
             }
             else {
-                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join(fmt.nl());
+                const dclstr = ddecls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
                 
                 fmt.indentPop();
                 if(ns.isTopNamespace()) {
