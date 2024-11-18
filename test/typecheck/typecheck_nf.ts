@@ -80,7 +80,6 @@ function checkTestFunctionError(ff: string, msg: string) {
     assert.equal(errors[0].msg, msg);
 }
 
-
 function checkTestFunctionInFile(code: string) {
     const assembly = loadContents(generateFileContents(code));
 

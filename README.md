@@ -72,17 +72,17 @@ Detailed Documentation, Tutorials, and Technical Information:
 
 ## Code Snippets
 
-**Add 2 numbers:**
+**Functions and arguments:**
 ```none
-public function add2(x: Nat, y: Nat): Nat {
-    return x + y;
+public function sub2(x: Int, y: Int): Int {
+    return x - y;
 }
 
-add2(3n, 4n) //7n
-add2(3n, 0n) //3n
+sub2(4i, 2i) //2i
+sub2(y=2i, 3i) //1i
 
-add2(3i, 4.0f) //type error -- defined on Nat but given Int and Float args 
-add2(3, 4)     //type error -- all numeric literals must have kind specifier
+sub2(3i, 4.0f) //type error -- defined on Int but given Float arg
+sub2(3, 4)     //type error -- un-annotated numeric literals are not supported (for now)
 ```
 
 **All positive check using rest parameters and lambda:**
