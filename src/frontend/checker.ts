@@ -641,7 +641,7 @@ class TypeChecker {
         return rtypes;
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], restinfo: [number, boolean, TypeSignature][] | undefined } {
+    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         let argsuffletype: (TypeSignature | undefined)[] = [];
@@ -682,6 +682,7 @@ class TypeChecker {
             apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
         }
 
+        let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam === undefined) {
             if(args.length > params.length) {
@@ -706,6 +707,7 @@ class TypeChecker {
             let restargs = args.slice(nonrestparams.length);
             const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
 
+            resttype = restparam.type.remapTemplateBindings(imapper);
             restinfo = [];
             for(let i = nonrestparams.length; i < args.length; ++i) {
                 const rri = restypes[i - nonrestparams.length] as [boolean, TypeSignature];
@@ -713,10 +715,15 @@ class TypeChecker {
             }
         }
 
-        return { shuffleinfo: argsuffleidx.map((si, i) => [si, argsuffletype[i]]), restinfo: restinfo };
+        let shuffleinfo: [number, TypeSignature | undefined][] = [];
+        for(let i = 0; i < nonrestparams.length; ++i) {
+            shuffleinfo.push([argsuffleidx[i], argsuffletype[i]]);
+        }
+
+        return { shuffleinfo: shuffleinfo, resttype: resttype, restinfo: restinfo };
     }
 
-    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], restinfo: [number, boolean, TypeSignature][] | undefined } {
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
         if(args.some((av) => av instanceof NamedArgumentValue)) {
             this.reportError(sinfo, `Named arguments not allowed in lambda argument list`);
         }
@@ -734,11 +741,13 @@ class TypeChecker {
             arginfo.push(argtype);
         }
 
+        let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
             let restargs = args.slice(nonrestparams.length);
             const restypes = this.checkRestParam(env, restargs, "[lambda_param]", restparam.type, TemplateNameMapper.createEmpty());
 
+            resttype = restparam.type;
             restinfo = [];
             for(let i = nonrestparams.length; i < args.length; ++i) {
                 const rri = restypes[i - nonrestparams.length] as [boolean, TypeSignature];
@@ -746,7 +755,7 @@ class TypeChecker {
             }
         }
 
-        return { arginfo: arginfo, restinfo: restinfo };
+        return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
     }
 
     private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
@@ -1435,6 +1444,7 @@ class TypeChecker {
         const arginfo = this.checkLambdaArgumentList(exp.sinfo, env, exp.args.args, lsig.params);
         exp.lambda = llvar.decltype;
         exp.arginfo = arginfo.arginfo;
+        exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
 
         return exp.setType(lsig.resultType);
@@ -1551,6 +1561,7 @@ class TypeChecker {
 
         const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, fdecl.params, imapper);
         exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
 
         return exp.setType(fdecl.resultType.remapTemplateBindings(imapper));
@@ -1578,6 +1589,7 @@ class TypeChecker {
         exp.resolvedDeclType = fdecl.typeinfo.tsig;
         exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
         exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
 
         return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
@@ -1736,6 +1748,7 @@ class TypeChecker {
         const fullmapper = TemplateNameMapper.merge(mresolve.typeinfo.mapping, imapper);
         const arginfo = this.checkArgumentList(exp.sinfo, env, exp.args.args, mresolve.member.params, fullmapper);
         exp.shuffleinfo = arginfo.shuffleinfo;
+        exp.resttype = arginfo.resttype;
         exp.restinfo = arginfo.restinfo;
 
         if(exp.specificResolve !== undefined) {

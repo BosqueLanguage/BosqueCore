@@ -91,9 +91,9 @@ public function allPositive(...args: List<Int>): Bool {
     return args.allOf(pred(x) => x >= 0i);
 }
 
-allPositive(1, 3, 4)  //true
-allPositive()         //true
-allPositive(1, 3, -4) //false
+allPositive(1i, 3i, 4i)  //true
+allPositive()            //true
+allPositive(1i, 3i, -4i) //false
 ```
 
 **Sign (with blocks and assignment):**

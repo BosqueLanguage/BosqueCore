@@ -603,6 +603,7 @@ class LambdaInvokeExpression extends Expression {
     isCapturedLambda: boolean = false;
     lambda: LambdaTypeSignature | undefined = undefined;
     arginfo: TypeSignature[] = [];
+    resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
@@ -632,6 +633,7 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly args: ArgumentList;
 
     shuffleinfo: [number, TypeSignature | undefined][] = [];
+    resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
@@ -669,6 +671,7 @@ class CallTypeFunctionExpression extends Expression {
     resolvedDeclType: TypeSignature | undefined = undefined;
     resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
     shuffleinfo: [number, TypeSignature | undefined][] = [];
+    resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
     constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
@@ -1021,6 +1024,7 @@ class PostfixInvoke extends PostfixOperation {
     readonly args: ArgumentList;
 
     shuffleinfo: [number, TypeSignature | undefined][] = [];
+    resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;
 
