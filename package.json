@@ -6,7 +6,7 @@
         "name": "Mark Marron <marron@cs.uky.edu>"
     },
     "license": "MIT",
-    "version": "1.0.0-dev",
+    "version": "1.0.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/BosqueLanguage/BosqueCore"

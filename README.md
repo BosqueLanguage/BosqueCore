@@ -9,33 +9,29 @@
 
 Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating high-reliability software artifacts. The foundational design precepts for Bosque are:
 1. Design for Tooling & Mechanization -- The entire system should be amenable to automated analysis and transformation. Avoid features or behaviors that inhibit analysis and automation.
-2. WYSIWYG -- Humans and AI Agents understand and make assumptions about the semantics (behavior) of the code from the textual representation (syntax). Minimize the presence of implicit or syntactically hidden behaviors. 
-3. Total Safety -- Don't just make mistakes hard to make, eliminate them entirely. Whenever possible rule-out entire categories of failures by construction.
-4. Reliable Performance at Scale -- At scale eliminate worst-case performance behaviors will occur and will be very problematic. Design for low-variance executions and minimizing worst case behavior instead of optimizing for the best or average case. 
-5. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
+2. Total Safety -- Don't just make mistakes hard to make, eliminate them entirely. Whenever possible rule-out entire categories of failures by construction.
+3. WYSIWYG -- Humans and AI Agents understand and make assumptions about the semantics (behavior) of the code from the textual representation (syntax). Minimize the presence of implicit or syntactically hidden behaviors. 
+4. The Ecosystem is the Language -- Modern development at scale is a collaborative process, both working with partner teams or using 3rd party code, via packages and/or APIs. Create a framework that is designed for componentization, composition, and behavioral guarantees.
+5. Reliable Performance at Scale -- At scale worst-case performance behaviors _will_ inevitably occur and are problematic to resolve. Design for low-variance execution and minimize the impacts of worst case behaviors instead of optimizing for the best or average case. 
+6. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
 
-# News
-After extensive(!) experimentation and prototype work the project has reached a point where all the pieces are in place for a 1.0 release! We have 2 key components that bring new ways to deal with structured text processing ([BREX](https://github.com/BosqueLanguage/BREX)) and literal value representation ([BSQON](https://github.com/BosqueLanguage/BSQON)). We also have a solid baseline compiler and runtime for the compute part of the language. The 1.0 push will be to integrate, refine, and update the components into a state where we can self-host the next parts of the compiler and have a stable language for development in general. The 2.0 push will be to write, in Bosque, a full Small Model Verifier for the Bosque compiler!
+# Current Status
+We are at a major milestone in the Bosque project -- declaring 1.0! 
 
-There are no hard deadlines on this work but targeting a 1.0 this summer and a 2.0 by the start of the fall! Community involvement is welcome. There are some fidgity parts that I probably just need to manage but I have tried to open issues, and where possible, flag some that are amenable for outside help. This process will be taking place on `main` so, if you need to keep stability, I have created the `stable_pre1` branch. 
+Now this doesn't mean that Bosque is done, or even that is easily useable, but it does mean that the language is what it is going to be and (bold) engineering teams can write code with some degree of confidence that it will be stable and supported. As part of living this commitment, and moving on to the Bosque 2.0 phase, the goal is to begin implementing the majority of new Bosque code in Bosque itself!
+
+The 2.0 release will be focused on a revised version of the [Small Model Verifier](https://discovery.ucl.ac.uk/id/eprint/10146184/1/finir.pdf), the [AOT compiler/runtime](https://bosquelanguage.github.io/2024/10/01/an-omega-c-runtime.html), along with improving the language for self-hosting the compiler and having a stable language for development in general.
 
 # Platform Road Map 
 The current (approximate) roadmap for the Bosque project is broken down into a series of major components that are being developed in parallel + smaller but high-impact work items. These cover a range of complexity and required skills, from academic level publication results, through non-trivial software engineering lifts, and into smaller tasks that are good starter projects. If you are interested in one of these please find (or open) an issue for more detail.
 
-## Current Work Items 
 The current work items are focused on the 1.0 release of the Bosque language and it actively in-progress:
-- Base Language design -- mostly workable (in the `assembly.ts` and `body.ts` files) with needs for documentations
 - Core Libraries -- not much but lots of opportunity to build out from previous prototype code.
-- Parser and Type-Checker -- partially complete with plenty of todos and needs for documentation/tests.
-- Basic JS Runtime -- starting...
 - Visual Studio Code Integration -- Just a simple syntax highlighter at the moment next steps are to build out a full LSP server.
-
-## Planned Next Steps
-The next steps are focused on the 2.0 release of the Bosque language are focused on fulfilling two major promises in the tooling and runtime space:
 - Small Model Verifier -- a symbolic checker with guarantees of the decidability of the presence or absence of small inputs that trigger any runtime failure/assertion/pre/post/invariant condition.
 - A Ω()-time and O(1)-space runtime and AOT compiler -- a runtime that is designed to be performant, low memory, and predictable in its behavior.
 
-## Inviting for Contributors
+## Invitation for Contributors
 The Bosque project is actively inviting contributors as we move from a research focused into a practically focused project! We want to make this a a great place to learn and contribute to the next era in programming languages, compilers, and runtime systems. Below are some topics that are open for contributions and where help is greatly appreciated, we are happy to help mentor and guide you through the process.
 
 ### Breakout Features
@@ -67,7 +63,7 @@ These are well-defined items that can be done in a few hours to a maybe a couple
 
 # Documentation
 
-Complete documenation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively. Sample code snippets below provide a quick feel of the language and syntax.
+In progress documentation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively. Sample code snippets below provide a quick feel of the language and syntax.
 
 Detailed Documentation, Tutorials, and Technical Information:
 * [Language Docs](docs/overview.md)
@@ -78,7 +74,7 @@ Detailed Documentation, Tutorials, and Technical Information:
 
 **Add 2 numbers:**
 ```none
-function add2(x: Nat, y: Nat): Nat {
+public function add2(x: Nat, y: Nat): Nat {
     return x + y;
 }
 
@@ -91,7 +87,7 @@ add2(3, 4)     //type error -- all numeric literals must have kind specifier
 
 **All positive check using rest parameters and lambda:**
 ```none
-function allPositive(...args: List<Int>): Bool {
+public function allPositive(...args: List<Int>): Bool {
     return args.allOf(pred(x) => x >= 0i);
 }
 
@@ -102,7 +98,7 @@ allPositive(1, 3, -4) //false
 
 **Sign (with blocks and assignment):**
 ```none
-function sign(x: Int): Int {
+public function sign(x: Int): Int {
     var y: Int;
 
     if(x == 0i) {
