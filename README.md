@@ -205,11 +205,10 @@ restrict(none)      %%0n
 restrict(some(5n))  %%15n
 ```
 
-**(Algebraic Data Types)++ and Union Types**
+**(Algebraic Data Types)++**
 ```
-datatype BoolOp using {
-    line: Nat
-} of
+datatype BoolOp
+of
 Const { val: Bool }
 | NotOp { arg: BoolOp }
 | AndOp { larg: BoolOp, rarg: BoolOp }
@@ -217,30 +216,16 @@ Const { val: Bool }
 & {
     recursive method evaluate(): Bool {
         match(this)@ {
-            Const  => return $this.val;
-            | NotOp => return !$this.arg.evaluate[recursive]();
-            | AndOp => return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive]();
-            | OrOp  => return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive]();
+            Const  => { return $this.val; }
+            | NotOp => { return !$this.arg.evaluate[recursive](); }
+            | AndOp => { return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive](); }
+            | OrOp  => { return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive](); }
         }
     } 
 }
 
-AndOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]() %%false
-OrOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]()  %%true
-
-function printType(x: Bool | Int | String | None): String {
-    return match(x) {
-        Bool     => "b"
-        | Int    => "i"
-        | String => "s"
-        | _      => "n"
-    };
-}
-
-printType(1.0f) %%type error
-printType(true) %%"b"
-printType(none) %%"n"
-
+OrOp{Const{true}, Const{false}}.evaluate[recursive]()            %%true
+AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %%false
 ```
 
 **Validated Strings:**
