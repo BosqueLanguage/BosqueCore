@@ -230,21 +230,21 @@ AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive]() %%false
 
 **Validated Strings:**
 ```
-validator ValidZipcodeUS = /[0-9]{5}("-"[0-9]{4})?/;
-validator ValidCSSpt = /[0-9]+"pt"/;
+type Zipcode = String of /[0-9]{5}("-"[0-9]{4})?/;
+type CSSPt = String of /[0-9]+"pt"/;
 
-function is3pt(s1: StringOf<ValidCSSpt>): Bool {
-    return s1.value() === "3pt";
+function is3pt(s1: CSSPt): Bool {
+    return s1.value === "3pt";
 }
 
-RegexValidator::accepts<ValidZipcodeUS>("98052-0000") %%true
-RegexValidator::accepts<ValidZipcodeUS>("1234")       %%false
+"1234"<Zipcode> %%type error (does not match regex)
+"3px"<CSSPt>    %%type error (does not match regex)
 
-is3pt("12")              %%type error not a StringOf<CSSpt>
-is3pt("98052"(ValidZipcodeUS)) %%type error not a StringOf<CSSpt>
+is3pt("12")               %%type error not a CSSPt
+is3pt("98052"<Zipcode>)   %%type error not a CSSPt
 
-is3pt("3pt"(ValidCSSpt)) %%true
-is3pt("4pt"(ValidCSSpt)) %%false
+is3pt("3pt"<CSSPt>) %%true
+is3pt("4pt"<CSSPt>) %%false
 ```
 
 # Installing the Bosque Language (Currently Development Only)
