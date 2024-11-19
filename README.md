@@ -78,11 +78,11 @@ public function sub2(x: Int, y: Int): Int {
     return x - y;
 }
 
-sub2(4i, 2i) //2i
-sub2(y=2i, 3i) //1i
+sub2(4i, 2i)   %%2i
+sub2(y=2i, 3i) %%1i
 
-sub2(3i, 4.0f) //type error -- defined on Int but given Float arg
-sub2(3, 4)     //type error -- un-annotated numeric literals are not supported (for now)
+sub2(3i, 4.0f) %%type error -- defined on Int but given Float arg
+sub2(3, 4)     %%type error -- un-annotated numeric literals are not supported (for now)
 ```
 
 **All positive check using rest parameters and lambda:**
@@ -91,9 +91,9 @@ public function allPositive(...args: List<Int>): Bool {
     return args.allOf(pred(x) => x >= 0i);
 }
 
-allPositive(1i, 3i, 4i)  //true
-allPositive()            //true
-allPositive(1i, 3i, -4i) //false
+allPositive(1i, 3i, 4i)  %%true
+allPositive()            %%true
+allPositive(1i, 3i, -4i) %%false
 ```
 
 **Sign (with blocks and assignment):**
@@ -111,8 +111,8 @@ public function sign(x: Int): Int {
     return y;
 }
 
-sign(5i)    //1
-sign(-5i)   //-1
+sign(5i)    %%1
+sign(-5i)   %%-1
 ```
 
 **Nominal Types with Multi-Inheritance & Data Invariants:**
@@ -145,46 +145,46 @@ entity NamedGreeting provides WithName, Greeting {
     }
 }
 
-GenericGreeting{}.sayHello()          //"hello world"
-GenericGreeting::instance.sayHello()  //"hello world"
+GenericGreeting{}.sayHello()          %%"hello world"
+GenericGreeting::instance.sayHello()  %%"hello world"
 
-NamedGreeting{}.sayHello()           //type error no value provided for "name" field
-NamedGreeting{""}.sayHello()         //invariant error
-NamedGreeting{"bob"}.sayHello()      //"hello bob"
+NamedGreeting{}.sayHello()           %%type error no value provided for "name" field
+NamedGreeting{""}.sayHello()         %%invariant error
+NamedGreeting{"bob"}.sayHello()      %%"hello bob"
 ```
 
-**Typedecl Types**
+**Type Alias Types**
 ```
-typedecl Fahrenheit = Int;
-typedecl Celsius = Int;
+type Fahrenheit = Int;
+type Celsius = Int;
 
-typedecl Percentage = Nat & {
-    invariant $value <= 100n;
+type Percentage = Nat & {
+    invariant $value <= 100n;
 }
 
-32i_Fahrenheit + 0i_Celsius //type error different numeric types
-30n_Percentage              //valid percentage
-101n_Percentage             //invariant error
+32i<Fahrenheit> + 0i<Celsius>  %%type error different numeric types
+30n<Percentage>                %%valid percentage
+101n<Percentage>               %%invariant error
 
 function isFreezing(temp: Celsius): Bool {
-    return temp <= 0i_Celsius;
+    return temp <= 0i<Celsius>;
 }
 
-isFreezing(5i)          //type error not a celsius number
-isFreezing(5i_Celsius)  //false
-isFreezing(-5i_Celsius) //true
+isFreezing(5.0f)           %%type error not a celsius number
+isFreezing(5i<Celsius>)    %%false
+isFreezing(-5i<Celsius>)   %%true
 
 ```
 
 **Flow and Binders:**
 ```
 function flowit(x: Nat?): Nat {
-    //ITest for none as special
+    %%ITest for none as special
     if(x)@none {
         return 0n;
     }
     else {
-        //ITest allows binder for $x to value of x (with type inference)
+        %%ITest allows binder for $x to value of x (with type inference)
         return $x + 10n;
     }
 }
@@ -193,7 +193,7 @@ function restrict(x: Nat?): Nat {
     if(x)@@none {
         return 0n;
     }
-    //x is a Nat here and type infer
+    %%x is a Nat here and type infer
 
     return x + 10n;
 }
@@ -219,8 +219,8 @@ Const { val: Bool }
     } 
 }
 
-AndOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]() //false
-OrOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]()  //true
+AndOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]() %%false
+OrOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]()  %%true
 
 function printType(x: Bool | Int | String | None): String {
     return match(x) {
@@ -231,9 +231,9 @@ function printType(x: Bool | Int | String | None): String {
     };
 }
 
-printType(1.0f) //type error
-printType(true) //"b"
-printType(none) //"n"
+printType(1.0f) %%type error
+printType(true) %%"b"
+printType(none) %%"n"
 
 ```
 
@@ -246,14 +246,14 @@ function is3pt(s1: StringOf<ValidCSSpt>): Bool {
     return s1.value() === "3pt";
 }
 
-RegexValidator::accepts<ValidZipcodeUS>("98052-0000") //true
-RegexValidator::accepts<ValidZipcodeUS>("1234")       //false
+RegexValidator::accepts<ValidZipcodeUS>("98052-0000") %%true
+RegexValidator::accepts<ValidZipcodeUS>("1234")       %%false
 
-is3pt("12")              //type error not a StringOf<CSSpt>
-is3pt("98052"(ValidZipcodeUS)) //type error not a StringOf<CSSpt>
+is3pt("12")              %%type error not a StringOf<CSSpt>
+is3pt("98052"(ValidZipcodeUS)) %%type error not a StringOf<CSSpt>
 
-is3pt("3pt"(ValidCSSpt)) //true
-is3pt("4pt"(ValidCSSpt)) //false
+is3pt("3pt"(ValidCSSpt)) %%true
+is3pt("4pt"(ValidCSSpt)) %%false
 ```
 
 # Installing the Bosque Language (Currently Development Only)
