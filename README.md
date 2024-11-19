@@ -176,9 +176,9 @@ isFreezing(-5i<Celsius>)   %%true
 
 ```
 
-**Flow and Binders:**
+**Flow and Explicit Type Inference:**
 ```
-function flowit(x: Nat?): Nat {
+function flowit(x: Option<Nat>): Nat {
     %%ITest for none as special
     if(x)@none {
         return 0n;
@@ -189,14 +189,20 @@ function flowit(x: Nat?): Nat {
     }
 }
 
-function restrict(x: Nat?): Nat {
+flowit(none)      %%0n
+flowit(some(5n))  %%15n
+
+function restrict(x: Option<Nat>): Nat {
     if(x)@@none {
         return 0n;
     }
-    %%x is a Nat here and type infer
 
+    %%x is a Nat here as asserted by test and type inference
     return x + 10n;
 }
+
+restrict(none)      %%0n
+restrict(some(5n))  %%15n
 ```
 
 **(Algebraic Data Types)++ and Union Types**
