@@ -141,6 +141,10 @@ class InstantiationPropagator {
     }
 
     private isAlreadySeenNamespaceFunction(ns: FullyQualifiedNamespace, fkey: string, fdecl: NamespaceFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
+        if(this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey)) {
+            return true;
+        }
+
         const nsopt = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
         if(nsopt === undefined) {
             return false;
@@ -155,15 +159,14 @@ class InstantiationPropagator {
             return true;
         }
         
-        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-        if(okbinds) {
-            return true;
-        }
-        
-        return this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
+        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
     }
 
     private isAlreadySeenTypeFunction(ns: FullyQualifiedNamespace, tname: string, tkey: string, fkey: string, fdecl: TypeFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
+        if(this.pendingTypeFunctions.some((ptm) => ptm.fkey === fkey)) {
+            return true;
+        }
+
         const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
         if(nsinst === undefined) {
             return false;
@@ -188,15 +191,14 @@ class InstantiationPropagator {
             return true;
         }
         
-        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-        if(okbinds) {
-            return true;
-        }
-
-        return this.pendingTypeFunctions.some((ptm) => ptm.fkey === fkey);
+        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
     }
 
     private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {
+        if(this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey)) {
+            return true;
+        }
+
         const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
         if(nsinst === undefined) {
             return false;
@@ -221,12 +223,7 @@ class InstantiationPropagator {
             return true;
         }
         
-        const okbinds = bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-        if(okbinds) {
-            return true;
-        }
-
-        return this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
+        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
     }
 
     //Given a namespace function -- instantiate it
@@ -396,7 +393,7 @@ class InstantiationPropagator {
                     else if(args.length <= 4) {
                         const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`) as NamespaceFunctionDecl;
  
-                            this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                        this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
                     }
                     else {
                         assert(false, "Not Implemented -- list constructors");
@@ -441,7 +438,7 @@ class InstantiationPropagator {
         const ctype = (exp.ctype as NominalTypeSignature);
         const decl = ctype.decl;
         if(decl instanceof AbstractCollectionTypeDecl) {
-            return this.instantiateCollectionConstructor(decl, ctype, exp.args.args);
+            this.instantiateCollectionConstructor(decl, ctype, exp.args.args);
         }
     }
     
@@ -468,9 +465,15 @@ class InstantiationPropagator {
             this.instantiateTypeSignature(exp.arginfo[i], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: ArgumentValue[] = [];
+
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
             }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
     }
 
@@ -492,9 +495,15 @@ class InstantiationPropagator {
             }
         }
         if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: ArgumentValue[] = [];
+
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
             }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
@@ -514,9 +523,15 @@ class InstantiationPropagator {
             }
         }
         if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: ArgumentValue[] = [];
+
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
             }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
         const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
@@ -570,9 +585,15 @@ class InstantiationPropagator {
             }
         }
         if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: ArgumentValue[] = [];
+
             for(let i = 0; i < exp.restinfo.length; ++i) {
                 this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
             }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
         if(exp.resolvedTrgt !== undefined) {

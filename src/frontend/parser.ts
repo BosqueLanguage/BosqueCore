@@ -28,12 +28,7 @@ const TokenStrings = {
 
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
     NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
-
-    TaggedNumberinoInt: "[LITERAL_TAGGED_NUMBERINO_INT]",
-    TaggedNumberinoFloat: "[LITERAL_TAGGED_NUMBERINO_FLOAT]",
-    TaggedNumberinoRational: "[LITERAL_TAGGED_NUMBERINO_RATIONAL]",
-
-    TaggedBoolean: "[LITERAL_TAGGED_BOOLEAN]",
+    NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
@@ -328,8 +323,6 @@ class Lexer {
         return Lexer._s_templateNameRe.test(str);
     }
 
-    private static readonly _s_literalTDOnlyTagRE = `"<"`;
-
     private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
     private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
     private static readonly _s_intValueNoSignRE = `("0"|${Lexer._s_nonzeroIntValNoSignRE})`;
@@ -343,31 +336,28 @@ class Lexer {
 
     private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
     private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatValueRE}/`;
+    private static readonly _s_rationalNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})/`;
 
-    private static readonly _s_intTaggedNumberinoRe = `/${Lexer._s_intValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
-    private static readonly _s_floatTaggedNumberinoRe = `/${Lexer._s_floatValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
-    private static readonly _s_rationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_intRe = `/(${Lexer._s_intValueRE})"i"/`;
+    private static readonly _s_natRe = `/(${Lexer._s_intValueRE})"n"/`;
+    private static readonly _s_bigintRe = `/(${Lexer._s_intValueRE})"I"/`;
+    private static readonly _s_bignatRe = `/(${Lexer._s_intValueRE})"N"/`;
 
-    private static readonly _s_intRe = `/(${Lexer._s_intValueRE})"i"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_natRe = `/(${Lexer._s_intValueRE})"n"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_bigintRe = `/(${Lexer._s_intValueRE})"I"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_bignatRe = `/(${Lexer._s_intValueRE})"N"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_floatRe = `/(${Lexer._s_floatValueRE})"f"/`;
+    private static readonly _s_decimalRe = `/(${Lexer._s_floatValueRE})"d"/`;
+    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})("%slash;"(${Lexer._s_nonzeroIntValNoSignRE}))?"R"/`;
+    private static readonly _s_complexRe = `/(${Lexer._s_floatValueRE})[+-](${Lexer._s_floatValueNoSignRE})"j"/`;
 
-    private static readonly _s_floatRe = `/(${Lexer._s_floatValueRE})"f"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_decimalRe = `/(${Lexer._s_floatValueRE})"d"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})("%slash;"(${Lexer._s_nonzeroIntValNoSignRE}))?"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_complexRe = `/(${Lexer._s_floatValueRE})[+-](${Lexer._s_floatValueNoSignRE})"j"(${Lexer._s_literalTDOnlyTagRE})?/`;
-
-    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"/`;
+    private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"/`;
     
-    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"/`;
 
-    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"/`;
+    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"/`;
 
-    private static readonly _s_zerodenomRationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"${Lexer._s_literalTDOnlyTagRE}/`;
-    private static readonly _s_zerodenomRationalRe = `/(${Lexer._s_intValueRE})("%slash;""0")?"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_zerodenomRationalNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"/`;
+    private static readonly _s_zerodenomRationalRe = `/(${Lexer._s_intValueRE})"%slash;""0""R"/`;
 
     private static readonly _s_redundantSignRE = /[+-]{2,}/y;
     private checkRedundantSigns() {
@@ -422,12 +412,6 @@ class Lexer {
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, this.utf8StrPos);
-        if(mnumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
-            return true;
-        }
-
         const unumberino = lexFront(Lexer._s_floatNumberinoRe, this.utf8StrPos);
         if(unumberino !== null) {
             this.recordLexTokenWData(this.jsStrPos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
@@ -438,18 +422,6 @@ class Lexer {
     }
 
     private tryLexIntegralCompositeLikeToken(): boolean {
-        const mrational = lexFront(Lexer._s_rationalRe, this.utf8StrPos);
-        if(mrational !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
-            return true;
-        }
-
-        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, this.utf8StrPos);
-        if(mnumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
-            return true;
-        }
-
         const mzerodenom = lexFront(Lexer._s_zerodenomRationalRe, this.utf8StrPos);
         if(mzerodenom !== null) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenom.length), "Zero denominator in rational number");
@@ -457,10 +429,22 @@ class Lexer {
             return true;
         }
 
-        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalTaggedNumberinoRe, this.utf8StrPos);
+        const mrational = lexFront(Lexer._s_rationalRe, this.utf8StrPos);
+        if(mrational !== null) {
+            this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
+            return true;
+        }
+
+        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalNumberinoRe, this.utf8StrPos);
         if(mzerodenomtagged !== null) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenomtagged.length), "Zero denominator in rational number");
-            this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.TaggedNumberinoRational, mzerodenomtagged);
+            this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.NumberinoRational, mzerodenomtagged);
+            return true;
+        }
+
+        const mnumberino = lexFront(Lexer._s_rationalNumberinoRe, this.utf8StrPos);
+        if(mnumberino !== null) {
+            this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
             return true;
         }
 
@@ -504,12 +488,6 @@ class Lexer {
             return true;
         }
 
-        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, this.utf8StrPos);
-        if(mtnumberino !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
-            return true;
-        }
-
         const mnumberino = lexFront(Lexer._s_intNumberinoRe, this.utf8StrPos);
         if(mnumberino !== null) {
             this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
@@ -545,7 +523,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"/`;
     private tryLexByteBuffer(): boolean {
         const m = lexFront(Lexer._s_bytebufferRe, this.utf8StrPos);
         if(m !== null) {
@@ -556,7 +534,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"/`;
     private tryLexUUID(): boolean {
         const m = lexFront(Lexer._s_uuidRe, this.utf8StrPos);
         if(m !== null) {
@@ -567,7 +545,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"/`;
     private tryLexHashCode(): boolean {
         const m = lexFront(Lexer._s_shaRe, this.utf8StrPos);
         if(m !== null) {
@@ -578,7 +556,6 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /[<]/y;
     private tryLexUnicodeString(): boolean {
         let ncpos = this.jsStrPos;
         let istemplate = false;
@@ -604,17 +581,6 @@ class Lexer {
         else {
             jepos++;
             let strval = this.input.substring(this.jsStrPos, jepos);
-
-            Lexer._s_literalGeneralTagRE.lastIndex = jepos;
-            const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
-            if(mtag !== null) {
-                if(istemplate) {
-                    this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Template strings cannot have type tags");
-                }
-                else {
-                    strval += "[T]";
-                }   
-            }
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
@@ -655,17 +621,6 @@ class Lexer {
 
             jepos++;
             let strval = this.input.substring(this.jsStrPos, jepos);
-
-            Lexer._s_literalGeneralTagRE.lastIndex = jepos;
-            const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
-            if(mtag !== null) {
-                if(istemplate) {
-                    this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Template strings cannot have type tags");
-                }
-                else {
-                    strval += "[T]";
-                }   
-            }
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateCString : TokenStrings.CString, strval);
@@ -766,11 +721,11 @@ class Lexer {
     private static _s_timevalueRE = '([0-9]{2})":"([0-9]{2})":"([0-9]{2})';
     private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
 
-    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_taitimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}/`;
+    private static _s_taitimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}?/`;
+    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}/`;
+    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}/`;
+    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"/`;
 
     private tryLexDateTime() {
         const mdt = lexFront(Lexer._s_datatimeRE, this.utf8StrPos);
@@ -809,10 +764,10 @@ class Lexer {
     private static _s_deltadatevalueRE = '([0-9]{1,4})"-"([0-9]{1,2})"-"([0-9]{1,2})';
     private static _s_deltatimevalueRE = '([0-9]{1,2})":"([0-9]{1,2})":"([0-9]{1,2})';
 
-    private static _s_datetimeDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}?(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_deltatimevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_datetimeDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}?/`;
+    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}/`;
+    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_deltatimevalueRE}/`;
+    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}"."([0-9]{3})"Z"/`;
 
     private tryLexDateTimeDelta() {
         const mdt = lexFront(Lexer._s_datetimeDeltaRE, this.utf8StrPos);
@@ -929,15 +884,8 @@ class Lexer {
         }
     }
 
-    private static readonly _s_taggedBooleanRE = `/"true<"|"false<"/`;
     private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
-        const mtb = lexFront(Lexer._s_taggedBooleanRE, this.utf8StrPos);
-        if (mtb !== null) {
-            this.recordLexTokenWData(this.jsStrPos + mtb.length, TokenStrings.TaggedBoolean, mtb);
-            return true;
-        }
-
         const identifiermatch = lexFront(Lexer._s_identiferName, this.utf8StrPos);
         const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, this.jsStrPos));
 
@@ -2757,21 +2705,16 @@ class Parser {
         return new ConstantExpressionValue(exp);
     }
 
-    private static isTaggedLiteral(val: string): boolean {
-        return val.endsWith("<");
-    }
-
     private processTaggedLiteral(val: string): [string, TypeSignature] {
-        const vval = val.slice(0, val.length - 1);
-
+        this.ensureAndConsumeTokenAlways(SYM_langle, "tagged literal");
         const ttype = this.parseTypeTagSignature();
-        this.ensureAndConsumeTokenIf(SYM_rangle, "tagged literal");
+        this.ensureAndConsumeTokenAlways(SYM_rangle, "tagged literal");
         
-        return [vval, ttype];
+        return [val, ttype];
     }
 
     private processSimplyTaggableLiteral(sinfo: SourceInfo, tag: ExpressionTag, val: string): Expression {
-        if(!Parser.isTaggedLiteral(val)) {
+        if(!this.testToken(SYM_langle)) {
             return new LiteralSimpleExpression(tag, sinfo, val);
         }
         else {
@@ -3087,22 +3030,7 @@ class Parser {
         }
         else if (tk === KW_true || tk === KW_false) {
             this.consumeToken();
-            return new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, tk);
-        }
-        else if(tk === TokenStrings.TaggedBoolean) {
-            const bstr = this.consumeTokenAndGetValue();
-            const [vval, ttype] = this.processTaggedLiteral(bstr);
-            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, vval), ttype);
-        }
-        else if(tk === TokenStrings.NumberinoInt || tk === TokenStrings.NumberinoFloat) {
-            this.consumeToken();
-            this.recordErrorGeneral(sinfo, "Un-annotated numeric literals are not supported");
-            return new ErrorExpression(sinfo, undefined, undefined);
-        }
-        else if(tk === TokenStrings.TaggedNumberinoRational) {
-            const rstr = this.consumeTokenAndGetValue();
-            const [vval, ttype] = this.processTaggedLiteral(rstr);
-            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralRationalExpression, sinfo, vval + "R"), ttype);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBoolExpression, tk);
         }
         else if (tk === TokenStrings.Nat) {
             const istr = this.consumeTokenAndGetValue();
@@ -3203,33 +3131,11 @@ class Parser {
         }
         else if(tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue();
-            if(sstr.endsWith("[T]")) {
-                const vval = sstr.slice(0, sstr.length - "[T]".length);
-
-                this.ensureAndConsumeTokenIf(SYM_langle, "string type tag");
-                const ttype = this.parseTypeTagSignature();
-                this.ensureAndConsumeTokenIf(SYM_rangle, "string type tag");
-                
-                return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralStringExpression, sinfo, vval), ttype);
-            }
-            else {
-                return new LiteralSimpleExpression(ExpressionTag.LiteralStringExpression, sinfo, sstr);
-            }
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralStringExpression, sstr);
         }
         else if(tk === TokenStrings.CString) {
             const sstr = this.consumeTokenAndGetValue();
-            if(sstr.endsWith("[T]")) {
-                const vval = sstr.slice(0, sstr.length - "[T]".length);
-                
-                this.ensureAndConsumeTokenIf(SYM_langle, "string type tag");
-                const ttype = this.parseTypeTagSignature();
-                this.ensureAndConsumeTokenIf(SYM_rangle, "string type tag");
-
-                return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralCStringExpression, sinfo, vval), ttype);
-            }
-            else {
-                return new LiteralSimpleExpression(ExpressionTag.LiteralCStringExpression, sinfo, sstr);
-            }
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralCStringExpression, sstr);
         }
         else if(tk === TokenStrings.PathItem) {
             const sstr = this.consumeTokenAndGetValue();
@@ -3239,18 +3145,12 @@ class Parser {
                 ptag = sstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathItemExpression;
             }
 
-            if(sstr.endsWith("[T]")) {
-                const vval = sstr.slice(0, sstr.length - "[T]".length);
-                
-                this.ensureAndConsumeTokenIf(SYM_langle, "string type tag");
-                const ttype = this.parseTypeTagSignature();
-                this.ensureAndConsumeTokenIf(SYM_rangle, "string type tag");
-
-                return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ptag, sinfo, vval), ttype);
-            }
-            else {
-                return new LiteralSimpleExpression(ptag, sinfo, sstr);
-            }
+            return this.processSimplyTaggableLiteral(sinfo, ptag, sstr);
+        }
+        else if(tk === TokenStrings.NumberinoInt || tk === TokenStrings.NumberinoFloat || tk === TokenStrings.NumberinoRational) {
+            this.consumeToken();
+            this.recordErrorGeneral(sinfo, "Un-annotated numeric literals are not supported");
+            return new ErrorExpression(sinfo, undefined, undefined);
         }
         else if (tk === KW_this) {
             this.consumeToken();
