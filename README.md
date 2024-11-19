@@ -115,7 +115,7 @@ sign(5i)    %%1
 sign(-5i)   %%-1
 ```
 
-**Nominal Types with Multi-Inheritance & Data Invariants:**
+**Nominal Types with Multi-Inheritance (todo: vcall impl) & Data Invariants:**
 ```
 concept WithName {
     invariant $name !== "";
@@ -251,9 +251,9 @@ is3pt("4pt"<CSSPt>) %%false
 
 In order to install/build the project the following are needed:
 
-- 64 bit Linux Operating System (Ubuntu 22 recommended)
-- Version 20+ of [node.js](https://nodejs.org/en/download/) (v20 or higher)
-- Typescript (5.3 or higher) -- install with: `npm i typescript -g`
+- 64 bit Linux Operating System (Ubuntu 24 recommended)
+- Version 22+ of [node.js](https://nodejs.org/en/download/)
+- Typescript 5.6 (installed as a dev dependency)
 - Git and [git-lfs](https://git-lfs.github.com/) setup
 
 ## Build & Test
@@ -263,17 +263,9 @@ npm install && npm test
 ```
 The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
-## Parser & Typechecker
-
-Current work is on spinning up the Parser/Typechecker and some basic LSP support. Key design goals in these systems are simplicity and general efficiency. Fast turnaround times in the developer loop tools are a priority so all features are geared towards a max O(n log n) complexity -- no exponential blowups (or turing completeness) in the type system, a relatively efficient 2 pass parser, and a fast emit to JavaScript.
-
-## Compiler & Runtime
-
-Next open task on the roadmap is a JavaScript runtime and NPM package generator. This will be targeted as a fast turnaround for developer tasks and ease of implementation (+ nice features like supporting a web-playground or REPL). A secondary task is an optimized AOT compiler with the O(1)-GC and and a focus on fast startup, low memory usage, and predictable latency.
-
 ## Visual Studio Code Integration
 
-This repository provides basic [Visual Studio Code](https://code.visualstudio.com/) IDE support for the Bosque language (currently limited to syntax and brace highlighting). The installation requires manually copying the full `bosque-language-tools/` folder into your user `.vscode/extensions/` directory and restarting VSCode.
+Basic [Visual Studio Code](https://code.visualstudio.com/) IDE support for the Bosque language (currently limited to syntax and brace highlighting) is available from [this repo](https://github.com/BosqueLanguage/bosque-language-tools). The installation requires manually building and installing as a VSIX package.
 
 ## Contribute
 
