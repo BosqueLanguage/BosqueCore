@@ -263,6 +263,15 @@ npm install && npm test
 ```
 The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
+## Running
+
+The current (and temporary) way to experiment with the Bosque language at this point is through the `bosque` compiler command line tool. After building this tool is available in the `bin/src/cmd/` directory. It is currently very simple with _one_ action which is to take all of the command line arguments and compile them as a single application to produce an set of executable JavaScript files -- using the unique `public function main() ...` as the entrypoint and putting the result in the output folder `jsout`. 
+
+```none
+node bin/src/cmd/bosque.js <source-file.bsq> <source-file.bsq> ...
+node jsout/Main.mjs
+```
+
 ## Visual Studio Code Integration
 
 Basic [Visual Studio Code](https://code.visualstudio.com/) IDE support for the Bosque language (currently limited to syntax and brace highlighting) is available from [this repo](https://github.com/BosqueLanguage/bosque-language-tools). The installation requires manually building and installing as a VSIX package.
