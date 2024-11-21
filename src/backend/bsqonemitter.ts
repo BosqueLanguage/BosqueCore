@@ -93,9 +93,9 @@ class BSQONTypeInfoEmitter {
         if(isentity) {
             decl.fields = optfdecls.map((ff) => {
                 let fdecl: any = {};
-                fdecl.name = ff.name;
-                fdecl.type = this.tproc(ff.declaredType).tkeystr;
-                fdecl.isOptional = ff.defaultValue !== undefined;
+                fdecl.fname = ff.name;
+                fdecl.ftype = this.tproc(ff.declaredType).tkeystr;
+                fdecl.isoptional = ff.defaultValue !== undefined;
                 if(ff.attributes.length !== 0) {
                     fdecl.fsannotation = this.emitFieldAttributes(ff.attributes);
                 }
@@ -107,7 +107,7 @@ class BSQONTypeInfoEmitter {
         }
 
         decl.tkey = rcvr.tkeystr;
-        decl.name = decl.name;
+        decl.name = tdecl.name;
 
         this.mapper = undefined;
 
@@ -128,7 +128,7 @@ class BSQONTypeInfoEmitter {
 
         decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
         decl.tkey = rcvr.tkeystr;
-        decl.name = decl.name;
+        decl.name = tdecl.name;
 
         this.mapper = undefined;
         
@@ -154,7 +154,7 @@ class BSQONTypeInfoEmitter {
 
         decl.supertypes = [];
         decl.tkey = rcvr.tkeystr;
-        decl.name = decl.name;
+        decl.name = tdecl.name;
 
         this.mapper = undefined;
         
@@ -186,7 +186,7 @@ class BSQONTypeInfoEmitter {
 
         decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
         decl.tkey = rcvr.tkeystr;
-        decl.name = decl.name;
+        decl.name = tdecl.name;
 
         return decl;
     }
@@ -435,7 +435,7 @@ class BSQONTypeInfoEmitter {
     private emitNamespace(nsdecl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo): {ns: any, types: any[]} {
         let decl: any = {};
 
-        decl.istoplevel = nsdecl.isTopNamespace;
+        decl.istoplevel = nsdecl.isTopNamespace();
 
         decl.imports = nsdecl.usings.map((usd) => [usd.fromns, usd.asns || usd.fromns]);
         decl.ns = nsdecl.name;
@@ -485,6 +485,7 @@ class BSQONTypeInfoEmitter {
         //
         //TODO: Recursive Sets here!!!
         //
+        decl.recursiveSets = [];
 
         if(includeregexinfo) {
             decl.resystem = assembly.toplevelNamespaces.flatMap((ns) => assembly.loadConstantsAndValidatorREs(ns));
