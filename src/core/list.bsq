@@ -38,8 +38,36 @@ __internal entity List<T> {
         return ListOps::s_list_get<T>(this, i);
     }
 
+    method setFront(v: T): List<T> 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_set_front<T>(this, v);
+    }
+
+    method setBack(v: T): List<T> 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_set_back<T>(this, v);
+    }
+
+    method set(i: Nat, v: T): List<T> 
+        requires i < ListOps::s_list_size<T>(this);
+    {
+        return ListOps::s_list_set<T>(this, i, v);
+    }
+
+    method pushFront(v: T): List<T> {
+        return ListOps::s_list_push_front<T>(this, v);
+    }
+
     method pushBack(v: T): List<T> {
         return ListOps::s_list_push_back<T>(this, v);
+    }
+
+    method insert(i: Nat, v: T): List<T> 
+        requires i <= ListOps::s_list_size<T>(this);
+    {
+        return ListOps::s_list_insert<T>(this, i, v);
     }
 
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
