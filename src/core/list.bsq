@@ -105,5 +105,32 @@ __internal entity List<T> {
             return ListOps::s_list_map[recursive?]<T, U>(this, f);
         }
     }
+
+    recursive? method mapIdx<U>(f: recursive? fn(T, Nat) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_mapidx[recursive?]<T, U>(this, f);
+        }
+    }
+
+    recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_filter[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method filterIdx(p: recursive? pred(T, Nat) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_filteridx[recursive?]<T>(this, p);
+        }
+    }
 #endif %% STRIPPED_CORE 
 }

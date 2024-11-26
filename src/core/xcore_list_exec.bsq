@@ -84,6 +84,18 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<U>, List<U>>(Tree<T>::map[recursive?]<U>(l.value, f));
     }
 
+    recursive? function s_list_mapidx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> {
+        return XCore::s_createDirect<Tree<U>, List<U>>(Tree<T>::mapidx[recursive?]<U>(l.value, 0n, f));
+    }
+
+    recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::filter[recursive?](l.value, Tree<T>::emptyTree, p));
+    }
+
+    recursive? function s_list_filteridx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::filteridx[recursive?](l.value, Tree<T>::emptyTree, 0n, p));
+    }
+
     enum Color {
         Red,
         Black,
@@ -618,6 +630,51 @@ namespace ListOps {
                     let nl = Tree<T>::map[recursive?]<U>($t.l, f);
                     let nr = Tree<T>::map[recursive?]<U>($t.r, f);
                     return Node<U>{$t.c, $t.count, nl, nr};
+                }
+            }
+        }
+
+        recursive? function mapidx<U>(t: Tree<T>, cidx: Nat, f: recursive? fn(T, Nat) -> U): Tree<U> {
+            match(t)@ {
+                Leaf<T> => { return Leaf<U>{f[recursive?]($t.v, cidx)}; }
+                | Node<T> => { 
+                    let nl = Tree<T>::mapidx[recursive?]<U>($t.l, cidx, f);
+                    let nr = Tree<T>::mapidx[recursive?]<U>($t.r, cidx + size<T>($t.l), f);
+                    return Node<U>{$t.c, $t.count, nl, nr};
+                }
+            }
+        }
+
+        recursive? function filter(t: Tree<T>, ct: Tree<T>, p: recursive? pred(T) -> Bool): Tree<T> {
+            match(t)@ {
+                Leaf<T> => { 
+                    let tval = p[recursive?]($t.v);
+                    if(!tval) { 
+                        return ct; 
+                    }
+                    else {
+                        return pushBack<T>(ct, $t.v);
+                    }
+                }
+                | Node<T> => { 
+                    return Tree<T>::filter[recursive?]($t.r, Tree<T>::filter[recursive?]($t.l, ct, p), p);
+                }
+            }
+        }
+
+        recursive? function filteridx(t: Tree<T>, ct: Tree<T>, cidx: Nat, p: recursive? pred(T, Nat) -> Bool): Tree<T> {
+            match(t)@ {
+                Leaf<T> => { 
+                    let tval = p[recursive?]($t.v, cidx);
+                    if(!tval) { 
+                        return ct; 
+                    }
+                    else {
+                        return pushBack<T>(ct, $t.v);
+                    }
+                }
+                | Node<T> => {
+                    return Tree<T>::filteridx[recursive?]($t.r, Tree<T>::filteridx[recursive?]($t.l, ct, cidx, p), cidx + size<T>($t.l), p);
                 }
             }
         }
