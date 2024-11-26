@@ -15,43 +15,43 @@ __internal entity List<T> {
     }
 
     method lastIndex(): Nat 
-        requires !ListOps::s_list_empty<T>(this);
+        requires !this.empty();
     {
         return ListOps::s_list_size<T>(this) - 1n;
     }
 
     method front(): T 
-        requires !ListOps::s_list_empty<T>(this);
+        requires !this.empty();
     {
         return ListOps::s_list_front<T>(this);
     }
 
     method back(): T 
-        requires !ListOps::s_list_empty<T>(this);
+        requires !this.empty();
     {
         return ListOps::s_list_back<T>(this);
     }
 
     method get(i: Nat): T 
-        requires i < ListOps::s_list_size<T>(this);
+        requires i < this.size();
     {
         return ListOps::s_list_get<T>(this, i);
     }
 
     method setFront(v: T): List<T> 
-        requires !ListOps::s_list_empty<T>(this);
+        requires !this.empty();
     {
         return ListOps::s_list_set_front<T>(this, v);
     }
 
     method setBack(v: T): List<T> 
-        requires !ListOps::s_list_empty<T>(this);
+        requires !this.empty();
     {
         return ListOps::s_list_set_back<T>(this, v);
     }
 
     method set(i: Nat, v: T): List<T> 
-        requires i < ListOps::s_list_size<T>(this);
+        requires i < this.size();
     {
         return ListOps::s_list_set<T>(this, i, v);
     }
@@ -65,7 +65,7 @@ __internal entity List<T> {
     }
 
     method insert(i: Nat, v: T): List<T> 
-        requires i <= ListOps::s_list_size<T>(this);
+        requires i <= this.size();
     {
         return ListOps::s_list_insert<T>(this, i, v);
     }
