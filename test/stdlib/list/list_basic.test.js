@@ -16,5 +16,14 @@ describe ("List -- immediate and size", () => {
         runMainCode('public function main(): Nat { return List<Int>{1i}.size(); }', [1n, "Nat"]); 
         runMainCode('public function main(): Nat { return List<Int>{1i, 2i, 3i}.size(); }', [3n, "Nat"]); 
     });
+
+    it("should create and lastIndex", function () {
+        runMainCode('public function main(): Nat { return List<Int>{1i}.lastIndex(); }', [0n, "Nat"]); 
+        runMainCode('public function main(): Nat { return List<Int>{1i, 2i, 3i}.lastIndex(); }', [2n, "Nat"]); 
+    });
+
+    it("should error empty lastIndex", function () {
+        runMainCodeError('public function main(): Nat { return List<Int>{}.lastIndex(); }', "Error -- !this.empty() @ list.bsq"); 
+    });
 });
 
