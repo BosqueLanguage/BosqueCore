@@ -85,7 +85,7 @@ entity Board {
 }
 
 %*
-public function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
+function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
     let res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
             if err (state) {
                 return state;
@@ -114,7 +114,7 @@ public function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, S
 }
 *%
 
-%% Temp while we wait on BSQON stuff
+%% While we wait on BSQON stuff we just have a simple main
 public function main(): Bool {
     var bb = Board::initialBoard;
 

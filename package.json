@@ -26,7 +26,8 @@
         "test-typecheck": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",
         "test-runtime": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/runtime/*/*.test.js",
         "test-stdlib": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
-        "test-docs": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/documentation/*/*.test.js"
+        "test-docs": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
+        "test-apps": "node ./build/build_all.js &&  node --test-concurrency=8 --test ./test/apps/*/*.test.js"
     },
     "files": [
         "bin/*"
