@@ -1157,7 +1157,7 @@ class TypeChecker {
 
             if(arg instanceof PositionalArgumentValue) {
                 const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(etype));
-                this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, etype, this.constraints), `Argument ${i} expected type ${etype.emit()}`);
+                this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(argtype, etype, this.constraints), `Argument ${i} expected type ${etype.emit()}`);
             }
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);
@@ -1188,7 +1188,7 @@ class TypeChecker {
                 exp.shuffleinfo = [[0, "value", oktype]];
 
                 const okarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(oktype));
-                this.checkError(exp.sinfo, okarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.emit()}`);
+                this.checkError(exp.sinfo, (okarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(okarg, oktype, this.constraints), `Ok constructor argument is not a subtype of ${oktype.emit()}`);
             }
         }
         else if(cdecl instanceof FailTypeDecl) {
@@ -1200,7 +1200,7 @@ class TypeChecker {
                 exp.shuffleinfo = [[0, "value", errtype]];
 
                 const errarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(errtype));
-                this.checkError(exp.sinfo, errarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.emit()}`);
+                this.checkError(exp.sinfo, (errarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(errarg, errtype, this.constraints), `Err constructor argument is not a subtype of ${errtype.emit()}`);
             }
         }
         else if((cdecl instanceof APIRejectedTypeDecl) || (cdecl instanceof APIFailedTypeDecl) || (cdecl instanceof APIErrorTypeDecl) || (cdecl instanceof APISuccessTypeDecl)) {
@@ -1212,7 +1212,7 @@ class TypeChecker {
                 exp.shuffleinfo = [[0, "value", apitype]];
 
                 const apiarg = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(apitype));
-                this.checkError(exp.sinfo, apiarg instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
+                this.checkError(exp.sinfo, (apiarg instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(apiarg, apitype, this.constraints), `API result constructor argument is not a subtype of ${apitype.emit()}`);
             }
         }
         else if(cdecl instanceof SomeTypeDecl) {
@@ -1224,7 +1224,7 @@ class TypeChecker {
                 exp.shuffleinfo = [[0, "value", ttype]];
 
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ttype));
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
+                this.checkError(exp.sinfo, (etype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
             }
         }
         else if(cdecl instanceof MapEntryTypeDecl) {
@@ -1235,12 +1235,12 @@ class TypeChecker {
                 const ktype = ctype.alltermargs[0];
                 exp.shuffleinfo = [[0, "key", ktype]];
                 const ketype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(ktype));
-                this.checkError(exp.sinfo, ketype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.emit()}`);
+                this.checkError(exp.sinfo, (ketype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.emit()}`);
 
                 const vtype = ctype.alltermargs[1];
                 exp.shuffleinfo = [[1, "val", vtype]];
                 const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
-                this.checkError(exp.sinfo, vetype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.emit()}`);
+                this.checkError(exp.sinfo, (vetype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.emit()}`);
             }
         }
         else {
@@ -1263,7 +1263,7 @@ class TypeChecker {
             const vtype = this.relations.getTypeDeclValueType(ctype);
             if(vtype !== undefined) {
                 const etype = this.checkExpression(env, exp.args.args[0].exp, new SimpleTypeInferContext(vtype));
-                this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !(this.relations.areSameTypes(etype, vtype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
+                this.checkError(exp.sinfo, (etype instanceof ErrorTypeSignature) || !(this.relations.areSameTypes(etype, vtype)), `${etype.emit()} constructor argument is not compatible with ${vtype.emit()}`);
             }
         }
         

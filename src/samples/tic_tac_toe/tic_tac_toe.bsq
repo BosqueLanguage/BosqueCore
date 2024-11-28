@@ -1,0 +1,129 @@
+declare namespace Main;
+
+enum PlayerMark {
+    empty,
+    x,
+    o
+}
+
+entity Board {
+    %%Board is a List (rows) of Lists (of Cells)
+    field rows: List<List<PlayerMark>>;
+
+    invariant test $rows.size() == 3n;
+    invariant test $rows.allOf(pred(row) => row.size() == 3n);
+
+    const initialBoard: Board = Board {
+        List<List<PlayerMark>> {
+            List<PlayerMark> {PlayerMark#empty, PlayerMark#empty, PlayerMark#empty},
+            List<PlayerMark> {PlayerMark#empty, PlayerMark#empty, PlayerMark#empty},
+            List<PlayerMark> {PlayerMark#empty, PlayerMark#empty, PlayerMark#empty}
+        }
+    };
+
+    private method getCell(r: Nat, c: Nat): PlayerMark {
+        return this.rows.get(r).get(c);
+    }
+
+    private method setCell(r: Nat, c: Nat, mark: PlayerMark): Board
+        requires this.isCellEmpty(r, c);
+    {
+        let row = this.rows.get(r);
+        return Board{ this.rows.set(r, row.set(c, mark)) };
+    }
+
+    method isCellEmpty(r: Nat, c: Nat): Bool {
+        return this.getCell(r, c) === PlayerMark#empty;
+    }
+
+    private method check3(r1: Nat, c1: Nat, r2: Nat, c2: Nat, r3: Nat, c3: Nat, player: PlayerMark): Bool {
+        return this.getCell(r1, c1) === player && this.getCell(r2, c2) === player && this.getCell(r3, c3) === player;
+    }
+
+    method checkWinner(player: PlayerMark): Bool {
+        %%check rows across
+        if(\/(this.check3(0n, 0n, 0n, 1n, 0n, 2n, player), this.check3(1n, 0n, 1n, 1n, 1n, 2n, player), this.check3(2n, 0n, 2n, 1n, 2n, 2n, player))) {
+            return true;
+        }
+
+        %%check columns down
+        if(\/(this.check3(0n, 0n, 1n, 0n, 2n, 0n, player), this.check3(0n, 1n, 1n, 1n, 2n, 1n, player), this.check3(0n, 2n, 1n, 2n, 2n, 2n, player))) {
+            return true;
+        }
+
+        %%check diagonals
+        if(\/(this.check3(0n, 0n, 1n, 1n, 2n, 2n, player), this.check3(0n, 2n, 1n, 1n, 2n, 0n, player))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    method checkDraw(): Bool {
+        return this.rows.noneOf(pred(row) => row.someOf(pred(cc) => cc === PlayerMark#empty));
+    }
+
+    method checkAnyWinner(): Option<PlayerMark> {
+        if(this.checkWinner(PlayerMark#x)) {
+            return some(PlayerMark#x);
+        }
+        elif(this.checkWinner(PlayerMark#o)) {
+            return some(PlayerMark#o);
+        }
+        elif(this.checkDraw()) {
+            return some(PlayerMark#empty);
+        }
+        else {
+            return none;
+        }
+    }
+
+    method hasWinner(): Bool {
+        let winner = this.checkAnyWinner();
+        return winner === PlayerMark#x || winner === PlayerMark#o;
+    }
+}
+
+%*
+function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
+    let res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
+            if err (state) {
+                return state;
+            }
+            else {
+                let bb = $@ok;
+                if(bb.hasWinner()) {
+                    return err("A player already won");
+                }
+                elif(!bb.isCellEmpty(move.0, move.1)) {
+                    return err("Cell is already occupied");
+                }
+                else {
+                    return ok(bb.setCellMark(move.0, move.1, move.2));
+                }
+            }
+        });
+
+    if err (res) {
+        return err($);
+    }
+    else {
+        let bb = $@ok;
+        return ok(bb.checkAnyWinner());
+    }
+}
+*%
+
+%% While we wait on BSQON stuff we just have a simple main
+public function main(): Bool {
+    var bb = Board::initialBoard;
+
+    bb = bb.setCell(0n, 0n, PlayerMark#x);
+    bb = bb.setCell(1n, 1n, PlayerMark#o);
+    bb = bb.setCell(0n, 1n, PlayerMark#x);
+    bb = bb.setCell(1n, 0n, PlayerMark#o);
+    bb = bb.setCell(0n, 2n, PlayerMark#x);
+
+    let winner = bb.checkAnyWinner();
+    return winner === PlayerMark#x;
+}

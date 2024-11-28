@@ -186,7 +186,7 @@ const _$fkeq = {
 };
 
 const _$fkeqopt = {
-    "Enum": function(v1, v2) { return v1._$isNone() && _$fkeq.Enum(v1.value, v2); },
+    "Enum": function(v1, v2) { return v1._$isSome() && _$fkeq.Enum(v1.value, v2); },
     "Bool": function(v1, v2) { return v1._$isSome() && _$fkeq.Bool(v1.value, v2); },
     "Int": function(v1, v2) { return v1._$isSome() && _$fkeq.Int(v1.value, v2); },
     "Nat": function(v1, v2) { return v1._$isSome() && _$fkeq.Nat(v1.value, v2); },
