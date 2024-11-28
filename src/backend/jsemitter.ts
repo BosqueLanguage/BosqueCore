@@ -1702,8 +1702,18 @@ class JSEmitter {
         }
     }
 
-    private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: JSCodeFormatter): string {
-        assert(false, "Not implemented -- IfElifElse");
+    private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: JSCodeFormatter): string {  
+        const cffops = stmt.condflow.map((elif, ii) => {
+            const kww = ii === 0 ? "if" : fmt.indent("else if");
+            const test = this.emitExpression(elif.cond, true);
+            const body = this.emitBlockStatement(elif.block, fmt);
+
+            return `${kww}(${test}) ${body}${fmt.nl()}`
+        });
+
+        const eeop = this.emitBlockStatement(stmt.elseflow, fmt);
+
+        return cffops.join("") + fmt.indent("else ") + eeop;
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: JSCodeFormatter): string {
