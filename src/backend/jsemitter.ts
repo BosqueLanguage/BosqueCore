@@ -356,7 +356,7 @@ class JSEmitter {
     }
 
     private emitLiteralFloatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value}.slice(0, -1)`;
+        return exp.value.slice(0, -1);
     }
     
     private emitLiteralDecimalExpression(exp: LiteralSimpleExpression): string {

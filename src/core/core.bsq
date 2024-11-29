@@ -45,6 +45,32 @@ __internal __typedeclable __numeric entity Rational {
 
 %** Primitive float value. **%
 __internal __typedeclable __numeric entity Float {
+#if STRIPPED_CORE
+#else
+    const pi: Float = 3.1415926535897931f;
+    const e: Float = 2.7182818284590451f;
+
+    function min(a: Float, b: Float): Float { return if(a < b) then a else b; }
+    function max(a: Float, b: Float): Float { return if(a > b) then a else b; }
+
+    function pow(x: Float, y: Float): Float {
+        return NumericOps::s_floatPower(x, y);
+    }
+
+    function square(x: Float): Float {
+        return x * x;
+    }
+
+    function cube(x: Float): Float {
+        return x * x * x;
+    }
+
+    function sqrt(x: Float): Float
+        requires x >= 0.0f;
+    {
+        return NumericOps::s_floatSqrt(x);
+    }
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive float decimal value. **%

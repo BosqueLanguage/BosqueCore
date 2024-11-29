@@ -18,7 +18,7 @@ function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
 
         for (let i = 0; i < files.length; ++i) {
             const realpath = path.resolve(files[i]);
-            Status.output(`loading ${realpath}...\n`);
+            Status.output(`    ++ loading ${realpath}...\n`);
 
             code.push({ srcpath: realpath, filename: path.basename(files[i]), contents: fs.readFileSync(realpath).toString() });
         }
@@ -65,8 +65,10 @@ function workflowLoadAllSrc(files: string[]): CodeFileInfo[] | undefined {
 function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
 
-    Status.output(`parsing...\n`);
+    const pstart = Date.now();
+    Status.output(`Parsing...\n`);
     const parseres = Parser.parse(corecode, usercode.src, ["EXEC_LIBS"]);
+    const pend = Date.now();
 
     let tasm: Assembly | undefined = undefined;
     let parseerrors: ParserError[] = [];
@@ -76,9 +78,17 @@ function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserErro
         parseerrors = parseres;
     }
     else {
-        Status.output(`type checking...\n`);
+        Status.output(`    Parsing successful [${(pend - pstart) / 1000}s]\n\n`);
+
+        const tcstart = Date.now();
+        Status.output(`Type checking...\n`);
         tasm = parseres;
         typeerrors = TypeChecker.checkAssembly(tasm);
+        const tcend = Date.now();
+
+        if(typeerrors.length === 0) {
+            Status.output(`    Type checking successful [${(tcend - tcstart) / 1000}s]\n\n`);
+        }
     }
 
     return [tasm, parseerrors, typeerrors];
