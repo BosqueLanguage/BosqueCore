@@ -2007,16 +2007,33 @@ class JSEmitter {
         }
     }
 
+    private emitBuiltinBodyImplementation(body: BuiltinBodyImplementation, fmt: JSCodeFormatter): string {
+        const bname = body.builtin;
+
+        var bop: string = "";
+        if(bname === "s_float_power") {
+            bop = `Math.pow(a, b)`;
+        }
+        else if(bname === "s_float_sqrt") {
+            bop = `Math.sqrt(a)`;
+        }
+        else {
+            assert(false, `Unknown builtin function -- ${bname}`);
+        }
+
+        return `{ return ${bop}; }`;
+    }
+
     private emitBodyImplementation(body: BodyImplementation, initializers: string[], preconds: string[], refsaves: string[], returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
 
-        if(body instanceof BuiltinBodyImplementation) {
-            assert(false, "Not implemented -- emitBuiltinBodyImplementation");
-        }
-        else if(body instanceof SynthesisBodyImplementation) {
+        if(body instanceof SynthesisBodyImplementation) {
             assert(false, "Not implemented -- emitSynthesisBodyImplementation");
+        }
+        else if(body instanceof BuiltinBodyImplementation) {
+            return this.emitBuiltinBodyImplementation(body, fmt);
         }
         else {
             let stmts: string[] = [];
@@ -2049,7 +2066,7 @@ class JSEmitter {
                 fmt.indentPush()
                 const ideclops = initializers.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 fmt.indentPop()
-                const ideclstr = `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}")}`;
+                const ideclstr = initializers.length !== 0 ? `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}\n")}` : "";
 
                 const precondstr = preconds.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join(fmt.nl());

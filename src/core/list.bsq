@@ -132,5 +132,23 @@ __internal entity List<T> {
             return ListOps::s_list_filteridx[recursive?]<T>(this, p);
         }
     }
+
+    recursive? method reduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_reduce[recursive?]<T, U>(this, init, f);
+        }
+    }
+
+    method {when T: numeric} sum(): T {
+        if(ListOps::s_list_empty<T>(this)) {
+            return T::zero;
+        }
+        else {
+            return ListOps::s_list_sum<T>(this);
+        }
+    }
 #endif %% STRIPPED_CORE 
 }
