@@ -100,7 +100,7 @@ namespace ListOps {
         return Tree<T>::reduce[recursive?]<U>(l.value, init, f);
     }
 
-    function s_list_sum<T numeric>(l: List<T>, zero: T): T {
+    function s_list_sum<T: numeric>(l: List<T>, zero: T): T {
         return Tree<T>::sum(l.value, zero);
     }
 

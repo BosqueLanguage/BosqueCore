@@ -1669,7 +1669,7 @@ class Parser {
 
     private parseIdentifierAsTemplateVariable(): string {
         const vv = this.consumeTokenAndGetValue();
-        if(!/[A-Z]/.test(vv)) {
+        if(!/^[A-Z]$/.test(vv)) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid template variable name -- must be an uppercase letter");
         }
 
@@ -2847,26 +2847,47 @@ class Parser {
     private parseTypeScopedFirstExpression(access: {altScope: string[] | undefined, nsScope: NamespaceDeclaration, typeTokens: {tname: string, tterms: TypeSignature[]}[]}): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
-        xxxx;
-
-        const altns = access.altScope !== undefined ? new FullyQualifiedNamespace(access.altScope) : undefined;
-        const resolved = this.normalizeTypeNameChain(sinfo, access.nsScope, access.typeTokens);
-        const tsig = (resolved === undefined)  ? new ErrorTypeSignature(sinfo, access.nsScope.fullnamespace) : new NominalTypeSignature(sinfo, altns, resolved, access.typeTokens.flatMap((te) => te.tterms));
-
-        if(this.testToken(SYM_hash)) {
-            this.consumeToken();
+        if(this.testToken(SYM_hash) || this.testToken(SYM_lbrace)) {
+            const resolved = this.normalizeTypeNameChain(sinfo, access.nsScope, access.typeTokens);
+            if(resolved === undefined) {
+                this.recordErrorGeneral(sinfo, `Could not resolve type '${access.nsScope.fullnamespace.emit()}::${access.typeTokens.map((tt) => tt.tname).join("::")}'`);
+                return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: undefined}, undefined);
+            }
             
-            const ename = this.parseIdentifierAsEnumMember();
-            return new AccessEnumExpression(sinfo, tsig, ename);
-        }
-        else if(this.testToken(SYM_lbrace)) {
-            const isContainer = tsig instanceof NominalTypeSignature && tsig.decl instanceof AbstractCollectionTypeDecl;
-            const isMap = isContainer && (tsig instanceof NominalTypeSignature) && (tsig.decl instanceof MapTypeDecl);
-            const args = this.parseArguments(SYM_lbrace, SYM_rbrace, SYM_coma, false, isContainer, isContainer, isMap, false);
+            const altns = access.altScope !== undefined ? new FullyQualifiedNamespace(access.altScope) : undefined;
+            const tsig = new NominalTypeSignature(sinfo, altns, resolved, access.typeTokens.flatMap((te) => te.tterms));
 
-            return new ConstructorPrimaryExpression(sinfo, tsig, args);
+            if(this.testToken(SYM_hash)) {
+                this.consumeToken();
+            
+                const ename = this.parseIdentifierAsEnumMember();
+                return new AccessEnumExpression(sinfo, tsig, ename);
+            }
+            else {
+                const isContainer = tsig instanceof NominalTypeSignature && tsig.decl instanceof AbstractCollectionTypeDecl;
+                const isMap = isContainer && (tsig instanceof NominalTypeSignature) && (tsig.decl instanceof MapTypeDecl);
+                const args = this.parseArguments(SYM_lbrace, SYM_rbrace, SYM_coma, false, isContainer, isContainer, isMap, false);
+
+                return new ConstructorPrimaryExpression(sinfo, tsig, args);
+            }
         }
         else if(this.testToken(SYM_coloncolon)) {
+            let tsig: TypeSignature | undefined = undefined;
+            if(access.typeTokens.length === 1 && /^[A-Z]$/.test(access.typeTokens[0].tname)) {
+                tsig = new TemplateTypeSignature(sinfo, access.typeTokens[0].tname);
+            }
+            else {
+                const resolved = this.normalizeTypeNameChain(sinfo, access.nsScope, access.typeTokens);
+                if(resolved === undefined) {
+                    this.recordErrorGeneral(sinfo, `Could not resolve type '${access.nsScope.fullnamespace.emit()}::${access.typeTokens.map((tt) => tt.tname).join("::")}'`);
+                    tsig = new ErrorTypeSignature(sinfo, access.nsScope.fullnamespace);
+                }
+                else {
+                    const altns = access.altScope !== undefined ? new FullyQualifiedNamespace(access.altScope) : undefined;
+                    tsig = new NominalTypeSignature(sinfo, altns, resolved, access.typeTokens.flatMap((te) => te.tterms));
+                }
+            }
+
             this.consumeToken();
             const idname = this.parseIdentifierAsStdVariable();
 
@@ -2892,7 +2913,7 @@ class Parser {
         }
         else {
             this.recordErrorGeneral(sinfo, "Unknown type scoped expression");
-            return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: tsig}, undefined);
+            return new ErrorExpression(sinfo, {ns: access.nsScope, typeopt: undefined}, undefined);
         }
     }
 

@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, TemplateTermDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, InvokeTemplateTypeRestriction, TemplateTermDecl } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -27,8 +27,13 @@ class TemplateConstraintScope {
     constructor() {
     }
 
-    pushConstraintScope(constraints: TemplateTermDecl[]) {
+    pushConstraintScope(constraints: TemplateTermDecl[], trestrict: InvokeTemplateTypeRestriction | undefined) {
         this.constraints.push([...constraints]);
+
+        //cases of {where T: U numeric}
+        if(trestrict !== undefined) {
+            this.constraints.push(trestrict.clauses.map((tc) => new TemplateTermDecl(tc.t.name, tc.subtype, tc.extraTags)));
+        }
     }
 
     popConstraintScope() {

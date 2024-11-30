@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, SomeTypeDecl, InvokeParameterDecl, AbstractCollectionTypeDecl, ConstructableTypeDecl, MAX_SAFE_NAT, MIN_SAFE_INT, MAX_SAFE_INT, AbstractEntityTypeDecl, InvokeTemplateTypeRestrictionClause } from "./assembly.js";
 import { CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VarUpdateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VoidRefCallStatement } from "./body.js";
@@ -547,6 +547,28 @@ class TypeChecker {
             }
 
             tmap.set(tdecl.name, targ);
+        }
+
+        if(decl.termRestriction !== undefined) {
+            for(let i = 0; i < decl.termRestriction.clauses.length; ++i) {
+                let cc = decl.termRestriction.clauses[i];
+
+                if(cc.subtype !== undefined && !this.relations.isSubtypeOf(cc.t, cc.subtype, this.constraints)) {
+                    this.reportError(sinfo, `Template argument ${decl.terms[i].name} is not a subtype of subtype restriction`);
+                    return undefined;
+                }
+
+                if(cc.extraTags.length !== 0) {
+                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
+                        this.checkError(decl.sinfo, !this.relations.isKeyType(cc.t, this.constraints), `Template argument ${cc.t.name} is not a keytype`);
+                        return undefined;
+                    }
+                    if(cc.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
+                        this.checkError(decl.sinfo, !this.relations.isNumericType(cc.t, this.constraints), `Template argument ${cc.t.name} is not a numeric type`);
+                        return undefined;
+                    }
+                }
+            }
         }
 
         return TemplateNameMapper.createInitialMapping(tmap);
@@ -1286,15 +1308,14 @@ class TypeChecker {
     }
 
     private checkConstructorPrimaryExpression(env: TypeEnvironment, exp: ConstructorPrimaryExpression): TypeSignature {
-        this.checkTypeSignature(exp.ctype);
+        const tok = this.checkTypeSignature(exp.ctype);
 
-        if(!(exp.ctype instanceof NominalTypeSignature)) {
+        if(!tok) {
             this.reportError(exp.sinfo, `Invalid type for constructor expression -- ${exp.ctype.emit()}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const ctype = exp.ctype as NominalTypeSignature;
-        const decl = ctype.decl;
+        const decl = exp.ctype.decl;
         if(decl instanceof AbstractCollectionTypeDecl) {
             return this.checkCollectionConstructor(env, decl, exp);
         }
@@ -3575,11 +3596,24 @@ class TypeChecker {
         }
     }
 
+    private checkExplicitInvokeDeclTermInfoClause(sinfo: SourceInfo, trclause: InvokeTemplateTypeRestrictionClause) {
+        const tok = this.checkTypeSignature(trclause.t);
+        const subtok = trclause.subtype === undefined || this.checkTypeSignature(trclause.subtype);
+        
+        if(!tok || !subtok) {
+            return;
+        }
+
+        this.checkError(sinfo, trclause.subtype !== undefined && !this.relations.isSubtypeOf(trclause.t, trclause.subtype, this.constraints), `Template argument ${trclause.t.name} is not a subtype of restriction`);
+    }
+
     private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
         this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
 
         if(idecl.termRestriction !== undefined) {
-            assert(false, "Not implemented -- checkExplicitInvokeDeclTermInfo"); //make sure it is well formed
+            for(let i = 0; i < idecl.termRestriction.clauses.length; ++i) {
+                this.checkExplicitInvokeDeclTermInfoClause(idecl.sinfo, idecl.termRestriction.clauses[i]);
+            }
         }
     }
 
@@ -3622,7 +3656,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms);
+                this.constraints.pushConstraintScope(fdecl.terms, fdecl.termRestriction);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl, []);
@@ -3647,7 +3681,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms);
+                this.constraints.pushConstraintScope(fdecl.terms, fdecl.termRestriction);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl, []);
@@ -3670,7 +3704,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(mdecl);
 
             if(mdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(mdecl.terms);
+                this.constraints.pushConstraintScope(mdecl.terms, mdecl.termRestriction);
             }
 
             const thisvinfo = new VarInfo("this", "this", rcvr, [], true, true, mdecl.isThisRef);
@@ -3760,7 +3794,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
+            this.constraints.pushConstraintScope(tdecl.terms, undefined);
         }
 
         this.checkProvides(tdecl.provides);
@@ -3988,7 +4022,7 @@ class TypeChecker {
     private checkResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms);
+        this.constraints.pushConstraintScope(tdecl.terms, undefined);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof OkTypeDecl) {
@@ -4004,7 +4038,7 @@ class TypeChecker {
     private checkAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms);
+        this.constraints.pushConstraintScope(tdecl.terms, undefined);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof APIRejectedTypeDecl) {
@@ -4093,7 +4127,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms);
+            this.constraints.pushConstraintScope(tdecl.terms, undefined);
         }
 
         const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, tdecl.terms.map((tt) => new TemplateTypeSignature(tdecl.sinfo, tt.name)));
