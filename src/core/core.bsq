@@ -25,10 +25,20 @@ __internal __typedeclable __keycomparable entity Bool {
 
 %** Primitive natural number value. **%
 __internal __typedeclable __keycomparable __numeric entity Nat {
+#if STRIPPED_CORE
+#else
+    const zero: Nat = 0n;
+    const one: Nat = 1n;
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive integer value. **%
 __internal __typedeclable __keycomparable __numeric entity Int {
+    #if STRIPPED_CORE
+#else
+    const zero: Int = 0i;
+    const one: Int = 1i;
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive big-integer value. **%
@@ -47,6 +57,9 @@ __internal __typedeclable __numeric entity Rational {
 __internal __typedeclable __numeric entity Float {
 #if STRIPPED_CORE
 #else
+    const zero: Float = 0.0f;
+    const one: Float = 1.0f;
+
     const pi: Float = 3.1415926535897931f;
     const e: Float = 2.7182818284590451f;
 

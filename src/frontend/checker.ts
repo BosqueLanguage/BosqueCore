@@ -353,12 +353,14 @@ class TypeChecker {
 
             if(tdecl.extraTags.length !== 0) {
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                    this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
-                    return false;
+                    if(this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`)) {
+                        return false;
+                    }
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                    this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
-                    return false;
+                    if(this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`)) {
+                        return false;
+                    }
                 }
             }
         }
@@ -518,7 +520,7 @@ class TypeChecker {
         }
     }
 
-    private checkTemplateBindingsOnInvoke(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl): TemplateNameMapper | undefined {
+    private checkTemplateBindingsOnInvoke(sinfo: SourceInfo, env: TypeEnvironment, targs: TypeSignature[], decl: ExplicitInvokeDecl, refinemap: TemplateNameMapper | undefined): TemplateNameMapper | undefined {
         if(targs.length !== decl.terms.length) {
             this.reportError(sinfo, `Invoke ${decl.name} expected ${decl.terms.length} terms but got ${targs.length}`);
             return undefined;
@@ -531,18 +533,20 @@ class TypeChecker {
 
             const trestrict = tdecl.tconstraint;
             if(trestrict !== undefined && !this.relations.isSubtypeOf(targ, trestrict, this.constraints)) {
-                this.reportError(decl.sinfo, `Template argument ${tdecl.name} is not a subtype of constraint type`);
+                this.reportError(sinfo, `Template argument ${tdecl.name} is not a subtype of constraint type`);
                 return undefined;
             }
 
             if(tdecl.extraTags.length !== 0) {
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                    this.checkError(decl.sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
-                    return undefined;
+                    if(this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`)) {
+                        return undefined;
+                    }
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                    this.checkError(decl.sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
-                    return undefined;
+                    if(this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`)) {
+                        return undefined;
+                    }
                 }
             }
 
@@ -550,22 +554,27 @@ class TypeChecker {
         }
 
         if(decl.termRestriction !== undefined) {
+            assert(refinemap !== undefined, "Template mapper must be defined");
+
             for(let i = 0; i < decl.termRestriction.clauses.length; ++i) {
                 let cc = decl.termRestriction.clauses[i];
+                let trefine = refinemap.resolveTemplateMapping(cc.t);
 
-                if(cc.subtype !== undefined && !this.relations.isSubtypeOf(cc.t, cc.subtype, this.constraints)) {
+                if(cc.subtype !== undefined && !this.relations.isSubtypeOf(trefine, cc.subtype, this.constraints)) {
                     this.reportError(sinfo, `Template argument ${decl.terms[i].name} is not a subtype of subtype restriction`);
                     return undefined;
                 }
 
                 if(cc.extraTags.length !== 0) {
                     if(cc.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                        this.checkError(decl.sinfo, !this.relations.isKeyType(cc.t, this.constraints), `Template argument ${cc.t.name} is not a keytype`);
-                        return undefined;
+                        if(this.checkError(sinfo, !this.relations.isKeyType(trefine, this.constraints), `Template argument ${cc.t.name} is not a keytype`)) {
+                            return undefined;
+                        }
                     }
                     if(cc.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                        this.checkError(decl.sinfo, !this.relations.isNumericType(cc.t, this.constraints), `Template argument ${cc.t.name} is not a numeric type`);
-                        return undefined;
+                        if(this.checkError(sinfo, !this.relations.isNumericType(trefine, this.constraints), `Template argument ${cc.t.name} is not a numeric type`)) {
+                            return undefined;
+                        }
                     }
                 }
             }
@@ -593,12 +602,14 @@ class TypeChecker {
 
             if(tdecl.extraTags.length !== 0) {
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.KeyType)) {
-                    this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`);
-                    return undefined;
+                    if(this.checkError(sinfo, !this.relations.isKeyType(targ, this.constraints), `Template argument ${tdecl.name} is not a keytype`)) {
+                        return undefined;
+                    }
                 }
                 if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Numeric)) {
-                    this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`);
-                    return undefined;
+                    if(this.checkError(sinfo, !this.relations.isNumericType(targ, this.constraints), `Template argument ${tdecl.name} is not a numeric type`)) {
+                        return undefined;
+                    }
                 }
             }
 
@@ -1125,6 +1136,17 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        if(this.relations.isNumericType(exp.stype, this.constraints)) {
+            if(exp.name === "zero") {
+                exp.resolvedDeclType = exp.stype;
+                return exp.setType(exp.stype);
+            }
+            if(exp.name === "one") {
+                exp.resolvedDeclType = exp.stype;
+                return exp.setType(exp.stype);
+            }
+        }
+
         const cconst = this.relations.resolveTypeConstant(exp.stype, exp.name, this.constraints);
         if(cconst !== undefined) {
             exp.resolvedDeclType = cconst.typeinfo.tsig;
@@ -1575,7 +1597,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, fdecl);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, fdecl, undefined);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1600,7 +1622,8 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member);
+        const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member, refinemap);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1761,7 +1784,8 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member);
+        const refinemap = this.relations.generateTemplateMappingForTypeDecl(mresolve.typeinfo.tsig);
+        const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member, refinemap);
         if(imapper === undefined) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1887,6 +1911,9 @@ class TypeChecker {
         }
         else if(this.relations.isTypeDeclType(ttype)) {
             return this.relations.getTypeDeclValueType(ttype);
+        }
+        else if(ttype instanceof TemplateTypeSignature) {
+            return ttype;
         }
         else {
             return undefined;
@@ -3604,6 +3631,12 @@ class TypeChecker {
             return;
         }
 
+        const tinscope = this.constraints.resolveConstraint(trclause.t.name);
+        if(tinscope === undefined) {
+            this.checkError(sinfo, true, `Template argument ${trclause.t.name} is not in scope -- so can't refine it`);
+            return;
+        }
+
         this.checkError(sinfo, trclause.subtype !== undefined && !this.relations.isSubtypeOf(trclause.t, trclause.subtype, this.constraints), `Template argument ${trclause.t.name} is not a subtype of restriction`);
     }
 
@@ -3656,7 +3689,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms, fdecl.termRestriction);
+                this.constraints.pushConstraintScope(fdecl.terms, undefined);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl, []);
@@ -3680,7 +3713,7 @@ class TypeChecker {
     
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
-            if(fdecl.terms.length !== 0) {
+            if(fdecl.terms.length !== 0 || fdecl.termRestriction !== undefined) {
                 this.constraints.pushConstraintScope(fdecl.terms, fdecl.termRestriction);
             }
 
@@ -3703,7 +3736,7 @@ class TypeChecker {
     
             this.checkExplicitInvokeDeclTermInfo(mdecl);
 
-            if(mdecl.terms.length !== 0) {
+            if(mdecl.terms.length !== 0 || mdecl.termRestriction !== undefined) {
                 this.constraints.pushConstraintScope(mdecl.terms, mdecl.termRestriction);
             }
 

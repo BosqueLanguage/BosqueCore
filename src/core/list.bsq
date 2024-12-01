@@ -147,7 +147,7 @@ __internal entity List<T> {
             return T::zero;
         }
         else {
-            return ListOps::s_list_sum<T>(this);
+            return ListOps::s_list_sum<T>(this, T::zero);
         }
     }
 #endif %% STRIPPED_CORE 
