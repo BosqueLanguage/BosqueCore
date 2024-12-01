@@ -167,7 +167,7 @@ class Lexer {
         this.utf8StrPos += u8count;
     }
 
-    constructor(iscore: boolean, srcfile: string, input: string, macrodefs: string[]) {
+    constructor(iscore: boolean, srcfile: string, input: string, lstart: number, macrodefs: string[]) {
         this.iscore = iscore;
         this.srcfile = srcfile;
         this.macrodefs = macrodefs;
@@ -182,7 +182,7 @@ class Lexer {
         const [u16count] = this.advancePositionInfo(this.input.length);
         this.jsStrEnd = u16count;
 
-        this.cline = 1;
+        this.cline = lstart + 1;
         this.linestart = 0;
 
         this.tokens = [];
@@ -3209,7 +3209,7 @@ class Parser {
             return this.parseParseAsTypeExpression();
         }
         else if(tk === SYM_lparen) {
-            const closeparen = this.scanMatchingParens(SYM_lbrack, SYM_rbrack);
+            const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
             this.prepStateStackForNested("paren-type", closeparen);
 
             this.consumeToken();
@@ -5831,7 +5831,9 @@ class Parser {
     private static _s_bcre = /^%\*[\s\S]*?\*%/y;
     private static _s_wsre = /^\s+/y;
 
-    private static eatDeadTextAtFileStart(contents: string): string {
+    private static eatDeadTextAtFileStart(contents: string): [string, number] {
+        let cccontents = contents;
+
         while(true) {
             let ocontents = contents;
             let m = Parser._s_lcre.exec(contents);
@@ -5853,14 +5855,15 @@ class Parser {
             }
 
             if(ocontents.length === contents.length) {
-                return contents;
+                const nlcount = [...cccontents.slice(0, cccontents.length - contents.length).matchAll(/\n/g)].length;
+                return [contents, nlcount];
             }
         }
     }
 
     private static _s_nsre = /^(declare[ ]+)?namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
     private static parseCompilationUnit(iscore: boolean, phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
-        const tcontents = Parser.eatDeadTextAtFileStart(contents);
+        const [tcontents, lstart] = Parser.eatDeadTextAtFileStart(contents);
         const nnsm = Parser._s_nsre.exec(tcontents);
         if(nnsm === null) {
             return {ns: "[error]", isdecl: false, errors: [new ParserError(file, SourceInfo.implicitSourceInfo(), "Failed to find namespace declaration")]};
@@ -5877,7 +5880,7 @@ class Parser {
         const ns = nnt;
         assembly.ensureToplevelNamespace(ns);
 
-        const ll = new Lexer(iscore, file, tcontents, macrodefs);
+        const ll = new Lexer(iscore, file, tcontents, lstart, macrodefs);
         const toks = ll.lex();
         
         const pp = new Parser(file, ns, toks, assembly, phase);
