@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper, LambdaTypeSignature } from "./type.js";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper, LambdaTypeSignature, NominalTypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
@@ -465,10 +465,10 @@ class AccessStaticFieldExpression extends Expression {
 }
 
 class AccessEnumExpression extends Expression {
-    readonly stype: TypeSignature;
+    readonly stype: NominalTypeSignature;
     readonly name: string;
 
-    constructor(sinfo: SourceInfo, stype: TypeSignature, name: string) {
+    constructor(sinfo: SourceInfo, stype: NominalTypeSignature, name: string) {
         super(ExpressionTag.AccessEnumExpression, sinfo);
         this.stype = stype;
         this.name = name;
@@ -509,12 +509,12 @@ abstract class ConstructorExpression extends Expression {
 }
 
 class ConstructorPrimaryExpression extends ConstructorExpression {
-    readonly ctype: TypeSignature;
+    readonly ctype: NominalTypeSignature;
 
     elemtype: TypeSignature | undefined = undefined;
     shuffleinfo: [number, string, TypeSignature][] = [];
     
-    constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
+    constructor(sinfo: SourceInfo, ctype: NominalTypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
         this.ctype = ctype;
     }

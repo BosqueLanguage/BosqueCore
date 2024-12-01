@@ -33,3 +33,12 @@ describe ("Exec -- BigInt", () => {
         runMainCode("public function main(): BigInt { return -2I; }", [-2n, "BigInt"]);
     });
 });
+
+describe ("Exec -- Float", () => {
+    it("should exec simple floats", function () {
+        runMainCode("public function main(): Float { return 0.0f; }", [0.0, "Float"]);
+        runMainCode("public function main(): Float { return 1.0f; }", [1.0, "Float"]);
+        runMainCode("public function main(): Float { return -2.0f; }", [-2.0, "Float"]);
+    });
+});
+

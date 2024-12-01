@@ -22,11 +22,11 @@ function getSimpleFilename(fn: string): string {
 }
 
 function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
-    Status.output("generating JS code...\n");
+    Status.output("Generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
     const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, iim);
 
-    Status.output("writing JS code to disk...\n");
+    Status.output("    Writing JS code to disk...\n");
     const nndir = path.normalize(outname);
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
@@ -41,15 +41,15 @@ function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug",
         Status.error("Failed to write output files!\n");
     }
 
-    Status.output(`Code generation successful -- JS emitted to ${nndir}\n`);
+    Status.output(`    Code generation successful -- JS emitted to ${nndir}\n\n`);
 }
 
 function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
-    Status.output("generating Type Info assembly...\n");
+    Status.output("Generating Type Info assembly...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
     const tinfo = BSQONTypeInfoEmitter.emitAssembly(assembly, iim, true);
 
-    Status.output("writing Type Info to disk...\n");
+    Status.output("    Writing Type Info to disk...\n");
     const nndir = path.normalize(outname);
     try {
         const fname = path.join(nndir, "typeinfo.json");
@@ -59,25 +59,26 @@ function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
         Status.error("Failed to write type info file!\n");
     }
 
-    Status.output(`Code generation successful -- Type Info emitted to ${nndir}\n`);
+    Status.output(`    Code generation successful -- Type Info emitted to ${nndir}\n\n`);
 }
 
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
     Status.enable();
 
-    process.stdout.write("loading user sources...\n");
+    const lstart = Date.now();
+    Status.output("Loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     if(usersrcinfo === undefined) {
         Status.error("Failed to load user sources!\n");
         return;
     }
+    const dend = Date.now();
+    Status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
 
     const userpackage = new PackageConfig([], usersrcinfo)
     const [asm, perrors, terrors] = generateASM(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
-        Status.output("Assembly generation successful!\n");
-
         return asm;
     }
     else {
@@ -103,7 +104,7 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 const asm = checkAssembly(fullargs);
 if(asm !== undefined) {
     const outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
-    Status.output(`JS output directory: ${outdir}\n`);
+    Status.output(`-- JS output directory: ${outdir}\n\n`);
 
     fs.rmSync(outdir, { recursive: true, force: true });
     fs.mkdirSync(outdir);

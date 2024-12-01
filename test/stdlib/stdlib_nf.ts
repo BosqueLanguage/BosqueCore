@@ -36,6 +36,15 @@ function fromBSONHelper(val: any, type: string): string {
     else if(type === "Int") {
         return val.toString();
     }
+    else if(type === "BigNat") {
+        return val.toString();
+    }
+    else if(type === "BigInt") {
+        return val.toString();
+    }
+    else if(type === "Float") {
+        return val.toString();
+    }
     else if(type === "String") {
         return val;
     }

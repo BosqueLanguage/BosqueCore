@@ -56,10 +56,23 @@ class TypeCheckerRelations {
         return TemplateNameMapper.createInitialMapping(pmap)
     }
 
+    private resolveTemplateAsNeededForNameLookup(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature | undefined {
+        if (ttype instanceof NominalTypeSignature) {
+            return ttype;
+        }
+        else if(ttype instanceof TemplateTypeSignature) {
+            const tcs = tconstrain.resolveConstraint(ttype.name);
+            return tcs !== undefined ? tcs.tconstraint : undefined
+        }
+        else {
+            return undefined;
+        }
+    }
+
     //get all of the actual concepts + template mappings that are provided by a type
     resolveDirectProvidesDecls(ttype: TypeSignature, tconstrain: TemplateConstraintScope): TypeLookupInfo[] {
-        const tn = ttype instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(ttype.name) : ttype;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(ttype, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return [];
         }
 
@@ -726,8 +739,8 @@ class TypeCheckerRelations {
     }
 
     resolveTypeConstant(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<ConstMemberDecl> | undefined {
-        const tn = tsig instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(tsig.name) : tsig;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
@@ -753,8 +766,8 @@ class TypeCheckerRelations {
     }
 
     resolveTypeField(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MemberFieldDecl> | undefined {
-        const tn = tsig instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(tsig.name) : tsig;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
@@ -840,8 +853,8 @@ class TypeCheckerRelations {
     }
 
     resolveTypeMethodDeclaration(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
-        const tn = tsig instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(tsig.name) : tsig;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
@@ -867,8 +880,8 @@ class TypeCheckerRelations {
     }
 
     resolveTypeMethodImplementation(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<MethodDecl> | undefined {
-        const tn = tsig instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(tsig.name) : tsig;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 
@@ -894,8 +907,8 @@ class TypeCheckerRelations {
     }
 
     resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl> | undefined {
-        const tn = tsig instanceof TemplateTypeSignature ? tconstrain.resolveConstraint(tsig.name) : tsig;
-        if(!(tn instanceof NominalTypeSignature)) {
+        const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
+        if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
         }
 

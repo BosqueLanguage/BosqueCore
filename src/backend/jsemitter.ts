@@ -356,7 +356,7 @@ class JSEmitter {
     }
 
     private emitLiteralFloatExpression(exp: LiteralSimpleExpression): string {
-        return `${exp.value}.slice(0, -1)`;
+        return exp.value.slice(0, -1);
     }
     
     private emitLiteralDecimalExpression(exp: LiteralSimpleExpression): string {
@@ -484,6 +484,7 @@ class JSEmitter {
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
         const ctt = this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature;
+
         const cdecl = ctt.decl.consts.find((c) => c.name === exp.name) as ConstMemberDecl;
         return EmitNameManager.generateAccssorNameForTypeConstant(this.getCurrentNamespace(), ctt, cdecl);
     }
@@ -955,7 +956,7 @@ class JSEmitter {
             }
             else {
                 const eexp = this.emitExpression(exp.exp, true);
-                const cc = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
+                const cc = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.getType()) as NominalTypeSignature)}`;
 
                 const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
                 return `_$negate.${optype}(${eexp}, ${cc})`;
@@ -965,10 +966,11 @@ class JSEmitter {
 
     private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
-        
+        const etype = this.tproc(exp.getType());
+
         let ccepr = "";
-        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
-            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
         }
 
         return `_$add.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
@@ -976,10 +978,11 @@ class JSEmitter {
 
     private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
-        
+        const etype = this.tproc(exp.getType());
+
         let ccepr = "";
-        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
-            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
         }
 
         return `_$sub.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
@@ -987,10 +990,11 @@ class JSEmitter {
     
     private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
-        
+        const etype = this.tproc(exp.getType());
+
         let ccepr = "";
-        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
-            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
         }
 
         return `_$mult.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
@@ -998,10 +1002,11 @@ class JSEmitter {
     
     private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
-        
+        const etype = this.tproc(exp.getType());
+
         let ccepr = "";
-        if(!EmitNameManager.isPrimitiveType(exp.getType())) {
-            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature)}`;
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
         }
 
         return `_$div.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
@@ -2007,16 +2012,33 @@ class JSEmitter {
         }
     }
 
+    private emitBuiltinBodyImplementation(body: BuiltinBodyImplementation, fmt: JSCodeFormatter): string {
+        const bname = body.builtin;
+
+        var bop: string = "";
+        if(bname === "s_float_power") {
+            bop = `Math.pow(a, b)`;
+        }
+        else if(bname === "s_float_sqrt") {
+            bop = `Math.sqrt(a)`;
+        }
+        else {
+            assert(false, `Unknown builtin function -- ${bname}`);
+        }
+
+        return `{ return ${bop}; }`;
+    }
+
     private emitBodyImplementation(body: BodyImplementation, initializers: string[], preconds: string[], refsaves: string[], returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
 
-        if(body instanceof BuiltinBodyImplementation) {
-            assert(false, "Not implemented -- emitBuiltinBodyImplementation");
-        }
-        else if(body instanceof SynthesisBodyImplementation) {
+        if(body instanceof SynthesisBodyImplementation) {
             assert(false, "Not implemented -- emitSynthesisBodyImplementation");
+        }
+        else if(body instanceof BuiltinBodyImplementation) {
+            return this.emitBuiltinBodyImplementation(body, fmt);
         }
         else {
             let stmts: string[] = [];
@@ -2049,7 +2071,7 @@ class JSEmitter {
                 fmt.indentPush()
                 const ideclops = initializers.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 fmt.indentPop()
-                const ideclstr = `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}")}`;
+                const ideclstr = initializers.length !== 0 ? `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}\n")}` : "";
 
                 const precondstr = preconds.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join(fmt.nl());
