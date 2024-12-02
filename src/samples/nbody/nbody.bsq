@@ -235,6 +235,6 @@ public function main(): Float {
 
     return system.energy();
 
-    %%let system_end = Flows::while<[Nat, NBodySystem]>([0n, system_start], pred(state) => state.0 < iters, fn(state) => [state.0 + 1n, state.1.advance(step)]);
+    %%let system_end = Flows::while<(|Nat, NBodySystem|)>((|0n, system_start|), pred(state) => state.0 < iters, fn(state) => [state.0 + 1n, state.1.advance(step)]);
     %%return system_end.1.energy();
 }
