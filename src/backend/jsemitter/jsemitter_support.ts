@@ -1,7 +1,7 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, EnumTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../frontend/assembly.js";
-import { SourceInfo } from "../frontend/build_decls.js";
-import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, EnumTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { SourceInfo } from "../../frontend/build_decls.js";
+import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 
 class JSCodeFormatter {
     private level: number | undefined;

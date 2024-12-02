@@ -3,7 +3,7 @@ import * as path from "path";
 
 import assert from "node:assert";
 
-import { JSEmitter } from '../../src/backend/jsemitter.js';
+import { JSEmitter } from '../../src/backend/jsemitter/jsemitter.js';
 import { generateASM } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
 import { InstantiationPropagator } from '../../src/frontend/closed_terms.js';

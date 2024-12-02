@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../frontend/assembly.js";
-import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../frontend/type.js";
-import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../frontend/instantiation_map.js";
-import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../frontend/body.js";
-import { SourceInfo } from "../frontend/build_decls.js";
+import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
+import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
+import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
+import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../../frontend/body.js";
+import { SourceInfo } from "../../frontend/build_decls.js";
 
 class BSQONTypeInfoEmitter {
     readonly assembly: Assembly;

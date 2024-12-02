@@ -23,7 +23,7 @@ function copyResourceDir(dirfrom, dirto) {
 process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core/", "core/");
-copyResourceDir("backend/runtime/", "jsruntime/");
+copyResourceDir("backend/jsemitter/runtime/", "jsruntime/");
 
 copyResourceDir("samples/", "samples/");
 

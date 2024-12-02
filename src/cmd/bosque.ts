@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { JSEmitter } from "../backend/jsemitter.js";
+import { JSEmitter } from "../backend/jsemitter/jsemitter.js";
 import { Assembly } from "../frontend/assembly.js";
 import { BuildLevel, PackageConfig } from "../frontend/build_decls.js";
 import { InstantiationPropagator } from "../frontend/closed_terms.js";
@@ -8,7 +8,7 @@ import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
 import { fileURLToPath } from 'url';
-import { BSQONTypeInfoEmitter } from "../backend/bsqonemitter.js";
+import { BSQONTypeInfoEmitter } from "../backend/bsqon/bsqonemitter.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
