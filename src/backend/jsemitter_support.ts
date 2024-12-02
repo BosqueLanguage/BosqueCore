@@ -242,6 +242,10 @@ class EmitNameManager {
         }
     }
 
+    static generateTermKeyFromTermTypes(terms: TypeSignature[]): string {
+        return `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+    }
+
     static generateAccssorNameForNamespaceConstant(currentns: NamespaceDeclaration, inns: NamespaceDeclaration, cv: NamespaceConstDecl): string {
         const nns = this.emitNamespaceAccess(currentns, inns);
         const ans = nns !== "" ? (nns + ".") : "";
@@ -257,7 +261,7 @@ class EmitNameManager {
             return `${ans}${fv.name}`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${ans}${fv.name}["${termstr}"]`;
         }
     }
@@ -270,7 +274,7 @@ class EmitNameManager {
             return `${ans}${fv.name}$OnReturn`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${ans}${fv.name}["${termstr}$OnReturn"]`;
         }
     }
@@ -290,7 +294,7 @@ class EmitNameManager {
             return `${tas}.${fv.name}`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${tas}.${fv.name}["${termstr}"]`;
         }
     }
@@ -300,7 +304,7 @@ class EmitNameManager {
             return `${mv.name}`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${mv.name}["${termstr}"]`;
         }
     }
@@ -312,7 +316,7 @@ class EmitNameManager {
             return `${tas}.${mv.name}`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${tas}.${mv.name}["${termstr}"]`;
         }
     }
@@ -324,7 +328,7 @@ class EmitNameManager {
             return `${tas}.${fv.name}$OnReturn`;
         }
         else {
-            const termstr = `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+            const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${tas}["${termstr}$OnReturn"]`;
         }
     }
