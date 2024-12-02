@@ -860,7 +860,7 @@ class JSEmitter {
                 return `${val}.${EmitNameManager.generateAccssorNameForMethodImplicit(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
             }
             else {
-                return `${EmitNameManager.generateAccssorNameForMethodFull(this.getCurrentNamespace(), rtrgt, mdecl, exp.terms.map((tt) => this.tproc(tt)))}.call(${val}${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`;
+                return `${val}.$scall("${exp.name}", "${EmitNameManager.generateTermKeyFromTermTypes(exp.terms.map((tt) => this.tproc(tt)))}"${argl.length !== 0 ? ", " : ""}${argl.join(", ")})`; 
             }
         }
         else {
@@ -2580,6 +2580,10 @@ class JSEmitter {
         return ["[VTABLE -- NOT IMPLEMENTED]"];
     }
 
+    private emitStaticInvokeFunction(): string {
+        return `$scall: { value: function(name, tt, ...args) { return this[name][tt].call(this, ...args); } }`;
+    }
+
     private emitDefaultFieldInitializers(ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[]): string[] {
         //TODO: we need to compute the dependency order here and check for cycles later -- right now just do left to right
 
@@ -2728,6 +2732,7 @@ class JSEmitter {
 
         if(isentity) {
             decls.push(...this.emitStaticInherits(tdecl, rcvr));
+            decls.push(this.emitStaticInvokeFunction());
 
             if(tdecl.hasDynamicInvokes) {
                 decls.push(...this.emitVTable(tdecl, fmt));
@@ -2764,6 +2769,7 @@ class JSEmitter {
 
         if(tdecl instanceof AbstractEntityTypeDecl) {
             decls.push(...this.emitStaticInherits(tdecl, rcvr));
+            decls.push(this.emitStaticInvokeFunction());
 
             if(tdecl.hasDynamicInvokes) {
                 decls.push(...this.emitVTable(tdecl, fmt));
@@ -2877,6 +2883,8 @@ class JSEmitter {
         tests.push(...mdecls.tests);
 
         decls.push(...this.emitStaticInherits(tdecl, rcvr));
+        decls.push(this.emitStaticInvokeFunction());
+
         if(tdecl.hasDynamicInvokes) {
             decls.push(...this.emitVTable(tdecl, fmt));
         }
