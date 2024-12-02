@@ -390,7 +390,7 @@ class InstantiationPropagator {
                         const ff = lops.functions.find((f) => f.name === "s_list_create_empty") as NamespaceFunctionDecl;
                         this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
                     }
-                    else if(args.length <= 4) {
+                    else if(args.length <= 6) {
                         const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`) as NamespaceFunctionDecl;
  
                         this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);

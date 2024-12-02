@@ -523,7 +523,7 @@ class JSEmitter {
         if(argc === 0) {
             return `${coreprefix}ListOps.s_list_create_empty["<${ttype.tkeystr}>"]()`;
         }
-        else if(argc <= 4 && allsimple) {
+        else if(argc <= 6 && allsimple) {
             let opr: string;
 
             if(argc === 1) {
@@ -535,8 +535,14 @@ class JSEmitter {
             else if(argc === 3) {
                 opr = "s_list_create_3";
             }
-            else {
+            else if(argc === 4) {
                 opr = "s_list_create_4";
+            }
+            else if(argc === 5) {
+                opr = "s_list_create_5";
+            }
+            else {
+                opr = "s_list_create_6";
             }
 
             const llargs = args.map((ee) => this.emitExpression(ee.exp, true));

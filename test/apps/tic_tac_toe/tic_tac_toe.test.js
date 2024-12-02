@@ -7,7 +7,7 @@ const x_winner_main = "public function main(): Bool { var bb = Board::initialBoa
 const oob_main = "public function main(): Bool { var bb = Board::initialBoard; bb = bb.setCell(0n, 4n, PlayerMark#x); return true; }";
 const occupied_main = "public function main(): Bool { var bb = Board::initialBoard; bb = bb.setCell(0n, 0n, PlayerMark#x); bb = bb.setCell(0n, 0n, PlayerMark#o); return true; }";
 
-describe ("TicTacToe -- access", () => {
+describe ("TicTacToe", () => {
     it("should winner", function () {
         runMainCode("tic_tac_toe/tic_tac_toe.bsq", no_winner_main, [true, "Bool"]); 
         runMainCode("tic_tac_toe/tic_tac_toe.bsq", x_winner_main, [true, "Bool"]); 
