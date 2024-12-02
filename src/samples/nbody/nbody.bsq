@@ -226,10 +226,14 @@ entity NBodySystem {
 }
 
 public function main(): Float {
-    let system_start = NBodySystem::create();
+    var system = NBodySystem::create();
     let step = 0.01f;
 
-    return system_start.energy();
+    system = system.advance(step);
+    system = system.advance(step);
+    system = system.advance(step);
+
+    return system.energy();
 
     %%let system_end = Flows::while<[Nat, NBodySystem]>([0n, system_start], pred(state) => state.0 < iters, fn(state) => [state.0 + 1n, state.1.advance(step)]);
     %%return system_end.1.energy();
