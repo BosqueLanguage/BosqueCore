@@ -453,7 +453,7 @@ class BSQONTypeInfoEmitter {
     }
 
     private emitElistInfo(): any[] {
-        assert(false, "TODO: handle EList type info in assembly instantiations");
+        return ["TODO -- EList Emit"];
     }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {

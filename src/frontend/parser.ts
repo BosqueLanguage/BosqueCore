@@ -1106,7 +1106,8 @@ class Parser {
                 return this.tokens[this.tokens.length - 1];
             }
             else {
-                return new Token(-1, -1, -1, 0, TokenStrings.Recover, undefined);
+                const tkk = cstate.tokens[cstate.epos];
+                return new Token(tkk.line, tkk.column, tkk.pos, tkk.span, TokenStrings.Recover, undefined);
             }
         }
         else {

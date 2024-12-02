@@ -53,19 +53,82 @@ namespace ListOps {
     }
 
     function s_list_create_1<T>(v1: T): List<T> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create1(v1));
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::createLeaf(v1));
     }
 
     function s_list_create_2<T>(v1: T, v2: T): List<T> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create2(v1, v2));
+        return XCore::s_createDirect<Tree<T>, List<T>>(
+            Tree<T>::createNode(Color#Black, 
+                Tree<T>::createLeaf(v1), 
+                Tree<T>::createLeaf(v2)
+            )
+        );
     }
 
     function s_list_create_3<T>(v1: T, v2: T, v3: T): List<T> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create3(v1, v2, v3));
+        return XCore::s_createDirect<Tree<T>, List<T>>(
+            Tree<T>::createNode(Color#Black, 
+                Tree<T>::createLeaf(v1), 
+                Tree<T>::createNode(Color#Red, 
+                    Tree<T>::createLeaf(v2), 
+                    Tree<T>::createLeaf(v3)
+                )
+            )
+        );
     }
 
     function s_list_create_4<T>(v1: T, v2: T, v3: T, v4: T): List<T> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::create4(v1, v2, v3, v4));
+        return XCore::s_createDirect<Tree<T>, List<T>>(
+            Tree<T>::createNode(Color#Black,
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v1), 
+                    Tree<T>::createLeaf(v2)
+                ),
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v3), 
+                    Tree<T>::createLeaf(v4)
+                ) 
+            )
+        );
+    }
+
+    function s_list_create_5<T>(v1: T, v2: T, v3: T, v4: T, v5: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(
+            Tree<T>::createNode(Color#Black,
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v1), 
+                    Tree<T>::createLeaf(v2)
+                ),
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v3), 
+                    Tree<T>::createNode(Color#Red, 
+                        Tree<T>::createLeaf(v4), 
+                        Tree<T>::createLeaf(v5)
+                    )
+                )
+            )
+        );
+    }
+
+    function s_list_create_6<T>(v1: T, v2: T, v3: T, v4: T, v5: T, v6: T): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(
+            Tree<T>::createNode(Color#Black,
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v1), 
+                    Tree<T>::createNode(Color#Red, 
+                        Tree<T>::createLeaf(v2), 
+                        Tree<T>::createLeaf(v3)
+                    )
+                ),
+                Tree<T>::createNode(Color#Black, 
+                    Tree<T>::createLeaf(v4), 
+                    Tree<T>::createNode(Color#Red, 
+                        Tree<T>::createLeaf(v5), 
+                        Tree<T>::createLeaf(v6)
+                    )
+                )
+            )
+        );
     }
 
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
@@ -565,22 +628,6 @@ namespace ListOps {
 
         function createNode(c: Color, l: Tree<T>, r: Tree<T>): Node<T> {
             return Node<T>{c, size<T>(l) + size<T>(r), l, r};
-        }
-
-        function create1(v1: T): Tree<T> {
-            return Tree<T>::createLeaf(v1);
-        }
-
-        function create2(v1: T, v2: T): Tree<T> {
-            return Tree<T>::createNode(Color#Black, Tree<T>::createLeaf(v1), Tree<T>::createLeaf(v2));
-        }
-
-        function create3(v1: T, v2: T, v3: T): Tree<T> {
-            return Tree<T>::createNode(Color#Black, Tree<T>::createLeaf(v1), Tree<T>::create2(v2, v3));
-        }
-
-        function create4(v1: T, v2: T, v3: T, v4: T): Tree<T> {
-            return Tree<T>::createNode(Color#Black, Tree<T>::create2(v1, v2), Tree<T>::create2(v3, v4));
         }
 
         recursive? function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
