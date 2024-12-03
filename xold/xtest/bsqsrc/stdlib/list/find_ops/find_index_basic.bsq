@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(l: List<Int>): Nat {
-     return l.findIndexOf(pred(x) => x > 1i);
-}

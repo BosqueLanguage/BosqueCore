@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(args: List<Int>): Bool {
-    return args.allOf(fn(x) => x >= 0i);
-}

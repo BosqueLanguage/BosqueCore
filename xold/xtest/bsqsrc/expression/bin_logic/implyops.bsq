@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): [Bool, Bool, Bool] {
-    return [true ==> true, true ==> false, false ==> (1i / 0i == 1i)];
-}

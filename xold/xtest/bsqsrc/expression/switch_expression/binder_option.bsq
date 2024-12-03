@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(y: Option<Nat>): Nat {
-    return switch (y) {
-        nothing => 0n
-        | _  => $.value() + 1n
-    };
-}

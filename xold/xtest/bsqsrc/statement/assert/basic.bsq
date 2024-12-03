@@ -1,7 +1,0 @@
-namespace Main;
-
-export function main(b: Bool): Bool {
-    assert b;
-
-    return b;
-}

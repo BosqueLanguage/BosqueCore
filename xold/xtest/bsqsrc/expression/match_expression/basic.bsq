@@ -1,9 +1,0 @@
-namespace Main;
-
-export function main(x: Int | Nat | None): Int {
-    return match (x) {
-        None  => 0i
-        | Int => 1i
-        | _   => 2i
-    };
-}

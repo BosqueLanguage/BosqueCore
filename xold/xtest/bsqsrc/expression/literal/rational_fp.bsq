@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): [Float, Float, Decimal, Decimal, Rational, Rational, Rational] {
-    return [0.0f, 1.1f, -3.01d, 5.0d, 0/2R, 2/1R, 5/2R];
-}

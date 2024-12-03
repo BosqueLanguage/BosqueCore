@@ -1,7 +1,0 @@
-namespace Main;
-
-typedecl Foo = BigInt;
-
-export function main(i: Int, f: Float, r: Rational, x: Foo): [Bool, Bool, Bool, Bool, Bool] {
-    return [i > 1i, i >= 2i, f >= -3.0f, r > 1/3R, x >= 1I_Foo];
-}

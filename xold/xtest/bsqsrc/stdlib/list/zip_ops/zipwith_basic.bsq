@@ -1,6 +1,0 @@
-namespace Main;
-
-export function main(l1: List<Int>): List<Bool> {
-    let l2 = List<String>{"one", "two", "three"};
-    return ListOp::zipWith<Int, String, Bool>(l1, l2, fn(e1, e2) => e1 > 2i || e2 === "one");
-}

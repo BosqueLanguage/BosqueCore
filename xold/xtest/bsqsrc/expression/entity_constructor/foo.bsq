@@ -1,9 +1,0 @@
-namespace Main;
-
-entity Foo {
-    field f: Int;
-}
-
-export function main(): Foo {
-    return Foo{3i};
-}

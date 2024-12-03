@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(): [Bool, Bool] {
-  return [
-    \/(false, 1i == 1i, 2i == 3i),
-    \/(false, 2i == 3i)
-  ];
-}

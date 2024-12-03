@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(l1: List<Int>): List<Int> {
-    return l1.popBack();
-}

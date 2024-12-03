@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(x: Nat, y: Nat): Nat {
-    return x + y;
-}

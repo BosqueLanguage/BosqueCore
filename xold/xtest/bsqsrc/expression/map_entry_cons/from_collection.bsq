@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): Map<Int, String> {
-    return Map<Int, String>{1i => "one", 2i => "two"};
-}

@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): [None, Nothing, Bool, Bool] {
-    return [none, nothing, true, false];
-}
