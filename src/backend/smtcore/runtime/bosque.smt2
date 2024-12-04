@@ -2,30 +2,38 @@
 ;;Template file for building SMTLIB models of Bosque code
 ;;
 
-;;;;;
-;;Utilities
-;;;;;
-
 ;;
 ;;Error kinds that we propagate in results
 ;;;
 (declare-sort @ErrorKind)
 (declare-const @error-target @ErrorKind)
 (declare-const @error-other @ErrorKind)
-(declare-const @error-validate @ErrorKind)
 
 ;;Make sure they are all different values
-(assert (distinct @error-target @error-other @error-validate))
+(assert (distinct @error-target @error-other))
 
-;;@INT_MIN, @INT_MAX, @NAT_MAX
-;;--V_MIN_MAX--;;
+;;Bounds on input numeric/string/container sizes -- TODO: in the future let solver set these....
+(declare-const _@INPUT_NUMBER_MIN Int) (assert (= _@INPUT_NUMBER_MIN -256))
+(declare-const _@INPUT_NUMBER_MAX Int) (assert (= _@INPUT_NUMBER_MAX 256))
+(declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
+(declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
 
-;;NLA options
-(declare-fun @Nat_mult (Int Int) Int)
-(declare-fun @Nat_div (Int Int) Int)
+;;
+;; Primitive datatypes 
+;;
+(declare-datatype None ((none)))
+;;Bool is Bool
+(define-datatype Nat () Int)
+;;Int is Int
+(define-datatype BigNat () Int)
+(define-datatype BigInt () Int)
+(define-datatype Float () Real)
+(define-datatype CString () String)
+;;String is String
 
-(declare-fun @Int_mult (Int Int) Int)
-(declare-fun @Int_div (Int Int) Int)
+(declare-datatype _@Some ( par ( T )
+    ( (some (value T)) )
+))
 
 ;;
 ;; Primitive datatypes 
@@ -47,6 +55,7 @@
         ;;--OO_CONSTRUCTORS--;;
     )
 )
+
 (declare-datatypes (T) ((@ResultO (mk-pair (first T1) (second T2)))))
 
 (declare-datatype @Term 
@@ -229,32 +238,12 @@
     (ite (= y 0) (@ResultO-mk-err-BigInt @error-other) (@ResultO-mk-ok-BigInt (@BigInt_div x y)))
 )
 
-(define-fun @keyless ((k1 @Term) (k2 @Term)) Bool 
-    (let ((tk1 (@BoxedKey-get-tag (@Term-key k1))) (tk2 (@BoxedKey-get-tag (@Term-key k2))))
-    (ite (not (= tk1 tk2))
-        (@key_type_sort_order tk1 tk2)
-        (let ((vv1 (@BoxedKey-get-value (@Term-key k1))) (vv2 (@BoxedKey-get-value (@Term-key k2))))
-        (ite (and (= vv1 @BoxedKeyValue-mk-None) (= vv2 @BoxedKeyValue-mk-None))
-            false
-            (ite (and ((_ is @BoxedKeyValue-mk-Bool) vv1) ((_ is @BoxedKeyValue-mk-Bool) vv2))
-                (and (not (@BoxedKeyValue-Bool vv1)) (@BoxedKeyValue-Bool vv2))
-                (ite (and ((_ is @BoxedKeyValue-mk-Int) vv1) ((_ is @BoxedKeyValue-mk-Int) vv2))
-                    (< (@BoxedKeyValue-Int vv1) (@BoxedKeyValue-Int vv2))
-                    (ite (and ((_ is @BoxedKeyValue-mk-String) vv1) ((_ is @BoxedKeyValue-mk-String) vv2))
-                        (str.< (@BoxedKeyValue-String vv1) (@BoxedKeyValue-String vv2))
-                        (ite (and ((_ is @BoxedKeyValue-mk-SHAContentHash) vv1) ((_ is @BoxedKeyValue-mk-SHAContentHash) vv2))
-                            (bvult (@BoxedKeyValue-SHAContentHash vv1) (@BoxedKeyValue-SHAContentHash vv2))
-                            (ite (and ((_ is @BoxedKeyValue-mk-IdealDateTime) vv1) ((_ is @BoxedKeyValue-mk-IdealDateTime) vv2))
-                                (@IdealDateTime_less (@BoxedKeyValue-IdealDateTime vv1) (@BoxedKeyValue-IdealDateTime vv2)) 
-                                false
-                            )
-                        )
-                    )
-                )
-            )
-        ))
-    ))
-)
+;;NLA options
+(declare-fun @Nat_mult (Int Int) Int)
+(declare-fun @Nat_div (Int Int) Int)
+
+(declare-fun @Int_mult (Int Int) Int)
+(declare-fun @Int_div (Int Int) Int)
 
 ;;--TYPE_SUBTYPE--;;
 
