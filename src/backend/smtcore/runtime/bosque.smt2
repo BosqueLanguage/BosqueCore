@@ -3,16 +3,12 @@
 ;;
 
 ;;
-;;Error kinds that we propagate in results
-;;;
-(declare-sort @ErrorKind)
-(declare-const @error-target @ErrorKind)
-(declare-const @error-other @ErrorKind)
+;;Error kinds and results that we propagate
+;;
 
-;;Make sure they are all different values
-(assert (distinct @error-target @error-other))
-
+;;
 ;;Bounds on input numeric/string/container sizes -- TODO: in the future let solver set these....
+;;
 (declare-const _@INPUT_NUMBER_MIN Int) (assert (= _@INPUT_NUMBER_MIN -256))
 (declare-const _@INPUT_NUMBER_MAX Int) (assert (= _@INPUT_NUMBER_MAX 256))
 (declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
@@ -31,108 +27,37 @@
 (define-datatype CString () String)
 ;;String is String
 
-(declare-datatype _@Some ( par ( T )
-    ( (some (value T)) )
+
+;;
+;; primitive results 
+;;
+(declare-datatype @ResultTrgt-None ( (@ResultTrgt-None-mk-err) (@ResultTrgt-None-mk-ok (@ResultTrgt-None-value None)) ))
+(define-fun @ResultTrgt-None-is-err ((x @ResultTrgt-None)) Bool (_ is @ResultTrgt-None-mk-err x))
+
+(declare-datatype @ResultOther ( par ( T )
+    ( 
+        (@ResultOther-mk-err)
+        (@ResultOther-mk-ok (@ResultOther-value T)) 
+    )
+))
+
+(declare-datatype @Result ( par ( T )
+    ( 
+        (some (value T)) 
+    )
 ))
 
 ;;
-;; Primitive datatypes 
+;; typedecl datatypes 
 ;;
-(declare-datatypes (
-    (None 0)
-    ; Bool -> Bool
-    ; Int -> Int
-    ; Nat -> Int
-    ; BigInt -> Int
-    ; BigNat -> Int
-    ; Float -> @Float 
-    ; CString -> String
-    ; String -> String
-    ; Regex -> String
-    ;;--OO_DECLS--;;
-    ) (
-        ( (none) ) 
-        ;;--OO_CONSTRUCTORS--;;
-    )
-)
-
-(declare-datatypes (T) ((@ResultO (mk-pair (first T1) (second T2)))))
-
-(declare-datatype @Term 
-    (
-        (@Term-mk-None)
-        (@Term-mk-Bool (@Term-Bool Bool))
-        (@Term-mk-Int (@Term-Int Int))
-        (@Term-mk-Nat (@Term-Nat Int))
-        (@Term-mk-BigInt (@Term-BigInt Int))
-        (@Term-mk-BigNat (@Term-BigNat Int))
-        (@Term-mk-Float (@Term-Float @Float))
-        (@Term-mk-CString (@Term-CString String))
-        (@Term-mk-String (@Term-String String))
-        ;;--TYPE_CONSTRUCTORS--;;
-    )
-)
+(declare-datatype T ())
 
 ;;
-;; ResultO datatypes 
+;; typedecl results 
 ;;
-(declare-datatypes (
-    (@ResultO-None 0)
-    (@ResultO-Nothing 0)
-    (@ResultO-Bool 0)
-    (@ResultO-Int 0)
-    (@ResultO-Nat 0)
-    (@ResultO-BigInt 0)
-    (@ResultO-BigNat 0)
-    (@ResultO-Float 0)
-    (@ResultO-Decimal 0)
-    (@ResultO-Rational 0)
-    (@ResultO-String 0)
-    (@ResultO-ASCIIString 0)
-    (@ResultO-ByteBuffer 0)
-    (@ResultO-DateTime 0)
-    (@ResultO-UTCDateTime 0)
-    (@ResultO-PlainDate 0)
-    (@ResultO-PlainTime 0)
-    (@ResultO-TickTime 0)
-    (@ResultO-LogicalTime 0)
-    (@ResultO-ISOTimeStamp 0)
-    (@ResultO-UUIDv4 0)
-    (@ResultO-UUIDv7 0)
-    (@ResultO-SHAContentHash 0)
-    (@ResultO-Regex 0)
-    ;;--RESULT_O_DECLS--;;
-    ) (
-        ( (@ResultO-mk-ok-None (@ResultO-None-val None)) (@ResultO-mk-err-None (@ResultO-None-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Nothing (@ResultO-Nothing-val Nothing)) (@ResultO-mk-err-Nothing (@ResultO-Nothing-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Bool (@ResultO-Bool-val Bool)) (@ResultO-mk-err-Bool (@ResultO-Bool-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Int (@ResultO-Int-val Int)) (@ResultO-mk-err-Int (@ResultO-Int-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Nat (@ResultO-Nat-val Int)) (@ResultO-mk-err-Nat (@ResultO-Nat-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-BigInt (@ResultO-BigInt-val Int)) (@ResultO-mk-err-BigInt (@ResultO-BigInt-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-BigNat (@ResultO-BigNat-val Int)) (@ResultO-mk-err-BigNat (@ResultO-BigNat-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Float (@ResultO-Float-val @Float)) (@ResultO-mk-err-Float (@ResultO-Float-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Decimal (@ResultO-Decimal-val @Decimal)) (@ResultO-mk-err-Decimal (@ResultO-Decimal-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Rational (@ResultO-Rational-val @Rational)) (@ResultO-mk-err-Rational (@ResultO-Rational-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-String (@ResultO-String-val String)) (@ResultO-mk-err-String (@ResultO-String-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-ASCIIString (@ResultO-ASCIIString-val String)) (@ResultO-mk-err-ASCIIString (@ResultO-ASCIIString-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-ByteBuffer (@ResultO-ByteBuffer-val (Seq (_ BitVec 8)))) (@ResultO-mk-err-ByteBuffer (@ResultO-ByteBuffer-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-DateTime (@ResultO-DateTime-val @IdealDateTime)) (@ResultO-mk-err-DateTime (@ResultO-DateTime-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-UTCDateTime (@ResultO-UTCDateTime-val @IdealDateTime)) (@ResultO-mk-err-UTCDateTime (@ResultO-UTCDateTime-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-PlainDate (@ResultO-PlainDate-val @IdealDateTime)) (@ResultO-mk-err-PlainDate (@ResultO-PlainDate-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-PlainTime (@ResultO-PlainTime-val @IdealDateTime)) (@ResultO-mk-err-PlainTime (@ResultO-PlainTime-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-TickTime (@ResultO-TickTime-val Int)) (@ResultO-mk-err-TickTime (@ResultO-TickTime-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-LogicalTime (@ResultO-LogicalTime-val Int)) (@ResultO-mk-err-LogicalTime (@ResultO-LogicalTime-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-ISOTimeStamp (@ResultO-ISOTimeStamp-val @IdealDateTime)) (@ResultO-mk-err-ISOTimeStamp (@ResultO-ISOTimeStamp-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-UUIDv4 (@ResultO-UUIDv4-val String)) (@ResultO-mk-err-UUIDv4 (@ResultO-UUIDv4-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-UUIDv7 (@ResultO-UUIDv7-val String)) (@ResultO-mk-err-UUIDv7 (@ResultO-UUIDv7-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-SHAContentHash (@ResultO-SHAContentHash-val (_ BitVec 16))) (@ResultO-mk-err-SHAContentHash (@ResultO-SHAContentHash-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-Regex (@ResultO-Regex-val String)) (@ResultO-mk-err-Regex (@ResultO-Regex-err @ErrorKind)) )
-        ;;--RESULT_O_CONSTRUCTORS--;;
-    )
-)
 
 ;;
-;; ResultT datatypes 
+;; Entity datatypes 
 ;;
 (declare-datatypes (
     (@ResultT-None 0)
@@ -186,6 +111,21 @@
         ( (@ResultT-mk-ok-SHAContentHash (@ResultT-SHAContentHash-val (_ BitVec 16))) (@ResultT-mk-err-SHAContentHash (@ResultT-SHAContentHash-err @ErrorKind)) )
         ( (@ResultT-mk-ok-Regex (@ResultT-Regex-val String)) (@ResultT-mk-err-Regex (@ResultT-Regex-err @ErrorKind)) )
         ;;--RESULT_T_CONSTRUCTORS--;;
+    )
+)
+
+(declare-datatype @Term 
+    (
+        (@Term-mk-None)
+        (@Term-mk-Bool (@Term-Bool Bool))
+        (@Term-mk-Nat (@Term-Nat Nat))
+        (@Term-mk-Int (@Term-Int Int))
+        (@Term-mk-BigNat (@Term-BigNat BigNat))
+        (@Term-mk-BigInt (@Term-BigInt BigInt))
+        (@Term-mk-Float (@Term-Float Float))
+        (@Term-mk-CString (@Term-CString CString))
+        (@Term-mk-String (@Term-String String))
+        ;;--TYPE_CONSTRUCTORS--;;
     )
 )
 
@@ -254,3 +194,14 @@
 ;;--FUNCTION_DECLS--;;
 
 ;;--GLOBAL_DEFINITIONS--;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-fun mmap ((a (Seq Int)) (g (Array Int Bool))) (Seq Bool)
+    (seq.map g a))
+
+(declare-const ain (Seq Int))
+(assert (= ain (seq.++ (seq.unit 1) (seq.unit 2))))
+
+(declare-const aout (Seq Bool))
+(assert (= aout (mmap ain (lambda ((x Int)) (ite (> x 1) true false)))))
