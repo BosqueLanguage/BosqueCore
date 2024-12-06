@@ -1,0 +1,29 @@
+namespace IRAssembly;
+
+entity LambdaParameterSignature {
+    field  ptype: TypeSignature;
+    field isRefParam: Bool;
+    field isRestParam: Bool;
+}
+
+datatype TypeSignature using {
+    sinfo: IR::SourceInfo;
+    tkeystr: IR::TypeKey;
+} 
+of 
+VoidTypeSignature { }
+| TemplateTypeSignature { }
+| NominalTypeSignature {
+    decl: IR::TypeKey;
+    alltermargs: List<TypeSignature>;
+}
+| EListTypeSignature {
+    entries: List<TypeSignature>;
+}
+| LambdaTypeSignature {
+    field frecursive: IR::RecursiveAnnotation;
+    field isPredLambda: Bool;
+    field params: List<LambdaParameterSignature>;
+    field resultType: TypeSignature;
+}
+;

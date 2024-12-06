@@ -1,0 +1,320 @@
+declare namespace IRAssembly {
+    using IRDecl as IR;
+}
+
+const MIN_SAFE_INT: Int = -4611686018427387903i;
+const MAX_SAFE_INT: Int = 4611686018427387903i;
+
+//negation and conversion are always safe
+const MAX_SAFE_NAT: Nat = 4611686018427387903n;
+
+datatype TemplateTermDecl using {
+    field tname: IR::TemplateName;
+    field tconstraint: Option<TypeSignature>;
+    field hasKeyTypeConstraint: Bool;
+    field hasNumericTypeConstraint: Bool;
+}
+of
+TypeTemplateTermDecl { }
+| InvokeTemplateTermDecl { }
+;
+
+entity InvokeTemplateTypeRestrictionClause {
+    field t: IR::TemplateName;
+    field subtype: Option<TypeSignature>;
+    field hasKeyTypeConstraint: Bool;
+    field hasNumericTypeConstraint: Bool;
+}
+
+entity InvokeTemplateTypeRestriction {
+    field clauses: List<InvokeTemplateTypeRestrictionClause>;
+}
+
+concept AbstractDecl {
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+}
+
+concept ConditionDecl provides AbstractDecl {
+    field diagnosticTag: Option<CString>;
+}
+
+entity PreConditionDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field issoft: Bool;
+    field exp: Expression;
+}
+
+entity PostConditionDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field issoft: Bool;
+    field exp: Expression;
+}
+
+entity InvariantDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field exp: Expression;
+}
+
+entity ValidateDecl extends ConditionDecl {
+    field exp: Expression;
+}
+
+enum InvokeExampleKind {
+    Synth, %%may be bsqon or literal -- for synthesis
+    Test,  %%may be bsqon or literal -- for testing
+    Spec   %%must be bsqon -- for specifications -- DOCUMENTATION and TESTING
+}
+
+concept InvokeExample provides AbstractDecl {
+    field kind: InvokeExampleKind;
+    field terms: List<TypeSignature>;
+}
+
+datatype InvokeExampleDeclInlineRepr 
+of
+| InvokeExampleDeclBSQON {
+    field args: List<Expression>;
+    field output: Expression;
+}
+| InvokeExampleDeclLiteral {
+    field vval: CString; %%function in/out as BSQON -- (args1, ..., argsN) -> out
+}
+;
+
+entity InvokeExampleDeclInline provides InvokeExample {
+    field entries: List<InvokeExampleDeclInlineRepr>;
+}
+
+entity InvokeExampleDeclFile provides InvokeExample {
+    field filepath: CString; %%may use the ROOT and SRC environment variables
+}
+
+entity DeclarationAttibute {
+    field name: CString;
+    field tags: List<(|TypeSignature, CString|)>; %%tags are enum names
+    field text: Option<String>;
+}
+
+concept AbstractCoreDecl provides AbstractDecl {
+    field attributes: List<DeclarationAttibute>;
+    field name: CString;
+}
+
+entity InvokeParameterDecl {
+    field pname: CString;
+    field ptype: TypeSignature;
+    field defaultval: Option<Expression>;
+    field isRefParam: Bool;
+    field isRestParam: Bool;
+}
+
+concept AbstractInvokeDecl provides AbstractCoreDecl {
+    field irecursive: IR::RecursiveAnnotation;
+
+    field params: List<InvokeParameterDecl>;
+    field resultType: TypeSignature;
+
+    field body: BodyImplementation;
+}
+
+entity LambdaDecl provides AbstractInvokeDecl {
+}
+
+concept ExplicitInvokeDecl provides AbstractInvokeDecl {
+    field terms: List<InvokeTemplateTermDecl>;
+    field termRestriction: Option<InvokeTemplateTypeRestriction>;
+
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<PostConditionDecl>;
+
+    field examples: List<InvokeExample>;
+}
+
+concept FunctionInvokeDecl provides ExplicitInvokeDecl {
+}
+
+
+enum FunctionDeclKindTag {
+    Function,
+    Predicate,
+    ErrTest,
+    ChkTest
+}
+
+entity NamespaceFunctionDecl provides FunctionInvokeDecl {
+    field fkind: FunctionDeclKindTag;
+}
+
+entity TypeFunctionDecl provides FunctionInvokeDecl {
+}
+
+entity MethodDecl provides ExplicitInvokeDecl {
+    field isThisRef: Bool;
+}
+
+entity TaskMethodDecl provides ExplicitInvokeDecl {
+    field isSelfRef: Bool;
+}
+
+entity TaskActionDecl provides ExplicitInvokeDecl {
+}
+
+entity ConstMemberDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
+entity MemberFieldDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field defaultValue: Option<Expression>;
+    field isSpecialAccess: Bool;
+}
+
+enum AdditionalTypeDeclTag {
+    Std,
+    Status,
+    Event
+}
+
+entity SaturatedFieldInfo {
+    field fname: CString;
+    field ftype: TypeSignature;
+    field hasdefault: Bool;
+    field containingtype: NominalTypeSignature
+}
+
+entity SaturatedInvariantInfo {
+    field containingtype: NominalTypeSignature;
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+    field tag: Option<CString>;
+}
+
+concept AbstractNominalTypeDecl provides AbstractDecl {
+    field attributes: List<DeclarationAttibute>;
+    field ns: IR::FullyQualifiedNamespace;
+    field name: CString;
+
+    field terms: List<TypeTemplateTermDecl>;
+    field tprovides: List<TypeSignature>;
+
+    field invariants: List<InvariantDecl>;
+    field validates: List<ValidateDecl>;
+
+    field consts: List<ConstMemberDecl>;
+    field functions: List<TypeFunctionDecl>;
+    field methods: List<MethodDecl>;
+
+    field etag: AdditionalTypeDeclTag;
+
+    field saturatedProvides: List<NominalTypeSignature>;
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+
+    field allInvariants: List<SaturatedInvariantInfo>;
+    field allValidates: List<SaturatedInvariantInfo>;
+
+    field hasDynamicInvokes: Bool;
+}
+
+concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
+}
+
+entity EnumTypeDecl provides AbstractEntityTypeDecl {
+    field members: List<CString>;
+}
+
+entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: TypeSignature;
+    field optofexp: Option<Expression>;
+}
+
+concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
+}
+
+entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
+}
+
+datatype ConstructableTypeDecl provides InternalEntityTypeDecl 
+of
+OkTypeDecl { }
+| FailTypeDecl { }
+| APIRejectedTypeDecl { }
+| APIFailedTypeDecl { }
+| APIErrorTypeDecl { }
+| APISuccessTypeDecl { }
+| SomeTypeDecl { }
+| MapEntryTypeDecl { }
+;
+
+datatype AbstractCollectionTypeDecl provides InternalEntityTypeDecl 
+of
+ListTypeDecl { }
+| StackTypeDecl { }
+| QueueTypeDecl { }
+| SetTypeDecl { }
+| MapTypeDecl { }
+;
+
+entity EventListTypeDecl provides InternalEntityTypeDecl {
+}
+
+entity EntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+}
+
+concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
+}
+
+datatype InternalConceptTypeDecl provides AbstractConceptTypeDecl 
+of
+OptionTypeDecl { }
+| ResultTypeDecl { 
+    field okType: Option<OkTypeDecl>;
+    field failType: Option<FailTypeDecl>;
+}
+| APIResultTypeDecl { 
+    field errorType: Option<APIErrorTypeDecl>;
+    field failedType: Option<APIFailedTypeDecl>;
+    field rejectedType: Option<APIRejectedTypeDecl>;
+    field successType: Option<APISuccessTypeDecl>;
+}
+;
+
+entity ConceptTypeDecl provides AbstractConceptTypeDecl {
+    field fields: List<MemberFieldDecl[]>;
+}
+
+entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field parentTypeDecl: NominalTypeSignature;
+}
+
+entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field associatedMemberEntityDecls: List<DatatypeMemberEntityTypeDecl>;
+}
+
+%%
+%% TODO: missing task related stuff
+%%
+
+entity NamespaceConstDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
+entity NamespaceDeclaration {
+    field name: CString; 
+    field fullnamespace: FullyQualifiedNamespace;
+
+    field subns: List<NamespaceDeclaration>;
+
+    field consts: List<NamespaceConstDecl>;
+    field functions: List<NamespaceFunctionDecl>;
+    field typedecls: List<AbstractNominalTypeDecl>;
+}
+
+entity Assembly {
+    field toplevelNamespaces: List<NamespaceDeclaration>;
+}

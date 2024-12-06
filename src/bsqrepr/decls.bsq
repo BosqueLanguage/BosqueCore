@@ -1,0 +1,44 @@
+declare namespace IRDecl;
+
+const c_namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+type NamespaceComponent = CString of c_namespaceComponentRE;
+type FullyQualifiedNamespaceKey = CString of /(${c_namespaceComponentRE}'::')*${c_namespaceComponentRE}?/c; %%Core is implicit here
+
+entity FullyQualifiedNamespace {
+    field key: FullyQualifiedNamespaceKey;
+    field scopes: List<NamespaceComponent>; %%Core is explicit here
+}
+
+const c_templateTypeKeyRE: CRegex = /[A-Z]/c;
+const c_nominalTypeKeyBaseRE: CRegex = /(${c_namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+/c; %%Core is implicit here
+const c_specialScopedTypeRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const c_nominalTypeKeyRE: CRegex = /(${c_nominalTypeKeyBaseRE}|${c_specialScopedTypeBaseRE})('<'.+'>')?/c; %%a bit rough but helps prevent mistakes
+const c_elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
+
+const c_baseTypeKeyRE: CRegex = /${c_templateTypeKeyRE}|${c_specialScopedTypeRE}|${c_nominalTypeKeyRE}|${c_elistTypeKeyRE}/c;
+const c_lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${c_baseTypeKeyRE}/c;
+const c_typeKeyRE: CRegex = /${c_baseTypeKeyRE}|${c_lambdaTypeKeyRE}/c; 
+
+type TemplateName = CString of c_templateTypeKeyRE;
+type TypeKey = CString of c_typeKeyRE;
+
+entity SourceInfo {
+    field line: number;
+    field column: number;
+    field pos: number;
+    field span: number;
+}
+
+enum BuildLevel {
+    BuildSpec,
+    BuildDebug,
+    BuildTest,
+    BuildRrelease,
+    BuildSafety
+}
+
+enum RecursiveAnnotation {
+    RecursiveTag,
+    RecursiveNoTag,
+    RecursiveCondTag
+}

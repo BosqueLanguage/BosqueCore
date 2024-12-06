@@ -1,0 +1,3 @@
+declare namespace SMTAssembly {
+    using IRDecl as IR;
+}
