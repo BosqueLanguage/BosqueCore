@@ -178,10 +178,10 @@ enum AdditionalTypeDeclTag {
 }
 
 entity SaturatedFieldInfo {
+    field containingtype: NominalTypeSignature;
     field fname: CString;
     field ftype: TypeSignature;
     field hasdefault: Bool;
-    field containingtype: NominalTypeSignature
 }
 
 entity SaturatedInvariantInfo {

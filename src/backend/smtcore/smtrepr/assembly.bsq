@@ -1,3 +1,151 @@
 declare namespace SMTAssembly {
     using IRDecl as IR;
 }
+
+concept AbstractDecl {
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+}
+
+concept ConditionDecl provides AbstractDecl {
+    field diagnosticTag: Option<CString>;
+}
+
+entity PreConditionDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field issoft: Bool;
+    field exp: Expression;
+}
+
+entity PostConditionDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field issoft: Bool;
+    field exp: Expression;
+}
+
+entity InvariantDecl provides ConditionDecl {
+    field level: IR::BuildLevel;
+    field exp: Expression;
+}
+
+entity ValidateDecl extends ConditionDecl {
+    field exp: Expression;
+}
+
+entity DeclarationAttibute {
+    field name: CString;
+    field tags: List<(|IR::TypeKey, CString|)>; %%tags are enum names
+    field text: Option<String>;
+}
+
+concept AbstractCoreDecl provides AbstractDecl {
+    field attributes: List<DeclarationAttibute>;
+    field name: CString;
+}
+
+entity InvokeParameterDecl {
+    field pname: CString;
+    field ptype: IR::TypeKey;
+    field defaultval: Option<Expression>;
+    field isRefParam: Bool;
+    field isRestParam: Bool;
+}
+
+concept AbstractInvokeDecl provides AbstractCoreDecl {
+    field irecursive: IR::RecursiveAnnotation;
+
+    field params: List<InvokeParameterDecl>;
+    field resultType: IR::TypeKey;
+
+    field body: BodyImplementation;
+}
+
+entity LambdaDecl provides AbstractInvokeDecl {
+}
+
+concept ExplicitInvokeDecl provides AbstractInvokeDecl {
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<PostConditionDecl>;
+}
+
+concept FunctionInvokeDecl provides ExplicitInvokeDecl {
+}
+
+enum FunctionDeclKindTag {
+    Function,
+    Predicate
+}
+
+entity NamespaceFunctionDecl provides FunctionInvokeDecl {
+    field fkind: FunctionDeclKindTag;
+}
+
+entity TypeFunctionDecl provides FunctionInvokeDecl {
+}
+
+entity MethodDecl provides ExplicitInvokeDecl {
+    field isThisRef: Bool;
+}
+
+entity TaskMethodDecl provides ExplicitInvokeDecl {
+    field isSelfRef: Bool;
+}
+
+entity TaskActionDecl provides ExplicitInvokeDecl {
+}
+
+entity ConstMemberDecl provides AbstractCoreDecl {
+    field declaredType: IR::TypeKey;
+    field value: Expression;
+}
+
+entity MemberFieldDecl provides AbstractCoreDecl {
+    field declaredType: IR::TypeKey;
+    field defaultValue: Option<Expression>;
+    field isSpecialAccess: Bool;
+}
+
+enum AdditionalTypeDeclTag {
+    Std,
+    Status,
+    Event
+}
+
+entity SaturatedFieldInfo {
+    field containingtype: IR::TypeKey;
+    field fname: CString;
+    field ftype: TypeSignature;
+    field hasdefault: Bool;
+}
+
+entity SaturatedInvariantInfo {
+    field containingtype: IR::TypeKey;
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+    field tag: Option<CString>;
+}
+
+concept AbstractNominalTypeDecl provides AbstractDecl {
+    field attributes: List<DeclarationAttibute>;
+    field ns: IR::FullyQualifiedNamespace;
+    field name: CString;
+
+    field tprovides: List<IR::TypeKey>;
+
+    field invariants: List<InvariantDecl>;
+    field validates: List<ValidateDecl>;
+
+    field consts: List<ConstMemberDecl>;
+    field functions: List<TypeFunctionDecl>;
+    field methods: List<MethodDecl>;
+
+    field etag: AdditionalTypeDeclTag;
+
+    field saturatedProvides: List<IR::TypeKey>;
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+
+    field allInvariants: List<SaturatedInvariantInfo>;
+    field allValidates: List<SaturatedInvariantInfo>;
+
+    field hasDynamicInvokes: Bool;
+}

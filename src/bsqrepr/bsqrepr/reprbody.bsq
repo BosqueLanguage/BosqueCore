@@ -37,537 +37,156 @@ entity ArgumentList {
 
 concept Expression {
     field sinfo: IR::SourceInfo;
-
-    private etype: TypeSignature | undefined = undefined;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo) {
-        this.tag = tag;
-        this.sinfo = sinfo;
-    }
-
-    getType(): TypeSignature {
-        assert(this.etype !== undefined, "Type signature not set");
-        return this.etype as TypeSignature;
-    }
-
-    setType(etype: TypeSignature): TypeSignature {
-        this.etype = etype;
-        return etype;
-    }
-
-    isLiteralExpression(): boolean {
-        return false;
-    }
-
-    abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
+    field etype: TypeSignature;
 }
 
-class ErrorExpression extends Expression {
-    readonly staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature | undefined} | undefined;
-    readonly dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined;
-
-    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature | undefined} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
-        super(ExpressionTag.ErrorExpression, sinfo);
-
-        this.staticPrefix = staticPrefix;
-        this.dotaccess = dotaccess;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return "[!ERROR_EXP!]";
-    }
+entity LiteralNoneExpression provides Expression {
 }
 
-//This just holds a constant expression that can be evaluated without any arguments but not a subtype of Expression so we can distinguish as types
-class LiteralExpressionValue {
-    readonly exp: Expression;
-
-    constructor(exp: Expression) {
-        this.exp = exp;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.exp.emit(toplevel, fmt);
-    }
+entity LiteralSimpleExpression provides Expression {
+    field value: CString;
 }
 
-//This just holds a constant expression (for use where we expect a constant -- or restricted constant expression) but not a subtype of Expression so we can distinguish as types
-class ConstantExpressionValue {
-    readonly exp: Expression;
-
-    constructor(exp: Expression) {
-        this.exp = exp;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.exp.emit(toplevel, fmt);
-    }
+entity LiteralCStringExpression provides Expression {
+    field value: CString;
 }
 
-class LiteralNoneExpression extends Expression {
-    constructor(tag: ExpressionTag, sinfo: SourceInfo) {
-        super(tag, sinfo);
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return "none";
-    }
+entity LiteralStringExpression provides Expression {
+    field value: String;
 }
 
-class LiteralSimpleExpression extends Expression {
-    readonly value: string;
-    resolvedValue: any = undefined; //e.g. for string types after unescaping
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
-        super(tag, sinfo);
-        this.value = value;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
-    }
+entity LiteralCRegexExpression provides Expression {
+    field value: CString;
 }
 
-class LiteralRegexExpression extends Expression {
-    readonly value: string;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
-        super(tag, sinfo);
-        this.value = value;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
-    }
+entity LiteralRegexExpression provides Expression {
+    field value: String;
 }
 
-class LiteralTypeDeclValueExpression extends Expression {
-    readonly value: Expression;
-    readonly constype: TypeSignature;
-    
-    optResolvedString: string | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
-        this.value = value;
-        this.constype = constype;
-    }
-
-    override isLiteralExpression(): boolean {
-        return true;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}<${this.constype.emit()}>`;
-    }
+entity LiteralTypeDeclValueExpression provides Expression {
+    field value: Expression;
+    field constype: TypeSignature;
 }
 
-class AccessEnvValueExpression extends Expression {
-    readonly keyname: string;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, keyname: string) {
-        super(tag, sinfo);
-        this.keyname = keyname;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `env${this.tag === ExpressionTag.HasEnvValueExpression ? "?" : ""}[${this.keyname}]`;
-    }
+entity AccessNamespaceConstantExpression provides Expression {
+    field ns: FullyQualifiedNamespace;
+    field name: string;
 }
 
-class TaskAccessInfoExpression extends Expression {
-    readonly name: string;
+entity AccessStaticFieldExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field name: string;
 
-    constructor(sinfo: SourceInfo, name: string) {
-        super(ExpressionTag.TaskAccessInfoExpression, sinfo);
-        this.name = name;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::${this.name}()`;
-    }
+    field resolvedDeclType: TypeSignature;
 }
 
-class AccessNamespaceConstantExpression extends Expression {
-    readonly ns: FullyQualifiedNamespace;
-    readonly isImplicitNS: boolean;
-    readonly name: string;
-
-    constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string) {
-        super(ExpressionTag.AccessNamespaceConstantExpression, sinfo);
-        this.ns = ns;
-        this.isImplicitNS = isImplicitNS;
-        this.name = name;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${!this.isImplicitNS ? (this.ns.emit() + "::") : ""}${this.name}`;
-    }
+entity AccessEnumExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field name: string;
 }
 
-class AccessStaticFieldExpression extends Expression {
-    readonly stype: TypeSignature;
-    readonly name: string;
-
-    resolvedDeclType: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, stype: TypeSignature, name: string) {
-        super(ExpressionTag.AccessStaticFieldExpression, sinfo);
-        this.stype = stype;
-        this.name = name;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.stype.emit()}::${this.name}`;
-    }
-}
-
-class AccessEnumExpression extends Expression {
-    readonly stype: NominalTypeSignature;
-    readonly name: string;
-
-    constructor(sinfo: SourceInfo, stype: NominalTypeSignature, name: string) {
-        super(ExpressionTag.AccessEnumExpression, sinfo);
-        this.stype = stype;
-        this.name = name;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.stype.emit()}#${this.name}`;
-    }
-}
-
-class AccessVariableExpression extends Expression {
+entity AccessVariableExpression provides Expression {
     readonly srcname: string; //the name in the source code
 
     specialaccess: { ttype: TypeSignature, specialaccess: string | undefined }[] = []; //field name to access to a special re-typed variable (specifically extracting an option or result value)
     layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
     scopename: string; //maybe a different name that gets used for shadowing binders
     isCaptured: boolean;
-
-    constructor(sinfo: SourceInfo, srcname: string) {
-        super(ExpressionTag.AccessVariableExpression, sinfo);
-        this.srcname = srcname;
-        this.scopename = srcname;
-        this.isCaptured = false;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.srcname + (this.scopename !== this.srcname ? `%*${this.scopename}*%` : "");
-    }
 }
 
-abstract class ConstructorExpression extends Expression {
-    readonly args: ArgumentList;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, args: ArgumentList) {
-        super(tag, sinfo);
-        this.args = args;
-    }
+concept ConstructorExpression provides Expression {
+    field args: ArgumentList;
 }
 
-class ConstructorPrimaryExpression extends ConstructorExpression {
-    readonly ctype: NominalTypeSignature;
+entity ConstructorPrimaryExpression provides ConstructorExpression {
+    field ctype: NominalTypeSignature;
 
     elemtype: TypeSignature | undefined = undefined;
-    shuffleinfo: [number, string, TypeSignature][] = [];
+    shuffleinfo: List<(|Int, CString, TypeSignature|)>
+}
+
+entity ConstructorEListExpression provides ConstructorExpression {
+}
+
+entity ConstructorLambdaExpression provides Expression {
+    field invoke: LambdaDecl;
+}
+
+entity LetExpression provides Expression {
+    field decls: List<(|CString, TypeSignature, Expression|)>;
+    field body: Expression;
+}
+
+entity SpecialConstructorExpression provides Expression {
+    field constype: TypeSignature; %%some, ok, or fail
+    field arg: Expression;
+}
+
+entity SpecialConverterExpression provides Expression {
+    field convtype: TypeSignature; %%option or result
+    field readonly arg: Expression;
+}
+
+entity LambdaInvokeExpression provides Expression {
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field isCapturedLambda: Bool;
+    field lambda: LambdaTypeSignature;
+    field arginfo: List<TypeSignature>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
+entity CallNamespaceFunctionExpression provides Expression {
+    field ns: FullyQualifiedNamespace;
+
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field terms: List<TypeSignature>;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
+entity CallTypeFunctionExpression provides Expression {
+    field ttype: TypeSignature;
+    field name: string;
+    field rec: RecursiveAnnotation;
+    field terms: TypeSignature[];
+    field args: ArgumentList;
+
+    field resolvedDeclType: TypeSignature | undefined = undefined;
+    field resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
     
-    constructor(sinfo: SourceInfo, ctype: NominalTypeSignature, args: ArgumentList) {
-        super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
-        this.ctype = ctype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ctype.emit()}${this.args.emit(fmt, "{", "}")}`;
-    }
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
 }
 
-class ConstructorEListExpression extends ConstructorExpression {
-    constructor(sinfo: SourceInfo, args: ArgumentList) {
-        super(ExpressionTag.ConstructorEListExpression, sinfo, args);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.args.emit(fmt, "(|", "|)");
-    }
+entity CallRefThisExpression provides Expression {
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field terms: List<TypeSignature>;
+    field args: ArgumentList;
 }
 
-class ConstructorLambdaExpression extends Expression {
-    readonly invoke: LambdaDecl;
-
-    constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
-        super(ExpressionTag.ConstructorLambdaExpression, sinfo);
-        this.invoke = invoke;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.invoke.emit(fmt);
-    }
+entity CallRefSelfExpression provides Expression {
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field terms: List<TypeSignature>;
+    field args: ArgumentList;
 }
 
-class LetExpression extends Expression {
-    readonly decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[];
-    readonly body: Expression;
-
-    constructor(sinfo: SourceInfo, decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[], body: Expression) {
-        super(ExpressionTag.LetExpression, sinfo);
-        this.decls = decls;
-        this.body = body;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
-        return `(let ${dds} in ${this.body.emit(true, fmt)})`;
-    }
+entity LogicActionAndExpression provides Expression {
+    field args: List<Expression>;
 }
 
-class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some";
-    readonly arg: Expression;
-
-    constype: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
-        super(ExpressionTag.SpecialConstructorExpression, sinfo);
-        this.rop = rop;
-        this.arg = arg;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
-    }
-}
-
-class SpecialConverterExpression extends Expression {
-    readonly rop: "option" | "result";
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, rop: "option" | "result", arg: Expression) {
-        super(ExpressionTag.SpecialConverterExpression, sinfo);
-        this.rop = rop;
-        this.arg = arg;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
-    }
-}
-
-class LambdaInvokeExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly args: ArgumentList;
-
-    isCapturedLambda: boolean = false;
-    lambda: LambdaTypeSignature | undefined = undefined;
-    arginfo: TypeSignature[] = [];
-    resttype: TypeSignature | undefined = undefined;
-    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.LambdaInvokeExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        return `${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class CallNamespaceFunctionExpression extends Expression {
-    readonly ns: FullyQualifiedNamespace;
-    readonly isImplicitNS: boolean;
-
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
-    resttype: TypeSignature | undefined = undefined;
-    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, isImplicitNS: boolean, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
-        this.ns = ns;
-        this.isImplicitNS = isImplicitNS;
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `${!this.isImplicitNS ? (this.ns.emit() + "::") : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class CallTypeFunctionExpression extends Expression {
-    readonly ttype: TypeSignature;
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    resolvedDeclType: TypeSignature | undefined = undefined;
-    resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
-    resttype: TypeSignature | undefined = undefined;
-    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallTypeFunctionExpression, sinfo);
-        this.ttype = ttype;
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class CallRefThisExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefThisExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class CallRefSelfExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefSelfExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class CallTaskActionExpression extends Expression {
-    readonly name: string;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
-        super(ExpressionTag.CallTaskActionExpression, sinfo);
-        this.name = name;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `do self.${this.name}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class LogicActionAndExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionAndExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `/\\(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
-    }
-}
-
-class LogicActionOrExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionOrExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `\\/(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
-    }
+entity LogicActionOrExpression provides Expression {
+    field args: List<Expression>;
 }
 
 class ParseAsTypeExpression extends Expression {
