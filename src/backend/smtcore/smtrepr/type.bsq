@@ -1,0 +1,16 @@
+namespace IRAssembly;
+
+datatype TypeSignature using {
+    field sinfo: IR::SourceInfo;
+    field tkeystr: IR::TypeKey;
+} 
+of 
+NominalTypeSignature { }
+| EListTypeSignature {
+    entries: List<TypeSignature>;
+}
+| LambdaTypeSignature {
+    field params: List<TypeSignature>;
+    field resultType: TypeSignature;
+}
+;

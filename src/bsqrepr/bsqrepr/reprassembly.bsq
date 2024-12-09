@@ -2,34 +2,6 @@ declare namespace IRAssembly {
     using IRDecl as IR;
 }
 
-const MIN_SAFE_INT: Int = -4611686018427387903i;
-const MAX_SAFE_INT: Int = 4611686018427387903i;
-
-//negation and conversion are always safe
-const MAX_SAFE_NAT: Nat = 4611686018427387903n;
-
-datatype TemplateTermDecl using {
-    field tname: IR::TemplateName;
-    field tconstraint: Option<TypeSignature>;
-    field hasKeyTypeConstraint: Bool;
-    field hasNumericTypeConstraint: Bool;
-}
-of
-TypeTemplateTermDecl { }
-| InvokeTemplateTermDecl { }
-;
-
-entity InvokeTemplateTypeRestrictionClause {
-    field t: IR::TemplateName;
-    field subtype: Option<TypeSignature>;
-    field hasKeyTypeConstraint: Bool;
-    field hasNumericTypeConstraint: Bool;
-}
-
-entity InvokeTemplateTypeRestriction {
-    field clauses: List<InvokeTemplateTypeRestrictionClause>;
-}
-
 concept AbstractDecl {
     field file: CString;
     field sinfo: IR::SourceInfo;
@@ -58,36 +30,6 @@ entity InvariantDecl provides ConditionDecl {
 
 entity ValidateDecl extends ConditionDecl {
     field exp: Expression;
-}
-
-enum InvokeExampleKind {
-    Synth, %%may be bsqon or literal -- for synthesis
-    Test,  %%may be bsqon or literal -- for testing
-    Spec   %%must be bsqon -- for specifications -- DOCUMENTATION and TESTING
-}
-
-concept InvokeExample provides AbstractDecl {
-    field kind: InvokeExampleKind;
-    field terms: List<TypeSignature>;
-}
-
-datatype InvokeExampleDeclInlineRepr 
-of
-| InvokeExampleDeclBSQON {
-    field args: List<Expression>;
-    field output: Expression;
-}
-| InvokeExampleDeclLiteral {
-    field vval: CString; %%function in/out as BSQON -- (args1, ..., argsN) -> out
-}
-;
-
-entity InvokeExampleDeclInline provides InvokeExample {
-    field entries: List<InvokeExampleDeclInlineRepr>;
-}
-
-entity InvokeExampleDeclFile provides InvokeExample {
-    field filepath: CString; %%may use the ROOT and SRC environment variables
 }
 
 entity DeclarationAttibute {
@@ -134,12 +76,12 @@ concept ExplicitInvokeDecl provides AbstractInvokeDecl {
 concept FunctionInvokeDecl provides ExplicitInvokeDecl {
 }
 
-
 enum FunctionDeclKindTag {
     Function,
     Predicate,
     ErrTest,
-    ChkTest
+    ChkTest,
+    Example
 }
 
 entity NamespaceFunctionDecl provides FunctionInvokeDecl {
@@ -193,11 +135,7 @@ entity SaturatedInvariantInfo {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field attributes: List<DeclarationAttibute>;
-    field ns: IR::FullyQualifiedNamespace;
-    field name: CString;
-
-    field terms: List<TypeTemplateTermDecl>;
-    field tprovides: List<TypeSignature>;
+    field tkey: IR::TypeKey;
 
     field invariants: List<InvariantDecl>;
     field validates: List<ValidateDecl>;
@@ -206,15 +144,12 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field functions: List<TypeFunctionDecl>;
     field methods: List<MethodDecl>;
 
-    field etag: AdditionalTypeDeclTag;
-
+    
     field saturatedProvides: List<NominalTypeSignature>;
     field saturatedBFieldInfo: List<SaturatedFieldInfo>;
 
     field allInvariants: List<SaturatedInvariantInfo>;
     field allValidates: List<SaturatedInvariantInfo>;
-
-    field hasDynamicInvokes: Bool;
 }
 
 concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
@@ -226,7 +161,11 @@ entity EnumTypeDecl provides AbstractEntityTypeDecl {
 
 entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
     field valuetype: TypeSignature;
-    field optofexp: Option<Expression>;
+}
+
+entity TypedeclStringOfTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: TypeSignature;
+    field ofexp: Expression;
 }
 
 concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
@@ -237,26 +176,27 @@ entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 
 datatype ConstructableTypeDecl provides InternalEntityTypeDecl 
 of
-OkTypeDecl { }
-| FailTypeDecl { }
+OkTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
+| FailTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
 | APIRejectedTypeDecl { }
 | APIFailedTypeDecl { }
 | APIErrorTypeDecl { }
 | APISuccessTypeDecl { }
-| SomeTypeDecl { }
-| MapEntryTypeDecl { }
+| SomeTypeDecl { field vtype: TypeSignature; }
+| MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
 datatype AbstractCollectionTypeDecl provides InternalEntityTypeDecl 
 of
-ListTypeDecl { }
+ListTypeDecl { field ttype: TypeSignature; }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
 entity EventListTypeDecl provides InternalEntityTypeDecl {
+    field ttype: TypeSignature;
 }
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl {
@@ -269,20 +209,25 @@ concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
 datatype InternalConceptTypeDecl provides AbstractConceptTypeDecl 
 of
 OptionTypeDecl { }
-| ResultTypeDecl { 
-    field okType: Option<OkTypeDecl>;
-    field failType: Option<FailTypeDecl>;
+| ResultTypeDecl {
+    field ttype: TypeSignature; 
+    field etype: TypeSignature;
+
+    field okType: OkTypeDecl;
+    field failType: FailTypeDecl;
 }
-| APIResultTypeDecl { 
-    field errorType: Option<APIErrorTypeDecl>;
-    field failedType: Option<APIFailedTypeDecl>;
-    field rejectedType: Option<APIRejectedTypeDecl>;
-    field successType: Option<APISuccessTypeDecl>;
+| APIResultTypeDecl {
+    field ttype: TypeSignature;
+
+    field errorType: APIErrorTypeDecl;
+    field failedType: APIFailedTypeDecl;
+    field rejectedType: APIRejectedTypeDecl;
+    field successType: APISuccessTypeDecl;
 }
 ;
 
 entity ConceptTypeDecl provides AbstractConceptTypeDecl {
-    field fields: List<MemberFieldDecl[]>;
+    field fields: List<MemberFieldDecl>;
 }
 
 entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {

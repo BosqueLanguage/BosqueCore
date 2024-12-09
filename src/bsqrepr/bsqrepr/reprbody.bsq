@@ -65,45 +65,67 @@ entity LiteralRegexExpression provides Expression {
 
 entity LiteralTypeDeclValueExpression provides Expression {
     field value: Expression;
-    field constype: TypeSignature;
+    field constype: NominalTypeSignature;
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
     field ns: FullyQualifiedNamespace;
-    field name: string;
+    field name: CString;
 }
 
 entity AccessStaticFieldExpression provides Expression {
     field stype: NominalTypeSignature;
-    field name: string;
+    field name: CString;
 
     field resolvedDeclType: TypeSignature;
 }
 
 entity AccessEnumExpression provides Expression {
     field stype: NominalTypeSignature;
-    field name: string;
+    field name: CString;
 }
 
 entity AccessVariableExpression provides Expression {
-    readonly srcname: string; //the name in the source code
+    field vname: CString;
+    field layouttype: TypeSignature;
+}
 
-    specialaccess: { ttype: TypeSignature, specialaccess: string | undefined }[] = []; //field name to access to a special re-typed variable (specifically extracting an option or result value)
-    layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
-    scopename: string; //maybe a different name that gets used for shadowing binders
-    isCaptured: boolean;
+entity AccessRetypeStep {
+    field ttype: TypeSignature;
+    field specialfname: CString
+}
+
+entity AccessVariableExpressionSpecial provides Expression {
+    field vname: CString;
+    field layouttype: TypeSignature;
+
+    field vname: CString;
+    field steps: List<AccessRetypeStep>;
 }
 
 concept ConstructorExpression provides Expression {
     field args: ArgumentList;
 }
 
-entity ConstructorPrimaryExpression provides ConstructorExpression {
+datatype ConstructorPrimaryExpression provides ConstructorExpression using {
     field ctype: NominalTypeSignature;
-
-    elemtype: TypeSignature | undefined = undefined;
-    shuffleinfo: List<(|Int, CString, TypeSignature|)>
 }
+of 
+ConstructorPrimaryCollectionSingletonsExpression {
+    field elemtype: TypeSignature;
+}
+| ConstructorPrimarySpecialConstructableExpression { }
+| ConstructorTypeDeclExpression {
+    field invchecks: Bool;
+}
+| ConstructorTypeDeclStringExpression {
+    field invchecks: Bool;
+    field ofcheck: Expression;
+}
+| ConstructorStdExpression { 
+    field shuffleinfo: List<(|Int, CString, TypeSignature|)>;
+}
+;
 
 entity ConstructorEListExpression provides ConstructorExpression {
 }
@@ -117,22 +139,11 @@ entity LetExpression provides Expression {
     field body: Expression;
 }
 
-entity SpecialConstructorExpression provides Expression {
-    field constype: TypeSignature; %%some, ok, or fail
-    field arg: Expression;
-}
-
-entity SpecialConverterExpression provides Expression {
-    field convtype: TypeSignature; %%option or result
-    field readonly arg: Expression;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
     field rec: RecursiveAnnotation;
     field args: ArgumentList;
 
-    field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;
     field arginfo: List<TypeSignature>;
     field resttype: Option<TypeSignature>;
@@ -144,7 +155,6 @@ entity CallNamespaceFunctionExpression provides Expression {
 
     field name: CString;
     field rec: RecursiveAnnotation;
-    field terms: List<TypeSignature>;
     field args: ArgumentList;
 
     field shuffleinfo: List<(|Int, TypeSignature|)>;
@@ -153,14 +163,12 @@ entity CallNamespaceFunctionExpression provides Expression {
 }
 
 entity CallTypeFunctionExpression provides Expression {
-    field ttype: TypeSignature;
+    field ttype: NominalTypeSignature;
     field name: string;
     field rec: RecursiveAnnotation;
-    field terms: TypeSignature[];
     field args: ArgumentList;
 
-    field resolvedDeclType: TypeSignature | undefined = undefined;
-    field resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
+    field resolvedDeclType: NominalTypeSignature;
     
     field shuffleinfo: List<(|Int, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
@@ -170,14 +178,12 @@ entity CallTypeFunctionExpression provides Expression {
 entity CallRefThisExpression provides Expression {
     field name: CString;
     field rec: RecursiveAnnotation;
-    field terms: List<TypeSignature>;
     field args: ArgumentList;
 }
 
 entity CallRefSelfExpression provides Expression {
     field name: CString;
     field rec: RecursiveAnnotation;
-    field terms: List<TypeSignature>;
     field args: ArgumentList;
 }
 
@@ -189,312 +195,83 @@ entity LogicActionOrExpression provides Expression {
     field args: List<Expression>;
 }
 
-class ParseAsTypeExpression extends Expression {
-    readonly exp: Expression;
-    readonly ttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, ttype: TypeSignature) {
-        super(ExpressionTag.ParseAsTypeExpression, sinfo);
-        this.exp = exp;
-        this.ttype = ttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `<${this.ttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
+entity SafeConvertExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
 }
 
-class SafeConvertExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.SafeConvertExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_safeas<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
+entity CreateDirectExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
 }
 
-class CreateDirectExpression extends Expression {
-    readonly exp: Expression;
-    readonly srctype: TypeSignature;
-    readonly trgttype: TypeSignature;
+datatype PostfixOperation using {
+    field sinfo: IR::SourceInfo;
+    field baseType: NominalTypeSignature;
+}
+of 
+PostfixAccessFromName {
+    field declaredInType: NominalTypeSignature;
+    field name: CString;
+}
+| PostfixProjectFromNames {
+    field declOnType: NominalTypeSignature;
+    field names: List<(|CString, NominalTypeSignature|)>;
+}
+| PostfixAccessFromIndex {
+    field idx: Nat;
+}
+| PostfixIsTest {
+    field ttest: ITest;
+}
+| PostfixAsConvert {
+    field ttest: ITest;
+}
+| PostfixAssignFields {
+    field declOnType: NominalTypeSignature;
+    field updates: List<(|CString, NominalTypeSignature, Expression|)>;
+}
+| PostfixInvokeStatic extends PostfixOperation {
+    field resolvedTrgt: NominalTypeSignature;
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, exp: Expression, srctype: TypeSignature, trgttype: TypeSignature) {
-        super(ExpressionTag.CreateDirectExpression, sinfo);
-        this.exp = exp;
-        this.srctype = srctype;
-        this.trgttype = trgttype;
-    }
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+| PostfixInvokeVirtual extends PostfixOperation {
+    field resolvedBase: NominalTypeSignature;
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
 
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `s_createDirect<${this.srctype.emit()}, ${this.trgttype.emit()}>(${this.exp.emit(toplevel, fmt)})`;
-    }
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+| PostfixLiteralKeyAccess {
+    field kexp: Expression;
+}
+;
+
+entity PostfixOp provides Expression {
+    field rootExp: Expression;
+    field ops: List<PostfixOperation>;
 }
 
-enum PostfixOpTag {
-    PostfixError = "PostfixError",
-
-    PostfixAccessFromName = "PostfixAccessFromName",
-    PostfixProjectFromNames = "PostfixProjectFromNames",
-
-    PostfixAccessFromIndex = "PostfixAccessFromIndex",
-
-    PostfixIsTest = "PostfixIsTest",
-    PostfixAsConvert = "PostfixAsConvert",
-
-    PostfixAssignFields = "PostfixAssignFields",
-
-    PostfixInvoke = "PostfixInvoke",
-    PostfixLiteralKeyAccess = "PostfixLiteralKeyAccess"
+datatype UnaryExpression provides Expression using {
+    field exp: Expression;
+    field opertype: TypeSignature;
 }
-
-abstract class PostfixOperation {
-    readonly sinfo: SourceInfo;
-    readonly tag: PostfixOpTag;
-
-    private rcvrType: TypeSignature | undefined = undefined;
-    private etype: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, tag: PostfixOpTag) {
-        this.sinfo = sinfo;
-        this.tag = tag;
-    }
-
-    getRcvrType(): TypeSignature {
-        assert(this.rcvrType !== undefined, "Type signature not set");
-        return this.rcvrType as TypeSignature;
-    }
-
-    setRcvrType(rcvrType: TypeSignature): TypeSignature {
-        this.rcvrType = rcvrType;
-        return rcvrType;
-    }
-
-    getType(): TypeSignature {
-        assert(this.etype !== undefined, "Type signature not set");
-        return this.etype as TypeSignature;
-    }
-
-    setType(etype: TypeSignature): TypeSignature {
-        this.etype = etype;
-        return etype;
-    }
-
-    abstract emit(fmt: CodeFormatter): string;
-}
-
-class PostfixOp extends Expression {
-    readonly rootExp: Expression;
-    readonly ops: PostfixOperation[];
-
-    constructor(sinfo: SourceInfo, root: Expression, ops: PostfixOperation[]) {
-        super(ExpressionTag.PostfixOpExpression, sinfo);
-        this.rootExp = root;
-        this.ops = ops;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let res = this.rootExp.emit(false, fmt);
-        for(let i = 0; i < this.ops.length; ++i) {
-            res += this.ops[i].emit(fmt);
-        }
-
-        return res;
-    }
-}
-
-class PostfixError extends PostfixOperation {
-    constructor(sinfo: SourceInfo) {
-        super(sinfo, PostfixOpTag.PostfixError);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "[!ERROR!]";
-    }
-}
-
-class PostfixAccessFromName extends PostfixOperation {
-    readonly name: string;
-    
-    declaredInType: TypeSignature | undefined = undefined;
-    fieldDecl: MemberFieldDecl | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, name: string) {
-        super(sinfo, PostfixOpTag.PostfixAccessFromName);
-        this.name = name;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `.${this.name}`;
-    }
-}
-
-class PostfixProjectFromNames extends PostfixOperation {
-    readonly names: string[];
-
-    constructor(sinfo: SourceInfo, names: string[]) {
-        super(sinfo, PostfixOpTag.PostfixProjectFromNames);
-        this.names = names;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `.(|${this.names.join(", ")}|)`;
-    }
-}
-
-class PostfixAccessFromIndex extends PostfixOperation {
-    readonly idx: number;
-
-    constructor(sinfo: SourceInfo, idx: number) {
-        super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
-        this.idx = idx;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `.${this.idx}`;
-    }
-}
-
-class PostfixIsTest extends PostfixOperation {
-    readonly ttest: ITest;
-
-    constructor(sinfo: SourceInfo, ttest: ITest) {
-        super(sinfo, PostfixOpTag.PostfixIsTest);
-        this.ttest = ttest;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "?" + this.ttest.emit(fmt);
-    }
-}
-
-class PostfixAsConvert extends PostfixOperation {
-    readonly ttest: ITest;
-
-    constructor(sinfo: SourceInfo, ttest: ITest) {
-        super(sinfo, PostfixOpTag.PostfixAsConvert);
-        this.ttest = ttest;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "@" + this.ttest.emit(fmt);
-    }
-}
-
-class PostfixAssignFields extends PostfixOperation {
-    readonly updates: ArgumentList;
-
-    constructor(sinfo: SourceInfo, updates: ArgumentList) {
-        super(sinfo, PostfixOpTag.PostfixAssignFields);
-        this.updates = updates;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.updates.emit(fmt, "[|", "|]")}`;
-    }
-}
-
-class PostfixInvoke extends PostfixOperation {
-    readonly specificResolve: TypeSignature | undefined;
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
-    resttype: TypeSignature | undefined = undefined;
-    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-    resolvedTrgt: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(sinfo, PostfixOpTag.PostfixInvoke);
-        this.specificResolve = specificResolve;
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `.${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class PostfixLiteralKeyAccess extends PostfixOperation {
-    readonly kexp: Expression;
-
-    constructor(sinfo: SourceInfo, kexp: Expression) {
-        super(sinfo, PostfixOpTag.PostfixLiteralKeyAccess);
-        this.kexp = kexp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `[${this.kexp.emit(true, fmt)}]`;
-    }
-}
-
-abstract class UnaryExpression extends Expression {
-    readonly exp: Expression;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, exp: Expression) {
-        super(tag, sinfo);
-        this.exp = exp;
-    }
-
-    uopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
-        let ee = `${this.exp.emit(false, fmt)}`;
-        if(op === "-" || op === "+") {
-            ee = `(${ee})`;
-        }
-        ee = `${op}${ee}`;
-        
-        return toplevel ? ee : `(${ee})`;
-    }
-}
-
-class PrefixNotOpExpression extends UnaryExpression {
-    opertype: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, exp: Expression) {
-        super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.uopEmit(toplevel, fmt, "!");
-    }
-}
-
-class PrefixNegateOrPlusOpExpression extends UnaryExpression {
-    readonly op: "-" | "+";
-
-    opertype: TypeSignature | undefined = undefined;
-
-    constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
-        super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
-        this.op = op;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.uopEmit(toplevel, fmt, this.op);
-    }
-}
+of
+PrefixNotOpExpression { }
+| PrefixNegateOpExpression { }
+| PrefixPlusOpExpression { }
+;
 
 abstract class BinaryArithExpression extends Expression {
     readonly lhs: Expression;

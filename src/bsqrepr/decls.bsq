@@ -1,5 +1,11 @@
 declare namespace IRDecl;
 
+const MIN_SAFE_INT: Int = -4611686018427387903i;
+const MAX_SAFE_INT: Int = 4611686018427387903i;
+
+%%negation and conversion are always safe
+const MAX_SAFE_NAT: Nat = 4611686018427387903n;
+
 const c_namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
 type NamespaceComponent = CString of c_namespaceComponentRE;
 type FullyQualifiedNamespaceKey = CString of /(${c_namespaceComponentRE}'::')*${c_namespaceComponentRE}?/c; %%Core is implicit here

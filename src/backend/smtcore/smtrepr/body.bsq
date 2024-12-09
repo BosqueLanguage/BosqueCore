@@ -1,1 +1,248 @@
 namespace BBody;
+
+const c_varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/;
+type VarName = CString of c_varnameRE;
+
+entity BinderInfo {
+    field vname: VarName;
+    field refineonfollow: Bool;
+}
+
+datatype ITest using {
+    field isnot: Bool;
+}
+of
+ITestType { field ttype: TypeSignature; }
+| ITestNone { }
+| ITestSome { }
+| ITestOk { }
+| ITestFail { }
+;
+
+concept Expression {
+    field sinfo: IR::SourceInfo;
+    field etype: TypeSignature;
+}
+
+concept Value provides Expression {
+}
+
+datatype ConstantValue provides Value
+of
+LiteralNoneExpression { }
+| LiteralSimpleExpression {
+    field value: CString;
+}
+| LiteralCStringExpression {
+    field value: CString;
+}
+| LiteralStringExpression {
+    field value: String;
+}
+| LiteralCRegexExpression {
+    field value: CString;
+}
+| LiteralRegexExpression {
+    field value: String;
+}
+;
+
+entity VariableValue provides Value {
+    field vname: CString;
+    field layouttype: TypeSignature;
+}
+
+entity AccessNamespaceConstantExpression provides Value {
+    field ns: FullyQualifiedNamespace;
+    field name: CString;
+}
+
+entity AccessStaticFieldExpression provides Value {
+    field stype: NominalTypeSignature;
+    field name: CString;
+
+    field resolvedDeclType: TypeSignature;
+}
+
+entity AccessEnumExpression provides Value {
+    field stype: NominalTypeSignature;
+    field name: CString;
+}
+
+entity AccessVariableExpression provides Value {
+    field vname: CString;
+}
+
+entity AccessRetypeStep {
+    field ttype: TypeSignature;
+    field specialfname: CString
+}
+
+entity AccessVariableExpressionRetypeStep provides Value {
+    field vname: CString;
+    field steps: List<AccessRetypeStep>;
+}
+
+datatype ValueExpression using {
+    field value: Value;
+}
+of
+SimpleValue { }
+| TermifyValue {
+    field fromtype: NominalTypeSignature;
+}
+| UntermifyValue {
+    field fromexp: Expression;
+    field fromtype: NominalTypeSignature;
+}
+;
+
+entity LiteralTypeDeclValueExpression provides Expression {
+    field value: ConstantValue;
+    field constype: NominalTypeSignature;
+
+    field invchecks: Bool;
+}
+
+entity LiteralTypeDeclStringValueExpression provides Expression {
+    field value: ConstantValue;
+    field constype: NominalTypeSignature;
+
+    field invchecks: Bool;
+}
+
+concept ConstructorExpression provides Expression {
+    field args: List<ValueExpression>;
+}
+
+datatype ConstructorPrimaryExpression provides ConstructorExpression using {
+    field ctype: NominalTypeSignature;
+}
+of 
+ConstructorPrimaryCollectionSingletonsExpression { }
+| ConstructorPrimarySpecialConstructableExpression { }
+| ConstructorTypeDeclExpression { }
+| ConstructorStdExpression { }
+;
+
+entity ConstructorEListExpression provides ConstructorExpression {
+}
+
+entity ConstructorLambdaExpression provides Expression {
+    field invoke: LambdaDecl;
+}
+
+entity LetExpression provides Expression {
+    field decls: List<(|CString, TypeSignature, ValueExpression|)>;
+    field body: Expression;
+}
+
+entity LambdaInvokeExpression provides Expression {
+    field name: CString;
+
+    field args: List<ValueExpression>;
+    field lambda: LambdaTypeSignature;
+}
+
+entity CallNamespaceFunctionExpression provides Expression {
+    field ns: FullyQualifiedNamespace;
+    field name: CString;
+
+    field args: List<ValueExpression>;
+}
+
+entity CallTypeFunctionExpression provides Expression {
+    field resolvedType: NominalTypeSignature;
+    field name: string;
+    
+    field args: List<ValueExpression>;
+}
+
+entity CallRefThisExpression provides Expression {
+    field name: CString;
+    
+    field args: List<ValueExpression>;
+}
+
+entity CallRefSelfExpression provides Expression {
+    field name: CString;
+
+    field args: List<ValueExpression>;
+}
+
+entity LogicActionAndExpression provides Expression {
+    field args: List<ValueExpression>;
+}
+
+entity LogicActionOrExpression provides Expression {
+    field args: List<ValueExpression>;
+}
+
+entity SafeConvertExpression provides Expression {
+    field exp: ValueExpression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CreateDirectExpression provides Expression {
+    field exp: ValueExpression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+datatype SimplePostfixOperation using {
+    field sinfo: IR::SourceInfo;
+    field baseType: NominalTypeSignature;
+}
+of 
+PostfixAccessFromName {
+    field declaredInType: NominalTypeSignature;
+    field name: CString;
+}
+| PostfixProjectFromNames {
+    field declOnType: NominalTypeSignature;
+    field names: List<(|CString, NominalTypeSignature|)>;
+}
+| PostfixAccessFromIndex {
+    field idx: Nat;
+}
+| PostfixIsTest {
+    field ttest: ITest;
+}
+;
+
+entity SimplePostfixOp provides Expression {
+    field rootExp: ValueExpression;
+    field ops: List<SimplePostfixOperation>;
+}
+
+datatype ErrorablePostfixOperation using {
+    field sinfo: IR::SourceInfo;
+}
+of 
+PostfixAsConvert {
+    field ttest: ITest;
+}
+| PostfixAssignFields {
+    field declOnType: NominalTypeSignature;
+    field updates: List<(|CString, NominalTypeSignature, Expression|)>;
+}
+| PostfixInvokeStatic extends PostfixOperation {
+    field resolvedTrgt: NominalTypeSignature;
+    field name: CString;
+    field args: List<ValueExpression>;
+}
+| PostfixInvokeVirtual extends PostfixOperation {
+    field resolvedBase: NominalTypeSignature;
+    field name: CString;
+    field args: List<ValueExpression>;
+}
+| PostfixLiteralKeyAccess {
+    field kexp: ValueExpression;
+}
+;
+
+entity ErrorablePostfixOp provides Expression {
+    field rootExp: ValueExpression;
+    field op: ErrorablePostfixOperation;
+}
