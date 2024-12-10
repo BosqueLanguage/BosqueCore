@@ -3,28 +3,13 @@ namespace BBody;
 const c_varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/;
 type VarName = CString of c_varnameRE;
 
-entity BinderInfo {
-    field vname: VarName;
-    field refineonfollow: Bool;
-}
-
-datatype ITest using {
-    field isnot: Bool;
-}
-of
-ITestType { field ttype: TypeSignature; }
-| ITestNone { }
-| ITestSome { }
-| ITestOk { }
-| ITestFail { }
-;
-
 concept Expression {
     field sinfo: IR::SourceInfo;
-    field etype: TypeSignature;
+    field etype: ResultType;
 }
 
 concept Value provides Expression {
+    field vtype: TypeSignature;
 }
 
 datatype ConstantValue provides Value
@@ -52,24 +37,24 @@ entity VariableValue provides Value {
     field layouttype: TypeSignature;
 }
 
-entity AccessNamespaceConstantExpression provides Value {
+entity AccessNamespaceConstantValue provides Value {
     field ns: FullyQualifiedNamespace;
     field name: CString;
 }
 
-entity AccessStaticFieldExpression provides Value {
+entity AccessStaticFieldValue provides Value {
     field stype: NominalTypeSignature;
     field name: CString;
 
     field resolvedDeclType: TypeSignature;
 }
 
-entity AccessEnumExpression provides Value {
+entity AccessEnumValue provides Value {
     field stype: NominalTypeSignature;
     field name: CString;
 }
 
-entity AccessVariableExpression provides Value {
+entity AccessVariableValue provides Value {
     field vname: CString;
 }
 
@@ -78,32 +63,32 @@ entity AccessRetypeStep {
     field specialfname: CString
 }
 
-entity AccessVariableExpressionRetypeStep provides Value {
+entity AccessVariableRetypeStepValue provides Value {
     field vname: CString;
     field steps: List<AccessRetypeStep>;
 }
 
-entity TermifyExpression provides Value {
+entity TermifyValue provides Value {
     field value: Value;
     field fromtype: NominalTypeSignature;
 }
 
-entity UntermifyExpression provides Value {
+entity UntermifyValue provides Value {
     field value: Value;
     field fromtype: NominalTypeSignature;
 }
 
-entity LiteralTypeDeclSimpleExpression provides Value {
+entity LiteralTypeDeclValue provides Value {
     field value: ConstantValue;
     field constype: NominalTypeSignature;
 }
 
-concept ConstructorExpression provides Value {
+concept ConstructorValue provides Value {
     field args: List<Value>;
 }
 
 %% Assume that checks are always inlined explicitly so that these are simple values
-datatype ConstructorPrimaryExpression provides ConstructorExpression using {
+datatype ConstructorPrimaryValue provides ConstructorValue using {
     field ctype: NominalTypeSignature;
 }
 of 
@@ -113,15 +98,20 @@ ConstructorPrimaryCollectionSingletonsExpression { }
 | ConstructorStdExpression { }
 ;
 
-entity ConstructorEListExpression provides ConstructorExpression {
+entity ConstructorEListValue provides ConstructorValue {
 }
 
-entity ConstructorLambdaExpression provides Expression {
+entity ConstructorLambdaValue provides Value {
     field invoke: LambdaDecl;
 }
 
+entity LetValue provides Value {
+    field decls: List<(|CString, TypeSignature, Value|)>;
+    field body: Value;
+}
+
 entity LetExpression provides Expression {
-    field decls: List<(|CString, TypeSignature, Expression|)>;
+    field decls: List<(|CString, TypeSignature, Value|)>;
     field body: Expression;
 }
 
@@ -158,21 +148,21 @@ entity CallRefSelfExpression provides Expression {
     field args: List<Value>;
 }
 
-entity LogicActionAndExpression provides Value {
+entity LogicActionAndValue provides Value {
     field args: List<Value>;
 }
 
-entity LogicActionOrExpression provides Value {
+entity LogicActionOrValue provides Value {
     field args: List<Value>;
 }
 
-entity SafeConvertExpression provides Value {
+entity SafeConvertValue provides Value {
     field exp: Value;
     field srctype: NominalTypeSignature;
     field trgttype: NominalTypeSignature;
 }
 
-entity CreateDirectExpression provides Value {
+entity CreateDirectValue provides Value {
     field exp: Value;
     field srctype: NominalTypeSignature;
     field trgttype: NominalTypeSignature;
@@ -199,7 +189,7 @@ PostfixAccessFromName {
 }
 ;
 
-entity SimplePostfixOp provides Value {
+entity ValuePostfixOp provides Value {
     field rootExp: Value;
     field ops: List<SimplePostfixOperation>;
 }
@@ -230,7 +220,125 @@ PostfixAsConvert {
 }
 ;
 
-entity ErrorablePostfixOp provides Expression {
+entity ExpressionPostfixOp provides Expression {
     field rootExp: Value;
     field op: ErrorablePostfixOperation;
+}
+
+datatype UnaryValue provides Value using {
+    field exp: Value;
+    field opertype: NominalTypeSignature;
+}
+of
+PrefixNotOpValue { }
+| PrefixNegateOpValue { }
+| PrefixPlusOpValue { }
+;
+
+datatype BinaryArithValue provides Value using {
+    field lhs: Value;
+    field rhs: Value;
+    field opertype: NominalTypeSignature;
+}
+of
+BinAddValue { }
+| BinSubValue { }
+| BinMultValue { }
+| BinDivValue { }
+;
+
+
+datatype BinaryKeyEqValue provides Value using {
+    field ktype: TypeSignature;
+}
+of
+BinKeyEqNoneValue { 
+    field exp: Value;
+}
+| BinKeyNotEqNoneValue { 
+    field exp: Value;
+}
+| BinKeySomeEqValue {
+    field eoption: Value;
+    field eval: Value;
+}
+| BinKeyNotSomeEqValue {
+    field eoption: Value;
+    field eval: Value;
+}
+| BinKeyEqValue{
+    field lhs: Value;
+    field rhs: Value;
+}
+| BinKeyNotEqValue {
+    field lhs: Value;
+    field rhs: Value;
+}
+;
+
+entity KeyCompareValue provides Value {
+    field ktype: TypeSignature;
+
+    field lhs: Value;
+    field rhs: Value;
+}
+
+datatype BinaryNumericValue provides Value using {
+    field lhs: Value;
+    field rhs: Value;
+
+    field opertype: TypeSignature;
+}
+of
+NumericEqValue { }
+| NumericNeqValue { }
+| NumericLessValue { }
+| NumericLessEqValue { }
+| NumericGreaterValue { }
+| NumericGreaterEqValue { }
+;
+
+datatype BinLogicValue provides Value using {
+    field lhs: Value;
+    field rhs: Value;
+}
+of
+BinLogicAndValue { }
+| BinLogicOrValue { }
+| BinLogicImpliesValue { }
+| BinLogicIFFValue { }
+;
+
+entity MapEntryConstructorValue provides Value {
+    field kexp: Value;
+    field vexp: Value;
+}
+
+entity IfValue extends Value {
+    field iftest: Value;
+    field trueValue: Value;
+    field falseValue: Value;
+}
+
+entity IfExpression extends Expression {
+    field iftest: Expression;
+    field trueValue: Expression
+    field falseValue: Expression;
+}
+
+entity ErrorProcessExpression extends Expression {
+    field exp: Expression;
+    field vname: CString;
+    field vtype: TypeSignature;
+
+    field successexp: Expression;
+}
+
+entity AbortExpression extends Expression {
+    field kind: OptionResultKind;
+}
+
+entity AssertExpression extends Expression {
+    field cond: Value;
+    field kind: OptionResultKind;
 }

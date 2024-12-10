@@ -15,6 +15,13 @@ NominalTypeSignature { }
 }
 ;
 
+enum OptionResultKind {
+    Clear,
+    Target,
+    Other,
+    General
+};
+
 datatype ResultType
 of
 DirectResult { 
@@ -22,6 +29,7 @@ DirectResult {
 }
 | OptionResult { 
     field rtype: TypeSignature;
+    field kind: OptionResultKind;
 }
 %% TODO -- later add result types with ref stuff
 ;

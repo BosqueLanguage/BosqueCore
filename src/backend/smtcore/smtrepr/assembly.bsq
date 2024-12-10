@@ -31,7 +31,7 @@ concept AbstractInvokeDecl provides AbstractCoreDecl {
     field irecursive: IR::RecursiveAnnotation;
 
     field params: List<InvokeParameterDecl>;
-    field resultType: TypeSignature;
+    field resultType: ResultType;
 
     field body: BodyImplementation;
 }
