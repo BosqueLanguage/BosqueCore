@@ -83,38 +83,26 @@ entity AccessVariableExpressionRetypeStep provides Value {
     field steps: List<AccessRetypeStep>;
 }
 
-datatype ValueExpression using {
+entity TermifyExpression provides Value {
     field value: Value;
-}
-of
-SimpleValue { }
-| TermifyValue {
     field fromtype: NominalTypeSignature;
 }
-| UntermifyValue {
-    field fromexp: Expression;
+
+entity UntermifyExpression provides Value {
+    field value: Value;
     field fromtype: NominalTypeSignature;
 }
-;
 
-entity LiteralTypeDeclValueExpression provides Expression {
+entity LiteralTypeDeclSimpleExpression provides Value {
     field value: ConstantValue;
     field constype: NominalTypeSignature;
-
-    field invchecks: Bool;
 }
 
-entity LiteralTypeDeclStringValueExpression provides Expression {
-    field value: ConstantValue;
-    field constype: NominalTypeSignature;
-
-    field invchecks: Bool;
+concept ConstructorExpression provides Value {
+    field args: List<Value>;
 }
 
-concept ConstructorExpression provides Expression {
-    field args: List<ValueExpression>;
-}
-
+%% Assume that checks are always inlined explicitly so that these are simple values
 datatype ConstructorPrimaryExpression provides ConstructorExpression using {
     field ctype: NominalTypeSignature;
 }
@@ -133,14 +121,14 @@ entity ConstructorLambdaExpression provides Expression {
 }
 
 entity LetExpression provides Expression {
-    field decls: List<(|CString, TypeSignature, ValueExpression|)>;
+    field decls: List<(|CString, TypeSignature, Expression|)>;
     field body: Expression;
 }
 
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
 
-    field args: List<ValueExpression>;
+    field args: List<Value>;
     field lambda: LambdaTypeSignature;
 }
 
@@ -148,44 +136,44 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ns: FullyQualifiedNamespace;
     field name: CString;
 
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field resolvedType: NominalTypeSignature;
-    field name: string;
+    field name: CString;
     
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 
 entity CallRefThisExpression provides Expression {
     field name: CString;
     
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 
 entity CallRefSelfExpression provides Expression {
     field name: CString;
 
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 
-entity LogicActionAndExpression provides Expression {
-    field args: List<ValueExpression>;
+entity LogicActionAndExpression provides Value {
+    field args: List<Value>;
 }
 
-entity LogicActionOrExpression provides Expression {
-    field args: List<ValueExpression>;
+entity LogicActionOrExpression provides Value {
+    field args: List<Value>;
 }
 
-entity SafeConvertExpression provides Expression {
-    field exp: ValueExpression;
+entity SafeConvertExpression provides Value {
+    field exp: Value;
     field srctype: NominalTypeSignature;
     field trgttype: NominalTypeSignature;
 }
 
-entity CreateDirectExpression provides Expression {
-    field exp: ValueExpression;
+entity CreateDirectExpression provides Value {
+    field exp: Value;
     field srctype: NominalTypeSignature;
     field trgttype: NominalTypeSignature;
 }
@@ -211,8 +199,8 @@ PostfixAccessFromName {
 }
 ;
 
-entity SimplePostfixOp provides Expression {
-    field rootExp: ValueExpression;
+entity SimplePostfixOp provides Value {
+    field rootExp: Value;
     field ops: List<SimplePostfixOperation>;
 }
 
@@ -225,24 +213,24 @@ PostfixAsConvert {
 }
 | PostfixAssignFields {
     field declOnType: NominalTypeSignature;
-    field updates: List<(|CString, NominalTypeSignature, Expression|)>;
+    field updates: List<(|CString, NominalTypeSignature, Value|)>;
 }
 | PostfixInvokeStatic extends PostfixOperation {
     field resolvedTrgt: NominalTypeSignature;
     field name: CString;
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 | PostfixInvokeVirtual extends PostfixOperation {
     field resolvedBase: NominalTypeSignature;
     field name: CString;
-    field args: List<ValueExpression>;
+    field args: List<Value>;
 }
 | PostfixLiteralKeyAccess {
-    field kexp: ValueExpression;
+    field kexp: Value;
 }
 ;
 
 entity ErrorablePostfixOp provides Expression {
-    field rootExp: ValueExpression;
+    field rootExp: Value;
     field op: ErrorablePostfixOperation;
 }

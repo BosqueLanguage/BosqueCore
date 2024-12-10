@@ -4,7 +4,7 @@ datatype TypeSignature using {
     field sinfo: IR::SourceInfo;
     field tkeystr: IR::TypeKey;
 } 
-of 
+of
 NominalTypeSignature { }
 | EListTypeSignature {
     entries: List<TypeSignature>;
@@ -13,4 +13,15 @@ NominalTypeSignature { }
     field params: List<TypeSignature>;
     field resultType: TypeSignature;
 }
+;
+
+datatype ResultType
+of
+DirectResult { 
+    field rtype: TypeSignature; 
+}
+| OptionResult { 
+    field rtype: TypeSignature;
+}
+%% TODO -- later add result types with ref stuff
 ;
