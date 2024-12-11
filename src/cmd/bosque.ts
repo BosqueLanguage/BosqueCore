@@ -28,6 +28,13 @@ if(outdiridx !== -1) {
     fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
 }
 
+let mainns = "Main";
+let mainnsidx = fullargs.findIndex((v) => v === "--namespace");
+if(mainnsidx !== -1) {
+    mainns = fullargs[mainnsidx + 1];
+    fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
+}
+
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
@@ -35,7 +42,7 @@ function getSimpleFilename(fn: string): string {
 function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
     Status.output("Generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
-    const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, iim);
+    const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
 
     Status.output("    Writing JS code to disk...\n");
     const nndir = path.normalize(outname);
@@ -119,7 +126,7 @@ if(asm !== undefined) {
     fs.rmSync(outdir, { recursive: true, force: true });
     fs.mkdirSync(outdir);
 
-    buildTypeInfo(asm, "Main", outdir);
-    buildExeCode(asm, "debug", "debug", "Main", outdir);
+    buildTypeInfo(asm, mainns, outdir);
+    buildExeCode(asm, "debug", "debug", mainns, outdir);
 }
 

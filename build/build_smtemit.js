@@ -28,7 +28,7 @@ for(let i = 0; i < allsrcdirs.length; ++i) {
     }
 }
 
-exec(`node ${cmdpath} --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
+exec(`node ${cmdpath} --namespace SMTEmitter --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
     if(err !== null) {
         console.log(err);
         console.log(stderr);

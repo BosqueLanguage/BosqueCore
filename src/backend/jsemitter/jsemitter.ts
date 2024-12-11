@@ -3323,7 +3323,7 @@ class JSEmitter {
         return {decls: alldecls, supers: allsupertypes, tests: alltests};
     }
 
-    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, tests: string[], nestedsupers: string[]} {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], mainns: string, fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, tests: string[], nestedsupers: string[]} {
         //all usings should be resolved and valid so nothing to do there
 
         let decls: string[] = [];
@@ -3342,7 +3342,7 @@ class JSEmitter {
                 const cdecl = this.currentns;
 
                 this.currentns = subdecl;
-                const snsdecl = this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, fmt, decl.isTopNamespace());
+                const snsdecl = this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, mainns, fmt, decl.isTopNamespace());
                 
                 decls.push(snsdecl.contents);
                 tests.push(...snsdecl.tests);
@@ -3383,7 +3383,7 @@ class JSEmitter {
 
             let loadop = "";
             let mainop = fmt.nl();
-            if(decl.name === "Main") {
+            if(decl.name === mainns) {
                 const asmreinfo = this.assembly.toplevelNamespaces.flatMap((ns) => this.assembly.loadConstantsAndValidatorREs(ns));
 
                 //Now process the regexs
@@ -3409,7 +3409,7 @@ class JSEmitter {
         }
     }
 
-    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
+    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, mainns: string, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
         const emitter = new JSEmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
 
         //emit each of the assemblies
@@ -3421,7 +3421,7 @@ class JSEmitter {
             
             if(nsii !== undefined) {
                 emitter.currentns = nsdecl;
-                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new JSCodeFormatter(0), true);
+                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, mainns, new JSCodeFormatter(0), true);
 
                 results.push({ns: nsdecl.fullnamespace, contents: code.contents});
                 tests.push(...code.tests);
