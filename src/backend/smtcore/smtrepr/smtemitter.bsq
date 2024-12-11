@@ -1,0 +1,10 @@
+declare namespace SMTEmitter {
+    using IRDecl as IR;
+    using SMTAssembly as SMT;
+}
+
+public function main(): Int {
+    var asm: SMT::SMTAssembly;
+
+    return 0;
+}

@@ -16,6 +16,17 @@ const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
 const modules_path = path.join(bosque_dir, "node_modules");
 
 let fullargs = [...process.argv].slice(2);
+if(fullargs.length === 0) {
+    Status.error("No input files specified!\n");
+    process.exit(1);
+}
+
+let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
+let outdiridx = fullargs.findIndex((v) => v === "-output");
+if(outdiridx !== -1) {
+    outdir = fullargs[outdiridx + 1];
+    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
+}
 
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
@@ -103,7 +114,6 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 
 const asm = checkAssembly(fullargs);
 if(asm !== undefined) {
-    const outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
     Status.output(`-- JS output directory: ${outdir}\n\n`);
 
     fs.rmSync(outdir, { recursive: true, force: true });

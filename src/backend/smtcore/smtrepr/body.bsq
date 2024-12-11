@@ -247,7 +247,6 @@ BinAddValue { }
 | BinDivValue { }
 ;
 
-
 datatype BinaryKeyEqValue provides Value using {
     field ktype: TypeSignature;
 }
