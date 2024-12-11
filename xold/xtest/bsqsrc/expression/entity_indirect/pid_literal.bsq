@@ -1,8 +1,0 @@
-namespace Main;
-
-typedecl SystemID = /[A-Z]{3}"-"[0-9]+/;
-typedecl PartID = StringOf<SystemID>;
-
-export function main(): PartID {
-    return "ABC-123"_PartID;
-}

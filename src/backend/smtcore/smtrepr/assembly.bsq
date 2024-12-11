@@ -1,0 +1,220 @@
+namespace SMTEmitter;
+
+concept AbstractDecl {
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+}
+
+datatype ConditionDecl provides AbstractDecl using {
+    field diagnosticTag: Option<CString>;
+    field exp: Expression;
+}
+of 
+PreConditionDecl { }
+| PostConditionDecl { }
+| InvariantDecl { }
+| ValidateDecl { }
+;
+
+concept AbstractCoreDecl provides AbstractDecl {
+    field name: CString;
+}
+
+entity InvokeParameterDecl {
+    field pname: CString;
+    field ptype: TypeSignature;
+}
+
+concept AbstractInvokeDecl provides AbstractCoreDecl {
+    field irecursive: IR::RecursiveAnnotation;
+
+    field params: List<InvokeParameterDecl>;
+    field resultType: ResultType;
+
+    field body: Option<Expression>;
+}
+
+entity LambdaDecl provides AbstractInvokeDecl {
+}
+
+concept ExplicitInvokeDecl provides AbstractInvokeDecl {
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<PostConditionDecl>;
+}
+
+concept FunctionInvokeDecl provides ExplicitInvokeDecl {
+}
+
+enum FunctionDeclKindTag {
+    Function,
+    Predicate
+}
+
+entity NamespaceFunctionDecl provides FunctionInvokeDecl {
+    field fkind: FunctionDeclKindTag;
+}
+
+entity TypeFunctionDecl provides FunctionInvokeDecl {
+}
+
+entity MethodDecl provides ExplicitInvokeDecl {
+    field isThisRef: Bool;
+}
+
+entity TaskMethodDecl provides ExplicitInvokeDecl {
+    field isSelfRef: Bool;
+}
+
+entity TaskActionDecl provides ExplicitInvokeDecl {
+}
+
+entity ConstMemberDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
+entity MemberFieldDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+}
+
+entity SaturatedFieldInfo {
+    field containingtype: TypeSignature;
+    field fname: CString;
+    field ftype: TypeSignature;
+}
+
+entity SaturatedInvariantInfo {
+    field containingtype: TypeSignature;
+    field file: CString;
+    field sinfo: IR::SourceInfo;
+    field tag: Option<CString>;
+}
+
+concept AbstractNominalTypeDecl provides AbstractDecl {
+    field tkey: IR::TypeKey;
+
+    field invariants: List<InvariantDecl>;
+    field validates: List<ValidateDecl>;
+
+    field consts: List<ConstMemberDecl>;
+    field functions: List<TypeFunctionDecl>;
+    field methods: List<MethodDecl>;
+
+    field saturatedProvides: List<NominalTypeSignature>;
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+
+    field allInvariants: List<SaturatedInvariantInfo>;
+    field allValidates: List<SaturatedInvariantInfo>;
+}
+
+concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
+}
+
+entity EnumTypeDecl provides AbstractEntityTypeDecl {
+    field members: List<CString>;
+}
+
+entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: TypeSignature;
+}
+
+entity TypedeclStringOfTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: TypeSignature;
+    field ofexp: Expression;
+}
+
+concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
+}
+
+entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
+}
+
+datatype ConstructableTypeDecl provides InternalEntityTypeDecl 
+of
+OkTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
+| FailTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
+| APIRejectedTypeDecl { }
+| APIFailedTypeDecl { }
+| APIErrorTypeDecl { }
+| APISuccessTypeDecl { }
+| SomeTypeDecl { field vtype: TypeSignature; }
+| MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+;
+
+datatype AbstractCollectionTypeDecl provides InternalEntityTypeDecl 
+of
+ListTypeDecl { field ttype: TypeSignature; }
+| StackTypeDecl { }
+| QueueTypeDecl { }
+| SetTypeDecl { }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+;
+
+entity EventListTypeDecl provides InternalEntityTypeDecl {
+    field ttype: TypeSignature;
+}
+
+entity EntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+}
+
+concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
+}
+
+datatype InternalConceptTypeDecl provides AbstractConceptTypeDecl 
+of
+OptionTypeDecl { }
+| ResultTypeDecl {
+    field ttype: TypeSignature; 
+    field etype: TypeSignature;
+
+    field okType: OkTypeDecl;
+    field failType: FailTypeDecl;
+}
+| APIResultTypeDecl {
+    field ttype: TypeSignature;
+
+    field errorType: APIErrorTypeDecl;
+    field failedType: APIFailedTypeDecl;
+    field rejectedType: APIRejectedTypeDecl;
+    field successType: APISuccessTypeDecl;
+}
+;
+
+entity ConceptTypeDecl provides AbstractConceptTypeDecl {
+    field fields: List<MemberFieldDecl>;
+}
+
+entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field parentTypeDecl: NominalTypeSignature;
+}
+
+entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field associatedMemberEntityDecls: List<DatatypeMemberEntityTypeDecl>;
+}
+
+%%
+%% TODO: missing task related stuff
+%%
+
+entity NamespaceConstDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
+entity NamespaceDeclaration {
+    field name: CString; 
+    field fullnamespace: IR::FullyQualifiedNamespace;
+
+    field subns: List<NamespaceDeclaration>;
+
+    field consts: List<NamespaceConstDecl>;
+    field functions: List<NamespaceFunctionDecl>;
+    field typedecls: List<AbstractNominalTypeDecl>;
+}
+
+entity Assembly {
+    field toplevelNamespaces: List<NamespaceDeclaration>;
+}

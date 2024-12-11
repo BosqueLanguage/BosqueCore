@@ -19,7 +19,8 @@
     },
     "include": [
         "src/frontend/*.ts",
-        "src/backend/*.ts",
+        "src/backend/bsqon/*.ts",
+        "src/backend/jsemitter/*.ts",
         "src/cmd/*.ts",
         "test/*/*_nf.ts"
     ]

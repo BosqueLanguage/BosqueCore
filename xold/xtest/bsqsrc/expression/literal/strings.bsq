@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): [String, String, ASCIIString, ASCIIString] {
-    return ["hello", "", ascii{"hello"}, ascii{""}];
-}

@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(): [Int, [Int?, String]] {
-    let x = 1i;
-    let y: [Int?, String] = [1i, "hello"];
-
-    return [x, y];
-}

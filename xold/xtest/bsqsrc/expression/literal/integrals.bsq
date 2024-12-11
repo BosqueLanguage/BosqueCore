@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(): [Nat, Nat, Int, Int, Int, BigNat, BigNat, BigInt, BigInt, BigInt] {
-    return [0n, 10n, -3i, 0i, 1i, 0N, 10N, -3I, 0I, 1I];
-}

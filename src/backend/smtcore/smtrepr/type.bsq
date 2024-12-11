@@ -1,0 +1,35 @@
+namespace SMTEmitter;
+
+datatype TypeSignature using {
+    field sinfo: IR::SourceInfo;
+    field tkeystr: IR::TypeKey;
+} 
+of
+NominalTypeSignature { }
+| EListTypeSignature {
+    field entries: List<TypeSignature>;
+}
+| LambdaTypeSignature {
+    field params: List<TypeSignature>;
+    field resultType: TypeSignature;
+}
+;
+
+enum OptionResultKind {
+    Clear,
+    Target,
+    Other,
+    General
+}
+
+datatype ResultType
+of
+DirectResult { 
+    field rtype: TypeSignature; 
+}
+| OptionResult { 
+    field rtype: TypeSignature;
+    field kind: OptionResultKind;
+}
+%% TODO -- later add result types with ref stuff
+;

@@ -1,9 +1,0 @@
-namespace Main;
-
-export function main(x: Int?): Int {
-    return switch (x) {
-        none => 0i
-        | 0i => 1i
-        | _  => 2i
-    };
-}

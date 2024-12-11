@@ -5544,9 +5544,6 @@ class Parser {
                 this.scanOverBraceDelimitedDeclaration();
             }
             else {
-                if(tdecl.fields.length !== 0) {
-                    this.recordErrorGeneral(sinfo, "Cannot mix POD (using) declartion with full datatype (&) declaration");
-                }
                 this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
             }
         }

@@ -1,7 +1,0 @@
-namespace Main;
-
-export function main(x: Int): Int? {
-    let yy: Int? = if (x == 0i) then none else x;
-
-    return yy;
-}

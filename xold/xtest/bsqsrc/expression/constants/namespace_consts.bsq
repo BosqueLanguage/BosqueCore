@@ -1,8 +1,0 @@
-namespace Main;
-
-const c1: Int = 1i;
-const c2: Int = 2i + Main::c1;
-
-export function main(): [Int, Int] {
-    return [Main::c1, Main::c2];
-}

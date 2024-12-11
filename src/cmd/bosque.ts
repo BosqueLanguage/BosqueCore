@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { JSEmitter } from "../backend/jsemitter.js";
+import { JSEmitter } from "../backend/jsemitter/jsemitter.js";
 import { Assembly } from "../frontend/assembly.js";
 import { BuildLevel, PackageConfig } from "../frontend/build_decls.js";
 import { InstantiationPropagator } from "../frontend/closed_terms.js";
@@ -8,7 +8,7 @@ import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
 import { fileURLToPath } from 'url';
-import { BSQONTypeInfoEmitter } from "../backend/bsqonemitter.js";
+import { BSQONTypeInfoEmitter } from "../backend/bsqon/bsqonemitter.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
@@ -16,6 +16,24 @@ const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
 const modules_path = path.join(bosque_dir, "node_modules");
 
 let fullargs = [...process.argv].slice(2);
+if(fullargs.length === 0) {
+    Status.error("No input files specified!\n");
+    process.exit(1);
+}
+
+let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
+let outdiridx = fullargs.findIndex((v) => v === "--output");
+if(outdiridx !== -1) {
+    outdir = fullargs[outdiridx + 1];
+    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
+}
+
+let mainns = "Main";
+let mainnsidx = fullargs.findIndex((v) => v === "--namespace");
+if(mainnsidx !== -1) {
+    mainns = fullargs[mainnsidx + 1];
+    fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
+}
 
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
@@ -24,7 +42,7 @@ function getSimpleFilename(fn: string): string {
 function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
     Status.output("Generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
-    const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, iim);
+    const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
 
     Status.output("    Writing JS code to disk...\n");
     const nndir = path.normalize(outname);
@@ -103,13 +121,12 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 
 const asm = checkAssembly(fullargs);
 if(asm !== undefined) {
-    const outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
     Status.output(`-- JS output directory: ${outdir}\n\n`);
 
     fs.rmSync(outdir, { recursive: true, force: true });
     fs.mkdirSync(outdir);
 
-    buildTypeInfo(asm, "Main", outdir);
-    buildExeCode(asm, "debug", "debug", "Main", outdir);
+    buildTypeInfo(asm, mainns, outdir);
+    buildExeCode(asm, "debug", "debug", mainns, outdir);
 }
 

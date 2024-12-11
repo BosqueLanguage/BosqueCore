@@ -3,7 +3,7 @@ import * as path from "path";
 
 import assert from "node:assert";
 
-import { JSEmitter } from '../../src/backend/jsemitter.js';
+import { JSEmitter } from '../../src/backend/jsemitter/jsemitter.js';
 import { generateASM } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
 import { InstantiationPropagator } from '../../src/frontend/closed_terms.js';
@@ -70,7 +70,7 @@ function buildAssembly(srcfile: string): Assembly | undefined {
 
 function buildMainCode(assembly: Assembly, outname: string) {
     const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
-    const [jscode, _] = JSEmitter.emitAssembly(assembly, "debug", "test", iim);
+    const [jscode, _] = JSEmitter.emitAssembly(assembly, "debug", "test", "Main", iim);
 
     const nndir = path.normalize(outname);
     try {

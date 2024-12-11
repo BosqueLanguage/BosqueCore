@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(l: List<Int>, i: Nat, v: Int): List<Int> {
-    return l.insert(i, v);
-}

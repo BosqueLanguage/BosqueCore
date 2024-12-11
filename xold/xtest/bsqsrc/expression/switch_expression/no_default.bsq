@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(y: Bool): Nat {
-    return switch (y) {
-        true    => 0n
-        | false => 1n
-    };
-}

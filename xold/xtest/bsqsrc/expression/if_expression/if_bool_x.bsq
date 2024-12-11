@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(x: Int): [Int, Int] {
-    let v1 = if (x < 0i) then -x else x;
-    let v2 = if (x == 0i) then 0i elif (x < 0i) then -1i else 1i;
-
-    return [v1, v2];
-}

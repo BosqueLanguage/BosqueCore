@@ -1,8 +1,0 @@
-namespace Main;
-
-typedecl SystemID = /[A-Z]{3}"-"[0-9]+/;
-typedecl PartID = StringOf<SystemID>;
-
-export function main(idstr: String): PartID {
-    return PartID{StringOf<SystemID>::coerce(idstr)};
-}

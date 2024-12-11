@@ -1,8 +1,0 @@
-namespace Main;
-
-export function main(y: Option<Nat>): Nat {
-    return match (y) {
-        Nothing          => 0n
-        | Something<Nat> => $.value() + 1n
-    };
-}

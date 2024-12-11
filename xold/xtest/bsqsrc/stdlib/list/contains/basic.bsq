@@ -1,5 +1,0 @@
-namespace Main;
-
-export function main(l: List<Int?>): Bool {
-    return l.contains(3i);
-}

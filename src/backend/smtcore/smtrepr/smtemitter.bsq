@@ -1,0 +1,9 @@
+declare namespace SMTEmitter {
+    using IRDecl as IR;
+}
+
+public function main(): Int {
+    var asm: Assembly;
+
+    return 0i;
+}
