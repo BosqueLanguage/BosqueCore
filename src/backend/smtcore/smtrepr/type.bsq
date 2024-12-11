@@ -1,4 +1,4 @@
-namespace IRAssembly;
+namespace SMTEmitter;
 
 datatype TypeSignature using {
     field sinfo: IR::SourceInfo;
@@ -7,7 +7,7 @@ datatype TypeSignature using {
 of
 NominalTypeSignature { }
 | EListTypeSignature {
-    entries: List<TypeSignature>;
+    field entries: List<TypeSignature>;
 }
 | LambdaTypeSignature {
     field params: List<TypeSignature>;
@@ -20,7 +20,7 @@ enum OptionResultKind {
     Target,
     Other,
     General
-};
+}
 
 datatype ResultType
 of

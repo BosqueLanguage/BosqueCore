@@ -22,7 +22,7 @@ if(fullargs.length === 0) {
 }
 
 let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
-let outdiridx = fullargs.findIndex((v) => v === "-output");
+let outdiridx = fullargs.findIndex((v) => v === "--output");
 if(outdiridx !== -1) {
     outdir = fullargs[outdiridx + 1];
     fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));

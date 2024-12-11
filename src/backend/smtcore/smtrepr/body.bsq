@@ -1,7 +1,18 @@
-namespace BBody;
+namespace SMTEmitter;
 
-const c_varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/;
-type VarName = CString of c_varnameRE;
+const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
+type VarName = CString of SMTEmitter::varnameRE;
+
+datatype ITest using {
+    field isnot: Bool;
+}
+of
+ITestType { field ttype: TypeSignature; }
+| ITestNone { }
+| ITestSome { }
+| ITestOk { }
+| ITestFail { }
+;
 
 concept Expression {
     field sinfo: IR::SourceInfo;
@@ -38,7 +49,7 @@ entity VariableValue provides Value {
 }
 
 entity AccessNamespaceConstantValue provides Value {
-    field ns: FullyQualifiedNamespace;
+    field ns: IR::FullyQualifiedNamespace;
     field name: CString;
 }
 
@@ -60,7 +71,7 @@ entity AccessVariableValue provides Value {
 
 entity AccessRetypeStep {
     field ttype: TypeSignature;
-    field specialfname: CString
+    field specialfname: CString;
 }
 
 entity AccessVariableRetypeStepValue provides Value {
@@ -123,7 +134,7 @@ entity LambdaInvokeExpression provides Expression {
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
-    field ns: FullyQualifiedNamespace;
+    field ns: IR::FullyQualifiedNamespace;
     field name: CString;
 
     field args: List<Value>;
@@ -205,12 +216,12 @@ PostfixAsConvert {
     field declOnType: NominalTypeSignature;
     field updates: List<(|CString, NominalTypeSignature, Value|)>;
 }
-| PostfixInvokeStatic extends PostfixOperation {
+| PostfixInvokeStatic {
     field resolvedTrgt: NominalTypeSignature;
     field name: CString;
     field args: List<Value>;
 }
-| PostfixInvokeVirtual extends PostfixOperation {
+| PostfixInvokeVirtual {
     field resolvedBase: NominalTypeSignature;
     field name: CString;
     field args: List<Value>;
@@ -313,19 +324,19 @@ entity MapEntryConstructorValue provides Value {
     field vexp: Value;
 }
 
-entity IfValue extends Value {
+entity IfValue provides Value {
     field iftest: Value;
     field trueValue: Value;
     field falseValue: Value;
 }
 
-entity IfExpression extends Expression {
+entity IfExpression provides Expression {
     field iftest: Expression;
-    field trueValue: Expression
+    field trueValue: Expression;
     field falseValue: Expression;
 }
 
-entity ErrorProcessExpression extends Expression {
+entity ErrorProcessExpression provides Expression {
     field exp: Expression;
     field vname: CString;
     field vtype: TypeSignature;
@@ -333,11 +344,11 @@ entity ErrorProcessExpression extends Expression {
     field successexp: Expression;
 }
 
-entity AbortExpression extends Expression {
+entity AbortExpression provides Expression {
     field kind: OptionResultKind;
 }
 
-entity AssertExpression extends Expression {
+entity AssertExpression provides Expression {
     field cond: Value;
     field kind: OptionResultKind;
 }

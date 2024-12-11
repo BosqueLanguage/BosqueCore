@@ -1,38 +1,38 @@
 declare namespace IRDecl;
 
-const MIN_SAFE_INT: Int = -4611686018427387903i;
-const MAX_SAFE_INT: Int = 4611686018427387903i;
+const min_safe_int: Int = -4611686018427387903i;
+const max_safe_int: Int = 4611686018427387903i;
 
 %%negation and conversion are always safe
-const MAX_SAFE_NAT: Nat = 4611686018427387903n;
+const max_safe_nat: Nat = 4611686018427387903n;
 
-const c_namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-type NamespaceComponent = CString of c_namespaceComponentRE;
-type FullyQualifiedNamespaceKey = CString of /(${c_namespaceComponentRE}'::')*${c_namespaceComponentRE}?/c; %%Core is implicit here
+const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+type NamespaceComponent = CString of IRDecl::namespaceComponentRE;
+type FullyQualifiedNamespaceKey = CString of /(${IRDecl::namespaceComponentRE}'::')*${IRDecl::namespaceComponentRE}?/c; %%Core is implicit here
 
 entity FullyQualifiedNamespace {
     field key: FullyQualifiedNamespaceKey;
     field scopes: List<NamespaceComponent>; %%Core is explicit here
 }
 
-const c_templateTypeKeyRE: CRegex = /[A-Z]/c;
-const c_nominalTypeKeyBaseRE: CRegex = /(${c_namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+/c; %%Core is implicit here
-const c_specialScopedTypeRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
-const c_nominalTypeKeyRE: CRegex = /(${c_nominalTypeKeyBaseRE}|${c_specialScopedTypeBaseRE})('<'.+'>')?/c; %%a bit rough but helps prevent mistakes
-const c_elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
+const templateTypeKeyRE: CRegex = /[A-Z]/c;
+const nominalTypeKeyBaseRE: CRegex = /(${IRDecl::namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+/c; %%Core is implicit here
+const specialScopedTypeRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${IRDecl::nominalTypeKeyBaseRE}|${IRDecl::specialScopedTypeBaseRE})('<'.+'>')?/c; %%a bit rough but helps prevent mistakes
+const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const c_baseTypeKeyRE: CRegex = /${c_templateTypeKeyRE}|${c_specialScopedTypeRE}|${c_nominalTypeKeyRE}|${c_elistTypeKeyRE}/c;
-const c_lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${c_baseTypeKeyRE}/c;
-const c_typeKeyRE: CRegex = /${c_baseTypeKeyRE}|${c_lambdaTypeKeyRE}/c; 
+const baseTypeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::specialScopedTypeRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IRDecl::baseTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${IRDecl::baseTypeKeyRE}|${IRDecl::lambdaTypeKeyRE}/c; 
 
-type TemplateName = CString of c_templateTypeKeyRE;
-type TypeKey = CString of c_typeKeyRE;
+type TemplateName = CString of IRDecl::templateTypeKeyRE;
+type TypeKey = CString of IRDecl::typeKeyRE;
 
 entity SourceInfo {
-    field line: number;
-    field column: number;
-    field pos: number;
-    field span: number;
+    field line: Nat;
+    field column: Nat;
+    field pos: Nat;
+    field span: Nat;
 }
 
 enum BuildLevel {

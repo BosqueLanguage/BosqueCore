@@ -1,6 +1,8 @@
 "use strict";
 
 import { exec } from "node:child_process";
+
+import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { fileURLToPath } from 'url';
@@ -10,9 +12,10 @@ const bsqdir = path.dirname(__dirname);
 const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 
 const binoutdir = path.join(bsqdir, "bin/smtemit");
+const bsqreprmiscdir = path.join(bsqdir, "src/bsqrepr");
 const smtcoredir = path.join(bsqdir, "src/backend/smtcore/smtrepr");
 
-const allsrcdirs = [smtcoredir];
+const allsrcdirs = [bsqreprmiscdir, smtcoredir];
 let allsources = [];
 for(let i = 0; i < allsrcdirs.length; ++i) {
     const srcdir = allsrcdirs[i];
@@ -25,12 +28,7 @@ for(let i = 0; i < allsrcdirs.length; ++i) {
     }
 }
 
-console.log(`building sources ...`);
-for(let i = 0; i < allsources.length; ++i) {
-    console.log(`  ${allsources[i]}`);
-}
-
-exec(`node ${cmdpath} --output ${binoutdir} ${allsources.join(" ")}`, {cwd: tscdir}, (err, stdout, stderr) => {
+exec(`node ${cmdpath} --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
     if(err !== null) {
         console.log(err);
         console.log(stderr);

@@ -1,6 +1,4 @@
-declare namespace SMTAssembly {
-    using IRDecl as IR;
-}
+namespace SMTEmitter;
 
 concept AbstractDecl {
     field file: CString;
@@ -33,7 +31,7 @@ concept AbstractInvokeDecl provides AbstractCoreDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: BodyImplementation;
+    field body: Option<Expression>;
 }
 
 entity LambdaDecl provides AbstractInvokeDecl {
@@ -208,7 +206,7 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 
 entity NamespaceDeclaration {
     field name: CString; 
-    field fullnamespace: FullyQualifiedNamespace;
+    field fullnamespace: IR::FullyQualifiedNamespace;
 
     field subns: List<NamespaceDeclaration>;
 
