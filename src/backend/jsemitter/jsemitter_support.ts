@@ -117,6 +117,10 @@ class EmitNameManager {
         return currentns.fullnamespace.ns[0] === tns.fullnamespace.ns[0] ? (tns.fullnamespace.ns.slice(1).join(".")) : ("$" + tns.fullnamespace.ns.join("."));
     }
 
+    private static emitNamespaceAccessForceExplicit(tns: NamespaceDeclaration): string {
+        return "$" + tns.fullnamespace.ns.join(".");
+    }
+
     static emitTypeTermKey(tsig: NominalTypeSignature): string {
         return `"<${tsig.alltermargs.map((t) => t.tkeystr).join(", ")}>"`;
     }
@@ -264,6 +268,12 @@ class EmitNameManager {
             const termstr = EmitNameManager.generateTermKeyFromTermTypes(terms);
             return `${ans}${fv.name}["${termstr}"]`;
         }
+    }
+
+    static generateAccssorNameForNamespaceTestFunction(inns: NamespaceDeclaration, fv: NamespaceFunctionDecl): string {
+        const ans = this.emitNamespaceAccessForceExplicit(inns);
+
+        return `${ans}${fv.name}`;
     }
 
     static generateOnCompleteAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, terms: TypeSignature[]): string {

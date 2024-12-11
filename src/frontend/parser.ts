@@ -5,7 +5,7 @@ import { Buffer } from "node:buffer";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LogicActionAndExpression, LogicActionOrExpression, CreateDirectExpression, LambdaInvokeExpression } from "./body.js";
-import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, InvokeExampleKind, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, InvokeExampleDeclBSQON, InvokeExampleDeclInlineRepr, InvokeExampleDeclLiteral } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, SYM_land, SYM_lor } from "./parser_kw.js";
 
@@ -1780,6 +1780,34 @@ class Parser {
         }
     }
 
+    private parseTestAssociations(): TestAssociation[] | undefined {
+        if(this.testToken(SYM_lbrack)) {
+            return this.parseListOf<TestAssociation>("test association list", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                const access = this.parseIdentifierAccessChain();
+                if(access === undefined) {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid test association");
+                    return new TestAssociation(this.env.currentFile, this.env.currentNamespace.fullnamespace, undefined, undefined);
+                }
+                else {
+                    let tname: string | undefined = undefined;
+                    if(this.testAndConsumeTokenIf(SYM_coloncolon)) {
+                        this.ensureToken(TokenStrings.IdentifierName, "test association");
+                        tname = this.consumeTokenAndGetValue();
+                    }
+
+                    if(access.typeTokens.length !== 0) {
+                        return new TestAssociation(this.env.currentFile, access.nsScope.fullnamespace, access.typeTokens[0].tname, tname);    
+                    }
+                    else {
+                        return new TestAssociation(this.env.currentFile, access.nsScope.fullnamespace, undefined, tname);
+                    }
+                }
+            });
+        }
+
+        return undefined;
+    }
+
     private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
@@ -1852,68 +1880,6 @@ class Parser {
         this.env.scope = undefined;
 
         return [preconds, postconds];
-    }
-
-    private parseSamples(sinfo: SourceInfo, boundtemplates: Set<string>): InvokeExample[] {
-        let samples: InvokeExample[] = [];
-        while (this.testToken(KW_spec) || this.testToken(KW_test) || this.testToken(KW_example)) {
-            let ekind: InvokeExampleKind = InvokeExampleKind.Test;
-            while(this.testToken(KW_spec) || this.testToken(KW_test) || this.testToken(KW_example)) {
-                if(ekind !== undefined) {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have multiple example kinds in the same example block");
-                }
-
-                if(this.testToken(KW_spec)) {
-                    ekind = InvokeExampleKind.Spec;
-                }
-                else if(this.testToken(KW_test)) {
-                    ekind = InvokeExampleKind.Test;
-                }
-                else {
-                    ekind = InvokeExampleKind.Synth;
-                }
-                this.consumeToken();
-            }
-
-            const terms = this.parseInvokeTemplateArguments();
-
-            if(this.testToken(TokenStrings.PathItem)) {
-                const fp = this.consumeTokenAndGetValue();
-
-                if(ekind === InvokeExampleKind.Spec) {
-                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have a spec example in a file -- too big for documentation");
-                }
-                samples.push(new InvokeExampleDeclFile(this.env.currentFile, sinfo, ekind, terms, fp));
-            }
-            else {
-                this.ensureToken(SYM_lbrace, "example");
-                const examples = this.parseListOf<InvokeExampleDeclInlineRepr>("examples", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
-                    if(this.testToken(TokenStrings.BSQONLiteralImplicitType)) {
-                        const bsqon = this.consumeTokenAndGetValue();
-                        return new InvokeExampleDeclLiteral(bsqon);
-                    }
-                    else {
-                        this.env.scope = new StandardScopeInfo([], boundtemplates, undefined);
-                        const args = this.parseListOf<Expression>("example args", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseExpression());
-                        this.env.scope = undefined;
-
-                        this.ensureAndConsumeTokenAlways(SYM_arrow, "example");
-
-                        this.env.scope = new StandardScopeInfo([new LocalVariableDefinitionInfo(true, WELL_KNOWN_SRC_VAR_NAME)], boundtemplates, undefined);
-                        const result = this.parseExpression();
-                        this.env.scope = undefined;
-
-                        return new InvokeExampleDeclBSQON(args, result);
-                    }
-                });
-                
-                samples.push(new InvokeExampleDeclInline(this.env.currentFile, sinfo, ekind, terms, examples));
-            }
-
-            this.ensureAndConsumeTokenIf(SYM_semicolon, "example");
-        }
-
-        return samples;
     }
 
     private parseLambdaSignatureParameter(): LambdaParameterSignature {
@@ -2154,7 +2120,7 @@ class Parser {
         return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, !someTypedParams);
     }
 
-    private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
+    private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "example" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
         const cinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
@@ -2163,7 +2129,7 @@ class Parser {
             this.consumeToken();
         }
 
-        let fkind: "function" | "predicate" | "chktest" | "errtest" = "function";
+        let fkind: "function" | "predicate" | "chktest" | "errtest" | "example" = "function";
         if(functionkind === "predicate") { 
             fkind = "predicate";
             this.ensureAndConsumeTokenAlways(KW_predicate, "predicate declaration");
@@ -2176,9 +2142,15 @@ class Parser {
             fkind = "chktest";
             this.ensureAndConsumeTokenAlways(KW_chktest, "chktest declaration");
         }
+        else if(functionkind === "example") {
+            fkind = "example";
+            this.ensureAndConsumeTokenAlways(KW_example, "example declaration");
+        }
         else {
             this.ensureAndConsumeTokenAlways(KW_function, "function declaration");
         }
+
+        const tassoc = this.parseTestAssociations();
 
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
@@ -2206,17 +2178,16 @@ class Parser {
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
-        const samples = this.parseSamples(cinfo, boundtemplates);
-    
+        
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, functionkind === "predicate", false);
         this.env.popStandardFunctionScope();
 
         if(functionkind === "typescope") {
-            return new TypeFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
+            return new TypeFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds);
         }
         else {
-            return new NamespaceFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, fkind);
+            return new NamespaceFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, tassoc, fkind);
         }
     }
 
@@ -2273,17 +2244,16 @@ class Parser {
         }
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
-        const samples = this.parseSamples(cinfo, boundtemplates);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
         this.env.popStandardFunctionScope();
 
         if(taskscope) {
-            return new TaskMethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, isref);
+            return new TaskMethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
         }
         else {
-            return new MethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, isref);
+            return new MethodDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, isref);
         }
     }
 
@@ -2322,13 +2292,12 @@ class Parser {
         refparams.add("self");
     
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
-        const samples = this.parseSamples(cinfo, boundtemplates);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
         this.env.popStandardFunctionScope();
 
-        return new TaskActionDecl(this.env.currentFile, cinfo, attributes, fname, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
+        return new TaskActionDecl(this.env.currentFile, cinfo, attributes, fname, params, resultInfo, body, terms, termRestrictions, preconds, postconds);
     }
 
     ////
@@ -4586,7 +4555,7 @@ class Parser {
             else if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
                 this.parseNamespaceFunction(attributes);
             }
-            else if(this.testFollows(KW_chktest) || this.testFollows(KW_errtest)) {
+            else if(this.testFollows(KW_chktest) || this.testFollows(KW_errtest) || this.testFollows(KW_example)) {
                 this.parseNamespaceFunction(attributes);
             }
             else if(this.testFollows(KW_entity) || this.testFollows(KW_status, KW_entity) || this.testFollows(KW_event, KW_entity)) {
@@ -4713,7 +4682,7 @@ class Parser {
             this.scanOverBraceDelimitedDeclaration(true);
         }
         else {
-            let fkind: "namespace" | "predicate" | "chktest" | "errtest" = "namespace";
+            let fkind: "namespace" | "predicate" | "chktest" | "errtest" | "example" = "namespace";
             if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
                 fkind = "predicate";
             }
@@ -4722,6 +4691,9 @@ class Parser {
             }
             else if(this.testFollows(KW_errtest)) {
                 fkind = "errtest";
+            }
+            else if(this.testFollows(KW_example)) {
+                fkind = "example";
             }
             else {
                 ;
@@ -5732,7 +5704,6 @@ class Parser {
             const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
 
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
-            const samples = this.parseSamples(sinfo, boundtemplates);
     
             let statusinfo: TypeSignature[] = [];
             let resouceinfo: ResourceInformation[] | "**" | "{}" | undefined = undefined;
@@ -5811,7 +5782,7 @@ class Parser {
             const body = this.parseBody(attributes, false, false);
             this.env.popStandardFunctionScope();
             
-            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, preconds, postconds, samples, statusinfo, envinfo, resouceinfo, body);
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, preconds, postconds, statusinfo, envinfo, resouceinfo, body);
             this.env.currentNamespace.apis.push(api);
         }
     }
