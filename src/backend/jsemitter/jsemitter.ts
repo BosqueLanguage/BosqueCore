@@ -3413,7 +3413,7 @@ class JSEmitter {
             let imports = "";
             for(let i = 0; i < decl.usings.length; ++i) {
                 const tlname = decl.usings[i].fromns;
-                if(decl.name !== tlname) {
+                if(decl.name !== tlname && aainsts.find((ai) => ai.ns.ns[0] === tlname) !== undefined) {
                     imports += `import * as $${tlname} from "./${tlname}.mjs";${fmt.nl()}`;
                 }
             }
@@ -3499,7 +3499,9 @@ class JSEmitter {
         let imports = "";
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const tlname = assembly.toplevelNamespaces[i].name;
-            imports += `import * as $${tlname} from "./${tlname}.mjs";\n`;
+            if(asminstantiation.find((ai) => ai.ns.ns[0] === tlname) !== undefined) {
+                imports += `import * as $${tlname} from "./${tlname}.mjs";\n`;
+            }
         }
 
         const tgheader = prefix + imports + "\n";

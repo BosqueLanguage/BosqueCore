@@ -17,7 +17,7 @@ const bsqreprmiscdir = path.join(bsqdir, "src/bsqrepr");
 const smtcoredir = path.join(bsqdir, "src/backend/smtcore/smtrepr");
 const smtcoretestdir = path.join(bsqdir, "src/backend/smtcore/test");
 
-const allsrcdirs = [bsqreprmiscdir, smtcoredir];
+const allsrcdirs = [bsqreprmiscdir, smtcoredir, smtcoretestdir];
 let allsources = [];
 for(let i = 0; i < allsrcdirs.length; ++i) {
     const srcdir = allsrcdirs[i];

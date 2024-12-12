@@ -1,5 +1,7 @@
 namespace SMTEmitter;
 
+const c_typeSigCString: TypeSignature = TypeSignature{tskind: TypeSignatureKind::NominalTypeSignature, name: 'CString'};
+
 chktest test_emitLiteralNoneValue(): Bool {
     return emitLiteralNoneValue() === 'none';
 }
@@ -31,3 +33,12 @@ chktest test_emitLiteralBigIntValue(): Bool {
 chktest test_emitLiteralFloatValue(): Bool {
     return emitLiteralFloatValue('3.0f') === '3.0';
 }
+
+chktest test_emitLiteralCStringValue_ok(): Bool {
+    return emitLiteralCStringValue(LiteralCStringValue{'"ok"'}) === '"ok"';
+}
+%*
+chktest test_emitLiteralStringValue_ok(): Bool {
+    return emitLiteralStringValue(LiteralStringValue{'"ok"'}) === '"ok"';
+}
+*%

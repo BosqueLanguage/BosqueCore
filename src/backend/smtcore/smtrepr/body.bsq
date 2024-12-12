@@ -33,7 +33,7 @@ LiteralNoneValue { }
     field value: CString;
 }
 | LiteralStringValue {
-    field value: String;
+    field value: CString;
 }
 | LiteralCRegexValue {
     field value: CString;

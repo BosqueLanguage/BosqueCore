@@ -30,6 +30,24 @@ function emitLiteralFloatValue(v: CString): CString {
     return v.removeSuffixString('f');
 }
 
+function emitLiteralCStringValue(v: LiteralCStringValue): CString {
+    return v.value;
+}
+
+function emitLiteralStringValue(v: LiteralStringValue): CString {
+    return v.value;
+}
+
+function emitLiteralCRegexValue(v: CString): CString {
+    %%TODO
+    abort;
+}
+
+function emitLiteralRegexValue(v: CString): CString {
+    %%TODO
+    abort;
+}
+
 public function main(): Int {
     var asm: Assembly;
 
