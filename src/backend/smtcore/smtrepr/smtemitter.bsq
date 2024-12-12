@@ -2,6 +2,34 @@ declare namespace SMTEmitter {
     using IRDecl as IR;
 }
 
+function emitLiteralNoneValue(): CString {
+    return 'none';
+}
+
+function emitLiteralBoolValue(v: CString): CString {
+    return v;
+}
+
+function emitLiteralNatValue(v: CString): CString {
+    return v.removeSuffixString('n');
+}
+
+function emitLiteralIntValue(v: CString): CString {
+    return v.removeSuffixString('i');
+}
+
+function emitLiteralBigNatValue(v: CString): CString {
+    return v.removeSuffixString('N');
+}
+
+function emitLiteralBigIntValue(v: CString): CString {
+    return v.removeSuffixString('I');
+}
+
+function emitLiteralFloatValue(v: CString): CString {
+    return v.removeSuffixString('f');
+}
+
 public function main(): Int {
     var asm: Assembly;
 

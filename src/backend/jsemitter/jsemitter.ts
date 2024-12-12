@@ -2037,6 +2037,30 @@ class JSEmitter {
         else if(bname === "s_float_sqrt") {
             bop = `Math.sqrt(a)`;
         }
+        else if(bname === "cstring_empty") {
+            bop = `s === ""`;
+        }
+        else if(bname === "cstring_starts_with_string") {
+            bop = `s.startsWith(prefix)`;
+        }
+        else if(bname === "cstring_ends_with_string") {
+            bop = `s.endsWith(suffix)`;
+        }
+        else if(bname === "cstring_append") {
+            bop = `s + c`;
+        }
+        else if(bname === "cstring_prepend") {
+            bop = `c + s`;
+        }
+        else if(bname === "cstring_concat2") {
+            bop = `s1 + s2`;
+        }
+        else if(bname === "cstring_remove_prefix_string") {
+            bop = `s.slice(prefix.length)`;
+        }
+        else if(bname === "cstring_remove_suffix_string") {
+            bop = `s.slice(0, s.length - suffix.length)`;
+        }
         else {
             assert(false, `Unknown builtin function -- ${bname}`);
         }
@@ -3394,7 +3418,7 @@ class JSEmitter {
                 }
             }
             if(decl.name !== "Core") {
-                imports = `import * as $Core from "./Core.mjs";${fmt.nl(2)}`;
+                imports += `import * as $Core from "./Core.mjs";${fmt.nl(2)}`;
             }
 
             let loadop = "";

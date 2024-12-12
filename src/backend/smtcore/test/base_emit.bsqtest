@@ -1,0 +1,33 @@
+namespace SMTEmitter;
+
+chktest test_emitLiteralNoneValue(): Bool {
+    return emitLiteralNoneValue() === 'none';
+}
+
+chktest test_emitLiteralBoolValue_true(): Bool {
+    return emitLiteralBoolValue('true') === 'true';
+}
+
+chktest test_emitLiteralBoolValue_false(): Bool {
+    return emitLiteralBoolValue('false') === 'false';
+}
+
+chktest test_emitLiteralNatValue(): Bool {
+    return emitLiteralNatValue('3n') === '3';
+}
+
+chktest test_emitLiteralIntValue(): Bool {
+    return emitLiteralIntValue('-3i') === '-3';
+}
+
+chktest test_emitLiteralBigNatValue(): Bool {
+    return emitLiteralBigNatValue('5N') === '5';
+}
+
+chktest test_emitLiteralBigIntValue(): Bool {
+    return emitLiteralBigIntValue('0I') === '0';
+}
+
+chktest test_emitLiteralFloatValue(): Bool {
+    return emitLiteralFloatValue('3.0f') === '3.0';
+}

@@ -34,7 +34,7 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
 
 %** Primitive integer value. **%
 __internal __typedeclable __keycomparable __numeric entity Int {
-    #if STRIPPED_CORE
+#if STRIPPED_CORE
 #else
     const zero: Int = 0i;
     const one: Int = 1i;
@@ -108,6 +108,72 @@ __internal __typedeclable __keycomparable entity String {
 
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity CString {
+#if STRIPPED_CORE
+#else
+    %** Check if the string is empty **%
+    method empty(): Bool {
+        return CStringOps::s_empty(this);
+    }
+
+    %** Check if the string starts with the given prefix **%
+    method startsWithString(prefix: CString): Bool {
+        return CStringOps::s_startsWithString(this, prefix);
+    }
+
+    %** Check if the string ends with the given suffix **%
+    method endsWithString(suffix: CString): Bool {
+        return CStringOps::s_endsWithString(this, suffix);
+    }
+
+    %** Append CString s to back of this **%
+    method append(s: CString): CString {
+        return CStringOps::s_concat2(this, s);
+    }
+
+    %** Prepend CString s to the front of this **%
+    method prepend(s: CString): CString {
+        return CStringOps::s_concat2(s, this);
+    }
+
+    %** Concatenate all of the strings **%
+    function concat(...strs: List<CString>): CString {
+        if(strs.empty()) {
+            return '';
+        }
+        else {
+            let cc = strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
+            return cc;
+        }
+    }
+
+    %** Concatenate all of the strings in the list **%
+    function concatAll(strs: List<CString>): CString {
+        if(strs.empty()) {
+            return '';
+        }
+        else {
+            let cc = strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
+            return cc;
+        }
+    }
+
+    %%%%
+    %%TODO: we want to support regex versions of these operations too
+
+    %** Remove a given prefix string **%
+    method removePrefixString(prefix: CString): CString 
+        requires this.startsWithString(prefix);
+    {
+        return CStringOps::s_removePrefixString(this, prefix);
+    }
+    
+    %** Remove a given suffix string **%
+    method removeSuffixString(suffix: CString): CString 
+        requires this.endsWithString(suffix);
+    {
+        return CStringOps::s_removeSuffixString(this, suffix);
+    }
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive unicode regex value. **%
