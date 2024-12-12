@@ -4552,7 +4552,7 @@ class Parser {
             else if(this.testFollows(KW_function) || this.testFollows(KW_recursive, KW_function) || this.testFollows(KW_recursive_q, KW_function)) {
                 this.parseNamespaceFunction(attributes);
             }
-            else if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
+            else if(this.testFollows(KW_predicate)) {
                 this.parseNamespaceFunction(attributes);
             }
             else if(this.testFollows(KW_chktest) || this.testFollows(KW_errtest) || this.testFollows(KW_example)) {
@@ -4683,16 +4683,16 @@ class Parser {
         }
         else {
             let fkind: "namespace" | "predicate" | "chktest" | "errtest" | "example" = "namespace";
-            if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
+            if(this.testToken(KW_predicate)) {
                 fkind = "predicate";
             }
-            else if(this.testFollows(KW_chktest)) {
+            else if(this.testToken(KW_chktest)) {
                 fkind = "chktest";
             }
-            else if(this.testFollows(KW_errtest)) {
+            else if(this.testToken(KW_errtest)) {
                 fkind = "errtest";
             }
-            else if(this.testFollows(KW_example)) {
+            else if(this.testToken(KW_example)) {
                 fkind = "example";
             }
             else {

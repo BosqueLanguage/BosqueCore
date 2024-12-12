@@ -273,7 +273,7 @@ class EmitNameManager {
     static generateAccssorNameForNamespaceTestFunction(inns: NamespaceDeclaration, fv: NamespaceFunctionDecl): string {
         const ans = this.emitNamespaceAccessForceExplicit(inns);
 
-        return `${ans}${fv.name}`;
+        return `${ans}.${fv.name}`;
     }
 
     static generateOnCompleteAccssorNameForNamespaceFunction(currentns: NamespaceDeclaration, fv: NamespaceFunctionDecl, terms: TypeSignature[]): string {

@@ -21,13 +21,6 @@ if(fullargs.length === 0) {
     process.exit(1);
 }
 
-let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
-let outdiridx = fullargs.findIndex((v) => v === "--output");
-if(outdiridx !== -1) {
-    outdir = fullargs[outdiridx + 1];
-    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
-}
-
 let mainns = "Main";
 let mainnsidx = fullargs.findIndex((v) => v === "--namespace");
 if(mainnsidx !== -1) {
@@ -40,6 +33,13 @@ let testgenidx = fullargs.findIndex((v) => v === "--testgen");
 if(testgenidx !== -1) {
     testgen = true;
     fullargs = fullargs.slice(0, testgenidx).concat(fullargs.slice(testgenidx + 1));
+}
+
+let outdir = path.join(path.dirname(path.resolve(fullargs[0])), "jsout");
+let outdiridx = fullargs.findIndex((v) => v === "--output");
+if(outdiridx !== -1) {
+    outdir = fullargs[outdiridx + 1];
+    fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
 }
 
 function getSimpleFilename(fn: string): string {

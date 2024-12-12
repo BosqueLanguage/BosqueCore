@@ -2243,20 +2243,23 @@ class JSEmitter {
             return undefined;
         }
 
-        if(!this.testgroups.find((gg) => gg[0] === fdecl.file) === undefined) {
+        if(this.testgroups.find((gg) => gg[0] === fdecl.file) === undefined) {
             this.testgroups.push([fdecl.file, []]);
         }
-        let tarray = this.testgroups.find((gg) => gg[0] === fdecl.file) as string[];
+        let tarray = (this.testgroups.find((gg) => gg[0] === fdecl.file) as [string, string[]])[1];
     
         const invname = EmitNameManager.generateAccssorNameForNamespaceTestFunction(this.getCurrentNamespace(), fdecl);
-            
+        
+        //TODO: we will need to handle test functions with parameters here
+        assert(fdecl.params.length === 0, "Not implemented -- fuzzing for test functions with parameters");
+
         let invop = "";
-        const testmsg = `  process.stdout.write("Test @${fdecl.sinfo.line} -- ${fdecl.name}...");`;
+        const testmsg = `process.stdout.write("    Test @${fdecl.sinfo.line} -- ${fdecl.name}... ");`;
         if(fdecl.fkind === "chktest") {
-            invop = `${testmsg} try { const result = ${invname}(); if(result) { _$passcount++; process.stdout.writeln("pass " + _$passcount.toString() + "/" + _$totalcount.toString()); } else { _$failcount++; process.stdout.writeln("fail " + _$failcount.toString() + "/" + _$totalcount.toString()); } } catch { process.stdout.write("error"); }`;
+            invop = `${testmsg} _$ccount++; try { const result = ${invname}(); if(result) { _$passcount++; process.stdout.write("pass " + _$ccount.toString() + "/" + _$totalcount.toString() + "\\n"); } else { _$failcount++; process.stdout.write("fail " + _$ccount.toString() + "/" + _$totalcount.toString() + "\\n"); } } catch { _$errorcount++; process.stdout.write("error "  + _$ccount.toString() + "/" + _$totalcount.toString() + "\\n"); }`;
         }
         else {
-            invop = `${testmsg} try { ${invname}(); _$passcount++; process.stdout.writeln("pass " + _$passcount.toString() + "/" + _$totalcount.toString()); } catch { _$errorcount++; process.stdout.writeln("error "  + _$errorcount.toString() + "/" + _$totalcount.toString()); }`;
+            invop = `${testmsg} _$ccount++; try { ${invname}(); _$passcount++; process.stdout.write("pass " + _$ccount.toString() + "/" + _$totalcount.toString() + "\\n"); } catch { _$errorcount++; process.stdout.write("error "  + _$ccount.toString() + "/" + _$totalcount.toString() + "\\n"); }`;
         }
 
         tarray.push(invop);
@@ -3384,6 +3387,12 @@ class JSEmitter {
             }
 
             let imports = "";
+            for(let i = 0; i < decl.usings.length; ++i) {
+                const tlname = decl.usings[i].fromns;
+                if(decl.name !== tlname) {
+                    imports += `import * as $${tlname} from "./${tlname}.mjs";${fmt.nl()}`;
+                }
+            }
             if(decl.name !== "Core") {
                 imports = `import * as $Core from "./Core.mjs";${fmt.nl(2)}`;
             }
@@ -3459,18 +3468,29 @@ class JSEmitter {
             const tg = emitter.testgroups[i];
             totalcount += tg[1].length;
 
-            tgs.push(`process.stdout.write("\\nRunning test group ${tg[0]} (${i}/${emitter.testgroups.length})\\n");`);
+            const ttests = tg[1].join("\n");
+            tgs.push(`process.stdout.write("\\nRunning tests from ${tg[0]} (${i + 1}/${emitter.testgroups.length})\\n");\n` + ttests);
         }
 
-        const tgheader = prefix + 'import * as $Core from "./Core.mjs";\n\n';
+        let imports = "";
+        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+            const tlname = assembly.toplevelNamespaces[i].name;
+            imports += `import * as $${tlname} from "./${tlname}.mjs";\n`;
+        }
+
+        const tgheader = prefix + imports + "\n";
 
         const asmreinfo = assembly.toplevelNamespaces.flatMap((ns) => assembly.loadConstantsAndValidatorREs(ns));
-        const loadop = `\n\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
+        const loadop = `import { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});\n\n`
                 
-        const vinit = `let _$passcount = 0;\nlet _$failcount = 0;\nlet _$errorcount = 0;\nconst _$totalcount = ${totalcount}\n\n`;
-        const tests = tgs.join("\n\n");
+        const vinit = `let _$ccount = 0;\nlet _$passcount = 0;\nlet _$failcount = 0;\nlet _$errorcount = 0;\nconst _$totalcount = ${totalcount}\n\n`;
+        const tests = tgs.join("\n\n") + "\n\n";
 
-        return [results, tgheader + loadop + vinit + tests];
+        const verrors = `if(_$errorcount !== 0) { process.stdout.write(_$errorcount.toString() + " tests had errors...\\n") }\n`;
+        const vfails = `if(_$failcount !== 0) { process.stdout.write(_$failcount.toString() + " tests failed...\\n") }\n`;
+        const vok = `if(_$errorcount === 0 && _$failcount === 0) { process.stdout.write("All (" + _$passcount.toString() + ") tests passed!\\n"); process.exit(0); } else { process.stdout.write(_$passcount.toString() + " tests passed...\\ndone\\n"); process.exit(1); }\n`;
+
+        return [results, tgheader + loadop + vinit + tests + verrors + vfails + vok];
     }
 }
 
