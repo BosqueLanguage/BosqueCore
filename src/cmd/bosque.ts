@@ -35,14 +35,21 @@ if(mainnsidx !== -1) {
     fullargs = fullargs.slice(0, mainnsidx).concat(fullargs.slice(mainnsidx + 2));
 }
 
+let testgen = false;
+let testgenidx = fullargs.findIndex((v) => v === "--testgen");
+if(testgenidx !== -1) {
+    testgen = true;
+    fullargs = fullargs.slice(0, testgenidx).concat(fullargs.slice(testgenidx + 1));
+}
+
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
-function buildExeCode(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
+function buildExeCode(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
     Status.output("Generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
-    const [jscode, _] = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
+    const jscode = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
 
     Status.output("    Writing JS code to disk...\n");
     const nndir = path.normalize(outname);
@@ -78,6 +85,33 @@ function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
     }
 
     Status.output(`    Code generation successful -- Type Info emitted to ${nndir}\n\n`);
+}
+
+
+function buildExeCodeTest(assembly: Assembly, outname: string) {
+    Status.output("Generating JS code...\n");
+    const iim = InstantiationPropagator.computeInstantiations(assembly, undefined);
+    const [jscode, testasm] = JSEmitter.emitTestAssembly(assembly, iim, undefined, undefined);
+
+    Status.output("    Writing JS code to disk...\n");
+    const nndir = path.normalize(outname);
+    try {
+        fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
+        fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
+
+        for(let i = 0; i < jscode.length; ++i) {
+            const fname = path.join(nndir, `${jscode[i].ns.ns[0]}.mjs`);
+            fs.writeFileSync(fname, jscode[i].contents);
+        }
+
+        const testfname = path.join(nndir, "test.mjs");
+        fs.writeFileSync(testfname, testasm);
+    }
+    catch(e) {      
+        Status.error("Failed to write output files!\n");
+    }
+
+    Status.output(`    Code generation successful -- JS emitted to ${nndir}\n\n`);
 }
 
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
@@ -126,7 +160,12 @@ if(asm !== undefined) {
     fs.rmSync(outdir, { recursive: true, force: true });
     fs.mkdirSync(outdir);
 
-    buildTypeInfo(asm, mainns, outdir);
-    buildExeCode(asm, "debug", "debug", mainns, outdir);
+    if(testgen) {
+        buildExeCodeTest(asm, outdir);
+    }
+    else {
+        buildTypeInfo(asm, mainns, outdir);
+        buildExeCode(asm, "debug", "debug", mainns, outdir);
+    }
 }
 

@@ -396,6 +396,22 @@ class TestAssociation {
         this.ontype = ontype;
         this.onmember = onmember;
     }
+
+    isMatchWith(tmatch: TestAssociation): boolean {
+        if(!FullyQualifiedNamespace.areSame(this.ns, tmatch.ns)) {
+            return false;
+        }
+
+        if(tmatch.ontype !== undefined && this.ontype !== tmatch.ontype) {
+            return false;
+        }
+
+        if(tmatch.onmember !== undefined && this.onmember !== tmatch.onmember) {
+            return false;
+        }
+
+        return true;
+    }
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {

@@ -70,7 +70,7 @@ function buildAssembly(srcfile: string): Assembly | undefined {
 
 function buildMainCode(assembly: Assembly, outname: string) {
     const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
-    const [jscode, _] = JSEmitter.emitAssembly(assembly, "debug", "test", "Main", iim);
+    const jscode = JSEmitter.emitAssembly(assembly, "debug", "test", "Main", iim);
 
     const nndir = path.normalize(outname);
     try {

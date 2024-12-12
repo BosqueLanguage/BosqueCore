@@ -1948,6 +1948,22 @@ class InstantiationPropagator {
         }
     }
 
+    private shouldInstantiateAsRootInvokeForTest(idecl: NamespaceFunctionDecl): boolean {
+        return idecl.terms.length === 0 && (idecl.fkind === "chktest" || idecl.fkind === "errtest" || idecl.fkind === "example");
+    }
+
+    private instantiateRootNamespaceDeclarationForTest(decl: NamespaceDeclaration) {
+        for(let i = 0; i < decl.functions.length; ++i) {
+            if(this.shouldInstantiateAsRootInvokeForTest(decl.functions[i])) {
+                this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(decl, decl.functions[i], []));
+            }
+        }
+
+        for(let i = 0; i < decl.subns.length; ++i) {
+            this.instantiateRootNamespaceDeclarationForTest(decl.subns[i]);
+        }
+    }
+
     private hasPendingWork(): boolean {
         if(this.pendingNominalTypeDecls.length !== 0) {
             return true;
@@ -1965,7 +1981,7 @@ class InstantiationPropagator {
         wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
     }
 
-    static computeInstantiations(assembly: Assembly, roonts: string): NamespaceInstantiationInfo[] {
+    static computeInstantiations(assembly: Assembly, roonts: string | undefined): NamespaceInstantiationInfo[] {
         let wellknownTypes = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
@@ -1991,8 +2007,15 @@ class InstantiationPropagator {
 
         let iim = new InstantiationPropagator(assembly, wellknownTypes);
 
-        const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;
-        iim.instantiateRootNamespaceDeclaration(rootns);
+        if(roonts !== undefined) {
+            const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;
+            iim.instantiateRootNamespaceDeclaration(rootns);
+        }
+        else {
+            for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+                iim.instantiateRootNamespaceDeclarationForTest(assembly.toplevelNamespaces[i]);
+            }
+        }
 
         while(iim.hasPendingWork()) {
             if(iim.pendingNominalTypeDecls.length !== 0) {

@@ -22,11 +22,11 @@ class JSEmitter {
     readonly buildlevel: BuildLevel;
 
     readonly generateTestInfo: boolean;
-    readonly testfilefilter: string[] = [];
-    readonly testfilters: TestAssociation[] = [];
+    readonly testfilefilter: string[] | undefined;
+    readonly testfilters: TestAssociation[] | undefined;
 
     //map from files with tests to the list of tests
-    readonly testcount: Map<string, string[]> = new Map<string, string[]>();
+    readonly testgroups: [string, string[]][] = [];
 
     currentfile: string | undefined;
     currentns: NamespaceDeclaration | undefined;
@@ -36,13 +36,16 @@ class JSEmitter {
 
     bindernames: Set<string> = new Set();
 
-    constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean) {
+    constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean, testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined) {
         this.assembly = assembly;
         this.asminstantiation = asminstantiation;
 
         this.mode = mode;
         this.buildlevel = buildlevel;
+
         this.generateTestInfo = generateTestInfo;
+        this.testfilefilter = testfilefilter;
+        this.testfilters = testfilters;
 
         this.currentfile = undefined;
         this.currentns = undefined;
@@ -2211,12 +2214,28 @@ class JSEmitter {
         return ensurescc;
     }
 
-    private testEmitEnabled(fdecl: FunctionInvokeDecl): boolean {
-        if(!this.testEmitEnabled) {
+    private testEmitEnabled(fdecl: NamespaceFunctionDecl): boolean {
+        if(!this.generateTestInfo) {
             return false;
         }
 
-        xxxx;
+        if(this.testfilefilter === undefined && this.testfilters === undefined) {
+            return true;
+        }
+
+        let matchfile = false;
+        if(this.testfilefilter !== undefined) {
+            matchfile = this.testfilefilter.some((ff) => fdecl.file.endsWith(ff));
+        }
+
+        let matchfilter = false;
+        if(this.testfilters !== undefined) {
+            const assoc = fdecl.tassoc;
+
+            matchfilter = assoc !== undefined && this.testfilters.some((tmatch) => assoc.some((asc) => asc.isMatchWith(tmatch)));
+        }
+
+        return matchfile || matchfilter;
     }
 
     private emitTestCallForFunctionDecl(fdecl: NamespaceFunctionDecl) {
@@ -2224,20 +2243,23 @@ class JSEmitter {
             return undefined;
         }
 
-        if(fdecl.params.length === 0) {
-            const invname = EmitNameManager.generateAccssorNameForNamespaceTestFunction(this.getCurrentNamespace(), fdecl);
+        if(!this.testgroups.find((gg) => gg[0] === fdecl.file) === undefined) {
+            this.testgroups.push([fdecl.file, []]);
+        }
+        let tarray = this.testgroups.find((gg) => gg[0] === fdecl.file) as string[];
+    
+        const invname = EmitNameManager.generateAccssorNameForNamespaceTestFunction(this.getCurrentNamespace(), fdecl);
             
-            xxxx;
-            if(fdecl.fkind === "chktest") {
-                return `_$chktest(${invname}());`;
-            }
-            else {
-                return `_$errtest(${invname}());`;
-            }
+        let invop = "";
+        const testmsg = `  process.stdout.write("Test @${fdecl.sinfo.line} -- ${fdecl.name}...");`;
+        if(fdecl.fkind === "chktest") {
+            invop = `${testmsg} try { const result = ${invname}(); if(result) { _$passcount++; process.stdout.writeln("pass " + _$passcount.toString() + "/" + _$totalcount.toString()); } else { _$failcount++; process.stdout.writeln("fail " + _$failcount.toString() + "/" + _$totalcount.toString()); } } catch { process.stdout.write("error"); }`;
         }
         else {
-            return "[FUZZER NOT IMPLEMENTED]";
+            invop = `${testmsg} try { ${invname}(); _$passcount++; process.stdout.writeln("pass " + _$passcount.toString() + "/" + _$totalcount.toString()); } catch { _$errorcount++; process.stdout.writeln("error "  + _$errorcount.toString() + "/" + _$totalcount.toString()); }`;
         }
+
+        tarray.push(invop);
     }
 
     private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined] | undefined, optmapping: TemplateNameMapper | undefined, fmt: JSCodeFormatter): {body: string, resfimpl: string | undefined} {
@@ -3312,11 +3334,10 @@ class JSEmitter {
         return {decls: alldecls, supers: allsupertypes};
     }
 
-    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], mainns: string, fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, tests: string[], nestedsupers: string[]} {
+    private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], mainns: string | undefined, fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, nestedsupers: string[]} {
         //all usings should be resolved and valid so nothing to do there
 
         let decls: string[] = [];
-        let tests: string[] = [];
         let nestedsupers: string[] = [];
 
         if(!decl.isTopNamespace()) {
@@ -3334,7 +3355,6 @@ class JSEmitter {
                 const snsdecl = this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, mainns, fmt, decl.isTopNamespace());
                 
                 decls.push(snsdecl.contents);
-                tests.push(...snsdecl.tests);
                 nestedsupers.push(...snsdecl.nestedsupers);
 
                 this.currentns = cdecl;
@@ -3378,7 +3398,7 @@ class JSEmitter {
                 mainop = "\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
             }
 
-            return {contents: prefix + imports + ddecls + supers + loadop + mainop, tests: tests, nestedsupers: []};
+            return {contents: prefix + imports + ddecls + supers + loadop + mainop, nestedsupers: []};
         }
         else {
             const idecls = decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());
@@ -3392,16 +3412,15 @@ class JSEmitter {
                 ddecls = fmt.indent(`${decl.name}: {${fmt.nl()}${idecls}${fmt.nl()}${fmt.indent("}")}`);
             }
 
-            return {contents: ddecls, tests: tests, nestedsupers: tdecls.supers};
+            return {contents: ddecls, nestedsupers: tdecls.supers};
         }
     }
 
-    static emitAssembly(assembly: Assembly, mode: "release" | "testing" | "debug", buildlevel: BuildLevel, mainns: string, asminstantiation: NamespaceInstantiationInfo[]): [{ns: FullyQualifiedNamespace, contents: string}[], string[]] {
-        const emitter = new JSEmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, mode === "testing");
+    static emitAssembly(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, mainns: string, asminstantiation: NamespaceInstantiationInfo[]): {ns: FullyQualifiedNamespace, contents: string}[] {
+        const emitter = new JSEmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, false, undefined, undefined);
 
         //emit each of the assemblies
         let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
-        let tests: string[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
@@ -3411,11 +3430,47 @@ class JSEmitter {
                 const code = emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, mainns, new JSCodeFormatter(0), true);
 
                 results.push({ns: nsdecl.fullnamespace, contents: code.contents});
-                tests.push(...code.tests);
             }
         }
 
-        return [results, tests];
+        return results;
+    }
+
+    static emitTestAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined): [{ns: FullyQualifiedNamespace, contents: string}[], string] {
+        const emitter = new JSEmitter(assembly, asminstantiation, "debug", "test", true, testfilefilter, testfilters);
+        
+        //emit each of the assemblies
+        let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
+        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+            const nsdecl = assembly.toplevelNamespaces[i];
+            const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                emitter.currentns = nsdecl;
+                const code = emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, undefined, new JSCodeFormatter(0), true);
+
+                results.push({ns: nsdecl.fullnamespace, contents: code.contents});
+            }
+        }
+
+        let tgs: string[] = [];
+        let totalcount = 0;
+        for(let i = 0; i < emitter.testgroups.length; ++i) {
+            const tg = emitter.testgroups[i];
+            totalcount += tg[1].length;
+
+            tgs.push(`process.stdout.write("\\nRunning test group ${tg[0]} (${i}/${emitter.testgroups.length})\\n");`);
+        }
+
+        const tgheader = prefix + 'import * as $Core from "./Core.mjs";\n\n';
+
+        const asmreinfo = assembly.toplevelNamespaces.flatMap((ns) => assembly.loadConstantsAndValidatorREs(ns));
+        const loadop = `\n\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";\nloadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
+                
+        const vinit = `let _$passcount = 0;\nlet _$failcount = 0;\nlet _$errorcount = 0;\nconst _$totalcount = ${totalcount}\n\n`;
+        const tests = tgs.join("\n\n");
+
+        return [results, tgheader + loadop + vinit + tests];
     }
 }
 
