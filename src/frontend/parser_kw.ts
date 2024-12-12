@@ -13,7 +13,6 @@ const KW_abort = "abort";
 const KW_assert = "assert";
 const KW_bsqon = "bsqon";
 const KW_dollarbsqon = "$bsqon";
-const KW_example = "example";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -81,6 +80,7 @@ const KW_predicate = "predicate";
 const KW_softcheck = "softcheck";
 const KW_errtest = "errtest";
 const KW_chktest = "chktest";
+const KW_example = "example";
 
 //reserved
 const KW_operator = "operator";
@@ -95,7 +95,6 @@ const KeywordStrings = [
     KW_action,
     KW_bsqon,
     KW_dollarbsqon,
-    KW_example,
     KW__debug,
     KW_do,
     KW_abort,
@@ -160,7 +159,8 @@ const KeywordStrings = [
     KW_resource,
     KW_softcheck,
     KW_errtest,
-    KW_chktest
+    KW_chktest,
+    KW_example
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -354,7 +354,6 @@ export {
     KW_action,
     KW_bsqon,
     KW_dollarbsqon,
-    KW_example,
     KW__debug,
     KW_do,
     KW_abort,
@@ -420,6 +419,7 @@ export {
     KW_softcheck,
     KW_errtest,
     KW_chktest,
+    KW_example,
 
     SYM_lbrack,
     SYM_lparen,

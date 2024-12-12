@@ -19,6 +19,20 @@ class FullyQualifiedNamespace {
             return this.ns.join("::");
         }
     }
+
+    static areSame(ns1: FullyQualifiedNamespace, ns2: FullyQualifiedNamespace): boolean {
+        if(ns1.ns.length !== ns2.ns.length) {
+            return false;
+        }
+
+        for(let i = 0; i < ns1.ns.length; ++i) {
+            if(ns1.ns[i] !== ns2.ns[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 class TemplateConstraintScope {
