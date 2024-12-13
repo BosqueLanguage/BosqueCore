@@ -154,18 +154,20 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 }
 
 const asm = checkAssembly(fullargs);
-if(asm !== undefined) {
-    Status.output(`-- JS output directory: ${outdir}\n\n`);
+if(asm === undefined) {
+    process.exit(1);
+}
 
-    fs.rmSync(outdir, { recursive: true, force: true });
-    fs.mkdirSync(outdir);
+Status.output(`-- JS output directory: ${outdir}\n\n`);
 
-    if(testgen) {
-        buildExeCodeTest(asm, outdir);
-    }
-    else {
-        buildTypeInfo(asm, mainns, outdir);
-        buildExeCode(asm, "debug", "debug", mainns, outdir);
-    }
+fs.rmSync(outdir, { recursive: true, force: true });
+fs.mkdirSync(outdir);
+
+if(testgen) {
+    buildExeCodeTest(asm, outdir);
+}
+else {
+    buildTypeInfo(asm, mainns, outdir);
+    buildExeCode(asm, "debug", "debug", mainns, outdir);
 }
 
