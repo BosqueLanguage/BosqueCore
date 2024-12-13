@@ -1,6 +1,7 @@
 namespace SMTEmitter;
 
-const c_typeSigCString: TypeSignature = TypeSignature{tskind: TypeSignatureKind::NominalTypeSignature, name: 'CString'};
+const c_typeSigCString: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'CString' };
+const c_typeSigCStringResult: ResultType = DirectResult{ SMTEmitter::c_typeSigCString };
 
 chktest test_emitLiteralNoneValue(): Bool {
     return emitLiteralNoneValue() === 'none';
@@ -35,7 +36,8 @@ chktest test_emitLiteralFloatValue(): Bool {
 }
 
 chktest test_emitLiteralCStringValue_ok(): Bool {
-    return emitLiteralCStringValue(LiteralCStringValue{'"ok"'}) === '"ok"';
+    let op = LiteralCStringValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSigCStringResult, SMTEmitter::c_typeSigCString, '"ok"'};
+    return emitLiteralCStringValue(op) === '"ok"';
 }
 %*
 chktest test_emitLiteralStringValue_ok(): Bool {
