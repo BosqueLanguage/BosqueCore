@@ -1,6 +1,6 @@
 namespace SMTEmitter;
 
-const c_typeSigCString: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'CString' };
+const c_typeSigCString: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'CString'<IR::TypeKey> };
 const c_typeSigCStringResult: ResultType = DirectResult{ SMTEmitter::c_typeSigCString };
 
 chktest test_emitLiteralNoneValue(): Bool {

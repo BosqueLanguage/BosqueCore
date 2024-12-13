@@ -16,12 +16,12 @@ entity FullyQualifiedNamespace {
 }
 
 const templateTypeKeyRE: CRegex = /[A-Z]/c;
-const nominalTypeKeyBaseRE: CRegex = /(${IRDecl::namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+/c; %%Core is implicit here
-const specialScopedTypeRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
-const nominalTypeKeyRE: CRegex = /(${IRDecl::nominalTypeKeyBaseRE}|${IRDecl::specialScopedTypeBaseRE})('<'.+'>')?/c; %%a bit rough but helps prevent mistakes
+const basicNominalTypeKeyRE: CRegex = /(${IRDecl::namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${IRDecl::basicNominalTypeKeyRE}|${IRDecl::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const baseTypeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::specialScopedTypeRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
+const baseTypeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
 const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IRDecl::baseTypeKeyRE}/c;
 const typeKeyRE: CRegex = /${IRDecl::baseTypeKeyRE}|${IRDecl::lambdaTypeKeyRE}/c; 
 
