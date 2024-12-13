@@ -2,50 +2,58 @@ declare namespace SMTEmitter {
     using IRDecl as IR;
 }
 
+function cleanOptionalLeadingPlus(vstr: CString): CString {
+    return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
+}
+
+function emitTaggedNumericType(nstr: CString, tag: CString): CString {
+    return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
+}
+
 function emitLiteralNoneValue(): CString {
     return 'none';
 }
 
-function emitLiteralBoolValue(v: CString): CString {
-    return v;
-}
+function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
+    let tkey = v.vtype.tkeystr;
 
-function emitLiteralNatValue(v: CString): CString {
-    return v.removeSuffixString('n');
-}
-
-function emitLiteralIntValue(v: CString): CString {
-    return v.removeSuffixString('i');
-}
-
-function emitLiteralBigNatValue(v: CString): CString {
-    return v.removeSuffixString('N');
-}
-
-function emitLiteralBigIntValue(v: CString): CString {
-    return v.removeSuffixString('I');
-}
-
-function emitLiteralFloatValue(v: CString): CString {
-    return v.removeSuffixString('f');
+    switch(tkey) {
+        'Bool'<IR::TypeKey>     => { return v.value; }
+        | 'Nat'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
+        | 'Int'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
+        | 'BigNat'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
+        | 'BigInt'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
+        | 'Float'<IR::TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
+    }
 }
 
 function emitLiteralCStringValue(v: LiteralCStringValue): CString {
-    return v.value;
+    return CString::concat('"', v.value, '"');
 }
 
 function emitLiteralStringValue(v: LiteralStringValue): CString {
-    return v.value;
+    return CString::concat('"', v.value, '"');
 }
 
-function emitLiteralCRegexValue(v: CString): CString {
+function emitLiteralCRegexValue(v: LiteralCRegexValue): CString {
     %%TODO
     abort;
 }
 
-function emitLiteralRegexValue(v: CString): CString {
+function emitLiteralRegexValue(v: LiteralRegexValue): CString {
     %%TODO
     abort;
+}
+
+function emitConstantValue(v: ConstantValue): CString {
+    match(v)@ {
+        LiteralNoneValue => { return emitLiteralNoneValue(); }
+        | LiteralSimpleValue => { return emitLiteralSimpleValue($v); }
+        | LiteralCStringValue => { return emitLiteralCStringValue($v); }
+        | LiteralStringValue => { return emitLiteralStringValue($v); }
+        | LiteralCRegexValue => { return emitLiteralCRegexValue($v); }
+        | LiteralRegexValue => { return emitLiteralRegexValue($v); }
+    }
 }
 
 public function main(): Int {
