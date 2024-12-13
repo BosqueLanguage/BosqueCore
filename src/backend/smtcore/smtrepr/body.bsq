@@ -25,20 +25,20 @@ concept Value provides Expression {
 
 datatype ConstantValue provides Value
 of
-LiteralNoneExpression { }
-| LiteralSimpleExpression {
+LiteralNoneValue { }
+| LiteralSimpleValue {
     field value: CString;
 }
-| LiteralCStringExpression {
+| LiteralCStringValue {
     field value: CString;
 }
-| LiteralStringExpression {
-    field value: String;
-}
-| LiteralCRegexExpression {
+| LiteralStringValue {
     field value: CString;
 }
-| LiteralRegexExpression {
+| LiteralCRegexValue {
+    field value: CString;
+}
+| LiteralRegexValue {
     field value: String;
 }
 ;

@@ -1,0 +1,19 @@
+namespace Core;
+
+#if STRIPPED_CORE
+#else
+#if EXEC_LIBS
+namespace CStringOps {
+    function s_empty(s: CString): Bool = cstring_empty;
+
+    function s_startsWithString(s: CString, prefix: CString): Bool = cstring_starts_with_string;
+    function s_endsWithString(s: CString, suffix: CString): Bool = cstring_ends_with_string;
+
+    function s_concat2(s1: CString, s2: CString): CString = cstring_concat2;
+
+    function s_removePrefixString(s: CString, prefix: CString): CString = cstring_remove_prefix_string;
+    function s_removeSuffixString(s: CString, suffix: CString): CString = cstring_remove_suffix_string;
+}
+#else
+#endif %% EXEC_LIBS
+#endif %% STRIPPED_CORE

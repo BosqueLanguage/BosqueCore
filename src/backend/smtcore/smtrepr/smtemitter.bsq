@@ -2,6 +2,60 @@ declare namespace SMTEmitter {
     using IRDecl as IR;
 }
 
+function cleanOptionalLeadingPlus(vstr: CString): CString {
+    return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
+}
+
+function emitTaggedNumericType(nstr: CString, tag: CString): CString {
+    return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
+}
+
+function emitLiteralNoneValue(): CString {
+    return 'none';
+}
+
+function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
+    let tkey = v.vtype.tkeystr;
+
+    switch(tkey) {
+        'Bool'<IR::TypeKey>     => { return v.value; }
+        | 'Nat'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
+        | 'Int'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
+        | 'BigNat'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
+        | 'BigInt'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
+        | 'Float'<IR::TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
+    }
+}
+
+function emitLiteralCStringValue(v: LiteralCStringValue): CString {
+    return CString::concat('"', v.value, '"');
+}
+
+function emitLiteralStringValue(v: LiteralStringValue): CString {
+    return CString::concat('"', v.value, '"');
+}
+
+function emitLiteralCRegexValue(v: LiteralCRegexValue): CString {
+    %%TODO
+    abort;
+}
+
+function emitLiteralRegexValue(v: LiteralRegexValue): CString {
+    %%TODO
+    abort;
+}
+
+function emitConstantValue(v: ConstantValue): CString {
+    match(v)@ {
+        LiteralNoneValue => { return emitLiteralNoneValue(); }
+        | LiteralSimpleValue => { return emitLiteralSimpleValue($v); }
+        | LiteralCStringValue => { return emitLiteralCStringValue($v); }
+        | LiteralStringValue => { return emitLiteralStringValue($v); }
+        | LiteralCRegexValue => { return emitLiteralCRegexValue($v); }
+        | LiteralRegexValue => { return emitLiteralRegexValue($v); }
+    }
+}
+
 public function main(): Int {
     var asm: Assembly;
 

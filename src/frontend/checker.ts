@@ -4308,7 +4308,12 @@ class TypeChecker {
         const asmreinfo = assembly.toplevelNamespaces.flatMap((ns) => assembly.loadConstantsAndValidatorREs(ns));
 
         //Now process the regexs
-        loadConstAndValidateRESystem(asmreinfo);
+        const err = loadConstAndValidateRESystem(asmreinfo);
+        if(err !== null) {
+            for(let i = 0; i < err.length; ++i) {
+                this.reportError(SourceInfo.implicitSourceInfo(), err[i]);
+            }
+        }
     }
 
     private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
