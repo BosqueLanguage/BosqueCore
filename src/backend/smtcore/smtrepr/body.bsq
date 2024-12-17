@@ -15,7 +15,6 @@ ITestType { field ttype: TypeSignature; }
 ;
 
 concept Expression {
-    field sinfo: IR::SourceInfo;
     field etype: ResultType;
 }
 
@@ -43,13 +42,8 @@ LiteralNoneValue { }
 }
 ;
 
-entity VariableValue provides Value {
-    field vname: CString;
-    field layouttype: TypeSignature;
-}
-
 entity AccessNamespaceConstantValue provides Value {
-    field ns: IR::FullyQualifiedNamespace;
+    field ns: NamespaceKey;
     field name: CString;
 }
 
@@ -144,7 +138,7 @@ entity LambdaInvokeExpression provides Expression {
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
-    field ns: IR::FullyQualifiedNamespace;
+    field ns: NamespaceKey;
     field name: CString;
 
     field args: List<Value>;
@@ -190,7 +184,6 @@ entity CreateDirectValue provides Value {
 }
 
 datatype PostfixOperation using {
-    field sinfo: IR::SourceInfo;
     field baseType: NominalTypeSignature;
 }
 of 
@@ -215,7 +208,9 @@ PostfixAccessFromName {
 | PostfixAsConvert {
     field ttest: ITest;
 }
-;
+| LiteralKeyAccess {
+    field kexp: Value;
+}
 ;
 
 entity PostfixOp provides Value {
@@ -237,7 +232,7 @@ entity MethodInvokeVirtual provides Expression {
     field args: List<Value>;
 }
 
-entity LiteralKeyAccess provides Expression {
+entity LiteralKeyHas provides Value {
     field rootExp: Value;
     field kexp: Value;
 }

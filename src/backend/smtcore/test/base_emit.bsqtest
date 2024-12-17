@@ -1,15 +1,14 @@
 namespace SMTEmitter;
 
-const c_typeSig_None: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'None'<IR::TypeKey> };
-const c_typeSig_Bool: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<IR::TypeKey> };
-const c_typeSig_Nat: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'Nat'<IR::TypeKey> };
-const c_typeSig_Int: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<IR::TypeKey> };
-const c_typeSig_BigNat: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'BigNat'<IR::TypeKey> };
-const c_typeSig_BigInt: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'BigInt'<IR::TypeKey> };
-const c_typeSig_Float: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'Float'<IR::TypeKey> };
-const c_typeSig_CString: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'CString'<IR::TypeKey> };
-const c_typeSig_String: TypeSignature = NominalTypeSignature{ IR::SourceInfo{0n, 0n, 0n, 0n}, 'String'<IR::TypeKey> };
-
+const c_typeSig_None: TypeSignature = NominalTypeSignature{ 'None'<TypeKey> };
+const c_typeSig_Bool: TypeSignature = NominalTypeSignature{ 'Bool'<TypeKey> };
+const c_typeSig_Nat: TypeSignature = NominalTypeSignature{ 'Nat'<TypeKey> };
+const c_typeSig_Int: TypeSignature = NominalTypeSignature{ 'Int'<TypeKey> };
+const c_typeSig_BigNat: TypeSignature = NominalTypeSignature{ 'BigNat'<TypeKey> };
+const c_typeSig_BigInt: TypeSignature = NominalTypeSignature{ 'BigInt'<TypeKey> };
+const c_typeSig_Float: TypeSignature = NominalTypeSignature{ 'Float'<TypeKey> };
+const c_typeSig_CString: TypeSignature = NominalTypeSignature{ 'CString'<TypeKey> };
+const c_typeSig_String: TypeSignature = NominalTypeSignature{ 'String'<TypeKey> };
 
 const c_typeSig_NoneResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_None };
 const c_typeSig_BoolResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_Bool };
@@ -22,42 +21,42 @@ const c_typeSig_CStringResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_
 const c_typeSig_StringResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_String };
 
 chktest test_emitLiteralNoneValue(): Bool {
-    let op = LiteralNoneValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_NoneResult, SMTEmitter::c_typeSig_None};
+    let op = LiteralNoneValue{SMTEmitter::c_typeSig_NoneResult, SMTEmitter::c_typeSig_None};
     return emitConstantValue(op) === 'none';
 }
 
 chktest test_emitLiteralBoolValue_true(): Bool {
-    let op = LiteralSimpleValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_BoolResult, SMTEmitter::c_typeSig_Bool, 'true'};
+    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_BoolResult, SMTEmitter::c_typeSig_Bool, 'true'};
     return emitConstantValue(op) === 'true';
 }
 
 chktest test_emitLiteralNatValue_42(): Bool {
-    let op = LiteralSimpleValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_NatResult, SMTEmitter::c_typeSig_Nat, '42n'};
+    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_NatResult, SMTEmitter::c_typeSig_Nat, '42n'};
     return emitConstantValue(op) === '42';
 }
 
 chktest test_emitLiteralIntValue_neg42(): Bool {
-    let op = LiteralSimpleValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_IntResult, SMTEmitter::c_typeSig_Int, '-42i'};
+    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_IntResult, SMTEmitter::c_typeSig_Int, '-42i'};
     return emitConstantValue(op) === '-42';
 }
 
 chktest test_emitLiteralBigNatValue_0(): Bool {
-    let op = LiteralSimpleValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_BigNatResult, SMTEmitter::c_typeSig_BigNat, '0N'};
+    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_BigNatResult, SMTEmitter::c_typeSig_BigNat, '0N'};
     return emitConstantValue(op) === '0';
 }
 
 chktest test_emitLiteralBigIntValue_pos1(): Bool {
-    let op = LiteralSimpleValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_BigIntResult, SMTEmitter::c_typeSig_BigInt, '+1I'};
+    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_BigIntResult, SMTEmitter::c_typeSig_BigInt, '+1I'};
     return emitConstantValue(op) === '1';
 }
 
 chktest test_emitLiteralCStringValue_ok(): Bool {
-    let op = LiteralCStringValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_CStringResult, SMTEmitter::c_typeSig_CString, 'ok'};
+    let op = LiteralCStringValue{SMTEmitter::c_typeSig_CStringResult, SMTEmitter::c_typeSig_CString, 'ok'};
     return emitConstantValue(op) === '"ok"';
 }
 
 chktest test_emitLiteralStringValue_ok(): Bool {
-    let op = LiteralStringValue{IR::SourceInfo{0n, 0n, 0n, 0n}, SMTEmitter::c_typeSig_StringResult, SMTEmitter::c_typeSig_String, 'ok'};
+    let op = LiteralStringValue{SMTEmitter::c_typeSig_StringResult, SMTEmitter::c_typeSig_String, 'ok'};
     return emitConstantValue(op) === '"ok"';
 }
 

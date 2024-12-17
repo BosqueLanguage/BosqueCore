@@ -660,7 +660,7 @@ class TypeChecker {
                 const argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(etype));
                 rtypes.push([false, argtype]);
 
-                this.checkError(arg.exp.sinfo, !this.relations.isSubtypeOf(argtype, etype, this.constraints), `Rest argument ${i} expected type ${etype.emit()}`);
+                this.checkError(arg.exp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, etype, this.constraints), `Rest argument ${i} expected type ${etype.emit()}`);
             }
             else {
                 const argtype = this.checkExpression(env, arg.exp, undefined);

@@ -1,6 +1,4 @@
-declare namespace SMTEmitter {
-    using IRDecl as IR;
-}
+declare namespace SMTEmitter;
 
 function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
@@ -18,12 +16,12 @@ function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
     let tkey = v.vtype.tkeystr;
 
     switch(tkey) {
-        'Bool'<IR::TypeKey>     => { return v.value; }
-        | 'Nat'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
-        | 'Int'<IR::TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
-        | 'BigNat'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
-        | 'BigInt'<IR::TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
-        | 'Float'<IR::TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
+        'Bool'<TypeKey>     => { return v.value; }
+        | 'Nat'<TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
+        | 'Int'<TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
+        | 'BigNat'<TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
+        | 'BigInt'<TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
+        | 'Float'<TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
     }
 }
 
@@ -54,6 +52,18 @@ function emitConstantValue(v: ConstantValue): CString {
         | LiteralCRegexValue => { return emitLiteralCRegexValue($v); }
         | LiteralRegexValue => { return emitLiteralRegexValue($v); }
     }
+}
+
+function emitAccessNamespaceConstantValue(v: AccessNamespaceConstantValue): CString {
+    return CString::concat(v.ns.value, '@', v.name);
+}
+
+function emitAccessStaticFieldValue(v: AccessStaticFieldValue): CString {
+    abort;
+}
+
+function emitAccessEnumValue(v: AccessEnumValue): CString {
+    abort;
 }
 
 public function main(): Int {

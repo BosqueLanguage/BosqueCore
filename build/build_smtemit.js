@@ -12,10 +12,9 @@ const bsqdir = path.dirname(__dirname);
 const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 
 const binoutdir = path.join(bsqdir, "bin/smtemit");
-const bsqreprmiscdir = path.join(bsqdir, "src/bsqrepr");
 const smtcoredir = path.join(bsqdir, "src/backend/smtcore/smtrepr");
 
-const allsrcdirs = [bsqreprmiscdir, smtcoredir];
+const allsrcdirs = [smtcoredir];
 let allsources = [];
 for(let i = 0; i < allsrcdirs.length; ++i) {
     const srcdir = allsrcdirs[i];
