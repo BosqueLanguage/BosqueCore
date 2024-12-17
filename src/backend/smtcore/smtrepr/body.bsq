@@ -103,10 +103,10 @@ datatype ConstructorPrimaryValue provides ConstructorValue using {
     field ctype: NominalTypeSignature;
 }
 of 
-ConstructorPrimaryCollectionSingletonsExpression { }
-| ConstructorPrimarySpecialConstructableExpression { }
-| ConstructorTypeDeclExpression { }
-| ConstructorStdExpression { }
+ConstructorPrimaryCollectionSingletonsValue { }
+| ConstructorPrimarySpecialConstructableValue { }
+| ConstructorTypeDeclValue { }
+| ConstructorStdValue { }
 ;
 
 entity ConstructorEListValue provides ConstructorValue {
@@ -117,11 +117,21 @@ entity ConstructorLambdaValue provides Value {
 }
 
 entity LetValue provides Value {
+    field decls: (|CString, TypeSignature, Value|);
+    field body: Value;
+}
+
+entity LetValueMulti provides Value {
     field decls: List<(|CString, TypeSignature, Value|)>;
     field body: Value;
 }
 
 entity LetExpression provides Expression {
+    field decls: (|CString, TypeSignature, Value|);
+    field body: Expression;
+}
+
+entity LetExpressionMulti provides Expression {
     field decls: List<(|CString, TypeSignature, Value|)>;
     field body: Expression;
 }
@@ -179,7 +189,7 @@ entity CreateDirectValue provides Value {
     field trgttype: NominalTypeSignature;
 }
 
-datatype SimplePostfixOperation using {
+datatype PostfixOperation using {
     field sinfo: IR::SourceInfo;
     field baseType: NominalTypeSignature;
 }
@@ -192,48 +202,44 @@ PostfixAccessFromName {
     field declOnType: NominalTypeSignature;
     field names: List<(|CString, NominalTypeSignature|)>;
 }
+| PostfixAssignFields {
+    field declOnType: NominalTypeSignature;
+    field updates: List<(|CString, NominalTypeSignature, Value|)>;
+}
 | PostfixAccessFromIndex {
     field idx: Nat;
 }
 | PostfixIsTest {
     field ttest: ITest;
 }
-;
-
-entity ValuePostfixOp provides Value {
-    field rootExp: Value;
-    field ops: List<SimplePostfixOperation>;
-}
-
-datatype ErrorablePostfixOperation using {
-    field sinfo: IR::SourceInfo;
-}
-of 
-PostfixAsConvert {
+| PostfixAsConvert {
     field ttest: ITest;
 }
-| PostfixAssignFields {
-    field declOnType: NominalTypeSignature;
-    field updates: List<(|CString, NominalTypeSignature, Value|)>;
+;
+;
+
+entity PostfixOp provides Value {
+    field rootExp: Value;
+    field ops: List<PostfixOperation>;
 }
-| PostfixInvokeStatic {
+
+entity MethodInvokeStatic provides Expression {
+    field rootExp: Value;
     field resolvedTrgt: NominalTypeSignature;
     field name: CString;
     field args: List<Value>;
 }
-| PostfixInvokeVirtual {
+
+entity MethodInvokeVirtual provides Expression {
+    field rootExp: Value;
     field resolvedBase: NominalTypeSignature;
     field name: CString;
     field args: List<Value>;
 }
-| PostfixLiteralKeyAccess {
-    field kexp: Value;
-}
-;
 
-entity ExpressionPostfixOp provides Expression {
+entity LiteralKeyAccess provides Expression {
     field rootExp: Value;
-    field op: ErrorablePostfixOperation;
+    field kexp: Value;
 }
 
 datatype UnaryValue provides Value using {
