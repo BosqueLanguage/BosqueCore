@@ -1,0 +1,7 @@
+namespace SMTEmitter;
+
+chktest test_emitTermifyValue(): Bool {
+    let basev = AccessVariableValue{'cc'};
+    let termify = TermifyValue{basev, 'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>};
+    return emitTermifyValue(termify) === '(@Term-Option$Int$-mk cc)';
+}

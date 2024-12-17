@@ -8,4 +8,12 @@ namespace SMTNameManager {
     function generateStructFieldName(tkey: TypeKey, vname: CString): CString {
         return CString::concat(tkey.value, '-', vname);
     }
+
+    function generateStructTermConstructorName(tkey: TypeKey): CString {
+        return CString::concat('@Term-', tkey.value, '-mk');
+    }
+
+    function generateStructTermFieldName(tkey: TypeKey, vname: CString): CString {
+        return CString::concat('@Term-', tkey.value, '-value');
+    }
 }

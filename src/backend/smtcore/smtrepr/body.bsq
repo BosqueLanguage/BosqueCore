@@ -7,24 +7,21 @@ datatype ITest using {
     field isnot: Bool;
 }
 of
-ITestType { field ttype: TypeSignature; }
+ITestType { field ttype: TypeKey; }
 | ITestNone { }
 | ITestSome { }
 | ITestOk { }
 | ITestFail { }
 ;
 
-concept Expression {
-}
-
-concept Value provides Expression {
+concept Value {
 }
 
 datatype ConstantValue provides Value
 of
 LiteralNoneValue { }
 | LiteralSimpleValue {
-    field vtype: NominalTypeSignature;
+    field vtype: TypeKey;
     field value: CString;
 }
 | LiteralCStringValue {
@@ -61,7 +58,7 @@ entity AccessVariableValue provides Value {
 }
 
 entity AccessRetypeStep {
-    field ttype: NominalTypeSignature;
+    field ttype: TypeKey;
     field specialfname: CString;
 }
 
@@ -77,28 +74,25 @@ entity AccessVariableRetypeMultiStepValue provides Value {
 
 entity TermifyValue provides Value {
     field value: Value;
-    field fromtype: NominalTypeSignature;
-    field intotype: NominalTypeSignature;
+    field fromtype: TypeKey;
+    field intotype: TypeKey;
 }
 
 entity UntermifyValue provides Value {
     field value: Value;
-    field fromtype: NominalTypeSignature;
-    field intotype: NominalTypeSignature;
+    field fromtype: TypeKey;
+    field intotype: TypeKey;
 }
 
 entity LiteralTypeDeclValue provides Value {
     field value: ConstantValue;
-    field constype: NominalTypeSignature;
-}
-
-concept ConstructorValue provides Value {
-    field args: List<Value>;
+    field constype: TypeKey;
 }
 
 %% Assume that checks are always inlined explicitly so that these are simple values
-datatype ConstructorPrimaryValue provides ConstructorValue using {
-    field ctype: NominalTypeSignature;
+datatype ConstructorPrimaryValue provides Value using {
+    field ctype: TypeKey;
+    field args: List<Value>;
 }
 of 
 ConstructorPrimaryCollectionSingletonsValue { }
@@ -107,7 +101,9 @@ ConstructorPrimaryCollectionSingletonsValue { }
 | ConstructorStdValue { }
 ;
 
-entity ConstructorEListValue provides ConstructorValue {
+entity ConstructorEListValue provides Value {
+    field ctype: TypeKey;
+    field args: List<Value>;
 }
 
 entity ConstructorLambdaValue provides Value {
@@ -115,22 +111,22 @@ entity ConstructorLambdaValue provides Value {
 }
 
 entity LetValue provides Value {
-    field decls: (|CString, TypeSignature, Value|);
+    field decls: (|CString, TypeKey, Value|);
     field body: Value;
 }
 
 entity LetValueMulti provides Value {
-    field decls: List<(|CString, TypeSignature, Value|)>;
+    field decls: List<(|CString, TypeKey, Value|)>;
     field body: Value;
 }
 
 entity LetExpression provides Expression {
-    field decls: (|CString, TypeSignature, Value|);
+    field decls: (|CString, TypeKey, Value|);
     field body: Expression;
 }
 
 entity LetExpressionMulti provides Expression {
-    field decls: List<(|CString, TypeSignature, Value|)>;
+    field decls: List<(|CString, TypeKey, Value|)>;
     field body: Expression;
 }
 
@@ -138,7 +134,7 @@ entity LambdaInvokeExpression provides Expression {
     field name: CString;
 
     field args: List<Value>;
-    field lambda: LambdaTypeSignature;
+    field lambda: TypeKey;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
@@ -149,7 +145,7 @@ entity CallNamespaceFunctionExpression provides Expression {
 }
 
 entity CallTypeFunctionExpression provides Expression {
-    field resolvedType: NominalTypeSignature;
+    field resolvedType: TypeKey;
     field name: CString;
     
     field args: List<Value>;
@@ -177,31 +173,31 @@ entity LogicActionOrValue provides Value {
 
 entity SafeConvertValue provides Value {
     field exp: Value;
-    field srctype: NominalTypeSignature;
-    field trgttype: NominalTypeSignature;
+    field srctype: TypeKey;
+    field trgttype: TypeKey;
 }
 
 entity CreateDirectValue provides Value {
     field exp: Value;
-    field srctype: NominalTypeSignature;
-    field trgttype: NominalTypeSignature;
+    field srctype: TypeKey;
+    field trgttype: TypeKey;
 }
 
 datatype PostfixOperation using {
-    field baseType: NominalTypeSignature;
+    field baseType: TypeKey;
 }
 of 
 PostfixAccessFromName {
-    field declaredInType: NominalTypeSignature;
+    field declaredInType: TypeKey;
     field name: CString;
 }
 | PostfixProjectFromNames {
-    field declOnType: NominalTypeSignature;
-    field names: List<(|CString, NominalTypeSignature|)>;
+    field declOnType: TypeKey;
+    field names: List<(|CString, TypeKey|)>;
 }
 | PostfixAssignFields {
-    field declOnType: NominalTypeSignature;
-    field updates: List<(|CString, NominalTypeSignature, Value|)>;
+    field declOnType: TypeKey;
+    field updates: List<(|CString, TypeKey, Value|)>;
 }
 | PostfixAccessFromIndex {
     field idx: Nat;
@@ -224,14 +220,14 @@ entity PostfixOp provides Value {
 
 entity MethodInvokeStatic provides Expression {
     field rootExp: Value;
-    field resolvedTrgt: NominalTypeSignature;
+    field resolvedTrgt: TypeKey;
     field name: CString;
     field args: List<Value>;
 }
 
 entity MethodInvokeVirtual provides Expression {
     field rootExp: Value;
-    field resolvedBase: NominalTypeSignature;
+    field resolvedBase: TypeKey;
     field name: CString;
     field args: List<Value>;
 }
@@ -243,7 +239,7 @@ entity LiteralKeyHas provides Value {
 
 datatype UnaryValue provides Value using {
     field exp: Value;
-    field opertype: NominalTypeSignature;
+    field opertype: TypeKey;
 }
 of
 PrefixNotOpValue { }
@@ -254,7 +250,7 @@ PrefixNotOpValue { }
 datatype BinaryArithValue provides Value using {
     field lhs: Value;
     field rhs: Value;
-    field opertype: NominalTypeSignature;
+    field opertype: TypeKey;
 }
 of
 BinAddValue { }
@@ -264,7 +260,7 @@ BinAddValue { }
 ;
 
 datatype BinaryKeyEqValue provides Value using {
-    field ktype: TypeSignature;
+    field ktype: TypeKey;
 }
 of
 BinKeyEqNoneValue { 
@@ -292,7 +288,7 @@ BinKeyEqNoneValue {
 ;
 
 entity KeyCompareValue provides Value {
-    field ktype: TypeSignature;
+    field ktype: TypeKey;
 
     field lhs: Value;
     field rhs: Value;
@@ -302,7 +298,7 @@ datatype BinaryNumericValue provides Value using {
     field lhs: Value;
     field rhs: Value;
 
-    field opertype: TypeSignature;
+    field opertype: TypeKey;
 }
 of
 NumericEqValue { }
@@ -335,6 +331,14 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
+
+concept Expression {
+}
+
+entity ValueExpression provides Expression {
+    field value: Value;
+}
+
 entity IfExpression provides Expression {
     field iftest: Expression;
     field trueValue: Expression;
@@ -344,7 +348,7 @@ entity IfExpression provides Expression {
 entity ErrorProcessExpression provides Expression {
     field exp: Expression;
     field vname: CString;
-    field vtype: TypeSignature;
+    field vtype: TypeKey;
 
     field successexp: Expression;
 }

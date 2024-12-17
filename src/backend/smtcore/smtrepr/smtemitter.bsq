@@ -13,9 +13,7 @@ function emitLiteralNoneValue(): CString {
 }
 
 function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
-    let tkey = v.vtype.tkey;
-
-    switch(tkey) {
+    switch(v.vtype) {
         'Bool'<TypeKey>     => { return v.value; }
         | 'Nat'<TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
         | 'Int'<TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
@@ -71,8 +69,43 @@ function emitAccessVariableValue(v: AccessVariableValue): CString {
 }
 
 function emitAccessVariableRetypeStepValue(v: AccessVariableRetypeStepValue): CString {
-    let access = SMTNameManager::generateStructFieldName(v.step.ttype.tkey,  v.step.specialfname);
+    let access = SMTNameManager::generateStructFieldName(v.step.ttype,  v.step.specialfname);
     return CString::concat('(', access, ' ',  v.vname, ')');
+}
+
+function emitAccessVariableRetypeMultiStepValue(v: AccessVariableRetypeMultiStepValue): CString {
+    %%TODO
+    abort;
+}
+
+recursive function emitTermifyValue(v: TermifyValue): CString {
+    let consname = SMTNameManager::generateStructTermConstructorName(v.fromtype);
+    return CString::concat(consname, ' ', emitValue[recursive](v.value));
+}
+
+function emitUntermifyValue(v: UntermifyValue): CString {
+    let access = SMTNameManager::generateStructTermFieldName(v.fromtype, 'value');
+    return CString::concat('(', access, ' ', emitValue[recursive](v.value), ')');
+}
+
+function emitLiteralTypeDeclValue(v: LiteralTypeDeclValue): CString {
+    %%TODO
+    abort;
+}
+
+recursive function emitValue(v: Value): CString {
+    match(v)@ {
+        ConstantValue => { return emitConstantValue($v); }
+        | AccessNamespaceConstantValue => { return emitAccessNamespaceConstantValue($v); }
+        | AccessStaticFieldValue => { return emitAccessStaticFieldValue($v); }
+        | AccessEnumValue => { return emitAccessEnumValue($v); }
+        | AccessVariableValue => { return emitAccessVariableValue($v); }
+        | AccessVariableRetypeStepValue => { return emitAccessVariableRetypeStepValue($v); }
+        | AccessVariableRetypeMultiStepValue => { return emitAccessVariableRetypeMultiStepValue($v); }
+        | TermifyValue => { return emitTermifyValue[recursive]($v); }
+        | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
+        | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
+    }
 }
 
 public function main(): Int {

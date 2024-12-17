@@ -21,6 +21,6 @@ chktest test_emitAccessVariableValue(): Bool {
 }
 
 chktest test_emitAccessVariableRetypeStepValue(): Bool {
-    let op = AccessVariableRetypeStepValue{'cc', AccessRetypeStep{NominalTypeSignature{'Option$Int$'<TypeKey>}, 'value'}};
+    let op = AccessVariableRetypeStepValue{'cc', AccessRetypeStep{'Option$Int$'<TypeKey>, 'value'}};
     return emitAccessVariableRetypeStepValue(op) === '(Option$Int$-value cc)';
 }

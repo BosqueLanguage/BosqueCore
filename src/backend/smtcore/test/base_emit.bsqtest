@@ -6,27 +6,27 @@ chktest test_emitLiteralNoneValue(): Bool {
 }
 
 chktest test_emitLiteralBoolValue_true(): Bool {
-    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_Bool, 'true'};
+    let op = LiteralSimpleValue{'Bool'<TypeKey>, 'true'};
     return emitConstantValue(op) === 'true';
 }
 
 chktest test_emitLiteralNatValue_42(): Bool {
-    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_Nat, '42n'};
+    let op = LiteralSimpleValue{'Nat'<TypeKey>, '42n'};
     return emitConstantValue(op) === '42';
 }
 
 chktest test_emitLiteralIntValue_neg42(): Bool {
-    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_Int, '-42i'};
+    let op = LiteralSimpleValue{'Int'<TypeKey>, '-42i'};
     return emitConstantValue(op) === '-42';
 }
 
 chktest test_emitLiteralBigNatValue_0(): Bool {
-    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_BigNat, '0N'};
+    let op = LiteralSimpleValue{'BigNat'<TypeKey>, '0N'};
     return emitConstantValue(op) === '0';
 }
 
 chktest test_emitLiteralBigIntValue_pos1(): Bool {
-    let op = LiteralSimpleValue{SMTEmitter::c_typeSig_BigInt, '+1I'};
+    let op = LiteralSimpleValue{'BigInt'<TypeKey>, '+1I'};
     return emitConstantValue(op) === '1';
 }
 
