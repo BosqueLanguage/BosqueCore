@@ -1,0 +1,22 @@
+namespace SMTEmitter;
+
+%% TYPES
+const c_typeSig_None: NominalTypeSignature = NominalTypeSignature{ 'None'<TypeKey> };
+const c_typeSig_Bool: NominalTypeSignature = NominalTypeSignature{ 'Bool'<TypeKey> };
+const c_typeSig_Nat: NominalTypeSignature = NominalTypeSignature{ 'Nat'<TypeKey> };
+const c_typeSig_Int: NominalTypeSignature = NominalTypeSignature{ 'Int'<TypeKey> };
+const c_typeSig_BigNat: NominalTypeSignature = NominalTypeSignature{ 'BigNat'<TypeKey> };
+const c_typeSig_BigInt: NominalTypeSignature = NominalTypeSignature{ 'BigInt'<TypeKey> };
+const c_typeSig_Float: NominalTypeSignature = NominalTypeSignature{ 'Float'<TypeKey> };
+const c_typeSig_CString: NominalTypeSignature = NominalTypeSignature{ 'CString'<TypeKey> };
+const c_typeSig_String: NominalTypeSignature = NominalTypeSignature{ 'String'<TypeKey> };
+
+const c_typeSig_NoneResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_None };
+const c_typeSig_BoolResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_Bool };
+const c_typeSig_NatResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_Nat };
+const c_typeSig_IntResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_Int };
+const c_typeSig_BigNatResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_BigNat };
+const c_typeSig_BigIntResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_BigInt };
+const c_typeSig_FloatResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_Float };
+const c_typeSig_CStringResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_CString };
+const c_typeSig_StringResult: ResultType = DirectResult{ SMTEmitter::c_typeSig_String };

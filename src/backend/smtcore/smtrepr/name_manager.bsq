@@ -1,0 +1,11 @@
+namespace SMTEmitter;
+
+namespace SMTNameManager {
+    function generateStructConstructorName(tkey: TypeKey): CString {
+        return CString::concat(tkey.value, '-mk');
+    }
+
+    function generateStructFieldName(tkey: TypeKey, vname: CString): CString {
+        return CString::concat(tkey.value, '-', vname);
+    }
+}

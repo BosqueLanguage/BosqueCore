@@ -15,17 +15,16 @@ ITestType { field ttype: TypeSignature; }
 ;
 
 concept Expression {
-    field etype: ResultType;
 }
 
 concept Value provides Expression {
-    field vtype: TypeSignature;
 }
 
 datatype ConstantValue provides Value
 of
 LiteralNoneValue { }
 | LiteralSimpleValue {
+    field vtype: NominalTypeSignature;
     field value: CString;
 }
 | LiteralCStringValue {
@@ -48,14 +47,12 @@ entity AccessNamespaceConstantValue provides Value {
 }
 
 entity AccessStaticFieldValue provides Value {
-    field stype: NominalTypeSignature;
+    field tresolved: TypeKey;
     field name: CString;
-
-    field resolvedDeclType: TypeSignature;
 }
 
 entity AccessEnumValue provides Value {
-    field stype: NominalTypeSignature;
+    field enumtype: TypeKey;
     field name: CString;
 }
 
@@ -64,11 +61,16 @@ entity AccessVariableValue provides Value {
 }
 
 entity AccessRetypeStep {
-    field ttype: TypeSignature;
+    field ttype: NominalTypeSignature;
     field specialfname: CString;
 }
 
 entity AccessVariableRetypeStepValue provides Value {
+    field vname: CString;
+    field step: AccessRetypeStep;
+}
+
+entity AccessVariableRetypeMultiStepValue provides Value {
     field vname: CString;
     field steps: List<AccessRetypeStep>;
 }
@@ -76,11 +78,13 @@ entity AccessVariableRetypeStepValue provides Value {
 entity TermifyValue provides Value {
     field value: Value;
     field fromtype: NominalTypeSignature;
+    field intotype: NominalTypeSignature;
 }
 
 entity UntermifyValue provides Value {
     field value: Value;
     field fromtype: NominalTypeSignature;
+    field intotype: NominalTypeSignature;
 }
 
 entity LiteralTypeDeclValue provides Value {

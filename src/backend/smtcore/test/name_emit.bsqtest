@@ -1,0 +1,26 @@
+namespace SMTEmitter;
+
+chktest test_emitAccessNamespaceConstantValue(): Bool {
+    let op = AccessNamespaceConstantValue{'Foo'<NamespaceKey>, 'cc'};
+    return emitAccessNamespaceConstantValue(op) === 'Foo@cc';
+}
+
+chktest test_emitAccessStaticFieldValue(): Bool {
+    let op = AccessStaticFieldValue{'Foo$Int$'<TypeKey>, 'cc'};
+    return emitAccessStaticFieldValue(op) === 'Foo$Int$@cc';
+}
+
+chktest test_emitAccessEnumValue(): Bool {
+    let op = AccessEnumValue{'Foo'<TypeKey>, 'cc'};
+    return emitAccessEnumValue(op) === 'Foo@cc';
+}
+
+chktest test_emitAccessVariableValue(): Bool {
+    let op = AccessVariableValue{'cc'};
+    return emitAccessVariableValue(op) === 'cc';
+}
+
+chktest test_emitAccessVariableRetypeStepValue(): Bool {
+    let op = AccessVariableRetypeStepValue{'cc', AccessRetypeStep{NominalTypeSignature{'Option$Int$'<TypeKey>}, 'value'}};
+    return emitAccessVariableRetypeStepValue(op) === '(Option$Int$-value cc)';
+}

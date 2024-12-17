@@ -718,21 +718,22 @@ class TypeChecker {
         let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam === undefined) {
-            if(args.length > params.length) {
-                this.reportError(sinfo, `Too many arguments provided to function`);
-            }
-
             for(let i = argsuffleidx.length; i < params.length; ++i) {
                 argsuffleidx.push(-1);
             }
 
-            for(let i = 0; i < params.length; ++i) {
-                if(argsuffle[i] === undefined) {
-                    this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
-                }
-                else {
-                    const pp = params[i];
-                    argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.isRefParam, imapper);
+            if(args.length > params.length) {
+                this.reportError(sinfo, `Too many arguments provided to function`);
+            }
+            else {
+                for(let i = 0; i < params.length; ++i) {
+                    if(argsuffle[i] === undefined) {
+                        this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
+                    }
+                    else {
+                        const pp = params[i];
+                        argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.isRefParam, imapper);
+                    }
                 }
             }
         }
@@ -824,10 +825,6 @@ class TypeChecker {
             apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
         }
 
-        if(args.length > bnames.length) {
-            this.reportError(sinfo, `Too many arguments provided to function`);
-        }
-
         for(let i = argsuffleidx.length; i < bnames.length; ++i) {
             argsuffleidx.push(-1);
         }
@@ -844,6 +841,11 @@ class TypeChecker {
 
                 this.checkError(argexp.sinfo, !(argtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(argtype, ftype, this.constraints), `Argument ${bnames[i].name} expected type ${ftype.emit()} but got ${argtype.emit()}`);
             }
+        }
+
+        if(args.length > bnames.length) {
+            this.reportError(sinfo, `Too many arguments provided to constructor`);
+            return [];
         }
 
         return argsuffleidx.map((idx, i) => [idx, bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);

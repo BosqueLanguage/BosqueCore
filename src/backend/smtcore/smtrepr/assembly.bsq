@@ -19,7 +19,7 @@ const typeKeyRE: CRegex = /${SMTEmitter::nominalTypeKeyRE}|${SMTEmitter::elistTy
 type TypeKey = CString of SMTEmitter::typeKeyRE;
 
 datatype TypeSignature using {
-    field tkeystr: TypeKey;
+    field tkey: TypeKey;
 } 
 of
 NominalTypeSignature { }

@@ -13,7 +13,7 @@ function emitLiteralNoneValue(): CString {
 }
 
 function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
-    let tkey = v.vtype.tkeystr;
+    let tkey = v.vtype.tkey;
 
     switch(tkey) {
         'Bool'<TypeKey>     => { return v.value; }
@@ -59,11 +59,20 @@ function emitAccessNamespaceConstantValue(v: AccessNamespaceConstantValue): CStr
 }
 
 function emitAccessStaticFieldValue(v: AccessStaticFieldValue): CString {
-    abort;
+    return CString::concat(v.tresolved.value, '@', v.name);
 }
 
 function emitAccessEnumValue(v: AccessEnumValue): CString {
-    abort;
+    return CString::concat(v.enumtype.value, '@', v.name);
+}
+
+function emitAccessVariableValue(v: AccessVariableValue): CString {
+    return v.vname;
+}
+
+function emitAccessVariableRetypeStepValue(v: AccessVariableRetypeStepValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.step.ttype.tkey,  v.step.specialfname);
+    return CString::concat('(', access, ' ',  v.vname, ')');
 }
 
 public function main(): Int {
