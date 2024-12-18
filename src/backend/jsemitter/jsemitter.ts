@@ -3186,7 +3186,7 @@ class JSEmitter {
             const supers = tdecl.saturatedProvides.map((ss) => `Symbol.for("${this.tproc(ss).tkeystr}")`).join(", ");
             this.mapper = undefined;
 
-            return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}];`;
+            return `_$supertypes[Symbol.for("${instantiation.tkey}")] = [${supers}].reduce((acc, ks) => { acc[ks] = true; return acc; }, {});`;
         }
     }
 
