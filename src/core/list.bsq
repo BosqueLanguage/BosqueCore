@@ -20,8 +20,12 @@ __internal entity List<T> {
         return ListOps::s_list_size<T>(this) - 1n;
     }
 
+    method isSingleElement(): Bool {
+        return ListOps::s_list_size<T>(this) == 1n;
+    }
+
     method single(): T 
-        requires this.size() == 1n;
+        requires this.isSingleElement();
     {
         return ListOps::s_list_front<T>(this);
     }

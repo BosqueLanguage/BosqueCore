@@ -105,7 +105,7 @@ recursive function emitConstructorListSingletonsValue(v: ConstructorListSingleto
         return CString::concat('(as seq.empty (Seq ', v.oftype.value, '))');
     }
     else {
-        if(v.args.size() == 1n) {
+        if(v.args.isSingleElement()) {
             return CString::concat('(seq.unit ', emitValue[recursive](v.args.single()), ')');
         }
         else {
@@ -123,18 +123,35 @@ recursive function emitConstructorMapSingletonsValue(v: ConstructorMapSingletons
 }
 
 recursive function emitConstructorPrimarySpecialConstructableValue(v: ConstructorPrimarySpecialConstructableValue): CString {
-    %%TODO
-    abort;
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let vv = emitValue[recursive](v.arg);
+
+    return CString::concat('(', consname, ' ', vv, ')');
 }
 
 recursive function emitConstructorTypeDeclValue(v: ConstructorTypeDeclValue): CString {
-    %%TODO
-    abort;
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let vv = emitValue[recursive](v.arg);
+
+    return CString::concat('(', consname, ' ', vv, ')');
 }
 
 recursive function emitConstructorStdValue(v: ConstructorStdValue): CString {
-    %%TODO
-    abort;
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    if(v.args.empty()) {
+        return consname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', consname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', consname, ' ', argsl, ')');
+        }
+    }
 }
 
 recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CString {
@@ -146,10 +163,37 @@ recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CStr
         | ConstructorStdValue => { return emitConstructorStdValue[recursive]($v); }
     }
 }
+
+recursive function emitConstructorEListValue(v: ConstructorEListValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    if(v.args.empty()) {
+        return consname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', consname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', consname, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CString {
+    abort;
+}
+
+recursive function emitLetValue(v: LetValue): CString {
+    abort;
+}
+
 %*
-datatype ConstructorPrimaryValue provides Value using {
-    field ctype: TypeKey;
-    field args: List<Value>;
+entity LetValue provides Value {
+    field decls: (|CString, TypeKey, Value|);
+    field body: Value;
 }
 *%
 
@@ -166,6 +210,9 @@ recursive function emitValue(v: Value): CString {
         | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
         | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
         | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
+        | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
+        | ConstructorLambdaValue => { return emitConstructorLambdaValue[recursive]($v); }
+        | LetValue => { return emitLetValue[recursive]($v); }
     }
 }
 

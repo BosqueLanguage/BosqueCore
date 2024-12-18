@@ -91,23 +91,30 @@ entity LiteralTypeDeclValue provides Value {
 
 %% Assume that checks are always inlined explicitly so that these are simple values
 datatype ConstructorPrimaryValue provides Value using {
-    field ctype: TypeKey;
-    field args: List<Value>;
+    field constype: TypeKey;
 }
 of 
 ConstructorListSingletonsValue { 
     field oftype: TypeKey;
+    field args: List<Value>;
 }
 | ConstructorMapSingletonsValue { 
     field oftype: TypeKey;
+    field args: List<Value>;
 }
-| ConstructorPrimarySpecialConstructableValue { }
-| ConstructorTypeDeclValue { }
-| ConstructorStdValue { }
+| ConstructorPrimarySpecialConstructableValue { 
+    field arg: Value;
+}
+| ConstructorTypeDeclValue { 
+    field arg: Value;
+}
+| ConstructorStdValue { 
+    field args: List<Value>;
+}
 ;
 
 entity ConstructorEListValue provides Value {
-    field ctype: TypeKey;
+    field constype: TypeKey;
     field args: List<Value>;
 }
 
@@ -118,6 +125,8 @@ entity ConstructorLambdaValue provides Value {
 entity LetValue provides Value {
     field decls: (|CString, TypeKey, Value|);
     field body: Value;
+
+    invariant !$decls.empty();
 }
 
 entity LambdaInvokeExpression provides Expression {

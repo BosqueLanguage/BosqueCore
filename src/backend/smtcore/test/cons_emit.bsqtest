@@ -19,3 +19,43 @@ chktest test_emitConstructorListSingletonsValue_two(): Bool {
     let op = ConstructorListSingletonsValue{'List$Int$'<TypeKey>, oftype='Int'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}};
     return emitConstructorPrimaryValue(op) === '(seq.++ (seq.unit 0) (seq.unit 1))';
 }
+
+chktest test_ConstructorPrimarySpecialConstructableValue(): Bool {
+    let op = ConstructorPrimarySpecialConstructableValue{'Some$Int$'<TypeKey>, LiteralSimpleValue{'Int'<TypeKey>, '0i'}};
+    return emitConstructorPrimaryValue(op) === '(Some$Int$-mk 0)';
+}
+
+chktest test_ConstructorTypeDeclValue(): Bool {
+    let op = ConstructorTypeDeclValue{'Main@Foo'<TypeKey>, LiteralSimpleValue{'Int'<TypeKey>, '0i'}};
+    return emitConstructorPrimaryValue(op) === '(Main@Foo-mk 0)';
+}
+
+chktest test_emitConstructorStdValue_empty(): Bool {
+    let op = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{}};
+    return emitConstructorPrimaryValue(op) === 'Main@Foo-mk';
+}
+
+chktest test_emitConstructorStdValue_one(): Bool {
+    let op = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitConstructorPrimaryValue(op) === '(Main@Foo-mk 0)';
+}
+
+chktest test_emitConstructorStdValue_two(): Bool {
+    let op = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitConstructorPrimaryValue(op) === '(Main@Foo-mk 0 true)';
+}
+
+chktest test_emitConstructorEListValue_empty(): Bool {
+    let op = ConstructorEListValue{'@EList$$'<TypeKey>, List<Value>{}};
+    return emitValue(op) === '@EList$$-mk';
+}
+
+chktest test_emitConstructorEListValue_one(): Bool {
+    let op = ConstructorEListValue{'@EList$Int$'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitValue(op) === '(@EList$Int$-mk 0)';
+}
+
+chktest test_emitConstructorEListValue_two(): Bool {
+    let op = ConstructorEListValue{'@EList$Int-Bool$'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitValue(op) === '(@EList$Int-Bool$-mk 0 true)';
+}
