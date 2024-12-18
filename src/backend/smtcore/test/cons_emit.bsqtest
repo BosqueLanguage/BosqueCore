@@ -4,3 +4,18 @@ chktest test_emitLiteralTypeDeclValue(): Bool {
     let op = LiteralTypeDeclValue{LiteralSimpleValue{'Int'<TypeKey>, '-42i'}, 'Main@Foo'<TypeKey>};
     return emitLiteralTypeDeclValue(op) === '(Main@Foo-mk -42)';
 }
+
+chktest test_emitConstructorListSingletonsValue_empty(): Bool {
+    let op = ConstructorListSingletonsValue{'List$Int$'<TypeKey>, oftype='Int'<TypeKey>, List<Value>{}};
+    return emitConstructorPrimaryValue(op) === '(as seq.empty (Seq Int))';
+}
+
+chktest test_emitConstructorListSingletonsValue_one(): Bool {
+    let op = ConstructorListSingletonsValue{'List$Int$'<TypeKey>, oftype='Int'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitConstructorPrimaryValue(op) === '(seq.unit 0)';
+}
+
+chktest test_emitConstructorListSingletonsValue_two(): Bool {
+    let op = ConstructorListSingletonsValue{'List$Int$'<TypeKey>, oftype='Int'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}};
+    return emitConstructorPrimaryValue(op) === '(seq.++ (seq.unit 0) (seq.unit 1))';
+}

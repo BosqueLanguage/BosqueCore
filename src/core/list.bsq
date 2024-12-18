@@ -20,6 +20,12 @@ __internal entity List<T> {
         return ListOps::s_list_size<T>(this) - 1n;
     }
 
+    method single(): T 
+        requires this.size() == 1n;
+    {
+        return ListOps::s_list_front<T>(this);
+    }
+
     method front(): T 
         requires !this.empty();
     {

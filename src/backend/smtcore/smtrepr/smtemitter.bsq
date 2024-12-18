@@ -101,10 +101,20 @@ function emitLiteralTypeDeclValue(v: LiteralTypeDeclValue): CString {
 }
 
 recursive function emitConstructorListSingletonsValue(v: ConstructorListSingletonsValue): CString {
-    let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitValue[recursive](x), ')'));
-    let argsl = CString::joinAll(' ', cvals);
+    if(v.args.empty()) {
+        return CString::concat('(as seq.empty (Seq ', v.oftype.value, '))');
+    }
+    else {
+        if(v.args.size() == 1n) {
+            return CString::concat('(seq.unit ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitValue[recursive](x), ')'));
+            let argsl = CString::joinAll(' ', cvals);
 
-    return CString::concat('(seq.++ ', argsl, ')');
+            return CString::concat('(seq.++ ', argsl, ')');
+        }
+    }
 }
 
 recursive function emitConstructorMapSingletonsValue(v: ConstructorMapSingletonsValue): CString {
