@@ -32,11 +32,11 @@ function $Unwind(tag, info) {
 let _$supertypes = {};
 
 function _$fisSubtype(tag, tsym) {
-    return _$supertypes.get(tag).has(tsym);
+    return _$supertypes[tag][tsym] === true;
 }
 
 function _$fisNotSubtype(tag, tsym) {
-    return !_$supertypes.get(tag).has(tsym);
+    return _$supertypes[tag][tsym] === undefined;
 }
 
 function _$fasSubtype(val, tag, tsym, info) {

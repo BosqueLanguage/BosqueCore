@@ -12,6 +12,7 @@ describe ("Checker -- Entity Simple", () => {
     });
 
     it("should check fail simple entity", function () {
+        checkTestFunctionInFileError('entity Foo { field f: Int; } function main(): Int { return Foo{3i, 4i}; }', "Too many arguments provided to constructor");
         checkTestFunctionInFileError('entity Foo { field f: Int; } function main(): Int { return Foo{3i}.g; }', "Could not find field g in type Foo");
 
         checkTestFunctionInFileError('entity Foo { field f: Int; invariant $f >= 0i; } function main(): Nat { return Foo{3i}.f; }', "Expected a return value of type Nat but got Int");

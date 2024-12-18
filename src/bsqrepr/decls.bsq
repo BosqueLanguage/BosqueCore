@@ -21,9 +21,8 @@ const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|
 const nominalTypeKeyRE: CRegex = /(${IRDecl::basicNominalTypeKeyRE}|${IRDecl::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const baseTypeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IRDecl::baseTypeKeyRE}/c;
-const typeKeyRE: CRegex = /${IRDecl::baseTypeKeyRE}|${IRDecl::lambdaTypeKeyRE}/c; 
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}|${IRDecl::lambdaTypeKeyRE}/c; 
 
 type TemplateName = CString of IRDecl::templateTypeKeyRE;
 type TypeKey = CString of IRDecl::typeKeyRE;
