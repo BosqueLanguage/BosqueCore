@@ -80,7 +80,7 @@ function emitAccessVariableRetypeMultiStepValue(v: AccessVariableRetypeMultiStep
 
 recursive function emitTermifyValue(v: TermifyValue): CString {
     let consname = SMTNameManager::generateStructTermConstructorName(v.fromtype);
-    return CString::concat(consname, ' ', emitValue[recursive](v.value));
+    return CString::concat('(', consname, ' ', emitValue[recursive](v.value), ')');
 }
 
 function emitUntermifyValue(v: UntermifyValue): CString {

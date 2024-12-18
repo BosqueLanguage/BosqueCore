@@ -115,21 +115,6 @@ entity LetValue provides Value {
     field body: Value;
 }
 
-entity LetValueMulti provides Value {
-    field decls: List<(|CString, TypeKey, Value|)>;
-    field body: Value;
-}
-
-entity LetExpression provides Expression {
-    field decls: (|CString, TypeKey, Value|);
-    field body: Expression;
-}
-
-entity LetExpressionMulti provides Expression {
-    field decls: List<(|CString, TypeKey, Value|)>;
-    field body: Expression;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
 
@@ -171,16 +156,15 @@ entity LogicActionOrValue provides Value {
     field args: List<Value>;
 }
 
-entity SafeConvertValue provides Value {
+entity CreateDirectValue provides Value {
     field exp: Value;
     field srctype: TypeKey;
     field trgttype: TypeKey;
 }
 
-entity CreateDirectValue provides Value {
-    field exp: Value;
-    field srctype: TypeKey;
-    field trgttype: TypeKey;
+entity LiteralKeyHas provides Value {
+    field rootExp: Value;
+    field kexp: Value;
 }
 
 datatype PostfixOperation using {
@@ -230,11 +214,6 @@ entity MethodInvokeVirtual provides Expression {
     field resolvedBase: TypeKey;
     field name: CString;
     field args: List<Value>;
-}
-
-entity LiteralKeyHas provides Value {
-    field rootExp: Value;
-    field kexp: Value;
 }
 
 datatype UnaryValue provides Value using {
@@ -331,12 +310,16 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
-
 concept Expression {
 }
 
 entity ValueExpression provides Expression {
     field value: Value;
+}
+
+entity LetExpression provides Expression {
+    field decls: (|CString, TypeKey, Value|);
+    field body: Expression;
 }
 
 entity IfExpression provides Expression {

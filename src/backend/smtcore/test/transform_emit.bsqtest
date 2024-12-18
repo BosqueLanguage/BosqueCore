@@ -5,3 +5,10 @@ chktest test_emitTermifyValue(): Bool {
     let termify = TermifyValue{basev, 'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>};
     return emitTermifyValue(termify) === '(@Term-Option$Int$-mk cc)';
 }
+
+
+chktest test_emitUntermifyValue(): Bool {
+    let basev = AccessVariableValue{'tmp_cc'};
+    let termify = UntermifyValue{basev, 'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>};
+    return emitUntermifyValue(termify) === '(@Term-Option$Int$-value tmp_cc)';
+}
