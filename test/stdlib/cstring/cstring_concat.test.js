@@ -32,3 +32,19 @@ describe ("CString -- concat", () => {
         runMainCode("public function main(): CString { return CString::concatAll(List<CString>{'a', '-', 'ok'}); }", ["a-ok", "CString"]); 
     });
 });
+
+describe ("CString -- join", () => {
+    it("should join", function () {
+        runMainCode("public function main(): CString { return CString::join('-'); }", ["", "CString"]); 
+        runMainCode("public function main(): CString { return CString::join('-', '1'); }", ["1", "CString"]); 
+        runMainCode("public function main(): CString { return CString::join('-', '1', '2'); }", ["1-2", "CString"]); 
+        runMainCode("public function main(): CString { return CString::join('-', '1', '2', '3'); }", ["1-2-3", "CString"]); 
+    });
+
+    it("should joinAll", function () {
+        runMainCode("public function main(): CString { return CString::joinAll('-', List<CString>{}); }", ["", "CString"]); 
+        runMainCode("public function main(): CString { return CString::joinAll('-', List<CString>{'1'}); }", ["1", "CString"]); 
+        runMainCode("public function main(): CString { return CString::joinAll('-', List<CString>{'1', '2'}); }", ["1-2", "CString"]); 
+        runMainCode("public function main(): CString { return CString::joinAll('-', List<CString>{'1', '2', '3'}); }", ["1-2-3", "CString"]); 
+    });
+});

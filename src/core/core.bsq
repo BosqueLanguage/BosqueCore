@@ -141,8 +141,7 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            let cc = strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
-            return cc;
+            return strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
         }
     }
 
@@ -152,8 +151,41 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            let cc = strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
-            return cc;
+            return strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
+        }
+    }
+
+    %** Join all of the strings with the given separator **%
+    function join(sep: CString, ...strs: List<CString>): CString {
+        if(strs.empty()) {
+            return '';
+        }
+        else {
+            return strs.reduce<CString>('', fn(acc, s) => {
+                if(acc.empty()) {
+                    return s;
+                }
+                else {
+                    return CStringOps::s_concat2(CStringOps::s_concat2(acc, sep), s);
+                }
+            });
+        }
+    }
+
+    %** Concatenate all of the strings in the list (using the given separator) **%
+    function joinAll(sep: CString, strs: List<CString>): CString {
+        if(strs.empty()) {
+            return '';
+        }
+        else {
+            return strs.reduce<CString>('', fn(acc, s) => {
+                if(acc.empty()) {
+                    return s;
+                }
+                else {
+                    return CStringOps::s_concat2(CStringOps::s_concat2(acc, sep), s);
+                }
+            });
         }
     }
 
