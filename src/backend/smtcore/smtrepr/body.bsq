@@ -123,10 +123,9 @@ entity ConstructorLambdaValue provides Value {
 }
 
 entity LetValue provides Value {
-    field decls: (|CString, TypeKey, Value|);
+    field vname: CString;
+    field value: Value;
     field body: Value;
-
-    invariant !$decls.empty();
 }
 
 entity LambdaInvokeExpression provides Expression {

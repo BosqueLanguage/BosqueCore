@@ -187,15 +187,11 @@ recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CStrin
 }
 
 recursive function emitLetValue(v: LetValue): CString {
-    abort;
+    let vbind = CString::concat('((', v.vname, ' ', emitValue[recursive](v.value), '))');
+    let bbody = emitValue[recursive](v.body);
+    
+    return CString::concat('(let ', vbind, ' ', bbody, ')');
 }
-
-%*
-entity LetValue provides Value {
-    field decls: (|CString, TypeKey, Value|);
-    field body: Value;
-}
-*%
 
 recursive function emitValue(v: Value): CString {
     match(v)@ {
