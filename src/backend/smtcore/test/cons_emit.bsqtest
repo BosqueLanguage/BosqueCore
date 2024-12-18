@@ -1,0 +1,6 @@
+namespace SMTEmitter;
+
+chktest test_emitLiteralTypeDeclValue(): Bool {
+    let op = LiteralTypeDeclValue{LiteralSimpleValue{'Int'<TypeKey>, '-42i'}, 'Main@Foo'<TypeKey>};
+    return emitLiteralTypeDeclValue(op) === '(Main@Foo-mk -42)';
+}

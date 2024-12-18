@@ -95,7 +95,8 @@ datatype ConstructorPrimaryValue provides Value using {
     field args: List<Value>;
 }
 of 
-ConstructorPrimaryCollectionSingletonsValue { }
+ConstructorListSingletonsValue { }
+| ConstructorMapSingletonsValue { }
 | ConstructorPrimarySpecialConstructableValue { }
 | ConstructorTypeDeclValue { }
 | ConstructorStdValue { }

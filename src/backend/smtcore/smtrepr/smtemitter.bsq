@@ -61,7 +61,7 @@ function emitAccessStaticFieldValue(v: AccessStaticFieldValue): CString {
 }
 
 function emitAccessEnumValue(v: AccessEnumValue): CString {
-    return CString::concat(v.enumtype.value, '@', v.name);
+    return CString::concat(v.enumtype.value, '$$', v.name);
 }
 
 function emitAccessVariableValue(v: AccessVariableValue): CString {
@@ -70,6 +70,7 @@ function emitAccessVariableValue(v: AccessVariableValue): CString {
 
 function emitAccessVariableRetypeStepValue(v: AccessVariableRetypeStepValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.step.ttype,  v.step.specialfname);
+    
     return CString::concat('(', access, ' ',  v.vname, ')');
 }
 
@@ -80,18 +81,67 @@ function emitAccessVariableRetypeMultiStepValue(v: AccessVariableRetypeMultiStep
 
 recursive function emitTermifyValue(v: TermifyValue): CString {
     let consname = SMTNameManager::generateStructTermConstructorName(v.fromtype);
-    return CString::concat('(', consname, ' ', emitValue[recursive](v.value), ')');
+    let vv = emitValue[recursive](v.value);
+    
+    return CString::concat('(', consname, ' ', vv, ')');
 }
 
-function emitUntermifyValue(v: UntermifyValue): CString {
+recursive function emitUntermifyValue(v: UntermifyValue): CString {
     let access = SMTNameManager::generateStructTermFieldName(v.fromtype, 'value');
-    return CString::concat('(', access, ' ', emitValue[recursive](v.value), ')');
+    let vv = emitValue[recursive](v.value);
+    
+    return CString::concat('(', access, ' ', vv, ')');
 }
 
 function emitLiteralTypeDeclValue(v: LiteralTypeDeclValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let vv = emitConstantValue(v.value);
+
+    return CString::concat('(', consname, ' ', vv, ')');
+}
+
+recursive function emitConstructorListSingletonsValue(v: ConstructorListSingletonsValue): CString {
+    let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitValue[recursive](x), ')'));
+    let argsl = CString::joinAll(' ', cvals);
+
+    return CString::concat('(seq.++ ', argsl, ')');
+}
+
+recursive function emitConstructorMapSingletonsValue(v: ConstructorMapSingletonsValue): CString {
     %%TODO
     abort;
 }
+
+recursive function emitConstructorPrimarySpecialConstructableValue(v: ConstructorPrimarySpecialConstructableValue): CString {
+    %%TODO
+    abort;
+}
+
+recursive function emitConstructorTypeDeclValue(v: ConstructorTypeDeclValue): CString {
+    %%TODO
+    abort;
+}
+
+recursive function emitConstructorStdValue(v: ConstructorStdValue): CString {
+    %%TODO
+    abort;
+}
+
+recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CString {
+    match(v)@ {
+        ConstructorListSingletonsValue => { return emitConstructorListSingletonsValue[recursive]($v); }
+        | ConstructorMapSingletonsValue => { return emitConstructorMapSingletonsValue[recursive]($v); }
+        | ConstructorPrimarySpecialConstructableValue => { return emitConstructorPrimarySpecialConstructableValue[recursive]($v); }
+        | ConstructorTypeDeclValue => { return emitConstructorTypeDeclValue[recursive]($v); }
+        | ConstructorStdValue => { return emitConstructorStdValue[recursive]($v); }
+    }
+}
+%*
+datatype ConstructorPrimaryValue provides Value using {
+    field ctype: TypeKey;
+    field args: List<Value>;
+}
+*%
 
 recursive function emitValue(v: Value): CString {
     match(v)@ {
@@ -105,6 +155,7 @@ recursive function emitValue(v: Value): CString {
         | TermifyValue => { return emitTermifyValue[recursive]($v); }
         | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
         | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
+        | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
     }
 }
 

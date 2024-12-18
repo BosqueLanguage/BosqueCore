@@ -715,29 +715,27 @@ class TypeChecker {
             apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
         }
 
-        let resttype: TypeSignature | undefined = undefined;
-        let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
-        if(restparam === undefined) {
-            for(let i = argsuffleidx.length; i < params.length; ++i) {
-                argsuffleidx.push(-1);
-            }
+        for(let i = argsuffleidx.length; i < nonrestparams.length; ++i) {
+            argsuffleidx.push(-1);
+        }
 
-            if(args.length > params.length) {
-                this.reportError(sinfo, `Too many arguments provided to function`);
+        if(restparam === undefined && args.length > params.length) {
+            this.reportError(sinfo, `Too many arguments provided to function`);
+        }
+            
+        for(let i = 0; i < nonrestparams.length; ++i) {
+            if(argsuffle[i] === undefined) {
+                this.checkError(sinfo, nonrestparams[i].optDefaultValue === undefined, `Required argument ${nonrestparams[i].name} not provided`);
             }
             else {
-                for(let i = 0; i < params.length; ++i) {
-                    if(argsuffle[i] === undefined) {
-                        this.checkError(sinfo, params[i].optDefaultValue === undefined, `Required argument ${params[i].name} not provided`);
-                    }
-                    else {
-                        const pp = params[i];
-                        argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.isRefParam, imapper);
-                    }
-                }
+                const pp = nonrestparams[i];
+                argsuffletype[i] = this.checkSingleParam(env, argsuffle[i] as ArgumentValue, pp.name, pp.type, pp.isRefParam, imapper);
             }
         }
-        else {
+        
+        let resttype: TypeSignature | undefined = undefined;
+        let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+        if(restparam !== undefined) {
             let restargs = args.slice(nonrestparams.length);
             const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
 
