@@ -1,5 +1,6 @@
 namespace SMTEmitter;
 
+
 chktest test_emitLiteralNoneValue(): Bool {
     let op = LiteralNoneValue{};
     return emitConstantValue(op) === 'none';
