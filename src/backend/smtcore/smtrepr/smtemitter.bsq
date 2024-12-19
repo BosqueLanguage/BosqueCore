@@ -331,6 +331,22 @@ recursive function emitConvertResultToFailEValue(v: ConvertResultToFailEValue): 
     return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
+recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(v.resolvedTrgt, v.name);
+    let rootv = emitValue[recursive](v.rootExp);
+
+    let rpfx = CString::concat(fname, ' ', rootv);
+    if(v.args.empty()) {
+        return CString::concat('(', rpfx, ')');
+    }
+    else {
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', rpfx, ' ', argsl, ')');
+    }
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }

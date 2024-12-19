@@ -209,16 +209,9 @@ entity ConvertResultToFailEValue provides Value {
 }
 
 entity MethodInvokeStaticValue provides Value {
-    field rootExp: Value;
     field resolvedTrgt: TypeKey;
     field name: CString;
-    field args: List<Value>;
-}
-
-entity MethodInvokeVirtualValue provides Value {
     field rootExp: Value;
-    field resolvedBase: TypeKey;
-    field name: CString;
     field args: List<Value>;
 }
 

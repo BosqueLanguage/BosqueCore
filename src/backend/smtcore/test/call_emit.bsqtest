@@ -45,3 +45,13 @@ chktest test_emitCallTypeFunctionValue_two(): Bool {
     return emitCallTypeFunctionValue(op) === '(Main@Foo@f 0 true)';
 }
 
+chktest test_emitMethodInvokeStaticValue_empty(): Bool {
+    let op = MethodInvokeStaticValue{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{}};
+    return emitMethodInvokeStaticValue(op) === '(Main@Foo@f cc)';
+}
+
+chktest test_emitMethodInvokeStaticValue_one(): Bool {
+    let op = MethodInvokeStaticValue{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitMethodInvokeStaticValue(op) === '(Main@Foo@f cc 0)';
+}
+
