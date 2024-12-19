@@ -1,0 +1,11 @@
+namespace SMTEmitter;
+
+chktest test_emitLogicActionAndValue(): Bool {
+    let op = LogicActionAndValue{List<Value>{AccessVariableValue{'v'}, UnwrapTypeDeclToPrimitiveValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}}}};
+    return emitLogicActionAndValue(op) === '(and v (Main@Foo-value cc))';
+}
+
+chktest test_emitLogicActionOrValue(): Bool {
+    let op = LogicActionOrValue{List<Value>{AccessVariableValue{'v'}, UnwrapTypeDeclToPrimitiveValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}}}};
+    return emitLogicActionOrValue(op) === '(or v (Main@Foo-value cc))';
+}

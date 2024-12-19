@@ -30,3 +30,9 @@ chktest test_emitLetValue_WAccess(): Bool {
 
     return emitLetValue(lval) === '(let ((cc (Main@Foo-mk 0))) (@Term-Option$Int$-mk cc))';
 }
+
+chktest test_emitUnwrapTypeDeclToPrimitiveValue(): Bool {
+    let op = UnwrapTypeDeclToPrimitiveValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}};
+
+    return emitUnwrapTypeDeclToPrimitiveValue(op) === '(Main@Foo-value cc)';
+}

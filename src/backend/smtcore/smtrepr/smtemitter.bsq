@@ -246,6 +246,25 @@ recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString 
     }
 }
 
+recursive function emitLogicActionAndValue(v: LogicActionAndValue): CString {
+    let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+    let argsl = CString::joinAll(' ', cvals);
+
+    return CString::concat('(and ', argsl, ')');
+}
+
+recursive function emitLogicActionOrValue(v: LogicActionOrValue): CString {
+    let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+    let argsl = CString::joinAll(' ', cvals);
+
+    return CString::concat('(or ', argsl, ')');
+}
+
+function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimitiveValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.decltype, 'value');
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -265,6 +284,9 @@ recursive function emitValue(v: Value): CString {
         | LambdaInvokeValue => { return emitLambdaInvokeValue[recursive]($v); }
         | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
         | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
+        | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
+        | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
+        | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
     }
 }
 

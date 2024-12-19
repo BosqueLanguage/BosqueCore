@@ -149,10 +149,19 @@ entity CallTypeFunctionValue provides Value {
 
 entity LogicActionAndValue provides Value {
     field args: List<Value>;
+
+    invariant $args.size() >= 2n;
 }
 
 entity LogicActionOrValue provides Value {
     field args: List<Value>;
+
+    invariant $args.size() >= 2n;
+}
+
+entity UnwrapTypeDeclToPrimitiveValue provides Value {
+    field decltype: TypeKey;
+    field arg: Value;
 }
 
 entity CreateDirectValue provides Value {
