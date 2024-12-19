@@ -420,20 +420,20 @@ recursive function emitBinKeyEqNoneValue(v: BinKeyEqNoneValue): CString {
 }
 
 recursive function emitBinKeyNotEqNoneValue(v: BinKeyNotEqNoneValue): CString {
-    let vv = emitValue[recursive](v.arg);
+    let vv = emitValue[recursive](v.exp);
     return CString::concat('(not (= ', vv, ' @Term-mk-None))');
 }
 
 recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
     let eopt = emitValue[recursive](v.eoption);
-    let eval = emitValue[recursive](v.eval);
+    let val = emitValue[recursive](v.val);
     
     let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
     let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
 
-    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
-    let eqop = CString::concat('(= ', extractop, ' ', eval, ')');
+    let eqop = CString::concat('(= ', extractop, ' ', val, ')');
 
     let notnoneop = CString::concat('(not (= ', eopt, ' @Term-mk-None))');
 
@@ -442,17 +442,14 @@ recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
 
 recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
     let eopt = emitValue[recursive](v.eoption);
-    let eval = emitValue[recursive](v.eval);
-    
-    let eopt = emitValue[recursive](v.eoption);
-    let eval = emitValue[recursive](v.eval);
+    let val = emitValue[recursive](v.val);
     
     let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
     let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
 
-    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
-    let eqop = CString::concat('(= ', extractop, ' ', eval, ')');
+    let eqop = CString::concat('(= ', extractop, ' ', val, ')');
 
     let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
 

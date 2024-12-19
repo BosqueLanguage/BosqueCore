@@ -250,14 +250,14 @@ BinKeyEqNoneValue {
     field sometype: TypeKey;
 
     field eoption: Value;
-    field eval: Value;
+    field val: Value;
 }
 | BinKeyNotSomeEqValue {
     field optiontype: TypeKey;
     field sometype: TypeKey;
     
     field eoption: Value;
-    field eval: Value;
+    field val: Value;
 }
 | BinKeyEqValue{
     field lhs: Value;
