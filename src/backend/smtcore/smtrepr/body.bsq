@@ -3,17 +3,6 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
-datatype ITest using {
-    field isnot: Bool;
-}
-of
-ITestType { field ttype: TypeKey; }
-| ITestNone { }
-| ITestSome { }
-| ITestOk { }
-| ITestFail { }
-;
-
 concept Value {
 }
 
@@ -178,16 +167,43 @@ entity AccessFromIndexValue provides Value {
     field arg: Value;
 }
 
-entity IsTestValue provides Value {
-    field argtype: TypeKey;
-    field ttest: ITest;
+entity IsNoneTestValue provides Value {
+    field arg: Value;
+}
+
+entity IsSomeTestValue provides Value {
+    field arg: Value;
+}
+
+entity IsTypeTestValue provides Value {
+    field istype: TypeKey;
 
     field arg: Value;
 }
 
-entity AsConvertValue provides Value {
-    field argtype: TypeKey;
-    field ttest: ITest;
+entity IsSubtypeTestValue provides Value {
+    field oftype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertOptionToSomeTValue provides Value {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertResultToOkTValue provides Value {
+    field resulttype: TypeKey;
+    field oktype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertResultToFailEValue provides Value {
+    field resulttype: TypeKey;
+    field failtype: TypeKey;
 
     field arg: Value;
 }

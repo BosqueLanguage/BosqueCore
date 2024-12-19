@@ -87,7 +87,7 @@ recursive function emitTermifyValue(v: TermifyValue): CString {
 }
 
 recursive function emitUntermifyValue(v: UntermifyValue): CString {
-    let access = SMTNameManager::generateStructTermFieldName(v.fromtype, 'value');
+    let access = SMTNameManager::generateStructTermFieldName(v.fromtype);
     let vv = emitValue[recursive](v.value);
     
     return CString::concat('(', access, ' ', vv, ')');
@@ -280,12 +280,55 @@ recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
-recursive function emitIsTestValue(v: IsTestValue): CString {
-    abort;
+recursive function emitIsNoneTestValue(v: IsNoneTestValue): CString {
+    let vv = emitValue[recursive](v.arg);
+    return CString::concat('(= ', vv, ' @Term-mk-None)');
 }
 
-recursive function emitAsConvertValue(v: AsConvertValue): CString {
-    abort;
+recursive function emitIsSomeTestValue(v: IsSomeTestValue): CString {
+    let vv = emitValue[recursive](v.arg);
+    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+}
+
+recursive function emitIsTypeTestValue(v: IsTypeTestValue): CString {
+    let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
+    let ttchk = CString::concat('(_ is ', ccons, ')');
+    let vv = emitValue[recursive](v.arg);
+
+    %%v is always in term repr to test against term constructor
+    return CString::concat('(', ttchk, ' ', vv, ')');
+}
+
+recursive function emitIsSubtypeTestValue(v: IsSubtypeTestValue): CString {
+    let subchk = SMTNameManager::generateTermSubtypeFunctionName(v.oftype);
+    let vv = emitValue[recursive](v.arg);
+
+    %%v is always in term repr to test against term constructor
+    return CString::concat('(', subchk, ' ', vv, ')');
+}
+
+recursive function emitConvertOptionToSomeTValue(v: ConvertOptionToSomeTValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
+}
+
+recursive function emitConvertResultToOkTValue(v: ConvertResultToOkTValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
+    let extract = SMTNameManager::generateStructFieldName(v.oktype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
+}
+
+recursive function emitConvertResultToFailEValue(v: ConvertResultToFailEValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
+    let extract = SMTNameManager::generateStructFieldName(v.failtype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
 recursive function emitValue(v: Value): CString {
@@ -312,8 +355,13 @@ recursive function emitValue(v: Value): CString {
         | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
         | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
         | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
-        | IsTestValue => { return emitIsTestValue[recursive]($v); }
-        | AsConvertValue => { return emitAsConvertValue[recursive]($v); }
+        | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
+        | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
+        | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
+        | IsSubtypeTestValue => { return emitIsSubtypeTestValue[recursive]($v); }
+        | ConvertOptionToSomeTValue => { return emitConvertOptionToSomeTValue[recursive]($v); }
+        | ConvertResultToOkTValue => { return emitConvertResultToOkTValue[recursive]($v); }
+        | ConvertResultToFailEValue => { return emitConvertResultToFailEValue[recursive]($v); }
     }
 }
 

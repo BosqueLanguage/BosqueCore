@@ -9,3 +9,23 @@ chktest test_emitLogicActionOrValue(): Bool {
     let op = LogicActionOrValue{List<Value>{AccessVariableValue{'v'}, UnwrapTypeDeclToPrimitiveValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}}}};
     return emitLogicActionOrValue(op) === '(or v (Main@Foo-value cc))';
 }
+
+chktest test_emitIsNoneTestValue(): Bool {
+    let op = IsNoneTestValue{AccessVariableValue{'cc'}};
+    return emitIsNoneTestValue(op) === '(= cc @Term-mk-None)';
+}
+
+chktest test_emitIsSomeTestValue(): Bool {
+    let op = IsSomeTestValue{AccessVariableValue{'cc'}};
+    return emitIsSomeTestValue(op) === '(not (= cc @Term-mk-None))';
+}
+
+chktest test_emitIsTypeTestValue(): Bool {
+    let op = IsTypeTestValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}};
+    return emitIsTypeTestValue(op) === '((_ is @Term-Main@Foo-mk) cc)';
+}
+
+chktest test_emitIsSubtypeTestValue(): Bool {
+    let op = IsSubtypeTestValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}};
+    return emitIsSubtypeTestValue(op) === '(@SubtypeOf-Main@Foo cc)';
+}
