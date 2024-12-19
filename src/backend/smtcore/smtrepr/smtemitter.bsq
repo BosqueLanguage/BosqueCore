@@ -193,6 +193,59 @@ recursive function emitLetValue(v: LetValue): CString {
     return CString::concat('(let ', vbind, ' ', bbody, ')');
 }
 
+recursive function emitLambdaInvokeValue(v: LambdaInvokeValue): CString {
+    if(v.args.empty()) {
+        return v.name;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(select ', v.name, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(v.ns, v.name);
+    if(v.args.empty()) {
+        return fname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', fname, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(v.resolvedType, v.name);
+    if(v.args.empty()) {
+        return fname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', fname, ' ', argsl, ')');
+        }
+    }
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -209,6 +262,9 @@ recursive function emitValue(v: Value): CString {
         | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
         | ConstructorLambdaValue => { return emitConstructorLambdaValue[recursive]($v); }
         | LetValue => { return emitLetValue[recursive]($v); }
+        | LambdaInvokeValue => { return emitLambdaInvokeValue[recursive]($v); }
+        | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
+        | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
     }
 }
 

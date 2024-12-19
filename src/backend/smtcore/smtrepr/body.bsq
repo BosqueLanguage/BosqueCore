@@ -128,36 +128,22 @@ entity LetValue provides Value {
     field body: Value;
 }
 
-entity LambdaInvokeExpression provides Expression {
+entity LambdaInvokeValue provides Value {
     field name: CString;
-
     field args: List<Value>;
-    field lambda: TypeKey;
 }
 
-entity CallNamespaceFunctionExpression provides Expression {
+entity CallNamespaceFunctionValue provides Value {
     field ns: NamespaceKey;
     field name: CString;
 
     field args: List<Value>;
 }
 
-entity CallTypeFunctionExpression provides Expression {
+entity CallTypeFunctionValue provides Value {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Value>;
-}
-
-entity CallRefThisExpression provides Expression {
-    field name: CString;
-    
-    field args: List<Value>;
-}
-
-entity CallRefSelfExpression provides Expression {
-    field name: CString;
-
     field args: List<Value>;
 }
 
@@ -328,6 +314,40 @@ concept Expression {
 
 entity ValueExpression provides Expression {
     field value: Value;
+}
+
+
+entity LambdaInvokeExpression provides Expression {
+    field name: CString;
+
+    field args: List<Value>;
+    field lambda: TypeKey;
+}
+
+entity CallNamespaceFunctionExpression provides Expression {
+    field ns: NamespaceKey;
+    field name: CString;
+
+    field args: List<Value>;
+}
+
+entity CallTypeFunctionExpression provides Expression {
+    field resolvedType: TypeKey;
+    field name: CString;
+    
+    field args: List<Value>;
+}
+
+entity CallRefThisExpression provides Expression {
+    field name: CString;
+    
+    field args: List<Value>;
+}
+
+entity CallRefSelfExpression provides Expression {
+    field name: CString;
+
+    field args: List<Value>;
 }
 
 entity LetExpression provides Expression {

@@ -1,0 +1,47 @@
+namespace SMTEmitter;
+
+chktest test_emitLambdaInvokeValue_empty(): Bool {
+    let op = LambdaInvokeValue{'f', List<Value>{}};
+    return emitLambdaInvokeValue(op) === 'f';
+}
+
+chktest test_emitLambdaInvokeValue_one(): Bool {
+    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitLambdaInvokeValue(op) === '(f 0)';
+}
+
+chktest test_emitLambdaInvokeValue_two(): Bool {
+    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitLambdaInvokeValue(op) === '(select f 0 true)';
+}
+
+chktest test_emitCallNamespaceFunctionValue_empty(): Bool {
+    let op = CallNamespaceFunctionValue{'Main'<NamespaceKey>, 'f', List<Value>{}};
+    return emitCallNamespaceFunctionValue(op) === 'Main@f';
+}
+
+chktest test_emitCallNamespaceFunctionValue_one(): Bool {
+    let op = CallNamespaceFunctionValue{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallNamespaceFunctionValue(op) === '(Main@f 0)';
+}
+
+chktest test_emitCallNamespaceFunctionValue_two(): Bool {
+    let op = CallNamespaceFunctionValue{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallNamespaceFunctionValue(op) === '(Main@f 0 true)';
+}
+
+chktest test_emitCallTypeFunctionValue_empty(): Bool {
+    let op = CallTypeFunctionValue{'Main@Foo'<TypeKey>, 'f', List<Value>{}};
+    return emitCallTypeFunctionValue(op) === 'Main@Foo@f';
+}
+
+chktest test_emitCallTypeFunctionValue_one(): Bool {
+    let op = CallTypeFunctionValue{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallTypeFunctionValue(op) === '(Main@Foo@f 0)';
+}
+
+chktest test_emitCallTypeFunctionValue_two(): Bool {
+    let op = CallTypeFunctionValue{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallTypeFunctionValue(op) === '(Main@Foo@f 0 true)';
+}
+
