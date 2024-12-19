@@ -164,60 +164,42 @@ entity UnwrapTypeDeclToPrimitiveValue provides Value {
     field arg: Value;
 }
 
-entity CreateDirectValue provides Value {
-    field exp: Value;
-    field srctype: TypeKey;
-    field trgttype: TypeKey;
-}
-
-entity LiteralKeyHas provides Value {
-    field rootExp: Value;
-    field kexp: Value;
-}
-
-datatype PostfixOperation using {
-    field baseType: TypeKey;
-}
-of 
-PostfixAccessFromName {
-    field declaredInType: TypeKey;
+entity AccessFromNameResolvedValue provides Value {
+    field ontype: TypeKey;
     field name: CString;
-}
-| PostfixProjectFromNames {
-    field declOnType: TypeKey;
-    field names: List<(|CString, TypeKey|)>;
-}
-| PostfixAssignFields {
-    field declOnType: TypeKey;
-    field updates: List<(|CString, TypeKey, Value|)>;
-}
-| PostfixAccessFromIndex {
-    field idx: Nat;
-}
-| PostfixIsTest {
-    field ttest: ITest;
-}
-| PostfixAsConvert {
-    field ttest: ITest;
-}
-| LiteralKeyAccess {
-    field kexp: Value;
-}
-;
 
-entity PostfixOp provides Value {
-    field rootExp: Value;
-    field ops: List<PostfixOperation>;
+    field arg: Value;
 }
 
-entity MethodInvokeStatic provides Expression {
+entity AccessFromIndexValue provides Value {
+    field elisttype: TypeKey;
+    field idx: CString;
+
+    field arg: Value;
+}
+
+entity IsTestValue provides Value {
+    field argtype: TypeKey;
+    field ttest: ITest;
+
+    field arg: Value;
+}
+
+entity AsConvertValue provides Value {
+    field argtype: TypeKey;
+    field ttest: ITest;
+
+    field arg: Value;
+}
+
+entity MethodInvokeStaticValue provides Value {
     field rootExp: Value;
     field resolvedTrgt: TypeKey;
     field name: CString;
     field args: List<Value>;
 }
 
-entity MethodInvokeVirtual provides Expression {
+entity MethodInvokeVirtualValue provides Value {
     field rootExp: Value;
     field resolvedBase: TypeKey;
     field name: CString;
@@ -347,15 +329,17 @@ entity CallTypeFunctionExpression provides Expression {
     field args: List<Value>;
 }
 
-entity CallRefThisExpression provides Expression {
+entity MethodInvokeStaticExpression provides Expression {
+    field rootExp: Value;
+    field resolvedTrgt: TypeKey;
     field name: CString;
-    
     field args: List<Value>;
 }
 
-entity CallRefSelfExpression provides Expression {
+entity MethodInvokeVirtualExpression provides Expression {
+    field rootExp: Value;
+    field resolvedBase: TypeKey;
     field name: CString;
-
     field args: List<Value>;
 }
 
