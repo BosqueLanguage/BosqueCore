@@ -233,13 +233,11 @@ datatype BinaryArithValue provides Value using {
 of
 BinAddValue { }
 | BinSubValue { }
-| BinMultValue { }
-| BinDivValue { }
+| BinMultValue { field useUninterpreted: Bool; }
+| BinDivValue {field useUninterpreted: Bool; }
 ;
 
-datatype BinaryKeyEqValue provides Value using {
-    field ktype: TypeKey;
-}
+datatype BinaryKeyEqValue provides Value 
 of
 BinKeyEqNoneValue { 
     field exp: Value;
@@ -248,10 +246,16 @@ BinKeyEqNoneValue {
     field exp: Value;
 }
 | BinKeySomeEqValue {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+
     field eoption: Value;
     field eval: Value;
 }
 | BinKeyNotSomeEqValue {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+    
     field eoption: Value;
     field eval: Value;
 }

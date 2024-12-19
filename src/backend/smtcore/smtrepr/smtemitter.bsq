@@ -347,6 +347,141 @@ recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CStr
     }
 }
 
+recursive function emitPrefixNotOpValue(v: PrefixNotOpValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(not ', vv, ')');
+}
+
+recursive function emitPrefixNegateOpValue(v: PrefixNegateOpValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(- ', vv, ')');
+}
+
+recursive function emitPrefixPlusOpValue(v: PrefixPlusOpValue): CString {
+    return emitValue[recursive](v.exp);
+}
+
+recursive function emitUnaryValue(v: UnaryValue): CString {
+    match(v)@ {
+        PrefixNotOpValue => { return emitPrefixNotOpValue[recursive]($v); }
+        | PrefixNegateOpValue => { return emitPrefixNegateOpValue[recursive]($v); }
+        | PrefixPlusOpValue => { return emitPrefixPlusOpValue[recursive]($v); }
+    }
+}
+
+recursive function emitBinAddValue(v: BinAddValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(+ ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinSubValue(v: BinSubValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(- ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinMultValue(v: BinMultValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    if(v.useUninterpreted) {
+        return CString::concat('(@NLA_I_mult ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(@NLA_I_div ', lhs, ' ', rhs, ')');
+    }
+}
+
+recursive function emitBinDivValue(v: BinDivValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    
+    if(v.useUninterpreted) {
+        return CString::concat('(/ ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(', lhs, ' ', rhs, ')');
+    }
+}
+
+recursive function emitBinaryArithValue(v: BinaryArithValue): CString {
+    match(v)@ {
+        BinAddValue => { return emitBinAddValue[recursive]($v); }
+        | BinSubValue => { return emitBinSubValue[recursive]($v); }
+        | BinMultValue => { return emitBinMultValue[recursive]($v); }
+        | BinDivValue => { return emitBinDivValue[recursive]($v); }
+    }
+}
+
+recursive function emitBinKeyEqNoneValue(v: BinKeyEqNoneValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(= ', vv, ' @Term-mk-None)');
+}
+
+recursive function emitBinKeyNotEqNoneValue(v: BinKeyNotEqNoneValue): CString {
+    let vv = emitValue[recursive](v.arg);
+    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+}
+
+recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
+    let eopt = emitValue[recursive](v.eoption);
+    let eval = emitValue[recursive](v.eval);
+    
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    let extractop = CString::concat('(', extract, ' ', ubxop, ')');
+    let eqop = CString::concat('(= ', extractop, ' ', eval, ')');
+
+    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-mk-None))');
+
+    return CString::concat('(and ', notnoneop, ' ', eqop, ')');
+}
+
+recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
+    let eopt = emitValue[recursive](v.eoption);
+    let eval = emitValue[recursive](v.eval);
+    
+    let eopt = emitValue[recursive](v.eoption);
+    let eval = emitValue[recursive](v.eval);
+    
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    let extractop = CString::concat('(', extract, ' ', ubxop, ')');
+    let eqop = CString::concat('(= ', extractop, ' ', eval, ')');
+
+    let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
+
+    return CString::concat('(or ', noneop, ' ', eqop, ')');
+}
+
+recursive function emitBinKeyEqValue(v: BinKeyEqValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(= ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinKeyNotEqValue(v: BinKeyNotEqValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(not (= ', lhs, ' ', rhs, '))');
+}
+
+recursive function emitBinaryKeyEqValue(v: BinaryKeyEqValue): CString {
+    match(v)@ {
+        BinKeyEqNoneValue => { return emitBinKeyEqNoneValue[recursive]($v); }
+        | BinKeyNotEqNoneValue => { return emitBinKeyNotEqNoneValue[recursive]($v); }
+        | BinKeySomeEqValue => { return emitBinKeySomeEqValue[recursive]($v); }
+        | BinKeyNotSomeEqValue => { return emitBinKeyNotSomeEqValue[recursive]($v); }
+        | BinKeyEqValue => { return emitBinKeyEqValue[recursive]($v); }
+        | BinKeyNotEqValue => { return emitBinKeyNotEqValue[recursive]($v); }
+    }
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -378,6 +513,10 @@ recursive function emitValue(v: Value): CString {
         | ConvertOptionToSomeTValue => { return emitConvertOptionToSomeTValue[recursive]($v); }
         | ConvertResultToOkTValue => { return emitConvertResultToOkTValue[recursive]($v); }
         | ConvertResultToFailEValue => { return emitConvertResultToFailEValue[recursive]($v); }
+        | MethodInvokeStaticValue => { return emitMethodInvokeStaticValue[recursive]($v); }
+        | UnaryValue => { return emitUnaryValue[recursive]($v); }
+        | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
+        | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
     }
 }
 
