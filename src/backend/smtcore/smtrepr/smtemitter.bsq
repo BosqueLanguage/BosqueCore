@@ -87,7 +87,7 @@ recursive function emitTermifyValue(v: TermifyValue): CString {
 }
 
 recursive function emitUntermifyValue(v: UntermifyValue): CString {
-    let access = SMTNameManager::generateStructTermFieldName(v.fromtype, 'value');
+    let access = SMTNameManager::generateStructTermFieldName(v.fromtype);
     let vv = emitValue[recursive](v.value);
     
     return CString::concat('(', access, ' ', vv, ')');
@@ -101,18 +101,23 @@ function emitLiteralTypeDeclValue(v: LiteralTypeDeclValue): CString {
 }
 
 recursive function emitConstructorListSingletonsValue(v: ConstructorListSingletonsValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+
     if(v.args.empty()) {
-        return CString::concat('(as seq.empty (Seq ', v.oftype.value, '))');
+        let scons = CString::concat('(as seq.empty (Seq ', v.oftype.value, '))');
+        return CString::concat('(', consname, ' ', scons, ')');
     }
     else {
         if(v.args.isSingleElement()) {
-            return CString::concat('(seq.unit ', emitValue[recursive](v.args.single()), ')');
+            let scons = CString::concat('(seq.unit ', emitValue[recursive](v.args.single()), ')');
+            return CString::concat('(', consname, ' ', scons, ')');
         }
         else {
             let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitValue[recursive](x), ')'));
             let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(seq.++ ', argsl, ')');
+            let scons = CString::concat('(seq.++ ', argsl, ')');
+            return CString::concat('(', consname, ' ', scons, ')');
         }
     }
 }
@@ -193,6 +198,301 @@ recursive function emitLetValue(v: LetValue): CString {
     return CString::concat('(let ', vbind, ' ', bbody, ')');
 }
 
+recursive function emitLambdaInvokeValue(v: LambdaInvokeValue): CString {
+    if(v.args.empty()) {
+        return v.name;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(select ', v.name, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(v.ns, v.name);
+    if(v.args.empty()) {
+        return fname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', fname, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(v.resolvedType, v.name);
+    if(v.args.empty()) {
+        return fname;
+    }
+    else {
+        if(v.args.isSingleElement()) {
+            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
+        }
+        else {
+            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+            let argsl = CString::joinAll(' ', cvals);
+
+            return CString::concat('(', fname, ' ', argsl, ')');
+        }
+    }
+}
+
+recursive function emitLogicActionAndValue(v: LogicActionAndValue): CString {
+    let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+    let argsl = CString::joinAll(' ', cvals);
+
+    return CString::concat('(and ', argsl, ')');
+}
+
+recursive function emitLogicActionOrValue(v: LogicActionOrValue): CString {
+    let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+    let argsl = CString::joinAll(' ', cvals);
+
+    return CString::concat('(or ', argsl, ')');
+}
+
+recursive function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimitiveValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.decltype, 'value');
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
+recursive function emitAccessFromNameResolvedValue(v: AccessFromNameResolvedValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
+recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
+recursive function emitIsNoneTestValue(v: IsNoneTestValue): CString {
+    let vv = emitValue[recursive](v.arg);
+    return CString::concat('(= ', vv, ' @Term-mk-None)');
+}
+
+recursive function emitIsSomeTestValue(v: IsSomeTestValue): CString {
+    let vv = emitValue[recursive](v.arg);
+    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+}
+
+recursive function emitIsTypeTestValue(v: IsTypeTestValue): CString {
+    let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
+    let ttchk = CString::concat('(_ is ', ccons, ')');
+    let vv = emitValue[recursive](v.arg);
+
+    %%v is always in term repr to test against term constructor
+    return CString::concat('(', ttchk, ' ', vv, ')');
+}
+
+recursive function emitIsSubtypeTestValue(v: IsSubtypeTestValue): CString {
+    let subchk = SMTNameManager::generateTermSubtypeFunctionName(v.oftype);
+    let vv = emitValue[recursive](v.arg);
+
+    %%v is always in term repr to test against term constructor
+    return CString::concat('(', subchk, ' ', vv, ')');
+}
+
+recursive function emitConvertOptionToSomeTValue(v: ConvertOptionToSomeTValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
+}
+
+recursive function emitConvertResultToOkTValue(v: ConvertResultToOkTValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
+    let extract = SMTNameManager::generateStructFieldName(v.oktype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
+}
+
+recursive function emitConvertResultToFailEValue(v: ConvertResultToFailEValue): CString {
+    let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
+    let extract = SMTNameManager::generateStructFieldName(v.failtype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', emitValue[recursive](v.arg), ')');
+    return CString::concat('(', extract, ' ', ubxop, ')');
+}
+
+recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(v.resolvedTrgt, v.name);
+    let rootv = emitValue[recursive](v.rootExp);
+
+    let rpfx = CString::concat(fname, ' ', rootv);
+    if(v.args.empty()) {
+        return CString::concat('(', rpfx, ')');
+    }
+    else {
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', rpfx, ' ', argsl, ')');
+    }
+}
+
+recursive function emitPrefixNotOpValue(v: PrefixNotOpValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(not ', vv, ')');
+}
+
+recursive function emitPrefixNegateOpValue(v: PrefixNegateOpValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(- ', vv, ')');
+}
+
+recursive function emitPrefixPlusOpValue(v: PrefixPlusOpValue): CString {
+    return emitValue[recursive](v.exp);
+}
+
+recursive function emitUnaryValue(v: UnaryValue): CString {
+    match(v)@ {
+        PrefixNotOpValue => { return emitPrefixNotOpValue[recursive]($v); }
+        | PrefixNegateOpValue => { return emitPrefixNegateOpValue[recursive]($v); }
+        | PrefixPlusOpValue => { return emitPrefixPlusOpValue[recursive]($v); }
+    }
+}
+
+recursive function emitBinAddValue(v: BinAddValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(+ ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinSubValue(v: BinSubValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(- ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinMultValue(v: BinMultValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    if(v.useUninterpreted) {
+        return CString::concat('(@NLA_I_mult ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(* ', lhs, ' ', rhs, ')');
+    }
+}
+
+recursive function emitBinDivValue(v: BinDivValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    
+    if(v.useUninterpreted) {
+        return CString::concat('(@NLA_I_div ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(/ ', lhs, ' ', rhs, ')');
+    }
+}
+
+recursive function emitBinaryArithValue(v: BinaryArithValue): CString {
+    match(v)@ {
+        BinAddValue => { return emitBinAddValue[recursive]($v); }
+        | BinSubValue => { return emitBinSubValue[recursive]($v); }
+        | BinMultValue => { return emitBinMultValue[recursive]($v); }
+        | BinDivValue => { return emitBinDivValue[recursive]($v); }
+    }
+}
+
+recursive function emitBinKeyEqNoneValue(v: BinKeyEqNoneValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(= ', vv, ' @Term-mk-None)');
+}
+
+recursive function emitBinKeyNotEqNoneValue(v: BinKeyNotEqNoneValue): CString {
+    let vv = emitValue[recursive](v.exp);
+    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+}
+
+recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
+    let eopt = emitValue[recursive](v.eoption);
+    let val = emitValue[recursive](v.val);
+    
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
+    let extractop = CString::concat('(', extract, ' ', ubxop, ')');
+    let eqop = CString::concat('(= ', extractop, ' ', val, ')');
+
+    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-mk-None))');
+
+    return CString::concat('(and ', notnoneop, ' ', eqop, ')');
+}
+
+recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
+    let eopt = emitValue[recursive](v.eoption);
+    let val = emitValue[recursive](v.val);
+    
+    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
+
+    let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
+    let extractop = CString::concat('(', extract, ' ', ubxop, ')');
+    let neqop = CString::concat('(not (= ', extractop, ' ', val, '))');
+
+    let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
+
+    return CString::concat('(or ', noneop, ' ', neqop, ')');
+}
+
+recursive function emitBinKeyEqValue(v: BinKeyEqValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(= ', lhs, ' ', rhs, ')');
+}
+
+recursive function emitBinKeyNotEqValue(v: BinKeyNotEqValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+    return CString::concat('(not (= ', lhs, ' ', rhs, '))');
+}
+
+recursive function emitBinaryKeyEqValue(v: BinaryKeyEqValue): CString {
+    match(v)@ {
+        BinKeyEqNoneValue => { return emitBinKeyEqNoneValue[recursive]($v); }
+        | BinKeyNotEqNoneValue => { return emitBinKeyNotEqNoneValue[recursive]($v); }
+        | BinKeySomeEqValue => { return emitBinKeySomeEqValue[recursive]($v); }
+        | BinKeyNotSomeEqValue => { return emitBinKeyNotSomeEqValue[recursive]($v); }
+        | BinKeyEqValue => { return emitBinKeyEqValue[recursive]($v); }
+        | BinKeyNotEqValue => { return emitBinKeyNotEqValue[recursive]($v); }
+    }
+}
+
+recursive function emitKeyLessValue(v: KeyLessValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    switch(v.kind) {
+        KeyLessKind#KeyBool => {return CString::concat('(and (not ', lhs, ') ', rhs, ')'); }
+        | KeyLessKind#KeyNumber => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | KeyLessKind#KeyString => { return CString::concat('(str.< ', lhs, ' ', rhs, ')'); }
+        | KeyLessKind#KeyUUID => { abort; }
+        | KeyLessKind#KeyHash => { abort; }
+        | KeyLessKind#KeyDataInfo => { abort; }
+    }
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -209,6 +509,26 @@ recursive function emitValue(v: Value): CString {
         | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
         | ConstructorLambdaValue => { return emitConstructorLambdaValue[recursive]($v); }
         | LetValue => { return emitLetValue[recursive]($v); }
+        | LambdaInvokeValue => { return emitLambdaInvokeValue[recursive]($v); }
+        | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
+        | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
+        | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
+        | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
+        | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
+        | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
+        | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
+        | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
+        | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
+        | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
+        | IsSubtypeTestValue => { return emitIsSubtypeTestValue[recursive]($v); }
+        | ConvertOptionToSomeTValue => { return emitConvertOptionToSomeTValue[recursive]($v); }
+        | ConvertResultToOkTValue => { return emitConvertResultToOkTValue[recursive]($v); }
+        | ConvertResultToFailEValue => { return emitConvertResultToFailEValue[recursive]($v); }
+        | MethodInvokeStaticValue => { return emitMethodInvokeStaticValue[recursive]($v); }
+        | UnaryValue => { return emitUnaryValue[recursive]($v); }
+        | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
+        | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
+        | KeyLessValue => { return emitKeyLessValue($v); }
     }
 }
 
