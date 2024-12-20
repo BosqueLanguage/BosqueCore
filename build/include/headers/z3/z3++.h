@@ -320,7 +320,7 @@ namespace z3 {
         /**
            \brief Create a recursive datatype over a single sort.
            \c name is the name of the recursive datatype
-           \c n - the numer of constructors of the datatype
+           \c n - the number of constructors of the datatype
            \c cs - the \c n constructors used to define the datatype
 
            References to the datatype can be created using \ref datatype_sort.
@@ -368,7 +368,7 @@ namespace z3 {
         func_decl recfun(char const * name, sort const & d1, sort const & d2, sort const & range);
 
         /**
-         * \brief add function definition body to declaration decl. decl needs to be declared using context::<recfun>.
+         * \brief add function definition body to declaration decl. decl needs to be declared using context::recfun.
          * @param decl
          * @param args
          * @param body
@@ -470,6 +470,7 @@ namespace z3 {
         context * m_ctx;
     public:
         object(context & c):m_ctx(&c) {}
+        virtual ~object() = default;
         context & ctx() const { return *m_ctx; }
         Z3_error_code check_error() const { return m_ctx->check_error(); }
         friend void check_context(object const & a, object const & b);
@@ -508,7 +509,7 @@ namespace z3 {
             object::operator=(o);
             return *this;
         }
-        ~param_descrs() { Z3_param_descrs_dec_ref(ctx(), m_descrs); }
+        ~param_descrs() override { Z3_param_descrs_dec_ref(ctx(), m_descrs); }
         static param_descrs simplify_param_descrs(context& c) { return param_descrs(c, Z3_simplify_get_param_descrs(c)); }
         static param_descrs global_param_descrs(context& c) { return param_descrs(c, Z3_get_global_param_descrs(c)); }
 
@@ -526,7 +527,7 @@ namespace z3 {
     public:
         params(context & c):object(c) { m_params = Z3_mk_params(c); Z3_params_inc_ref(ctx(), m_params); }
         params(params const & s):object(s), m_params(s.m_params) { Z3_params_inc_ref(ctx(), m_params); }
-        ~params() { Z3_params_dec_ref(ctx(), m_params); }
+        ~params() override { Z3_params_dec_ref(ctx(), m_params); }
         operator Z3_params() const { return m_params; }
         params & operator=(params const & s) {
             Z3_params_inc_ref(s.ctx(), s.m_params);
@@ -554,7 +555,7 @@ namespace z3 {
         ast(context & c):object(c), m_ast(0) {}
         ast(context & c, Z3_ast n):object(c), m_ast(n) { Z3_inc_ref(ctx(), m_ast); }
         ast(ast const & s) :object(s), m_ast(s.m_ast) { Z3_inc_ref(ctx(), m_ast); }
-        ~ast() { if (m_ast) { Z3_dec_ref(*m_ctx, m_ast); } }
+        ~ast() override { if (m_ast) { Z3_dec_ref(*m_ctx, m_ast); } }
         operator Z3_ast() const { return m_ast; }
         operator bool() const { return m_ast != 0; }
         ast & operator=(ast const & s) {
@@ -592,7 +593,7 @@ namespace z3 {
         ast_vector_tpl(ast_vector_tpl const & s):object(s), m_vector(s.m_vector) { Z3_ast_vector_inc_ref(ctx(), m_vector); }
         ast_vector_tpl(context& c, ast_vector_tpl const& src): object(c) { init(Z3_ast_vector_translate(src.ctx(), src, c)); }
 
-        ~ast_vector_tpl() { Z3_ast_vector_dec_ref(ctx(), m_vector); }
+        ~ast_vector_tpl() override { Z3_ast_vector_dec_ref(ctx(), m_vector); }
         operator Z3_ast_vector() const { return m_vector; }
         unsigned size() const { return Z3_ast_vector_size(ctx(), m_vector); }
         T operator[](unsigned i) const { Z3_ast r = Z3_ast_vector_get(ctx(), m_vector, i); check_error(); return cast_ast<T>()(ctx(), r); }
@@ -1602,10 +1603,10 @@ namespace z3 {
             unsigned i;
         public:
             iterator(expr& e, unsigned i): e(e), i(i) {}
-            bool operator==(iterator const& other) noexcept {
+            bool operator==(iterator const& other) const noexcept {
                 return i == other.i;
             }
-            bool operator!=(iterator const& other) noexcept {
+            bool operator!=(iterator const& other) const noexcept {
                 return i != other.i;
             }
             expr operator*() const { return e.arg(i); }
@@ -2496,6 +2497,34 @@ namespace z3 {
         return expr(ctx, r);
     }
 
+    inline expr map(expr const& f, expr const& list) {
+        context& ctx = f.ctx();
+        Z3_ast r = Z3_mk_seq_map(ctx, f, list);
+        ctx.check_error();
+        return expr(ctx, r);
+    }
+
+    inline expr mapi(expr const& f, expr const& i, expr const& list) {
+        context& ctx = f.ctx();
+        Z3_ast r = Z3_mk_seq_mapi(ctx, f, i, list);
+        ctx.check_error();
+        return expr(ctx, r);
+    }
+
+    inline expr foldl(expr const& f, expr const& a, expr const& list) {
+        context& ctx = f.ctx();
+        Z3_ast r = Z3_mk_seq_foldl(ctx, f, a, list);
+        ctx.check_error();
+        return expr(ctx, r);
+    }
+
+    inline expr foldli(expr const& f, expr const& i, expr const& a, expr const& list) {
+        context& ctx = f.ctx();
+        Z3_ast r = Z3_mk_seq_foldli(ctx, f, i, a, list);
+        ctx.check_error();
+        return expr(ctx, r);
+    }
+
     inline expr mk_or(expr_vector const& args) {
         array<Z3_ast> _args(args);
         Z3_ast r = Z3_mk_or(args.ctx(), _args.size(), _args.ptr());
@@ -2527,7 +2556,7 @@ namespace z3 {
     public:
         func_entry(context & c, Z3_func_entry e):object(c) { init(e); }
         func_entry(func_entry const & s):object(s) { init(s.m_entry); }
-        ~func_entry() { Z3_func_entry_dec_ref(ctx(), m_entry); }
+        ~func_entry() override { Z3_func_entry_dec_ref(ctx(), m_entry); }
         operator Z3_func_entry() const { return m_entry; }
         func_entry & operator=(func_entry const & s) {
             Z3_func_entry_inc_ref(s.ctx(), s.m_entry);
@@ -2550,7 +2579,7 @@ namespace z3 {
     public:
         func_interp(context & c, Z3_func_interp e):object(c) { init(e); }
         func_interp(func_interp const & s):object(s) { init(s.m_interp); }
-        ~func_interp() { Z3_func_interp_dec_ref(ctx(), m_interp); }
+        ~func_interp() override { Z3_func_interp_dec_ref(ctx(), m_interp); }
         operator Z3_func_interp() const { return m_interp; }
         func_interp & operator=(func_interp const & s) {
             Z3_func_interp_inc_ref(s.ctx(), s.m_interp);
@@ -2584,7 +2613,7 @@ namespace z3 {
         model(context & c, Z3_model m):object(c) { init(m); }
         model(model const & s):object(s) { init(s.m_model); }
         model(model& src, context& dst, translate) : object(dst) { init(Z3_model_translate(src.ctx(), src, dst)); }
-        ~model() { Z3_model_dec_ref(ctx(), m_model); }
+        ~model() override { Z3_model_dec_ref(ctx(), m_model); }
         operator Z3_model() const { return m_model; }
         model & operator=(model const & s) {
             Z3_model_inc_ref(s.ctx(), s.m_model);
@@ -2664,7 +2693,7 @@ namespace z3 {
         stats(context & c):object(c), m_stats(0) {}
         stats(context & c, Z3_stats e):object(c) { init(e); }
         stats(stats const & s):object(s) { init(s.m_stats); }
-        ~stats() { if (m_stats) Z3_stats_dec_ref(ctx(), m_stats); }
+        ~stats() override { if (m_stats) Z3_stats_dec_ref(ctx(), m_stats); }
         operator Z3_stats() const { return m_stats; }
         stats & operator=(stats const & s) {
             Z3_stats_inc_ref(s.ctx(), s.m_stats);
@@ -2746,7 +2775,7 @@ namespace z3 {
         solver(context & c, solver const& src, translate): object(c) { Z3_solver s = Z3_solver_translate(src.ctx(), src, c); check_error(); init(s); }
         solver(solver const & s):object(s) { init(s.m_solver); }
         solver(solver const& s, simplifier const& simp);
-        ~solver() { Z3_solver_dec_ref(ctx(), m_solver); }
+        ~solver() override { Z3_solver_dec_ref(ctx(), m_solver); }
         operator Z3_solver() const { return m_solver; }
         solver & operator=(solver const & s) {
             Z3_solver_inc_ref(s.ctx(), s.m_solver);
@@ -2836,6 +2865,17 @@ namespace z3 {
             check_error(); 
             return result; 
         }
+        void set_initial_value(expr const& var, expr const& value) {
+            Z3_solver_set_initial_value(ctx(), m_solver, var, value);
+            check_error();
+        }
+        void set_initial_value(expr const& var, int i) {
+            set_initial_value(var, ctx().num_val(i, var.get_sort()));
+        }
+        void set_initial_value(expr const& var, bool b) {
+            set_initial_value(var, ctx().bool_val(b));            
+        }
+
         expr proof() const { Z3_ast r = Z3_solver_get_proof(ctx(), m_solver); check_error(); return expr(ctx(), r); }
         friend std::ostream & operator<<(std::ostream & out, solver const & s);
 
@@ -2917,10 +2957,10 @@ namespace z3 {
             expr_vector const * operator->() const { return &(operator*()); }
             expr_vector const& operator*() const noexcept { return m_cube; }
 
-            bool operator==(cube_iterator const& other) noexcept {
+            bool operator==(cube_iterator const& other) const noexcept {
                 return other.m_end == m_end;
             };
-            bool operator!=(cube_iterator const& other) noexcept {
+            bool operator!=(cube_iterator const& other) const noexcept {
                 return other.m_end != m_end;
             };
 
@@ -2967,7 +3007,7 @@ namespace z3 {
         goal(context & c, bool models=true, bool unsat_cores=false, bool proofs=false):object(c) { init(Z3_mk_goal(c, models, unsat_cores, proofs)); }
         goal(context & c, Z3_goal s):object(c) { init(s); }
         goal(goal const & s):object(s) { init(s.m_goal); }
-        ~goal() { Z3_goal_dec_ref(ctx(), m_goal); }
+        ~goal() override { Z3_goal_dec_ref(ctx(), m_goal); }
         operator Z3_goal() const { return m_goal; }
         goal & operator=(goal const & s) {
             Z3_goal_inc_ref(s.ctx(), s.m_goal);
@@ -3025,7 +3065,7 @@ namespace z3 {
     public:
         apply_result(context & c, Z3_apply_result s):object(c) { init(s); }
         apply_result(apply_result const & s):object(s) { init(s.m_apply_result); }
-        ~apply_result() { Z3_apply_result_dec_ref(ctx(), m_apply_result); }
+        ~apply_result() override { Z3_apply_result_dec_ref(ctx(), m_apply_result); }
         operator Z3_apply_result() const { return m_apply_result; }
         apply_result & operator=(apply_result const & s) {
             Z3_apply_result_inc_ref(s.ctx(), s.m_apply_result);
@@ -3050,7 +3090,7 @@ namespace z3 {
         tactic(context & c, char const * name):object(c) { Z3_tactic r = Z3_mk_tactic(c, name); check_error(); init(r); }
         tactic(context & c, Z3_tactic s):object(c) { init(s); }
         tactic(tactic const & s):object(s) { init(s.m_tactic); }
-        ~tactic() { Z3_tactic_dec_ref(ctx(), m_tactic); }
+        ~tactic() override { Z3_tactic_dec_ref(ctx(), m_tactic); }
         operator Z3_tactic() const { return m_tactic; }
         tactic & operator=(tactic const & s) {
             Z3_tactic_inc_ref(s.ctx(), s.m_tactic);
@@ -3136,7 +3176,7 @@ namespace z3 {
         simplifier(context & c, char const * name):object(c) { Z3_simplifier r = Z3_mk_simplifier(c, name); check_error(); init(r); }
         simplifier(context & c, Z3_simplifier s):object(c) { init(s); }
         simplifier(simplifier const & s):object(s) { init(s.m_simplifier); }
-        ~simplifier() { Z3_simplifier_dec_ref(ctx(), m_simplifier); }
+        ~simplifier() override { Z3_simplifier_dec_ref(ctx(), m_simplifier); }
         operator Z3_simplifier() const { return m_simplifier; }
         simplifier & operator=(simplifier const & s) {
             Z3_simplifier_inc_ref(s.ctx(), s.m_simplifier);
@@ -3178,7 +3218,7 @@ namespace z3 {
         probe(context & c, double val):object(c) { Z3_probe r = Z3_probe_const(c, val); check_error(); init(r); }
         probe(context & c, Z3_probe s):object(c) { init(s); }
         probe(probe const & s):object(s) { init(s.m_probe); }
-        ~probe() { Z3_probe_dec_ref(ctx(), m_probe); }
+        ~probe() override { Z3_probe_dec_ref(ctx(), m_probe); }
         operator Z3_probe() const { return m_probe; }
         probe & operator=(probe const & s) {
             Z3_probe_inc_ref(s.ctx(), s.m_probe);
@@ -3272,7 +3312,7 @@ namespace z3 {
             object::operator=(o);
             return *this;
         }
-        ~optimize() { Z3_optimize_dec_ref(ctx(), m_opt); }
+        ~optimize() override { Z3_optimize_dec_ref(ctx(), m_opt); }
         operator Z3_optimize() const { return m_opt; }
         void add(expr const& e) {
             assert(e.is_bool());
@@ -3301,6 +3341,17 @@ namespace z3 {
         handle add(expr const& e, unsigned weight) {
             return add_soft(e, weight);
         }
+        void set_initial_value(expr const& var, expr const& value) {
+            Z3_optimize_set_initial_value(ctx(), m_opt, var, value);
+            check_error();
+        }
+        void set_initial_value(expr const& var, int i) {
+            set_initial_value(var, ctx().num_val(i, var.get_sort()));
+        }
+        void set_initial_value(expr const& var, bool b) {
+            set_initial_value(var, ctx().bool_val(b));            
+        }
+
         handle maximize(expr const& e) {
             return handle(Z3_optimize_maximize(ctx(), m_opt, e));
         }
@@ -3353,7 +3404,7 @@ namespace z3 {
     public:
         fixedpoint(context& c):object(c) { m_fp = Z3_mk_fixedpoint(c); Z3_fixedpoint_inc_ref(c, m_fp); }
         fixedpoint(fixedpoint const & o):object(o), m_fp(o.m_fp) { Z3_fixedpoint_inc_ref(ctx(), m_fp); }
-        ~fixedpoint() { Z3_fixedpoint_dec_ref(ctx(), m_fp); }
+        ~fixedpoint() override { Z3_fixedpoint_dec_ref(ctx(), m_fp); }
         fixedpoint & operator=(fixedpoint const & o) {
             Z3_fixedpoint_inc_ref(o.ctx(), o.m_fp);
             Z3_fixedpoint_dec_ref(ctx(), m_fp);
@@ -4214,17 +4265,20 @@ namespace z3 {
         return expr(ctx(), r);
     }
 
-    typedef std::function<void(expr const& proof, expr_vector const& clause)> on_clause_eh_t;
+    typedef std::function<void(expr const& proof, std::vector<unsigned> const& deps, expr_vector const& clause)> on_clause_eh_t;
 
     class on_clause {
         context& c;
         on_clause_eh_t m_on_clause;
 
-        static void _on_clause_eh(void* _ctx, Z3_ast _proof, Z3_ast_vector _literals) {
+        static void _on_clause_eh(void* _ctx, Z3_ast _proof, unsigned n, unsigned const* dep, Z3_ast_vector _literals) {
             on_clause* ctx = static_cast<on_clause*>(_ctx);
             expr_vector lits(ctx->c, _literals);
             expr proof(ctx->c, _proof);
-            ctx->m_on_clause(proof, lits);
+            std::vector<unsigned> deps;
+            for (unsigned i = 0; i < n; ++i)
+                deps.push_back(dep[i]);
+            ctx->m_on_clause(proof, deps, lits);
         }
     public:
         on_clause(solver& s, on_clause_eh_t& on_clause_eh): c(s.ctx()) {
@@ -4240,7 +4294,7 @@ namespace z3 {
         typedef std::function<void(void)> final_eh_t;
         typedef std::function<void(expr const&, expr const&)> eq_eh_t;
         typedef std::function<void(expr const&)> created_eh_t;
-        typedef std::function<void(expr&, unsigned&, Z3_lbool&)> decide_eh_t;
+        typedef std::function<void(expr, unsigned, bool)> decide_eh_t;
 
         final_eh_t m_final_eh;
         eq_eh_t    m_eq_eh;
@@ -4309,13 +4363,11 @@ namespace z3 {
             p->m_created_eh(e);
         }
         
-        static void decide_eh(void* _p, Z3_solver_callback cb, Z3_ast* _val, unsigned* bit, Z3_lbool* is_pos) {
+        static void decide_eh(void* _p, Z3_solver_callback cb, Z3_ast _val, unsigned bit, bool is_pos) {
             user_propagator_base* p = static_cast<user_propagator_base*>(_p);
             scoped_cb _cb(p, cb);
-            expr val(p->ctx(), *_val);
-            p->m_decide_eh(val, *bit, *is_pos);
-            // TBD: life time of val is within the scope of this callback.
-            *_val = val;
+            expr val(p->ctx(), _val);
+            p->m_decide_eh(val, bit, is_pos);
         }
         
     public:
@@ -4435,7 +4487,7 @@ namespace z3 {
         }
 
         void register_decide() {
-            m_decide_eh = [this](expr& val, unsigned& bit, Z3_lbool& is_pos) {
+            m_decide_eh = [this](expr val, unsigned bit, bool is_pos) {
                 decide(val, bit, is_pos);
             };
             if (s) {
@@ -4451,11 +4503,11 @@ namespace z3 {
 
         virtual void created(expr const& /*e*/) {}
         
-        virtual void decide(expr& /*val*/, unsigned& /*bit*/, Z3_lbool& /*is_pos*/) {}
+        virtual void decide(expr const& /*val*/, unsigned /*bit*/, bool /*is_pos*/) {}
 
-        void next_split(expr const & e, unsigned idx, Z3_lbool phase) {
+        bool next_split(expr const& e, unsigned idx, Z3_lbool phase) {
             assert(cb);
-            Z3_solver_next_split(ctx(), cb, e, idx, phase);
+            return Z3_solver_next_split(ctx(), cb, e, idx, phase);
         }
 
         /**
@@ -4498,14 +4550,14 @@ namespace z3 {
             Z3_solver_propagate_consequence(ctx(), cb, fixed.size(), _fixed.ptr(), lhs.size(), _lhs.ptr(), _rhs.ptr(), conseq);
         }
 
-        void propagate(expr_vector const& fixed, expr const& conseq) {
+        bool propagate(expr_vector const& fixed, expr const& conseq) {
             assert(cb);
             assert((Z3_context)conseq.ctx() == (Z3_context)ctx());
             array<Z3_ast> _fixed(fixed);
-            Z3_solver_propagate_consequence(ctx(), cb, _fixed.size(), _fixed.ptr(), 0, nullptr, nullptr, conseq);
+            return Z3_solver_propagate_consequence(ctx(), cb, _fixed.size(), _fixed.ptr(), 0, nullptr, nullptr, conseq);
         }
 
-        void propagate(expr_vector const& fixed,
+        bool propagate(expr_vector const& fixed,
                        expr_vector const& lhs, expr_vector const& rhs,
                        expr const& conseq) {
             assert(cb);
@@ -4515,7 +4567,7 @@ namespace z3 {
             array<Z3_ast> _lhs(lhs);
             array<Z3_ast> _rhs(rhs);
             
-            Z3_solver_propagate_consequence(ctx(), cb, _fixed.size(), _fixed.ptr(), lhs.size(), _lhs.ptr(), _rhs.ptr(), conseq);
+            return Z3_solver_propagate_consequence(ctx(), cb, _fixed.size(), _fixed.ptr(), lhs.size(), _lhs.ptr(), _rhs.ptr(), conseq);
         }
     };
 

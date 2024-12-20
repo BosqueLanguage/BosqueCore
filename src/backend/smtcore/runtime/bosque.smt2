@@ -229,40 +229,9 @@
 
 TODO: None action!!!!!
 
-;;Checked arith operations
-(define-fun @Sub-Nat-op-trgt ((x Nat) (y Nat)) @ResultTrgt-Nat 
-    (ite (<= y x) (@ResultTrgt-Nat-mk-ok (- x y)) @ResultTrgt-NAT-mk-err)
-)
-
-
-
-
-
-
-
-(define-fun @Nat_checked_trgt_div ((x Int) (y Int)) @ResultT-Nat 
-    (ite (= y 0) (@ResultT-mk-err-Nat @error-target) (@ResultT-mk-ok-Nat (@Nat_div x y)))
-)
-
-(define-fun @Nat_checked_div ((x Int) (y Int)) @ResultO-Nat 
-    (ite (= y 0) (@ResultO-mk-err-Nat @error-other) (@ResultO-mk-ok-Nat (@Nat_div x y)))
-)
-
-(define-fun @Int_checked_trgt_div ((x Int) (y Int)) @ResultT-Int 
-    (ite (= y 0) (@ResultT-mk-err-Int @error-target) (@ResultT-mk-ok-Int (@Int_div x y)))
-)
-
-(define-fun @Int_checked_div ((x Int) (y Int)) @ResultO-Int 
-    (ite (= y 0) (@ResultO-mk-err-Int @error-other) (@ResultO-mk-ok-Int (@Int_div x y)))
-)
-
-
 ;;NLA options
-(declare-fun @Nat_mult (Int Int) Int)
-(declare-fun @Nat_div (Int Int) Int)
-
-(declare-fun @Int_mult (Int Int) Int)
-(declare-fun @Int_div (Int Int) Int)
+(declare-fun @NLA_I_mult (Int Int) Int)
+(declare-fun @NLA_I_div (Int Int) Int)
 
 ;;--TYPE_SUBTYPE--;;
 

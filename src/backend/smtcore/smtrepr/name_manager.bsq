@@ -13,7 +13,19 @@ namespace SMTNameManager {
         return CString::concat('@Term-', tkey.value, '-mk');
     }
 
-    function generateStructTermFieldName(tkey: TypeKey, vname: CString): CString {
+    function generateStructTermFieldName(tkey: TypeKey): CString {
         return CString::concat('@Term-', tkey.value, '-value');
+    }
+
+    function generateNamespaceFunctionName(ns: NamespaceKey, name: CString): CString {
+        return CString::concat(ns.value, '@', name);
+    }
+
+    function generateTypeFunctionName(tkey: TypeKey, name: CString): CString {
+        return CString::concat(tkey.value, '@', name);
+    }
+
+    function generateTermSubtypeFunctionName(tkey: TypeKey): CString {
+        return CString::concat('@SubtypeOf-', tkey.value);
     }
 }

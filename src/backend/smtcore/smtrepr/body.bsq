@@ -3,17 +3,6 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
-datatype ITest using {
-    field isnot: Bool;
-}
-of
-ITestType { field ttype: TypeKey; }
-| ITestNone { }
-| ITestSome { }
-| ITestOk { }
-| ITestFail { }
-;
-
 concept Value {
 }
 
@@ -128,110 +117,106 @@ entity LetValue provides Value {
     field body: Value;
 }
 
-entity LambdaInvokeExpression provides Expression {
+entity LambdaInvokeValue provides Value {
     field name: CString;
-
     field args: List<Value>;
-    field lambda: TypeKey;
 }
 
-entity CallNamespaceFunctionExpression provides Expression {
+entity CallNamespaceFunctionValue provides Value {
     field ns: NamespaceKey;
     field name: CString;
 
     field args: List<Value>;
 }
 
-entity CallTypeFunctionExpression provides Expression {
+entity CallTypeFunctionValue provides Value {
     field resolvedType: TypeKey;
     field name: CString;
     
     field args: List<Value>;
 }
 
-entity CallRefThisExpression provides Expression {
-    field name: CString;
-    
-    field args: List<Value>;
-}
-
-entity CallRefSelfExpression provides Expression {
-    field name: CString;
-
-    field args: List<Value>;
-}
-
 entity LogicActionAndValue provides Value {
     field args: List<Value>;
+
+    invariant $args.size() >= 2n;
 }
 
 entity LogicActionOrValue provides Value {
     field args: List<Value>;
+
+    invariant $args.size() >= 2n;
 }
 
-entity CreateDirectValue provides Value {
-    field exp: Value;
-    field srctype: TypeKey;
-    field trgttype: TypeKey;
+entity UnwrapTypeDeclToPrimitiveValue provides Value {
+    field decltype: TypeKey;
+    field arg: Value;
 }
 
-entity LiteralKeyHas provides Value {
-    field rootExp: Value;
-    field kexp: Value;
-}
-
-datatype PostfixOperation using {
-    field baseType: TypeKey;
-}
-of 
-PostfixAccessFromName {
-    field declaredInType: TypeKey;
+entity AccessFromNameResolvedValue provides Value {
+    field ontype: TypeKey;
     field name: CString;
-}
-| PostfixProjectFromNames {
-    field declOnType: TypeKey;
-    field names: List<(|CString, TypeKey|)>;
-}
-| PostfixAssignFields {
-    field declOnType: TypeKey;
-    field updates: List<(|CString, TypeKey, Value|)>;
-}
-| PostfixAccessFromIndex {
-    field idx: Nat;
-}
-| PostfixIsTest {
-    field ttest: ITest;
-}
-| PostfixAsConvert {
-    field ttest: ITest;
-}
-| LiteralKeyAccess {
-    field kexp: Value;
-}
-;
 
-entity PostfixOp provides Value {
-    field rootExp: Value;
-    field ops: List<PostfixOperation>;
+    field arg: Value;
 }
 
-entity MethodInvokeStatic provides Expression {
-    field rootExp: Value;
+entity AccessFromIndexValue provides Value {
+    field elisttype: TypeKey;
+    field idx: CString;
+
+    field arg: Value;
+}
+
+entity IsNoneTestValue provides Value {
+    field arg: Value;
+}
+
+entity IsSomeTestValue provides Value {
+    field arg: Value;
+}
+
+entity IsTypeTestValue provides Value {
+    field istype: TypeKey;
+
+    field arg: Value;
+}
+
+entity IsSubtypeTestValue provides Value {
+    field oftype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertOptionToSomeTValue provides Value {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertResultToOkTValue provides Value {
+    field resulttype: TypeKey;
+    field oktype: TypeKey;
+
+    field arg: Value;
+}
+
+entity ConvertResultToFailEValue provides Value {
+    field resulttype: TypeKey;
+    field failtype: TypeKey;
+
+    field arg: Value;
+}
+
+entity MethodInvokeStaticValue provides Value {
     field resolvedTrgt: TypeKey;
     field name: CString;
-    field args: List<Value>;
-}
-
-entity MethodInvokeVirtual provides Expression {
     field rootExp: Value;
-    field resolvedBase: TypeKey;
-    field name: CString;
     field args: List<Value>;
 }
 
 datatype UnaryValue provides Value using {
     field exp: Value;
-    field opertype: TypeKey;
 }
 of
 PrefixNotOpValue { }
@@ -242,18 +227,15 @@ PrefixNotOpValue { }
 datatype BinaryArithValue provides Value using {
     field lhs: Value;
     field rhs: Value;
-    field opertype: TypeKey;
 }
 of
 BinAddValue { }
 | BinSubValue { }
-| BinMultValue { }
-| BinDivValue { }
+| BinMultValue { field useUninterpreted: Bool; }
+| BinDivValue {field useUninterpreted: Bool; }
 ;
 
-datatype BinaryKeyEqValue provides Value using {
-    field ktype: TypeKey;
-}
+datatype BinaryKeyEqValue provides Value 
 of
 BinKeyEqNoneValue { 
     field exp: Value;
@@ -262,12 +244,18 @@ BinKeyEqNoneValue {
     field exp: Value;
 }
 | BinKeySomeEqValue {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+
     field eoption: Value;
-    field eval: Value;
+    field val: Value;
 }
 | BinKeyNotSomeEqValue {
+    field optiontype: TypeKey;
+    field sometype: TypeKey;
+    
     field eoption: Value;
-    field eval: Value;
+    field val: Value;
 }
 | BinKeyEqValue{
     field lhs: Value;
@@ -279,8 +267,17 @@ BinKeyEqNoneValue {
 }
 ;
 
-entity KeyCompareValue provides Value {
-    field ktype: TypeKey;
+enum KeyLessKind {
+    KeyBool,
+    KeyNumber,
+    KeyString,
+    KeyUUID,
+    KeyHash,
+    KeyDataInfo
+}
+
+entity KeyLessValue provides Value {
+    field kind: KeyLessKind;
 
     field lhs: Value;
     field rhs: Value;
@@ -289,8 +286,6 @@ entity KeyCompareValue provides Value {
 datatype BinaryNumericValue provides Value using {
     field lhs: Value;
     field rhs: Value;
-
-    field opertype: TypeKey;
 }
 of
 NumericEqValue { }
@@ -328,6 +323,42 @@ concept Expression {
 
 entity ValueExpression provides Expression {
     field value: Value;
+}
+
+
+entity LambdaInvokeExpression provides Expression {
+    field name: CString;
+
+    field args: List<Value>;
+    field lambda: TypeKey;
+}
+
+entity CallNamespaceFunctionExpression provides Expression {
+    field ns: NamespaceKey;
+    field name: CString;
+
+    field args: List<Value>;
+}
+
+entity CallTypeFunctionExpression provides Expression {
+    field resolvedType: TypeKey;
+    field name: CString;
+    
+    field args: List<Value>;
+}
+
+entity MethodInvokeStaticExpression provides Expression {
+    field rootExp: Value;
+    field resolvedTrgt: TypeKey;
+    field name: CString;
+    field args: List<Value>;
+}
+
+entity MethodInvokeVirtualExpression provides Expression {
+    field rootExp: Value;
+    field resolvedBase: TypeKey;
+    field name: CString;
+    field args: List<Value>;
 }
 
 entity LetExpression provides Expression {
