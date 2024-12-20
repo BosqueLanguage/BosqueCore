@@ -29,3 +29,99 @@ chktest test_emitIsSubtypeTestValue(): Bool {
     let op = IsSubtypeTestValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}};
     return emitIsSubtypeTestValue(op) === '(@SubtypeOf-Main@Foo cc)';
 }
+
+chktest test_emitPrefixNotOpValue(): Bool {
+    let op = PrefixNotOpValue{AccessVariableValue{'cc'}};
+    return emitUnaryValue(op) === '(not cc)';
+}
+
+chktest test_emitPrefixNegateOpValue(): Bool {
+    let op = PrefixNegateOpValue{AccessVariableValue{'cc'}};
+    return emitUnaryValue(op) === '(- cc)';
+}
+
+chktest test_emitPrefixPlusOpValue(): Bool {
+    let op = PrefixPlusOpValue{AccessVariableValue{'cc'}};
+    return emitUnaryValue(op) === 'cc';
+}
+
+chktest test_BinAddValue(): Bool {
+    let op = BinAddValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Nat'<TypeKey>, '1n'}};
+    return emitBinaryArithValue(op) === '(+ x 1)';
+}
+
+chktest test_BinSubValue(): Bool {
+    let op = BinSubValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryArithValue(op) === '(- x 1)';
+}
+
+chktest test_BinMultValue_uv(): Bool {
+    let op = BinMultValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Nat'<TypeKey>, '2n'}, true};
+    return emitBinaryArithValue(op) === '(@NLA_I_mult x 2)';
+}
+
+chktest test_BinMultValue_f(): Bool {
+    let op = BinMultValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Float'<TypeKey>, '2.0f'}, false};
+    return emitBinaryArithValue(op) === '(* x 2.0)';
+}
+
+chktest test_BinDivValue_uv(): Bool {
+    let op = BinDivValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Nat'<TypeKey>, '2n'}, true};
+    return emitBinaryArithValue(op) === '(@NLA_I_div x 2)';
+}
+
+chktest test_BinDivValue_f(): Bool {
+    let op = BinDivValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Float'<TypeKey>, '2.0f'}, false};
+    return emitBinaryArithValue(op) === '(/ x 2.0)';
+}
+
+chktest test_BinValue(): Bool {
+    let op = BinAddValue{AccessFromNameResolvedValue{'Main@Foo$Int$'<TypeKey>, 'f', AccessVariableValue{'cc'}}, LiteralSimpleValue{'Nat'<TypeKey>, '1n'}};
+    return emitBinaryArithValue(op) === '(+ (Main@Foo$Int$-f cc) 1)';
+}
+
+
+chktest test_BinKeyEqNoneValue(): Bool {
+    let op = BinKeyEqNoneValue{AccessVariableValue{'x'}};
+    return emitBinaryKeyEqValue(op) === '(= x @Term-mk-None)';
+}
+
+chktest test_BinKeyNotEqNoneValue(): Bool {
+    let op = BinKeyNotEqNoneValue{AccessVariableValue{'x'}};
+    return emitBinaryKeyEqValue(op) === '(not (= x @Term-mk-None))';
+}
+
+chktest test_BinKeySomeEqValue(): Bool {
+    let op = BinKeySomeEqValue{'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>, AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryKeyEqValue(op) === '(and (not (= x @Term-mk-None)) (= (Some$Int$-value (@Term-Option$Int$-value x)) 1))';
+}
+
+chktest test_BinKeyNotSomeEqValue(): Bool {
+    let op = BinKeyNotSomeEqValue{'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>, AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryKeyEqValue(op) === '(or (= x @Term-mk-None) (not (= (Some$Int$-value (@Term-Option$Int$-value x)) 1)))';
+}
+
+chktest test_BinKeyEqValue(): Bool {
+    let op = BinKeyEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryKeyEqValue(op) === '(= x 1)';
+}
+
+chktest test_BinKeyNotEqValue(): Bool {
+    let op = BinKeyNotEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryKeyEqValue(op) === '(not (= x 1))';
+}
+
+chktest test_KeyLessValue_bool(): Bool {
+    let op = KeyLessValue{KeyLessKind#KeyBool, AccessVariableValue{'x'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}};
+    return emitKeyLessValue(op) === '(and (not x) true)';
+}
+
+chktest test_KeyLessValue_number(): Bool {
+    let op = KeyLessValue{KeyLessKind#KeyNumber, AccessVariableValue{'x'}, LiteralSimpleValue{'Nat'<TypeKey>, '1n'}};
+    return emitKeyLessValue(op) === '(< x 1)';
+}
+
+chktest test_KeyLessValue_string(): Bool {
+    let op = KeyLessValue{KeyLessKind#KeyString, AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitKeyLessValue(op) === '(str.< x y)';
+}

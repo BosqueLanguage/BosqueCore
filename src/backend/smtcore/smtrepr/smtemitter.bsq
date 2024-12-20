@@ -389,7 +389,7 @@ recursive function emitBinMultValue(v: BinMultValue): CString {
         return CString::concat('(@NLA_I_mult ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(@NLA_I_div ', lhs, ' ', rhs, ')');
+        return CString::concat('(* ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -398,10 +398,10 @@ recursive function emitBinDivValue(v: BinDivValue): CString {
     let rhs = emitValue[recursive](v.rhs);
     
     if(v.useUninterpreted) {
-        return CString::concat('(/ ', lhs, ' ', rhs, ')');
+        return CString::concat('(@NLA_I_div ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(', lhs, ' ', rhs, ')');
+        return CString::concat('(/ ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -449,11 +449,11 @@ recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
 
     let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
-    let eqop = CString::concat('(= ', extractop, ' ', val, ')');
+    let neqop = CString::concat('(not (= ', extractop, ' ', val, '))');
 
     let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
 
-    return CString::concat('(or ', noneop, ' ', eqop, ')');
+    return CString::concat('(or ', noneop, ' ', neqop, ')');
 }
 
 recursive function emitBinKeyEqValue(v: BinKeyEqValue): CString {
@@ -476,6 +476,20 @@ recursive function emitBinaryKeyEqValue(v: BinaryKeyEqValue): CString {
         | BinKeyNotSomeEqValue => { return emitBinKeyNotSomeEqValue[recursive]($v); }
         | BinKeyEqValue => { return emitBinKeyEqValue[recursive]($v); }
         | BinKeyNotEqValue => { return emitBinKeyNotEqValue[recursive]($v); }
+    }
+}
+
+recursive function emitKeyLessValue(v: KeyLessValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    switch(v.kind) {
+        KeyLessKind#KeyBool => {return CString::concat('(and (not ', lhs, ') ', rhs, ')'); }
+        | KeyLessKind#KeyNumber => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | KeyLessKind#KeyString => { return CString::concat('(str.< ', lhs, ' ', rhs, ')'); }
+        | KeyLessKind#KeyUUID => { abort; }
+        | KeyLessKind#KeyHash => { abort; }
+        | KeyLessKind#KeyDataInfo => { abort; }
     }
 }
 
@@ -514,6 +528,7 @@ recursive function emitValue(v: Value): CString {
         | UnaryValue => { return emitUnaryValue[recursive]($v); }
         | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
         | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
+        | KeyLessValue => { return emitKeyLessValue($v); }
     }
 }
 

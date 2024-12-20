@@ -217,7 +217,6 @@ entity MethodInvokeStaticValue provides Value {
 
 datatype UnaryValue provides Value using {
     field exp: Value;
-    field opertype: TypeKey;
 }
 of
 PrefixNotOpValue { }
@@ -228,7 +227,6 @@ PrefixNotOpValue { }
 datatype BinaryArithValue provides Value using {
     field lhs: Value;
     field rhs: Value;
-    field opertype: TypeKey;
 }
 of
 BinAddValue { }
@@ -269,8 +267,17 @@ BinKeyEqNoneValue {
 }
 ;
 
-entity KeyCompareValue provides Value {
-    field ktype: TypeKey;
+enum KeyLessKind {
+    KeyBool,
+    KeyNumber,
+    KeyString,
+    KeyUUID,
+    KeyHash,
+    KeyDataInfo
+}
+
+entity KeyLessValue provides Value {
+    field kind: KeyLessKind;
 
     field lhs: Value;
     field rhs: Value;
@@ -279,8 +286,6 @@ entity KeyCompareValue provides Value {
 datatype BinaryNumericValue provides Value using {
     field lhs: Value;
     field rhs: Value;
-
-    field opertype: TypeKey;
 }
 of
 NumericEqValue { }
