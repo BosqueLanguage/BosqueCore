@@ -493,6 +493,50 @@ recursive function emitKeyLessValue(v: KeyLessValue): CString {
     }
 }
 
+recursive function emitBinaryNumericCompareValue(v: BinaryNumericCompareValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    match(v)@ {
+        NumericEqValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+        | NumericNeqValue => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
+        | NumericLessValue => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | NumericLessEqValue => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
+        | NumericGreaterValue => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
+        | NumericGreaterEqValue => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
+    }
+}
+
+recursive function emitBinLogicValue(v: BinLogicValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    match(v)@ {
+        BinLogicAndValue => { return CString::concat('(and ', lhs, ' ', rhs, ')'); }
+        | BinLogicOrValue => { return CString::concat('(or ', lhs, ' ', rhs, ')'); }
+        | BinLogicImpliesValue => { return CString::concat('(=> ', lhs, ' ', rhs, ')'); }
+        | BinLogicIFFValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+    }
+}
+
+recursive function emitMapEntryConstructorValue(v: MapEntryConstructorValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let key = emitValue[recursive](v.kexp);
+    let val = emitValue[recursive](v.vexp);
+
+    let ops = CString::concat(' ', key, ' ', val);
+    return CString::concat('(', consname, ops, ')');
+}
+
+recursive function emitIfValue(v: IfValue): CString {
+    let tst = emitValue[recursive](v.iftest);
+    let tv = emitValue[recursive](v.trueValue);
+    let fv = emitValue[recursive](v.falseValue);
+
+    let flows = CString::concat(' ', tv, ' ', fv);
+    return CString::concat('(ite ', tst, flows, ')');
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -529,6 +573,10 @@ recursive function emitValue(v: Value): CString {
         | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
         | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
         | KeyLessValue => { return emitKeyLessValue($v); }
+        | BinaryNumericCompareValue => { return emitBinaryNumericCompareValue[recursive]($v); }
+        | BinLogicValue => { return emitBinLogicValue[recursive]($v); }
+        | MapEntryConstructorValue => { return emitMapEntryConstructorValue[recursive]($v); }
+        | IfValue => { return emitIfValue[recursive]($v); }
     }
 }
 

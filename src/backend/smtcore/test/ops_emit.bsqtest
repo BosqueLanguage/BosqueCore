@@ -125,3 +125,63 @@ chktest test_KeyLessValue_string(): Bool {
     let op = KeyLessValue{KeyLessKind#KeyString, AccessVariableValue{'x'}, AccessVariableValue{'y'}};
     return emitKeyLessValue(op) === '(str.< x y)';
 }
+
+chktest test_NumericEqValue_int(): Bool {
+    let op = NumericEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryNumericCompareValue(op) === '(= x 1)';
+}
+
+chktest test_NumericNeqValue_nat(): Bool {
+    let op = NumericNeqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Nat'<TypeKey>, '1n'}};
+    return emitBinaryNumericCompareValue(op) === '(not (= x 1))';
+}
+
+chktest test_NumericLessValue_float(): Bool {
+    let op = NumericLessValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Float'<TypeKey>, '1.0f'}};
+    return emitBinaryNumericCompareValue(op) === '(< x 1.0)';
+}
+
+chktest test_NumericLessEqValue_int(): Bool {
+    let op = NumericLessEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryNumericCompareValue(op) === '(<= x 1)';
+}
+
+chktest test_NumericGreaterValue_float(): Bool {
+    let op = NumericGreaterValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Float'<TypeKey>, '1.0f'}};
+    return emitBinaryNumericCompareValue(op) === '(> x 1.0)';
+}
+
+chktest test_NumericGreaterEqValue_int(): Bool {
+    let op = NumericGreaterEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    return emitBinaryNumericCompareValue(op) === '(>= x 1)';
+}
+
+chktest test_BinLogicAndValue(): Bool {
+    let op = BinLogicAndValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitBinLogicValue(op) === '(and x y)';
+}
+
+chktest test_BinLogicOrValue(): Bool {
+    let op = BinLogicOrValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitBinLogicValue(op) === '(or x y)';
+}
+
+chktest test_BinLogicImpliesValue(): Bool {
+    let op = BinLogicImpliesValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitBinLogicValue(op) === '(=> x y)';
+}
+
+chktest test_BinLogicIFFValue(): Bool {
+    let op = BinLogicIFFValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitBinLogicValue(op) === '(= x y)';
+}
+
+chktest test_MapEntryConstructorValue(): Bool {
+    let op = MapEntryConstructorValue{'MapEntry$Int-Bool$'<TypeKey>, AccessVariableValue{'k'}, AccessVariableValue{'v'}};
+    return emitMapEntryConstructorValue(op) === '(MapEntry$Int-Bool$-mk k v)';
+}
+
+chktest test_IfValue(): Bool {
+    let op = IfValue{AccessVariableValue{'tt'}, AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    return emitIfValue(op) === '(ite tt x y)';
+}

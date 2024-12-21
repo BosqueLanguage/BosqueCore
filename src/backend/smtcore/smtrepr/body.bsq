@@ -283,7 +283,7 @@ entity KeyLessValue provides Value {
     field rhs: Value;
 }
 
-datatype BinaryNumericValue provides Value using {
+datatype BinaryNumericCompareValue provides Value using {
     field lhs: Value;
     field rhs: Value;
 }
@@ -308,6 +308,8 @@ BinLogicAndValue { }
 ;
 
 entity MapEntryConstructorValue provides Value {
+    field constype: TypeKey;
+    
     field kexp: Value;
     field vexp: Value;
 }
