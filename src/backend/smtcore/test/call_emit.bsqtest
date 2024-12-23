@@ -1,10 +1,5 @@
 namespace SMTEmitter;
 
-chktest test_emitLambdaInvokeValue_empty(): Bool {
-    let op = LambdaInvokeValue{'f', List<Value>{}};
-    return emitLambdaInvokeValue(op) === 'f';
-}
-
 chktest test_emitLambdaInvokeValue_one(): Bool {
     let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
     return emitLambdaInvokeValue(op) === '(f 0)';
