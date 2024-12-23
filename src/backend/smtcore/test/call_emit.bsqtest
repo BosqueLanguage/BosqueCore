@@ -1,5 +1,16 @@
 namespace SMTEmitter;
 
+chktest test_emitConstructorLambdaValue(): Bool {
+    let op = ConstructorLambdaValue{
+        LambdaDecl{
+            List<InvokeParameterDecl>{InvokeParameterDecl{'a', 'Int'<TypeKey>}, InvokeParameterDecl{'b', 'Int'<TypeKey>}},
+            DirectResult{'Int'<TypeKey>},
+            ValueExpression{AccessVariableValue{'a'}}
+        }
+    };
+    return emitConstructorLambdaValue(op) === '(lambda ((a Int) (b Int)) a)';
+}
+
 chktest test_emitLambdaInvokeValue_one(): Bool {
     let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
     return emitLambdaInvokeValue(op) === '(f 0)';
@@ -50,3 +61,27 @@ chktest test_emitMethodInvokeStaticValue_one(): Bool {
     return emitMethodInvokeStaticValue(op) === '(Main@Foo@f cc 0)';
 }
 
+chktest test_emitLambdaInvokeExpression_one(): Bool {
+    let op = LambdaInvokeExpression{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitLambdaInvokeExpression(op) === '(f 0)';
+}
+
+chktest test_emitLambdaInvokeExpression_two(): Bool {
+    let op = LambdaInvokeExpression{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitLambdaInvokeExpression(op) === '(select f 0 true)';
+}
+
+chktest test_emitCallNamespaceFunctionExpression_empty(): Bool {
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{}};
+    return emitCallNamespaceFunctionExpression(op) === 'Main@f';
+}
+
+chktest test_emitCallNamespaceFunctionExpression_one(): Bool {
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallNamespaceFunctionExpression(op) === '(Main@f 0)';
+}
+
+chktest test_emitCallNamespaceFunctionExpression_two(): Bool {
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallNamespaceFunctionExpression(op) === '(Main@f 0 true)';
+}
