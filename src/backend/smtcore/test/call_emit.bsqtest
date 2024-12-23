@@ -85,3 +85,28 @@ chktest test_emitCallNamespaceFunctionExpression_two(): Bool {
     let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
     return emitCallNamespaceFunctionExpression(op) === '(Main@f 0 true)';
 }
+
+chktest test_emitCallTypeFunctionExpression_empty(): Bool {
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{}};
+    return emitCallTypeFunctionExpression(op) === 'Main@Foo@f';
+}
+
+chktest test_emitCallTypeFunctionExpression_one(): Bool {
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallTypeFunctionExpression(op) === '(Main@Foo@f 0)';
+}
+
+chktest test_emitCallTypeFunctionExpression_two(): Bool {
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallTypeFunctionExpression(op) === '(Main@Foo@f 0 true)';
+}
+
+chktest test_emitMethodInvokeStaticExpression_empty(): Bool {
+    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{}};
+    return emitMethodInvokeStaticExpression(op) === '(Main@Foo@f cc)';
+}
+
+chktest test_emitMethodInvokeStaticExpression_one(): Bool {
+    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitMethodInvokeStaticExpression(op) === '(Main@Foo@f cc 0)';
+}

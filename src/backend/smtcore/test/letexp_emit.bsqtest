@@ -1,0 +1,33 @@
+namespace SMTEmitter;
+
+chktest test_emitLetExpression_inline(): Bool {
+    let vbody = ValueExpression{AccessVariableValue{'cc'}};
+    let lval = LetExpression{'cc', LiteralSimpleValue{'Int'<TypeKey>, '0i'}, vbody};
+
+    return emitLetExpression(lval, none) === '(let ((cc 0)) cc)';
+}
+
+chktest test_emitLetExpression_indent(): Bool {
+    let vbody = ValueExpression{AccessVariableValue{'cc'}};
+    let lval = LetExpression{'cc', LiteralSimpleValue{'Int'<TypeKey>, '0i'}, vbody};
+
+    let expected = '(let ((cc 0))
+                   \    cc
+                   \)';
+
+    return emitLetExpression(lval, some('')) === expected;
+}
+
+chktest test_emitLetExpression_indent2(): Bool {
+    let vbody = ValueExpression{BinAddValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}}};
+    let innerlet = LetExpression{'y', LiteralSimpleValue{'Int'<TypeKey>, '2i'}, vbody};
+    let outerlet = LetExpression{'x', LiteralSimpleValue{'Int'<TypeKey>, '1i'}, innerlet};
+
+    let expected = '(let ((x 1))
+                   \(let ((y 2))
+                   \    (+ x y)
+                   \))';
+
+    return emitLetExpression(outerlet, some('')) === expected;
+}
+

@@ -181,7 +181,7 @@ recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CStrin
     let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    let body = emitExpression[recursive](v.invoke.body);
+    let body = emitExpression[recursive](v.invoke.body, none);
 
     return CString::concat('(lambda ', pll, ' ', body, ')');
 }
@@ -589,29 +589,86 @@ recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionE
     }
 }
 
-%*
-entity CallTypeFunctionExpression provides Expression {
-    field resolvedType: TypeKey;
-    field name: CString;
-    
-    field args: List<Value>;
+recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(e.resolvedType, e.name);
+    if(e.args.empty()) {
+        return fname;
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', fname, ' ', argsl, ')');
+    }
 }
 
-entity MethodInvokeStaticExpression provides Expression {
-    field rootExp: Value;
-    field resolvedTrgt: TypeKey;
-    field name: CString;
-    field args: List<Value>;
-}
-*%
+recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpression): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(e.resolvedTrgt, e.name);
+    let rootv = emitValue[recursive](e.rootExp);
 
-recursive function emitExpression(e: Expression): CString {
+    let rpfx = CString::concat(fname, ' ', rootv);
+    if(e.args.empty()) {
+        return CString::concat('(', rpfx, ')');
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', rpfx, ' ', argsl, ')');
+    }
+}
+
+function doLetIndent(enext: Expression): Bool {
+    return !\/(enext?<LetExpression>, enext?<ErrorProcessExpression>);
+}
+
+recursive function emitLetExpression(e: LetExpression, indent: Option<CString>): CString {
+    let vbind = CString::concat('((', e.vname, ' ', emitValue[recursive](e.value), '))');
+
+    if(indent)@none {
+        return CString::concat('(let ', vbind, ' ', emitExpression[recursive](e.body, none), ')');
+    }
+    else {
+        var iident = $indent;
+        var tident = ')';
+        if(doLetIndent(e.body)) {
+            iident = CString::concat('    ', $indent);
+            tident = CString::concat('%n;', $indent, ')');
+        }
+
+        let bbody = emitExpression[recursive](e.body, some(iident));
+        return CString::concat('(let ', vbind, '%n;', bbody, tident);
+    }
+}
+
+recursive function emitIfExpression(e: IfExpression, indent: Option<CString>): CString {
+    abort;
+    %*
+    let tst = emitValue[recursive](e.iftest);
+    let tv = emitExpression[recursive](e.trueValue, none);
+    let fv = emitExpression[recursive](e.falseValue, none);
+
+    return CString::concat('(ite ', tst, ' ', tv, ' ', fv, ')');
+    *%
+}
+
+recursive function emitExpression(e: Expression, indent: Option<CString>): CString {
+    var eexp: CString;
     match(e)@ {
-        ValueExpression => { return emitValueExpression[recursive]($e); }
-        | LambdaInvokeExpression => { return emitLambdaInvokeExpression[recursive]($e); }
-        | CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($e); }
-        %%| CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($e); }
-        %%| MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($e); }
+        ValueExpression => { eexp = emitValueExpression[recursive]($e); }
+        | LambdaInvokeExpression => { eexp = emitLambdaInvokeExpression[recursive]($e); }
+        | CallNamespaceFunctionExpression => { eexp = emitCallNamespaceFunctionExpression[recursive]($e); }
+        | CallTypeFunctionExpression => { eexp = emitCallTypeFunctionExpression[recursive]($e); }
+        | MethodInvokeStaticExpression => { eexp = emitMethodInvokeStaticExpression[recursive]($e); }
+        | LetExpression => { eexp = emitLetExpression[recursive]($e, indent); }
+        | IfExpression => { eexp = emitIfExpression[recursive]($e, indent); }
+    }
+
+    if(indent)@none {
+        return eexp;
+    }
+    else {
+        return CString::concat($indent, eexp);
     }
 }
 

@@ -351,19 +351,20 @@ entity CallTypeFunctionExpression provides Expression {
 }
 
 entity MethodInvokeStaticExpression provides Expression {
-    field rootExp: Value;
     field resolvedTrgt: TypeKey;
     field name: CString;
+    field rootExp: Value;
     field args: List<Value>;
 }
 
 entity LetExpression provides Expression {
-    field decls: (|CString, TypeKey, Value|);
+    field vname: CString;
+    field value: Value;
     field body: Expression;
 }
 
 entity IfExpression provides Expression {
-    field iftest: Expression;
+    field iftest: Value;
     field trueValue: Expression;
     field falseValue: Expression;
 }
