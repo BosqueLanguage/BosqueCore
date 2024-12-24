@@ -365,8 +365,8 @@ entity LetExpression provides Expression {
 
 entity IfExpression provides Expression {
     field iftest: Value;
-    field trueValue: Expression;
-    field falseValue: Expression;
+    field trueExpression: Expression;
+    field falseExpression: Expression;
 }
 
 entity ErrorProcessExpression provides Expression {

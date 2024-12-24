@@ -1,0 +1,24 @@
+namespace SMTEmitter;
+
+chktest test_emitIfExpression_inline(): Bool {
+    let vthen = ValueExpression{AccessVariableValue{'x'}};
+    let velse = ValueExpression{AccessVariableValue{'y'}};
+    let ifval = IfExpression{AccessVariableValue{'b'}, vthen, velse};
+
+    return emitIfExpression(ifval, none) === '(ite b x y)';
+}
+
+chktest test_emitIfExpression_indent(): Bool {
+    let vbody = BinAddValue{AccessVariableValue{'x'}, AccessVariableValue{'y'}};
+    let innerlet = ValueExpression{LetValue{'y', LiteralSimpleValue{'Int'<TypeKey>, '2i'}, vbody}};
+
+    let tval = BinKeyEqValue{AccessVariableValue{'x'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}};
+    let outerif = IfExpression{tval, ValueExpression{AccessVariableValue{'x'}}, innerlet};
+
+    let expected = '(ite (= x 1)
+                   \    x
+                   \    (let ((y 2)) (+ x y))
+                   \)';
+
+    return emitIfExpression(outerif, some('')) === expected;
+}

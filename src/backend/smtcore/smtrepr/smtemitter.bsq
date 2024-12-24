@@ -642,14 +642,21 @@ recursive function emitLetExpression(e: LetExpression, indent: Option<CString>):
 }
 
 recursive function emitIfExpression(e: IfExpression, indent: Option<CString>): CString {
-    abort;
-    %*
     let tst = emitValue[recursive](e.iftest);
-    let tv = emitExpression[recursive](e.trueValue, none);
-    let fv = emitExpression[recursive](e.falseValue, none);
+    let ttst = CString::concat('(ite ', tst);
 
-    return CString::concat('(ite ', tst, ' ', tv, ' ', fv, ')');
-    *%
+    if(indent)@none {
+        return CString::concat(ttst, ' ', emitExpression[recursive](e.trueExpression, none), ' ', emitExpression[recursive](e.falseExpression, none), ')');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, ')');
+
+        let tv = emitExpression[recursive](e.trueExpression, some(iident));
+        let fv = emitExpression[recursive](e.falseExpression, some(iident));
+
+        return CString::concat(ttst, '%n;', tv, '%n;', fv, tident);
+    }
 }
 
 recursive function emitExpression(e: Expression, indent: Option<CString>): CString {
