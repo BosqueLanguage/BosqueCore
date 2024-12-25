@@ -120,6 +120,8 @@ entity LetValue provides Value {
 entity LambdaInvokeValue provides Value {
     field name: CString;
     field args: List<Value>;
+
+    invariant !$args.empty();
 }
 
 entity CallNamespaceFunctionValue provides Value {
@@ -283,7 +285,7 @@ entity KeyLessValue provides Value {
     field rhs: Value;
 }
 
-datatype BinaryNumericValue provides Value using {
+datatype BinaryNumericCompareValue provides Value using {
     field lhs: Value;
     field rhs: Value;
 }
@@ -308,6 +310,8 @@ BinLogicAndValue { }
 ;
 
 entity MapEntryConstructorValue provides Value {
+    field constype: TypeKey;
+
     field kexp: Value;
     field vexp: Value;
 }
@@ -325,12 +329,11 @@ entity ValueExpression provides Expression {
     field value: Value;
 }
 
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
-
     field args: List<Value>;
-    field lambda: TypeKey;
+    
+    invariant !$args.empty();
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
@@ -348,36 +351,30 @@ entity CallTypeFunctionExpression provides Expression {
 }
 
 entity MethodInvokeStaticExpression provides Expression {
-    field rootExp: Value;
     field resolvedTrgt: TypeKey;
     field name: CString;
-    field args: List<Value>;
-}
-
-entity MethodInvokeVirtualExpression provides Expression {
     field rootExp: Value;
-    field resolvedBase: TypeKey;
-    field name: CString;
     field args: List<Value>;
 }
 
 entity LetExpression provides Expression {
-    field decls: (|CString, TypeKey, Value|);
+    field vname: CString;
+    field value: Value;
     field body: Expression;
 }
 
 entity IfExpression provides Expression {
-    field iftest: Expression;
-    field trueValue: Expression;
-    field falseValue: Expression;
+    field iftest: Value;
+    field trueExpression: Expression;
+    field falseExpression: Expression;
+}
+
+entity DirectResultExpression provides Expression {
+    field val: Value;
 }
 
 entity ErrorProcessExpression provides Expression {
-    field exp: Expression;
-    field vname: CString;
-    field vtype: TypeKey;
-
-    field successexp: Expression;
+    %%TODO
 }
 
 entity AbortExpression provides Expression {

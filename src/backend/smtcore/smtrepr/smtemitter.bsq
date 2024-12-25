@@ -147,15 +147,10 @@ recursive function emitConstructorStdValue(v: ConstructorStdValue): CString {
         return consname;
     }
     else {
-        if(v.args.isSingleElement()) {
-            return CString::concat('(', consname, ' ', emitValue[recursive](v.args.single()), ')');
-        }
-        else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-            let argsl = CString::joinAll(' ', cvals);
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(', consname, ' ', argsl, ')');
-        }
+        return CString::concat('(', consname, ' ', argsl, ')');
     }
 }
 
@@ -175,20 +170,20 @@ recursive function emitConstructorEListValue(v: ConstructorEListValue): CString 
         return consname;
     }
     else {
-        if(v.args.isSingleElement()) {
-            return CString::concat('(', consname, ' ', emitValue[recursive](v.args.single()), ')');
-        }
-        else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-            let argsl = CString::joinAll(' ', cvals);
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(', consname, ' ', argsl, ')');
-        }
+        return CString::concat('(', consname, ' ', argsl, ')');
     }
 }
 
 recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CString {
-    abort;
+    let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let body = emitExpression[recursive](v.invoke.body, none);
+
+    return CString::concat('(lambda ', pll, ' ', body, ')');
 }
 
 recursive function emitLetValue(v: LetValue): CString {
@@ -199,19 +194,14 @@ recursive function emitLetValue(v: LetValue): CString {
 }
 
 recursive function emitLambdaInvokeValue(v: LambdaInvokeValue): CString {
-    if(v.args.empty()) {
-        return v.name;
+    if(v.args.isSingleElement()) {
+        return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
     }
     else {
-        if(v.args.isSingleElement()) {
-            return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
-        }
-        else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-            let argsl = CString::joinAll(' ', cvals);
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(select ', v.name, ' ', argsl, ')');
-        }
+        return CString::concat('(select ', v.name, ' ', argsl, ')');
     }
 }
 
@@ -221,15 +211,10 @@ recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue)
         return fname;
     }
     else {
-        if(v.args.isSingleElement()) {
-            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
-        }
-        else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-            let argsl = CString::joinAll(' ', cvals);
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(', fname, ' ', argsl, ')');
-        }
+        return CString::concat('(', fname, ' ', argsl, ')');
     }
 }
 
@@ -239,15 +224,10 @@ recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString 
         return fname;
     }
     else {
-        if(v.args.isSingleElement()) {
-            return CString::concat('(', fname, ' ', emitValue[recursive](v.args.single()), ')');
-        }
-        else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-            let argsl = CString::joinAll(' ', cvals);
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
 
-            return CString::concat('(', fname, ' ', argsl, ')');
-        }
+        return CString::concat('(', fname, ' ', argsl, ')');
     }
 }
 
@@ -493,6 +473,50 @@ recursive function emitKeyLessValue(v: KeyLessValue): CString {
     }
 }
 
+recursive function emitBinaryNumericCompareValue(v: BinaryNumericCompareValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    match(v)@ {
+        NumericEqValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+        | NumericNeqValue => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
+        | NumericLessValue => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | NumericLessEqValue => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
+        | NumericGreaterValue => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
+        | NumericGreaterEqValue => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
+    }
+}
+
+recursive function emitBinLogicValue(v: BinLogicValue): CString {
+    let lhs = emitValue[recursive](v.lhs);
+    let rhs = emitValue[recursive](v.rhs);
+
+    match(v)@ {
+        BinLogicAndValue => { return CString::concat('(and ', lhs, ' ', rhs, ')'); }
+        | BinLogicOrValue => { return CString::concat('(or ', lhs, ' ', rhs, ')'); }
+        | BinLogicImpliesValue => { return CString::concat('(=> ', lhs, ' ', rhs, ')'); }
+        | BinLogicIFFValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+    }
+}
+
+recursive function emitMapEntryConstructorValue(v: MapEntryConstructorValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let key = emitValue[recursive](v.kexp);
+    let val = emitValue[recursive](v.vexp);
+
+    let ops = CString::concat(' ', key, ' ', val);
+    return CString::concat('(', consname, ops, ')');
+}
+
+recursive function emitIfValue(v: IfValue): CString {
+    let tst = emitValue[recursive](v.iftest);
+    let tv = emitValue[recursive](v.trueValue);
+    let fv = emitValue[recursive](v.falseValue);
+
+    let flows = CString::concat(' ', tv, ' ', fv);
+    return CString::concat('(ite ', tst, flows, ')');
+}
+
 recursive function emitValue(v: Value): CString {
     match(v)@ {
         ConstantValue => { return emitConstantValue($v); }
@@ -529,6 +553,129 @@ recursive function emitValue(v: Value): CString {
         | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
         | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
         | KeyLessValue => { return emitKeyLessValue($v); }
+        | BinaryNumericCompareValue => { return emitBinaryNumericCompareValue[recursive]($v); }
+        | BinLogicValue => { return emitBinLogicValue[recursive]($v); }
+        | MapEntryConstructorValue => { return emitMapEntryConstructorValue[recursive]($v); }
+        | IfValue => { return emitIfValue[recursive]($v); }
+    }
+}
+
+recursive function emitValueExpression(e: ValueExpression): CString {
+    return emitValue[recursive](e.value);
+}
+
+recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression): CString {
+    if(e.args.isSingleElement()) {
+        return CString::concat('(', e.name, ' ', emitValue[recursive](e.args.single()), ')');
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(select ', e.name, ' ', argsl, ')');
+    }
+}
+
+recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(e.ns, e.name);
+    if(e.args.empty()) {
+        return fname;
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', fname, ' ', argsl, ')');
+    }
+}
+
+recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(e.resolvedType, e.name);
+    if(e.args.empty()) {
+        return fname;
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', fname, ' ', argsl, ')');
+    }
+}
+
+recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpression): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(e.resolvedTrgt, e.name);
+    let rootv = emitValue[recursive](e.rootExp);
+
+    let rpfx = CString::concat(fname, ' ', rootv);
+    if(e.args.empty()) {
+        return CString::concat('(', rpfx, ')');
+    }
+    else {
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', rpfx, ' ', argsl, ')');
+    }
+}
+
+function doLetIndent(enext: Expression): Bool {
+    return !\/(enext?<LetExpression>, enext?<ErrorProcessExpression>);
+}
+
+recursive function emitLetExpression(e: LetExpression, indent: Option<CString>): CString {
+    let vbind = CString::concat('((', e.vname, ' ', emitValue[recursive](e.value), '))');
+
+    if(indent)@none {
+        return CString::concat('(let ', vbind, ' ', emitExpression[recursive](e.body, none), ')');
+    }
+    else {
+        var iident = $indent;
+        var tident = ')';
+        if(doLetIndent(e.body)) {
+            iident = CString::concat('    ', $indent);
+            tident = CString::concat('%n;', $indent, ')');
+        }
+
+        let bbody = emitExpression[recursive](e.body, some(iident));
+        return CString::concat('(let ', vbind, '%n;', bbody, tident);
+    }
+}
+
+recursive function emitIfExpression(e: IfExpression, indent: Option<CString>): CString {
+    let tst = emitValue[recursive](e.iftest);
+    let ttst = CString::concat('(ite ', tst);
+
+    if(indent)@none {
+        return CString::concat(ttst, ' ', emitExpression[recursive](e.trueExpression, none), ' ', emitExpression[recursive](e.falseExpression, none), ')');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, ')');
+
+        let tv = emitExpression[recursive](e.trueExpression, some(iident));
+        let fv = emitExpression[recursive](e.falseExpression, some(iident));
+
+        return CString::concat(ttst, '%n;', tv, '%n;', fv, tident);
+    }
+}
+
+recursive function emitExpression(e: Expression, indent: Option<CString>): CString {
+    var eexp: CString;
+    match(e)@ {
+        ValueExpression => { eexp = emitValueExpression[recursive]($e); }
+        | LambdaInvokeExpression => { eexp = emitLambdaInvokeExpression[recursive]($e); }
+        | CallNamespaceFunctionExpression => { eexp = emitCallNamespaceFunctionExpression[recursive]($e); }
+        | CallTypeFunctionExpression => { eexp = emitCallTypeFunctionExpression[recursive]($e); }
+        | MethodInvokeStaticExpression => { eexp = emitMethodInvokeStaticExpression[recursive]($e); }
+        | LetExpression => { eexp = emitLetExpression[recursive]($e, indent); }
+        | IfExpression => { eexp = emitIfExpression[recursive]($e, indent); }
+    }
+
+    if(indent)@none {
+        return eexp;
+    }
+    else {
+        return CString::concat($indent, eexp);
     }
 }
 
