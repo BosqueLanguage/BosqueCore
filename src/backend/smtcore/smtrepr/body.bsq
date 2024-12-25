@@ -369,13 +369,22 @@ entity IfExpression provides Expression {
     field falseExpression: Expression;
 }
 
-entity ErrorProcessExpression provides Expression {
+entity DirectResultExpression provides Expression {
+    field val: Value;
+}
+
+entity OptionResultResultExpression provides Expression {
+    xxxx;
+}
+
+datatype ErrorProcessExpression provides Expression using {
     field exp: Expression;
     field vname: CString;
     field vtype: TypeKey;
 
     field successexp: Expression;
-}
+} of
+;
 
 entity AbortExpression provides Expression {
     field kind: OptionResultKind;
