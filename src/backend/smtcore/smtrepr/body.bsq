@@ -372,20 +372,11 @@ entity IfExpression provides Expression {
 entity DirectResultExpression provides Expression {
     field val: Value;
 }
-%*
-entity OptionResultResultExpression provides Expression {
-    xxxx;
+
+entity ErrorProcessExpression provides Expression {
+    %%TODO
 }
 
-datatype ErrorProcessExpression provides Expression using {
-    field exp: Expression;
-    field vname: CString;
-    field vtype: TypeKey;
-
-    field successexp: Expression;
-} of
-;
-*%
 entity AbortExpression provides Expression {
     field kind: OptionResultKind;
 }
