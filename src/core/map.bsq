@@ -49,7 +49,9 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_get<K, V>(this, k);
     }
 
-    method insert(k: Key, v: V): Map<K, V> {
+    method insert(k: Key, v: V): Map<K, V> 
+        requires !this.has(k);
+    {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
 #endif %% STRIPPED_CORE

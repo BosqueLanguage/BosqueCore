@@ -37,24 +37,24 @@ namespace ListOps {
     }
 
     function s_map_create_1<K: keytype, V>(v1: MapEntry<K, V>): Map<K, V> {
-        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::createLeaf(v1));
+        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(Tree<K, V>::createLeaf(v1));
     }
 
     function s_map_create_2<K: keytype, V>(v1: MapEntry<K, V>, v2: MapEntry<K, V>): Map<K, V> {
-        assert !KeyComparator::equal<T>(v1.key, v2.key);
+        assert !KeyComparator::equal<K>(v1.key, v2.key);
 
-        if(KeyComparator::less<T>(v1.key, v2.key)) {
-            return XCore::s_createDirect<Tree<T>, List<T>>(
-                Tree<T>::createNode(Color#Black, 
-                    Tree<T>::createLeaf(v1), 
-                    Tree<T>::createLeaf(v2)
+        if(KeyComparator::less<K>(v1.key, v2.key)) {
+            return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(
+                Tree<K, V>::createNode(Color#Black, 
+                    Tree<K, V>::createLeaf(v1), 
+                    Tree<K, V>::createLeaf(v2)
                 )
             );
         } else {
-            return XCore::s_createDirect<Tree<T>, List<T>>(
-                Tree<T>::createNode(Color#Black, 
-                    Tree<T>::createLeaf(v2), 
-                    Tree<T>::createLeaf(v1)
+            return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(
+                Tree<K, V>::createNode(Color#Black,
+                    Tree<K, V>::createLeaf(v2), 
+                    Tree<K, V>::createLeaf(v1)
                 )
             );
         }
@@ -67,40 +67,40 @@ namespace ListOps {
         NB
     }
 
-    function computeColor<T>(t: Tree<T>): Color {
+    function computeColor<K: keytype, V>(t: Tree<K, V>): Color {
         match(t)@ {
-            BBLeaf<T> => { return Color#Black; }
-            | Leaf<T> => { return Color#Black; }
-            | Node<T> => { return $t.c; }
+            BBLeaf<K, V> => { return Color#Black; }
+            | Leaf<K, V> => { return Color#Black; }
+            | Node<K, V> => { return $t.c; }
         }
     }
 
-    recursive function checkRBChildColorInvariant<T>(t: Tree<T>): Bool {
-        if(t)@@!<Node<T>> {
+    recursive function checkRBChildColorInvariant<K: keytype, V>(t: Tree<K, V>): Bool {
+        if(t)@@!<Node<K, V>> {
             return true;
         }
 
         if(t.c === Color#Red) {
-            let islred = if(t.l)@<Node<T>> then $_.c === Color#Red  else false;
-            let isrred = if(t.r)@<Node<T>> then $_.c === Color#Red  else false;
+            let islred = if(t.l)@<Node<K, V>> then $_.c === Color#Red  else false;
+            let isrred = if(t.r)@<Node<K, V>> then $_.c === Color#Red  else false;
 
             return \/(islred, isrred);
         }
         
-        return checkRBChildColorInvariant[recursive]<T>(t.l) && checkRBChildColorInvariant[recursive]<T>(t.r);
+        return checkRBChildColorInvariant[recursive]<K, V>(t.l) && checkRBChildColorInvariant[recursive]<K, V>(t.r);
     }
 
-    recursive function checkRBPathLengthInvariant<T>(t: Tree<T>): Int {
-        if(t)@@!<Node<T>> {
+    recursive function checkRBPathLengthInvariant<K: keytype, V>(t: Tree<K, V>): Int {
+        if(t)@@!<Node<K, V>> {
             return 0i;
         }
 
-        let lc = checkRBPathLengthInvariant[recursive]<T>(t.l);
+        let lc = checkRBPathLengthInvariant[recursive]<K, V>(t.l);
         if(lc == -1i) {
             return -1i;
         }
 
-        let rc = checkRBPathLengthInvariant[recursive]<T>(t.r);
+        let rc = checkRBPathLengthInvariant[recursive]<K, V>(t.r);
         if(rc == -1i) {
             return -1i;
         }
@@ -112,8 +112,8 @@ namespace ListOps {
         return if(t.c === Color#Black) then lc + 1i else lc;
     }
 
-    function checkRBInvariants<T>(t: Tree<T>): Bool {
-       return checkRBChildColorInvariant<T>(t) && checkRBPathLengthInvariant<T>(t) >= 0i;
+    function checkRBInvariants<K: keytype, V>(t: Tree<K, V>): Bool {
+       return checkRBChildColorInvariant<K, V>(t) && checkRBPathLengthInvariant<K, V>(t) >= 0i;
     }
 
     function blacken(c: Color): Color {
@@ -137,17 +137,17 @@ namespace ListOps {
     }
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
-    function balanceHelper_RR_LL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    function balanceHelper_RR_LL<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
 
-        if (tleft)@@!<Node<T>> {
+        if (tleft)@@!<Node<K, V>> {
             return none;
         }
 
         let lleft = tleft.l;
-        if(lleft)@@!<Node<T>> {
+        if(lleft)@@!<Node<K, V>> {
             return none;
         }
             
@@ -155,23 +155,23 @@ namespace ListOps {
             return none;
         }
 
-        let nl = Tree<T>::createNode(Color#Black, lleft.l, lleft.r);
-        let nr = Tree<T>::createNode(Color#Black, tleft.r, tright);
-        return some(Tree<T>::createNode(redden(c), nl, nr));
+        let nl = Tree<K, V>::createNode(Color#Black, lleft.l, lleft.r);
+        let nr = Tree<K, V>::createNode(Color#Black, tleft.r, tright);
+        return some(Tree<K, V>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
-    function balanceHelper_RR_LR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    function balanceHelper_RR_LR<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
 
-        if (tleft)@@!<Node<T>> {
+        if (tleft)@@!<Node<K, V>> {
             return none;
         }
 
         let lright = tleft.r;
-        if(lright)@@!<Node<T>> {
+        if(lright)@@!<Node<K, V>> {
             return none;
         }
             
@@ -179,23 +179,23 @@ namespace ListOps {
             return none;
         }
 
-        let nl = Tree<T>::createNode(Color#Black, tleft.l, lright.l);
-        let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return some(Tree<T>::createNode(redden(c), nl, nr));
+        let nl = Tree<K, V>::createNode(Color#Black, tleft.l, lright.l);
+        let nr = Tree<K, V>::createNode(Color#Black, lright.r, tright);
+        return some(Tree<K, V>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
-    function balanceHelper_RR_RL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    function balanceHelper_RR_RL<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
 
-        if (tright)@@!<Node<T>> {
+        if (tright)@@!<Node<K, V>> {
             return none;
         }
 
         let rleft = tright.l;
-        if(rleft)@@!<Node<T>> {
+        if(rleft)@@!<Node<K, V>> {
             return none;
         }
             
@@ -203,23 +203,23 @@ namespace ListOps {
             return none;
         }
 
-        let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
-        let nr = Tree<T>::createNode(Color#Black, rleft.r, tright.r);
-        return some(Tree<T>::createNode(redden(c), nl, nr));
+        let nl = Tree<K, V>::createNode(Color#Black, tleft, rleft.l);
+        let nr = Tree<K, V>::createNode(Color#Black, rleft.r, tright.r);
+        return some(Tree<K, V>::createNode(redden(c), nl, nr));
     }
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
-    function balanceHelper_RR_RR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    function balanceHelper_RR_RR<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(/\(c !== Color#Black, c !== Color#BB)) {
             return none;
         }
 
-        if (tright)@@!<Node<T>> {
+        if (tright)@@!<Node<K, V>> {
             return none;
         }
 
         let rright = tright.r;
-        if(rright)@@!<Node<T>> {
+        if(rright)@@!<Node<K, V>> {
             return none;
         }
             
@@ -227,18 +227,18 @@ namespace ListOps {
             return none;
         }
 
-        let nl = Tree<T>::createNode(Color#Black, tleft, tright.l);
-        let nr = Tree<T>::createNode(Color#Black, rright.l, rright.r);
-        return some(Tree<T>::createNode(redden(c), nl, nr));
+        let nl = Tree<K, V>::createNode(Color#Black, tleft, tright.l);
+        let nr = Tree<K, V>::createNode(Color#Black, rright.l, rright.r);
+        return some(Tree<K, V>::createNode(redden(c), nl, nr));
     }
     
     %% Case where we have negative blacks on L side -- tleft = Node{NB, _, Node{Black, _, a, b}, Node{Black, _, c, d}}
-    recursive function balanceHelper_DB_L<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    recursive function balanceHelper_DB_L<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(c !== Color#BB) {
             return none;
         }
 
-        if (tleft)@@!<Node<T>> {
+        if (tleft)@@!<Node<K, V>> {
             return none;
         }
 
@@ -247,12 +247,12 @@ namespace ListOps {
         }
 
         let lleft = tleft.l;
-        if(lleft)@@!<Node<T>> {
+        if(lleft)@@!<Node<K, V>> {
             return none;
         }
 
         let lright = tleft.r;
-        if(lright)@@!<Node<T>> {
+        if(lright)@@!<Node<K, V>> {
             return none;
         }
 
@@ -260,18 +260,18 @@ namespace ListOps {
             return none;
         }
 
-        let nl = balance[recursive]<T>(Color#Black, Tree<T>::createNode(Color#Red, lleft.l, lleft.r), lright.l);
-        let nr = Tree<T>::createNode(Color#Black, lright.r, tright);
-        return some(Tree<T>::createNode(Color#Black, nl, nr));
+        let nl = balance[recursive]<K, V>(Color#Black, Tree<K, V>::createNode(Color#Red, lleft.l, lleft.r), lright.l);
+        let nr = Tree<K, V>::createNode(Color#Black, lright.r, tright);
+        return some(Tree<K, V>::createNode(Color#Black, nl, nr));
     }
 
     %% Case where we have negative blacks on R side -- tright = Node{NB, _, Node{Black, _, b, c}, Node{Black, _, d, e}}}
-    recursive function balanceHelper_DB_R<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
+    recursive function balanceHelper_DB_R<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Option<Node<K, V>> {
         if(c !== Color#BB) {
             return none;
         }
 
-        if (tright)@@!<Node<T>> {
+        if (tright)@@!<Node<K, V>> {
             return none;
         }
 
@@ -280,12 +280,12 @@ namespace ListOps {
         }
 
         let rleft = tright.l;
-        if(rleft)@@!<Node<T>> {
+        if(rleft)@@!<Node<K, V>> {
             return none;
         }
 
         let rright = tright.r;
-        if(rright)@@!<Node<T>> {
+        if(rright)@@!<Node<K, V>> {
             return none;
         }
 
@@ -293,68 +293,182 @@ namespace ListOps {
             return none;
         }
 
-        let nl = Tree<T>::createNode(Color#Black, tleft, rleft.l);
-        let nr = balance[recursive]<T>(Color#Black, rleft.r, Tree<T>::createNode(Color#Red, rright.l, rright.r));
-        return some(Tree<T>::createNode(Color#Black, nl, nr));
+        let nl = Tree<K, V>::createNode(Color#Black, tleft, rleft.l);
+        let nr = balance[recursive]<K, V>(Color#Black, rleft.r, Tree<K, V>::createNode(Color#Red, rright.l, rright.r));
+        return some(Tree<K, V>::createNode(Color#Black, nl, nr));
     }
 
-    recursive function balance<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
-        let doubleRedLL = balanceHelper_RR_LL<T>(c, tleft, tright);
+    recursive function balance<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Tree<K, V> {
+        let doubleRedLL = balanceHelper_RR_LL<K, V>(c, tleft, tright);
         if(doubleRedLL)@!none {
             return $doubleRedLL;
         }
 
-        let doubleRedLR = balanceHelper_RR_LR<T>(c, tleft, tright);
+        let doubleRedLR = balanceHelper_RR_LR<K, V>(c, tleft, tright);
         if(doubleRedLR)@!none {
             return $doubleRedLR;
         }
 
-        let doubleRedRL = balanceHelper_RR_RL<T>(c, tleft, tright);
+        let doubleRedRL = balanceHelper_RR_RL<K, V>(c, tleft, tright);
         if(doubleRedRL)@!none {
             return $doubleRedRL;
         }
 
-        let doubleRedRR = balanceHelper_RR_RR<T>(c, tleft, tright);
+        let doubleRedRR = balanceHelper_RR_RR<K, V>(c, tleft, tright);
         if(doubleRedRR)@!none {
             return $doubleRedRR;
         }
 
-        let negBlackL = balanceHelper_DB_L<T>(c, tleft, tright);
+        let negBlackL = balanceHelper_DB_L<K, V>(c, tleft, tright);
         if(negBlackL)@!none {
             return $negBlackL;
         }
 
-        let negBlackR = balanceHelper_DB_R<T>(c, tleft, tright);
+        let negBlackR = balanceHelper_DB_R<K, V>(c, tleft, tright);
         if(negBlackR)@!none {
             return $negBlackR;
         }
 
-        return Tree<T>::createNode(c, tleft, tright);
+        return Tree<K, V>::createNode(c, tleft, tright);
     }
 
-    function bubble<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
-        if(/\(tleft?<Node<T>>, tright?<Node<T>>)) {
-            let tl = tleft@<Node<T>>;
-            let tr = tright@<Node<T>>;
+    function bubble<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Tree<K, V> {
+        if(/\(tleft?<Node<K, V>>, tright?<Node<K, V>>)) {
+            let tl = tleft@<Node<K, V>>;
+            let tr = tright@<Node<K, V>>;
 
             if(tl.c === Color#BB || tr.c === Color#BB) {
-                let nl = Tree<T>::createNode(redden(tl.c), tl.l, tl.r);
-                let nr = Tree<T>::createNode(redden(tr.c), tr.l, tr.r);
-                return balance<T>(blacken(tl.c), nl, nr);
+                let nl = Tree<K, V>::createNode(redden(tl.c), tl.l, tl.r);
+                let nr = Tree<K, V>::createNode(redden(tr.c), tr.l, tr.r);
+                return balance<K, V>(blacken(tl.c), nl, nr);
             }
         }
         
-        return Tree<T>::createNode(c, tleft, tright);
+        return Tree<K, V>::createNode(c, tleft, tright);
     }
 
-    %%
-    %% IMPLEMENtATIONS HERE!!!
-    %% 
+    function size<K: keytype, V>(t: Tree<K: keytype, V>): Nat {
+        match(t)@ {
+            BBLeaf<K, V> => { return 0n; }
+            | Leaf<K, V> => { return 1n; }
+            | Node<K, V> => { return $t.count; }
+        }
+    }
+
+    function mink<K: keytype, V>(t: Tree<K, V>): K {
+        if(t)@<Leaf<K, V>> {
+            return $t.v.key;
+        }
+
+        return t@<Node<K, V>>.mink;
+    }
+
+    function maxk<K: keytype, V>(t: Tree<K, V>): K {
+        if(t)@<Leaf<K, V>> {
+            return $t.v.key;
+        }
+
+        return t@<Node<K, V>>.maxk;
+    }
+
+    recursive function min<K: keytype, V>(t: Tree<K, V>): MapEntry<K, V> {
+        if(t)@<Leaf<K, V>> {
+            return $t.v;
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            return min[recursive]<K, V>(nn.l);
+        }
+    }
+
+    recursive function max<K: keytype, V>(t: Tree<K, V>): MapEntry<K, V> {
+        if(t)@<Leaf<K, V>> {
+            return $t.v;
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            return max[recursive]<K, V>(nn.r);
+        }
+    }
+
+    recursive function has<K: keytype, V>(t: Tree<K, V>, k: K): Bool {
+        if(t)@<Leaf<K, V>> {
+            return KeyComparator::equal<K>($t.v.key, k);
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            let rmin = mink<K, V>(nn.r);
+
+            if(KeyComparator::less<K>(k, rmin)) {
+                return has[recursive]<K, V>(nn.l, k);
+            } 
+            else {
+                return has[recursive]<K, V>(nn.r, k);
+            }
+        }
+    }
+
+    recursive function get<K: keytype, V>(t: Tree<K, V>, k: K): V {
+        if(t)@<Leaf<K, V>> {
+            return $t.v; %% stdlib impl ensures of has(t, k) => this works 
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            let rmin = mink<K, V>(nn.r);
+
+            if(KeyComparator::less<K>(k, rmin)) {
+                return get[recursive]<K, V>(nn.l, k);
+            } 
+            else {
+                return get[recursive]<K, V>(nn.r, k);
+            }
+        }
+    }
+
+    recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: Key, v: V): Tree<K, V> {
+        %% stdlib impl ensures of !has(t, k) => this never collides 
+        match(t)@ {
+            BBLeaf<K, V> => { 
+                return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}); 
+            }
+            | Leaf<K, V> => {
+                if(KeyComparator::less<K>(k, $t.v.key)) {
+                    return Tree<K, V>::createNode(Color#Black, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
+                }
+                else {
+                    return Tree<K, V>::createNode(Color#Black, $t, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
+                }
+            }
+            | Node<K, V> => { 
+                let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+                let rmin = mink<K, V>(nn.r);
+
+                if(KeyComparator::less<K>(k, rmin)) {
+                    let nr = insert_helper[recursive]<T>($t.l, k, v);
+                    return balance<K, V>(Color#Black, nr, $t.r); 
+                }
+                else {
+                    let nr = insert_helper[recursive]<K, V>($t.r, k, v);
+                    return balance<K, V>(Color#Black, $t.l, nr); 
+                }
+            }
+        }
+    }
+
+    function insert<K: keytype, V>(t: Tree<T>, k: K, v: V): Tree<T> {
+        let tt = insert_helper<K, V>(t, k, v); 
+        if (tt)@!<Node<K, V>> {
+            return tt;
+        }
+        else {
+            return Tree<K, V>::createNode(Color#Black, $tt.l, $tt.r);
+        }
+    }
 
     datatype Tree<K: keytype, V> of 
         BBLeaf {}
         | Leaf { v: MapEntry<K, V> }
-        | Node { c: Color, v: MapEntry<K, V>, l: Tree<K, V>, r: Tree<K, V> }
+        | Node { c: Color, count: Nat, rmink: K, maxk: K, l: Tree<K, V>, r: Tree<K, V> }
     & {
         const emptyTree: Tree<K, V> = BBLeaf<K, V>{};
 
@@ -362,8 +476,11 @@ namespace ListOps {
             return Leaf<K, V>{MapEntry<K, V>};
         }
 
-        function createNode(c: Color, v: MapEntry<K, V>, l: Tree<T>, r: Tree<T>): Node<K, V> {
-            return Node<K, V>{c, v, l, r};
+        function createNode(c: Color, l: Tree<K, V>, r: Tree<K, V>): Node<K, V> {
+            let nsize = size<K, V>(l) + size<K, V>(r);
+            let nmink = mink<K, V>(l);
+            let nmaxk = maxk<K, V>(r);
+            return Node<K, V>{c, nsize, nmink, nmaxk, l, r};
         }
     }
 }
