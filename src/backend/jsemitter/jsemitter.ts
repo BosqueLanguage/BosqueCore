@@ -9,7 +9,7 @@ import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiat
 
 const prefix = 
 '"use strict";\n' +
-'let _$consts = new Map();\n' +
+'let _$consts = {};\n' +
 '\n' +
 'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
 '\n'
@@ -568,12 +568,50 @@ class JSEmitter {
         }
     }
 
+    private processEmitMapConstructor(ktype: TypeSignature, vtype: TypeSignature, args: ArgumentValue[]): string {
+        const argc = args.length;
+        const allsimple = args.every((aa) => aa instanceof PositionalArgumentValue);
+
+        const coreprefix = this.getCurrentNamespace().fullnamespace.ns[0] !== "Core" ? "$Core." : "";
+
+        if(argc === 0) {
+            return `${coreprefix}MapOps.s_map_create_empty["<${ktype.tkeystr}, ${vtype.tkeystr}>"]()`;
+        }
+        else if(argc <= 2 && allsimple) {
+            let opr: string;
+
+            if(argc === 1) {
+                opr = "s_map_create_1";
+            }
+            else {
+                opr = "s_map_create_2";
+            }
+
+            const llargs = args.map((ee) => this.emitExpression(ee.exp, true));
+            return `${coreprefix}MapOps.${opr}["<${ktype.tkeystr}, ${vtype.tkeystr}>"](${llargs.join(", ")})`;
+        }
+        else {
+            if(argc === 1) {
+                //a spread of a single thing -- maybe a list or other special case we want to do
+                assert(false, "Not implemented -- Map values");
+            }
+            else {
+                assert(false, "Not implemented -- Map values"); //TODO: need to implement list in Bosque core + have way well known way to call constructor here!!!!
+            }
+        }
+    }
+
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
         const ctype = this.tproc(exp.ctype) as NominalTypeSignature;
-        const ttype = ctype.alltermargs[0];
 
         if(cdecl instanceof ListTypeDecl) {
+            const ttype = ctype.alltermargs[0];
             return this.processEmitListConstructor(ttype, exp.args.args);
+        }
+        else if(cdecl instanceof MapTypeDecl) {
+            const ktype = ctype.alltermargs[0];
+            const vtype = ctype.alltermargs[1];
+            return this.processEmitMapConstructor(ktype, vtype, exp.args.args);
         }
         else {
             assert(false, "Unknown collection type -- emitCollectionConstructor");
@@ -2545,7 +2583,7 @@ class JSEmitter {
         }
 
         if(cdecls.length !== 0) {
-            cdecls = ["_$consts: { value: new Map() }", ...cdecls];
+            cdecls = ["_$consts: { value: {} }", ...cdecls];
         }
 
         return cdecls;
@@ -2878,7 +2916,7 @@ class JSEmitter {
 
         decls.push(this.emitTypeSymbol(rcvr));
 
-        decls.push("_$memomap: { value: new Map() }");
+        decls.push("_$memomap: { value: {} }");
         decls.push(...tdecl.members.map((mm, ii) => {
             const paramargs = `value: { value: ${ii}n }`;
             const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);

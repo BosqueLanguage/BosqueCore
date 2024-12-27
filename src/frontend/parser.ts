@@ -3596,9 +3596,8 @@ class Parser {
         //TODO: this will reject (2 => 3) since there are parens, maybe this is ok or maybe we should allow it?
 
         const lexp = this.parseExpression();   
-        if(this.testAndConsumeTokenIf("=>")) {
+        if(this.testAndConsumeTokenIf(SYM_bigarrow)) {
             const rexp = this.parseExpression();
-        
             return new MapEntryConstructorExpression(sinfo, lexp, rexp);
         }
         else {

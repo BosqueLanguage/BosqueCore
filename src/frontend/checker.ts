@@ -1282,7 +1282,7 @@ class TypeChecker {
                 this.checkError(exp.sinfo, (ketype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.emit()}`);
 
                 const vtype = ctype.alltermargs[1];
-                exp.shuffleinfo = [[1, "val", vtype]];
+                exp.shuffleinfo = [[1, "value", vtype]];
                 const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
                 this.checkError(exp.sinfo, (vetype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.emit()}`);
             }

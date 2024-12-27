@@ -8,6 +8,12 @@ describe ("List -- construct empty and isEmpty", () => {
         runMainCode('public function main(): Bool { return List<Int>{}.empty(); }', [true, "Bool"]); 
         runMainCode('public function main(): Bool { return List<Int>{1i}.empty(); }', [false, "Bool"]); 
     });
+
+    it("should isSingle list", function () {
+        runMainCode('public function main(): Bool { return List<Int>{}.isSingleElement(); }', [false, "Bool"]); 
+        runMainCode('public function main(): Bool { return List<Int>{1i}.isSingleElement(); }', [true, "Bool"]); 
+        runMainCode('public function main(): Bool { return List<Int>{1i, 2i}.isSingleElement(); }', [false, "Bool"]); 
+    });
 });
 
 describe ("List -- immediate and size", () => {

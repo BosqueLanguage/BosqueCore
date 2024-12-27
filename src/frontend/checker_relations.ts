@@ -827,6 +827,14 @@ class TypeCheckerRelations {
                     cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
                 }
             }
+            else if(tn.decl instanceof MapTypeDecl) {
+                if(name === "value") {
+                    const tlva = (this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration).typedecls.find((tdecl) => tdecl.name === "Tree") as DatatypeTypeDecl;
+                    const vtype = new NominalTypeSignature(tn.decl.sinfo, undefined, tlva, [tn.alltermargs[0], tn.alltermargs[1]]);
+                    
+                    cci = new MemberFieldDecl(tn.decl.file, tn.decl.sinfo, [], "value", vtype, undefined, true);
+                }
+            }
             else {
                 ;
             }

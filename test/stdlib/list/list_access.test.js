@@ -1,3 +1,5 @@
+"use strict";
+
 import { runMainCode, runMainCodeError } from "../../../bin/test/stdlib/stdlib_nf.js";
 import { describe, it } from "node:test";
 

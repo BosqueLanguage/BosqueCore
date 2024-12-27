@@ -27,29 +27,29 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_min<K, V>(this);
     }
 
-    method min(): MapEntry<K, V>
+    method kmin(): MapEntry<K, V>
         requires !this.empty();
     {
         return MapOps::s_map_min<K, V>(this);
     }
 
-    method max(): MapEntry<K, V>
+    method kmax(): MapEntry<K, V>
         requires !this.empty();
     {
         return MapOps::s_map_max<K, V>(this);
     }
 
-    method has(k: Key): Bool {
+    method has(k: K): Bool {
         return MapOps::s_map_has<K, V>(this, k);
     }
 
-    method get(k: Key): V 
+    method get(k: K): V 
         requires this.has(k);
     {
         return MapOps::s_map_get<K, V>(this, k);
     }
 
-    method insert(k: Key, v: V): Map<K, V> 
+    method insert(k: K, v: V): Map<K, V> 
         requires !this.has(k);
     {
         return MapOps::s_map_insert<K, V>(this, k, v);

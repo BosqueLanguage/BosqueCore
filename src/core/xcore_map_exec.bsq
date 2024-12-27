@@ -1,9 +1,9 @@
-amespace Core;
+namespace Core;
 
 #if STRIPPED_CORE
 #else
 #if EXEC_LIBS
-namespace ListOps {
+namespace MapOps {
     function s_map_empty<K: keytype, V>(m: Map<K, V>): Bool {
         return m.value?<BBLeaf<K, V>>;
     }
@@ -29,7 +29,7 @@ namespace ListOps {
     }
 
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> {
-        return insert<K, V>(m.value, k, v);
+        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(insert<K, V>(m.value, k, v));
     }
 
     function s_map_create_empty<K: keytype, V>(): Map<K, V> {
@@ -347,7 +347,7 @@ namespace ListOps {
         return Tree<K, V>::createNode(c, tleft, tright);
     }
 
-    function size<K: keytype, V>(t: Tree<K: keytype, V>): Nat {
+    function size<K: keytype, V>(t: Tree<K, V>): Nat {
         match(t)@ {
             BBLeaf<K, V> => { return 0n; }
             | Leaf<K, V> => { return 1n; }
@@ -410,7 +410,7 @@ namespace ListOps {
 
     recursive function get<K: keytype, V>(t: Tree<K, V>, k: K): V {
         if(t)@<Leaf<K, V>> {
-            return $t.v; %% stdlib impl ensures of has(t, k) => this works 
+            return $t.v.value; %% stdlib impl ensures of has(t, k) => this works 
         }
         else {
             let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
@@ -425,7 +425,7 @@ namespace ListOps {
         }
     }
 
-    recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: Key, v: V): Tree<K, V> {
+    recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
         %% stdlib impl ensures of !has(t, k) => this never collides 
         match(t)@ {
             BBLeaf<K, V> => { 
@@ -444,7 +444,7 @@ namespace ListOps {
                 let rmin = mink<K, V>(nn.r);
 
                 if(KeyComparator::less<K>(k, rmin)) {
-                    let nr = insert_helper[recursive]<T>($t.l, k, v);
+                    let nr = insert_helper[recursive]<K, V>($t.l, k, v);
                     return balance<K, V>(Color#Black, nr, $t.r); 
                 }
                 else {
@@ -455,7 +455,7 @@ namespace ListOps {
         }
     }
 
-    function insert<K: keytype, V>(t: Tree<T>, k: K, v: V): Tree<T> {
+    function insert<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
         let tt = insert_helper<K, V>(t, k, v); 
         if (tt)@!<Node<K, V>> {
             return tt;
@@ -468,12 +468,12 @@ namespace ListOps {
     datatype Tree<K: keytype, V> of 
         BBLeaf {}
         | Leaf { v: MapEntry<K, V> }
-        | Node { c: Color, count: Nat, rmink: K, maxk: K, l: Tree<K, V>, r: Tree<K, V> }
+        | Node { c: Color, count: Nat, mink: K, maxk: K, l: Tree<K, V>, r: Tree<K, V> }
     & {
         const emptyTree: Tree<K, V> = BBLeaf<K, V>{};
 
-        function createLeaf(MapEntry<K, V>): Leaf<K, V> {
-            return Leaf<K, V>{MapEntry<K, V>};
+        function createLeaf(v: MapEntry<K, V>): Leaf<K, V> {
+            return Leaf<K, V>{v};
         }
 
         function createNode(c: Color, l: Tree<K, V>, r: Tree<K, V>): Node<K, V> {
