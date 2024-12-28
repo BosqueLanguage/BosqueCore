@@ -9,8 +9,8 @@ describe ("Map -- insert", () => {
 
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(0i, 2i).get(0i); }', [2n, "Int"]); 
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(0i, 2i).get(1i); }', [0n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(2i, 2i).get(0i); }', [0n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(2i, 2i).get(1i); }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(2i, 2i).get(2i); }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i}.insert(2i, 2i).get(1i); }', [0n, "Int"]); 
 
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i, 3i => 5i}.insert(2i, 2i).get(2i); }', [2n, "Int"]);
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 0i, 3i => 5i}.insert(2i, 2i).get(3i); }', [5n, "Int"]);
@@ -26,6 +26,6 @@ describe ("Map -- insert", () => {
     });
 
     it("should fail insert exists", function () {
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.insert(2i, 5i).get(1i); }', "Error -- this.has(k) @ map.bsq");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.insert(2i, 5i).get(1i); }', "Error -- !this.has(k) @ map.bsq");
     });
 });

@@ -1246,7 +1246,11 @@ class JSEmitter {
     }
     
     private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
-        assert(false, "Not implemented -- MapEntryConstructor");
+        let ekey = this.emitExpression(exp.kexp, true);
+        let evalue = this.emitExpression(exp.vexp, true);
+
+        const cname = EmitNameManager.generateAccessorForSpecialTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype as TypeSignature) as NominalTypeSignature);
+        return `${cname}(${ekey}, ${evalue})`;
     }
 
     private emitIfExpression(exp: IfExpression, toplevel: boolean): string {

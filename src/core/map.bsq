@@ -54,5 +54,8 @@ __internal entity Map<K: keytype, V> {
     {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
+
+    %% TODO: also insert with a MapEntry -- maybe einsert
+
 #endif %% STRIPPED_CORE
 }

@@ -764,7 +764,8 @@ class InstantiationPropagator {
     }
 
     private instantiateMapEntryConstructorExpression(exp: MapEntryConstructorExpression) {
-        assert(false, "Not Implemented -- instantiateMapEntryConstructorExpression");
+        this.instantiateExpression(exp.kexp);
+        this.instantiateExpression(exp.vexp);
     }
 
     private instantiateIfExpression(exp: IfExpression) {

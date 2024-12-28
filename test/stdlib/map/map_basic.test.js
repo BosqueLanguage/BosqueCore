@@ -29,6 +29,6 @@ describe ("Map -- has", () => {
         runMainCode('public function main(): Bool { return Map<Int, Int>{}.has(1i); }', [false, "Bool"]); 
         runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i}.has(1i); }', [true, "Bool"]); 
         runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.has(2i); }', [true, "Bool"]); 
-        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 5i => 3i}.has(2i); }', [3n, "Bool"]); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 5i => 3i}.has(2i); }', [false, "Bool"]); 
     });
 });

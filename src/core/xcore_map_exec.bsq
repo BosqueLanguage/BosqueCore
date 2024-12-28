@@ -21,7 +21,12 @@ namespace MapOps {
     }
 
     function s_map_has<K: keytype, V>(m: Map<K, V>, k: K): Bool {
-        return has<K, V>(m.value, k);
+        if(m.value?<BBLeaf<K, V>>) {
+            return false;
+        }
+        else {
+            return has<K, V>(m.value, k);
+        }
     }
 
     function s_map_get<K: keytype, V>(m: Map<K, V>, k: K): V {
