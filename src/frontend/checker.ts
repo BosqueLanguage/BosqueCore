@@ -1282,7 +1282,7 @@ class TypeChecker {
                 this.checkError(exp.sinfo, (ketype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(ketype, ktype, this.constraints), `MapEntry constructor key argument is not a subtype of ${ktype.emit()}`);
 
                 const vtype = ctype.alltermargs[1];
-                exp.shuffleinfo = [[1, "val", vtype]];
+                exp.shuffleinfo = [[1, "value", vtype]];
                 const vetype = this.checkExpression(env, exp.args.args[1].exp, new SimpleTypeInferContext(vtype));
                 this.checkError(exp.sinfo, (vetype instanceof ErrorTypeSignature) || !this.relations.isSubtypeOf(vetype, vtype, this.constraints), `MapEntry constructor value argument is not a subtype of ${vtype.emit()}`);
             }
@@ -2243,7 +2243,23 @@ class TypeChecker {
     }
 
     private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, infertype: TypeSignature | undefined): TypeSignature {
-        assert(false, "Not Implemented -- checkMapEntryConstructorExpression");
+        const ioktype = infertype !== undefined && (infertype instanceof NominalTypeSignature) && (infertype.decl instanceof MapEntryTypeDecl);
+        if(!ioktype) {
+            this.reportError(exp.sinfo, `MapEntryConstructor requires a MapEntry type as the inferred type`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const iktype: TypeSignature = infertype.alltermargs[0];
+        const ktype = this.checkExpression(env, exp.kexp, new SimpleTypeInferContext(iktype));
+        this.checkError(exp.sinfo, !this.relations.isKeyType(iktype, this.constraints), `MapEntryConstructor requires a key type as the first argument`); 
+        this.checkError(exp.sinfo, ktype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(ktype, iktype, this.constraints), `MapEntryConstructor key expression is not a subtype of ${iktype.emit()}`);
+
+        let ivtype: TypeSignature = infertype.alltermargs[1];
+        const vtype = this.checkExpression(env, exp.vexp, new SimpleTypeInferContext(ivtype));
+        this.checkError(exp.sinfo, vtype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(vtype, ivtype, this.constraints), `MapEntryConstructor value expression is not a subtype of ${ivtype.emit()}`);
+
+        exp.ctype = infertype;
+        return exp.setType(infertype);
     }
 
     private checkIfExpression(env: TypeEnvironment, exp: IfExpression, typeinfer: TypeInferContext | undefined): TypeSignature {

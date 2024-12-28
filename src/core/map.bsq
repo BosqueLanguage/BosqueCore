@@ -1,7 +1,61 @@
 namespace Core;
 
+namespace Map {
+}
+
 __internal entity MapEntry<K: keytype, V> {
 }
 
 __internal entity Map<K: keytype, V> {
+#if STRIPPED_CORE
+#else
+    method empty(): Bool {
+        return MapOps::s_map_empty<K, V>(this);
+    }
+
+    method size(): Nat {
+        return MapOps::s_map_size<K, V>(this);
+    }
+
+    method isSingleElement(): Bool {
+        return MapOps::s_map_size<K, V>(this) == 1n;
+    }
+
+    method single(): MapEntry<K, V>
+        requires this.isSingleElement();
+    {
+        return MapOps::s_map_min<K, V>(this);
+    }
+
+    method kmin(): MapEntry<K, V>
+        requires !this.empty();
+    {
+        return MapOps::s_map_min<K, V>(this);
+    }
+
+    method kmax(): MapEntry<K, V>
+        requires !this.empty();
+    {
+        return MapOps::s_map_max<K, V>(this);
+    }
+
+    method has(k: K): Bool {
+        return MapOps::s_map_has<K, V>(this, k);
+    }
+
+    method get(k: K): V 
+        requires this.has(k);
+    {
+        return MapOps::s_map_get<K, V>(this, k);
+    }
+
+    method insert(k: K, v: V): Map<K, V> 
+        requires !this.has(k);
+    {
+        return MapOps::s_map_insert<K, V>(this, k, v);
+    }
+
+    %% TODO: also insert with a MapEntry -- maybe einsert
+
+#endif %% STRIPPED_CORE
 }

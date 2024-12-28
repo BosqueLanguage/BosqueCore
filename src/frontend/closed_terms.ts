@@ -396,11 +396,11 @@ class InstantiationPropagator {
                         this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
                     }
                     else {
-                        assert(false, "Not Implemented -- list constructors");
+                        assert(false, "Not Implemented -- large explicit list constructors");
                     }
                 }
                 else {
-                    assert(false, "Not Implemented -- list constructors");
+                    assert(false, "Not Implemented -- list spread constructors");
                 }
             }
         }
@@ -422,12 +422,28 @@ class InstantiationPropagator {
             if(mops !== undefined) {
                 const mtree = mops.typedecls.find((tt) => tt.name === "Tree");
                 ists = (mtree !== undefined) ? new NominalTypeSignature(t.sinfo, undefined, mtree, [t.alltermargs[0], t.alltermargs[1]]) : undefined;
-            }
 
-            if(ists !== undefined) {
-                this.instantiateTypeSignature(ists, this.currentMapping);
+                if(ists !== undefined) {
+                    this.instantiateTypeSignature(ists, this.currentMapping);
+                }
 
-                assert(false, "Not Implemented -- map constructors");
+                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                    if(args.length === 0) {
+                        const ff = mops.functions.find((f) => f.name === "s_map_create_empty") as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]], this.currentMapping);
+                    }
+                    else if(args.length <= 2) {
+                        const ff = mops.functions.find((f) => f.name === `s_map_create_${args.length}`) as NamespaceFunctionDecl;
+
+                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]], this.currentMapping);
+                    }
+                    else {
+                        assert(false, "Not Implemented -- large explicit map constructors");
+                    }
+                }
+                else {
+                    assert(false, "Not Implemented -- map spread constructors");
+                }
             }
         }
     }
@@ -748,7 +764,8 @@ class InstantiationPropagator {
     }
 
     private instantiateMapEntryConstructorExpression(exp: MapEntryConstructorExpression) {
-        assert(false, "Not Implemented -- instantiateMapEntryConstructorExpression");
+        this.instantiateExpression(exp.kexp);
+        this.instantiateExpression(exp.vexp);
     }
 
     private instantiateIfExpression(exp: IfExpression) {

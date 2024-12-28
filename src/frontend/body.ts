@@ -1386,6 +1386,8 @@ class MapEntryConstructorExpression extends Expression {
     readonly kexp: Expression;
     readonly vexp: Expression;
 
+    ctype: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, kexp: Expression, vexp: Expression) {
         super(ExpressionTag.MapEntryConstructorExpression, sinfo);
         this.kexp = kexp;

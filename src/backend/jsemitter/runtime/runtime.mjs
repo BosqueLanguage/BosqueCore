@@ -314,13 +314,13 @@ function _$softpostcond(cond, info) {
 }
 
 function _$memoconstval(memmap, key, comp) {
-    const vval = memmap.get(key);
+    const vval = memmap[key];
     if(vval !== undefined) {
         return vval;
     }
 
     const nval = comp();
-    memmap.set(key, nval);
+    memmap[key] = nval;
 
     return nval;
 }
