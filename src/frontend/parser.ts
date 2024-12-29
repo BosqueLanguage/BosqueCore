@@ -1,6 +1,5 @@
 
 import assert from "node:assert";
-import { Buffer } from "node:buffer";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
@@ -8,8 +7,6 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, Acces
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, SYM_land, SYM_lor } from "./parser_kw.js";
-
-import { initializeLexer, lexFront } from "@bosque/jsbrex";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -144,8 +141,6 @@ class Lexer {
     readonly input: string;
 
     private jsStrPos: number;
-    private utf8StrPos: number;
-
     private jsStrEnd: number;
 
     cline: number;
@@ -154,17 +149,41 @@ class Lexer {
     tokens: Token[];
     errors: ParserError[];
 
-    private advancePositionInfo(epos: number): [number, number] {
-        const u16count = epos - this.jsStrPos;
-        const u8count = Buffer.from(this.input.substring(this.jsStrPos, epos), "utf8").length;
-
-        return [u16count, u8count];
+    private advancePosition(epos: number) {
+        this.jsStrPos += epos - this.jsStrPos;
     }
 
-    private advancePosition(epos: number) {
-        const [u16count, u8count] = this.advancePositionInfo(epos);
-        this.jsStrPos += u16count;
-        this.utf8StrPos += u8count;
+    private trylex(re: RegExp): string | null {
+        re.lastIndex = this.jsStrPos;
+        const mm = re.exec(this.input);
+        if(mm === null) {
+            return null;
+        }
+        else {
+            return mm[0];
+        }
+    }
+
+    private static readonly _s_whitespaceRe = new RegExp('\\s+', "y");    
+    private trylexWSPlus(options: string[], suffix: RegExp): string | null {
+        Lexer._s_whitespaceRe.lastIndex = this.jsStrPos;
+        const mmpre = Lexer._s_whitespaceRe.exec(this.input);
+        if(mmpre === null) {
+            return null;
+        }
+        
+        const mopt = options.find((opt) => this.input.startsWith(opt, this.jsStrPos + mmpre[0].length));
+        if(mopt === undefined) {
+            return null;
+        }
+
+        suffix.lastIndex = this.jsStrPos + mmpre[0].length + mopt.length;
+        const mmsuf = suffix.exec(this.input);
+        if(mmsuf === null) {
+            return null;
+        }
+
+        return this.input.slice(this.jsStrPos, this.jsStrPos + mmpre[0].length + mopt.length + mmsuf[0].length);
     }
 
     constructor(iscore: boolean, srcfile: string, input: string, lstart: number, macrodefs: string[]) {
@@ -174,13 +193,8 @@ class Lexer {
         this.scanmode = [LexerStateScanMode.Enabled];
 
         this.input = input;
-        initializeLexer(this.input);
-
         this.jsStrPos = 0;
-        this.utf8StrPos = 0;
-
-        const [u16count] = this.advancePositionInfo(this.input.length);
-        this.jsStrEnd = u16count;
+        this.jsStrEnd = this.input.length;
 
         this.cline = lstart + 1;
         this.linestart = 0;
@@ -224,27 +238,20 @@ class Lexer {
         }
     }
     
-    private static readonly _s_resourceUseModRe = '/"["[?!+*-]+"]"/';
-
-    private static readonly _s_spaceSensitiveOps = SpaceRequiredSymbols.map((op) => `"${op.trim()}"`).join("|")
-    private static readonly _s_spaceSensitiveOpsRe = `/[ %n;%v;%f;%r;%t;]+(${Lexer._s_spaceSensitiveOps})[ %n;%v;%f;%r;%t;]+/`;
-
-    private static readonly _s_spaceSensitiveFrontOps = SpaceFrontSymbols.map((op) => `"${op.trim()}"`).join("|")
-    private static readonly _s_spaceSensitiveFrontOpsRe = `/<[ %n;%v;%f;%r;%t;]+(${Lexer._s_spaceSensitiveFrontOps})>$[^0-9+-]/`;
-
-    private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]+/';
+    private static readonly _s_resourceUseModRe = new RegExp('\[[?!+*-]+\]', 'y');
+    
     private tryLexWS(): boolean {
-        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.utf8StrPos);
+        const arop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
         if (arop !== null) {
             return false;
         }
 
-        const frop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.utf8StrPos);
+        const frop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
         if (frop !== null) {
             return false;
         }
 
-        const m = lexFront(Lexer._s_whitespaceRe, this.utf8StrPos);
+        const m = this.trylex(Lexer._s_whitespaceRe);
         if (m === null) {
             return false;
         }
@@ -288,7 +295,7 @@ class Lexer {
             jepos += 4;
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, TokenStrings.DocComment, this.input.substring(this.jsStrPos, jepos));
+            this.recordLexTokenWData(jepos, TokenStrings.DocComment, this.input.slice(this.jsStrPos, jepos));
             return true;
         }
 
@@ -323,41 +330,41 @@ class Lexer {
         return Lexer._s_templateNameRe.test(str);
     }
 
-    private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
-    private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
-    private static readonly _s_intValueNoSignRE = `("0"|${Lexer._s_nonzeroIntValNoSignRE})`;
-    private static readonly _s_intValueRE = `("0"|"+0"|${Lexer._s_nonzeroIntValRE})`;
+    private static readonly _s_nonzeroIntValNoSign = '[1-9][0-9]*';
+    private static readonly _s_nonzeroIntVal = `[+-]?${Lexer._s_nonzeroIntValNoSign}`;
+    private static readonly _s_intValueNoSign = `(0|${Lexer._s_nonzeroIntValNoSign})`;
+    private static readonly _s_intValue = `(0|[+]0|${Lexer._s_nonzeroIntVal})`;
 
-    private static readonly _s_floatValueNoSignRE = `[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?`;
-    private static readonly _s_floatValueRE = `[+-]?${Lexer._s_floatValueNoSignRE}([eE][-+]?[0-9]+)?`;
+    private static readonly _s_floatValueNoSign = '[0-9]+[.][0-9]+([eE][-+]?[0-9]+)?';
+    private static readonly _s_floatValue = `[+-]?${Lexer._s_floatValueNoSign}([eE][-+]?[0-9]+)?`;
 
-    private static readonly _s_floatSimpleValueNoSignRE = '[0-9]+"."[0-9]+';
-    private static readonly _s_floatSimpleValueRE = `[+-]?${Lexer._s_floatSimpleValueNoSignRE}`;
+    private static readonly _s_floatSimpleValueNoSign = '[0-9]+[.][0-9]+';
+    private static readonly _s_floatSimpleValue = `[+-]?${Lexer._s_floatSimpleValueNoSign}`;
 
-    private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
-    private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatValueRE}/`;
-    private static readonly _s_rationalNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})/`;
+    private static readonly _s_intNumberinoRe = new RegExp(`${Lexer._s_intValue}`, "y");
+    private static readonly _s_floatNumberinoRe = new RegExp(`${Lexer._s_floatValue}`, "y");
+    private static readonly _s_rationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/(${Lexer._s_nonzeroIntValNoSign})`, "y");
 
-    private static readonly _s_intRe = `/(${Lexer._s_intValueRE})"i"/`;
-    private static readonly _s_natRe = `/(${Lexer._s_intValueRE})"n"/`;
-    private static readonly _s_bigintRe = `/(${Lexer._s_intValueRE})"I"/`;
-    private static readonly _s_bignatRe = `/(${Lexer._s_intValueRE})"N"/`;
+    private static readonly _s_intRe = new RegExp(`(${Lexer._s_intValue})i`, "y");
+    private static readonly _s_natRe = new RegExp(`(${Lexer._s_intValue})n`, "y");
+    private static readonly _s_bigintRe = new RegExp(`(${Lexer._s_intValue})I`, "y");
+    private static readonly _s_bignatRe = new RegExp(`(${Lexer._s_intValue})N`, "y");
 
-    private static readonly _s_floatRe = `/(${Lexer._s_floatValueRE})"f"/`;
-    private static readonly _s_decimalRe = `/(${Lexer._s_floatValueRE})"d"/`;
-    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})("%slash;"(${Lexer._s_nonzeroIntValNoSignRE}))?"R"/`;
-    private static readonly _s_complexRe = `/(${Lexer._s_floatValueRE})[+-](${Lexer._s_floatValueNoSignRE})"j"/`;
+    private static readonly _s_floatRe = new RegExp(`(${Lexer._s_floatValue})f`, "y");
+    private static readonly _s_decimalRe = new RegExp(`(${Lexer._s_floatValue})d`, "y");
+    private static readonly _s_rationalRe = new RegExp(`(${Lexer._s_intValue})(/(${Lexer._s_nonzeroIntValNoSign}))?R`, "y");
+    private static readonly _s_complexRe = new RegExp(`(${Lexer._s_floatValue})[+-](${Lexer._s_floatValueNoSign})j`, "y");
 
-    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"/`;
-    private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"/`;
+    private static readonly _s_decimalDegreeRe = new RegExp(`(${Lexer._s_floatSimpleValue})dd`, "y");
+    private static readonly _s_latlongRe = new RegExp(`(${Lexer._s_floatSimpleValue})lat[+-]${Lexer._s_floatSimpleValueNoSign}long`, "y");
     
-    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"/`;
+    private static readonly _s_logicaltimeRe = new RegExp(`(${Lexer._s_intValue})l`, "y");
 
-    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"/`;
-    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"/`;
+    private static readonly _s_deltasecondsRE = new RegExp(`[+-](${Lexer._s_floatValueNoSign})ds`, "y");
+    private static readonly _s_deltalogicaltimeRE = new RegExp(`[+-](${Lexer._s_intValueNoSign})dl`, "y");
 
-    private static readonly _s_zerodenomRationalNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"/`;
-    private static readonly _s_zerodenomRationalRe = `/(${Lexer._s_intValueRE})"%slash;""0""R"/`;
+    private static readonly _s_zerodenomRationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/0`, "y");
+    private static readonly _s_zerodenomRationalRe = new RegExp(`(${Lexer._s_intValue})/0R`, "y");
 
     private static readonly _s_redundantSignRE = /[+-]{2,}/y;
     private checkRedundantSigns() {
@@ -372,13 +379,13 @@ class Lexer {
     }
 
     private tryLexFloatCompositeLikeToken(): boolean {
-        const mcomplex = lexFront(Lexer._s_complexRe, this.utf8StrPos);
+        const mcomplex = this.trylex(Lexer._s_complexRe);
         if(mcomplex !== null) {
             this.recordLexTokenWData(this.jsStrPos + mcomplex.length, TokenStrings.Complex, mcomplex);
             return true;
         }
 
-        const mlatlong = lexFront(Lexer._s_latlongRe, this.utf8StrPos);
+        const mlatlong = this.trylex(Lexer._s_latlongRe);
         if(mlatlong !== null) {
             this.recordLexTokenWData(this.jsStrPos + mlatlong.length, TokenStrings.LatLong, mlatlong);
             return true;
@@ -388,31 +395,31 @@ class Lexer {
     }
 
     private tryLexFloatLikeToken(): boolean {
-        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, this.utf8StrPos);
+        const mdecimaldegree = this.trylex(Lexer._s_decimalDegreeRe);
         if(mdecimaldegree !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
             return true;
         }
 
-        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, this.utf8StrPos);
+        const mdeltaseconds = this.trylex(Lexer._s_deltasecondsRE);
         if(mdeltaseconds !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
             return true;
         }
 
-        const mdecimal = lexFront(Lexer._s_decimalRe, this.utf8StrPos);
+        const mdecimal = this.trylex(Lexer._s_decimalRe);
         if(mdecimal !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdecimal.length, TokenStrings.Decimal, mdecimal);
             return true;
         }
 
-        const mfloat = lexFront(Lexer._s_floatRe, this.utf8StrPos);
+        const mfloat = this.trylex(Lexer._s_floatRe);
         if(mfloat !== null) {
             this.recordLexTokenWData(this.jsStrPos + mfloat.length, TokenStrings.Float, mfloat);
             return true;
         }
 
-        const unumberino = lexFront(Lexer._s_floatNumberinoRe, this.utf8StrPos);
+        const unumberino = this.trylex(Lexer._s_floatNumberinoRe);
         if(unumberino !== null) {
             this.recordLexTokenWData(this.jsStrPos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
             return true;
@@ -422,27 +429,27 @@ class Lexer {
     }
 
     private tryLexIntegralCompositeLikeToken(): boolean {
-        const mzerodenom = lexFront(Lexer._s_zerodenomRationalRe, this.utf8StrPos);
+        const mzerodenom = this.trylex(Lexer._s_zerodenomRationalRe);
         if(mzerodenom !== null) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenom.length), "Zero denominator in rational number");
             this.recordLexTokenWData(this.jsStrPos + mzerodenom.length, TokenStrings.Rational, mzerodenom);
             return true;
         }
 
-        const mrational = lexFront(Lexer._s_rationalRe, this.utf8StrPos);
+        const mrational = this.trylex(Lexer._s_rationalRe);
         if(mrational !== null) {
             this.recordLexTokenWData(this.jsStrPos + mrational.length, TokenStrings.Rational, mrational);
             return true;
         }
 
-        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalNumberinoRe, this.utf8StrPos);
+        const mzerodenomtagged = this.trylex(Lexer._s_zerodenomRationalNumberinoRe);
         if(mzerodenomtagged !== null) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, mzerodenomtagged.length), "Zero denominator in rational number");
             this.recordLexTokenWData(this.jsStrPos + mzerodenomtagged.length, TokenStrings.NumberinoRational, mzerodenomtagged);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_rationalNumberinoRe, this.utf8StrPos);
+        const mnumberino = this.trylex(Lexer._s_rationalNumberinoRe);
         if(mnumberino !== null) {
             this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
             return true;
@@ -452,43 +459,43 @@ class Lexer {
     }
 
     private tryLexIntegralLikeToken(): boolean {
-        const mlogical = lexFront(Lexer._s_logicaltimeRe, this.utf8StrPos);
+        const mlogical = this.trylex(Lexer._s_logicaltimeRe);
         if(mlogical !== null) {
             this.recordLexTokenWData(this.jsStrPos + mlogical.length, TokenStrings.LogicalTime, mlogical);
             return true;
         }
 
-        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, this.utf8StrPos);
+        const m_deltalogical = this.trylex(Lexer._s_deltalogicaltimeRE);
         if(m_deltalogical !== null) {
             this.recordLexTokenWData(this.jsStrPos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
             return true;
         }
         
-        const mint = lexFront(Lexer._s_intRe, this.utf8StrPos);
+        const mint = this.trylex(Lexer._s_intRe);
         if(mint !== null) {
             this.recordLexTokenWData(this.jsStrPos + mint.length, TokenStrings.Int, mint);
             return true;
         }
 
-        const mnat = lexFront(Lexer._s_natRe, this.utf8StrPos);
+        const mnat = this.trylex(Lexer._s_natRe);
         if(mnat !== null) {
             this.recordLexTokenWData(this.jsStrPos + mnat.length, TokenStrings.Nat, mnat);
             return true;
         }
 
-        const mbigint = lexFront(Lexer._s_bigintRe, this.utf8StrPos);
+        const mbigint = this.trylex(Lexer._s_bigintRe);
         if(mbigint !== null) {
             this.recordLexTokenWData(this.jsStrPos + mbigint.length, TokenStrings.BigInt, mbigint);
             return true;
         }
 
-        const mbignat = lexFront(Lexer._s_bignatRe, this.utf8StrPos);
+        const mbignat = this.trylex(Lexer._s_bignatRe);
         if(mbignat !== null) {
             this.recordLexTokenWData(this.jsStrPos + mbignat.length, TokenStrings.BigNat, mbignat);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_intNumberinoRe, this.utf8StrPos);
+        const mnumberino = this.trylex(Lexer._s_intNumberinoRe);
         if(mnumberino !== null) {
             this.recordLexTokenWData(this.jsStrPos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
             return true;
@@ -523,9 +530,9 @@ class Lexer {
         return false;
     }
 
-    private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"/`;
+    private static _s_bytebufferRe = new RegExp('0x\\[[0-9a-fA-F]+\\]', "y");
     private tryLexByteBuffer(): boolean {
-        const m = lexFront(Lexer._s_bytebufferRe, this.utf8StrPos);
+        const m = this.trylex(Lexer._s_bytebufferRe);
         if(m !== null) {
             this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.ByteBuffer, m);
             return true;
@@ -534,9 +541,9 @@ class Lexer {
         return false;
     }
 
-    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"/`;
+    private static _s_uuidRe = new RegExp('uuid[47]\\{[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\\}', "y");
     private tryLexUUID(): boolean {
-        const m = lexFront(Lexer._s_uuidRe, this.utf8StrPos);
+        const m = this.trylex(Lexer._s_uuidRe);
         if(m !== null) {
             this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.UUIDValue, m);
             return true;
@@ -545,9 +552,9 @@ class Lexer {
         return false;
     }
 
-    private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"/`;
+    private static _s_shaRe = new RegExp('sha3\\{[a-fA-F0-9]{64}\\}', "y");
     private tryLexHashCode(): boolean {
-        const m = lexFront(Lexer._s_shaRe, this.utf8StrPos);
+        const m = this.trylex(Lexer._s_shaRe);
         if(m !== null) {
             this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.ShaHashcode, m);
             return true;
@@ -580,7 +587,7 @@ class Lexer {
         }
         else {
             jepos++;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
@@ -620,7 +627,7 @@ class Lexer {
             }
 
             jepos++;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateCString : TokenStrings.CString, strval);
@@ -646,7 +653,7 @@ class Lexer {
         }
         else {            
             jepos += 2;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             //TODO we should validate that the string is valid BSQON here
 
@@ -676,19 +683,41 @@ class Lexer {
         return false;
     }
 
-    private static _s_regexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[cp]?/';
+    private static _s_validRegexChars = /([!-.0-~]|\s)+/;
     private tryLexRegex() {
-        const rem = lexFront(Lexer._s_regexRe, this.utf8StrPos);
-        if(rem === null) {
+        if(!this.input.startsWith("/", this.jsStrPos)) {
             return false;
         }
 
-        this.updatePositionInfo(this.jsStrPos, this.jsStrPos + rem.length);
-        this.recordLexTokenWData(this.jsStrPos + rem.length, TokenStrings.Regex, rem);
-        return true;
+        let jepos = this.input.indexOf("/", this.jsStrPos + 1);
+        if(jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated Regex literal");
+            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            const mstr = this.input.slice(this.jsStrPos + 1, jepos);
+            if(!Lexer._s_validRegexChars.test(mstr)) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid characters in (or empty) Regex literal");
+                this.recordLexToken(jepos, TokenStrings.Error);
+
+                return true;
+            }
+
+            jepos++;
+            if(this.input.startsWith("c", jepos) || this.input.startsWith("p", jepos)) {
+                jepos++;
+            }
+
+            let strval = this.input.slice(this.jsStrPos, jepos);
+
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.Regex, strval);
+            return true;
+        }
     }
 
-    
     private static _s_pathRe = /[$]?[gf]?\\[ !-Z^-~\[\]]\\/y;
     private static readonly _s_literalPathTagRE = /[<]/y;
     private tryLexPath() {
@@ -700,7 +729,7 @@ class Lexer {
 
             const istemplate = pthval.startsWith("$");
             if(istemplate) {
-                pthval = pthval.substring(1);
+                pthval = pthval.slice(1);
             }
 
             Lexer._s_literalPathTagRE.lastIndex = jepos;
@@ -717,42 +746,42 @@ class Lexer {
         return false;
     }
 
-    private static _s_datevalueRE = '([0-9]{4})"-"([0-9]{2})"-"([0-9]{2})';
-    private static _s_timevalueRE = '([0-9]{2})":"([0-9]{2})":"([0-9]{2})';
-    private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
+    private static _s_datevalue = '([0-9]{4})-([0-9]{2})-([0-9]{2})';
+    private static _s_timevalue = '([0-9]{2}):([0-9]{2}):([0-9]{2})';
+    private static _s_tzvalue = '((\{[a-zA-Z0-9/, _-]+\})|[A-Z]+)';
 
-    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}/`;
-    private static _s_taitimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}?/`;
-    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}/`;
-    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}/`;
-    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"/`;
+    private static _s_datatimeRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}@${Lexer._s_tzvalue}`, "y");
+    private static _s_taitimeRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}?`, "y");
+    private static _s_plaindateRE = new RegExp(`${Lexer._s_datevalue}`, "y");
+    private static _s_plaintimeRE = new RegExp(`${Lexer._s_timevalue}`, "y");
+    private static _s_timestampRE = new RegExp(`${Lexer._s_datevalue}T${Lexer._s_timevalue}[.]([0-9]{3})Z`, "y");
 
     private tryLexDateTime() {
-        const mdt = lexFront(Lexer._s_datatimeRE, this.utf8StrPos);
+        const mdt = this.trylex(Lexer._s_datatimeRE);
         if(mdt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.TZDateTime, mdt);
             return true;
         }
 
-        const mutcdt = lexFront(Lexer._s_taitimeRE, this.utf8StrPos);
+        const mutcdt = this.trylex(Lexer._s_taitimeRE);
         if(mutcdt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mutcdt.length, TokenStrings.TAITime, mutcdt);
             return true;
         }
 
-        const mts = lexFront(Lexer._s_timestampRE, this.utf8StrPos);
+        const mts = this.trylex(Lexer._s_timestampRE);
         if(mts !== null) {
             this.recordLexTokenWData(this.jsStrPos + mts.length, TokenStrings.Timestamp, mts);
             return true;
         }
 
-        const mpd = lexFront(Lexer._s_plaindateRE, this.utf8StrPos);
+        const mpd = this.trylex(Lexer._s_plaindateRE);
         if(mpd !== null) {
             this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.PlainDate, mpd);
             return true;
         }
 
-        const mpt = lexFront(Lexer._s_plaintimeRE, this.utf8StrPos);
+        const mpt = this.trylex(Lexer._s_plaintimeRE);
         if(mpt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.PlainTime, mpt);
             return true;
@@ -761,34 +790,34 @@ class Lexer {
         return false;
     }
 
-    private static _s_deltadatevalueRE = '([0-9]{1,4})"-"([0-9]{1,2})"-"([0-9]{1,2})';
-    private static _s_deltatimevalueRE = '([0-9]{1,2})":"([0-9]{1,2})":"([0-9]{1,2})';
+    private static _s_deltadatevalue = '([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})';
+    private static _s_deltatimevalue = '([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})';
 
-    private static _s_datetimeDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}?/`;
-    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}/`;
-    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_deltatimevalueRE}/`;
-    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_deltadatevalueRE}"T"${Lexer._s_deltatimevalueRE}"."([0-9]{3})"Z"/`;
+    private static _s_datetimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}?`, "y");
+    private static _s_plaindateDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}`, "y");
+    private static _s_plaintimeDeltaRE = new RegExp(`[+-]${Lexer._s_deltatimevalue}`, "y");
+    private static _s_timestampDeltaRE = new RegExp(`[+-]${Lexer._s_deltadatevalue}T${Lexer._s_deltatimevalue}[.]([0-9]{3})Z`, "y");
 
     private tryLexDateTimeDelta() {
-        const mdt = lexFront(Lexer._s_datetimeDeltaRE, this.utf8StrPos);
+        const mdt = this.trylex(Lexer._s_datetimeDeltaRE);
         if(mdt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mdt.length, TokenStrings.DeltaDateTime, mdt);
             return true;
         }
 
-        const mts = lexFront(Lexer._s_timestampDeltaRE, this.utf8StrPos);
+        const mts = this.trylex(Lexer._s_timestampDeltaRE);
         if(mts !== null) {
             this.recordLexTokenWData(this.jsStrPos + mts.length, TokenStrings.DeltaTimestamp, mts);
             return true;
         }
 
-        const mpd = lexFront(Lexer._s_plaindateDeltaRE, this.utf8StrPos);
+        const mpd = this.trylex(Lexer._s_plaindateDeltaRE);
         if(mpd !== null) {
             this.recordLexTokenWData(this.jsStrPos + mpd.length, TokenStrings.DeltaDateTime, mpd + "T00:00:00");
             return true;
         }
 
-        const mpt = lexFront(Lexer._s_plaintimeDeltaRE, this.utf8StrPos);
+        const mpt = this.trylex(Lexer._s_plaintimeDeltaRE);
         if(mpt !== null) {
             this.recordLexTokenWData(this.jsStrPos + mpt.length, TokenStrings.DeltaDateTime, "0000-00-00T" + mpt);
             return true;
@@ -812,9 +841,9 @@ class Lexer {
     }
 
     private tryLexSymbol() {
-        const usemodop = lexFront(Lexer._s_resourceUseModRe, this.utf8StrPos);
-        const spaceop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.utf8StrPos);
-        const frontop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.utf8StrPos);
+        const usemodop = this.trylex(Lexer._s_resourceUseModRe);
+        const spaceop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
+        const frontop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
         if(usemodop !== null) {
             this.recordLexTokenWData(this.jsStrPos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
             return true;
@@ -826,9 +855,9 @@ class Lexer {
             return true; 
         }
         else if(frontop !== null) {
-            const realstr = " " + frontop.trim();
+            const realstr = " " + frontop.trim().slice(0, -1);
 
-            this.recordLexToken(this.jsStrPos + frontop.length, realstr);
+            this.recordLexToken(this.jsStrPos + frontop.length - 1, realstr);
             return true; 
         }
         else {
@@ -857,7 +886,7 @@ class Lexer {
                 jepos++;
             }
 
-            this.recordLexTokenWData(jepos, TokenStrings.Attribute, this.input.substring(this.jsStrPos, jepos));
+            this.recordLexTokenWData(jepos, TokenStrings.Attribute, this.input.slice(this.jsStrPos, jepos));
             return true;
         }
 
@@ -884,9 +913,9 @@ class Lexer {
         }
     }
 
-    private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
+    private static readonly _s_identiferName = new RegExp('[$]?[_a-zA-Z][_a-zA-Z0-9]*', "y");
     private tryLexName(): boolean {
-        const identifiermatch = lexFront(Lexer._s_identiferName, this.utf8StrPos);
+        const identifiermatch = this.trylex(Lexer._s_identiferName);
         const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, this.jsStrPos));
 
         if(identifiermatch === null && kwmatch === undefined) {
@@ -914,9 +943,9 @@ class Lexer {
         }
     }
 
-    private static readonly _s_macroRe = '/("#if"" "+([A-Z][_A-Z0-9]*)|"#else"|"#endif")/';
+    private static readonly _s_macroRe = new RegExp('(#if[ ]+([A-Z][_A-Z0-9]*)|#else|#endif)', "y");
     tryLexMacroOp(): [string, string | undefined] | undefined {
-        const m = lexFront(Lexer._s_macroRe, this.utf8StrPos);
+        const m = this.trylex(Lexer._s_macroRe);
         if (m === null) {
             return undefined;
         }
