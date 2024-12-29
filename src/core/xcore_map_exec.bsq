@@ -29,8 +29,12 @@ namespace MapOps {
         }
     }
 
-    function s_map_get<K: keytype, V>(m: Map<K, V>, k: K): V {
-        return get<K, V>(m.value, k);
+    function s_map_get_direct<K: keytype, V>(m: Map<K, V>, k: K): V {
+        return get_direct<K, V>(m.value, k);
+    }
+
+    function s_map_get_option<K: keytype, V>(m: Map<K, V>, k: K): Option<V> {
+        return get_option<K, V>(m.value, k);
     }
 
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> {
@@ -413,30 +417,52 @@ namespace MapOps {
         }
     }
 
-    recursive function get<K: keytype, V>(t: Tree<K, V>, k: K): V {
+    recursive function get_direct<K: keytype, V>(t: Tree<K, V>, k: K): V {
         if(t)@<Leaf<K, V>> {
-            return $t.v.value; %% stdlib impl ensures of has(t, k) => this works 
+            assert KeyComparator::equal<K>($t.v.key, k);
+            
+            return $t.v.value;
         }
         else {
             let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
             let rmin = mink<K, V>(nn.r);
 
             if(KeyComparator::less<K>(k, rmin)) {
-                return get[recursive]<K, V>(nn.l, k);
+                return get_direct[recursive]<K, V>(nn.l, k);
             } 
             else {
-                return get[recursive]<K, V>(nn.r, k);
+                return get_direct[recursive]<K, V>(nn.r, k);
+            }
+        }
+    }
+
+    recursive function get_option<K: keytype, V>(t: Tree<K, V>, k: K): Option<V> {
+        if(t)@<Leaf<K, V>> {
+            if(!KeyComparator::equal<K>($t.v.key, k)) {
+                return none;
+            }
+            else {
+                return some($t.v.value);
+            }
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            let rmin = mink<K, V>(nn.r);
+
+            if(KeyComparator::less<K>(k, rmin)) {
+                return get_option[recursive]<K, V>(nn.l, k);
+            } 
+            else {
+                return get_option[recursive]<K, V>(nn.r, k);
             }
         }
     }
 
     recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
-        %% stdlib impl ensures of !has(t, k) => this never collides 
         match(t)@ {
-            BBLeaf<K, V> => { 
-                return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}); 
-            }
-            | Leaf<K, V> => {
+            Leaf<K, V> => {
+                assert !KeyComparator::equal<K>(k, $t.v.key);
+
                 if(KeyComparator::less<K>(k, $t.v.key)) {
                     return Tree<K, V>::createNode(Color#Black, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
                 }
@@ -461,6 +487,10 @@ namespace MapOps {
     }
 
     function insert<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
+        if(t)<BBLeaf<K, V>> { 
+            return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}); 
+        }
+
         let tt = insert_helper<K, V>(t, k, v); 
         if (tt)@!<Node<K, V>> {
             return tt;

@@ -44,13 +44,24 @@ __internal entity Map<K: keytype, V> {
     }
 
     method get(k: K): V 
-        requires this.has(k);
+        requires test this.has(k);
     {
-        return MapOps::s_map_get<K, V>(this, k);
+        assert !MapOps::s_map_empty<K, V>(this);
+
+        return MapOps::s_map_get_direct<K, V>(this, k);
+    }
+
+    method getOption(k: K): Option<V> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return none;
+        }
+        else {
+            return MapOps::s_map_get_option<K, V>(this, k);
+        }
     }
 
     method insert(k: K, v: V): Map<K, V> 
-        requires !this.has(k);
+        requires test !this.has(k);
     {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
