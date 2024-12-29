@@ -538,8 +538,7 @@ namespace ListOps {
 
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            BBLeaf<T> => { return Tree<T>::createLeaf(v); }
-            | Leaf<T> => { return balance<T>(Color#Black, $t, Tree<T>::createLeaf(v)); }
+            Leaf<T> => { return balance<T>(Color#Black, $t, Tree<T>::createLeaf(v)); }
             | Node<T> => { 
                 let nr = pushBack_helper[recursive]<T>($t.r, v);
                 return balance<T>(Color#Black, $t.l, nr); 
@@ -548,6 +547,10 @@ namespace ListOps {
     }
 
     function pushBack<T>(t: Tree<T>, v: T): Tree<T> {
+        if(t)<BBLeaf<T>> { 
+            return Tree<T>::createLeaf(v); 
+        }
+
         let tt = pushBack_helper<T>(t, v); 
         if (tt)@!<Node<T>> {
             return tt;
@@ -559,8 +562,7 @@ namespace ListOps {
 
     recursive function pushFront_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            BBLeaf<T> => { return Tree<T>::createLeaf(v); }
-            | Leaf<T> => { return balance<T>(Color#Black, Tree<T>::createLeaf(v), $t); }
+            Leaf<T> => { return balance<T>(Color#Black, Tree<T>::createLeaf(v), $t); }
             | Node<T> => { 
                 let nr = pushFront_helper[recursive]<T>($t.l, v);
                 return balance<T>(Color#Black, nr, $t.r); 
@@ -569,6 +571,10 @@ namespace ListOps {
     }
 
     function pushFront<T>(t: Tree<T>, v: T): Tree<T> {
+        if(t)<BBLeaf<T>> { 
+            return Tree<T>::createLeaf(v); 
+        }
+
         let tt = pushFront_helper<T>(t, v); 
         if (tt)@!<Node<T>> {
             return tt;
@@ -580,10 +586,7 @@ namespace ListOps {
 
     recursive function insert_helper<T>(t: Tree<T>, idx: Nat, v: T): Tree<T> {
         match(t)@ {
-            BBLeaf<T> => { 
-                return Tree<T>::createLeaf(v); 
-            }
-            | Leaf<T> => { 
+            Leaf<T> => { 
                 if(idx == 0n) {
                     return Tree<T>::createNode(Color#Black, Tree<T>::createLeaf(v), $t);
                 }
@@ -606,6 +609,10 @@ namespace ListOps {
     }
 
     function insert<T>(t: Tree<T>, idx: Nat, v: T): Tree<T> {
+        if(t)<BBLeaf<T>> { 
+            return Tree<T>::createLeaf(v); 
+        }
+
         let tt = insert_helper<T>(t, idx, v); 
         if (tt)@!<Node<T>> {
             return tt;

@@ -24,6 +24,13 @@ describe ("Map -- access", () => {
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(2i); }', [3n, "Int"]); 
     });
 
+    it("should getOption key", function () {
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.getOption(1i)@some; }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(1i)@some; }', [2n, "Int"]); 
+
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(5i)?none; }', [true, "Bool"]); 
+    });
+
     it("should fail get empty", function () {
         runMainCodeError('public function main(): Int { return Map<Int, Int>{}.kmin().value; }', "Error -- !this.empty() @ map.bsq");
         runMainCodeError('public function main(): Int { return Map<Int, Int>{}.kmax().value; }', "Error -- !this.empty() @ map.bsq");
