@@ -317,18 +317,21 @@ const SpaceRequiredSymbols = [
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    "[|][|]", //SYM_barbar,
-    "[-+*]", //SYM_plus|SYM_minus|SYM_times,
+    SYM_barbar,
+    SYM_plus,
     SYM_lt,
     SYM_lteq,
     SYM_gt,
     SYM_gteq,
+    SYM_minus,
+    SYM_times,
     SYM_div
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 
 const SpaceFrontSymbols = [
-    "[-+]" //SYM_positive|SYM_negate
+    SYM_positive,
+    SYM_negate
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const ParenSymbols = [

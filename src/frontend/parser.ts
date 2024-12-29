@@ -164,6 +164,18 @@ class Lexer {
         }
     }
 
+    private trylexPlus(prefix: RegExp, options: string[], suffix: RegExp): string | null {
+        prefix.lastIndex = this.jsStrPos;
+        const mmpre = prefix.exec(this.input);
+        if(mmpre === null) {
+            return null;
+        }
+        
+        xxxx;
+
+        return null;
+    }
+
     constructor(iscore: boolean, srcfile: string, input: string, lstart: number, macrodefs: string[]) {
         this.iscore = iscore;
         this.srcfile = srcfile;
