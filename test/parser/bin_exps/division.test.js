@@ -11,7 +11,7 @@ describe ("Parser -- Nat division", () => {
     });
 
     it("should fail stuck signs", function () {
-        parseTestExpError("2n//3n", 'Unrecognized token', "Nat");
+        parseTestExpError("2n//3n", 'Invalid characters in (or empty) Regex literal', "Nat");
     });
 });
 
@@ -24,7 +24,7 @@ describe ("Parser -- BigInt division", () => {
     });
 
     it("should fail stuck signs", function () {
-        parseTestExpError("2I//3I", 'Unrecognized token', "BigInt");
+        parseTestExpError("2I//3I", 'Invalid characters in (or empty) Regex literal', "BigInt");
     });
 });
 

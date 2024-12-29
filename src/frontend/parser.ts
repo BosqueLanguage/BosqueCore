@@ -164,16 +164,26 @@ class Lexer {
         }
     }
 
-    private trylexPlus(prefix: RegExp, options: string[], suffix: RegExp): string | null {
-        prefix.lastIndex = this.jsStrPos;
-        const mmpre = prefix.exec(this.input);
+    private static readonly _s_whitespaceRe = new RegExp('\\s+', "y");    
+    private trylexWSPlus(options: string[], suffix: RegExp): string | null {
+        Lexer._s_whitespaceRe.lastIndex = this.jsStrPos;
+        const mmpre = Lexer._s_whitespaceRe.exec(this.input);
         if(mmpre === null) {
             return null;
         }
         
-        xxxx;
+        const mopt = options.find((opt) => this.input.startsWith(opt, this.jsStrPos + mmpre[0].length));
+        if(mopt === undefined) {
+            return null;
+        }
 
-        return null;
+        suffix.lastIndex = this.jsStrPos + mmpre[0].length + mopt.length;
+        const mmsuf = suffix.exec(this.input);
+        if(mmsuf === null) {
+            return null;
+        }
+
+        return this.input.slice(this.jsStrPos, this.jsStrPos + mmpre[0].length + mopt.length + mmsuf[0].length);
     }
 
     constructor(iscore: boolean, srcfile: string, input: string, lstart: number, macrodefs: string[]) {
@@ -229,21 +239,14 @@ class Lexer {
     }
     
     private static readonly _s_resourceUseModRe = new RegExp('\[[?!+*-]+\]', 'y');
-
-    private static readonly _s_spaceSensitiveOps = SpaceRequiredSymbols.map((op) => `${op.trim()}`).join("|")
-    private static readonly _s_spaceSensitiveOpsRe = new RegExp(`\\s+(${Lexer._s_spaceSensitiveOps})\\s+`);
-
-    private static readonly _s_spaceSensitiveFrontOps = SpaceFrontSymbols.map((op) => `${op.trim()}`).join("|")
-    private static readonly _s_spaceSensitiveFrontOpsRe = new RegExp(`\\s+(${Lexer._s_spaceSensitiveFrontOps})[^0-9+-]`, "y");
-
-    private static readonly _s_whitespaceRe = new RegExp('\\s+', "y");
+    
     private tryLexWS(): boolean {
-        const arop = this.trylex(Lexer._s_spaceSensitiveOpsRe);
+        const arop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
         if (arop !== null) {
             return false;
         }
 
-        const frop = this.trylex(Lexer._s_spaceSensitiveFrontOpsRe);
+        const frop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
         if (frop !== null) {
             return false;
         }
@@ -292,7 +295,7 @@ class Lexer {
             jepos += 4;
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, TokenStrings.DocComment, this.input.substring(this.jsStrPos, jepos));
+            this.recordLexTokenWData(jepos, TokenStrings.DocComment, this.input.slice(this.jsStrPos, jepos));
             return true;
         }
 
@@ -584,7 +587,7 @@ class Lexer {
         }
         else {
             jepos++;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
@@ -624,7 +627,7 @@ class Lexer {
             }
 
             jepos++;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateCString : TokenStrings.CString, strval);
@@ -650,7 +653,7 @@ class Lexer {
         }
         else {            
             jepos += 2;
-            let strval = this.input.substring(this.jsStrPos, jepos);
+            let strval = this.input.slice(this.jsStrPos, jepos);
 
             //TODO we should validate that the string is valid BSQON here
 
@@ -680,16 +683,39 @@ class Lexer {
         return false;
     }
 
-    private static _s_regexRe = new RegExp('/([!-.0-~]|\s)+/[cp]?', "y");
+    private static _s_validRegexChars = /([!-.0-~]|\s)+/;
     private tryLexRegex() {
-        const rem = this.trylex(Lexer._s_regexRe);
-        if(rem === null) {
+        if(!this.input.startsWith("/", this.jsStrPos)) {
             return false;
         }
 
-        this.updatePositionInfo(this.jsStrPos, this.jsStrPos + rem.length);
-        this.recordLexTokenWData(this.jsStrPos + rem.length, TokenStrings.Regex, rem);
-        return true;
+        let jepos = this.input.indexOf("/", this.jsStrPos + 1);
+        if(jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated Regex literal");
+            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            const mstr = this.input.slice(this.jsStrPos + 1, jepos);
+            if(!Lexer._s_validRegexChars.test(mstr)) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid characters in (or empty) Regex literal");
+                this.recordLexToken(jepos, TokenStrings.Error);
+
+                return true;
+            }
+
+            jepos++;
+            if(this.input.startsWith("c", jepos) || this.input.startsWith("p", jepos)) {
+                jepos++;
+            }
+
+            let strval = this.input.slice(this.jsStrPos, jepos);
+
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.Regex, strval);
+            return true;
+        }
     }
 
     private static _s_pathRe = /[$]?[gf]?\\[ !-Z^-~\[\]]\\/y;
@@ -703,7 +729,7 @@ class Lexer {
 
             const istemplate = pthval.startsWith("$");
             if(istemplate) {
-                pthval = pthval.substring(1);
+                pthval = pthval.slice(1);
             }
 
             Lexer._s_literalPathTagRE.lastIndex = jepos;
@@ -816,8 +842,8 @@ class Lexer {
 
     private tryLexSymbol() {
         const usemodop = this.trylex(Lexer._s_resourceUseModRe);
-        const spaceop = this.trylex(Lexer._s_spaceSensitiveOpsRe);
-        const frontop = this.trylex(Lexer._s_spaceSensitiveFrontOpsRe);
+        const spaceop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
+        const frontop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
         if(usemodop !== null) {
             this.recordLexTokenWData(this.jsStrPos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
             return true;
@@ -860,7 +886,7 @@ class Lexer {
                 jepos++;
             }
 
-            this.recordLexTokenWData(jepos, TokenStrings.Attribute, this.input.substring(this.jsStrPos, jepos));
+            this.recordLexTokenWData(jepos, TokenStrings.Attribute, this.input.slice(this.jsStrPos, jepos));
             return true;
         }
 

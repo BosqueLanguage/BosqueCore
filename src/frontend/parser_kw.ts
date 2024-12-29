@@ -326,13 +326,14 @@ const SpaceRequiredSymbols = [
     SYM_minus,
     SYM_times,
     SYM_div
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
+].map((s) => { return s.trim(); })
+.sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const SpaceFrontSymbols = [
     SYM_positive,
     SYM_negate
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+].map((s) => { return s.trim(); })
+.sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const ParenSymbols = [
     ...LeftScanParens,
