@@ -3,6 +3,14 @@
 ;;
 
 ;;
+;;Bounds on input numeric/string/container sizes -- TODO: in the future let solver set these....
+;;
+(declare-const _@INPUT_NUMBER_MIN Int) (assert (= _@INPUT_NUMBER_MIN -256))
+(declare-const _@INPUT_NUMBER_MAX Int) (assert (= _@INPUT_NUMBER_MAX 256))
+(declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
+(declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
+
+;;
 ;;Error kinds and results that we propagate
 ;;
 (declare-datatype @ResultKind (@ResultKind-T @ResultKind-O @ResultKind-C))
@@ -19,16 +27,6 @@
 (declare-datatype @ResultA (par (V) ((@ResultA-err (@ResultA-kind @ResultKind)) (@ResultA-ok (@ResultA-value V)))))
 
 ;;
-
-;;
-;;Bounds on input numeric/string/container sizes -- TODO: in the future let solver set these....
-;;
-(declare-const _@INPUT_NUMBER_MIN Int) (assert (= _@INPUT_NUMBER_MIN -256))
-(declare-const _@INPUT_NUMBER_MAX Int) (assert (= _@INPUT_NUMBER_MAX 256))
-(declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
-(declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
-
-;;
 ;; Primitive datatypes 
 ;;
 (declare-datatype None ((none)))
@@ -40,14 +38,10 @@
 ;;String is String
 
 ;;
-;; enum datatypes 
+;; enum datatypes
+;; SAMPLE -- (declare-datatypes () ((EnumType a b c))) 
 ;;
-
-;;SAMPLE -- (declare-datatypes () ((EnumType a b c)))
-
-;;
-;; enum results -- set of enum results per enum type
-;;
+;;--ENUM DECLS--;;
 
 ;;
 ;; typedecl datatypes 
