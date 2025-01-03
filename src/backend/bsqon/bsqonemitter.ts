@@ -307,12 +307,19 @@ class BSQONTypeInfoEmitter {
 
     private emitOptionTypeDecl(tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Option");
+        const mdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Option");
+        mdecl.oftype = rcvr.alltermargs[0].tkeystr;
+
+        return mdecl;
     }
 
     private emitResultTypeDecl(tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result");
+        const mdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Result");
+        mdecl.ttype = rcvr.alltermargs[0].tkeystr;
+        mdecl.etype = rcvr.alltermargs[1].tkeystr;
+
+        return mdecl;
     }
 
     private emitAPIResultTypeDecl(tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo): any {
