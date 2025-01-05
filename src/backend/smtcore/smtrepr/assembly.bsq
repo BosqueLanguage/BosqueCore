@@ -18,11 +18,14 @@ const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}|${SMTEmitter:
 
 type TypeKey = CString of SMTEmitter::typeKeyRE;
 
-enum OptionResultKind {
-    Clear,
-    Target,
-    Other,
-    General
+enum ResultKindEnum {
+    Unknown,
+    Direct,
+    ResultT,
+    ResultO,
+    ResultC,
+    ResultM,
+    ResultA
 }
 
 datatype ResultType
@@ -32,7 +35,7 @@ DirectResult {
 }
 | OptionResult { 
     field rtype: TypeKey;
-    field kind: OptionResultKind;
+    field kind: ResultKindEnum;
 }
 %% TODO -- later add result types with ref stuff
 ;

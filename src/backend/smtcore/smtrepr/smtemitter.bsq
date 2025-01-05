@@ -619,7 +619,7 @@ recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpress
 }
 
 function doLetIndent(enext: Expression): Bool {
-    return !\/(enext?<LetExpression>, enext?<ErrorProcessExpression>);
+    return !\/(enext?<LetExpression>, enext?<ResultErrorProcessExpression>);
 }
 
 recursive function emitLetExpression(e: LetExpression, indent: Option<CString>): CString {
@@ -656,6 +656,19 @@ recursive function emitIfExpression(e: IfExpression, indent: Option<CString>): C
         let fv = emitExpression[recursive](e.falseExpression, some(iident));
 
         return CString::concat(ttst, '%n;', tv, '%n;', fv, tident);
+    }
+}
+
+function emitReturnExpression(e: ReturnExpression, indent: Option<CString>, fkind: ResultKindEnum): CString {
+    let vval = emitValue(e.val);
+
+    switch(fkind) {
+        ResultKindEnum#Direct => { return vval; }
+        | ResultKindEnum#ResultT => { return CString::concat('(@ResultT-ok ', vval, ')'); }
+        | ResultKindEnum#ResultO => { return CString::concat('(@ResultE-ok ', vval, ')'); }
+        | ResultKindEnum#ResultC => { return CString::concat('(@ResultC-ok ', vval, ')'); }
+        | ResultKindEnum#ResultM => { return CString::concat('(@ResultM-ok ', vval, ')'); }
+        | ResultKindEnum#ResultA => { return CString::concat('(@ResultA-ok ', vval, ')'); }
     }
 }
 

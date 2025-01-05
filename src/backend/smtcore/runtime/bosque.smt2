@@ -13,18 +13,24 @@
 ;;
 ;;Error kinds and results that we propagate
 ;;
-(declare-datatype @ResultKind (@ResultKind-T @ResultKind-O @ResultKind-C))
-(assert (distinct @ResultKind-T @ResultKind-O @ResultKind-C))
-
 (declare-datatype @ResultT (par (V) ((@ResultT-err) (@ResultT-ok (@ResultT-value V)))))
 (declare-datatype @ResultO (par (V) ((@ResultO-err) (@ResultO-ok (@ResultO-value V)))))
 (declare-datatype @ResultC (par (V) ((@ResultC-err) (@ResultC-ok (@ResultC-value V)))))
 
 ;;Misc is either a @ResultKind-O @ResultKind-C
-(declare-datatype @ResultM (par (V) ((@ResultM-err (@ResultM-kind @ResultKind)) (@ResultM-ok (@ResultM-value V)))))
+(declare-datatype @ResultM (par (V) (
+    (@ResultM-err-o) 
+    (@ResultM-err-c) 
+    (@ResultM-ok (@ResultM-value V))
+)))
 
 ;;Any is either a @ResultKind-T @ResultKind-O @ResultKind-C
-(declare-datatype @ResultA (par (V) ((@ResultA-err (@ResultA-kind @ResultKind)) (@ResultA-ok (@ResultA-value V)))))
+(declare-datatype @ResultA (par (V) (
+    (@ResultA-err-t)
+    (@ResultA-err-o)
+    (@ResultA-err-c) 
+    (@ResultA-ok (@ResultA-value V))
+)))
 
 ;;
 ;; Primitive datatypes 

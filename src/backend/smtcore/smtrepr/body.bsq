@@ -369,19 +369,21 @@ entity IfExpression provides Expression {
     field falseExpression: Expression;
 }
 
-entity DirectResultExpression provides Expression {
+entity ReturnExpression provides Expression {
+    field kind: ResultKindEnum;
     field val: Value;
 }
 
-entity ErrorProcessExpression provides Expression {
-    %%TODO
+entity ResultErrorProcessExpression provides Expression {
+    field expkind: ResultKindEnum;
+    field val: Expression;
 }
 
 entity AbortExpression provides Expression {
-    field kind: OptionResultKind;
+    field kind: ResultKindEnum;
 }
 
 entity AssertExpression provides Expression {
     field cond: Value;
-    field kind: OptionResultKind;
+    field kind: ResultKindEnum;
 }
