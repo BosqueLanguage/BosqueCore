@@ -16,8 +16,12 @@ const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}/c;
 const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::nominalTypeKeyRE}/c;
 const paramTypeKeyRE: CRegex = /${SMTEmitter::typeKeyRE}|${lambdaTypeKeyRE}/c;
 
+const resultTypeKeyRE: CRegex = /'('('@ResultT'|'@ResultO'|'@ResultA')' '${SMTEmitter::typeKeyRE}')'/c;
+const returnTypeKeyRE: CRegex = /'${SMTEmitter::typeKeyRE}|${SMTEmitter::resultTypeKeyRE}'/c;
+
 type TypeKey = CString of SMTEmitter::typeKeyRE;
 type ParamTypeKey = CString of SMTEmitter::paramTypeKeyRE;
+type ReturnTypeKey = CString of SMTEmitter::resultTypeKeyRE;
 
 enum ResultKindEnum {
     Unknown,

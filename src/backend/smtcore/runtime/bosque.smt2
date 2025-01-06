@@ -15,7 +15,6 @@
 ;;
 (declare-datatype @ResultT (par (T) ((@ResultT-err) (@ResultT-ok (@ResultT-value T)))))
 (declare-datatype @ResultO (par (T) ((@ResultO-err) (@ResultO-ok (@ResultO-value T)))))
-(declare-datatype @ResultC (par (T) ((@ResultC-err) (@ResultC-ok (@ResultC-value T)))))
 
 ;;Any is either a @ResultKind-T @ResultKind-O
 (declare-datatype @ResultA (par (T) (

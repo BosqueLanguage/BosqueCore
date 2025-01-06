@@ -132,11 +132,6 @@ ConstructorListSingletonsValue {
 }
 ;
 
-entity ConstructorEListValue provides Value {
-    field constype: TypeKey;
-    field args: List<Value>;
-}
-
 entity LetValue provides Value {
     field vname: CString;
     field value: Value;
@@ -184,13 +179,6 @@ entity UnwrapTypeDeclToPrimitiveValue provides Value {
 entity AccessFromNameResolvedValue provides Value {
     field ontype: TypeKey;
     field name: CString;
-
-    field arg: Value;
-}
-
-entity AccessFromIndexValue provides Value {
-    field elisttype: TypeKey;
-    field idx: CString;
 
     field arg: Value;
 }
