@@ -3,6 +3,14 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
+
+entity LambdaConstructorSafeCallable {
+    field params: List<InvokeParameterDecl>;
+    field resultType: DirectResult;
+
+    field body: Value;
+}
+
 concept Value {
 }
 
@@ -105,10 +113,6 @@ ConstructorListSingletonsValue {
 entity ConstructorEListValue provides Value {
     field constype: TypeKey;
     field args: List<Value>;
-}
-
-entity ConstructorLambdaValue provides Value {
-    field invoke: LambdaDecl;
 }
 
 entity LetValue provides Value {
@@ -320,6 +324,13 @@ entity IfValue provides Value {
     field iftest: Value;
     field trueValue: Value;
     field falseValue: Value;
+}
+
+entity LambdaConstructorWithResult {
+    field params: List<InvokeParameterDecl>;
+    field resultType: OptionResult;
+
+    field body: Expression;
 }
 
 concept Expression {

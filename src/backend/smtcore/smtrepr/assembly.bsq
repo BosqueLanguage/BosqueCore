@@ -23,8 +23,6 @@ enum ResultKindEnum {
     Direct,
     ResultT,
     ResultO,
-    ResultC,
-    ResultM,
     ResultA
 }
 
@@ -43,13 +41,6 @@ DirectResult {
 entity InvokeParameterDecl {
     field pname: CString;
     field ptype: TypeKey;
-}
-
-entity LambdaDecl {
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: Expression;
 }
 
 entity NamespaceFunctionDecl {

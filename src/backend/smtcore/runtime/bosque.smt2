@@ -13,23 +13,15 @@
 ;;
 ;;Error kinds and results that we propagate
 ;;
-(declare-datatype @ResultT (par (V) ((@ResultT-err) (@ResultT-ok (@ResultT-value V)))))
-(declare-datatype @ResultO (par (V) ((@ResultO-err) (@ResultO-ok (@ResultO-value V)))))
-(declare-datatype @ResultC (par (V) ((@ResultC-err) (@ResultC-ok (@ResultC-value V)))))
+(declare-datatype @ResultT (par (T) ((@ResultT-err) (@ResultT-ok (@ResultT-value T)))))
+(declare-datatype @ResultO (par (T) ((@ResultO-err) (@ResultO-ok (@ResultO-value T)))))
+(declare-datatype @ResultC (par (T) ((@ResultC-err) (@ResultC-ok (@ResultC-value T)))))
 
-;;Misc is either a @ResultKind-O @ResultKind-C
-(declare-datatype @ResultM (par (V) (
-    (@ResultM-err-o) 
-    (@ResultM-err-c) 
-    (@ResultM-ok (@ResultM-value V))
-)))
-
-;;Any is either a @ResultKind-T @ResultKind-O @ResultKind-C
-(declare-datatype @ResultA (par (V) (
+;;Any is either a @ResultKind-T @ResultKind-O
+(declare-datatype @ResultA (par (T) (
     (@ResultA-err-t)
-    (@ResultA-err-o)
-    (@ResultA-err-c) 
-    (@ResultA-ok (@ResultA-value V))
+    (@ResultA-err-o) 
+    (@ResultA-ok (@ResultA-value T))
 )))
 
 ;;
@@ -45,7 +37,7 @@
 
 ;;
 ;; enum datatypes
-;; SAMPLE -- (declare-datatypes () ((EnumType a b c))) 
+;; SAMPLE -- (declare-datatype (EnumType a b c)) 
 ;;
 ;;--ENUM DECLS--;;
 
