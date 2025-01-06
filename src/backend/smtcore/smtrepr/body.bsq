@@ -3,15 +3,37 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
+enum ExpressionKindEnum {
+    Direct,
+    ResultT,
+    ResultO,
+    ResultA
+}
 
-entity LambdaConstructorSafeCallable {
+concept CallArgValue {
+}
+
+concept CallArgExpression {
+}
+
+entity LambdaConstructorSafeCallable provides CallArgValue, CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: DirectResult;
 
     field body: Value;
 }
 
-concept Value {
+entity LambdaConstructorWithResult provides CallArgExpression {
+    field params: List<InvokeParameterDecl>;
+    field resultType: ResultType;
+
+    field body: Expression;
+}
+
+concept Expression {
+}
+
+concept Value provides Expression, CallArgValue, CallArgExpression {
 }
 
 datatype ConstantValue provides Value
@@ -123,7 +145,7 @@ entity LetValue provides Value {
 
 entity LambdaInvokeValue provides Value {
     field name: CString;
-    field args: List<Value>;
+    field args: List<CallArgValue>;
 
     invariant !$args.empty();
 }
@@ -132,14 +154,14 @@ entity CallNamespaceFunctionValue provides Value {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<Value>;
+    field args: List<CallArgValue>;
 }
 
 entity CallTypeFunctionValue provides Value {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Value>;
+    field args: List<CallArgValue>;
 }
 
 entity LogicActionAndValue provides Value {
@@ -218,7 +240,7 @@ entity MethodInvokeStaticValue provides Value {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
-    field args: List<Value>;
+    field args: List<CallArgValue>;
 }
 
 datatype UnaryValue provides Value using {
@@ -326,23 +348,9 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
-entity LambdaConstructorWithResult {
-    field params: List<InvokeParameterDecl>;
-    field resultType: OptionResult;
-
-    field body: Expression;
-}
-
-concept Expression {
-}
-
-entity ValueExpression provides Expression {
-    field value: Value;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
     
     invariant !$args.empty();
 }
@@ -351,21 +359,21 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
 entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
 entity LetExpression provides Expression {
@@ -380,7 +388,12 @@ entity IfExpression provides Expression {
     field falseExpression: Expression;
 }
 
-entity ReturnExpression provides Expression {
+entity ReturnDirectExpression provides Expression {
+    field kind: ResultKindEnum;
+    field val: Value;
+}
+
+entity ReturnResultExpression provides Expression {
     field kind: ResultKindEnum;
     field val: Value;
 }
@@ -391,10 +404,10 @@ entity ResultErrorProcessExpression provides Expression {
 }
 
 entity AbortExpression provides Expression {
-    field kind: ResultKindEnum;
+    field istrgt: Bool;
 }
 
 entity AssertExpression provides Expression {
+    field istrgt: Bool;
     field cond: Value;
-    field kind: ResultKindEnum;
 }

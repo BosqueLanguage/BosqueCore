@@ -1,5 +1,9 @@
 declare namespace SMTEmitter;
 
+entity SMTEmitterEnv {
+    field expectedResultType: ResultType;
+}
+
 function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
 }
@@ -189,7 +193,7 @@ recursive function emitLambdaInvokeValue(v: LambdaInvokeValue): CString {
         return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitCallArgValue[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(select ', v.name, ' ', argsl, ')');
@@ -202,7 +206,7 @@ recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue)
         return fname;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitCallArgValue[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', fname, ' ', argsl, ')');
@@ -215,7 +219,7 @@ recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString 
         return fname;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitCallArgValue[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', fname, ' ', argsl, ')');
@@ -311,7 +315,7 @@ recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CStr
         return CString::concat('(', rpfx, ')');
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitCallArgValue[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', rpfx, ' ', argsl, ')');
@@ -550,17 +554,46 @@ recursive function emitValue(v: Value): CString {
     }
 }
 
-recursive function emitValueExpression(e: ValueExpression): CString {
-    return emitValue[recursive](e.value);
+recursive function emitLambdaConstructorSafeCallable(v: LambdaConstructorSafeCallable): CString {
+    let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let body = emitValue[recursive](v.invoke.body);
+
+    return CString::concat('(lambda ', pll, ' ', body, ')');
 }
 
-recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression): CString {
+recursive function emitLambdaConstructorWithResult(v: LambdaConstructorWithResult, e: SMTEmitterEnv): (|CString, ExpressionKindEnum|) {
+    let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let body, info = emitExpression[recursive](v.invoke.body, e);
+
+    return CString::concat('(lambda ', pll, ' ', body, ')'), info;
+}
+
+recursive function emitCallArgValue(v: CallArgValue): CString {
+    match(v)@ {
+        LambdaConstructorSafeCallable => { return emitLambdaConstructorSafeCallable[recursive]($v); }
+        | Value => { return emitValue[recursive]($v); }
+    }
+}
+
+recursive function emitCallArgExpression(v: CallArgExpression, e: SMTEmitterEnv): (|CString, ExpressionKindEnum|) {
+    match(v)@ {
+        LambdaConstructorWithResult => { return emitLambdaConstructorWithResult[recursive]($v, e); }
+        | CallArgValue => { return (|emitCallArgValue[recursive]($v), ExpressionKindEnum#Direct|); }
+    }
+}
+
+recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression, e: SMTEmitterEnv): (|CString, ExpressionKindEnum|) {
     if(e.args.isSingleElement()) {
         return CString::concat('(', e.name, ' ', emitValue[recursive](e.args.single()), ')');
     }
     else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-        let argsl = CString::joinAll(' ', cvals);
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, e));
+        let argsl = CString::joinAll(' ', cvals.map((x) => x.0));
+        let knd = cvals.map((x) => x.1).reduce(fn(x, y) => if(x == y) then x else ExpressionKindEnum#Direct);
 
         return CString::concat('(select ', e.name, ' ', argsl, ')');
     }
@@ -653,11 +686,9 @@ function emitReturnExpression(e: ReturnExpression, indent: Option<CString>, fkin
     let vval = emitValue(e.val);
 
     switch(fkind) {
-        ResultKindEnum#Direct => { return vval; }
-        | ResultKindEnum#ResultT => { return CString::concat('(@ResultT-ok ', vval, ')'); }
+        ResultKindEnum#ResultT => { return CString::concat('(@ResultT-ok ', vval, ')'); }
         | ResultKindEnum#ResultO => { return CString::concat('(@ResultE-ok ', vval, ')'); }
         | ResultKindEnum#ResultC => { return CString::concat('(@ResultC-ok ', vval, ')'); }
-        | ResultKindEnum#ResultM => { return CString::concat('(@ResultM-ok ', vval, ')'); }
         | ResultKindEnum#ResultA => { return CString::concat('(@ResultA-ok ', vval, ')'); }
     }
 }
@@ -681,30 +712,6 @@ recursive function emitExpression(e: Expression, indent: Option<CString>): CStri
         return CString::concat($indent, eexp);
     }
 }
-
-%*
-recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CString {
-    let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
-    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
-
-    let body = emitExpression[recursive](v.invoke.body, none);
-
-    return CString::concat('(lambda ', pll, ' ', body, ')');
-}
-
-
-chktest test_emitConstructorLambdaValue(): Bool {
-    let op = ConstructorLambdaValue{
-        LambdaDecl{
-            List<InvokeParameterDecl>{InvokeParameterDecl{'a', 'Int'<TypeKey>}, InvokeParameterDecl{'b', 'Int'<TypeKey>}},
-            DirectResult{'Int'<TypeKey>},
-            ValueExpression{AccessVariableValue{'a'}}
-        }
-    };
-    return emitConstructorLambdaValue(op) === '(lambda ((a Int) (b Int)) a)';
-}
-
-*%
 
 public function main(): Int {
     var asm: Assembly;

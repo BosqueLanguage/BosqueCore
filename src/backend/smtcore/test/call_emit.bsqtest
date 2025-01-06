@@ -1,5 +1,14 @@
 namespace SMTEmitter;
 
+chktest test_emitLambdaConstructorSafeCallable(): Bool {
+    let op = LambdaConstructorSafeCallable{
+        List<InvokeParameterDecl>{InvokeParameterDecl{'a', 'Int'<TypeKey>}, InvokeParameterDecl{'b', 'Int'<TypeKey>}},
+        DirectResult{'Int'<TypeKey>},
+        ValueExpression{AccessVariableValue{'a'}}
+    };
+    return emitLambdaConstructorSafeCallable(op) === '(lambda ((a Int) (b Int)) a)';
+}
+
 chktest test_emitLambdaInvokeValue_one(): Bool {
     let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
     return emitLambdaInvokeValue(op) === '(f 0)';
