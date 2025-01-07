@@ -3,37 +3,17 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
-enum ExpressionKindEnum {
-    Direct,
-    ResultT,
-    ResultO,
-    ResultA
-}
-
-concept CallArgValue {
-}
-
 concept CallArgExpression {
 }
 
-entity LambdaConstructorSafeCallable provides CallArgValue, CallArgExpression {
-    field params: List<InvokeParameterDecl>;
-    field resultType: DirectResult;
-
-    field body: Value;
-}
-
-entity LambdaConstructorWithResult provides CallArgExpression {
+entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
     field body: Expression;
 }
 
-concept Expression {
-}
-
-concept Value provides Expression, CallArgValue, CallArgExpression {
+concept Value provides CallArgExpression {
 }
 
 datatype ConstantValue provides Value
@@ -138,25 +118,18 @@ entity LetValue provides Value {
     field body: Value;
 }
 
-entity LambdaInvokeValue provides Value {
-    field name: CString;
-    field args: List<CallArgValue>;
-
-    invariant !$args.empty();
-}
-
 entity CallNamespaceFunctionValue provides Value {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<CallArgValue>;
+    field args: List<Value>;
 }
 
 entity CallTypeFunctionValue provides Value {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<CallArgValue>;
+    field args: List<Value>;
 }
 
 entity LogicActionAndValue provides Value {
@@ -228,7 +201,7 @@ entity MethodInvokeStaticValue provides Value {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
-    field args: List<CallArgValue>;
+    field args: List<Value>;
 }
 
 datatype UnaryValue provides Value using {
@@ -336,6 +309,13 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
+concept Expression {
+}
+
+entity ValueExpression provides Expression {
+    field value: Value;
+}
+
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
     field args: List<CallArgExpression>;
@@ -376,26 +356,25 @@ entity IfExpression provides Expression {
     field falseExpression: Expression;
 }
 
-entity ReturnDirectExpression provides Expression {
-    field kind: ResultKindEnum;
+entity ReturnValueExpression provides Expression {
     field val: Value;
 }
 
-entity ReturnResultExpression provides Expression {
-    field kind: ResultKindEnum;
-    field val: Value;
+entity ReturnPassThroughExpression provides Expression {
+    field val: Expression;
 }
 
 entity ResultErrorProcessExpression provides Expression {
-    field expkind: ResultKindEnum;
+    field tmpvar: CString;
+    field bindvar: CString;
     field val: Expression;
 }
 
 entity AbortExpression provides Expression {
-    field istrgt: Bool;
+    field label: CString;
 }
 
 entity AssertExpression provides Expression {
-    field istrgt: Bool;
+    field label: CString;
     field cond: Value;
 }

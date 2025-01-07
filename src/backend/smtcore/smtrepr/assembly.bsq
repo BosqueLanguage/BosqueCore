@@ -23,23 +23,13 @@ type TypeKey = CString of SMTEmitter::typeKeyRE;
 type ParamTypeKey = CString of SMTEmitter::paramTypeKeyRE;
 type ReturnTypeKey = CString of SMTEmitter::resultTypeKeyRE;
 
-enum ResultKindEnum {
-    Unknown,
-    ResultT,
-    ResultO,
-    ResultA
-}
-
-datatype ResultType
-of
-DirectResult { 
-    field rtype: TypeKey; 
-}
-| OptionResult { 
+datatype ResultType using {
     field rtype: TypeKey;
-    field kind: ResultKindEnum;
 }
-%% TODO -- later add result types with ref stuff
+of
+DirectResult { }
+| OptionResult { }
+%% TODO -- later add result types with ref (etc.) stuff
 ;
 
 entity InvokeParameterDecl {

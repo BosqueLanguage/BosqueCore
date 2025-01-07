@@ -1,23 +1,5 @@
 namespace SMTEmitter;
 
-chktest test_emitLambdaConstructorSafeCallable(): Bool {
-    let op = LambdaConstructorSafeCallable{
-        List<InvokeParameterDecl>{InvokeParameterDecl{'a', 'Int'<TypeKey>}, InvokeParameterDecl{'b', 'Int'<TypeKey>}},
-        DirectResult{'Int'<TypeKey>},
-        ValueExpression{AccessVariableValue{'a'}}
-    };
-    return emitLambdaConstructorSafeCallable(op) === '(lambda ((a Int) (b Int)) a)';
-}
-
-chktest test_emitLambdaInvokeValue_one(): Bool {
-    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitLambdaInvokeValue(op) === '(f 0)';
-}
-
-chktest test_emitLambdaInvokeValue_two(): Bool {
-    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
-    return emitLambdaInvokeValue(op) === '(select f 0 true)';
-}
 
 chktest test_emitCallNamespaceFunctionValue_empty(): Bool {
     let op = CallNamespaceFunctionValue{'Main'<NamespaceKey>, 'f', List<Value>{}};

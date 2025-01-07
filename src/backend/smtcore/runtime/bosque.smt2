@@ -10,17 +10,10 @@
 (declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
 (declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
 
-;;
-;;Error kinds and results that we propagate
-;;
-(declare-datatype @ResultT (par (T) ((@ResultT-err) (@ResultT-ok (@ResultT-value T)))))
-(declare-datatype @ResultO (par (T) ((@ResultO-err) (@ResultO-ok (@ResultO-value T)))))
-
-;;Any is either a @ResultKind-T @ResultKind-O
-(declare-datatype @ResultA (par (T) (
-    (@ResultA-err-t)
-    (@ResultA-err-o) 
-    (@ResultA-ok (@ResultA-value T))
+(declare-datatype @Result (par (T) (
+    (@Result-err-t)
+    (@Result-err-o) 
+    (@Result-ok (@Result-value T))
 )))
 
 ;;
