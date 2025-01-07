@@ -10,7 +10,7 @@ entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: Expression;
+    field body: FlowOperation;
 }
 
 concept Value provides CallArgExpression {
@@ -312,10 +312,6 @@ entity IfValue provides Value {
 concept Expression {
 }
 
-entity ValueExpression provides Expression {
-    field value: Value;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
     field args: List<CallArgExpression>;
@@ -344,37 +340,47 @@ entity MethodInvokeStaticExpression provides Expression {
     field args: List<CallArgExpression>;
 }
 
-entity LetExpression provides Expression {
+concept FlowOperation {
+}
+
+entity LetOperation provides FlowOperation {
     field vname: CString;
     field value: Value;
-    field body: Expression;
+    field body: FlowOperation;
 }
 
-entity IfExpression provides Expression {
+entity IfOperation provides FlowOperation {
     field iftest: Value;
-    field trueExpression: Expression;
-    field falseExpression: Expression;
+    field trueExpression: FlowOperation;
+    field falseExpression: FlowOperation;
 }
 
-entity ReturnValueExpression provides Expression {
+entity ReturnValueOperation provides FlowOperation {
     field val: Value;
 }
 
-entity ReturnPassThroughExpression provides Expression {
+entity ResultErrorProcessOperation provides FlowOperation {
     field val: Expression;
-}
-
-entity ResultErrorProcessExpression provides Expression {
     field tmpvar: CString;
+
+    field follow: FlowOperation;
     field bindvar: CString;
-    field val: Expression;
 }
 
-entity AbortExpression provides Expression {
+entity AbortOperation provides FlowOperation {
     field label: CString;
 }
 
-entity AssertExpression provides Expression {
+entity AssertOperation provides FlowOperation {
     field label: CString;
     field cond: Value;
+
+    field follow: FlowOperation;
 }
+
+entity AssumeOperation provides FlowOperation {
+    field cond: Value;
+
+    field follow: FlowOperation;
+}
+

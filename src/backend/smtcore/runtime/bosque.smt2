@@ -11,8 +11,8 @@
 (declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
 
 (declare-datatype @Result (par (T) (
-    (@Result-err-t)
-    (@Result-err-o) 
+    (@Result-err-trgt)
+    (@Result-err-other) 
     (@Result-ok (@Result-value T))
 )))
 

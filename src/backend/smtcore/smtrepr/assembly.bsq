@@ -16,7 +16,7 @@ const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}/c;
 const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::nominalTypeKeyRE}/c;
 const paramTypeKeyRE: CRegex = /${SMTEmitter::typeKeyRE}|${lambdaTypeKeyRE}/c;
 
-const resultTypeKeyRE: CRegex = /'('('@ResultT'|'@ResultO'|'@ResultA')' '${SMTEmitter::typeKeyRE}')'/c;
+const resultTypeKeyRE: CRegex = /'(@Result '${SMTEmitter::typeKeyRE}')'/c;
 const returnTypeKeyRE: CRegex = /'${SMTEmitter::typeKeyRE}|${SMTEmitter::resultTypeKeyRE}'/c;
 
 type TypeKey = CString of SMTEmitter::typeKeyRE;
