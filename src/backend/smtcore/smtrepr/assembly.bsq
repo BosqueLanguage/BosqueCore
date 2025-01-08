@@ -11,9 +11,10 @@ type NamespaceKey = CString of /(${SMTEmitter::namespaceComponentRE}'@')*${SMTEm
 const basicNominalTypeKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('$'.+'$')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'$'.+'$''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /${SMTEmitter::basicNominalTypeKeyRE}|${SMTEmitter::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
-const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}/c;
+const elistTypeKeyRE: CRegex = /'@EList$'.*'$'/c;
+const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::elistTypeKeyRE}|${SMTEmitter::nominalTypeKeyRE}/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::nominalTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::typeKeyRE}/c;
 const paramTypeKeyRE: CRegex = /${SMTEmitter::typeKeyRE}|${lambdaTypeKeyRE}/c;
 
 const resultTypeKeyRE: CRegex = /'(@Result '${SMTEmitter::typeKeyRE}')'/c;

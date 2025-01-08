@@ -44,3 +44,18 @@ chktest test_emitConstructorStdValue_two(): Bool {
     let op = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
     return emitConstructorPrimaryValue(op) === '(Main@Foo-mk 0 true)';
 }
+
+chktest test_emitConstructorEListValue_empty(): Bool {
+    let op = ConstructorEListValue{'@EList$$'<TypeKey>, List<Value>{}};
+    return emitValue(op) === '@EList$$-mk';
+}
+
+chktest test_emitConstructorEListValue_one(): Bool {
+    let op = ConstructorEListValue{'@EList$Int$'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitValue(op) === '(@EList$Int$-mk 0)';
+}
+
+chktest test_emitConstructorEListValue_two(): Bool {
+    let op = ConstructorEListValue{'@EList$Int-Bool$'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitValue(op) === '(@EList$Int-Bool$-mk 0 true)';
+}

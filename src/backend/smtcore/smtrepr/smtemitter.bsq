@@ -169,11 +169,17 @@ recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CStr
     }
 }
 
-recursive function emitLetValue(v: LetValue): CString {
-    let vbind = CString::concat('((', v.vname, ' ', emitValue[recursive](v.value), '))');
-    let bbody = emitValue[recursive](v.body);
-    
-    return CString::concat('(let ', vbind, ' ', bbody, ')');
+recursive function emitConstructorEListValue(v: ConstructorEListValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    if(v.args.empty()) {
+        return consname;
+    }
+    else {
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', consname, ' ', argsl, ')');
+    }
 }
 
 recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
@@ -223,6 +229,11 @@ recursive function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimiti
 
 recursive function emitAccessFromNameResolvedValue(v: AccessFromNameResolvedValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
+recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
@@ -496,13 +507,14 @@ recursive function emitValue(v: Value): CString {
         | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
         | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
         | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
-        | LetValue => { return emitLetValue[recursive]($v); }
+        | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
         | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
         | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
         | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
         | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
         | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
         | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
+        | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
         | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
         | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
         | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
