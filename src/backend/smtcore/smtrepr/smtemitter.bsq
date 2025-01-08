@@ -751,6 +751,57 @@ recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, inde
     }
 }
 
+function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+    let evv = SMTEmitterEnv{vtype, '[NO_CONST_ERRORS]'};
+    let cval = emitFlowOperation(value, evv, none);
+
+    if(vtype)<DirectResult> {
+        return CString::concat('(assert (= ', cname, ' ', cval, '))');
+    }
+    else {
+        let tname = CString::concat(cname, '-cc-temp');
+        let icompute = CString::concat('(declare-const ', tname, ' ', vtype.rtype.value, ')');
+
+        return CString::concat('(@Result-ok ', vval, ')');
+    }
+}
+
+%** Return the declarations and definitions as 2 seperate components **%
+function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<ConstMemberDecl>): CString, CString {
+    let nsconstdecls = nsconsts.map<CString>(fn(c) => CString::concat('(declare-const ', SMTNameManager::generateNamespaceConstName(c.ns, c.cname), ' ', c.vtype.rtype.value, ')'));
+    let tconstdecls = typeconsts.map<CString>(fn(c) => CString::concat('(declare-const ', SMTNameManager::generateTypeConstName(c.tkey, c.name), ' ', cvtype.rtype.value, ')'));
+
+    let nsconstimpls = nsconsts.map<CString>(fn(c) => CString::concat('(assert (', c.name, ' ', emitValue(c.value), '))'));
+    let tconstimpls = typeconsts.map<CString>(fn(c) => CString::concat('(assert (', c.name, ' ', emitValue(c.value), '))'));
+
+    return xxxx;
+}
+
+function emitAssembly(asm: Assembly): CString {
+    let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
+
+%*
+    field nsfuncs: List<NamespaceFunctionDecl>;
+    field nspreds: List<NamespacePredicateFunctionDecl>;
+    field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    
+    field typefuncs: List<TypeFunctionDecl>;
+    
+    field enums: List<EnumTypeDecl>;
+    field typedecls: List<TypedeclTypeDecl>;
+    field pentities: List<PrimitiveEntityTypeDecl>;
+    field constructables: List<ConstructableTypeDecl>;
+    field collections: List<CollectionTypeDecl>;
+    field entities: List<EntityTypeDecl>;
+    
+    field pconcepts: List<PrimitiveConceptTypeDecl>;
+    field concepts: List<ConceptTypeDecl>;
+
+    field datatypes: List<DatatypeTypeDecl>;
+    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+*%
+}
+
 public function main(): Int {
     var asm: Assembly;
 

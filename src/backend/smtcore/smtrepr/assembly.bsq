@@ -80,8 +80,8 @@ entity ConstMemberDecl {
     field tkey: TypeKey;
     field cname: CString;
 
-    field declaredType: TypeKey;
-    field value: Expression;
+    field vtype: ResultType;
+    field value: FlowOperation;
 }
 
 entity MemberFieldDecl {
@@ -204,8 +204,8 @@ entity NamespaceConstDecl {
     field ns: NamespaceKey;
     field cname: CString;
 
-    field declaredType: TypeKey;
-    field value: Expression;
+    field vtype: ResultType;
+    field value: FlowOperation;
 }
 
 entity Assembly {
