@@ -1,5 +1,10 @@
 declare namespace SMTEmitter;
 
+entity SMTEmitterEnv {
+    field expectedResultType: ResultType;
+    field errtrgt: CString;
+}
+
 function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
 }
@@ -164,45 +169,11 @@ recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CStr
     }
 }
 
-recursive function emitConstructorEListValue(v: ConstructorEListValue): CString {
-    let consname = SMTNameManager::generateStructConstructorName(v.constype);
-    if(v.args.empty()) {
-        return consname;
-    }
-    else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-        let argsl = CString::joinAll(' ', cvals);
-
-        return CString::concat('(', consname, ' ', argsl, ')');
-    }
-}
-
-recursive function emitConstructorLambdaValue(v: ConstructorLambdaValue): CString {
-    let plist = v.invoke.params.map[recursive]<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
-    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
-
-    let body = emitExpression[recursive](v.invoke.body, none);
-
-    return CString::concat('(lambda ', pll, ' ', body, ')');
-}
-
 recursive function emitLetValue(v: LetValue): CString {
     let vbind = CString::concat('((', v.vname, ' ', emitValue[recursive](v.value), '))');
     let bbody = emitValue[recursive](v.body);
     
     return CString::concat('(let ', vbind, ' ', bbody, ')');
-}
-
-recursive function emitLambdaInvokeValue(v: LambdaInvokeValue): CString {
-    if(v.args.isSingleElement()) {
-        return CString::concat('(', v.name, ' ', emitValue[recursive](v.args.single()), ')');
-    }
-    else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
-        let argsl = CString::joinAll(' ', cvals);
-
-        return CString::concat('(select ', v.name, ' ', argsl, ')');
-    }
 }
 
 recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
@@ -252,11 +223,6 @@ recursive function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimiti
 
 recursive function emitAccessFromNameResolvedValue(v: AccessFromNameResolvedValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
-    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
-}
-
-recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
-    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
@@ -530,17 +496,13 @@ recursive function emitValue(v: Value): CString {
         | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
         | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
         | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
-        | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
-        | ConstructorLambdaValue => { return emitConstructorLambdaValue[recursive]($v); }
         | LetValue => { return emitLetValue[recursive]($v); }
-        | LambdaInvokeValue => { return emitLambdaInvokeValue[recursive]($v); }
         | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
         | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
         | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
         | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
         | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
         | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
-        | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
         | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
         | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
         | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
@@ -560,73 +522,95 @@ recursive function emitValue(v: Value): CString {
     }
 }
 
-recursive function emitValueExpression(e: ValueExpression): CString {
-    return emitValue[recursive](e.value);
+recursive function emitLambdaConstructor(v: LambdaConstructor, evv: SMTEmitterEnv): CString {
+    let plist = v.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let elambda = SMTEmitterEnv{v.resultType, evv.errtrgt};
+    let body = emitFlowOperation[recursive](v.body, elambda, none);
+
+    return CString::concat('(lambda ', pll, ' ', body, ')');
 }
 
-recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression): CString {
+recursive function emitCallArgExpression(v: CallArgExpression, evv: SMTEmitterEnv): CString {
+    match(v)@ {
+        LambdaConstructor => { return emitLambdaConstructor[recursive]($v, evv); }
+        | Value => { return emitValue($v); }
+    }
+}
+
+recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression, evv: SMTEmitterEnv): CString {
     if(e.args.isSingleElement()) {
-        return CString::concat('(', e.name, ' ', emitValue[recursive](e.args.single()), ')');
+        return CString::concat('(', e.name, ' ', emitCallArgExpression[recursive](e.args.single(), evv), ')');
     }
     else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(select ', e.name, ' ', argsl, ')');
     }
 }
 
-recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): CString {
+recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(e.ns, e.name);
     if(e.args.empty()) {
         return fname;
     }
     else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', fname, ' ', argsl, ')');
     }
 }
 
-recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression): CString {
+recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateTypeFunctionName(e.resolvedType, e.name);
     if(e.args.empty()) {
         return fname;
     }
     else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', fname, ' ', argsl, ')');
     }
 }
 
-recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpression): CString {
+recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateTypeFunctionName(e.resolvedTrgt, e.name);
-    let rootv = emitValue[recursive](e.rootExp);
+    let rootv = emitValue(e.rootExp);
 
     let rpfx = CString::concat(fname, ' ', rootv);
     if(e.args.empty()) {
         return CString::concat('(', rpfx, ')');
     }
     else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', rpfx, ' ', argsl, ')');
     }
 }
 
-function doLetIndent(enext: Expression): Bool {
-    return !\/(enext?<LetExpression>, enext?<ErrorProcessExpression>);
+recursive function emitExpression(e: Expression, evv: SMTEmitterEnv): CString {
+    match(e)@ {
+        LambdaInvokeExpression => { return emitLambdaInvokeExpression[recursive]($e, evv); }
+        | CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($e, evv); }
+        | CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($e, evv); }
+        | MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($e, evv); }
+    }
 }
 
-recursive function emitLetExpression(e: LetExpression, indent: Option<CString>): CString {
-    let vbind = CString::concat('((', e.vname, ' ', emitValue[recursive](e.value), '))');
+function doLetIndent(enext: FlowOperation): Bool {
+    return !\/(enext?<LetOperation>, enext?<ResultErrorProcessOperation>);
+}
+
+recursive function emitLetOperation(e: LetOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    let vbind = CString::concat('((', e.vname, ' ', emitValue(e.value), '))');
 
     if(indent)@none {
-        return CString::concat('(let ', vbind, ' ', emitExpression[recursive](e.body, none), ')');
+        return CString::concat('(let ', vbind, ' ', emitFlowOperation[recursive](e.body, evv, none), ')');
     }
     else {
         var iident = $indent;
@@ -636,39 +620,115 @@ recursive function emitLetExpression(e: LetExpression, indent: Option<CString>):
             tident = CString::concat('%n;', $indent, ')');
         }
 
-        let bbody = emitExpression[recursive](e.body, some(iident));
+        let bbody = emitFlowOperation[recursive](e.body, evv, some(iident));
         return CString::concat('(let ', vbind, '%n;', bbody, tident);
     }
 }
 
-recursive function emitIfExpression(e: IfExpression, indent: Option<CString>): CString {
+recursive function emitIfOperation(e: IfOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let tst = emitValue[recursive](e.iftest);
     let ttst = CString::concat('(ite ', tst);
 
     if(indent)@none {
-        return CString::concat(ttst, ' ', emitExpression[recursive](e.trueExpression, none), ' ', emitExpression[recursive](e.falseExpression, none), ')');
+        return CString::concat(ttst, ' ', emitFlowOperation[recursive](e.trueExpression, evv, none), ' ', emitFlowOperation[recursive](e.falseExpression, evv, none), ')');
     }
     else {
         let iident = CString::concat('    ', $indent);
         let tident = CString::concat('%n;', $indent, ')');
 
-        let tv = emitExpression[recursive](e.trueExpression, some(iident));
-        let fv = emitExpression[recursive](e.falseExpression, some(iident));
+        let tv = emitFlowOperation[recursive](e.trueExpression, evv, some(iident));
+        let fv = emitFlowOperation[recursive](e.falseExpression, evv, some(iident));
 
         return CString::concat(ttst, '%n;', tv, '%n;', fv, tident);
     }
 }
 
-recursive function emitExpression(e: Expression, indent: Option<CString>): CString {
+function emitReturnOperation(e: ReturnValueOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    let vval = emitValue(e.val);
+
+    if(evv.expectedResultType)<DirectResult> {
+        return vval;
+    }
+    else {
+        return CString::concat('(@Result-ok ', vval, ')');
+    }
+}
+
+recursive function emitResultErrorProcessOperation(e: ResultErrorProcessOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    let vval = emitExpression[recursive](e.val, evv);
+
+    let bbind = CString::concat('(let ((', e.tmpvar, ' ', vval, '))');
+    let chk = CString::concat('(ite (not ((_ is (@Result-ok ', evv.expectedResultType.rtype.value, ')) ', e.tmpvar, '))');
+    let lop = CString::concat(e.tmpvar, ' (let ((', e.bindvar, ' (@Result-value ', e.tmpvar, ')))');
+
+    let prefix = CString::concat(bbind, chk, lop);
+
+    if(indent)@none {
+        return CString::concat(prefix, ' ', emitFlowOperation[recursive](e.follow, evv, none), '))');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, '))');
+
+        let body = emitFlowOperation[recursive](e.follow, evv, some(iident));
+        return CString::concat(prefix, '%n;', body, tident);
+    }
+}
+
+function emitAbortOperation(e: AbortOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    if(e.label === evv.errtrgt) {
+        return '@Result-errtrgt';
+    }
+    else {
+        return '@Result-errother';
+    }
+}
+
+recursive function emitAssertOperation(e: AssertOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    let cond = emitValue(e.cond);
+    let rop = if(e.label === evv.errtrgt) then '@Result-errtrgt' else '@Result-errother';
+
+    let chk = CString::concat('(ite (not ', cond, ') ', rop, ' ');
+
+    if(indent)@none {
+        return CString::concat(chk, emitFlowOperation[recursive](e.follow, evv, none), ')');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, '))');
+
+        let follow = emitFlowOperation[recursive](e.follow, evv, some(iident));
+        return CString::concat(chk, '%n;', follow, tident);
+    }
+}
+
+recursive function emitAssumeOperation(e: AssumeOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    let cond = emitValue(e.cond);
+
+    let chk = CString::concat('(ite (not ', cond, ') @Result-errother ');
+
+    if(indent)@none {
+        return CString::concat(chk, emitFlowOperation[recursive](e.follow, evv, none), ')');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, '))');
+
+        let follow = emitFlowOperation[recursive](e.follow, evv, some(iident));
+        return CString::concat(chk, '%n;', follow, tident);
+    }
+}
+
+recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     var eexp: CString;
-    match(e)@ {
-        ValueExpression => { eexp = emitValueExpression[recursive]($e); }
-        | LambdaInvokeExpression => { eexp = emitLambdaInvokeExpression[recursive]($e); }
-        | CallNamespaceFunctionExpression => { eexp = emitCallNamespaceFunctionExpression[recursive]($e); }
-        | CallTypeFunctionExpression => { eexp = emitCallTypeFunctionExpression[recursive]($e); }
-        | MethodInvokeStaticExpression => { eexp = emitMethodInvokeStaticExpression[recursive]($e); }
-        | LetExpression => { eexp = emitLetExpression[recursive]($e, indent); }
-        | IfExpression => { eexp = emitIfExpression[recursive]($e, indent); }
+    match(op)@ {
+        LetOperation => { eexp = emitLetOperation[recursive]($op, evv, indent); }
+        | IfOperation => { eexp = emitIfOperation[recursive]($op, evv, indent); }
+        | ReturnValueOperation => { eexp = emitReturnOperation($op, evv, indent); }
+        | ResultErrorProcessOperation => { eexp = emitResultErrorProcessOperation[recursive]($op, evv, indent); }
+        | AbortOperation => { eexp = emitAbortOperation($op, evv, indent); }
+        | AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, indent); }
+        | AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, indent); }
     }
 
     if(indent)@none {

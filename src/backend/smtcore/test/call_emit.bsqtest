@@ -1,25 +1,6 @@
 namespace SMTEmitter;
 
-chktest test_emitConstructorLambdaValue(): Bool {
-    let op = ConstructorLambdaValue{
-        LambdaDecl{
-            List<InvokeParameterDecl>{InvokeParameterDecl{'a', 'Int'<TypeKey>}, InvokeParameterDecl{'b', 'Int'<TypeKey>}},
-            DirectResult{'Int'<TypeKey>},
-            ValueExpression{AccessVariableValue{'a'}}
-        }
-    };
-    return emitConstructorLambdaValue(op) === '(lambda ((a Int) (b Int)) a)';
-}
-
-chktest test_emitLambdaInvokeValue_one(): Bool {
-    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitLambdaInvokeValue(op) === '(f 0)';
-}
-
-chktest test_emitLambdaInvokeValue_two(): Bool {
-    let op = LambdaInvokeValue{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
-    return emitLambdaInvokeValue(op) === '(select f 0 true)';
-}
+const s_eev_call_emit: SMTEmitterEnv = SMTEmitterEnv{DirectResult{'Int'<TypeKey>}, '[NO_TRGT]'};
 
 chktest test_emitCallNamespaceFunctionValue_empty(): Bool {
     let op = CallNamespaceFunctionValue{'Main'<NamespaceKey>, 'f', List<Value>{}};
@@ -62,51 +43,51 @@ chktest test_emitMethodInvokeStaticValue_one(): Bool {
 }
 
 chktest test_emitLambdaInvokeExpression_one(): Bool {
-    let op = LambdaInvokeExpression{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitLambdaInvokeExpression(op) === '(f 0)';
+    let op = LambdaInvokeExpression{'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitLambdaInvokeExpression(op, SMTEmitter::s_eev_call_emit) === '(f 0)';
 }
 
 chktest test_emitLambdaInvokeExpression_two(): Bool {
-    let op = LambdaInvokeExpression{'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
-    return emitLambdaInvokeExpression(op) === '(select f 0 true)';
+    let op = LambdaInvokeExpression{'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitLambdaInvokeExpression(op, SMTEmitter::s_eev_call_emit) === '(select f 0 true)';
 }
 
 chktest test_emitCallNamespaceFunctionExpression_empty(): Bool {
-    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{}};
-    return emitCallNamespaceFunctionExpression(op) === 'Main@f';
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<CallArgExpression>{}};
+    return emitCallNamespaceFunctionExpression(op, SMTEmitter::s_eev_call_emit) === 'Main@f';
 }
 
 chktest test_emitCallNamespaceFunctionExpression_one(): Bool {
-    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitCallNamespaceFunctionExpression(op) === '(Main@f 0)';
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallNamespaceFunctionExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@f 0)';
 }
 
 chktest test_emitCallNamespaceFunctionExpression_two(): Bool {
-    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
-    return emitCallNamespaceFunctionExpression(op) === '(Main@f 0 true)';
+    let op = CallNamespaceFunctionExpression{'Main'<NamespaceKey>, 'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallNamespaceFunctionExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@f 0 true)';
 }
 
 chktest test_emitCallTypeFunctionExpression_empty(): Bool {
-    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{}};
-    return emitCallTypeFunctionExpression(op) === 'Main@Foo@f';
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<CallArgExpression>{}};
+    return emitCallTypeFunctionExpression(op, SMTEmitter::s_eev_call_emit) === 'Main@Foo@f';
 }
 
 chktest test_emitCallTypeFunctionExpression_one(): Bool {
-    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitCallTypeFunctionExpression(op) === '(Main@Foo@f 0)';
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitCallTypeFunctionExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@Foo@f 0)';
 }
 
 chktest test_emitCallTypeFunctionExpression_two(): Bool {
-    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
-    return emitCallTypeFunctionExpression(op) === '(Main@Foo@f 0 true)';
+    let op = CallTypeFunctionExpression{'Main@Foo'<TypeKey>, 'f', List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}, LiteralSimpleValue{'Bool'<TypeKey>, 'true'}}};
+    return emitCallTypeFunctionExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@Foo@f 0 true)';
 }
 
 chktest test_emitMethodInvokeStaticExpression_empty(): Bool {
-    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{}};
-    return emitMethodInvokeStaticExpression(op) === '(Main@Foo@f cc)';
+    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<CallArgExpression>{}};
+    return emitMethodInvokeStaticExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@Foo@f cc)';
 }
 
 chktest test_emitMethodInvokeStaticExpression_one(): Bool {
-    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    return emitMethodInvokeStaticExpression(op) === '(Main@Foo@f cc 0)';
+    let op = MethodInvokeStaticExpression{'Main@Foo'<TypeKey>, 'f', AccessVariableValue{'cc'}, List<CallArgExpression>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
+    return emitMethodInvokeStaticExpression(op, SMTEmitter::s_eev_call_emit) === '(Main@Foo@f cc 0)';
 }

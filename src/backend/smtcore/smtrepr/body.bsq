@@ -3,7 +3,17 @@ namespace SMTEmitter;
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
 type VarName = CString of SMTEmitter::varnameRE;
 
-concept Value {
+concept CallArgExpression {
+}
+
+entity LambdaConstructor provides CallArgExpression {
+    field params: List<InvokeParameterDecl>;
+    field resultType: ResultType;
+
+    field body: FlowOperation;
+}
+
+concept Value provides CallArgExpression {
 }
 
 datatype ConstantValue provides Value
@@ -102,26 +112,10 @@ ConstructorListSingletonsValue {
 }
 ;
 
-entity ConstructorEListValue provides Value {
-    field constype: TypeKey;
-    field args: List<Value>;
-}
-
-entity ConstructorLambdaValue provides Value {
-    field invoke: LambdaDecl;
-}
-
 entity LetValue provides Value {
     field vname: CString;
     field value: Value;
     field body: Value;
-}
-
-entity LambdaInvokeValue provides Value {
-    field name: CString;
-    field args: List<Value>;
-
-    invariant !$args.empty();
 }
 
 entity CallNamespaceFunctionValue provides Value {
@@ -158,13 +152,6 @@ entity UnwrapTypeDeclToPrimitiveValue provides Value {
 entity AccessFromNameResolvedValue provides Value {
     field ontype: TypeKey;
     field name: CString;
-
-    field arg: Value;
-}
-
-entity AccessFromIndexValue provides Value {
-    field elisttype: TypeKey;
-    field idx: CString;
 
     field arg: Value;
 }
@@ -325,13 +312,9 @@ entity IfValue provides Value {
 concept Expression {
 }
 
-entity ValueExpression provides Expression {
-    field value: Value;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field name: CString;
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
     
     invariant !$args.empty();
 }
@@ -340,48 +323,64 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
 entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
-    field args: List<Value>;
+    field args: List<CallArgExpression>;
 }
 
-entity LetExpression provides Expression {
+concept FlowOperation {
+}
+
+entity LetOperation provides FlowOperation {
     field vname: CString;
     field value: Value;
-    field body: Expression;
+    field body: FlowOperation;
 }
 
-entity IfExpression provides Expression {
+entity IfOperation provides FlowOperation {
     field iftest: Value;
-    field trueExpression: Expression;
-    field falseExpression: Expression;
+    field trueExpression: FlowOperation;
+    field falseExpression: FlowOperation;
 }
 
-entity DirectResultExpression provides Expression {
+entity ReturnValueOperation provides FlowOperation {
     field val: Value;
 }
 
-entity ErrorProcessExpression provides Expression {
-    %%TODO
+entity ResultErrorProcessOperation provides FlowOperation {
+    field val: Expression;
+    field tmpvar: CString;
+
+    field follow: FlowOperation;
+    field bindvar: CString;
 }
 
-entity AbortExpression provides Expression {
-    field kind: OptionResultKind;
+entity AbortOperation provides FlowOperation {
+    field label: CString;
 }
 
-entity AssertExpression provides Expression {
+entity AssertOperation provides FlowOperation {
+    field label: CString;
     field cond: Value;
-    field kind: OptionResultKind;
+
+    field follow: FlowOperation;
 }
+
+entity AssumeOperation provides FlowOperation {
+    field cond: Value;
+
+    field follow: FlowOperation;
+}
+

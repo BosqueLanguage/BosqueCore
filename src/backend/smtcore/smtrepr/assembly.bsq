@@ -11,42 +11,30 @@ type NamespaceKey = CString of /(${SMTEmitter::namespaceComponentRE}'@')*${SMTEm
 const basicNominalTypeKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('$'.+'$')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'$'.+'$''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /${SMTEmitter::basicNominalTypeKeyRE}|${SMTEmitter::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
-const elistTypeKeyRE: CRegex = /'@EList$'.*'$'/c;
+const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::nominalTypeKeyRE}|${SMTEmitter::elistTypeKeyRE}/c;
-const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::nominalTypeKeyRE}|${SMTEmitter::elistTypeKeyRE}|${lambdaTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::nominalTypeKeyRE}/c;
+const paramTypeKeyRE: CRegex = /${SMTEmitter::typeKeyRE}|${lambdaTypeKeyRE}/c;
+
+const resultTypeKeyRE: CRegex = /'(@Result '${SMTEmitter::typeKeyRE}')'/c;
+const returnTypeKeyRE: CRegex = /'${SMTEmitter::typeKeyRE}|${SMTEmitter::resultTypeKeyRE}'/c;
 
 type TypeKey = CString of SMTEmitter::typeKeyRE;
+type ParamTypeKey = CString of SMTEmitter::paramTypeKeyRE;
+type ReturnTypeKey = CString of SMTEmitter::resultTypeKeyRE;
 
-enum OptionResultKind {
-    Clear,
-    Target,
-    Other,
-    General
-}
-
-datatype ResultType
-of
-DirectResult { 
-    field rtype: TypeKey; 
-}
-| OptionResult { 
+datatype ResultType using {
     field rtype: TypeKey;
-    field kind: OptionResultKind;
 }
-%% TODO -- later add result types with ref stuff
+of
+DirectResult { }
+| OptionResult { }
+%% TODO -- later add result types with ref (etc.) stuff
 ;
 
 entity InvokeParameterDecl {
     field pname: CString;
-    field ptype: TypeKey;
-}
-
-entity LambdaDecl {
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: Expression;
+    field ptype: ParamTypeKey;
 }
 
 entity NamespaceFunctionDecl {
