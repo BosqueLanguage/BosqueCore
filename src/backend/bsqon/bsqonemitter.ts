@@ -345,9 +345,81 @@ class BSQONTypeInfoEmitter {
         return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdConcept", false);
     }
 
+    private processSingleTypeDecl(tt: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): any[] {
+        let alldecls: any[] = [];
+
+        if(tt instanceof EnumTypeDecl) {
+            alldecls.push(this.emitEnumTypeDecl(tt));
+        }
+        else if(tt instanceof TypedeclTypeDecl) {
+            alldecls.push(this.emitTypedeclTypeDecl(tt));
+        }
+        else if(tt instanceof PrimitiveEntityTypeDecl) {
+            alldecls.push(this.emitPrimitiveEntityTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof SomeTypeDecl) {
+            alldecls.push(this.emitSomeTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof MapEntryTypeDecl) {
+            alldecls.push(this.emitMapEntryTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof ListTypeDecl) {
+            alldecls.push(this.emitListTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof StackTypeDecl) {
+            alldecls.push(this.emitStackTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof QueueTypeDecl) {
+            alldecls.push(this.emitQueueTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof SetTypeDecl) {
+            alldecls.push(this.emitSetTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof MapTypeDecl) {
+            alldecls.push(this.emitMapTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof EventListTypeDecl) {
+            ; //no-op for parsing as we don't emit these
+        }
+        else if(tt instanceof EntityTypeDecl) {
+            alldecls.push(this.emitEntityTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof OptionTypeDecl) {
+            alldecls.push(this.emitOptionTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof ResultTypeDecl) {
+            alldecls.push(this.emitResultTypeDecl(tt, instantiation));
+            
+            alldecls.push(this.emitOkTypeDecl(tt.getOkType(), instantiation));
+            alldecls.push(this.emitFailTypeDecl(tt.getFailType(), instantiation));
+        }
+        else if(tt instanceof APIResultTypeDecl) {
+            alldecls.push(this.emitAPIResultTypeDecl(tt, instantiation));
+
+            alldecls.push(this.emitAPIRejectedTypeDecl(tt.getAPIRejectedType(), instantiation));
+            alldecls.push(this.emitAPIFailedTypeDecl(tt.getAPIFailedType(), instantiation));
+            alldecls.push(this.emitAPIErrorTypeDecl(tt.getAPIErrorType(), instantiation));
+            alldecls.push(this.emitAPISuccessTypeDecl(tt.getAPISuccessType(), instantiation));
+        }
+        else if(tt instanceof ConceptTypeDecl) {
+            alldecls.push(this.emitConceptTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof DatatypeMemberEntityTypeDecl) {
+            alldecls.push(this.emitDatatypeMemberEntityTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof DatatypeTypeDecl) {
+            alldecls.push(this.emitDatatypeTypeDecl(tt, instantiation));
+        }
+        else {
+            assert(false, "Unknown type decl kind");
+        }
+
+        return alldecls;
+    }
+
     private emitTypes(tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo): any[] {
         let alldecls: any[] = [];
-        
+
         for(let i = 0; i < tdecl.length; ++i) {
             const tt = tdecl[i];
             const iinsts = asminstantiation.typebinds.get(tt.name);
@@ -358,71 +430,7 @@ class BSQONTypeInfoEmitter {
             for(let j = 0; j < iinsts.length; ++j) {
                 const instantiation = iinsts[j];
 
-                if(tt instanceof EnumTypeDecl) {
-                    alldecls.push(this.emitEnumTypeDecl(tt));
-                }
-                else if(tt instanceof TypedeclTypeDecl) {
-                    alldecls.push(this.emitTypedeclTypeDecl(tt));
-                }
-                else if(tt instanceof PrimitiveEntityTypeDecl) {
-                    alldecls.push(this.emitPrimitiveEntityTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof SomeTypeDecl) {
-                    alldecls.push(this.emitSomeTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof MapEntryTypeDecl) {
-                    alldecls.push(this.emitMapEntryTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof ListTypeDecl) {
-                    alldecls.push(this.emitListTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof StackTypeDecl) {
-                    alldecls.push(this.emitStackTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof QueueTypeDecl) {
-                    alldecls.push(this.emitQueueTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof SetTypeDecl) {
-                    alldecls.push(this.emitSetTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof MapTypeDecl) {
-                    alldecls.push(this.emitMapTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof EventListTypeDecl) {
-                    ; //no-op for parsing as we don't emit these
-                }
-                else if(tt instanceof EntityTypeDecl) {
-                    alldecls.push(this.emitEntityTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof OptionTypeDecl) {
-                    alldecls.push(this.emitOptionTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof ResultTypeDecl) {
-                    alldecls.push(this.emitResultTypeDecl(tt, instantiation));
-                    
-                    alldecls.push(this.emitOkTypeDecl(tt.getOkType(), instantiation));
-                    alldecls.push(this.emitFailTypeDecl(tt.getFailType(), instantiation));
-                }
-                else if(tt instanceof APIResultTypeDecl) {
-                    alldecls.push(this.emitAPIResultTypeDecl(tt, instantiation));
-
-                    alldecls.push(this.emitAPIRejectedTypeDecl(tt.getAPIRejectedType(), instantiation));
-                    alldecls.push(this.emitAPIFailedTypeDecl(tt.getAPIFailedType(), instantiation));
-                    alldecls.push(this.emitAPIErrorTypeDecl(tt.getAPIErrorType(), instantiation));
-                    alldecls.push(this.emitAPISuccessTypeDecl(tt.getAPISuccessType(), instantiation));
-                }
-                else if(tt instanceof ConceptTypeDecl) {
-                    alldecls.push(this.emitConceptTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof DatatypeMemberEntityTypeDecl) {
-                    alldecls.push(this.emitDatatypeMemberEntityTypeDecl(tt, instantiation));
-                }
-                else if(tt instanceof DatatypeTypeDecl) {
-                    alldecls.push(this.emitDatatypeTypeDecl(tt, instantiation));
-                }
-                else {
-                    assert(false, "Unknown type decl kind");
-                }
+                alldecls.push(...this.processSingleTypeDecl(tt, instantiation));
             }
         }
 
