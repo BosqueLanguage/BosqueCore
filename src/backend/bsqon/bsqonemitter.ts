@@ -115,7 +115,7 @@ class BSQONTypeInfoEmitter {
     }
 
     private emitInteralSimpleTypeDeclHelper(tdecl: InternalEntityTypeDecl, rcvr: NominalTypeSignature, instantiation: TypeInstantiationInfo, tag: string): any {
-        if(tdecl.terms.length !== 0) {
+        if(instantiation.binds !== undefined) {
             this.mapper = instantiation.binds;
         }
 
