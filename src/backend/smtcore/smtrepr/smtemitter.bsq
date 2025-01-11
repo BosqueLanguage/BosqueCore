@@ -9,6 +9,16 @@ function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
 }
 
+function tryGetConstFlowOperation(value: FlowOperation): Option<ConstantValue> {
+    if(value)@<ReturnValueOperation> {
+        if($vv = $value.val)@<ConstantValue> {
+            return some($vv);
+        }
+    }
+
+    return none;
+}
+
 function emitTaggedNumericType(nstr: CString, tag: CString): CString {
     return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
 }
@@ -751,6 +761,33 @@ recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, inde
     }
 }
 
+function emitConstDeclarationHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+    var optconstv = tryGetConstFlowOperation(value);
+    var opteagerinit = '';
+    if(optconstv)@some {
+        opteagerinit = emitConstantValue($optconstv);
+    }
+
+    let cdecl = CString::concat('(declare-const ', cname, ' ', vtype.rtype.value, ')');
+
+    if(!opteagerinit.empty()) {
+        let cinit = CString::concat('(assert (= ', cname, ' ', opteagerinit, '))');
+        return CString::join(' ', cdecl, cinit);
+    }
+    else {
+        if(vtype)<DirectResult> {
+            return cdecl;
+        }
+        else {
+            let tname = CString::concat(cname, '-cc-temp');
+            let ttype = CString::concat('(@Result ', vtype.rtype.value, ')');
+            let icompute = CString::concat('(declare-const ', tname, ' ', vtype.rtype.value, ')');
+
+            return CString::join(' ', cdecl, icompute);
+        }
+    }
+}
+
 function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
     let evv = SMTEmitterEnv{vtype, '[NO_CONST_ERRORS]'};
     let cval = emitFlowOperation(value, evv, none);
@@ -760,21 +797,41 @@ function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: Fl
     }
     else {
         let tname = CString::concat(cname, '-cc-temp');
-        let icompute = CString::concat('(declare-const ', tname, ' ', vtype.rtype.value, ')');
+        let tval = CString::concat('(assert (= ', tname, ' ', cval, '))');
+        let chk = CString::concat('(assert ((_ is @Result-ok ', vtype.rtype.value, ') ', tname, '))');
+        let asgn = CString::concat('(assert (= ', cname, ' (@Result-value', tname, ')))');
 
-        return CString::concat('(@Result-ok ', vval, ')');
+        return CString::join('%n;', tval, chk, asgn);
     }
 }
 
 %** Return the declarations and definitions as 2 seperate components **%
 function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<ConstMemberDecl>): CString, CString {
-    let nsconstdecls = nsconsts.map<CString>(fn(c) => CString::concat('(declare-const ', SMTNameManager::generateNamespaceConstName(c.ns, c.cname), ' ', c.vtype.rtype.value, ')'));
-    let tconstdecls = typeconsts.map<CString>(fn(c) => CString::concat('(declare-const ', SMTNameManager::generateTypeConstName(c.tkey, c.name), ' ', cvtype.rtype.value, ')'));
+    let nsconstdecls = nsconsts.map<CString>(fn(c) => {
+        let cname = SMTNameManager::generateNamespaceConstName(c.ns, c.cname);
+        return emitConstDeclarationHelper(cname, c.vtype, c.value);
+    });
+    let tconstdecls = typeconsts.map<CString>(fn(c) => {
+        let cname = SMTNameManager::generateTypeConstName(c.tkey, c.cname);
+        return emitConstDeclarationHelper(cname, c.vtype, c.value);    
+    });
+    let alldecls = CString::join('%n;', CString::joinAll('%n;', nsconstdecls), CString::joinAll('%n;', tconstdecls));
 
-    let nsconstimpls = nsconsts.map<CString>(fn(c) => CString::concat('(assert (', c.name, ' ', emitValue(c.value), '))'));
-    let tconstimpls = typeconsts.map<CString>(fn(c) => CString::concat('(assert (', c.name, ' ', emitValue(c.value), '))'));
+    let nsconstinits = nsconsts
+        .filter(pred(c) => tryGetConstFlowOperation(c.value)?!none)
+        .map<CString>(fn(c) => {
+            let cname = SMTNameManager::generateNamespaceConstName(c.ns, c.cname);
+            return emitConstInitializerHelper(cname, c.vtype, c.value);
+        });
+    let tconstinits = typeconsts
+        .filter(pred(c) => tryGetConstFlowOperation(c.value)?!none)
+        .map<CString>(fn(c) => {
+            let cname = SMTNameManager::generateTypeConstName(c.tkey, c.cname);
+            return emitConstInitializerHelper(cname, c.vtype, c.value);
+        });
+    let allinits = CString::join('%n;', CString::joinAll('%n;', nsconstinits), CString::joinAll('%n;', tconstinits));
 
-    return xxxx;
+    return alldecls, allinits;
 }
 
 function emitAssembly(asm: Assembly): CString {
@@ -800,6 +857,7 @@ function emitAssembly(asm: Assembly): CString {
     field datatypes: List<DatatypeTypeDecl>;
     field datamembers: List<DatatypeMemberEntityTypeDecl>;
 *%
+    return 'ok';
 }
 
 public function main(): Int {
