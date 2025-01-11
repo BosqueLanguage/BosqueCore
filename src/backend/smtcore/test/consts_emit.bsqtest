@@ -14,13 +14,34 @@ const s_nsc2: NamespaceConstDecl = NamespaceConstDecl{
     ReturnValueOperation{BinKeyEqValue{LiteralSimpleValue{'Int'<TypeKey>, '42i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}}
 };
 
+const s_tc1: ConstMemberDecl = ConstMemberDecl{
+    'Main@Foo'<TypeKey>, 
+    'c1', 
+    DirectResult{'Int'<TypeKey>}, 
+    ReturnValueOperation{LiteralSimpleValue{'Int'<TypeKey>, '3i'}}
+};
+
 chktest test_emitSingleNamespaceConst_Literal(): Bool {
-    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{s_nsc1}, List<ConstMemberDecl>{});
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{SMTEmitter::s_nsc1}, List<ConstMemberDecl>{});
     return decls === '(declare-const Main@c1 Int) (assert (= Main@c1 42))' && inits === '';
 }
 
 chktest test_emitSingleNamespaceConst_WInit(): Bool {
-    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{s_nsc2}, List<ConstMemberDecl>{});
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{SMTEmitter::s_nsc2}, List<ConstMemberDecl>{});
     return decls === '(declare-const Main@c2 Bool)' && inits === '(assert (= Main@c2 (= 42 1)))';
 }
 
+chktest test_emitBothNamespaceConsts(): Bool {
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{SMTEmitter::s_nsc1, SMTEmitter::s_nsc2}, List<ConstMemberDecl>{});
+    return decls === '(declare-const Main@c1 Int) (assert (= Main@c1 42))%n;(declare-const Main@c2 Bool)' && inits === '(assert (= Main@c2 (= 42 1)))';
+}
+
+chktest test_emitSingleTypeConst(): Bool {
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{}, List<ConstMemberDecl>{SMTEmitter::s_tc1});
+    return decls === '(declare-const Main@Foo@c1 Int) (assert (= Main@Foo@c1 3))' && inits === '';
+}
+
+chktest test_emitNamespaceAndTypeConsts(): Bool {
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{SMTEmitter::s_nsc1}, List<ConstMemberDecl>{SMTEmitter::s_tc1});
+    return decls === '(declare-const Main@c1 Int) (assert (= Main@c1 42))%n;(declare-const Main@Foo@c1 Int) (assert (= Main@Foo@c1 3))' && inits === '';
+}
