@@ -1,0 +1,26 @@
+namespace SMTEmitter;
+
+const s_nsc1: NamespaceConstDecl = NamespaceConstDecl{
+    'Main'<NamespaceKey>, 
+    'c1', 
+    DirectResult{'Int'<TypeKey>}, 
+    ReturnValueOperation{LiteralSimpleValue{'Int'<TypeKey>, '42i'}}
+};
+
+const s_nsc2: NamespaceConstDecl = NamespaceConstDecl{
+    'Main'<NamespaceKey>, 
+    'c2', 
+    DirectResult{'Bool'<TypeKey>}, 
+    ReturnValueOperation{BinKeyEqValue{LiteralSimpleValue{'Int'<TypeKey>, '42i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}}
+};
+
+chktest test_emitSingleNamespaceConst_Literal(): Bool {
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{s_nsc1}, List<ConstMemberDecl>{});
+    return decls === '(declare-const Main@c1 Int) (assert (= Main@c1 42))' && inits === '';
+}
+
+chktest test_emitSingleNamespaceConst_WInit(): Bool {
+    let decls, inits = emitConstInfo(List<NamespaceConstDecl>{s_nsc2}, List<ConstMemberDecl>{});
+    return decls === '(declare-const Main@c2 Bool)' && inits === '(assert (= Main@c2 (= 42 1)))';
+}
+

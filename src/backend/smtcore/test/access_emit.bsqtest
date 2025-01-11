@@ -29,3 +29,8 @@ chktest test_emitAccessFromNameResolvedValue(): Bool {
     let op = AccessFromNameResolvedValue{'Main@Foo$Int$'<TypeKey>, 'f', AccessVariableValue{'cc'}};
     return emitAccessFromNameResolvedValue(op) === '(Main@Foo$Int$-f cc)';
 }
+
+chktest test_emitAccessFromIndexValue(): Bool {
+    let op = AccessFromIndexValue{'@EList$Int-Int$'<TypeKey>, '1', AccessVariableValue{'cc'}};
+    return emitAccessFromIndexValue(op) === '(@EList$Int-Int$-1 cc)';
+}

@@ -15,22 +15,6 @@ chktest test_emitUntermifyValue(): Bool {
     return emitUntermifyValue(termify) === '(@Term-Option$Int$-value tmp_cc)';
 }
 
-chktest test_emitLetValue(): Bool {
-    let vval = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    let vbody = AccessVariableValue{'cc'};
-    let lval = LetValue{'cc', vval, vbody};
-
-    return emitLetValue(lval) === '(let ((cc (Main@Foo-mk 0))) cc)';
-}
-
-chktest test_emitLetValue_WAccess(): Bool {
-    let vval = ConstructorStdValue{'Main@Foo'<TypeKey>, List<Value>{LiteralSimpleValue{'Int'<TypeKey>, '0i'}}};
-    let vbody = TermifyValue{AccessVariableValue{'cc'}, 'Option$Int$'<TypeKey>, 'Some$Int$'<TypeKey>};
-    let lval = LetValue{'cc', vval, vbody};
-
-    return emitLetValue(lval) === '(let ((cc (Main@Foo-mk 0))) (@Term-Option$Int$-mk cc))';
-}
-
 chktest test_emitUnwrapTypeDeclToPrimitiveValue(): Bool {
     let op = UnwrapTypeDeclToPrimitiveValue{'Main@Foo'<TypeKey>, AccessVariableValue{'cc'}};
 

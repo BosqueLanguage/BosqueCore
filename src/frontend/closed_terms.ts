@@ -1643,27 +1643,45 @@ class InstantiationPropagator {
     }
 
     private instantiateOkTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], undefined)
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes)
     }
 
     private instantiateFailTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], undefined);
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Result") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T", "E"], stypes);
     }
 
     private instantiateAPIRejectedTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPIFailedTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPIErrorTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateAPISuccessTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
+        const stypes = [
+            new NominalTypeSignature(pdecl.type.sinfo, undefined, this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "APIResult") as ResultTypeDecl, pdecl.instantiation),
+        ];
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], stypes);
     }
 
     private instantiateSomeTypeDecl(pdecl: PendingNominalTypeDecl) {
@@ -1899,6 +1917,16 @@ class InstantiationPropagator {
         }
         else if(tt instanceof ConceptTypeDecl) {
             this.instantiateConceptTypeDecl(tt, pdecl);
+
+            if(tt.terms.length === 0) {
+                const ttsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, tt, []);
+                const ntpt = ns.typedecls.filter((tt) => tt.terms.length === 0 && tt.saturatedProvides.some((sp) => sp.tkeystr === ttsig.tkeystr));
+                
+                for(let i = 0; i < ntpt.length; ++i) {
+                    const nnsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, ntpt[i], []);
+                    this.instantiateTypeSignature(nnsig, undefined);
+                }
+            }
         }
         else if(tt instanceof DatatypeMemberEntityTypeDecl) {
             this.instantiateDatatypeMemberEntityTypeDecl(tt, pdecl);

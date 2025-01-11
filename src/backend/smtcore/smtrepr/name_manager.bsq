@@ -17,8 +17,16 @@ namespace SMTNameManager {
         return CString::concat('@Term-', tkey.value, '-value');
     }
 
+    function generateNamespaceConstName(ns: NamespaceKey, cname: CString): CString {
+        return CString::concat(ns.value, '@', cname);
+    }
+
     function generateNamespaceFunctionName(ns: NamespaceKey, name: CString): CString {
         return CString::concat(ns.value, '@', name);
+    }
+
+    function generateTypeConstName(tkey: TypeKey, cname: CString): CString {
+        return CString::concat(tkey.value, '@', cname);
     }
 
     function generateTypeFunctionName(tkey: TypeKey, name: CString): CString {

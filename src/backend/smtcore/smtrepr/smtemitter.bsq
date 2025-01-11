@@ -9,6 +9,16 @@ function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
 }
 
+function tryGetConstFlowOperation(value: FlowOperation): Option<ConstantValue> {
+    if(value)@<ReturnValueOperation> {
+        if($vv = $value.val)@<ConstantValue> {
+            return some($vv);
+        }
+    }
+
+    return none;
+}
+
 function emitTaggedNumericType(nstr: CString, tag: CString): CString {
     return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
 }
@@ -169,11 +179,17 @@ recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CStr
     }
 }
 
-recursive function emitLetValue(v: LetValue): CString {
-    let vbind = CString::concat('((', v.vname, ' ', emitValue[recursive](v.value), '))');
-    let bbody = emitValue[recursive](v.body);
-    
-    return CString::concat('(let ', vbind, ' ', bbody, ')');
+recursive function emitConstructorEListValue(v: ConstructorEListValue): CString {
+    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    if(v.args.empty()) {
+        return consname;
+    }
+    else {
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', consname, ' ', argsl, ')');
+    }
 }
 
 recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
@@ -223,6 +239,11 @@ recursive function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimiti
 
 recursive function emitAccessFromNameResolvedValue(v: AccessFromNameResolvedValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
+    return CString::concat('(', access, ' ', emitValue(v.arg), ')');
+}
+
+recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
+    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
@@ -496,13 +517,14 @@ recursive function emitValue(v: Value): CString {
         | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
         | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
         | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
-        | LetValue => { return emitLetValue[recursive]($v); }
+        | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
         | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
         | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
         | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
         | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
         | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
         | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
+        | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
         | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
         | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
         | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
@@ -737,6 +759,137 @@ recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, inde
     else {
         return CString::concat($indent, eexp);
     }
+}
+
+function emitConstDeclarationHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+    var optconstv = tryGetConstFlowOperation(value);
+    var opteagerinit = '';
+    if(optconstv)@some {
+        opteagerinit = emitConstantValue($optconstv);
+    }
+
+    let cdecl = CString::concat('(declare-const ', cname, ' ', vtype.rtype.value, ')');
+
+    if(!opteagerinit.empty()) {
+        let cinit = CString::concat('(assert (= ', cname, ' ', opteagerinit, '))');
+        return CString::join(' ', cdecl, cinit);
+    }
+    else {
+        if(vtype)<DirectResult> {
+            return cdecl;
+        }
+        else {
+            let tname = CString::concat(cname, '-cc-temp');
+            let ttype = CString::concat('(@Result ', vtype.rtype.value, ')');
+            let icompute = CString::concat('(declare-const ', tname, ' ', vtype.rtype.value, ')');
+
+            return CString::join(' ', cdecl, icompute);
+        }
+    }
+}
+
+function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+    let evv = SMTEmitterEnv{vtype, '[NO_CONST_ERRORS]'};
+    let cval = emitFlowOperation(value, evv, none);
+
+    if(vtype)<DirectResult> {
+        return CString::concat('(assert (= ', cname, ' ', cval, '))');
+    }
+    else {
+        let tname = CString::concat(cname, '-cc-temp');
+        let tval = CString::concat('(assert (= ', tname, ' ', cval, '))');
+        let chk = CString::concat('(assert ((_ is @Result-ok ', vtype.rtype.value, ') ', tname, '))');
+        let asgn = CString::concat('(assert (= ', cname, ' (@Result-value', tname, ')))');
+
+        return CString::join('%n;', tval, chk, asgn);
+    }
+}
+
+%** Return the declarations and definitions as 2 seperate components **%
+function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<ConstMemberDecl>): CString, CString {
+    let nsconstdecls = nsconsts.map<CString>(fn(c) => {
+        let cname = SMTNameManager::generateNamespaceConstName(c.ns, c.cname);
+        return emitConstDeclarationHelper(cname, c.vtype, c.value);
+    });
+    let nsconstdecls_str = CString::joinAll('%n;', nsconstdecls);
+
+    let tconstdecls = typeconsts.map<CString>(fn(c) => {
+        let cname = SMTNameManager::generateTypeConstName(c.tkey, c.cname);
+        return emitConstDeclarationHelper(cname, c.vtype, c.value);    
+    });
+    let tconstdecls_str = CString::joinAll('%n;', tconstdecls);
+    
+    var alldecls: CString;
+    if(nsconstdecls_str.empty() && tconstdecls_str.empty()) {
+        alldecls = '';
+    }
+    elif(nsconstdecls_str.empty()) {
+        alldecls = tconstdecls_str;
+    }
+    elif(tconstdecls_str.empty()) {
+        alldecls = nsconstdecls_str;
+    }
+    else {
+        alldecls = CString::join('%n;', nsconstdecls_str, tconstdecls_str);
+    }
+
+    let nsconstinits = nsconsts
+        .filter(pred(c) => tryGetConstFlowOperation(c.value)?none)
+        .map<CString>(fn(c) => {
+            let cname = SMTNameManager::generateNamespaceConstName(c.ns, c.cname);
+            return emitConstInitializerHelper(cname, c.vtype, c.value);
+        });
+    let nsconstinits_str = CString::joinAll('%n;', nsconstinits);
+
+    let tconstinits = typeconsts
+        .filter(pred(c) => tryGetConstFlowOperation(c.value)?none)
+        .map<CString>(fn(c) => {
+            let cname = SMTNameManager::generateTypeConstName(c.tkey, c.cname);
+            return emitConstInitializerHelper(cname, c.vtype, c.value);
+        });
+    let tconstinits_str = CString::joinAll('%n;', tconstinits);
+
+    var allinits: CString;
+    if(nsconstinits_str.empty() && tconstinits_str.empty()) {
+        allinits = '';
+    }
+    elif(nsconstinits_str.empty()) {
+        allinits = tconstinits_str;
+    }
+    elif(tconstinits_str.empty()) {
+        allinits = nsconstinits_str;
+    }
+    else {
+        allinits = CString::join('%n;', nsconstinits_str, tconstinits_str);
+    }
+
+    return alldecls, allinits;
+}
+
+function emitAssembly(asm: Assembly): CString {
+    let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
+
+%*
+    field nsfuncs: List<NamespaceFunctionDecl>;
+    field nspreds: List<NamespacePredicateFunctionDecl>;
+    field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    
+    field typefuncs: List<TypeFunctionDecl>;
+    
+    field enums: List<EnumTypeDecl>;
+    field typedecls: List<TypedeclTypeDecl>;
+    field pentities: List<PrimitiveEntityTypeDecl>;
+    field constructables: List<ConstructableTypeDecl>;
+    field collections: List<CollectionTypeDecl>;
+    field entities: List<EntityTypeDecl>;
+    
+    field pconcepts: List<PrimitiveConceptTypeDecl>;
+    field concepts: List<ConceptTypeDecl>;
+
+    field datatypes: List<DatatypeTypeDecl>;
+    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+*%
+    return 'ok';
 }
 
 public function main(): Int {

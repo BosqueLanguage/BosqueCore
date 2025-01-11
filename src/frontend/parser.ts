@@ -2131,7 +2131,7 @@ class Parser {
 
         let resultInfo = this.env.SpecialAutoSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
-            resultInfo = this.parseReturnTypeSignature();
+            resultInfo = this.parseReturnTypeSignature(true);
         }
 
         if(!this.testToken(SYM_bigarrow)) {
@@ -2199,7 +2199,7 @@ class Parser {
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
-            resultInfo = this.parseReturnTypeSignature();
+            resultInfo = this.parseReturnTypeSignature(false);
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
@@ -2250,7 +2250,7 @@ class Parser {
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
-            resultInfo = this.parseReturnTypeSignature();
+            resultInfo = this.parseReturnTypeSignature(false);
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
@@ -2309,7 +2309,7 @@ class Parser {
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
-            resultInfo = this.parseReturnTypeSignature();
+            resultInfo = this.parseReturnTypeSignature(false);
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
@@ -2333,7 +2333,7 @@ class Parser {
     //Type parsing
 
     //parse just types that are legal as return types
-    private parseReturnTypeSignature(): TypeSignature {
+    private parseSingleReturnTypeSignature(): TypeSignature {
         switch (this.peekTokenKind()) {
             case TokenStrings.Template: {
                 return this.parseTemplateTypeReference();
@@ -2346,6 +2346,32 @@ class Parser {
             }
             default: {
                 return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
+            }
+        }
+    }
+
+    private parseReturnTypeSignature(explicitelist: boolean): TypeSignature {
+        if(explicitelist) {
+            return this.parseSingleReturnTypeSignature(); //lambdas need to always have explicit (|...|) for multi returns
+        }
+        else {
+            let ttl = [this.parseSingleReturnTypeSignature()];
+            while(this.testToken(SYM_coma)) {
+                this.consumeToken();
+                const ntt = this.parseSingleReturnTypeSignature();
+
+                if(ntt instanceof ErrorTypeSignature) {
+                    break;
+                }
+
+                ttl.push(ntt);
+            }
+
+            if(ttl.length === 1) {
+                return ttl[0];
+            }
+            else {
+                return new EListTypeSignature(ttl[0].sinfo, ttl);
             }
         }
     }
@@ -2501,7 +2527,7 @@ class Parser {
         const params = this.parseLambdaSignatureParameters(sinfo);
 
         this.ensureAndConsumeTokenAlways(SYM_arrow, "lambda type reference");
-        const resultInfo = this.parseReturnTypeSignature();
+        const resultInfo = this.parseReturnTypeSignature(true);
 
         return new LambdaTypeSignature(sinfo, isrecursive, name, params, resultInfo);
     }
@@ -5726,7 +5752,7 @@ class Parser {
             const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false, boundtemplates);
         
             this.ensureAndConsumeTokenIf(SYM_colon, "api declaration");
-            const resultInfo = this.parseReturnTypeSignature();
+            const resultInfo = this.parseReturnTypeSignature(true);
 
             const argNames = new Set<string>(params.map((param) => param.name));
             const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
