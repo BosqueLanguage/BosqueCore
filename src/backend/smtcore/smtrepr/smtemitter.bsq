@@ -899,7 +899,7 @@ function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, evv: SMTEmitterEnv)
     let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
     let body = emitFlowOperation(f.body, evv, none);
 
-    return CString::concat(psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
+    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
 function emitAssembly(asm: Assembly): CString {

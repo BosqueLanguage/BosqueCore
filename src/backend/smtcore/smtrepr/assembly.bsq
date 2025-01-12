@@ -38,16 +38,6 @@ entity InvokeParameterDecl {
     field ptype: ParamTypeKey;
 }
 
-entity NamespaceFunctionDecl {
-    field ns: NamespaceKey;
-    field name: CString;
-
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: FlowOperation;
-}
-
 entity NamespacePredicateFunctionDecl {
     field ns: NamespaceKey;
     field name: CString;
@@ -64,6 +54,16 @@ entity NamespaceBuiltinFunctionDecl {
     field resultType: ResultType;
 
     field specialname: CString;
+}
+
+entity NamespaceFunctionDecl {
+    field ns: NamespaceKey;
+    field name: CString;
+
+    field params: List<InvokeParameterDecl>;
+    field resultType: ResultType;
+
+    field body: FlowOperation;
 }
 
 entity TypeFunctionDecl {

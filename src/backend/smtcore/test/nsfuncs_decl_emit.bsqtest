@@ -1,0 +1,62 @@
+namespace SMTEmitter;
+
+const s_nsfp1: NamespacePredicateFunctionDecl = NamespacePredicateFunctionDecl{
+    'Main'<NamespaceKey>, 
+    'fp1', 
+    List<InvokeParameterDecl>{
+        InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
+    }
+};
+
+const s_nsbi1: NamespaceBuiltinFunctionDecl = NamespaceBuiltinFunctionDecl{
+    'Core@CStringOps'<NamespaceKey>, 
+    's_empty', 
+    List<InvokeParameterDecl>{
+        InvokeParameterDecl{'s', 'CString'<ParamTypeKey>},
+    }, 
+    DirectResult{'Bool'<TypeKey>}, 
+    'cstring_empty'
+};
+
+const s_nsff1: NamespaceFunctionDecl = NamespaceFunctionDecl{
+    'Main'<NamespaceKey>, 
+    'f1', 
+    List<InvokeParameterDecl>{
+        InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
+    }, 
+    DirectResult{'Int'<TypeKey>}, 
+    ReturnValueOperation{BinAddValue{LiteralSimpleValue{'Int'<TypeKey>, '3i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}}
+};
+
+const s_nsff2: NamespaceFunctionDecl = NamespaceFunctionDecl{
+    'Main'<NamespaceKey>, 
+    'f1', 
+    List<InvokeParameterDecl>{
+        InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
+    }, 
+    OptionResult{'Int'<TypeKey>}, 
+    ReturnValueOperation{BinAddValue{LiteralSimpleValue{'Int'<TypeKey>, '2i'}, LiteralSimpleValue{'Int'<TypeKey>, '3i'}}}
+};
+
+chktest test_NamespacePredicateFunctionDecl(): Bool {
+    let fpdecl = emitNamespacePredicateFunctionDecl(SMTEmitter::s_nsfp1);
+    return fpdecl === '(declare-fun Main@fp1 ((x Int)) Bool)';
+}
+
+chktest test_NamespaceBuiltinFunctionDecl(): Bool {
+    let evv = SMTEmitterEnv{DirectResult{'Bool'<TypeKey>}, '[NO_TRGT]'};
+    let fpdecl = emitNamespaceBuiltinFunctionDecl(SMTEmitter::s_nsbi1, evv);
+    return fpdecl === '(define-fun Core@CStringOps@s_empty ((s CString)) Bool (= s ""))';
+}
+
+chktest test_NamespaceFunctionDecl(): Bool {
+    let evv = SMTEmitterEnv{DirectResult{'Int'<TypeKey>}, '[NO_TRGT]'};
+    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff1, evv);
+    return fpdecl === '(define-fun Main@f1 ((x Int)) Int (+ 3 1))';
+}
+
+chktest test_NamespaceFunctionDecl_OptionResult(): Bool {
+    let evv = SMTEmitterEnv{OptionResult{'Int'<TypeKey>}, '[NO_TRGT]'};
+    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff2, evv);
+    return fpdecl === '(define-fun Main@f1 ((x Int)) (@Result Int) (@Result-ok (+ 2 3)))';
+}
