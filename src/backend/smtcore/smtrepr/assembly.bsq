@@ -45,7 +45,7 @@ entity NamespaceFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: Expression;
+    field body: FlowOperation;
 }
 
 entity NamespacePredicateFunctionDecl {
@@ -73,7 +73,7 @@ entity TypeFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: Expression;
+    field body: FlowOperation;
 }
 
 entity ConstMemberDecl {
@@ -212,9 +212,9 @@ entity Assembly {
     field nsconsts: List<NamespaceConstDecl>;
     field typeconsts: List<ConstMemberDecl>;
 
-    field nsfuncs: List<NamespaceFunctionDecl>;
     field nspreds: List<NamespacePredicateFunctionDecl>;
     field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    field nsfuncs: List<NamespaceFunctionDecl>;
     
     field typefuncs: List<TypeFunctionDecl>;
     

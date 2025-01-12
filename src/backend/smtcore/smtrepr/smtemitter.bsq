@@ -866,13 +866,49 @@ function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<Cons
     return alldecls, allinits;
 }
 
+function emitNamespacePredicateFunctionDecl(f: NamespacePredicateFunctionDecl): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    return CString::concat('(declare-fun ', fname, ' ', pll, ' Bool)');
+}
+
+function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, evv: SMTEmitterEnv): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
+    var body: CString;
+    if(f.specialname === 'cstring_empty') {
+        body = '(= s "")';
+    }
+    else {
+        abort; %%Missing builtin function implementation
+    }
+
+    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
+}
+
+function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, evv: SMTEmitterEnv): CString {
+    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
+    let body = emitFlowOperation(f.body, evv, none);
+
+    return CString::concat(psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
+}
+
 function emitAssembly(asm: Assembly): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
 
 %*
-    field nsfuncs: List<NamespaceFunctionDecl>;
     field nspreds: List<NamespacePredicateFunctionDecl>;
     field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    field nsfuncs: List<NamespaceFunctionDecl>;
     
     field typefuncs: List<TypeFunctionDecl>;
     
