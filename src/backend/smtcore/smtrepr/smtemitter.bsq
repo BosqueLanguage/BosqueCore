@@ -665,7 +665,7 @@ recursive function emitIfOperation(e: IfOperation, evv: SMTEmitterEnv, indent: O
     }
 }
 
-function emitReturnOperation(e: ReturnValueOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+function emitReturnOperation(e: ReturnValueOperation, evv: SMTEmitterEnv): CString {
     let vval = emitValue(e.val);
 
     if(evv.expectedResultType)<DirectResult> {
@@ -697,7 +697,7 @@ recursive function emitResultErrorProcessOperation(e: ResultErrorProcessOperatio
     }
 }
 
-function emitAbortOperation(e: AbortOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+function emitAbortOperation(e: AbortOperation, evv: SMTEmitterEnv): CString {
     if(e.label === evv.errtrgt) {
         return '@Result-errtrgt';
     }
@@ -746,9 +746,9 @@ recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, inde
     match(op)@ {
         LetOperation => { eexp = emitLetOperation[recursive]($op, evv, indent); }
         | IfOperation => { eexp = emitIfOperation[recursive]($op, evv, indent); }
-        | ReturnValueOperation => { eexp = emitReturnOperation($op, evv, indent); }
+        | ReturnValueOperation => { eexp = emitReturnOperation($op, evv); }
         | ResultErrorProcessOperation => { eexp = emitResultErrorProcessOperation[recursive]($op, evv, indent); }
-        | AbortOperation => { eexp = emitAbortOperation($op, evv, indent); }
+        | AbortOperation => { eexp = emitAbortOperation($op, evv); }
         | AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, indent); }
         | AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, indent); }
     }
@@ -874,7 +874,7 @@ function emitNamespacePredicateFunctionDecl(f: NamespacePredicateFunctionDecl): 
     return CString::concat('(declare-fun ', fname, ' ', pll, ' Bool)');
 }
 
-function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, evv: SMTEmitterEnv): CString {
+function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, trgterr: CString): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
@@ -891,15 +891,24 @@ function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, evv: 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, evv: SMTEmitterEnv): CString {
+function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, trgterr: CString): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
-    let body = emitFlowOperation(f.body, evv, none);
 
-    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
+    let evv = SMTEmitterEnv{f.resultType, trgterr};
+
+    var body: CString;
+    if($rb = f.body)@<ReturnValueOperation> {
+        body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
+    }
+    else {
+        body = CString::concat('%n;', emitFlowOperation(f.body, evv, some('    ')));
+    }
+
+    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
 }
 
 function emitAssembly(asm: Assembly): CString {

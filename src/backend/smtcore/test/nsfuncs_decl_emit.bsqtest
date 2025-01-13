@@ -44,19 +44,20 @@ chktest test_NamespacePredicateFunctionDecl(): Bool {
 }
 
 chktest test_NamespaceBuiltinFunctionDecl(): Bool {
-    let evv = SMTEmitterEnv{DirectResult{'Bool'<TypeKey>}, '[NO_TRGT]'};
-    let fpdecl = emitNamespaceBuiltinFunctionDecl(SMTEmitter::s_nsbi1, evv);
+    let fpdecl = emitNamespaceBuiltinFunctionDecl(SMTEmitter::s_nsbi1, '[NO_TRGT]');
     return fpdecl === '(define-fun Core@CStringOps@s_empty ((s CString)) Bool (= s ""))';
 }
 
 chktest test_NamespaceFunctionDecl(): Bool {
-    let evv = SMTEmitterEnv{DirectResult{'Int'<TypeKey>}, '[NO_TRGT]'};
-    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff1, evv);
-    return fpdecl === '(define-fun Main@f1 ((x Int)) Int (+ 3 1))';
+    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff1, '[NO_TRGT]');
+    return fpdecl === '(define-fun Main@f1 ((x Int)) Int
+                      \    (+ 3 1)
+                      \)';
 }
 
 chktest test_NamespaceFunctionDecl_OptionResult(): Bool {
-    let evv = SMTEmitterEnv{OptionResult{'Int'<TypeKey>}, '[NO_TRGT]'};
-    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff2, evv);
-    return fpdecl === '(define-fun Main@f1 ((x Int)) (@Result Int) (@Result-ok (+ 2 3)))';
+    let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff2, '[NO_TRGT]');
+    return fpdecl === '(define-fun Main@f1 ((x Int)) (@Result Int)
+                      \    (@Result-ok (+ 2 3))
+                      \)';
 }
