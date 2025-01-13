@@ -80,7 +80,6 @@ chktest test_BinValue(): Bool {
     return emitBinaryArithValue(op) === '(+ (Main@Foo$Int$-f cc) 1)';
 }
 
-
 chktest test_BinKeyEqNoneValue(): Bool {
     let op = BinKeyEqNoneValue{AccessVariableValue{'x'}};
     return emitBinaryKeyEqValue(op) === '(= x @Term-mk-None)';

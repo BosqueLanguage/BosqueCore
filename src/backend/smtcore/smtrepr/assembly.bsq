@@ -38,16 +38,6 @@ entity InvokeParameterDecl {
     field ptype: ParamTypeKey;
 }
 
-entity NamespaceFunctionDecl {
-    field ns: NamespaceKey;
-    field name: CString;
-
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: Expression;
-}
-
 entity NamespacePredicateFunctionDecl {
     field ns: NamespaceKey;
     field name: CString;
@@ -66,6 +56,16 @@ entity NamespaceBuiltinFunctionDecl {
     field specialname: CString;
 }
 
+entity NamespaceFunctionDecl {
+    field ns: NamespaceKey;
+    field name: CString;
+
+    field params: List<InvokeParameterDecl>;
+    field resultType: ResultType;
+
+    field body: FlowOperation;
+}
+
 entity TypeFunctionDecl {
     field tkey: TypeKey;
     field name: CString;
@@ -73,7 +73,7 @@ entity TypeFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: Expression;
+    field body: FlowOperation;
 }
 
 entity ConstMemberDecl {
@@ -212,9 +212,9 @@ entity Assembly {
     field nsconsts: List<NamespaceConstDecl>;
     field typeconsts: List<ConstMemberDecl>;
 
-    field nsfuncs: List<NamespaceFunctionDecl>;
     field nspreds: List<NamespacePredicateFunctionDecl>;
     field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    field nsfuncs: List<NamespaceFunctionDecl>;
     
     field typefuncs: List<TypeFunctionDecl>;
     

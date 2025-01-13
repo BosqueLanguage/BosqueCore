@@ -36,4 +36,12 @@ namespace SMTNameManager {
     function generateTermSubtypeFunctionName(tkey: TypeKey): CString {
         return CString::concat('@SubtypeOf-', tkey.value);
     }
+
+    function generateResultName(rtype: ResultType): CString {
+        if(rtype)@<DirectResult> {
+            return rtype.rtype.value;
+        } else {
+            return CString::concat('(@Result ', rtype.rtype.value, ')');
+        }
+    }
 }
