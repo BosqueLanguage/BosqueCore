@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
+import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
 import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../../frontend/body.js";
@@ -52,6 +52,7 @@ class BSQONTypeInfoEmitter {
         return attr;
     }
 
+    /*
     private emitFieldAttributes(attrs: DeclarationAttibute[]): any {
         let attr: any = {};
 
@@ -67,6 +68,7 @@ class BSQONTypeInfoEmitter {
 
         return attr;
     }
+        */
 
     private emitSuperTypes(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature): string[] | undefined {
         if(tdecl.name === "None" || tdecl.saturatedProvides.length === 0) {
@@ -76,7 +78,7 @@ class BSQONTypeInfoEmitter {
         return tdecl.saturatedProvides.map((ss) => this.tproc(ss).tkeystr);
     }
 
-    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, tag: string, isentity: boolean): any {
+    private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], instantiation: TypeInstantiationInfo, tag: string, isentity: boolean): any {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
         }
@@ -94,11 +96,15 @@ class BSQONTypeInfoEmitter {
             decl.fields = optfdecls.map((ff) => {
                 let fdecl: any = {};
                 fdecl.fname = ff.name;
-                fdecl.ftype = this.tproc(ff.declaredType).tkeystr;
-                fdecl.isoptional = ff.defaultValue !== undefined;
-                if(ff.attributes.length !== 0) {
-                    fdecl.fsannotation = this.emitFieldAttributes(ff.attributes);
-                }
+                fdecl.ftype = this.tproc(ff.type).tkeystr;
+                fdecl.isoptional = ff.hasdefault;
+
+                //
+                //TODO: emit field attributes
+                //
+                //if(ff.attributes.length !== 0) {
+                //    fdecl.fsannotation = this.emitFieldAttributes(ff.attributes);
+                //}
 
                 return fdecl;
             });
@@ -302,7 +308,7 @@ class BSQONTypeInfoEmitter {
     private emitEntityTypeDecl(tdecl: EntityTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdEntity", true);
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.saturatedBFieldInfo, instantiation, "StdEntity", true);
     }
 
     private emitOptionTypeDecl(tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo): any {
@@ -330,19 +336,19 @@ class BSQONTypeInfoEmitter {
     private emitConceptTypeDecl(tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdConcept", false);
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, [], instantiation, "StdConcept", false);
     }
 
     private emitDatatypeMemberEntityTypeDecl(tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdEntity", true);
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.saturatedBFieldInfo, instantiation, "StdEntity", true);
     }
 
     private emitDatatypeTypeDecl(tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         
-        return this.emitStdTypeDeclHelper(tdecl, rcvr, tdecl.fields, instantiation, "StdConcept", false);
+        return this.emitStdTypeDeclHelper(tdecl, rcvr, [], instantiation, "StdConcept", false);
     }
 
     private processSingleTypeDecl(tt: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): any[] {
