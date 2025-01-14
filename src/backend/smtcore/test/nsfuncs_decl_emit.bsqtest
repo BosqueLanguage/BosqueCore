@@ -38,24 +38,24 @@ const s_nsff2: NamespaceFunctionDecl = NamespaceFunctionDecl{
     ReturnValueOperation{BinAddValue{LiteralSimpleValue{'Int'<TypeKey>, '2i'}, LiteralSimpleValue{'Int'<TypeKey>, '3i'}}}
 };
 
-chktest test_NamespacePredicateFunctionDecl(): Bool {
+chktest test_emitNamespacePredicateFunctionDecl(): Bool {
     let fpdecl = emitNamespacePredicateFunctionDecl(SMTEmitter::s_nsfp1);
     return fpdecl === '(declare-fun Main@fp1 ((x Int)) Bool)';
 }
 
-chktest test_NamespaceBuiltinFunctionDecl(): Bool {
+chktest test_emitNamespaceBuiltinFunctionDecl(): Bool {
     let fpdecl = emitNamespaceBuiltinFunctionDecl(SMTEmitter::s_nsbi1, '[NO_TRGT]');
     return fpdecl === '(define-fun Core@CStringOps@s_empty ((s CString)) Bool (= s ""))';
 }
 
-chktest test_NamespaceFunctionDecl(): Bool {
+chktest test_emitNamespaceFunctionDecl(): Bool {
     let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff1, '[NO_TRGT]');
     return fpdecl === '(define-fun Main@f1 ((x Int)) Int
                       \    (+ 3 1)
                       \)';
 }
 
-chktest test_NamespaceFunctionDecl_OptionResult(): Bool {
+chktest test_emitNamespaceFunctionDecl_OptionResult(): Bool {
     let fpdecl = emitNamespaceFunctionDecl(SMTEmitter::s_nsff2, '[NO_TRGT]');
     return fpdecl === '(define-fun Main@f1 ((x Int)) (@Result Int)
                       \    (@Result-ok (+ 2 3))

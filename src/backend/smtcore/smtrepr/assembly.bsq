@@ -91,8 +91,7 @@ entity MemberFieldDecl {
     field declaredType: TypeKey;
 }
 
-entity SaturatedFieldInfo {
-    field containingtype: TypeKey;
+entity FieldInfo {
     field fname: CString;
     field ftype: TypeKey;
 }
@@ -103,15 +102,15 @@ entity EnumTypeDecl {
     field members: List<CString>;
 }
 
+%%
+%%No need for primitive type decls -- these are hardcoded
+%%
+
 entity TypedeclTypeDecl {
     field tkey: TypeKey;
 
+    field simple: Bool;
     field valuetype: TypeKey;
-    field vcheck: Option<CString>;
-}
-
-entity PrimitiveEntityTypeDecl {
-    field tkey: TypeKey;
 }
 
 datatype ConstructableTypeDecl using {
@@ -143,57 +142,44 @@ entity EntityTypeDecl {
     field tkey: TypeKey;
 
     field saturatedProvides: List<TypeKey>;
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
-
-    field vcheck: Option<CString>;
+    field allfields: List<FieldInfo>;
 }
 
 datatype PrimitiveConceptTypeDecl using {
     field tkey: TypeKey;
 }
 of
-OptionTypeDecl { }
+OptionTypeDecl {
+    field someType: TypeKey;
+ }
 | ResultTypeDecl {
-    field ttype: TypeKey; 
-    field etype: TypeKey;
-
-    field okType: OkTypeDecl;
-    field failType: FailTypeDecl;
+    field okType: TypeKey;
+    field failType: TypeKey;
 }
 | APIResultTypeDecl {
-    field ttype: TypeKey;
-
-    field errorType: APIErrorTypeDecl;
-    field failedType: APIFailedTypeDecl;
-    field rejectedType: APIRejectedTypeDecl;
-    field successType: APISuccessTypeDecl;
+    field errorType: TypeKey;
+    field failedType: TypeKey;
+    field rejectedType: TypeKey;
+    field successType: TypeKey;
 }
 ;
 
 entity ConceptTypeDecl {
     field tkey: TypeKey;
 
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
-
-    field vcheck: Option<CString>;
+    field subtypes: List<TypeKey>;
 }
 
 entity DatatypeTypeDecl {
     field tkey: TypeKey;
 
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
-    field associatedMemberEntityDecls: List<DatatypeMemberEntityTypeDecl>;
-
-    field vcheck: Option<CString>;
+    field subtypes: List<TypeKey>;
 }
 
 entity DatatypeMemberEntityTypeDecl {
     field tkey: TypeKey;
 
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
-    field parentTypeDecl: TypeKey;
-
-    field vcheck: Option<CString>;
+    field allfields: List<FieldInfo>;
 }
 
 %%
@@ -219,8 +205,9 @@ entity Assembly {
     field typefuncs: List<TypeFunctionDecl>;
     
     field enums: List<EnumTypeDecl>;
+
+
     field typedecls: List<TypedeclTypeDecl>;
-    field pentities: List<PrimitiveEntityTypeDecl>;
     field constructables: List<ConstructableTypeDecl>;
     field collections: List<CollectionTypeDecl>;
     field entities: List<EntityTypeDecl>;
