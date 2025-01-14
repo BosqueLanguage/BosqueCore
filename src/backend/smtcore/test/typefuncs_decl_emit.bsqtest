@@ -1,0 +1,20 @@
+namespace SMTEmitter;
+
+
+const s_tff1: TypeFunctionDecl = TypeFunctionDecl{
+    'Main@Foo'<TypeKey>, 
+    'f1', 
+    List<InvokeParameterDecl>{
+        InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
+    }, 
+    DirectResult{'Int'<TypeKey>}, 
+    ReturnValueOperation{BinAddValue{LiteralSimpleValue{'Int'<TypeKey>, '3i'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}}
+};
+
+
+chktest test_emitTypeFunctionDecl(): Bool {
+    let fpdecl = emitTypeFunctionDecl(SMTEmitter::s_tff1, '[NO_TRGT]');
+    return fpdecl === '(define-fun Main@Foo@f1 ((x Int)) Int
+                      \    (+ 3 1)
+                      \)';
+}

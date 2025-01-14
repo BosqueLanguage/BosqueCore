@@ -59,48 +59,6 @@
     )
 )
 
-;;
-;; entity results 
-;;
-
-;;
-;; term results 
-;;
-
-(declare-datatype @ResultTrgt-@Term ( (@ResultTrgt-@Term-mk-err) (@ResultTrgt-@Term-mk-ok (@ResultTrgt-@Term-ok @Term)) ))
-(define-fun @ResultTrgt-@Term-is-err ((x @ResultTrgt-@Term)) Bool (= x @ResultTrgt-@Term-mk-err))
-(define-fun @ResultTrgt-@Term-is-ok ((x @ResultTrgt-@Term)) Bool (not (= x @ResultTrgt-@Term-mk-err)))
-(define-fun @ResultTrgt-@Term-get-ok ((x @ResultTrgt-@Term)) @Term (@ResultTrgt-@Term-ok x))
-
-(declare-datatype @ResultOther-@Term ( (@ResultOther-@Term-mk-err) (@ResultOther-@Term-mk-ok (@ResultOther-@Term-ok Nat)) ))
-(define-fun @ResultOther-@Term-is-err ((x @ResultOther-@Term)) Bool (= x @ResultOther-@Term-mk-err))
-(define-fun @ResultOther-@Term-is-ok ((x @ResultOther-@Term)) Bool (not (= x @ResultOther-@Term-mk-err)))
-(define-fun @ResultOther-@Term-get-ok ((x @ResultOther-@Term)) Nat (@ResultOther-@Term-ok x))
-
-(declare-datatype @Result-Term ( (@Result-@Term-mk-err-trgt) (@Result-@Term-mk-err-other) (@Result-@Term-mk-ok (@Result-@Term-ok @Term)) ))
-(define-fun @Result-@Term-from-trgt ((x @ResultTrgt-@Term)) @Result-@Term (ite (= x @ResultTrgt-@Term-mk-err) @Result-@Term-mk-err-trgt (@Result-@Term-mk-ok (@ResultTrgt-@Term-get-ok x))))
-(define-fun @Result-@Term-from-other ((x @ResultOther-@Term)) @Result-@Term (ite (= x @ResultOther-@Term-mk-err) @Result-@Term-mk-err-other (@Result-@Term-mk-ok (@ResultOther-@Term-get-ok x))))
-(define-fun @Result-@Term-is-err ((x @Result-@Term)) Bool (or (= x @Result-@Term-mk-err-trgt) (= x @Result-@Term-mk-err-other)))
-(define-fun @Result-@Term-is-ok ((x @Result-@Term)) Bool (and (not (= x @Result-@Term-mk-err-trgt)) (not (= x @Result-@Term-mk-err-other))))
-(define-fun @Result-@Term-get-ok ((x @Result-@Term)) @Term (@Result-@Term-ok x))
-
-;;
-;; term results per entity (or typedecl) type
-;;
-
-;;SAMPLE --
-;; (define-fun @Result-@Term-from-Type ((x Type)) @Result-@Term (@Result-@Term-mk-ok (@Term-mk-Type x)))
-;; (define-fun @Result-@Term-from-@ResultTrgt-Type ((x Type)) @Result-@Term (ite ....)
-;; (define-fun @Result-@Term-from-@ResultOther-Type ((x Type)) @Result-@Term (ite ....)
-;; (define-fun @Result-@Term-from-@Result-Type ((x @Result-Type)) @Result-@Term (ite ....)
-;;
-;; (define-fun @Result-Type-from-Term ((x @Term)) @Result-Type (@Result-Type-mk-ok (@Term-Type-value x)))
-;; (define-fun @Result-Type-from-@ResultTrgt-@Term ((x @Term)) @Result-Type (ite ....)
-;; (define-fun @Result-Type-from-@ResultOther-@Term ((x @Term)) @Result-Type (ite ....)
-;; (define-fun @Result-Type-from-@Result-@Term ((x @Result-@Term)) @Result-Type (ite ....)
-
-TODO: None action!!!!!
-
 ;;NLA options
 (declare-fun @NLA_I_mult (Int Int) Int)
 (declare-fun @NLA_I_div (Int Int) Int)
@@ -108,8 +66,6 @@ TODO: None action!!!!!
 ;;--TYPE_SUBTYPE--;;
 
 ;;--GLOBAL_DECLS--;;
-
-;;--UF_DECLS--;;
 
 ;;--FUNCTION_DECLS--;;
 

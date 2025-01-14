@@ -9,6 +9,21 @@ function cleanOptionalLeadingPlus(vstr: CString): CString {
     return if(vstr.startsWithString('+')) then vstr.removePrefixString('+') else vstr;
 }
 
+function tidyNewlineJoin(s1: CString, s2: CString): CString {
+    if(s1.empty() && s2.empty()) {
+        return '';
+    }
+    elif(s1.empty()) {
+        return s2;
+    }
+    elif(s2.empty()) {
+        return s1;
+    }
+    else {
+        return CString::join('%n;', s1, s2);
+    }
+}
+
 function tryGetConstFlowOperation(value: FlowOperation): Option<ConstantValue> {
     if(value)@<ReturnValueOperation> {
         if($vv = $value.val)@<ConstantValue> {
@@ -818,20 +833,6 @@ function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<Cons
         return emitConstDeclarationHelper(cname, c.vtype, c.value);    
     });
     let tconstdecls_str = CString::joinAll('%n;', tconstdecls);
-    
-    var alldecls: CString;
-    if(nsconstdecls_str.empty() && tconstdecls_str.empty()) {
-        alldecls = '';
-    }
-    elif(nsconstdecls_str.empty()) {
-        alldecls = tconstdecls_str;
-    }
-    elif(tconstdecls_str.empty()) {
-        alldecls = nsconstdecls_str;
-    }
-    else {
-        alldecls = CString::join('%n;', nsconstdecls_str, tconstdecls_str);
-    }
 
     let nsconstinits = nsconsts
         .filter(pred(c) => tryGetConstFlowOperation(c.value)?none)
@@ -849,21 +850,7 @@ function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<Cons
         });
     let tconstinits_str = CString::joinAll('%n;', tconstinits);
 
-    var allinits: CString;
-    if(nsconstinits_str.empty() && tconstinits_str.empty()) {
-        allinits = '';
-    }
-    elif(nsconstinits_str.empty()) {
-        allinits = tconstinits_str;
-    }
-    elif(tconstinits_str.empty()) {
-        allinits = nsconstinits_str;
-    }
-    else {
-        allinits = CString::join('%n;', nsconstinits_str, tconstinits_str);
-    }
-
-    return alldecls, allinits;
+    return tidyNewlineJoin(nsconstdecls_str, tconstdecls_str), tidyNewlineJoin(nsconstinits_str, tconstinits_str);
 }
 
 function emitNamespacePredicateFunctionDecl(f: NamespacePredicateFunctionDecl): CString {
@@ -911,6 +898,61 @@ function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, trgterr: CString): 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
 }
 
+function emitTypeFunctionDecl(f: TypeFunctionDecl, trgterr: CString): CString {
+    let fname = SMTNameManager::generateTypeFunctionName(f.tkey, f.name);
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
+
+    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
+
+    let evv = SMTEmitterEnv{f.resultType, trgterr};
+
+    var body: CString;
+    if($rb = f.body)@<ReturnValueOperation> {
+        body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
+    }
+    else {
+        body = CString::concat('%n;', emitFlowOperation(f.body, evv, some('    ')));
+    }
+
+    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
+}
+
+function emitEnumTypeDecl(ttype: EnumTypeDecl): CString {
+    let tvals = CString::joinAll(' ', ttype.members.map<CString>(fn(v) => CString::concat(ttype.tkey.value, '$$', v)));
+
+    return CString::concat('(declare-datatype ', ttype.tkey.value, ' (', tvals, '))');
+}
+
+function emitEnumTypeDecls(ttypes: List<EnumTypeDecl>): CString {
+    let tdecls = ttypes.map<CString>(fn(t) => emitEnumTypeDecl(t));
+    return CString::joinAll('%n;', tdecls);
+}
+
+function emitTypedeclTypeDecl(ttype: TypedeclTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+    let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
+
+    let cval = CString::concat('(', consfield, ' ', ttype.valuetype.value, ')');
+    let vval = CString::concat('(', consname, ' ', cval, ')');
+
+    return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', vval, ' ))');
+}
+
+function emitTypedeclTypeDeclTermCons(ttype: TypedeclTypeDecl): CString {
+    let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
+    let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
+    let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
+    return CString::concat('            (', termcons, ' ', cval, ')');
+}
+
+function emitTypedeclTypes(ttypes: List<TypedeclTypeDecl>): CString, CString {
+    let tds = ttypes.map<CString>(fn(t) => emitTypedeclTypeDecl(t));
+    let ttcons = ttypes.filter(pred(t) => !t.simple).map<CString>(fn(t) => emitTypedeclTypeDeclTermCons(t));
+
+    return CString::joinAll('%n;', tds), CString::joinAll('%n;', ttcons);
+}
+
 function emitAssembly(asm: Assembly): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
 
@@ -922,8 +964,8 @@ function emitAssembly(asm: Assembly): CString {
     field typefuncs: List<TypeFunctionDecl>;
     
     field enums: List<EnumTypeDecl>;
-    field typedecls: List<TypedeclTypeDecl>;
     field pentities: List<PrimitiveEntityTypeDecl>;
+    field typedecls: List<TypedeclTypeDecl>;
     field constructables: List<ConstructableTypeDecl>;
     field collections: List<CollectionTypeDecl>;
     field entities: List<EntityTypeDecl>;

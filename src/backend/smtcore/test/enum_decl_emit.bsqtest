@@ -1,0 +1,10 @@
+namespace SMTEmitter;
+
+chktest test_emitEnumTypeDecl(): Bool {
+    let edecls = emitEnumTypeDecls(List<EnumTypeDecl>{
+        EnumTypeDecl{'Main@Foo'<TypeKey>, List<CString>{'f', 'g'}},
+        EnumTypeDecl{'Main@Bar'<TypeKey>, List<CString>{'yes', 'no'}}
+    });
+
+    return edecls === '(declare-datatype Main@Foo (Main@Foo$$f Main@Foo$$g))%n;(declare-datatype Main@Bar (Main@Bar$$yes Main@Bar$$no))';
+}
