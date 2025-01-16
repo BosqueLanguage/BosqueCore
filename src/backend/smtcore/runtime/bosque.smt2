@@ -27,34 +27,24 @@
 (define-sort CString () String)
 ;;String is String
 
-;;
-;; enum datatypes
-;; SAMPLE -- (declare-datatype (EnumType a b c)) 
-;;
 ;;--ENUM DECLS--;;
-
-;;
-;; typedecl datatypes 
-;;
-
-;;SAMPLE -- (declare-datatype TAType ((TAType-mk p)))
-
-;;
-;; typedecl results -- set of type alias results per type alias type
-;;
+;;--TYPEDECL_DECLS--;;
+;;--OTHER_DECLS_SIMPLE--;;
 
 ;;
 ;; Entity datatypes 
 ;;
 (declare-datatypes (
-    ;;--ENTITY_DECLS--;;
+    ;;--SPECIAL_DECLS_INDUCTIVE--;;
+    ;;--COLLECTION_DECLS_INDUCTIVE--;;
     (@Term 0)
     ) (
-        ;;--ENTITY_CONSTRUCTORS--;;
+        ;;--SPECIAL_CONSTRUCTORS_INDUCTIVE--;;
+        ;;--COLLECTION_CONSTRUCTORS_INDUCTIVE--;;
         (
             (@Term-mk-None)
             ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
-            ;;--ENTITY_TERM_CONSTRUCTORS--;;
+            ;;--SPECIAL_TERM_CONSTRUCTORS--;;
         )
     )
 )
@@ -63,9 +53,9 @@
 (declare-fun @NLA_I_mult (Int Int) Int)
 (declare-fun @NLA_I_div (Int Int) Int)
 
-;;--TYPE_SUBTYPE--;;
-
 ;;--GLOBAL_DECLS--;;
+
+;;--TYPE_SUBTYPE--;;
 
 ;;--FUNCTION_DECLS--;;
 

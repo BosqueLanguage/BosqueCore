@@ -361,6 +361,10 @@ entity IfOperation provides FlowOperation {
     field falseExpression: FlowOperation;
 }
 
+%%
+%%TODO Match and Switch operations -- handle large case statements and avoid overloading SMT in cases per function
+%%
+
 entity ReturnValueOperation provides FlowOperation {
     field val: Value;
 }

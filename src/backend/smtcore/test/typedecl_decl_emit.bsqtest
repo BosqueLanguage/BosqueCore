@@ -2,13 +2,13 @@ namespace SMTEmitter;
 
 const s_tdecl1: TypedeclTypeDecl = TypedeclTypeDecl{
     'Main@Foo'<TypeKey>,
-    true,
+    TypeKind#Simple,
     'Int'<TypeKey>
 };
 
 const s_tdecl2: TypedeclTypeDecl = TypedeclTypeDecl{
     'Main@Bar'<TypeKey>,
-    false,
+    TypeKind#Inductive,
     'Float'<TypeKey>
 };
 

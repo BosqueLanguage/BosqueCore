@@ -3114,7 +3114,7 @@ class TypeChecker {
                     cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, defaulttype)
                 }
                 
-                cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+                cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
 
                 if(stmt.sval[1] !== undefined) {
                     cenv = cenv.popLocalScope();
