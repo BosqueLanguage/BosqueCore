@@ -989,11 +989,11 @@ function emitConstructableTypeDeclConstructor(ttype: ConstructableTypeDecl): CSt
     }
 
     if(tlist.empty()) {
-        return CString::concat('    (', consname, ')');
+        return CString::concat('        (', consname, ')');
     }
     else {
         let tvals = CString::joinAll(' ', tlist);
-        return CString::concat('    (', consname, ' (', tvals, '))');
+        return CString::concat('        (', consname, ' ', tvals, ')');
     }
 }
 
