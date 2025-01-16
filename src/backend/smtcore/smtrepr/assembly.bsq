@@ -137,13 +137,15 @@ OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 datatype CollectionTypeDecl using {
     field tkey: TypeKey;
     field typekind: TypeKind;
+
+    field oftype: TypeKey;
 }
 of
-ListTypeDecl { field ttype: TypeKey; }
+ListTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { field ktype: TypeKey; field vtype: TypeKey; }
+| MapTypeDecl { }
 ;
 
 entity EntityTypeDecl {

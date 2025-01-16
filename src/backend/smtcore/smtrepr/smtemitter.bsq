@@ -1055,6 +1055,35 @@ function emitConstructableTypeDecls(ttypes: List<ConstructableTypeDecl>): CStrin
    return sdecls, idecls, cons, tcons;
 }
 
+function emitCollectionTypeDeclDeclarationSimple(ttype: CollectionTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+    let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
+
+    let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
+    let vval = CString::concat('(', consname, ' ', cval, ')');
+
+    return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', vval, ' ))');
+}
+
+function emitCollectionTypeDeclDeclarationInductive(ttype: CollectionTypeDecl): CString {
+    return CString::concat('    (', ttype.tkey.value, ' 0)');
+}
+
+function emitCollectionTypeDeclConstructor(ttype: CollectionTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+    let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
+    let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
+    return CString::concat('        (', consname, ' ', cval, ')');
+}
+
+function emitCollectionTypeDecls(ttypes: List<CollectionTypeDecl>): CString, CString, CString {
+    let sdecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind === TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclDeclarationSimple(t)));
+    let idecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclDeclarationInductive(t)));
+    let cons = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclConstructor(t)));
+    
+    return sdecls, idecls, cons;
+}
+
 function emitAssembly(asm: Assembly): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
 

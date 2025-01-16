@@ -27,25 +27,24 @@
 (define-sort CString () String)
 ;;String is String
 
-
 ;;--ENUM DECLS--;;
 ;;--TYPEDECL_DECLS--;;
+;;--OTHER_DECLS_SIMPLE--;;
 
 ;;
 ;; Entity datatypes 
 ;;
 (declare-datatypes (
-    ;;--CONSTRUCTABLE_DECLS--;;
-    ;;--ENTITY_DECLS--;;
+    ;;--SPECIAL_DECLS_INDUCTIVE--;;
+    ;;--COLLECTION_DECLS_INDUCTIVE--;;
     (@Term 0)
     ) (
-        ;;--CONSTRUCTABLE_CONSTRUCTORS--;;
-        ;;--ENTITY_CONSTRUCTORS--;;
+        ;;--SPECIAL_CONSTRUCTORS_INDUCTIVE--;;
+        ;;--COLLECTION_CONSTRUCTORS_INDUCTIVE--;;
         (
             (@Term-mk-None)
-            ;;--CONSTRUCTABLE_TERM_CONSTRUCTORS--;;
             ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
-            ;;--ENTITY_TERM_CONSTRUCTORS--;;
+            ;;--SPECIAL_TERM_CONSTRUCTORS--;;
         )
     )
 )
