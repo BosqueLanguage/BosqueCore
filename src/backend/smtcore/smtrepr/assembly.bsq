@@ -106,15 +106,22 @@ entity EnumTypeDecl {
 %%No need for primitive type decls -- these are hardcoded
 %%
 
+enum TypeKind {
+    Unknown,
+    Simple,
+    Inductive
+}
+
 entity TypedeclTypeDecl {
     field tkey: TypeKey;
+    field typekind: TypeKind;
 
-    field simple: Bool;
     field valuetype: TypeKey;
 }
 
 datatype ConstructableTypeDecl using {
     field tkey: TypeKey;
+    field typekind: TypeKind;
 }
 of
 OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
@@ -129,6 +136,7 @@ OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 
 datatype CollectionTypeDecl using {
     field tkey: TypeKey;
+    field typekind: TypeKind;
 }
 of
 ListTypeDecl { field ttype: TypeKey; }
@@ -140,6 +148,7 @@ ListTypeDecl { field ttype: TypeKey; }
 
 entity EntityTypeDecl {
     field tkey: TypeKey;
+    field typekind: TypeKind;
 
     field saturatedProvides: List<TypeKey>;
     field allfields: List<FieldInfo>;
