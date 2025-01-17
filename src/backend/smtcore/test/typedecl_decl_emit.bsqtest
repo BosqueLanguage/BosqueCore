@@ -2,30 +2,30 @@ namespace SMTEmitter;
 
 const s_tdecl1: TypedeclTypeDecl = TypedeclTypeDecl{
     'Main@Foo'<TypeKey>,
-    TypeKind#Simple,
+    false,
     'Int'<TypeKey>
 };
 
 const s_tdecl2: TypedeclTypeDecl = TypedeclTypeDecl{
     'Main@Bar'<TypeKey>,
-    TypeKind#Inductive,
+    true,
     'Float'<TypeKey>
 };
 
 chktest test_emitTypedeclTypesSimple(): Bool {
-    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{s_tdecl1});
+    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{SMTEmitter::s_tdecl1});
 
     return tdecls === '(declare-datatype Main@Foo ( (Main@Foo-mk (Main@Foo-value Int)) ))' && tcons.empty();
 }
 
 chktest test_emitTypedeclTypesWTerm(): Bool {
-    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{s_tdecl2});
+    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{SMTEmitter::s_tdecl2});
 
     return tdecls === '(declare-datatype Main@Bar ( (Main@Bar-mk (Main@Bar-value Float)) ))' && tcons === '            (@Term-Main@Bar-mk (@Term-Main@Bar-value Main@Bar))';
 }
 
 chktest test_emitTypedeclTypesMultiple(): Bool {
-    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{s_tdecl2, s_tdecl1});
+    let tdecls, tcons = emitTypedeclTypes(List<TypedeclTypeDecl>{SMTEmitter::s_tdecl2, SMTEmitter::s_tdecl1});
 
     return tdecls === '(declare-datatype Main@Bar ( (Main@Bar-mk (Main@Bar-value Float)) ))%n;(declare-datatype Main@Foo ( (Main@Foo-mk (Main@Foo-value Int)) ))' && tcons === '            (@Term-Main@Bar-mk (@Term-Main@Bar-value Main@Bar))';
 }

@@ -1,0 +1,54 @@
+namespace SMTEmitter;
+
+const s_entitynofields1: EntityTypeDecl = EntityTypeDecl{
+    'Main@Bar'<TypeKey>,
+    false,
+    List<FieldInfo>{}
+};
+
+const s_entitysimple1: EntityTypeDecl = EntityTypeDecl{
+    'Main@Foo'<TypeKey>,
+    false,
+    List<FieldInfo>{
+        FieldInfo{ 'x', 'Int'<TypeKey> },
+        FieldInfo{ 'y', 'Bool'<TypeKey> }
+    }
+};
+const s_entitytermable1: EntityTypeDecl = EntityTypeDecl{
+    'Main@Foo'<TypeKey>,
+    true,
+    List<FieldInfo>{
+        FieldInfo{ 'x', 'Int'<TypeKey> },
+        FieldInfo{ 'y', 'Bool'<TypeKey> }
+    }
+};
+
+chktest test_emitEntityTypeDecls_empty(): Bool {
+    let idecls, cons, tcons = emitEntityTypeDecls(List<EntityTypeDecl>{SMTEmitter::s_entitynofields1});
+
+    return /\(
+        idecls === '    (Main@Bar 0)',
+        cons === '        (Main@Bar-mk)',
+        tcons.empty()
+    );
+}
+
+chktest test_emitEntityTypeDecls_fields(): Bool {
+    let idecls, cons, tcons = emitEntityTypeDecls(List<EntityTypeDecl>{SMTEmitter::s_entitysimple1});
+
+    return /\(
+        idecls === '    (Main@Foo 0)',
+        cons === '        (Main@Foo-mk (Main@Foo-x Int) (Main@Foo-y Bool))',
+        tcons.empty()
+    );
+}
+
+chktest test_emitEntityTypeDecls_termable(): Bool {
+    let idecls, cons, tcons = emitEntityTypeDecls(List<EntityTypeDecl>{SMTEmitter::s_entitytermable1});
+
+    return /\(
+        idecls === '    (Main@Foo 0)',
+        cons === '        (Main@Foo-mk (Main@Foo-x Int) (Main@Foo-y Bool))',
+        tcons === '            (@Term-Main@Foo-mk (@Term-Main@Foo-value Main@Foo))'
+    );
+}

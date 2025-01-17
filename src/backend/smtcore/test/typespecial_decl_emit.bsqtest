@@ -2,60 +2,53 @@ namespace SMTEmitter;
 
 const s_somedecl1: SomeTypeDecl = SomeTypeDecl{
     'Some$Int$'<TypeKey>,
-    TypeKind#Simple,
     'Int'<TypeKey>
 };
 
 const s_okdecl1: OkTypeDecl = OkTypeDecl{
     'Result$Int-Bool$@Ok'<TypeKey>,
-    TypeKind#Inductive,
     'Int'<TypeKey>,
     'Bool'<TypeKey>
 };
 
 const s_faildecl1: FailTypeDecl = FailTypeDecl{
     'Result$Int-Bool$@Fail'<TypeKey>,
-    TypeKind#Inductive,
     'Int'<TypeKey>,
     'Bool'<TypeKey>
 };
 
 const s_mapentrydecl1: MapEntryTypeDecl = MapEntryTypeDecl{
     'MapEntry$Int-Bool$'<TypeKey>,
-    TypeKind#Simple,
     'Int'<TypeKey>,
     'Bool'<TypeKey>
 };
 
 chktest test_emitConstructableTypeDecls_some(): Bool {
-    let sdecls, idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{s_somedecl1});
+    let idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{SMTEmitter::s_somedecl1});
 
     return /\(
-        sdecls === '(declare-datatype Some$Int$ ( (Some$Int$-mk (Some$Int$-value Int)) ))',
-        idecls.empty(),
-        cons.empty(),
+        idecls === '    (Some$Int$ 0)',
+        cons === '        (Some$Int$-mk (Some$Int$-value Int))',
         tcons === '            (@Term-Some$Int$-mk (@Term-Some$Int$-value Some$Int$))'
     );
 }
 
 chktest test_emitConstructableTypeDecls_ok_fail(): Bool {
-    let sdecls, idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{s_okdecl1, s_faildecl1});
+    let idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{SMTEmitter::s_okdecl1, SMTEmitter::s_faildecl1});
 
     return /\(
-        sdecls.empty(),  
         idecls === '    (Result$Int-Bool$@Ok 0)%n;    (Result$Int-Bool$@Fail 0)',
         cons === '        (Result$Int-Bool$@Ok-mk (Result$Int-Bool$@Ok-value Int))%n;        (Result$Int-Bool$@Fail-mk (Result$Int-Bool$@Fail-value Bool))',
-         tcons === '            (@Term-Result$Int-Bool$@Ok-mk (@Term-Result$Int-Bool$@Ok-value Result$Int-Bool$@Ok))%n;            (@Term-Result$Int-Bool$@Fail-mk (@Term-Result$Int-Bool$@Fail-value Result$Int-Bool$@Fail))'
+        tcons === '            (@Term-Result$Int-Bool$@Ok-mk (@Term-Result$Int-Bool$@Ok-value Result$Int-Bool$@Ok))%n;            (@Term-Result$Int-Bool$@Fail-mk (@Term-Result$Int-Bool$@Fail-value Result$Int-Bool$@Fail))'
     );
 }
 
 chktest test_emitConstructableTypeDecls_mapentry(): Bool {
-    let sdecls, idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{s_mapentrydecl1});
+    let idecls, cons, tcons = emitConstructableTypeDecls(List<ConstructableTypeDecl>{SMTEmitter::s_mapentrydecl1});
 
     return /\(
-        sdecls === '(declare-datatype MapEntry$Int-Bool$ ( (MapEntry$Int-Bool$-mk (MapEntry$Int-Bool$-key Int) (MapEntry$Int-Bool$-value Bool)) ))',
-        idecls.empty(),
-        cons.empty(),
+        idecls === '    (MapEntry$Int-Bool$ 0)',
+        cons === '        (MapEntry$Int-Bool$-mk (MapEntry$Int-Bool$-value Int))',
         tcons === '            (@Term-MapEntry$Int-Bool$-mk (@Term-MapEntry$Int-Bool$-value MapEntry$Int-Bool$))'
     );
 }

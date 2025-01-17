@@ -106,22 +106,15 @@ entity EnumTypeDecl {
 %%No need for primitive type decls -- these are hardcoded
 %%
 
-enum TypeKind {
-    Unknown,
-    Simple,
-    Inductive
-}
-
 entity TypedeclTypeDecl {
     field tkey: TypeKey;
-    field typekind: TypeKind;
+    field termable: Bool;
 
     field valuetype: TypeKey;
 }
 
 datatype ConstructableTypeDecl using {
     field tkey: TypeKey;
-    field typekind: TypeKind;
 }
 of
 OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
@@ -136,8 +129,6 @@ OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 
 datatype CollectionTypeDecl using {
     field tkey: TypeKey;
-    field typekind: TypeKind;
-
     field oftype: TypeKey;
 }
 of
@@ -150,9 +141,8 @@ ListTypeDecl { }
 
 entity EntityTypeDecl {
     field tkey: TypeKey;
-    field typekind: TypeKind;
+    field termable: Bool;
 
-    field saturatedProvides: List<TypeKey>;
     field allfields: List<FieldInfo>;
 }
 
@@ -216,16 +206,15 @@ entity Assembly {
     field typefuncs: List<TypeFunctionDecl>;
     
     field enums: List<EnumTypeDecl>;
-
-
     field typedecls: List<TypedeclTypeDecl>;
     field constructables: List<ConstructableTypeDecl>;
     field collections: List<CollectionTypeDecl>;
+
     field entities: List<EntityTypeDecl>;
-    
+    field datatypes: List<DatatypeTypeDecl>;
+
     field pconcepts: List<PrimitiveConceptTypeDecl>;
     field concepts: List<ConceptTypeDecl>;
 
-    field datatypes: List<DatatypeTypeDecl>;
     field datamembers: List<DatatypeMemberEntityTypeDecl>;
 }
