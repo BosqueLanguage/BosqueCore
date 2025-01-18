@@ -218,4 +218,6 @@ entity Assembly {
     field concepts: List<ConceptTypeDecl>;
 
     field datatypes: List<DatatypeTypeDecl>;
+
+    validate $funcorder.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }

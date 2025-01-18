@@ -1,5 +1,7 @@
 declare namespace SMTEmitter;
 
+const s_ignoreErrTrgt: CString = '[ignore]';
+
 entity SMTEmitterEnv {
     field expectedResultType: ResultType;
     field errtrgt: CString;
@@ -1157,30 +1159,53 @@ function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concept
     return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
 }
 
-function emitAssembly(asm: Assembly): CString {
+function emitAssembly(asm: Assembly, trgterr: CString): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
+    let conststr = CString::join('%n;',
+        '#BEGIN ;;--GLOBAL_DECLS--;;'
+        constdecls,
+        '#END ;;--GLOBAL_DECLS--;;',
+        '#BEGIN ;;--GLOBAL_IMPLS--;;',
+        constimpls,
+        '#END ;;--GLOBAL_IMPLS--;;'
+    );
 
-%*
-    field nspreds: List<NamespacePredicateFunctionDecl>;
-    field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
-    field nsfuncs: List<NamespaceFunctionDecl>;
+    let nspreds = CString::joinAll('%n;', asm.nspreds.map<CString>(fn(f) => emitNamespacePredicateFunctionDecl(f)));
+    let nsbuiltins = CString::joinAll('%n;', asm.nsbuiltins.map<CString>(fn(f) => emitNamespaceBuiltinFunctionDecl(f, trgterr)));
+    let prestr = CString::join('%n;',
+        '#BEGIN ;;--PRE_FUNCS--;;',
+        nspreds,
+        nsbuiltins,
+        '#END ;;--PRE_FUNCS--;;'
+    );
+
+    let efuncs_list = funcorder.map<CString>(fn(t) => {
+        if(nsfuncs.contains(t)) {
+            return emitNamespaceFunctionDecl(nsfuncs[t], trgterr);
+        }
+        else {
+            return emitTypeFunctionDecl(typefuncs[t], trgterr);
+        }
+    });
+    let efuncs = CString::joinAll('%n%n;', efuncs_list);
     
-    field typefuncs: List<TypeFunctionDecl>;
-    
-    field enums: List<EnumTypeDecl>;
-    field pentities: List<PrimitiveEntityTypeDecl>;
-    field typedecls: List<TypedeclTypeDecl>;
-    field constructables: List<ConstructableTypeDecl>;
-    field collections: List<CollectionTypeDecl>;
+    let enum_edcls = emitEnumTypeDecls(asm.enums);
+
+    let typedecl_edcls, typedecl_etcons = emitTypedeclTypes(asm.typedecls);
+
+    let constructable_edcls, constructable_econs, constructable_etcons = emitConstructableTypeDecls(asm.constructables);
+
+    let collection_edcls, collection_econs = emitCollectionTypeDecls(asm.collections);
+
     field entities: List<EntityTypeDecl>;
-    
+    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+
     field pconcepts: List<PrimitiveConceptTypeDecl>;
     field concepts: List<ConceptTypeDecl>;
 
     field datatypes: List<DatatypeTypeDecl>;
-    field datamembers: List<DatatypeMemberEntityTypeDecl>;
-*%
-    return 'ok';
+
+    return CString::join('%n;', conststr);
 }
 
 public function main(): Int {

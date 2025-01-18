@@ -54,7 +54,6 @@
     )
 )
 
-
 ;;--TYPE_PRIMITIVE_CONCEPT_SUBTYPE--;;
 ;;--TYPE_CONCEPT_SUBTYPE--;;
 ;;--TYPE_DATATYPE_SUBTYPE--;;
@@ -64,6 +63,8 @@
 (declare-fun @NLA_I_div (Int Int) Int)
 
 ;;--GLOBAL_DECLS--;;
+
+;;--PRE_FUNCS--;;
 
 ;;--FUNCTION_DECLS--;;
 
