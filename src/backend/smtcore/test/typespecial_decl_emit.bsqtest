@@ -48,7 +48,7 @@ chktest test_emitConstructableTypeDecls_mapentry(): Bool {
 
     return /\(
         idecls === '    (MapEntry$Int-Bool$ 0)',
-        cons === '        (MapEntry$Int-Bool$-mk (MapEntry$Int-Bool$-value Int))',
+        cons === '        (MapEntry$Int-Bool$-mk (MapEntry$Int-Bool$-key Int) (MapEntry$Int-Bool$-value Bool))',
         tcons === '            (@Term-MapEntry$Int-Bool$-mk (@Term-MapEntry$Int-Bool$-value MapEntry$Int-Bool$))'
     );
 }

@@ -1041,7 +1041,7 @@ function emitEntityTypeDeclConstructor(ttype: EntityTypeDecl): CString {
         return CString::concat('        (', consname, ')');
     }
     else {
-        let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.fname, ')'));
+        let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
         return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
     }
 }
