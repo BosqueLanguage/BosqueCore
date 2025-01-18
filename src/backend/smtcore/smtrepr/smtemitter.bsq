@@ -1,5 +1,7 @@
 declare namespace SMTEmitter;
 
+const s_ignoreErrTrgt: CString = '[ignore]';
+
 entity SMTEmitterEnv {
     field expectedResultType: ResultType;
     field errtrgt: CString;
@@ -948,54 +950,12 @@ function emitTypedeclTypeDeclTermCons(ttype: TypedeclTypeDecl): CString {
 
 function emitTypedeclTypes(ttypes: List<TypedeclTypeDecl>): CString, CString {
     let tds = ttypes.map<CString>(fn(t) => emitTypedeclTypeDecl(t));
-    let ttcons = ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitTypedeclTypeDeclTermCons(t));
+    let ttcons = ttypes.filter(pred(t) => t.termable).map<CString>(fn(t) => emitTypedeclTypeDeclTermCons(t));
 
     return CString::joinAll('%n;', tds), CString::joinAll('%n;', ttcons);
 }
 
-function emitConstructableTypeDeclDeclarationSimple(ttype: ConstructableTypeDecl): CString {
-    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
-
-    var tlist: List<CString>;
-    match(ttype)@ {
-        OkTypeDecl => { 
-            tlist = List<CString>{
-                CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.ttype.value, ')'),
-            };
-        }
-        | FailTypeDecl => {
-            tlist = List<CString>{
-                CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.etype.value, ')'),
-            };
-        }
-        | SomeTypeDecl => {
-            tlist = List<CString>{
-                CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.vtype.value, ')'),
-            };
-        }
-        | MapEntryTypeDecl => {
-            tlist = List<CString>{
-                CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'key'), ' ', $ttype.ktype.value, ')'),
-                CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.vtype.value, ')'),
-            };
-        }
-        | _ => {
-            tlist = List<CString>{};
-        }
-    }
-
-    if(tlist.empty()) {
-        return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', consname, ' ))');
-    }
-    else {
-        let tvals = CString::joinAll(' ', tlist);
-        let tcons = CString::concat('(', consname, ' ', tvals, ')');
-
-        return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', tcons, ' ))');
-    }
-}
-
-function emitConstructableTypeDeclDeclarationInductive(ttype: ConstructableTypeDecl): CString {
+function emitConstructableTypeDeclDeclaration(ttype: ConstructableTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
@@ -1046,26 +1006,15 @@ function emitConstructableTypeDeclTermConstructor(ttype: ConstructableTypeDecl):
     return CString::concat('            (', termcons, ' ', cval, ')');
 }
 
-function emitConstructableTypeDecls(ttypes: List<ConstructableTypeDecl>): CString, CString, CString, CString {
-   let sdecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind === TypeKind#Simple).map<CString>(fn(t) => emitConstructableTypeDeclDeclarationSimple(t)));
-   let idecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitConstructableTypeDeclDeclarationInductive(t)));
-   let cons = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitConstructableTypeDeclConstructor(t)));
+function emitConstructableTypeDecls(ttypes: List<ConstructableTypeDecl>): CString, CString, CString {
+   let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclDeclaration(t)));
+   let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclConstructor(t)));
    let tcons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclTermConstructor(t)));
 
-   return sdecls, idecls, cons, tcons;
+   return idecls, cons, tcons;
 }
 
-function emitCollectionTypeDeclDeclarationSimple(ttype: CollectionTypeDecl): CString {
-    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
-    let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
-
-    let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
-    let vval = CString::concat('(', consname, ' ', cval, ')');
-
-    return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', vval, ' ))');
-}
-
-function emitCollectionTypeDeclDeclarationInductive(ttype: CollectionTypeDecl): CString {
+function emitCollectionTypeDeclDeclaration(ttype: CollectionTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
@@ -1076,38 +1025,253 @@ function emitCollectionTypeDeclConstructor(ttype: CollectionTypeDecl): CString {
     return CString::concat('        (', consname, ' ', cval, ')');
 }
 
-function emitCollectionTypeDecls(ttypes: List<CollectionTypeDecl>): CString, CString, CString {
-    let sdecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind === TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclDeclarationSimple(t)));
-    let idecls = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclDeclarationInductive(t)));
-    let cons = CString::joinAll('%n;', ttypes.filter(pred(t) => t.typekind !== TypeKind#Simple).map<CString>(fn(t) => emitCollectionTypeDeclConstructor(t)));
+function emitCollectionTypeDecls(ttypes: List<CollectionTypeDecl>): CString, CString {
+    let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitCollectionTypeDeclDeclaration(t)));
+    let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitCollectionTypeDeclConstructor(t)));
     
-    return sdecls, idecls, cons;
+    return idecls, cons;
 }
 
-function emitAssembly(asm: Assembly): CString {
+function emitEntityTypeDeclDeclaration(ttype: EntityTypeDecl): CString {
+    return CString::concat('    (', ttype.tkey.value, ' 0)');
+}
+
+function emitEntityTypeDeclConstructor(ttype: EntityTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+
+    if(ttype.allfields.empty()) {
+        return CString::concat('        (', consname, ')');
+    }
+    else {
+        let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
+        return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
+    }
+}
+
+function emitEntityTypeDeclTermConstructor(ttype: EntityTypeDecl): CString {
+    let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
+    let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
+    let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
+    return CString::concat('            (', termcons, ' ', cval, ')');
+}
+
+function emitEntityTypeDecls(ttypes: List<EntityTypeDecl>): CString, CString, CString {
+    let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitEntityTypeDeclDeclaration(t)));
+    let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitEntityTypeDeclConstructor(t)));
+    let tcons = CString::joinAll('%n;', ttypes.filter(pred(t) => t.termable).map<CString>(fn(t) => emitEntityTypeDeclTermConstructor(t)));
+
+    return idecls, cons, tcons;
+}
+
+function emitDatatypeMemberTypeDeclDeclaration(ttype: DatatypeMemberEntityTypeDecl): CString {
+    return CString::concat('    (', ttype.tkey.value, ' 0)');
+}
+
+function emitDatatypeMemberEntityTypeDeclConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+
+    if(ttype.allfields.empty()) {
+        return CString::concat('        (', consname, ')');
+    }
+    else {
+        let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
+        return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
+    }
+}
+
+function emitDatatypeMemberEntityTypeDeclTermConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+    let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
+    let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
+    let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
+    return CString::concat('            (', termcons, ' ', cval, ')');
+}
+
+function emitDatatypeMemberEntityTypeDecls(ttypes: List<DatatypeMemberEntityTypeDecl>): CString, CString, CString {
+    let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberTypeDeclDeclaration(t)));
+    let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclConstructor(t)));
+    let tcons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclTermConstructor(t)));
+
+    return idecls, cons, tcons;
+}
+
+function emitSubtypePredicate(ctype: TypeKey, subtypes: List<TypeKey>): CString {
+    let tname = SMTNameManager::generateTermSubtypeFunctionName(ctype);
+    
+    if(subtypes.empty()) {
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
+    }
+    elif(subtypes.isSingleElement()) {
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool ((_ is ', subtypes.single().value, ') tt))');
+    }
+    else {
+        let tlist = subtypes.map<CString>(fn(t) => CString::concat('((_ is ', t.value, ') tt)'));
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
+    }
+}
+
+function emitSpecialOptionSubtypePredicate(otype: OptionTypeDecl): CString {
+    let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
+    let tlist = List<CString>{
+        CString::concat('((_ is ', otype.someType.value, ') tt)'),
+        CString::concat('(= tt @Term-mk-None)'),
+    };
+
+    return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
+}
+
+function emitPrimitiveConceptSubtypeChecks(ctype: List<PrimitiveConceptTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => {
+        match(c)@{
+            OptionTypeDecl => {
+                return emitSpecialOptionSubtypePredicate($c);
+            }
+            | ResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.okType, $c.failType});
+            }
+            | APIResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.errorType, $c.failedType, $c.rejectedType, $c.successType});
+            }
+        }
+    });
+
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitConceptSubtypeChecks(ctype: List<ConceptTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitDatatypeSubtypeChecks(ctype: List<DatatypeTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concepts: List<ConceptTypeDecl>, dconcepts: List<DatatypeTypeDecl>): CString {
+    let pcks = emitPrimitiveConceptSubtypeChecks(pconcepts);
+    let ccks = emitConceptSubtypeChecks(concepts);
+    let dcks = emitDatatypeSubtypeChecks(dconcepts);
+
+    return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
+}
+
+function emitAssembly(asm: Assembly, trgterr: CString): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
+    let conststr = CString::join('%n;',
+        '#BEGIN ;;--GLOBAL_DECLS--;;',
+        constdecls,
+        '#END ;;--GLOBAL_DECLS--;;',
+        '#BEGIN ;;--GLOBAL_IMPLS--;;',
+        constimpls,
+        '#END ;;--GLOBAL_IMPLS--;;'
+    );
 
-%*
-    field nspreds: List<NamespacePredicateFunctionDecl>;
-    field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
-    field nsfuncs: List<NamespaceFunctionDecl>;
-    
-    field typefuncs: List<TypeFunctionDecl>;
-    
-    field enums: List<EnumTypeDecl>;
-    field pentities: List<PrimitiveEntityTypeDecl>;
-    field typedecls: List<TypedeclTypeDecl>;
-    field constructables: List<ConstructableTypeDecl>;
-    field collections: List<CollectionTypeDecl>;
-    field entities: List<EntityTypeDecl>;
-    
-    field pconcepts: List<PrimitiveConceptTypeDecl>;
-    field concepts: List<ConceptTypeDecl>;
+    let nspreds = CString::joinAll('%n;', asm.nspreds.map<CString>(fn(f) => emitNamespacePredicateFunctionDecl(f)));
+    let nsbuiltins = CString::joinAll('%n;', asm.nsbuiltins.map<CString>(fn(f) => emitNamespaceBuiltinFunctionDecl(f, trgterr)));
+    let prestr = CString::join('%n;',
+        '#BEGIN ;;--PRE_FUNCS--;;',
+        nspreds,
+        nsbuiltins,
+        '#END ;;--PRE_FUNCS--;;'
+    );
 
-    field datatypes: List<DatatypeTypeDecl>;
-    field datamembers: List<DatatypeMemberEntityTypeDecl>;
-*%
-    return 'ok';
+    let efuncs_list = asm.funcorder.map<CString>(fn(t) => {
+        if(asm.nsfuncs.has(t)) {
+            return emitNamespaceFunctionDecl(asm.nsfuncs.get(t), trgterr);
+        }
+        else {
+            return emitTypeFunctionDecl(asm.typefuncs.get(t), trgterr);
+        }
+    });
+    let efuncs = CString::concat(
+        '#BEGIN ;;--FUNCTION_DECLS--;;',
+        CString::joinAll('%n;%n;', efuncs_list),
+        '#END ;;--FUNCTION_DECLS--;;'
+    );
+    
+    let enum_edcls = emitEnumTypeDecls(asm.enums);
+    let typedecl_edcls, typedecl_etcons = emitTypedeclTypes(asm.typedecls);
+    let predecls = CString::join('%n;',
+        '#BEGIN ;;--ENUM_DECLS--;;',
+        enum_edcls,
+        '#END ;;--ENUM_DECLS--;;',
+        '#BEGIN ;;--TYPEDECL_DECLS--;;',
+        typedecl_edcls,
+        '#END ;;--TYPEDECL_DECLS--;;'
+    );
+
+    let predecl_str = CString::join('%n;', conststr, prestr, predecls);
+
+    let special_edcls, special_econs, special_etcons = emitConstructableTypeDecls(asm.constructables);
+    let collection_edcls, collection_econs = emitCollectionTypeDecls(asm.collections);
+    let entity_edcls, entity_econs, entity_etcons = emitEntityTypeDecls(asm.entities);
+    let datamember_edcls, datamember_econs, datamember_etcons = emitDatatypeMemberEntityTypeDecls(asm.datamembers);
+
+    let stddecls = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--CONSTRUCTABLE_DECLS--;;',
+            special_edcls,
+            '#END ;;--CONSTRUCTABLE_DECLS--;;',
+            '#BEGIN ;;--COLLECTION_DECLS--;;',
+            collection_edcls,
+            '#END ;;--COLLECTION_DECLS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_DECLS--;;',
+            entity_edcls,
+            '#END ;;--ENTITY_DECLS--;;',
+            '#BEGIN ;;--DATAMEMBER_DECLS--;;',
+            datamember_edcls,
+            '#END ;;--DATAMEMBER_DECLS--;;'
+        )
+    );
+
+    let stdcons = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--SPECIAL_CONSTRUCTORS--;;',
+            special_econs,
+            '#END ;;--SPECIAL_CONSTRUCTORS--;;',
+            '#BEGIN ;;--COLLECTION_CONSTRUCTORS--;;',
+            collection_econs,
+            '#END ;;--COLLECTION_CONSTRUCTORS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
+            entity_econs,
+            '#END ;;--ENTITY_CONSTRUCTORS--;;',
+            '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
+            datamember_econs,
+            '#END ;;--ENTITY_CONSTRUCTORS--;;'
+        )
+    );
+
+    let termcons = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--TYPEDECL_TERM_CONSTRUCTORS--;;',
+            typedecl_etcons,
+            '#END ;;--TYPEDECL_TERM_CONSTRUCTORS--;;',
+            '#BEGIN ;;--SPECIAL_TERM_CONSTRUCTORS--;;',
+            special_etcons,
+            '#END ;;--SPECIAL_TERM_CONSTRUCTORS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            entity_etcons,
+            '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            datamember_etcons,
+            '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;'
+        )
+    );
+
+    let subchecks = emitAllSubtypeChecks(asm.pconcepts, asm.concepts, asm.datatypes);
+    let subchecks_str = CString::join('%n;',
+        '#BEGIN ;;--SUBTYPE_PREDICATES--;;',
+        subchecks,
+        '#END ;;--SUBTYPE_PREDICATES--;;'
+    );
+
+    return CString::join('%n;', predecl_str, CString::join('%n;', stddecls, stdcons, termcons), subchecks_str, efuncs);
 }
 
 public function main(): Int {

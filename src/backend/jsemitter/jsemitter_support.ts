@@ -1,5 +1,5 @@
 
-import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, EnumTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
+import { AbstractConceptTypeDecl, Assembly, ConstMemberDecl, EnumTypeDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, TypedeclTypeDecl, TypeFunctionDecl } from "../../frontend/assembly.js";
 import { SourceInfo } from "../../frontend/build_decls.js";
 import { FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 
@@ -78,8 +78,12 @@ class EmitNameManager {
     }
 
     static generateFunctionLookupKeyForOperators(ttype: TypeSignature): string {
-        if((ttype as NominalTypeSignature).decl instanceof EnumTypeDecl) {
+        const ddecl = (ttype as NominalTypeSignature).decl;
+        if(ddecl instanceof EnumTypeDecl) {
             return `Enum`;
+        }
+        else if(ddecl instanceof TypedeclTypeDecl) {
+            return ddecl.valuetype.tkeystr;
         }
         else {
             return ttype.tkeystr;

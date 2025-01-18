@@ -1,0 +1,35 @@
+namespace SMTEmitter;
+
+const s_datatypeentrynofields1: DatatypeMemberEntityTypeDecl = DatatypeMemberEntityTypeDecl{
+    'Main@Bar'<TypeKey>,
+    List<FieldInfo>{}
+};
+
+const s_datatypeentrysimple1: DatatypeMemberEntityTypeDecl = DatatypeMemberEntityTypeDecl{
+    'Main@Foo'<TypeKey>,
+    List<FieldInfo>{
+        FieldInfo{ 'x', 'Int'<TypeKey> },
+        FieldInfo{ 'y', 'Bool'<TypeKey> }
+    }
+};
+
+chktest test_emitDatetypeMemberTypeDecls_empty(): Bool {
+    let idecls, cons, tcons = emitDatatypeMemberEntityTypeDecls(List<DatatypeMemberEntityTypeDecl>{SMTEmitter::s_datatypeentrynofields1});
+
+    return /\(
+        idecls === '    (Main@Bar 0)',
+        cons === '        (Main@Bar-mk)',
+        tcons === '            (@Term-Main@Bar-mk (@Term-Main@Bar-value Main@Bar))'
+    );
+}
+
+chktest test_emitDatatypeMemberTypeDecls_fields(): Bool {
+    let idecls, cons, tcons = emitDatatypeMemberEntityTypeDecls(List<DatatypeMemberEntityTypeDecl>{SMTEmitter::s_datatypeentrysimple1});
+
+    return /\(
+        idecls === '    (Main@Foo 0)',
+        cons === '        (Main@Foo-mk (Main@Foo-x Int) (Main@Foo-y Bool))',
+        tcons === '            (@Term-Main@Foo-mk (@Term-Main@Foo-value Main@Foo))'
+    );
+}
+

@@ -6,7 +6,8 @@ entity SourceInfo {
 }
 
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-type NamespaceKey = CString of /(${SMTEmitter::namespaceComponentRE}'@')*${SMTEmitter::namespaceComponentRE}?/c; %%Core is implicit here
+const namespaceKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*${SMTEmitter::namespaceComponentRE}/c; %%Core is implicit here
+type NamespaceKey = CString of SMTEmitter::namespaceKeyRE; 
 
 const basicNominalTypeKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('$'.+'$')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'$'.+'$''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
@@ -23,6 +24,9 @@ const returnTypeKeyRE: CRegex = /'${SMTEmitter::typeKeyRE}|${SMTEmitter::resultT
 type TypeKey = CString of SMTEmitter::typeKeyRE;
 type ParamTypeKey = CString of SMTEmitter::paramTypeKeyRE;
 type ReturnTypeKey = CString of SMTEmitter::resultTypeKeyRE;
+
+const invokeKeyRE: CRegex = /(${SMTEmitter::namespaceKeyRE}|${SMTEmitter::nominalTypeKeyRE})'@'[_a-zA-Z0-9]+/c;
+type InvokeKey = CString of SMTEmitter::invokeKeyRE;
 
 datatype ResultType using {
     field rtype: TypeKey;
@@ -41,6 +45,7 @@ entity InvokeParameterDecl {
 entity NamespacePredicateFunctionDecl {
     field ns: NamespaceKey;
     field name: CString;
+    field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
     %%Always Bool
@@ -49,6 +54,7 @@ entity NamespacePredicateFunctionDecl {
 entity NamespaceBuiltinFunctionDecl {
     field ns: NamespaceKey;
     field name: CString;
+    field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
@@ -59,6 +65,7 @@ entity NamespaceBuiltinFunctionDecl {
 entity NamespaceFunctionDecl {
     field ns: NamespaceKey;
     field name: CString;
+    field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
@@ -69,6 +76,7 @@ entity NamespaceFunctionDecl {
 entity TypeFunctionDecl {
     field tkey: TypeKey;
     field name: CString;
+    field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
@@ -106,22 +114,15 @@ entity EnumTypeDecl {
 %%No need for primitive type decls -- these are hardcoded
 %%
 
-enum TypeKind {
-    Unknown,
-    Simple,
-    Inductive
-}
-
 entity TypedeclTypeDecl {
     field tkey: TypeKey;
-    field typekind: TypeKind;
+    field termable: Bool;
 
     field valuetype: TypeKey;
 }
 
 datatype ConstructableTypeDecl using {
     field tkey: TypeKey;
-    field typekind: TypeKind;
 }
 of
 OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
@@ -136,8 +137,6 @@ OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 
 datatype CollectionTypeDecl using {
     field tkey: TypeKey;
-    field typekind: TypeKind;
-
     field oftype: TypeKey;
 }
 of
@@ -150,9 +149,8 @@ ListTypeDecl { }
 
 entity EntityTypeDecl {
     field tkey: TypeKey;
-    field typekind: TypeKind;
+    field termable: Bool;
 
-    field saturatedProvides: List<TypeKey>;
     field allfields: List<FieldInfo>;
 }
 
@@ -211,21 +209,23 @@ entity Assembly {
 
     field nspreds: List<NamespacePredicateFunctionDecl>;
     field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
-    field nsfuncs: List<NamespaceFunctionDecl>;
     
-    field typefuncs: List<TypeFunctionDecl>;
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
+    field funcorder: List<InvokeKey>;
     
     field enums: List<EnumTypeDecl>;
-
-
     field typedecls: List<TypedeclTypeDecl>;
     field constructables: List<ConstructableTypeDecl>;
     field collections: List<CollectionTypeDecl>;
+
     field entities: List<EntityTypeDecl>;
-    
+    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+
     field pconcepts: List<PrimitiveConceptTypeDecl>;
     field concepts: List<ConceptTypeDecl>;
 
     field datatypes: List<DatatypeTypeDecl>;
-    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+
+    validate $funcorder.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }

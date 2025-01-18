@@ -1,0 +1,115 @@
+namespace SMTEmitter;
+
+const s_testasm_simplefunc1: Assembly = Assembly{
+    nsconsts = List<NamespaceConstDecl>{
+        NamespaceConstDecl{
+            'Main'<NamespaceKey>, 
+            'c1', 
+            DirectResult{'Int'<TypeKey>}, 
+            ReturnValueOperation{LiteralSimpleValue{'Int'<TypeKey>, '3i'}}
+        }
+    },
+    typeconsts = List<ConstMemberDecl>{
+    },
+    nspreds = List<NamespacePredicateFunctionDecl>{
+    },
+    nsbuiltins = List<NamespaceBuiltinFunctionDecl>{
+    },
+    nsfuncs = Map<InvokeKey, NamespaceFunctionDecl>{
+        'Main@f1'<InvokeKey> => NamespaceFunctionDecl{
+            'Main'<NamespaceKey>,
+            'f1',
+            'Main@f1'<InvokeKey>, 
+            List<InvokeParameterDecl>{
+                InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
+            }, 
+            DirectResult{'Int'<TypeKey>}, 
+            ReturnValueOperation{BinAddValue{AccessNamespaceConstantValue{'Main'<NamespaceKey>, 'c1'}, LiteralSimpleValue{'Int'<TypeKey>, '1i'}}}
+        }
+    },
+    typefuncs = Map<InvokeKey, TypeFunctionDecl>{
+    },
+    funcorder = List<InvokeKey>{
+        'Main@f1'<InvokeKey>
+    },
+    enums = List<EnumTypeDecl>{
+    },
+    typedecls = List<TypedeclTypeDecl>{
+    },
+    constructables = List<ConstructableTypeDecl>{
+    },
+    collections = List<CollectionTypeDecl>{
+    },
+    entities = List<EntityTypeDecl>{
+    },
+    datamembers = List<DatatypeMemberEntityTypeDecl>{
+    },
+    pconcepts = List<PrimitiveConceptTypeDecl>{
+    },
+    concepts = List<ConceptTypeDecl>{
+    },
+    datatypes = List<DatatypeTypeDecl>{
+    }
+};
+
+chktest test_emitAssemblySimpleFunc1(): Bool {
+    let asm = emitAssembly(SMTEmitter::s_testasm_simplefunc1, SMTEmitter::s_ignoreErrTrgt);
+    return asm === '#BEGIN ;;--GLOBAL_DECLS--;;
+(declare-const Main@c1 Int) (assert (= Main@c1 3))
+#END ;;--GLOBAL_DECLS--;;
+#BEGIN ;;--GLOBAL_IMPLS--;;
+
+#END ;;--GLOBAL_IMPLS--;;
+#BEGIN ;;--PRE_FUNCS--;;
+
+
+#END ;;--PRE_FUNCS--;;
+#BEGIN ;;--ENUM_DECLS--;;
+
+#END ;;--ENUM_DECLS--;;
+#BEGIN ;;--TYPEDECL_DECLS--;;
+
+#END ;;--TYPEDECL_DECLS--;;
+#BEGIN ;;--CONSTRUCTABLE_DECLS--;;
+
+#END ;;--CONSTRUCTABLE_DECLS--;;
+#BEGIN ;;--COLLECTION_DECLS--;;
+
+#END ;;--COLLECTION_DECLS--;;
+#BEGIN ;;--ENTITY_DECLS--;;
+
+#END ;;--ENTITY_DECLS--;;
+#BEGIN ;;--DATAMEMBER_DECLS--;;
+
+#END ;;--DATAMEMBER_DECLS--;;
+#BEGIN ;;--SPECIAL_CONSTRUCTORS--;;
+
+#END ;;--SPECIAL_CONSTRUCTORS--;;
+#BEGIN ;;--COLLECTION_CONSTRUCTORS--;;
+
+#END ;;--COLLECTION_CONSTRUCTORS--;;
+#BEGIN ;;--ENTITY_CONSTRUCTORS--;;
+
+#END ;;--ENTITY_CONSTRUCTORS--;;
+#BEGIN ;;--ENTITY_CONSTRUCTORS--;;
+
+#END ;;--ENTITY_CONSTRUCTORS--;;
+#BEGIN ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
+
+#END ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
+#BEGIN ;;--SPECIAL_TERM_CONSTRUCTORS--;;
+
+#END ;;--SPECIAL_TERM_CONSTRUCTORS--;;
+#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;
+
+#END ;;--ENTITY_TERM_CONSTRUCTORS--;;
+#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;
+
+#END ;;--ENTITY_TERM_CONSTRUCTORS--;;
+#BEGIN ;;--SUBTYPE_PREDICATES--;;
+
+#END ;;--SUBTYPE_PREDICATES--;;
+#BEGIN ;;--FUNCTION_DECLS--;;(define-fun Main@f1 ((x Int)) Int
+    (+ Main@c1 1)
+)#END ;;--FUNCTION_DECLS--;;';
+}

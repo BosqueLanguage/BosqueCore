@@ -27,27 +27,34 @@
 (define-sort CString () String)
 ;;String is String
 
-;;--ENUM DECLS--;;
+;;--ENUM_DECLS--;;
 ;;--TYPEDECL_DECLS--;;
-;;--OTHER_DECLS_SIMPLE--;;
 
 ;;
 ;; Entity datatypes 
 ;;
 (declare-datatypes (
-    ;;--SPECIAL_DECLS_INDUCTIVE--;;
-    ;;--COLLECTION_DECLS_INDUCTIVE--;;
+    ;;--SPECIAL_DECLS--;;
+    ;;--COLLECTION_DECLS--;;
+    ;;--ENTITY_DECLS--;;
+    ;;--DATATYPE_DECLS--;;
     (@Term 0)
     ) (
-        ;;--SPECIAL_CONSTRUCTORS_INDUCTIVE--;;
-        ;;--COLLECTION_CONSTRUCTORS_INDUCTIVE--;;
+        ;;--SPECIAL_CONSTRUCTORS--;;
+        ;;--COLLECTION_CONSTRUCTORS--;;
+        ;;--ENTITY_CONSTRUCTORS--;;
+        ;;--DATATYPE_CONSTRUCTORS--;;
         (
             (@Term-mk-None)
             ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
             ;;--SPECIAL_TERM_CONSTRUCTORS--;;
+            ;;--ENTITY_TERM_CONSTRUCTORS--;;
+            ;;--DATATYPE_TERM_CONSTRUCTORS--;;
         )
     )
 )
+
+;;--SUBTYPE_PREDICATES--;;
 
 ;;NLA options
 (declare-fun @NLA_I_mult (Int Int) Int)
@@ -55,19 +62,9 @@
 
 ;;--GLOBAL_DECLS--;;
 
-;;--TYPE_SUBTYPE--;;
+;;--PRE_FUNCS--;;
 
 ;;--FUNCTION_DECLS--;;
 
 ;;--GLOBAL_DEFINITIONS--;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-fun mmap ((a (Seq Int)) (g (Array Int Bool))) (Seq Bool)
-    (seq.map g a))
-
-(declare-const ain (Seq Int))
-(assert (= ain (seq.++ (seq.unit 1) (seq.unit 2))))
-
-(declare-const aout (Seq Bool))
-(assert (= aout (mmap ain (lambda ((x Int)) (ite (> x 1) true false)))))
