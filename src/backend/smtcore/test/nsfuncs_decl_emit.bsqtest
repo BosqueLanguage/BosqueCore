@@ -3,6 +3,7 @@ namespace SMTEmitter;
 const s_nsfp1: NamespacePredicateFunctionDecl = NamespacePredicateFunctionDecl{
     'Main'<NamespaceKey>, 
     'fp1', 
+    'Main@fp1'<InvokeKey>,
     List<InvokeParameterDecl>{
         InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
     }
@@ -10,7 +11,8 @@ const s_nsfp1: NamespacePredicateFunctionDecl = NamespacePredicateFunctionDecl{
 
 const s_nsbi1: NamespaceBuiltinFunctionDecl = NamespaceBuiltinFunctionDecl{
     'Core@CStringOps'<NamespaceKey>, 
-    's_empty', 
+    's_empty',
+    'Core@CStringOps@s_empty'<InvokeKey>,
     List<InvokeParameterDecl>{
         InvokeParameterDecl{'s', 'CString'<ParamTypeKey>},
     }, 
@@ -21,6 +23,7 @@ const s_nsbi1: NamespaceBuiltinFunctionDecl = NamespaceBuiltinFunctionDecl{
 const s_nsff1: NamespaceFunctionDecl = NamespaceFunctionDecl{
     'Main'<NamespaceKey>, 
     'f1', 
+    'Main@f1'<InvokeKey>,
     List<InvokeParameterDecl>{
         InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
     }, 
@@ -31,6 +34,7 @@ const s_nsff1: NamespaceFunctionDecl = NamespaceFunctionDecl{
 const s_nsff2: NamespaceFunctionDecl = NamespaceFunctionDecl{
     'Main'<NamespaceKey>, 
     'f1', 
+    'Main@f1'<InvokeKey>,
     List<InvokeParameterDecl>{
         InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
     }, 

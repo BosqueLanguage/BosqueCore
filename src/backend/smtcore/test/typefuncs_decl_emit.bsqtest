@@ -4,6 +4,7 @@ namespace SMTEmitter;
 const s_tff1: TypeFunctionDecl = TypeFunctionDecl{
     'Main@Foo'<TypeKey>, 
     'f1', 
+    'Main@Foo@f1'<InvokeKey>,
     List<InvokeParameterDecl>{
         InvokeParameterDecl{'x', 'Int'<ParamTypeKey>},
     }, 

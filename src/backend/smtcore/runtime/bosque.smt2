@@ -27,7 +27,7 @@
 (define-sort CString () String)
 ;;String is String
 
-;;--ENUM DECLS--;;
+;;--ENUM_DECLS--;;
 ;;--TYPEDECL_DECLS--;;
 
 ;;
@@ -54,9 +54,7 @@
     )
 )
 
-;;--TYPE_PRIMITIVE_CONCEPT_SUBTYPE--;;
-;;--TYPE_CONCEPT_SUBTYPE--;;
-;;--TYPE_DATATYPE_SUBTYPE--;;
+;;--SUBTYPE_PREDICATES--;;
 
 ;;NLA options
 (declare-fun @NLA_I_mult (Int Int) Int)

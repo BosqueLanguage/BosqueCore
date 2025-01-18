@@ -1063,10 +1063,6 @@ function emitEntityTypeDecls(ttypes: List<EntityTypeDecl>): CString, CString, CS
     return idecls, cons, tcons;
 }
 
-
-
-
-
 function emitDatatypeMemberTypeDeclDeclaration(ttype: DatatypeMemberEntityTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
@@ -1162,7 +1158,7 @@ function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concept
 function emitAssembly(asm: Assembly, trgterr: CString): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
     let conststr = CString::join('%n;',
-        '#BEGIN ;;--GLOBAL_DECLS--;;'
+        '#BEGIN ;;--GLOBAL_DECLS--;;',
         constdecls,
         '#END ;;--GLOBAL_DECLS--;;',
         '#BEGIN ;;--GLOBAL_IMPLS--;;',
@@ -1179,33 +1175,103 @@ function emitAssembly(asm: Assembly, trgterr: CString): CString {
         '#END ;;--PRE_FUNCS--;;'
     );
 
-    let efuncs_list = funcorder.map<CString>(fn(t) => {
-        if(nsfuncs.contains(t)) {
-            return emitNamespaceFunctionDecl(nsfuncs[t], trgterr);
+    let efuncs_list = asm.funcorder.map<CString>(fn(t) => {
+        if(asm.nsfuncs.has(t)) {
+            return emitNamespaceFunctionDecl(asm.nsfuncs.get(t), trgterr);
         }
         else {
-            return emitTypeFunctionDecl(typefuncs[t], trgterr);
+            return emitTypeFunctionDecl(asm.typefuncs.get(t), trgterr);
         }
     });
-    let efuncs = CString::joinAll('%n%n;', efuncs_list);
+    let efuncs = CString::concat(
+        '#BEGIN ;;--FUNCTION_DECLS--;;',
+        CString::joinAll('%n;%n;', efuncs_list),
+        '#END ;;--FUNCTION_DECLS--;;'
+    );
     
     let enum_edcls = emitEnumTypeDecls(asm.enums);
-
     let typedecl_edcls, typedecl_etcons = emitTypedeclTypes(asm.typedecls);
+    let predecls = CString::join('%n;',
+        '#BEGIN ;;--ENUM_DECLS--;;',
+        enum_edcls,
+        '#END ;;--ENUM_DECLS--;;',
+        '#BEGIN ;;--TYPEDECL_DECLS--;;',
+        typedecl_edcls,
+        '#END ;;--TYPEDECL_DECLS--;;'
+    );
 
-    let constructable_edcls, constructable_econs, constructable_etcons = emitConstructableTypeDecls(asm.constructables);
+    let predecl_str = CString::join('%n;', conststr, prestr, predecls);
 
+    let special_edcls, special_econs, special_etcons = emitConstructableTypeDecls(asm.constructables);
     let collection_edcls, collection_econs = emitCollectionTypeDecls(asm.collections);
+    let entity_edcls, entity_econs, entity_etcons = emitEntityTypeDecls(asm.entities);
+    let datamember_edcls, datamember_econs, datamember_etcons = emitDatatypeMemberEntityTypeDecls(asm.datamembers);
 
-    field entities: List<EntityTypeDecl>;
-    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+    let stddecls = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--CONSTRUCTABLE_DECLS--;;',
+            special_edcls,
+            '#END ;;--CONSTRUCTABLE_DECLS--;;',
+            '#BEGIN ;;--COLLECTION_DECLS--;;',
+            collection_edcls,
+            '#END ;;--COLLECTION_DECLS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_DECLS--;;',
+            entity_edcls,
+            '#END ;;--ENTITY_DECLS--;;',
+            '#BEGIN ;;--DATAMEMBER_DECLS--;;',
+            datamember_edcls,
+            '#END ;;--DATAMEMBER_DECLS--;;'
+        )
+    );
 
-    field pconcepts: List<PrimitiveConceptTypeDecl>;
-    field concepts: List<ConceptTypeDecl>;
+    let stdcons = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--SPECIAL_CONSTRUCTORS--;;',
+            special_econs,
+            '#END ;;--SPECIAL_CONSTRUCTORS--;;',
+            '#BEGIN ;;--COLLECTION_CONSTRUCTORS--;;',
+            collection_econs,
+            '#END ;;--COLLECTION_CONSTRUCTORS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
+            entity_econs,
+            '#END ;;--ENTITY_CONSTRUCTORS--;;',
+            '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
+            datamember_econs,
+            '#END ;;--ENTITY_CONSTRUCTORS--;;'
+        )
+    );
 
-    field datatypes: List<DatatypeTypeDecl>;
+    let termcons = CString::join('%n;',
+        CString::join('%n;',
+            '#BEGIN ;;--TYPEDECL_TERM_CONSTRUCTORS--;;',
+            typedecl_etcons,
+            '#END ;;--TYPEDECL_TERM_CONSTRUCTORS--;;',
+            '#BEGIN ;;--SPECIAL_TERM_CONSTRUCTORS--;;',
+            special_etcons,
+            '#END ;;--SPECIAL_TERM_CONSTRUCTORS--;;'
+        ),
+        CString::join('%n;',
+            '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            entity_etcons,
+            '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            datamember_etcons,
+            '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;'
+        )
+    );
 
-    return CString::join('%n;', conststr);
+    let subchecks = emitAllSubtypeChecks(asm.pconcepts, asm.concepts, asm.datatypes);
+    let subchecks_str = CString::join('%n;',
+        '#BEGIN ;;--SUBTYPE_PREDICATES--;;',
+        subchecks,
+        '#END ;;--SUBTYPE_PREDICATES--;;'
+    );
+
+    return CString::join('%n;', predecl_str, CString::join('%n;', stddecls, stdcons, termcons), subchecks_str, efuncs);
 }
 
 public function main(): Int {
