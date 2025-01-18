@@ -201,9 +201,10 @@ entity Assembly {
 
     field nspreds: List<NamespacePredicateFunctionDecl>;
     field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
-    field nsfuncs: List<NamespaceFunctionDecl>;
     
-    field typefuncs: List<TypeFunctionDecl>;
+    field nsfuncs: Map<TypeKey, NamespaceFunctionDecl>;
+    field typefuncs: Map<TypeKey, TypeFunctionDecl>;
+    field funcorder: List<TypeKey>;
     
     field enums: List<EnumTypeDecl>;
     field typedecls: List<TypedeclTypeDecl>;
@@ -211,10 +212,10 @@ entity Assembly {
     field collections: List<CollectionTypeDecl>;
 
     field entities: List<EntityTypeDecl>;
-    field datatypes: List<DatatypeTypeDecl>;
+    field datamembers: List<DatatypeMemberEntityTypeDecl>;
 
     field pconcepts: List<PrimitiveConceptTypeDecl>;
     field concepts: List<ConceptTypeDecl>;
 
-    field datamembers: List<DatatypeMemberEntityTypeDecl>;
+    field datatypes: List<DatatypeTypeDecl>;
 }

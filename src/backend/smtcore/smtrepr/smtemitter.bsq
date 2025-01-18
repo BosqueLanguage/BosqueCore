@@ -1061,6 +1061,102 @@ function emitEntityTypeDecls(ttypes: List<EntityTypeDecl>): CString, CString, CS
     return idecls, cons, tcons;
 }
 
+
+
+
+
+function emitDatatypeMemberTypeDeclDeclaration(ttype: DatatypeMemberEntityTypeDecl): CString {
+    return CString::concat('    (', ttype.tkey.value, ' 0)');
+}
+
+function emitDatatypeMemberEntityTypeDeclConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+    let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
+
+    if(ttype.allfields.empty()) {
+        return CString::concat('        (', consname, ')');
+    }
+    else {
+        let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
+        return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
+    }
+}
+
+function emitDatatypeMemberEntityTypeDeclTermConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+    let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
+    let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
+    let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
+    return CString::concat('            (', termcons, ' ', cval, ')');
+}
+
+function emitDatatypeMemberEntityTypeDecls(ttypes: List<DatatypeMemberEntityTypeDecl>): CString, CString, CString {
+    let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberTypeDeclDeclaration(t)));
+    let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclConstructor(t)));
+    let tcons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclTermConstructor(t)));
+
+    return idecls, cons, tcons;
+}
+
+function emitSubtypePredicate(ctype: TypeKey, subtypes: List<TypeKey>): CString {
+    let tname = SMTNameManager::generateTermSubtypeFunctionName(ctype);
+    
+    if(subtypes.empty()) {
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
+    }
+    elif(subtypes.isSingleElement()) {
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool ((_ is ', subtypes.single().value, ') tt))');
+    }
+    else {
+        let tlist = subtypes.map<CString>(fn(t) => CString::concat('((_ is ', t.value, ') tt)'));
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
+    }
+}
+
+function emitSpecialOptionSubtypePredicate(otype: OptionTypeDecl): CString {
+    let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
+    let tlist = List<CString>{
+        CString::concat('((_ is ', otype.someType.value, ') tt)'),
+        CString::concat('(= tt @Term-mk-None)'),
+    };
+
+    return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
+}
+
+function emitPrimitiveConceptSubtypeChecks(ctype: List<PrimitiveConceptTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => {
+        match(c)@{
+            OptionTypeDecl => {
+                return emitSpecialOptionSubtypePredicate($c);
+            }
+            | ResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.okType, $c.failType});
+            }
+            | APIResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.errorType, $c.failedType, $c.rejectedType, $c.successType});
+            }
+        }
+    });
+
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitConceptSubtypeChecks(ctype: List<ConceptTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitDatatypeSubtypeChecks(ctype: List<DatatypeTypeDecl>): CString {
+    let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
+    return CString::joinAll('%n;', ccks);
+}
+
+function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concepts: List<ConceptTypeDecl>, dconcepts: List<DatatypeTypeDecl>): CString {
+    let pcks = emitPrimitiveConceptSubtypeChecks(pconcepts);
+    let ccks = emitConceptSubtypeChecks(concepts);
+    let dcks = emitDatatypeSubtypeChecks(dconcepts);
+
+    return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
+}
+
 function emitAssembly(asm: Assembly): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
 

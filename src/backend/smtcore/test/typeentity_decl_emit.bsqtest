@@ -14,6 +14,7 @@ const s_entitysimple1: EntityTypeDecl = EntityTypeDecl{
         FieldInfo{ 'y', 'Bool'<TypeKey> }
     }
 };
+
 const s_entitytermable1: EntityTypeDecl = EntityTypeDecl{
     'Main@Foo'<TypeKey>,
     true,

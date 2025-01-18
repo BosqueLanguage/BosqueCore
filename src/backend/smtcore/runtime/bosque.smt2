@@ -29,22 +29,21 @@
 
 ;;--ENUM DECLS--;;
 ;;--TYPEDECL_DECLS--;;
-;;--OTHER_DECLS_SIMPLE--;;
 
 ;;
 ;; Entity datatypes 
 ;;
 (declare-datatypes (
-    ;;--SPECIAL_DECLS_INDUCTIVE--;;
-    ;;--COLLECTION_DECLS_INDUCTIVE--;;
-    ;;--ENTITY_DECLS_INDUCTIVE--;;
-    ;;--DATATYPE_DECLS_INDUCTIVE--;;
+    ;;--SPECIAL_DECLS--;;
+    ;;--COLLECTION_DECLS--;;
+    ;;--ENTITY_DECLS--;;
+    ;;--DATATYPE_DECLS--;;
     (@Term 0)
     ) (
-        ;;--SPECIAL_CONSTRUCTORS_INDUCTIVE--;;
-        ;;--COLLECTION_CONSTRUCTORS_INDUCTIVE--;;
-        ;;--ENTITY_CONSTRUCTORS_INDUCTIVE--;;
-        ;;--DATATYPE_CONSTRUCTORS_INDUCTIVE--;;
+        ;;--SPECIAL_CONSTRUCTORS--;;
+        ;;--COLLECTION_CONSTRUCTORS--;;
+        ;;--ENTITY_CONSTRUCTORS--;;
+        ;;--DATATYPE_CONSTRUCTORS--;;
         (
             (@Term-mk-None)
             ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
