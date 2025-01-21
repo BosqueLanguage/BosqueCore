@@ -9,18 +9,41 @@ function NOT_IMPLEMENTED(name) {
     throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
 }
 
-std::vector<std::string> s_coreTypes = {
-    "None", "Bool", 
-    "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", 
-    "DecimalDegree", "LatLongCoordinate", 
-    "Complex",
-    "ByteBuffer", 
-    "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
-    "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
-    "String", "CString", 
-    "Regex", "CRegex", "PathRegex",
-    "Path", "PathItem", "Glob"
+const s_coreTypes = {
+    "None": true, 
+    "Bool": true, 
+    "Nat": true, 
+    "Int": true, 
+    "BigInt": true, 
+    "BigNat": true, 
+    "Rational": true, 
+    "Float": true, 
+    "Decimal": true, 
+    "DecimalDegree": true, 
+    "LatLongCoordinate": true, 
+    "Complex": true,
+    "ByteBuffer": true, 
+    "UUIDv4": true, 
+    "UUIDv7": true, 
+    "SHAContentHash": true, 
+    "TZDateTime": true, 
+    "TAITime": true, 
+    "PlainDate": true, 
+    "PlainTime": true, 
+    "LogicalTime": true, 
+    "ISOTimestamp": true,
+    "DeltaDateTime": true, 
+    "DeltaSeconds": true, 
+    "DeltaLogicalTime": true, 
+    "DeltaISOTimestamp": true,
+    "String": true, 
+    "CString": true, 
+    "Regex": true, 
+    "CRegex": true, 
+    "PathRegex": true,
+    "Path": true, 
+    "PathItem": true, 
+    "Glob": true
 };
 
 function SourceInfo(line, column, pos, span) {
@@ -751,7 +774,7 @@ function isValidNat(nv, upper) {
  * @returns {BigInt}
  * @throws {ParserError}
  */
-function isValidInt(nv) {
+function isValidInt(nv, lower, upper) {
     try {
         const vv = BigInt(nv);
         if(lower !== null && vv < lower) {
@@ -885,7 +908,7 @@ BSQONParser.prototype.parseNat = function() {
  */
 BSQONParser.prototype.parseInt = function() {
     const nv = this.consumeExpectedAndGetData(TokenStrings.Int);
-    return isValidNat(nv.slice(0, -1), MIN_SAFE_INT, MAX_SAFE_INT);
+    return isValidInt(nv.slice(0, -1), MIN_SAFE_INT, MAX_SAFE_INT);
 }
 /**
  * @returns {any}
@@ -901,7 +924,7 @@ BSQONParser.prototype.parseBigNat = function() {
  */
 BSQONParser.prototype.parseBigInt = function() {
     const nv = this.consumeExpectedAndGetData(TokenStrings.BigInt);
-    return isValidNat(nv.slice(0, -1), null, null);
+    return isValidInt(nv.slice(0, -1), null, null);
 }
 /**
  * @returns {any}
@@ -953,7 +976,7 @@ BSQONParser.prototype.parseComplex = function() {
 BSQONParser.prototype.parseString = function() {
     const ss = this.consumeExpectedAndGetData(TokenStrings.String);
     try {
-        return validateUnicodeStringLiteral(ss);
+        return validateStringLiteral(ss);
     }
     catch(e) {
         throw new ParserError(this.peek().sinfo, "Invalid Unicode string literal");
@@ -1181,7 +1204,7 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
         return this.parseLogicalTime();
     }
     else if(tkey === "ISOTimeStamp") {
-        return thiparseISOTimeStamp();
+        return this.parseISOTimeStamp();
     }
     else if(tkey === "UUIDv4") {
         return this.parseUUIDv4();
@@ -1235,7 +1258,7 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
     const idinfo = this.peek().sinfo;
     const vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
     
-    const vbind = this.vbinds.find((mm) => mm.has(vname));
+    const vbind = this.vbinds.find((mm) => mm.vname === vname);
     if(vbind === undefined) {
         throw new ParserError(idinfo, `Unknown identifier: ${vname}`);
     }
@@ -1248,6 +1271,19 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
     }
 }
 /**
+ * @returns {string}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseScopedType = function() {
+    let sctype = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+    while(this.test(SYM_coloncolon)) {
+        this.consume();
+        sctype += "::" + this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+    }
+
+    return sctype;
+}
+/**
  * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
@@ -1255,25 +1291,19 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
 BSQONParser.prototype.parseLetIn = function(tkey) {
     this.consumeExpected(KW_let);
     
-    let vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
-        if(this->vbinds.contains(vname)) {
-            this->addError("Duplicate let binding " + vname, Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-        }
+    const vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+    this.consumeExpected(SYM_colon);
+    const ttype = this.parseScopedType();
 
-        const Type* vtype = this->parseTypeRoot(lnode->vtype);
-        if(vtype->isUnresolved()) {
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-        }
+    this.consumeExpected(SYM_eq);
+    const vval = this.parseValue(ttype);
+    
+    this.vbinds.push({vname: vname, tkey: ttype, value: vval});
+    const res = this.parseValue(tkey);
+    this.vbinds.pop();
 
-        Value* vvalue = this->parseValue(vtype, lnode->value);
-        this->vbinds[vname] = vvalue;
-
-        Value* res = this->parseValue(t, lnode->exp);
-
-        this->vbinds.erase(vname);
-        return res;
-    }
+    return res;
+}
 /**
  * @param {string} tkey 
  * @returns {any}
@@ -1290,9 +1320,15 @@ BSQONParser.prototype.parseValue = function(tkey) {
     if(this.test(TokenStrings.IdentifierName)) {
         res = this.parseIdentifier(tkey);
     }
-    //handle primitive types
-    //dispatch on typekey
-    xxxx;
+    else if(this.test(KW_let)) {
+        res = this.parseLetIn(tkey);
+    }
+    else if(s_coreTypes[tkey]) {
+        res = this.parseValuePrimitive(tkey);
+    }
+    else {
+        res = this.pfmap[tkey]();
+    }
 
     if(hasparen) {
         this.consumeExpected(SYM_rparen);
@@ -1301,3 +1337,418 @@ BSQONParser.prototype.parseValue = function(tkey) {
     return res;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//BSQON Emitter
+
+function BSQONEmitter(pfmap) {
+    this.nl = "\n";
+    this.istr = "";
+
+    this.noneval = noneval;
+    this.pfmap = pfmap;
+}
+/**
+ * @param {string} v
+ * @returns {string}
+ */ 
+BSQONEmitter.prototype.indent = function(v) {
+    return this.istr + v;
+}
+/**
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitNone = function() {
+    return KW_none;
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONParser.prototype.emitBool = function(v) {
+    return v ? KW_true : KW_false;
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitNat = function(v) {
+    return v.toString() + "n";
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitInt = function(v) {
+    return v.toString() + "i";
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitBigNat = function(v) {
+    return v.toString() + "N";
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitBigInt = function(v) {
+    return v.toString() + "I";
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitRational = function(v) {
+    NOT_IMPLEMENTED("emitRational");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitFloat = function(v) {
+    const fs = v.toString();
+    if(!fs.includes(".")) {
+        return fs + ".0f";
+    }
+    else {
+        if(fs.startsWith(".")) {
+            return "0" + fs + "f";
+        }
+        else {
+            return fs + "f";
+        }
+    }
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDecimal = function(v) {
+    NOT_IMPLEMENTED("emitDecimal");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDecimalDegree = function(v) {
+    NOT_IMPLEMENTED("emitDecimalDegree");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitLatLong = function(v) {
+    NOT_IMPLEMENTED("emitLatLong");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitComplex = function(v) {
+    NOT_IMPLEMENTED("emitComplex");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitString = function(v) {
+    //TODO: need to export brex::escapeUnicodeString(this->sv); from JS module
+    NOT_IMPLEMENTED("emitString");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitCString = function(v) {
+    //TODO: need to export brex::escapeCString(this->sv); from JS module
+    NOT_IMPLEMENTED("emitCString");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitByteBuffer = function(v) {
+    NOT_IMPLEMENTED("emitByteBuffer");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitUUIDv4 = function(v) {
+    NOT_IMPLEMENTED("emitUUIDv4");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitUUIDv7 = function(v) {
+    NOT_IMPLEMENTED("emitUUIDv7");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitSHAHashcode = function(v) {
+    NOT_IMPLEMENTED("emitSHAHashcode");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitTZDateTime = function(v) {
+    NOT_IMPLEMENTED("emitTZDateTime");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitTIATime = function(v) {
+    NOT_IMPLEMENTED("emitTIATime");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPlainDate = function(v) {
+    NOT_IMPLEMENTED("emitPlainDate");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPlainTime = function(v) {
+    NOT_IMPLEMENTED("emitPlainTime");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitLogicalTime = function(v) {
+    NOT_IMPLEMENTED("emitLogicalTime");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitISOTimeStamp = function(v) {
+    NOT_IMPLEMENTED("emitISOTimeStamp");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDeltaDateTime = function(v) {
+    NOT_IMPLEMENTED("emitDeltaDateTime");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDeltaSeconds = function(v) {
+    NOT_IMPLEMENTED("emitDeltaSeconds");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDeltaLogical = function(v) {
+    NOT_IMPLEMENTED("emitDeltaLogical");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitDeltaISOTimeStamp = function(v) {
+    NOT_IMPLEMENTED("emitDeltaISOTimeStamp");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitUnicodeRegex = function(v) {
+    //TODO: We need to do better here...
+    NOT_IMPLEMENTED("emitUnicodeRegex");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitCRegex = function(v) {
+    //TODO: We need to do better here...
+    NOT_IMPLEMENTED("emitCRegex");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPathRegex = function(v) {
+    NOT_IMPLEMENTED("emitPathRegex");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPath = function(v) {
+    NOT_IMPLEMENTED("emitPath");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPathItem = function(v) {
+    NOT_IMPLEMENTED("emitPathItem");
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitPathGlob = function(v) {
+    NOT_IMPLEMENTED("emitPathGlob");
+}
+/**
+ * @param {string} tkey
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
+    if(tkey === "None") {
+        return this.emitNone();
+    }
+    else if(tkey === "Bool") {
+        return this.emitBool(v);
+    }
+    else if(tkey === "Int") {
+        return this.emitInt(v);
+    }
+    else if(tkey === "Nat") {
+        return this.emitNat(v);
+    }
+    else if(tkey === "BigInt") {
+        return this.emitBigInt(v);
+    }
+    else if(tkey === "BigNat") {
+        return this.emitBigNat(v);
+    }
+    else if(tkey === "Rational") {
+        return this.emitRational(v);
+    }
+    else if(tkey === "Float") {
+        return this.emitFloat(v);
+    }
+    else if(tkey === "Decimal") {
+        return this.emitDecimal(v);
+    }
+    else if(tkey === "DecimalDegree") {
+        return this.emitDecimalDegree(v);
+    }
+    else if(tkey === "LatLongCoordinate") {
+        return this.emitLatLong(v);
+    }
+    else if(tkey === "Complex") {
+        return this.emitComplex(v);
+    }
+    else if(tkey === "String") {
+        return this.emitString(v);
+    }
+    else if(tkey === "CString") {
+        return this.emitCString(v);
+    }
+    else if(tkey === "ByteBuffer") {
+        return this.emitByteBuffer(v);
+    }
+    else if(tkey === "TZDateTime") {
+        return this.emitTZDateTime(v);
+    }
+    else if(tkey === "TIATime") {
+        return this.emitTIATime(v);
+    }
+    else if(tkey === "PlainDate") {
+        return this.emitPlainDate(v);
+    }
+    else if(tkey === "PlainTime") {
+        return this.emitPlainTime(v);
+    }
+    else if(tkey === "LogicalTime") {
+        return this.emitLogicalTime(v);
+    }
+    else if(tkey === "ISOTimeStamp") {
+        return this.emitISOTimeStamp(v);
+    }
+    else if(tkey === "UUIDv4") {
+        return this.emitUUIDv4(v);
+    }
+    else if(tkey === "UUIDv7") {
+        return this.emitUUIDv7(v);
+    }
+    else if(tkey === "SHAContentHash") {
+        return this.emitSHAHashcode(v);
+    }
+    else if(tkey === "DataTimeDelta") {
+        return this.emitDeltaDateTime(v);
+    }
+    else if(tkey === "SecondsDelta") {
+        return this.emitDeltaSeconds(v);
+    }
+    else if(tkey === "ISOTimestampDelta") {
+        return this.emitDeltaISOTimeStamp(v);
+    }
+    else if(tkey === "LogicalTimeDelta") {
+        return this.emitDeltaLogical(v);
+    }      
+    else if(tkey === "UnicodeRegex") {
+        return this.emitUnicodeRegex(v);
+    }
+    else if(tkey === "CRegex") {
+        return this.emitCRegex(v);
+    }
+    else if(tkey === "PathRegex") {
+        return this.emitPathRegex(v);
+    }
+    else if(tkey === "Path") {
+        return this.emitPath(v);
+    }
+    else if(tkey === "PathItem") {
+        return this.emitPathItem(v);
+    }
+    else if(tkey === "Glob") {
+        return this.emitGlob(v);
+    }
+    else {
+        return "[UNKNOWN PRIMTIVE TYPE -- " + tkey + "]";
+    }
+}
+/**
+ * @param {string} tkey
+ * @param {any} v 
+ * @returns {string}
+ */
+BSQONParser.prototype.emitValue = function(tkey, v) {
+    if(s_coreTypes[tkey]) {
+        return this.emitValuePrimitive(tkey, v);
+    }
+    else {
+        return this.pfmap[tkey](v);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//Exposed functions
+
+function parseBSQON(tkey, input, noneval, pfmap) {
+    const lexer = new BSQONLexer(input);
+    const tokens = lexer.lex();
+
+    const parser = new BSQONParser(tokens, noneval, pfmap);
+    return parser.parseValue(tkey);
+}
+
+function emitBSQON(tkey, v, pfmap) {
+    const emitter = new BSQONEmitter(pfmap);
+    return emitter.emitValue(tkey, v);
+}
+
+export { 
+    BSQONParser, BSQONEmitter,
+    parseBSQON, emitBSQON 
+};
