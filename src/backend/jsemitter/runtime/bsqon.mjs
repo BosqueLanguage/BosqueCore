@@ -1,8 +1,13 @@
 "use strict;"
 
+import { validateStringLiteral, validateCStringLiteral } from "@bosque/jsbrex";
 
 ////////////////////////////////////////////////////////////////////////////////
 //Support
+
+function NOT_IMPLEMENTED(name) {
+    throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
+}
 
 function SourceInfo(line, column, pos, span) {
     this.line = line;
@@ -219,6 +224,12 @@ const _s_validRegexChars = /([!-.0-~]|\s)+/;
 const _s_identiferName = new RegExp('[$]?[_a-zA-Z][_a-zA-Z0-9]*', "y");
 
 const _s_redundantSignRE = /[+-]{2,}/y;
+
+const MIN_SAFE_INT = -4611686018427387903n;
+const MAX_SAFE_INT = 4611686018427387903n;
+
+//negation and conversion are always safe
+const MAX_SAFE_NAT = 4611686018427387903n;
 
 function BSQONLexer(input) {
     this.input = input;
@@ -694,5 +705,522 @@ BSQONLexer.prototype.lex = function() {
     this.recordLexToken(this.input.length, TokenStrings.EndOfStream);
     
     return this.tokens;
+}
+
+/**
+ * @param {string} nv 
+ * @param {BigInt | null} upper
+ * @returns {BigInt}
+ * @throws {ParserError}
+ */
+function isValidNat(nv, upper) {
+    try {
+        const vv = BigInt(nv);
+        if(vv < 0) {
+            throw new ParserError(new SourceInfo(0, 0, 0, 0), "Nat value outside of valid range");
+        }
+        if(upper !== null && vv > upper) {
+            throw new ParserError(new SourceInfo(0, 0, 0, 0), "Nat value outside of valid range");
+        }
+
+        return vv;
+    }
+    catch(e) {
+        throw new ParserError(new SourceInfo(0, 0, 0, 0), "Invalid Nat value");
+    }
+}
+
+/**
+ * @param {string} nv 
+ * @param {BigInt | null} lower
+ * @param {BigInt | null} upper
+ * @returns {BigInt}
+ * @throws {ParserError}
+ */
+function isValidInt(nv) {
+    try {
+        const vv = BigInt(nv);
+        if(lower !== null && vv < lower) {
+            throw new ParserError(new SourceInfo(0, 0, 0, 0), "Int value outside of valid range");
+        }
+        if(upper !== null && vv > upper) {
+            throw new ParserError(new SourceInfo(0, 0, 0, 0), "Int value outside of valid range");
+        }
+    }
+    catch(e) {
+        throw new ParserError(new SourceInfo(0, 0, 0, 0), "Invalid Int");
+    }
+}
+
+/**
+ * @param {string} nv 
+ * @returns {number}
+ * @throws {ParserError}
+ */
+function isValidFloat(nv) {
+    try {
+        return parseFloat(nv);
+    }
+    catch(e) {
+        throw new ParserError(new SourceInfo(0, 0, 0, 0), "Invalid Float");
+    }
+}
+
+function BSQONParser(tokens, noneval, pfmap) {
+    this.tokens = tokens;
+    this.idx = 0;
+
+    this.noneval = noneval;
+    this.pfmap = pfmap;
+}
+/**
+ * @returns {Token}
+ */
+BSQONParser.prototype.peek = function() {
+    if(this.idx >= this.tokens.length) {
+        return new Token(0, 0, 0, 0, TokenStrings.EndOfStream, TokenStrings.EndOfStream);
+    }
+    else {
+        return this.tokens[this.idx];
+    }
+}
+/**
+ * @returns {Token}
+ */
+BSQONParser.prototype.consume = function() {
+    if(this.idx >= this.tokens.length) {
+        return new Token(0, 0, 0, 0, TokenStrings.EndOfStream, TokenStrings.EndOfStream);
+    }
+    else {
+        return this.tokens[this.idx++];
+    }
+}
+/**
+ * @returns {string}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.consumeAndGetData = function() {
+    if(this.idx >= this.tokens.length) {
+        throw new ParserError(new SourceInfo(0, 0, 0, 0), "Unexpected end of stream");
+    }
+    else {
+        return this.tokens[this.idx++].data;
+    }
+}
+/**
+ * @param {string} kind
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.consumeExpected = function(kind) {
+    const tok = this.consume();
+    if(tok.kind !== kind) {
+        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}`);
+    }
+}
+/**
+ * @param {string} kind
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.consumeExpectedAndGetData = function(kind) {
+    const tok = this.consume();
+    if(tok.kind !== kind) {
+        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}`);
+    }
+
+    return tok.data;
+}
+/**
+ * @returns {boolean}
+ */
+BSQONParser.prototype.test = function(kind) {
+    return this.peek().kind === kind;
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseNone = function() {
+    this.consumeExpected(KW_none);
+    return this.noneval;
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseBool = function() {
+    if(!(this.test(KW_true) || this.test(KW_false))) {
+        throw new ParserError(this.peek().sinfo, "Expected boolean literal");
+    }
+    else {
+        this.consumeAndGetData() === KW_true ? true : false;
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseNat = function() {
+    const nv = this.consumeExpectedAndGetData(TokenStrings.Nat);
+    return isValidNat(nv.slice(0, -1), MAX_SAFE_NAT);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseInt = function() {
+    const nv = this.consumeExpectedAndGetData(TokenStrings.Int);
+    return isValidNat(nv.slice(0, -1), MIN_SAFE_INT, MAX_SAFE_INT);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseBigNat = function() {
+    const nv = this.consumeExpectedAndGetData(TokenStrings.BigNat);
+    return isValidNat(nv.slice(0, -1), null);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseBigInt = function() {
+    const nv = this.consumeExpectedAndGetData(TokenStrings.BigInt);
+    return isValidNat(nv.slice(0, -1), null, null);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseRational = function() {
+    NOT_IMPLEMENTED("parseRational");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseFloat = function() {
+    const nv = this.consumeExpectedAndGetData(TokenStrings.Float);
+    return isValidFloat(nv.slice(0, -1));
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDecimal = function() {
+    NOT_IMPLEMENTED("parseDecimal");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDecimalDegree = function() {
+    NOT_IMPLEMENTED("parseDecimalDegree");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseLatLong = function() {
+    NOT_IMPLEMENTED("parseLatLong");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseComplex = function() {
+    NOT_IMPLEMENTED("parseComplex");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseString = function() {
+    const ss = this.consumeExpectedAndGetData(TokenStrings.String);
+    try {
+        return validateUnicodeStringLiteral(ss);
+    }
+    catch(e) {
+        throw new ParserError(this.peek().sinfo, "Invalid Unicode string literal");
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseCString = function() {
+    const ss = this.consumeExpectedAndGetData(TokenStrings.CString);
+    try {
+        return validateCStringLiteral(ss);
+    }
+    catch(e) {
+        throw new ParserError(this.peek().sinfo, "Invalid CString literal");
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseByteBuffer = function() {
+    NOT_IMPLEMENTED("parseByteBuffer");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseUUIDv4 = function() {
+    NOT_IMPLEMENTED("parseUUIDv4");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseUUIDv7 = function() {
+    NOT_IMPLEMENTED("parseUUIDv7");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseSHAHashcode = function() {
+    NOT_IMPLEMENTED("parseSHAHashcode");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseTZDateTime = function() {
+    NOT_IMPLEMENTED("parseTZDateTime");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseTIATime = function() {
+    NOT_IMPLEMENTED("parseTIATime");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePlainDate = function() {
+    NOT_IMPLEMENTED("parsePlainDate");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePlainTime = function() {
+    NOT_IMPLEMENTED("parsePlainTime");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseLogicalTime = function() {
+    NOT_IMPLEMENTED("parseLogicalTime");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseISOTimeStamp = function() {
+    NOT_IMPLEMENTED("parseISOTimeStamp");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDeltaDateTime = function() {
+    NOT_IMPLEMENTED("parseDeltaDateTime");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDeltaSeconds = function() {
+    NOT_IMPLEMENTED("parseDeltaSeconds");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDeltaLogical = function() {
+    NOT_IMPLEMENTED("parseDeltaLogical");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseDeltaISOTimeStamp = function() {
+    NOT_IMPLEMENTED("parseDeltaISOTimeStamp");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseUnicodeRegex = function() {
+    //TODO: We need to do better here...
+    return this.consumeExpectedAndGetData(TokenStrings.Regex);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseCRegex = function() {
+    //TODO: We need to do better here...
+    return this.consumeExpectedAndGetData(TokenStrings.CRegex);
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePathRegex = function() {
+    NOT_IMPLEMENTED("parsePathRegex");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePath = function() {
+    NOT_IMPLEMENTED("parsePath");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePathItem = function() {
+    NOT_IMPLEMENTED("parsePathItem");
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parsePathGlob = function() {
+    NOT_IMPLEMENTED("parsePathGlob");
+}
+/**
+ * @param {string} tkey
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseValuePrimitive = function(tkey) {
+    if(tkey === "None") {
+        return this.parseNone();
+    }
+    else if(tkey === "Bool") {
+        return this.parseBool();
+    }
+    else if(tkey === "Int") {
+        return this.parseInt();
+    }
+    else if(tkey === "Nat") {
+        return this.parseNat();
+    }
+    else if(tkey === "BigInt") {
+        return this.parseBigInt();
+    }
+    else if(tkey === "BigNat") {
+        return this.parseBigNat();
+    }
+    else if(tkey === "Rational") {
+        return this.parseRational();
+    }
+    else if(tkey === "Float") {
+        return this.parseFloat();
+    }
+    else if(tkey === "Decimal") {
+        return this.parseDecimal();
+    }
+    else if(tkey === "DecimalDegree") {
+        return this.parseDecimalDegree();
+    }
+    else if(tkey === "LatLongCoordinate") {
+        return this.parseLatLong();
+    }
+    else if(tkey === "Complex") {
+        return this.parseComplex();
+    }
+    else if(tkey === "String") {
+        return this.parseString();
+    }
+    else if(tkey === "CString") {
+        return this.parseCString();
+    }
+    else if(tkey === "ByteBuffer") {
+        return this.parseByteBuffer();
+    }
+    else if(tkey === "TZDateTime") {
+        return this.parseTZDateTime();
+    }
+    else if(tkey === "TIATime") {
+        return this.parseTIATime();
+    }
+    else if(tkey === "PlainDate") {
+        return this.parsePlainDate();
+    }
+    else if(tkey === "PlainTime") {
+        return this.parsePlainTime();
+    }
+    else if(tkey === "LogicalTime") {
+        return this.parseLogicalTime();
+    }
+    else if(tkey === "ISOTimeStamp") {
+        return thiparseISOTimeStamp();
+    }
+    else if(tkey === "UUIDv4") {
+        return this.parseUUIDv4();
+    }
+    else if(tkey === "UUIDv7") {
+        return this.parseUUIDv7();
+    }
+    else if(tkey === "SHAContentHash") {
+        return this.parseSHAHashcode();
+    }
+    else if(tkey === "DataTimeDelta") {
+        return this.parseDeltaDateTime();
+    }
+    else if(tkey === "SecondsDelta") {
+        return this.parseDeltaSeconds();
+    }
+    else if(tkey === "ISOTimestampDelta") {
+        return this.parseDeltaISOTimeStamp();
+    }
+    else if(tkey === "LogicalTimeDelta") {
+        return this.parseDeltaLogical();
+    }      
+    else if(tkey === "UnicodeRegex") {
+        return this.parseUnicodeRegex();
+    }
+    else if(tkey === "CRegex") {
+        return this.parseCRegex();
+    }
+    else if(tkey === "PathRegex") {
+        return this.parsePathRegex();
+    }
+    else if(tkey === "Path") {
+        return this.parsePath();
+    }
+    else if(tkey === "PathItem") {
+        return this.parsePathItem();
+    }
+    else if(tkey === "Glob") {
+        return this.parseGlob();
+    }
+    else {
+        throw new ParserError(this.peek().sinfo, `Unknown primitive type: ${tkey}`);
+    }
+}
+/**
+ * @param {string} typekey 
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseValue = function(typekey) {
+    if(this.test(TokenStrings.EndOfStream)) {
+        xxxx;
+    }
+    //handle primitive types
+    //dispatch on typekey
+    xxxx;
 }
 
