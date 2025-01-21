@@ -9,6 +9,20 @@ function NOT_IMPLEMENTED(name) {
     throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
 }
 
+std::vector<std::string> s_coreTypes = {
+    "None", "Bool", 
+    "Nat", "Int", "BigInt", "BigNat", "Rational", "Float", "Decimal", 
+    "DecimalDegree", "LatLongCoordinate", 
+    "Complex",
+    "ByteBuffer", 
+    "UUIDv4", "UUIDv7", "SHAContentHash", 
+    "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
+    "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
+    "String", "CString", 
+    "Regex", "CRegex", "PathRegex",
+    "Path", "PathItem", "Glob"
+};
+
 function SourceInfo(line, column, pos, span) {
     this.line = line;
     this.column = column;
@@ -772,6 +786,8 @@ function BSQONParser(tokens, noneval, pfmap) {
 
     this.noneval = noneval;
     this.pfmap = pfmap;
+
+    this.vbinds = [];
 }
 /**
  * @returns {Token}
@@ -1211,16 +1227,77 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
     }
 }
 /**
- * @param {string} typekey 
+ * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parseValue = function(typekey) {
-    if(this.test(TokenStrings.EndOfStream)) {
-        xxxx;
+BSQONParser.prototype.parseIdentifier = function(tkey) {
+    const idinfo = this.peek().sinfo;
+    const vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+    
+    const vbind = this.vbinds.find((mm) => mm.has(vname));
+    if(vbind === undefined) {
+        throw new ParserError(idinfo, `Unknown identifier: ${vname}`);
+    }
+    else {
+        if(vbind.tkey !== tkey) {
+            throw new ParserError(idinfo, `Expected type ${tkey} but found ${vbind.tkey}`);
+        }
+
+        return vbind.value;
+    }
+}
+/**
+ * @param {string} tkey
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseLetIn = function(tkey) {
+    this.consumeExpected(KW_let);
+    
+    let vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+        if(this->vbinds.contains(vname)) {
+            this->addError("Duplicate let binding " + vname, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        const Type* vtype = this->parseTypeRoot(lnode->vtype);
+        if(vtype->isUnresolved()) {
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        Value* vvalue = this->parseValue(vtype, lnode->value);
+        this->vbinds[vname] = vvalue;
+
+        Value* res = this->parseValue(t, lnode->exp);
+
+        this->vbinds.erase(vname);
+        return res;
+    }
+/**
+ * @param {string} tkey 
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseValue = function(tkey) {
+    const hasparen = this.test("(");
+
+    if(hasparen) {
+        this.consumeExpected(SYM_lparen);
+    }
+
+    let res = null;
+    if(this.test(TokenStrings.IdentifierName)) {
+        res = this.parseIdentifier(tkey);
     }
     //handle primitive types
     //dispatch on typekey
     xxxx;
+
+    if(hasparen) {
+        this.consumeExpected(SYM_rparen);
+    }
+
+    return res;
 }
 
