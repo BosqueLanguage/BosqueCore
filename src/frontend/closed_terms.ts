@@ -126,6 +126,25 @@ class InstantiationPropagator {
         else {
             assert(false, "Unknown TypeSignature type -- " + rt.tkeystr);
         }
+
+        if(rt instanceof NominalTypeSignature && rt.decl instanceof ListTypeDecl) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration;
+
+            const createdecl = nns.functions.find((tt) => tt.name === "s_list_create_empty") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+
+            const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
+        }
+        if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration;
+
+            const createdecl = nns.functions.find((tt) => tt.name === "s_map_create_empty") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+
+            const pushdecl = nns.functions.find((tt) => tt.name === "s_map_insert") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
+        }
     }
 
     private areInvokeMappingsEqual(ma: TemplateNameMapper | undefined, mb: TemplateNameMapper | undefined): boolean {

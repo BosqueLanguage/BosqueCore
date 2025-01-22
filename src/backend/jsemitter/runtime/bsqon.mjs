@@ -1299,26 +1299,6 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
     }
 }
 /**
- * @returns {string}
- * @throws {ParserError}
- */
-BSQONParser.prototype.parseScopedType = function() {
-    if(!this.test(TokenStrings.IdentifierName)) {
-        throw new ParserError(this.peek().sinfo, "Expected scoped type");
-    }
-
-    let ii = this.idx;
-    let sctype = this.input[ii].data;
-    ii++;
-
-    while(ii < this.input.length && s_typeTokens.includes(this.input[ii].kind)) {
-        sctype += this.input[ii].data;
-        ii++;
-    }
-
-    return sctype;
-}
-/**
  * @returns {string | null}
  */
 BSQONParser.prototype.peekScopedType = function() {
@@ -1333,6 +1313,25 @@ BSQONParser.prototype.peekScopedType = function() {
     while(ii < this.input.length && s_typeTokens.includes(this.input[ii].kind)) {
         sctype += this.input[ii].data;
         ii++;
+    }
+
+    return sctype;
+}
+/**
+ * @returns {string}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseScopedType = function() {
+    if(!this.test(TokenStrings.IdentifierName)) {
+        throw new ParserError(this.peek().sinfo, "Expected scoped type");
+    }
+
+    let sctype = this.input[this.idx].data;
+    this.idx++;
+
+    while(this.idx < this.input.length && s_typeTokens.includes(this.input[this.idx].kind)) {
+        sctype += this.input[this.idx].data;
+        this.idx++;
     }
 
     return sctype;
@@ -1357,6 +1356,28 @@ BSQONParser.prototype.peekScopedTypeTailing = function() {
     if(ii >= this.input.length || this.input[ii].kind !== SYM_rangle) {
         return null;
     }
+
+    return sctype;
+}
+/**
+ * @returns {string}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseScopedTypeTailing = function() {
+    if(this.idx + 3 >= this.input.length || this.input[this.idx + 1].kind !== SYM_langle || this.input[this.idx + 2].kind !== TokenStrings.IdentifierName) {
+        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
+    }
+    this.idx++;
+
+    while(this.idx < this.input.length && (this.input[this.idx].kind === SYM_coloncolon || this.input[this.idx].kind === TokenStrings.IdentifierName)) {
+        sctype += this.input[this.idx].data;
+        this.idx++;
+    }
+
+    if(this.idx >= this.input.length || this.input[this.idx].kind !== SYM_rangle) {
+        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
+    }
+    this.idx++;
 
     return sctype;
 }
@@ -1412,6 +1433,29 @@ BSQONParser.prototype.parseValue = function(tkey) {
     }
 
     return res;
+}
+/**
+ * @returns {boolean}
+ */
+BSQONParser.prototype.testAndConsumeIfNone = function() {
+    if(!this.test(KW_none)) {
+        return false;
+    }
+
+    this.consume();
+    return true;
+}
+/**
+ * @returns {boolean}
+ */
+BSQONParser.prototype.testIfOk = function() {
+    return this.test(KW_ok);
+}
+/**
+ * @returns {boolean}
+ */
+BSQONParser.prototype.testIfFail = function() {
+    return this.test(KW_fail);
 }
 /**
  * @param {string} token
@@ -1937,7 +1981,7 @@ BSQONParser.prototype.emitValue = function(tkey, v) {
 ////////////////////////////////////////////////////////////////////////////////
 //Exposed functions
 
-function parseBSQON(tkey, input, noneval, pfmap) {
+function $parseBSQON(tkey, input, noneval, pfmap) {
     const lexer = new BSQONLexer(input);
     const tokens = lexer.lex();
 
@@ -1945,12 +1989,11 @@ function parseBSQON(tkey, input, noneval, pfmap) {
     return parser.parseValue(tkey);
 }
 
-function emitBSQON(tkey, v, pfmap) {
+function $emitBSQON(tkey, v, pfmap) {
     const emitter = new BSQONEmitter(pfmap);
     return emitter.emitValue(tkey, v);
 }
 
 export { 
-    BSQONParser, BSQONEmitter,
-    parseBSQON, emitBSQON 
+    $parseBSQON, $emitBSQON 
 };
