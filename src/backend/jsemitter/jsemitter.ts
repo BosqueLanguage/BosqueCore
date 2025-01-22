@@ -2785,6 +2785,57 @@ class JSEmitter {
         return `$createAPI: { value: (${(ffinfo || tdecl.saturatedBFieldInfo).map((fi) => fi.name).join(", ")}) => {${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")} }`;
     }
 
+    private emitBSQONParseAPI(tdecl: AbstractNominalTypeDecl, usesvalidate: boolean, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, specialop: string | undefined, fmt: JSCodeFormatter): string {
+        const createcall = EmitNameManager.generateAccessorForConstructorParseAPI(this.currentns as NamespaceDeclaration, rcvr, usesvalidate);
+        const dfields = ffinfo === undefined ? tdecl.saturatedBFieldInfo : ffinfo;
+        
+        let body: string;
+        if(dfields.length === 0) {
+            body = `{ return ${createcall}(); }`;
+        }
+        else if(dfields.length === 1) {
+            if(specialop !== undefined) {
+                xxxx;
+            }
+            else {
+                const sdf = dfields[0];
+                if(!sdf.hasdefault) {
+                    body = `{ return ${createcall}(parser.parseSingleArg("${sdf.type.tkeystr}")); }`;
+                }
+                else {
+                    body = `{ return ${createcall}(parser.parseSingleOrDefaultArg("${sdf.type.tkeystr}")); }`;               
+                }
+            }
+        }
+        else {
+            const parray = "[" + dfields.map((fi) => { return `["${fi.name}", "${fi.type.tkeystr}"]`; }) + "]";
+
+            body = `{ const vals = parser.parseArgListGeneral(${parray}); return ${createcall}(...vals); }`;
+        }
+
+        return `$parseAPI: { value: (parser) => ${body} }`;
+    }
+
+    private emitBSQONEmitAPI(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
+        const dfields = ffinfo === undefined ? tdecl.saturatedBFieldInfo : ffinfo;
+        
+        let body: string;
+        if(dfields.length === 0) {
+            body = `{ return "${rcvr}{}"; }`;
+        }
+        else if(dfields.length === 1) {
+            const sdf = dfields[0];
+            const evv = `emitter.emitValue("${sdf.type.tkeystr}", v.${sdf.name})`;
+            body = `{ return "${rcvr}{${evv}}"; }`;
+        }
+        else {
+            const emits = dfields.map((fi) => { return `emitter.emitValue("${fi.type.tkeystr}", v.${fi.name})`; }).join(", ");
+            body = `{ return "${rcvr}{${emits}}"; }`;
+        }
+
+        return `$emitAPI: { value: (value) => ${body} }`;
+    }
+
     private emitStdTypeDeclHelper(tdecl: AbstractNominalTypeDecl, rcvr: NominalTypeSignature, optfdecls: MemberFieldDecl[], instantiation: TypeInstantiationInfo, isentity: boolean, fmt: JSCodeFormatter): string[] {
         if(tdecl.terms.length !== 0) {
             this.mapper = instantiation.binds;
@@ -2807,9 +2858,13 @@ class JSEmitter {
         if(isentity) {
             decls.push(this.emitCreate(tdecl, undefined, rcvr, fmt));
 
-            if(hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0) {
+            const usesvalidate = hasoptFields || tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0;
+            if(usesvalidate) {
                 decls.push(this.emitCreateAPIValidate(tdecl, undefined, rcvr, fmt));
             }
+
+            decls.push(this.emitBSQONParseAPI(tdecl, usesvalidate, undefined, rcvr, fmt));
+            decls.push(this.emitBSQONEmitAPI(tdecl, undefined, rcvr, fmt));
         }
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));

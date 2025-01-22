@@ -869,10 +869,28 @@ BSQONParser.prototype.consumeExpectedAndGetData = function(kind) {
     return tok.data;
 }
 /**
+ * @param {string} kind
  * @returns {boolean}
  */
 BSQONParser.prototype.test = function(kind) {
     return this.peek().kind === kind;
+}
+/**
+ * @param {string} kind
+ * @returns {boolean}
+ */
+BSQONParser.prototype.testTokens = function(...kinds) {
+    if(this.idx + kinds.length > this.tokens.length) {
+        return false;
+    }
+
+    for(let i = 0; i < kinds.length; ++i) {
+        if(this.tokens[this.idx + i].kind !== kinds[i]) {
+            return false;
+        }
+    }
+
+    return true;
 }
 /**
  * @returns {any}
@@ -1276,9 +1294,8 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
  */
 BSQONParser.prototype.parseScopedType = function() {
     let sctype = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
-    while(this.test(SYM_coloncolon)) {
-        this.consume();
-        sctype += "::" + this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+    while(this.test(TokenStrings.IdentifierName) || this.test(SYM_coloncolon) || this.test(SYM_langle) || this.test(SYM_rangle) || this.test(SYM_lparenbar) || this.test(SYM_rparenbar) || this.test(SYM_coma)) {
+        sctype += this.consumeAndGetData();
     }
 
     return sctype;
@@ -1336,6 +1353,81 @@ BSQONParser.prototype.parseValue = function(tkey) {
 
     return res;
 }
+/**
+ * @param {string} tkey
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseSingleArg = function(tkey) {
+    this.consumeExpected(SYM_lbrace);
+    const res = this.parseValue(tkey);
+    this.consumeExpected(SYM_rbrace);
+
+    return res;
+}
+/**
+ * @param {string} tkey
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseSingleOrDefaultArg = function(tkey) {
+    this.consumeExpected(SYM_lbrace);
+    const res = !this.test(SYM_rbrace) ? this.parseValue(tkey) : undefined;
+    this.consumeExpected(SYM_rbrace);
+
+    return res;
+}
+/**
+ * @param {object[]} tkeys
+ * @returns {any[]}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseArgListGeneral = function(tkeys) {
+    const res = [];
+    for(let i = 0; i < tkeys.length; i++) {
+        res.push(undefined);
+    }
+
+    this.consumeExpected(SYM_lbrace);
+    
+    let positional = true;
+    let pval = 0;
+    while(!this.test(SYM_rbrace) && !this.test(TokenStrings.EndOfStream)) {
+        if(this.test(SYM_coma)) {
+            this.consume();
+        }
+
+        if(this.testTokens(TokenStrings.IdentifierName, SYM_eq)) {
+            positional = false;
+
+            const nval = this.consumeAndGetData();
+            this.consume();
+
+            const ffidx = tkeys.findIndex((mm) => mm[0] === nval);
+            if(ff === -1) {
+                throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
+            }
+
+            if(res[ffidx] !== undefined) {
+                throw new ParserError(this.peek().sinfo, `Duplicate argument: ${nval}`);
+            }
+
+            res[ffidx] = this.parseValue(tkeys[ffidx][1]);
+        }
+        else {
+            if(!positional) {
+                throw new ParserError(this.peek().sinfo, "All positional arguments must come before named arguments");
+            }
+
+            res[pval] = this.parseValue(tkeys[pval][1]);
+            pval++;
+        }
+    }
+
+    this.consumeExpected(SYM_rbrace);
+    return res;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Emitter
