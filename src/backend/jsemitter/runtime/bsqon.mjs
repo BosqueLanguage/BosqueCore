@@ -113,16 +113,6 @@ const TokenStrings = {
     EndOfStream: "[EOS]"
 };
 
-const s_typeTokens = [
-    TokenStrings.IdentifierName, 
-    SYM_coloncolon, 
-    SYM_langle,
-    SYM_rangle,
-    SYM_lparenbar,
-    SYM_rparenbar,
-    SYM_coma
-];
-
 ////////////////////////////////////////////////////////////////////////////////
 //Keywords
 
@@ -179,8 +169,6 @@ const StandardSymbols = [
     SYM_coma,
     SYM_dot,
     SYM_eq,
-    SYM_HOLE,
-    
     SYM_hash,
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -205,6 +193,17 @@ const ParenSymbols = [
     SYM_rangle
 
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+
+const s_typeTokens = [
+    TokenStrings.IdentifierName, 
+    SYM_coloncolon, 
+    SYM_langle,
+    SYM_rangle,
+    SYM_lparenbar,
+    SYM_rparenbar,
+    SYM_coma
+];
 
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Lexer and parser
@@ -1981,6 +1980,14 @@ BSQONParser.prototype.emitValue = function(tkey, v) {
 ////////////////////////////////////////////////////////////////////////////////
 //Exposed functions
 
+/**
+ * @param {string} tkey
+ * @param {string} input
+ * @param {any} noneval
+ * @param {object} pfmap
+ * @returns {any}
+ * @throws {ParserError}
+ */
 function $parseBSQON(tkey, input, noneval, pfmap) {
     const lexer = new BSQONLexer(input);
     const tokens = lexer.lex();
@@ -1989,6 +1996,12 @@ function $parseBSQON(tkey, input, noneval, pfmap) {
     return parser.parseValue(tkey);
 }
 
+/**
+ * @param {string} tkey
+ * @param {any} v
+ * @param {object} pfmap
+ * @returns {string}
+ */
 function $emitBSQON(tkey, v, pfmap) {
     const emitter = new BSQONEmitter(pfmap);
     return emitter.emitValue(tkey, v);

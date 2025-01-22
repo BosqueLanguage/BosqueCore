@@ -2802,7 +2802,7 @@ class JSEmitter {
                 chekcall = `parser.checkSpecialCons("${specialop}")`;
             }
             else {
-                chekcall = `parser.checkConsType("${rcvr}")`;
+                chekcall = `parser.checkConsType("${rcvr.tkeystr}")`;
             }
 
             if(!sdf.hasdefault) {
@@ -2815,7 +2815,7 @@ class JSEmitter {
         else {
             const parray = "[" + dfields.map((fi) => { return `["${fi.name}", "${fi.type.tkeystr}"]`; }) + "]";
 
-            body = `{ parser.checkConsType("${rcvr}"); const vals = parser.parseArgListGeneral(${parray}); return ${createcall}(...vals); }`;
+            body = `{ parser.checkConsType("${rcvr.tkeystr}"); const vals = parser.parseArgListGeneral(${parray}); return ${createcall}(...vals); }`;
         }
 
         return `$parseAPI: { value: (parser) => ${body} }`;
@@ -2831,11 +2831,11 @@ class JSEmitter {
         else if(dfields.length === 1) {
             const sdf = dfields[0];
             const evv = `emitter.emitValue("${sdf.type.tkeystr}", v.${sdf.name})`;
-            body = `{ return "${rcvr}{${evv}}"; }`;
+            body = `{ return "${rcvr.tkeystr}{" + ${evv} + "}"; }`;
         }
         else {
-            const emits = dfields.map((fi) => { return `emitter.emitValue("${fi.type.tkeystr}", v.${fi.name})`; }).join(", ");
-            body = `{ return "${rcvr}{${emits}}"; }`;
+            const emits = dfields.map((fi) => { return `emitter.emitValue("${fi.type.tkeystr}", v.${fi.name})`; }).join(' + ", " + ');
+            body = `{ return "${rcvr.tkeystr}{" + ${emits} + "}"; }`;
         }
 
         return `$emitAPI: { value: (emitter, value) => ${body} }`;
