@@ -20,10 +20,10 @@ describe ("type decl zipcode/css", () => {
 
 describe ("Exec -- type decl zipcode/css", () => {
     it("should exec string options type decl", function () {
-        runMainCode(`${zipcode} public function main(): String { return "98052-0000"<Zipcode>.value; }`, ["98052-0000", "String"]);
+        runMainCode(`${zipcode} public function main(): String { return "98052-0000"<Zipcode>.value; }`, '"98052-0000"');
         
-        runMainCode(`${csspt} public function main(): Bool { return is3pt("3pt"<CSSPt>); }`, [true, "Bool"]);
-        runMainCode(`${csspt} public function main(): Bool { return is3pt("4pt"<CSSPt>); }`, [false, "Bool"]);
+        runMainCode(`${csspt} public function main(): Bool { return is3pt("3pt"<CSSPt>); }`, "true");
+        runMainCode(`${csspt} public function main(): Bool { return is3pt("4pt"<CSSPt>); }`, "false");
     });
 });
 

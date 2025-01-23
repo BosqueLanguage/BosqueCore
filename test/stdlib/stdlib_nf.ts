@@ -103,7 +103,6 @@ function runMainCode(code: string, expected: string) {
     assert.equal(wsnorm(result), expected);
 }
 
-
 function runMainCodeError(code: string, expected: string) {
     const result = execMainCode(code, true);
 

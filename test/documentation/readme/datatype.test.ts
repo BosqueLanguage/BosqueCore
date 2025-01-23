@@ -7,8 +7,8 @@ const dtype = 'datatype BoolOp of Const { val: Bool } | NotOp { arg: BoolOp } | 
 
 describe ("datatype exec", () => {
     it("datatype should succeed", function () {
-        runMainCode(`${dtype} public function main(): Nat { return OrOp{Const{true}, Const{false}}.evaluate[recursive](); }`, [true, "Bool"]);
-        runMainCode(`${dtype} public function main(): Nat { return AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive](); }`, [false, "Bool"]); 
+        runMainCode(`${dtype} public function main(): Nat { return OrOp{Const{true}, Const{false}}.evaluate[recursive](); }`, "true");
+        runMainCode(`${dtype} public function main(): Nat { return AndOp{larg=Const{true}, rarg=Const{false}}.evaluate[recursive](); }`, "false"); 
     });
 });
 

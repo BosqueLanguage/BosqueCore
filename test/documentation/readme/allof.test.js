@@ -7,8 +7,8 @@ const allpositive = 'function allPositive(...args: List<Int>): Bool { return arg
 
 describe ("allof exec", () => {
     it("should exec allof", function () {
-        runMainCode(`${allpositive} public function main(): Bool { return allPositive(1i, 3i, 4i); }`, [true, "Bool"]); 
-        runMainCode(`${allpositive} public function main(): Bool { return allPositive(); }`, [true, "Bool"]);
-        runMainCode(`${allpositive} public function main(): Bool { return allPositive(1i, 3i, -4i); }`, [false, "Bool"]);
+        runMainCode(`${allpositive} public function main(): Bool { return allPositive(1i, 3i, 4i); }`, "true"); 
+        runMainCode(`${allpositive} public function main(): Bool { return allPositive(); }`, "true");
+        runMainCode(`${allpositive} public function main(): Bool { return allPositive(1i, 3i, -4i); }`, "false");
     });
 });
