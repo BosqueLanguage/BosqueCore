@@ -8,14 +8,14 @@ const step3 = "public function main(): Float { var system = NBodySystem::create(
 
 describe ("NBody", () => {
     it("init value", function () {
-        runMainCode("nbody/nbody.bsq", init, [-0.16907516382852444, "Float"]); 
+        runMainCode("nbody/nbody.bsq", init, "-0.16907516382852444f"); 
     });
 
     it("step 1", function () {
-        runMainCode("nbody/nbody.bsq", step1, [-0.16907495402506748, "Float"]); 
+        runMainCode("nbody/nbody.bsq", step1, "-0.16907495402506748f"); 
     });
 
     it("step 3", function () {
-        runMainCode("nbody/nbody.bsq", step3, [-0.1690745314240226, "Float"]); 
+        runMainCode("nbody/nbody.bsq", step3, "-0.1690745314240226f"); 
     });
 });
