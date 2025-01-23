@@ -15,45 +15,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
+const bsqon_code_path = path.join(bosque_dir, "bin/jsruntime/bsqon.mjs");
 const modules_path = path.join(bosque_dir, "node_modules");
 
 import { tmpdir } from 'node:os';
 
 function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");
-}
-
-function fromBSONHelper(val: any, type: string): string {
-    if(type === "None") {
-        return "null";
-    }
-    else if(type === "Bool") {
-        return val ? "true" : "false";
-    }
-    else if(type === "Nat") {
-        return val.toString();
-    }
-    else if(type === "Int") {
-        return val.toString();
-    }
-    else if(type === "BigNat") {
-        return val.toString();
-    }
-    else if(type === "BigInt") {
-        return val.toString();
-    }
-    else if(type === "Float") {
-        return val.toString();
-    }
-    else if(type === "String") {
-        return val;
-    }
-    else if(type === "CString") {
-        return val;
-    }
-    else {
-        return `unknown[${val}, ${type}]`;
-    }
 }
 
 function buildAssembly(srcfile: string): Assembly | undefined {
@@ -75,6 +43,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
     const nndir = path.normalize(outname);
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
+        fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
         fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
 
         for(let i = 0; i < jscode.length; ++i) {
@@ -128,10 +97,10 @@ function execMainCode(code: string, expectederr: boolean): string {
     return wsnorm(result);
 }
 
-function runMainCode(code: string, expected: [any, string]) {
+function runMainCode(code: string, expected: string) {
     const result = execMainCode(code, false);
 
-    assert.equal(wsnorm(result), fromBSONHelper(expected[0], expected[1]));
+    assert.equal(wsnorm(result), expected);
 }
 
 

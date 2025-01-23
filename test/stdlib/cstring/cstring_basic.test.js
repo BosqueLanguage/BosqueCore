@@ -5,9 +5,9 @@ import { describe, it } from "node:test";
 
 describe ("CString -- empty", () => {
     it("should create simple cstring", function () {
-        runMainCode("public function main(): CString { return ''; }", ["", "CString"]); 
-        runMainCode("public function main(): Bool { return ''.empty(); }", [true, "Bool"]); 
-        runMainCode("public function main(): Bool { return 'ok'.empty(); }", [false, "Bool"]); 
+        runMainCode("public function main(): CString { return ''; }", "''"); 
+        runMainCode("public function main(): Bool { return ''.empty(); }", "true"); 
+        runMainCode("public function main(): Bool { return 'ok'.empty(); }", "false"); 
     });
 });
 

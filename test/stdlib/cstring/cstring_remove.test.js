@@ -5,13 +5,13 @@ import { describe, it } from "node:test";
 
 describe ("CString -- removePrefixString/removeSuffixString", () => {
     it("should removePrefixString", function () {
-        runMainCode("public function main(): CString { return 'ok'.removePrefixString(''); }", ["ok", "CString"]); 
-        runMainCode("public function main(): CString { return 'a-ok'.removePrefixString('a-'); }", ["ok", "CString"]);  
+        runMainCode("public function main(): CString { return 'ok'.removePrefixString(''); }", "'ok'"); 
+        runMainCode("public function main(): CString { return 'a-ok'.removePrefixString('a-'); }", "'ok'");  
     });
 
     it("should removeSuffixString", function () {
-        runMainCode("public function main(): CString { return 'ok'.removeSuffixString(''); }", ["ok", "CString"]); 
-        runMainCode("public function main(): CString { return 'a-ok'.removeSuffixString('ok'); }", ["a-", "CString"]);  
+        runMainCode("public function main(): CString { return 'ok'.removeSuffixString(''); }", "'ok'"); 
+        runMainCode("public function main(): CString { return 'a-ok'.removeSuffixString('ok'); }", "'a-'");  
     });
 
     it("should removeString error", function () {

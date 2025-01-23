@@ -3155,7 +3155,7 @@ class JSEmitter {
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, pushdecl, rcvr.alltermargs);
         const pedecls = [
             `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
-            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
+            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [{fname: "value", ftype: vtype}], undefined, false, pedecls, undefined);
@@ -3192,7 +3192,7 @@ class JSEmitter {
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0]]);
         const pedecls = [
             `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
-            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
+            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [{fname: "value", ftype: vtype}], undefined, false, pedecls, undefined);

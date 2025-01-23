@@ -5,30 +5,30 @@ import { describe, it } from "node:test";
 
 describe ("Map -- access", () => {
     it("should get single", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.single().value; }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.single().value; }', "2i"); 
     });
 
     it("should get max", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.kmax().value; }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.kmax().value; }', [3n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.kmax().value; }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.kmax().value; }', "3i"); 
     });
 
     it("should get min", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.kmin().value; }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.kmin().value; }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.kmin().value; }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.kmin().value; }', "2i"); 
     });
 
     it("should get key", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.get(1i); }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(1i); }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(2i); }', [3n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.get(1i); }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(1i); }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(2i); }', "3i"); 
     });
 
     it("should getOption key", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.getOption(1i)@some; }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(1i)@some; }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.getOption(1i)@some; }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(1i)@some; }', "2i"); 
 
-        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(5i)?none; }', [true, "Bool"]); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(5i)?none; }', "true"); 
     });
 
     it("should fail get empty", function () {

@@ -135,7 +135,7 @@ class InstantiationPropagator {
             const createdecl = nns.functions.find((tt) => tt.name === "s_list_create_empty") as NamespaceFunctionDecl;
             this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
 
-            const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push") as NamespaceFunctionDecl;
+            const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push_back") as NamespaceFunctionDecl;
             this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
         }
         if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
