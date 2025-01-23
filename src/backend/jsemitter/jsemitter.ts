@@ -3026,8 +3026,8 @@ class JSEmitter {
             return `${mm}: {value: function() { return _$memoconstval(this._$memomap, "${mm}", ${lexp}); } }`;
         }));
 
-        decls.push(`$parseAPI: { value: (parser) => { return TODO; } }`);
-        decls.push(`$emitAPI: { value: (emitter, value) => { return TODO; } }`);
+        decls.push(`$parseAPI: { value: (parser) => { return "[ENUM TODO]"; } }`);
+        decls.push(`$emitAPI: { value: (emitter, value) => { return "[ENUM TODO]"; } }`);
 
         const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
