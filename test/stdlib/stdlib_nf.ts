@@ -89,18 +89,18 @@ function buildMainCode(assembly: Assembly, outname: string) {
     return true;
 }
 
-function execMainCode(code: string): string {
+function execMainCode(code: string, expectederr: boolean): string {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-test-"));
 
     let result = "";
     try {
         const asm = buildAssembly("declare namespace Main;\n\n" + code);
         if(asm === undefined) {
-            result = "[FAILED TO BUILD ASSEMBLY]";
+            result = `[FAILED TO BUILD ASSEMBLY] \n\n ${code}`;
         }
         else {
             if(!buildMainCode(asm, nndir)) {
-                result = "[FAILED TO BUILD MAIN CODE]";
+                result = `[FAILED TO BUILD MAIN CODE] \n\n ${code}`;
             }
             else {
                 try {
@@ -108,7 +108,12 @@ function execMainCode(code: string): string {
                     result = execSync(`node ${mjs}`).toString();
                 }
                 catch(e) {
-                    result = "[FAILED TO RUN MAIN CODE]";
+                    if(expectederr) {
+                        result = (e as any).stdout.toString();
+                    }
+                    else {
+                        result = `[FAILED TO RUN MAIN CODE] -- ${e} \n\n ${code}`;
+                    }
                 }
             }
         }
@@ -124,14 +129,14 @@ function execMainCode(code: string): string {
 }
 
 function runMainCode(code: string, expected: [any, string]) {
-    const result = execMainCode(code);
+    const result = execMainCode(code, false);
 
     assert.equal(wsnorm(result), fromBSONHelper(expected[0], expected[1]));
 }
 
 
 function runMainCodeError(code: string, expected: string) {
-    const result = execMainCode(code);
+    const result = execMainCode(code, true);
 
     assert.equal(wsnorm(result).replace(/:\d+$/, ""), expected);
 }

@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- simple abort", () => {
     it("should exec simple abort", function () {
-        runMainCode("public function main(): Int { if(false) { abort; } return 1i; }", [1n, "Int"]);
+        runMainCode("public function main(): Int { if(false) { abort; } return 1i; }", "1i");
 
         runMainCodeError("public function main(): Int { if(true) { abort; } return 1i; }", "Error -- abort @ test.bsq:3");
     });
@@ -13,8 +13,8 @@ describe ("Exec -- simple abort", () => {
 
 describe ("Exec -- simple assert", () => {
     it("should exec simple assert", function () {
-        runMainCode("public function main(): Int { assert true; return 1i; }", [1n, "Int"]);
-        runMainCode("public function main(): Int { assert debug false; return 1i; }", [1n, "Int"]);
+        runMainCode("public function main(): Int { assert true; return 1i; }", "1i");
+        runMainCode("public function main(): Int { assert debug false; return 1i; }", "1i");
     });
 
     it("should exec error assert", function () {
@@ -25,7 +25,7 @@ describe ("Exec -- simple assert", () => {
 
 describe ("Exec -- simple validate", () => {
     it("should exec simple validate", function () {
-        runMainCode("public function main(): Int { validate true; return 1i; }", [1n, "Int"]);
+        runMainCode("public function main(): Int { validate true; return 1i; }", "1i");
     });
 
     it("should exec error validate", function () {

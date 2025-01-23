@@ -1617,7 +1617,7 @@ BSQONEmitter.prototype.emitNone = function() {
  * @param {any} v
  * @returns {string}
  */
-BSQONParser.prototype.emitBool = function(v) {
+BSQONEmitter.prototype.emitBool = function(v) {
     return v ? KW_true : KW_false;
 }
 /**

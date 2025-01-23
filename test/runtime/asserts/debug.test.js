@@ -5,6 +5,6 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- simple debug", () => {
     it("should exec simple debug", function () {
-        runMainCode("public function main(): Int { if(false) { _debug 5i; } return 1i; }", [1n, "Int"]);
+        runMainCode("public function main(): Int { if(false) { _debug 5i; } return 1i; }", "1i");
     });
 });

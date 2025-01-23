@@ -5,18 +5,18 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- basic >", () => {
     it("should exec compare simple types", function () {
-        runMainCode("public function main(): Bool { return 0n > 1n; }", [false, "Bool"]);
-        runMainCode("public function main(): Bool { return +2i > -2i; }", [true, "Bool"]);
+        runMainCode("public function main(): Bool { return 0n > 1n; }", "false");
+        runMainCode("public function main(): Bool { return +2i > -2i; }", "true");
 
-        runMainCode("public function main(): Bool { return 1n > 1n; }", [false, "Bool"]);
+        runMainCode("public function main(): Bool { return 1n > 1n; }", "false");
     });
 });
 
 describe ("Exec -- basic <=", () => {
     it("should exec compare simple types", function () {
-        runMainCode("public function main(): Bool { return 0n >= 1n; }", [false, "Bool"]);
-        runMainCode("public function main(): Bool { return +2i >= -2i; }", [true, "Bool"]);
+        runMainCode("public function main(): Bool { return 0n >= 1n; }", "false");
+        runMainCode("public function main(): Bool { return +2i >= -2i; }", "true");
 
-        runMainCode("public function main(): Bool { return 1n >= 1n; }", [true, "Bool"]);
+        runMainCode("public function main(): Bool { return 1n >= 1n; }", "true");
     });
 });

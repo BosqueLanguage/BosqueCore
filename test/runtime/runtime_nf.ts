@@ -15,45 +15,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
+const bsqon_code_path = path.join(bosque_dir, "bin/jsruntime/bsqon.mjs");
 const modules_path = path.join(bosque_dir, "node_modules");
 
 import { tmpdir } from 'node:os';
 
 function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");
-}
-
-function fromBSONHelper(val: any, type: string): string {
-    if(type === "None") {
-        return "null";
-    }
-    else if(type === "Bool") {
-        return val ? "true" : "false";
-    }
-    else if(type === "Nat") {
-        return val.toString();
-    }
-    else if(type === "Int") {
-        return val.toString();
-    }
-    else if(type === "BigNat") {
-        return val.toString();
-    }
-    else if(type === "BigInt") {
-        return val.toString();
-    }
-    else if(type === "Float") {
-        return val.toString();
-    }
-    else if(type === "String") {
-        return val;
-    }
-    else if(type === "CString") {
-        return val;
-    }
-    else {
-        return `unknown[${val}, ${type}]`;
-    }
 }
 
 function buildAssembly(srcfile: string): Assembly | undefined {
@@ -75,6 +43,7 @@ function buildMainCode(assembly: Assembly, outname: string) {
     const nndir = path.normalize(outname);
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
+        fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
         fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
 
         for(let i = 0; i < jscode.length; ++i) {
@@ -89,18 +58,18 @@ function buildMainCode(assembly: Assembly, outname: string) {
     return true;
 }
 
-function execMainCode(code: string): string {
+function execMainCode(code: string, expectederr: boolean): string {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-test-"));
 
     let result = "";
     try {
         const asm = buildAssembly("declare namespace Main;\n\n" + code);
         if(asm === undefined) {
-            result = "[FAILED TO BUILD ASSEMBLY]";
+            result = `[FAILED TO BUILD ASSEMBLY] \n\n ${code}`;
         }
         else {
             if(!buildMainCode(asm, nndir)) {
-                result = "[FAILED TO BUILD MAIN CODE]";
+                result = `[FAILED TO BUILD MAIN CODE] \n\n ${code}`;
             }
             else {
                 try {
@@ -108,7 +77,12 @@ function execMainCode(code: string): string {
                     result = execSync(`node ${mjs}`).toString();
                 }
                 catch(e) {
-                    result = "[FAILED TO RUN MAIN CODE]";
+                    if(expectederr) {
+                        result = (e as any).stdout.toString();
+                    }
+                    else {
+                        result = `[FAILED TO RUN MAIN CODE] -- ${e} \n\n ${code}`;
+                    }
                 }
             }
         }
@@ -123,15 +97,14 @@ function execMainCode(code: string): string {
     return wsnorm(result);
 }
 
-function runMainCode(code: string, expected: [any, string]) {
-    const result = execMainCode(code);
+function runMainCode(code: string, expected: string) {
+    const result = execMainCode(code, false);
 
-    assert.equal(wsnorm(result), fromBSONHelper(expected[0], expected[1]));
+    assert.equal(wsnorm(result), expected);
 }
 
-
 function runMainCodeError(code: string, expected: string) {
-    const result = execMainCode(code);
+    const result = execMainCode(code, true);
 
     assert.equal(wsnorm(result), expected);
 }
