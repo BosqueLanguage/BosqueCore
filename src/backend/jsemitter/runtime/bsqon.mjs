@@ -5,6 +5,10 @@ import { validateStringLiteral, validateCStringLiteral } from "@bosque/jsbrex";
 ////////////////////////////////////////////////////////////////////////////////
 //Support
 
+let _$none_lit = null;
+let _$parsemap = {};
+let _$emitmap = {};
+
 function NOT_IMPLEMENTED(name) {
     throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
 }
@@ -310,8 +314,8 @@ BSQONLexer.prototype.trylex = function(re) {
  * @returns {string | null}
  */
 BSQONLexer.prototype.trylexWSPlus = function(options, suffix) {
-    Lexer._s_whitespaceRe.lastIndex = this.jsStrPos;
-    const mmpre = Lexer._s_whitespaceRe.exec(this.input);
+    _s_whitespaceRe.lastIndex = this.jsStrPos;
+    const mmpre = _s_whitespaceRe.exec(this.input);
     if(mmpre === null) {
         return null;
     }
@@ -373,7 +377,7 @@ BSQONLexer.prototype.updatePositionInfo = function(jspos, jepos) {
  * @returns {boolean}
  */
 BSQONLexer.prototype.tryLexWS = function() {
-    const arop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
+    const arop = this.trylexWSPlus(SpaceRequiredSymbols, _s_whitespaceRe);
     if (arop !== null) {
         return false;
     }
@@ -400,8 +404,8 @@ BSQONLexer.prototype.tryLexLineComment = function() {
     let jepos = this.input.indexOf("\n", this.jsStrPos);
 
     if (jepos === -1) {
-        this.updatePositionInfo(this.jsStrPos, this.jsStrEnd);
-        this.advancePosition(this.jsStrEnd);
+        this.updatePositionInfo(this.jsStrPos, this.input.length);
+        this.advancePosition(this.input.length);
     }
     else {
         jepos++;
@@ -417,7 +421,7 @@ BSQONLexer.prototype.tryLexLineComment = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.checkRedundantSigns = function() {
-    if(this.jsStrPos !== this.jsStrEnd && (this.input[this.jsStrPos] === "+" || this.input[this.jsStrPos] === "-")) {
+    if(this.jsStrPos !== this.input.length && (this.input[this.jsStrPos] === "+" || this.input[this.jsStrPos] === "-")) {
         _s_redundantSignRE.lastIndex = this.jsStrPos;
         const mm = _s_redundantSignRE.exec(this.input);
         if(mm !== null) {
@@ -537,11 +541,15 @@ BSQONLexer.prototype.tryLexHashCode = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexUnicodeString = function() {
+    if(!this.input.startsWith('"', this.jsStrPos)) {
+        return false;
+    }
+
     let ncpos = this.jsStrPos + 1;
     
     let jepos = this.input.indexOf('"', ncpos);
     if(jepos === -1) {
-        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated string literal");
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated string literal");
     }
 
     jepos++;
@@ -556,11 +564,15 @@ BSQONLexer.prototype.tryLexUnicodeString = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexCString = function() {
+    if(!this.input.startsWith('\'', this.jsStrPos)) {
+        return false;
+    }
+
     let ncpos = this.jsStrPos + 1;
         
     let jepos = this.input.indexOf("'", ncpos);
     if(jepos === -1) {
-        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated CString literal");
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated CString literal");
     }
     
     const mstr = this.input.slice(ncpos, jepos);
@@ -603,7 +615,7 @@ BSQONLexer.prototype.tryLexRegex = function() {
 
     let jepos = this.input.indexOf("/", this.jsStrPos + 1);
     if(jepos === -1) {
-            this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated Regex literal");
+            this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated Regex literal");
     }
     
     const mstr = this.input.slice(this.jsStrPos + 1, jepos);
@@ -719,8 +731,8 @@ BSQONLexer.prototype.tryLexName = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.lex = function() {
-    while (this.jsStrPos < this.jsStrEnd) {
-        if (this.tryLexWS() || this.tryLexLineComment() || this.tryLexDocComment() || this.tryLexSpanComment()) {
+    while (this.jsStrPos < this.input.length) {
+        if (this.tryLexWS() || this.tryLexLineComment()) {
             //continue
         }
         else if(this.tryLexDateLike()) {
@@ -792,6 +804,8 @@ function isValidInt(nv, lower, upper) {
         if(upper !== null && vv > upper) {
             throw new ParserError(new SourceInfo(0, 0, 0, 0), "Int value outside of valid range");
         }
+        
+        return vv;
     }
     catch(e) {
         throw new ParserError(new SourceInfo(0, 0, 0, 0), "Invalid Int");
@@ -812,12 +826,9 @@ function isValidFloat(nv) {
     }
 }
 
-function BSQONParser(tokens, noneval, pfmap) {
+function BSQONParser(tokens) {
     this.tokens = tokens;
     this.idx = 0;
-
-    this.noneval = noneval;
-    this.pfmap = pfmap;
 
     this.vbinds = [];
 }
@@ -907,7 +918,7 @@ BSQONParser.prototype.testTokens = function(...kinds) {
  */
 BSQONParser.prototype.parseNone = function() {
     this.consumeExpected(KW_none);
-    return this.noneval;
+    return _$none_lit;
 }
 /**
  * @returns {any}
@@ -1386,7 +1397,7 @@ BSQONParser.prototype.parseScopedTypeTailing = function() {
  * @throws {ParserError}
  */
 BSQONParser.prototype.parseLetIn = function(tkey) {
-    this.consumeExpected(KW_let);
+    this.consumeExpected(KW_LET);
     
     const vname = this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
     this.consumeExpected(SYM_colon);
@@ -1417,14 +1428,14 @@ BSQONParser.prototype.parseValue = function(tkey) {
     if(this.test(TokenStrings.IdentifierName)) {
         res = this.parseIdentifier(tkey);
     }
-    else if(this.test(KW_let)) {
+    else if(this.test(KW_LET)) {
         res = this.parseLetIn(tkey);
     }
     else if(s_coreTypes[tkey]) {
         res = this.parseValuePrimitive(tkey);
     }
     else {
-        res = this.pfmap[tkey](this);
+        res = _$parsemap[tkey](this);
     }
 
     if(hasparen) {
@@ -1585,12 +1596,9 @@ BSQONParser.prototype.parseCollectionConsArgs = function(etype) {
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Emitter
 
-function BSQONEmitter(pfmap) {
+function BSQONEmitter() {
     this.nl = "\n";
     this.istr = "";
-
-    this.noneval = noneval;
-    this.pfmap = pfmap;
 }
 /**
  * @param {string} v
@@ -1968,12 +1976,12 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
  * @param {any} v 
  * @returns {string}
  */
-BSQONParser.prototype.emitValue = function(tkey, v) {
+BSQONEmitter.prototype.emitValue = function(tkey, v) {
     if(s_coreTypes[tkey]) {
         return this.emitValuePrimitive(tkey, v);
     }
     else {
-        return this.pfmap[tkey](this, v);
+        return _$emitmap[tkey](this, v);
     }
 }
 
@@ -1981,32 +1989,43 @@ BSQONParser.prototype.emitValue = function(tkey, v) {
 //Exposed functions
 
 /**
- * @param {string} tkey
+ * @param {string[]} tkeys
  * @param {string} input
- * @param {any} noneval
- * @param {object} pfmap
- * @returns {any}
+ * @returns {any[]}
  * @throws {ParserError}
  */
-function $parseBSQON(tkey, input, noneval, pfmap) {
+function _$parseBSQON(tkeys, input) {
     const lexer = new BSQONLexer(input);
     const tokens = lexer.lex();
 
-    const parser = new BSQONParser(tokens, noneval, pfmap);
-    return parser.parseValue(tkey);
+    const parser = new BSQONParser(tokens);
+    let res = [];
+    for(let i = 0; i < tkeys.length; i++) {
+        res.push(parser.parseValue(tkeys[i]));
+    }
+
+    return res;
 }
 
 /**
  * @param {string} tkey
  * @param {any} v
- * @param {object} pfmap
  * @returns {string}
  */
-function $emitBSQON(tkey, v, pfmap) {
-    const emitter = new BSQONEmitter(pfmap);
+function _$emitBSQON(tkey, v) {
+    const emitter = new BSQONEmitter();
     return emitter.emitValue(tkey, v);
 }
 
+/**
+ * @param {any} nonelit
+ */
+function _$setnone_lit(nonelit) {
+    return _$none_lit = nonelit;
+}
+
 export { 
-    $parseBSQON, $emitBSQON 
+    _$setnone_lit,
+    _$parsemap, _$emitmap,
+    _$parseBSQON, _$emitBSQON 
 };

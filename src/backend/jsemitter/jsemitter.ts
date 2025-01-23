@@ -12,7 +12,7 @@ const prefix =
 'let _$consts = {};\n' +
 '\n' +
 'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
-'import { $parseBSQON, $emitBSQON } from "./bsqon.mjs";\n' +
+'import { _$setnone_lit, _$parsemap, _$emitmap, _$parseBSQON, _$emitBSQON } from "./bsqon.mjs";\n' +
 '\n'
 ;
 
@@ -2830,11 +2830,11 @@ class JSEmitter {
         }
         else if(dfields.length === 1) {
             const sdf = dfields[0];
-            const evv = `emitter.emitValue("${sdf.type.tkeystr}", v.${sdf.name})`;
+            const evv = `emitter.emitValue("${sdf.type.tkeystr}", value.${sdf.name})`;
             body = `{ return "${rcvr.tkeystr}{" + ${evv} + "}"; }`;
         }
         else {
-            const emits = dfields.map((fi) => { return `emitter.emitValue("${fi.type.tkeystr}", v.${fi.name})`; }).join(' + ", " + ');
+            const emits = dfields.map((fi) => { return `emitter.emitValue("${fi.type.tkeystr}", value.${fi.name})`; }).join(' + ", " + ');
             body = `{ return "${rcvr.tkeystr}{" + ${emits} + "}"; }`;
         }
 
@@ -3411,9 +3411,11 @@ class JSEmitter {
         }
     }
 
-    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], supers: string[]} {
+    private emitNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[], asminstantiation: NamespaceInstantiationInfo, fmt: JSCodeFormatter): {decls: string[], supers: string[], parses: string[], emits: string[]} {
         let alldecls: string[] = [];
         let allsupertypes: string[] = [];
+        let allparsedecls: string[] = [];
+        let allemitdecls: string[] = [];
 
         for(let i = 0; i < tdecl.length; ++i) {
             const tt = tdecl[i];
@@ -3547,6 +3549,11 @@ class JSEmitter {
                         allsupertypes.push(this.emitTypeSubtypeRelation(tt.getAPISuccessType(), instantiation));
                     }
                 }
+
+                if(!(tt instanceof PrimitiveEntityTypeDecl)) {
+                    allparsedecls.push(`_$parsemap["${instantiation.tkey}"] = ${EmitNameManager.generateAccessorForParseFunction(this.currentns as NamespaceDeclaration, instantiation.tsig as NominalTypeSignature)};`);
+                    allemitdecls.push(`_$emitmap["${instantiation.tkey}"] = ${EmitNameManager.generateAccessorForEmitFunction(this.currentns as NamespaceDeclaration, instantiation.tsig as NominalTypeSignature)};`);
+                }
             }
 
             if(!this.isMultiEmitDecl(tt)) {
@@ -3570,7 +3577,22 @@ class JSEmitter {
             }
         }
 
-        return {decls: alldecls, supers: allsupertypes};
+        return {decls: alldecls, supers: allsupertypes, parses: allparsedecls, emits: allemitdecls};
+    }
+
+    private emitReadArgsFromStdInAndCall(paramtypes: string[]): string {
+        if(paramtypes.length === 0) {
+            return "let res; try { res = main(); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); process.exit(1); }";
+        }
+        else {
+            const input = `import { readFileSync } from "fs";\nlet input = readFileSync(0, 'utf-8');`;
+            const pdecls = `try { args = _$parseBSQON([${paramtypes.map((tt) => `"${tt}"`).join(", ")}], input); } catch(pe) { process.stdout.write(\`ParseError -- \${pe.message || pe}\\n\`); process.exit(1); }`;
+            return `${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); }`;
+        }
+    }
+
+    private emitOutputResultToStdOut(tkey: string, mcall: string): string {
+        return `process.stdout.write(_$emitBSQON("${tkey}", res) + '\\n');'\\n'`
     }
 
     private emitNamespaceDeclaration(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[], mainns: string | undefined, fmt: JSCodeFormatter, isparentTop: boolean): {contents: string, nestedsupers: string[]} {
@@ -3578,6 +3600,8 @@ class JSEmitter {
 
         let decls: string[] = [];
         let nestedsupers: string[] = [];
+        let nestedparses: string[] = [];
+        let nestedemits: string[] = [];
 
         if(!decl.isTopNamespace()) {
             fmt.indentPush();
@@ -3595,6 +3619,8 @@ class JSEmitter {
                 
                 decls.push(snsdecl.contents);
                 nestedsupers.push(...snsdecl.nestedsupers);
+                nestedparses.push(...snsdecl.nestedsupers);
+                nestedemits.push(...snsdecl.nestedsupers);
 
                 this.currentns = cdecl;
             }
@@ -3622,6 +3648,16 @@ class JSEmitter {
                 supers = fmt.nl(2) + [...tdecls.supers, ...nestedsupers].join(fmt.nl());
             }
 
+            let parses = "";
+            if(tdecls.parses.length !== 0) {
+                parses = fmt.nl(2) + [...tdecls.parses, ...nestedparses].join(fmt.nl());
+            }
+
+            let emits = "";
+            if(tdecls.emits.length !== 0) {
+                emits = fmt.nl(2) + [...tdecls.emits, ...nestedemits].join(fmt.nl());
+            }
+
             let imports = "";
             for(let i = 0; i < decl.usings.length; ++i) {
                 const tlname = decl.usings[i].fromns;
@@ -3640,10 +3676,20 @@ class JSEmitter {
 
                 //Now process the regexs
                 loadop = `\n\nimport { loadConstAndValidateRESystem } from "@bosque/jsbrex";${fmt.nl()}loadConstAndValidateRESystem(${JSON.stringify(asmreinfo, undefined, 4)});`
-                mainop = "\ntry { process.stdout.write(`${main()}\\n`); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); }\n";
+                
+                const mainf = decl.functions.find((fd) => fd.name === "main");
+                if(mainf === undefined) {
+                    mainop = "\nprocess.stdout.write(`Error -- main function not found in main namespace\\n`);";
+                }
+                else {
+                    const params = this.emitReadArgsFromStdInAndCall(mainf.params.map((pt) => pt.type.tkeystr));
+                    const op = this.emitOutputResultToStdOut(mainf.resultType.tkeystr, "main");
+
+                    mainop = `\n${params}${fmt.nl()}${op}`;
+                }
             }
 
-            return {contents: prefix + imports + ddecls + supers + loadop + mainop, nestedsupers: []};
+            return {contents: prefix + imports + ddecls + supers + parses + emits + loadop + mainop, nestedsupers: []};
         }
         else {
             const idecls = decls.map((dd) => fmt.indent(dd)).join("," + fmt.nl());

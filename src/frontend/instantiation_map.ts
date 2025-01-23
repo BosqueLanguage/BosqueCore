@@ -1,4 +1,4 @@
-import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper } from "./type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "./type.js";
 
 
 class FunctionInstantiationInfo {
@@ -27,21 +27,23 @@ class MethodInstantiationInfo {
 
 class TypeInstantiationInfo {
     readonly tkey: string;
+    readonly tsig: TypeSignature;
 
     readonly binds: TemplateNameMapper | undefined;
     readonly functionbinds: Map<string, FunctionInstantiationInfo>;
     readonly methodbinds: Map<string, MethodInstantiationInfo>;
 
-    constructor(tkey: string, binds: TemplateNameMapper | undefined, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>) {
+    constructor(tkey: string, tsig: TypeSignature, binds: TemplateNameMapper | undefined, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>) {
         this.tkey = tkey;
+        this.tsig = tsig;
         this.binds = binds;
 
         this.functionbinds = functionbinds;
         this.methodbinds = methodbinds;
     }
 
-    static createNoTemplateInfo(tkey: string, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>): TypeInstantiationInfo {
-        return new TypeInstantiationInfo(tkey, undefined, functionbinds, methodbinds);
+    static createNoTemplateInfo(tkey: string, tsig: TypeSignature, functionbinds: Map<string, FunctionInstantiationInfo>, methodbinds: Map<string, MethodInstantiationInfo>): TypeInstantiationInfo {
+        return new TypeInstantiationInfo(tkey, tsig, undefined, functionbinds, methodbinds);
     }
 }
 
