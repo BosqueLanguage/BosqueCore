@@ -5,11 +5,11 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- logical or", () => {
     it("should exec simple or", function () {
-        runMainCode("public function main(): Bool { return true || false; }", [true, "Bool"]);
-        runMainCode("public function main(): Bool { return false || false; }", [false, "Bool"]);
+        runMainCode("public function main(): Bool { return true || false; }", "true");
+        runMainCode("public function main(): Bool { return false || false; }", "false");
     });
 
     it("should exec sc or", function () {
-        runMainCode("public function main(): Bool { return true || (1i // 0i) == 1i; }", [true, "Bool"]);
+        runMainCode("public function main(): Bool { return true || (1i // 0i) == 1i; }", "true");
     });
 });

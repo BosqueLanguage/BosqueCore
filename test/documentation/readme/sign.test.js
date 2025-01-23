@@ -7,8 +7,8 @@ const signf = 'function sign(x: Int): Int {var y: Int; if(x == 0i) { y = 0i; } e
 
 describe ("sign exec", () => {
     it("should exec sign", function () {
-        runMainCode(`${signf} public function main(): Int { return sign(5i); }`, [1n, "Int"]); 
-        runMainCode(`${signf} public function main(): Int { return sign(-5i); }`, [-1n, "Int"]);
-        runMainCode(`${signf} public function main(): Int { return sign(0i); }`, [0n, "Int"]);
+        runMainCode(`${signf} public function main(): Int { return sign(5i); }`, "1i"); 
+        runMainCode(`${signf} public function main(): Int { return sign(-5i); }`, "-1i");
+        runMainCode(`${signf} public function main(): Int { return sign(0i); }`, "0i");
     });
 });

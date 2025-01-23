@@ -5,10 +5,10 @@ import { describe, it } from "node:test";
 
 describe ("exec -- special literals", () => {
     it("should exec true", function () {
-        runMainCode("public function main(): Bool { return true; }", [true, "Bool"]);
+        runMainCode("public function main(): Bool { return true; }", "true");
     });
 
     it("should exec false", function () {
-        runMainCode("public function main(): Bool { return false; }", [false, "Bool"]);
+        runMainCode("public function main(): Bool { return false; }", "false");
     });
 });

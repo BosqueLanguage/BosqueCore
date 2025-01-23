@@ -9,8 +9,8 @@ const occupied_main = "public function main(): Bool { var bb = Board::initialBoa
 
 describe ("TicTacToe", () => {
     it("should winner", function () {
-        runMainCode("tic_tac_toe/tic_tac_toe.bsq", no_winner_main, [true, "Bool"]); 
-        runMainCode("tic_tac_toe/tic_tac_toe.bsq", x_winner_main, [true, "Bool"]); 
+        runMainCode("tic_tac_toe/tic_tac_toe.bsq", no_winner_main, "true"); 
+        runMainCode("tic_tac_toe/tic_tac_toe.bsq", x_winner_main, "true"); 
     });
 
     it("should fail access", function () {

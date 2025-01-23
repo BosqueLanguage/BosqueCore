@@ -14,10 +14,10 @@ describe ("type alias typechecks", () => {
 
 describe ("type alias exec", () => {
     it("should succeed", function () {
-        runMainCode(`${decls} public function main(): Nat { return 30n<Percentage>.value; }`, [30n, "Nat"]); 
+        runMainCode(`${decls} public function main(): Nat { return 30n<Percentage>.value; }`, "30n"); 
 
-        runMainCode(`${decls} public function main(): Bool { return isFreezing(5i<Celsius>); }`, [false, "Bool"]);
-        runMainCode(`${decls} public function main(): Bool { return isFreezing(-5i<Celsius>); }`, [true, "Bool"]); 
+        runMainCode(`${decls} public function main(): Bool { return isFreezing(5i<Celsius>); }`, "false");
+        runMainCode(`${decls} public function main(): Bool { return isFreezing(-5i<Celsius>); }`, "true"); 
     });
 
     it("should fail", function () {

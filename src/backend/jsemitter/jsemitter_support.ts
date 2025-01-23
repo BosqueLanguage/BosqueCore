@@ -359,6 +359,10 @@ class EmitNameManager {
         return this.emitTypeAccess(currentns, ttype) + ".$create";
     }
 
+    static generateAccessorForConstructorParseAPI(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, usesvalidate: boolean): string {
+        return this.emitTypeAccess(currentns, ttype) + (usesvalidate ? ".$createAPI" : ".$create");
+    }
+
     static generateAccessorForTypeKey(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
         return `${this.emitTypeAccess(currentns, ttype)}.$tsym`;
     }
@@ -369,6 +373,14 @@ class EmitNameManager {
 
     static generateAccessorForTypeConstructorProto(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
         return `${this.emitTypeAccess(currentns, ttype)}`;
+    }
+
+    static generateAccessorForParseFunction(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.$parseAPI`;
+    }
+
+    static generateAccessorForEmitFunction(currentns: NamespaceDeclaration, ttype: NominalTypeSignature): string {
+        return `${this.emitTypeAccess(currentns, ttype)}.$emitAPI`;
     }
 }
 

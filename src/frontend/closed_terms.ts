@@ -63,9 +63,11 @@ class PendingNominalTypeDecl {
     readonly instantiation: TypeSignature[];
 
     readonly tkey: string;
+    readonly tsig: TypeSignature;
 
-    constructor(tkeystr: string, type: AbstractNominalTypeDecl, instantiation: TypeSignature[]) {
+    constructor(tkeystr: string, tsig: TypeSignature, type: AbstractNominalTypeDecl, instantiation: TypeSignature[]) {
         this.type = type;
+        this.tsig = tsig;
         this.instantiation = instantiation;
 
         this.tkey = tkeystr;
@@ -113,7 +115,7 @@ class InstantiationPropagator {
 
         if(rt instanceof NominalTypeSignature) {
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
-            this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt.decl, rt.alltermargs));
+            this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
         }
         else if(rt instanceof EListTypeSignature) {
             rt.entries.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
@@ -125,6 +127,25 @@ class InstantiationPropagator {
         }
         else {
             assert(false, "Unknown TypeSignature type -- " + rt.tkeystr);
+        }
+
+        if(rt instanceof NominalTypeSignature && rt.decl instanceof ListTypeDecl) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration;
+
+            const createdecl = nns.functions.find((tt) => tt.name === "s_list_create_empty") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+
+            const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push_back") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
+        }
+        if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration;
+
+            const createdecl = nns.functions.find((tt) => tt.name === "s_map_create_empty") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+
+            const pushdecl = nns.functions.find((tt) => tt.name === "s_map_insert") as NamespaceFunctionDecl;
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
         }
     }
 
@@ -1618,10 +1639,10 @@ class InstantiationPropagator {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
             this.currentMapping = undefined;
         }
     }
@@ -1831,10 +1852,10 @@ class InstantiationPropagator {
         const bbl = cnns.typebinds.get(pdecl.type.name) as TypeInstantiationInfo[];
 
         if(tdecl.terms.length === 0) {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, undefined, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
         }
         else {
-            bbl.push(new TypeInstantiationInfo(pdecl.tkey, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
+            bbl.push(new TypeInstantiationInfo(pdecl.tkey, pdecl.tsig, this.currentMapping as TemplateNameMapper, new Map<string, FunctionInstantiationInfo>(), new Map<string, MethodInstantiationInfo>()));
             this.currentMapping = undefined;
         }
     }
@@ -1973,7 +1994,7 @@ class InstantiationPropagator {
         for(let i = 0; i < decl.typedecls.length; ++i) {
             if(this.shouldInstantiateAsRootType(decl.typedecls[i])) {
                 const tsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, decl.typedecls[i], []);
-                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, decl.typedecls[i], []));
+                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, tsig, decl.typedecls[i], []));
             }
         }
 
@@ -1984,7 +2005,7 @@ class InstantiationPropagator {
         for(let i = 0; i < decl.tasks.length; ++i) {
             if(this.shouldInstantiateAsRootType(decl.typedecls[i])) {
                 const tsig = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, decl.typedecls[i], []);
-                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, decl.typedecls[i], []));
+                this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(tsig.tkeystr, tsig, decl.typedecls[i], []));
             }
         }
 

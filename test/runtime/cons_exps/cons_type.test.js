@@ -5,13 +5,13 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- Type Alias Constructor", () => {
     it("should exec positional", function () {
-        runMainCode('type Foo = Int; public function main(): Int { return Foo{1i}.value; }', [1n, "Int"]);
+        runMainCode('type Foo = Int; public function main(): Int { return Foo{1i}.value; }', "1i");
     });
 });
 
 describe ("Exec -- Type Alias w/ Invariant Constructor", () => {
     it("should exec positional", function () {
-        runMainCode('type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{4i}.value; }', [4n, "Int"]);
+        runMainCode('type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{4i}.value; }', "4i");
     });
 
     it("should fail inv", function () {
@@ -21,10 +21,10 @@ describe ("Exec -- Type Alias w/ Invariant Constructor", () => {
 
 describe ("Exec -- type decl of strings w/ stacked constraints", () => {
     it("should exec string options type decl", function () {
-        runMainCode('type SV2 = String of /[a-z]+ & [a-c]+/; public function main(): String { return SV2{"abc"}.value; }', ["abc", "String"]);
-        runMainCode("type SV2 = CString of /[a-z]+ & [a-c]+/c; public function main(): CString { return SV2{'abc'}.value; }", ["abc", "CString"]);
+        runMainCode('type SV2 = String of /[a-z]+ & [a-c]+/; public function main(): String { return SV2{"abc"}.value; }', '"abc"');
+        runMainCode("type SV2 = CString of /[a-z]+ & [a-c]+/c; public function main(): CString { return SV2{'abc'}.value; }", "'abc'");
 
-        runMainCode('const re2: Regex = /[a-z]+/; type SV2 = String of /${Main::re2} & [a-c]+/; public function main(): String { return SV2{"abc"}.value; }', ["abc", "String"]);  
+        runMainCode('const re2: Regex = /[a-z]+/; type SV2 = String of /${Main::re2} & [a-c]+/; public function main(): String { return SV2{"abc"}.value; }', '"abc"');  
     });
 
     it("should fail string constraints", function () {

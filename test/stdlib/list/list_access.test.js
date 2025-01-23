@@ -5,24 +5,24 @@ import { describe, it } from "node:test";
 
 describe ("List -- access", () => {
     it("should get single", function () {
-        runMainCode('public function main(): Int { return List<Int>{1i}.single(); }', [1n, "Int"]); 
+        runMainCode('public function main(): Int { return List<Int>{1i}.single(); }', "1i"); 
     });
 
     it("should get back", function () {
-        runMainCode('public function main(): Int { return List<Int>{1i}.back(); }', [1n, "Int"]); 
-        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.back(); }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return List<Int>{1i}.back(); }', "1i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.back(); }', "2i"); 
     });
 
     it("should get front", function () {
-        runMainCode('public function main(): Int { return List<Int>{1i}.front(); }', [1n, "Int"]); 
-        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.front(); }', [1n, "Int"]); 
+        runMainCode('public function main(): Int { return List<Int>{1i}.front(); }', "1i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.front(); }', "1i"); 
     });
 
     it("should get index", function () {
-        runMainCode('public function main(): Int { return List<Int>{1i}.get(0n); }', [1n, "Int"]); 
-        runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i}.get(0n); }', [1n, "Int"]); 
-        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.get(1n); }', [2n, "Int"]); 
-        runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i}.get(1n); }', [2n, "Int"]); 
+        runMainCode('public function main(): Int { return List<Int>{1i}.get(0n); }', "1i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i}.get(0n); }', "1i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.get(1n); }', "2i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i}.get(1n); }', "2i"); 
     });
 
     it("should fail get empty", function () {
