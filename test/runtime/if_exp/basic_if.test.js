@@ -15,7 +15,7 @@ describe ("Exec -- Simple if-expression", () => {
         runMainCode("public function main(): Int { let x: Option<Int> = some(3i); return if(x)<Some<Int>> then 2i else 3i; }", "2i");
 
         runMainCode("public function main(): Int { let x: Option<Int> = some(1i); return if(x)@!none then $x else 3i; }", "1i");
-        runMainCode("public function main(): Int { let x: Int = 1i; return if(x < 3i) then 0i else x; }", "0");
+        runMainCode("public function main(): Int { let x: Int = 1i; return if(x < 3i) then 0i else x; }", "0i");
         
         runMainCode("public function main(): Int { let x: Int = 1i; return if(if(x < 3i) then none else some(x))@!none then $_ else 3i; }", "3i");
         runMainCode("public function main(): Int { let x: Int = 5i; return if(if(x < 3i) then none else some(x))@!none then $_ else 3i; }", "5i");

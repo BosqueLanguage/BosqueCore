@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- type decl of strings w/o constraints", () => {
     it("should exec string options type decl", function () {
-        runMainCode('type SV1 = String; public function main(): String { return "ok"<SV1>.value; }', '"ok');  
+        runMainCode('type SV1 = String; public function main(): String { return "ok"<SV1>.value; }', '"ok"');  
         runMainCode("type SV2 = CString; public function main(): CString { return 'ok'<SV2>.value; }", "'ok'");  
     });
 });

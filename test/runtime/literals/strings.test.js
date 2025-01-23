@@ -28,7 +28,7 @@ describe ("Exec -- CString", () => {
 
     it("should exec escaped strings", function () {
         runMainCode("public function main(): CString { return '%x59;'; }", "'Y'");
-        runMainCode("public function main(): CString { return '%%;'; }", "'%$;'");
+        runMainCode("public function main(): CString { return '%%;'; }", "'%%;'");
         runMainCode("public function main(): CString { return '%;'; }", "'%;'");
     });
 });

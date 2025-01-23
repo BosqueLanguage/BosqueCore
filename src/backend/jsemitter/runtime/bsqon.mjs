@@ -1,6 +1,6 @@
 "use strict;"
 
-import { validateStringLiteral, validateCStringLiteral } from "@bosque/jsbrex";
+import { validateStringLiteral, escapeStringLiteral, validateCStringLiteral, escapeCStringLiteral } from "@bosque/jsbrex";
 
 ////////////////////////////////////////////////////////////////////////////////
 //Support
@@ -1706,16 +1706,14 @@ BSQONEmitter.prototype.emitComplex = function(v) {
  * @returns {string}
  */
 BSQONEmitter.prototype.emitString = function(v) {
-    //TODO: need to export brex::escapeUnicodeString(this->sv); from JS module
-    NOT_IMPLEMENTED("emitString");
+    return `"${escapeStringLiteral(v)}"`;
 }
 /**
  * @param {any} v
  * @returns {string}
  */
 BSQONEmitter.prototype.emitCString = function(v) {
-    //TODO: need to export brex::escapeCString(this->sv); from JS module
-    NOT_IMPLEMENTED("emitCString");
+    return `'${escapeCStringLiteral(v)}'`;
 }
 /**
  * @param {any} v
