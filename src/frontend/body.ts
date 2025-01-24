@@ -698,6 +698,8 @@ class CallTypeFunctionExpression extends Expression {
     }
 }
 
+xxxx;
+
 class CallRefThisExpression extends Expression {
     readonly name: string;
     readonly rec: RecursiveAnnotation;
