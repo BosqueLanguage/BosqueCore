@@ -218,6 +218,7 @@ enum ExpressionTag {
     SpecialConverterExpression = "SpecialConverterExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallTypeFunctionExpression = "CallTypeFunctionExpression",
+    CallRefVariableExpression = "CallRefVariableExpression",
     CallRefThisExpression = "CallRefThisExpression",
     CallRefSelfExpression = "CallRefSelfExpression",
     CallTaskActionExpression = "CallTaskActionExpression",
@@ -698,7 +699,37 @@ class CallTypeFunctionExpression extends Expression {
     }
 }
 
-xxxx;
+
+class CallRefVariableExpression extends Expression {
+    readonly rcvr: string;
+    readonly name: string;
+    readonly rec: RecursiveAnnotation;
+    readonly terms: TypeSignature[];
+    readonly args: ArgumentList;
+
+    constructor(sinfo: SourceInfo, rcvr: string, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefVariableExpression, sinfo);
+        this.rcvr = rcvr;
+        this.name = name;
+        this.rec = rec;
+        this.terms = terms;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+        
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
+
+        return `ref ${this.rcvr}.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+    }
+}
 
 class CallRefThisExpression extends Expression {
     readonly name: string;
@@ -2400,7 +2431,7 @@ export {
     ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
     LetExpression,
     LambdaInvokeExpression,
-    CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
+    CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefVariableExpression, CallRefThisExpression,
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,

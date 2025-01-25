@@ -175,6 +175,14 @@ entity CallTypeFunctionExpression provides Expression {
     field restinfo: List<(|Int, Bool, TypeSignature|)>;
 }
 
+
+entity CallRefVariableExpression provides Expression {
+    field rcvr: CString;
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+}
+
 entity CallRefThisExpression provides Expression {
     field name: CString;
     field rec: RecursiveAnnotation;
