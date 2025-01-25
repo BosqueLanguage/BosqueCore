@@ -2140,33 +2140,36 @@ class VoidRefCallStatement extends Statement {
     }
 }
 
-class VarUpdateStatement extends Statement {
-    readonly name: string;
+abstract class UpdateStatement extends Statement {
+    readonly vexp: AccessVariableExpression;
     readonly updates: [string, Expression][];
 
-    constructor(sinfo: SourceInfo, name: string, updates: [string, Expression][]) {
-        super(StatementTag.VarUpdateStatement, sinfo);
-        this.name = name;
+    constructor(sinfo: SourceInfo, tag: StatementTag, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(tag, sinfo);
+
+        this.vexp = vexp;
         this.updates = updates;
     }
 
     emit(fmt: CodeFormatter): string {
         const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `ref ${this.name}[${updates}];`;
+        return `ref ${this.vexp.emit(true, fmt)}[${updates}];`;
+    }
+
+    updatetype: TypeSignature | undefined = undefined;
+    updateinfo: {fieldname: string, fieldtype: TypeSignature, etype: TypeSignature}[] = [];
+    isdirect: boolean = false;
+}
+
+class VarUpdateStatement extends UpdateStatement {
+    constructor(sinfo: SourceInfo, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(sinfo, StatementTag.VarUpdateStatement, vexp, updates);
     }
 }
 
-class ThisUpdateStatement extends Statement {
-    readonly updates: [string, Expression][];
-
-    constructor(sinfo: SourceInfo, updates: [string, Expression][]) {
-        super(StatementTag.ThisUpdateStatement, sinfo);
-        this.updates = updates;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `ref this[${updates}];`;
+class ThisUpdateStatement extends UpdateStatement {
+    constructor(sinfo: SourceInfo, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(sinfo, StatementTag.ThisUpdateStatement, vexp, updates);
     }
 }
 
@@ -2175,6 +2178,7 @@ class SelfUpdateStatement extends Statement {
 
     constructor(sinfo: SourceInfo, updates: [string, Expression][]) {
         super(StatementTag.SelfUpdateStatement, sinfo);
+
         this.updates = updates;
     }
 
@@ -2458,7 +2462,7 @@ export {
     VariableRetypeStatement,
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
-    VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
+    VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
     TaskYieldStatement,

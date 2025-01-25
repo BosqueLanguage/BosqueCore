@@ -3683,6 +3683,7 @@ class Parser {
 
             //A ref call (this/self/or var)
             const isthis = this.testToken(KW_this);
+            const isself = this.testToken(KW_self);
             const isvar = this.testToken(TokenStrings.IdentifierName);
 
             let vn: string | undefined = undefined;
@@ -3690,19 +3691,18 @@ class Parser {
                 vn = this.parseIdentifierAsStdVariable();
             }
             else {
+                if(!isthis && !isself) {
+                    this.recordErrorGeneral(sinfo, "Expected this/self/var after ref");
+                }
+
                 this.consumeToken();
             }
 
             this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
+            
             this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
-                    
-            let resolvedScope: TypeSignature | undefined = undefined;
-            if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                resolvedScope = this.parseNominalType();
-                this.ensureToken(SYM_coloncolon, "ref invoke ");
-            }
-
             const name = this.parseIdentifierAsStdVariable();
+
             const rec = this.parseInvokeRecursiveArgs();
             const targs = this.parseInvokeTemplateArguments();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
@@ -3761,10 +3761,18 @@ class Parser {
             }
             else if(this.testFollows(KW_ref, KW_this, SYM_lbrack)) {
                 this.consumeToken(); //consume ref
-                this.consumeToken(); //consume self
+
+                const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), "this");
+                this.consumeToken(); //consume this
+
                 const updates = this.parseVarUpdates();
 
-                return new ThisUpdateStatement(sinfo, updates);
+                if(updates.length === 0) {
+                    this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                    return new ErrorStatement(sinfo);
+                }
+
+                return new ThisUpdateStatement(sinfo, vexp, updates);
             }
             else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
                 this.consumeToken(); //consume ref
@@ -3776,10 +3784,16 @@ class Parser {
             }
             else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
                 this.consumeToken(); //consume ref
-                const id = this.consumeTokenAndGetValue();
+
+                const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
                 const updates = this.parseVarUpdates();
 
-                return new VarUpdateStatement(sinfo, id, updates);
+                if(updates.length === 0) {
+                    this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                    return new ErrorStatement(sinfo);
+                }
+
+                return new VarUpdateStatement(sinfo, vexp, updates);
             }
             else {
                 this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Unknown statment expression starting with -- " + this.peekToken().kind);
