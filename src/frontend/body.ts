@@ -699,16 +699,20 @@ class CallTypeFunctionExpression extends Expression {
     }
 }
 
-
-class CallRefVariableExpression extends Expression {
-    readonly rcvr: string;
+class CallRefInvokeExpression extends Expression {
+    readonly rcvr: AccessVariableExpression;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, rcvr: string, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefVariableExpression, sinfo);
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    resttype: TypeSignature | undefined = undefined;
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    resolvedTrgt: TypeSignature | undefined = undefined;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, rcvr: AccessVariableExpression, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(tag, sinfo);
         this.rcvr = rcvr;
         this.name = name;
         this.rec = rec;
@@ -727,65 +731,25 @@ class CallRefVariableExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `ref ${this.rcvr}.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `ref ${this.rcvr.emit(true, fmt)}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
-class CallRefThisExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefThisExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+class CallRefVariableExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefVariableExpression, sinfo, rcvr, name, terms, rec, args);
     }
 }
 
-class CallRefSelfExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefSelfExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
+class CallRefThisExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefThisExpression, sinfo, rcvr, name, terms, rec, args);
     }
+}
 
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
-
-        return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+class CallRefSelfExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefSelfExpression, sinfo, rcvr, name, terms, rec, args);
     }
 }
 
@@ -2435,8 +2399,9 @@ export {
     ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
     LetExpression,
     LambdaInvokeExpression,
-    CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefVariableExpression, CallRefThisExpression,
-    CallRefSelfExpression, CallTaskActionExpression,
+    CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
+    CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
+    CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,

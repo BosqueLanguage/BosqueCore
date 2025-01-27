@@ -2710,6 +2710,7 @@ class Parser {
         }
 
         if(!anyspreadok) {
+            xxxx;
             const spreadidx = args.findIndex((arg, index) => arg instanceof SpreadArgumentValue && index !== args.length - 1);
             const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof NamedArgumentValue));
             if(badspread) {
@@ -3681,23 +3682,12 @@ class Parser {
             const sinfo = this.peekToken().getSourceInfo();
             this.consumeToken();
 
-            //A ref call (this/self/or var)
-            const isthis = this.testToken(KW_this);
-            const isself = this.testToken(KW_self);
-            const isvar = this.testToken(TokenStrings.IdentifierName);
-
-            let vn: string | undefined = undefined;
-            if(isvar) {
-                vn = this.parseIdentifierAsStdVariable();
-            }
-            else {
-                if(!isthis && !isself) {
-                    this.recordErrorGeneral(sinfo, "Expected this/self/var after ref");
-                }
-
-                this.consumeToken();
+            if(this.testToken(TokenStrings.IdentifierName)) {
+                this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
+                return new ErrorExpression(sinfo, undefined, undefined);
             }
 
+            const rcvr = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
             this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
             
             this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
@@ -3707,14 +3697,14 @@ class Parser {
             const targs = this.parseInvokeTemplateArguments();
             const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
 
-            if(vn !== undefined) {
-                return new CallRefVariableExpression(sinfo, vn, name, targs, rec, args);
+            if(rcvr.srcname === "this") {
+                return new CallRefThisExpression(sinfo, rcvr, name, targs, rec, args);
             }
-            if(isthis) {
-                return new CallRefThisExpression(sinfo, name, targs, rec, args);
+            if(rcvr.srcname === "self") {
+                return new CallRefSelfExpression(sinfo, rcvr, name, targs, rec, args);                
             }
             else {
-                return new CallRefSelfExpression(sinfo, name, targs, rec, args);
+                return new CallRefVariableExpression(sinfo, rcvr, name, targs, rec, args);
             }
         }
         else {
@@ -3740,6 +3730,8 @@ class Parser {
             return new VoidRefCallStatement(sinfo, rhs);
         }
         else {
+            this.consumeToken(); //consume ref
+
             if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
                 const name = this.parseIdentifierAsStdVariable();
                 this.consumeToken();
@@ -3759,9 +3751,7 @@ class Parser {
 
                 return new VariableRetypeStatement(sinfo, name, ttest);
             }
-            else if(this.testFollows(KW_ref, KW_this, SYM_lbrack)) {
-                this.consumeToken(); //consume ref
-
+            else if(this.testFollows(KW_this, SYM_lbrack)) {
                 const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), "this");
                 this.consumeToken(); //consume this
 
@@ -3775,7 +3765,6 @@ class Parser {
                 return new ThisUpdateStatement(sinfo, vexp, updates);
             }
             else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
-                this.consumeToken(); //consume ref
                 this.consumeToken(); //consume self
                 this.parseVarUpdates();
 
@@ -3783,8 +3772,6 @@ class Parser {
                 return new ErrorStatement(sinfo);
             }
             else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
-                this.consumeToken(); //consume ref
-
                 const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
                 const updates = this.parseVarUpdates();
 

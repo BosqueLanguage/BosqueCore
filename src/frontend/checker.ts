@@ -675,6 +675,11 @@ class TypeChecker {
     }
 
     private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
+        
+        //Args options
+        //(positional..., named..., rest)
+        xxxx;
+
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         let argsuffletype: (TypeSignature | undefined)[] = [];
@@ -791,6 +796,8 @@ class TypeChecker {
     }
 
     private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
+        xxxx;
+        
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < args.length; ++i) {
