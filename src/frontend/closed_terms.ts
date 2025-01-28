@@ -997,6 +997,10 @@ class InstantiationPropagator {
     private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
         this.instantiateExpression(exp.rcvr);
 
+        if(exp.specificResolve !== undefined) {
+            this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
+        }
+
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {

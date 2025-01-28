@@ -11,6 +11,7 @@ describe ("Parser -- Container Constructor (List)", () => {
     });
 
     it("should fail list constructors", function () {
-        parseTestFunctionError("function main(x: Int): List<Int> { return List<Int>{ref x}; }", 'Cannot have a reference argument in this context');
+        parseTestFunctionError("function main(x: Int): List<Int> { return List<Int>{ref x}; }", 'Cannot have a reference argument in collection constructor context');
+        parseTestFunctionError("function main(): List<Int> { return List<Int>{x=2i}; }", 'Cannot have named arguments in collection constructor');
     });
 });

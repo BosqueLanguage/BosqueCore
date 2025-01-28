@@ -78,8 +78,8 @@ public function sub2(x: Int, y: Int): Int {
     return x - y;
 }
 
-sub2(4i, 2i)   %%2i
-sub2(y=2i, 3i) %%1i
+sub2(4i, 2i)     %%2i
+sub2(y=2i, x=3i) %%1i
 
 sub2(3i, 4.0f) %%type error -- defined on Int but given Float arg
 sub2(3, 4)     %%type error -- un-annotated numeric literals are not supported (for now)

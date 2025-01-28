@@ -13,6 +13,6 @@ describe ("sub2 typechecks", () => {
 describe ("sub2 exec", () => {
     it("should exec sub2", function () {
         runMainCode('public function sub2(x: Int, y: Int): Int { return x - y; } public function main(): Int { return sub2(4i, 2i); }', "2i"); 
-        runMainCode('public function sub2(x: Int, y: Int): Int { return x - y; } public function main(): Int { return sub2(y=2i, 3i); }', "1i"); 
+        runMainCode('public function sub2(x: Int, y: Int): Int { return x - y; } public function main(): Int { return sub2(y=2i, x=3i); }', "1i"); 
     });
 });
