@@ -2652,7 +2652,124 @@ class Parser {
         return recursive;
     }
 
-    private parseArguments(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean, anyspreadok: boolean, mapargs: boolean, lambdaok: boolean): ArgumentList {
+    private checkArgsStd(args: ArgumentValue[]) {
+        const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
+        const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
+        if(duplicateNames !== undefined) {
+            this.recordErrorGeneral(this.peekToken(), `Duplicate argument name ${duplicateNames}`);
+        }
+
+        const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
+        if(multiplerefs) {
+            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
+        }
+    }
+
+    private checkArgsStdSpread(args: ArgumentValue[]) {
+        const spreadidx = args.findIndex((arg) => arg instanceof SpreadArgumentValue);
+        const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof PositionalArgumentValue) && !(arg instanceof SpreadArgumentValue));
+        if(badspread) {
+            this.recordErrorGeneral(this.peekToken(), "Spread arguments must be the last arguments and either ... or positional");
+        }
+    }
+
+    private parseArgumentsCallStd(lparen: string, rparen: string, sep: string, refok: boolean): ArgumentList {
+        //args must be of the form (note each of the sets could be empty)
+        //First all positional (and possibly ref) arguments
+        //Then all named arguments
+        //Finally any spread arguments 
+
+        const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
+            if(this.testToken(KW_ref)) {
+                if(!refok) {
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
+                }
+                this.consumeToken();
+                const exp = this.parseExpression();
+                if(!(exp instanceof AccessVariableExpression)) {
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                }
+
+                return new RefArgumentValue(exp as AccessVariableExpression);
+            }
+            else if(this.testToken(SYM_dotdotdot)) {
+                this.consumeToken();
+                const exp = this.parseExpression();
+
+                return new SpreadArgumentValue(exp);
+            }
+            else if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+                const name = this.parseIdentifierAsStdVariable();
+                this.consumeToken();
+                const exp = this.parseExpression();
+
+                return new NamedArgumentValue(name, exp);
+            }
+            else {
+                const exp = this.parseLambdaOkExpression();
+                
+                return new PositionalArgumentValue(exp);
+            }
+        });
+
+        this.checkArgsStd(args);
+        this.checkArgsStdSpread(args);
+
+        return new ArgumentList(args);
+    }
+
+    private parseArgumentsCallLambda(lparen: string, rparen: string, sep: string): ArgumentList {
+        //args must be of the form (note each of the sets could be empty)
+        //First all positional (ref is not allowed) arguments
+        //NO -- named arguments
+        //Finally any spread arguments 
+
+        const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
+            if(this.testToken(KW_ref)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in lambda call context");
+
+                this.consumeToken();
+                const exp = this.parseExpression();
+                if(!(exp instanceof AccessVariableExpression)) {
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                }
+
+                return new RefArgumentValue(exp as AccessVariableExpression);
+            }
+            else if(this.testToken(SYM_dotdotdot)) {
+                this.consumeToken();
+                const exp = this.parseExpression();
+
+                return new SpreadArgumentValue(exp);
+            }
+            else if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have named arguments in lambda call context");
+
+                const name = this.parseIdentifierAsStdVariable();
+                this.consumeToken();
+                const exp = this.parseExpression();
+
+                return new NamedArgumentValue(name, exp);
+            }
+            else {
+                const exp = this.parseLambdaOkExpression();
+                
+                return new PositionalArgumentValue(exp);
+            }
+        });
+
+        this.checkArgsStd(args);
+        this.checkArgsStdSpread(args);
+
+        return new ArgumentList(args);
+    }
+
+    private parseArgumentsCollection(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean, anyspreadok: boolean, mapargs: boolean, lambdaok: boolean): ArgumentList {
+        //args must be of the form (note each of the sets could be empty)
+        //First all positional (and possibly ref) arguments
+        //Then all named arguments
+        //Finally any spread arguments 
+
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
                 if(!refok) {
@@ -2710,9 +2827,8 @@ class Parser {
         }
 
         if(!anyspreadok) {
-            xxxx;
             const spreadidx = args.findIndex((arg, index) => arg instanceof SpreadArgumentValue && index !== args.length - 1);
-            const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof NamedArgumentValue));
+            const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof PositionalArgumentValue) && !(arg instanceof SpreadArgumentValue));
             if(badspread) {
                 this.recordErrorGeneral(this.peekToken(), "Spread argument must be the last argument");
             }
