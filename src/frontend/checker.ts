@@ -745,7 +745,7 @@ class TypeChecker {
         let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
-            let restargs = args.slice(nonrestparams.length);
+            let restargs = args.slice(Math.min(nlast, nonrestparams.length));
             this.checkError(sinfo, restargs.length !== 0 && usingdeafults, `Cannot use (implicit) default arguments with rest parameter as uses are ambigious`);
 
             const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
