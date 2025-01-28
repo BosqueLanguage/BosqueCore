@@ -11,7 +11,8 @@ describe ("Exec -- Entity Constructor", () => {
 
     it("should exec nominal", function () {
         runMainCode('entity Foo { field f: Int; } public function main(): Int { return Foo{f = 1i}.f; }', "1i");
-        runMainCode('entity Foo { field f: Int; field g: Bool; } public function main(): Bool { return Foo{g = true, 1i}.g; }', "true");
+        runMainCode('entity Foo { field f: Int; field g: Bool; } public function main(): Bool { return Foo{1i, g = true}.g; }', "true");
+        runMainCode('entity Foo { field f: Int; field g: Bool; } public function main(): Bool { return Foo{f=1i, g = true}.g; }', "true");
     });
 
     it("should exec default", function () {

@@ -12,7 +12,7 @@ describe ("Checker -- Entity Constructor", () => {
 
     it("should check nominal", function () {
         checkTestFunctionInFile('entity Foo { field f: Int; } function main(): Foo { return Foo{f=1i}; }');
-        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool; } function main(): Foo { return Foo{g=true, 1i}; }');
+        checkTestFunctionInFile('entity Foo { field f: Int; field g: Bool; } function main(): Foo { return Foo{1i, g=true}; }');
     });
 
     it("should check default", function () {

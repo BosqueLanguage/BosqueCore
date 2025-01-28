@@ -15,8 +15,12 @@ describe ("Checker -- NamespaceFunction (no template)", () => {
     });
 
     it("should check simple mixed", function () {
-        checkTestFunction("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(x=1i, true); }");
-        checkTestFunction("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(y=true, 1i); }");
+        checkTestFunction("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(1i, y=true); }");
+        checkTestFunction("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(y=true, x=1i); }");
+    });
+
+    it("should fail check mixed (named before positional)", function () {
+        checkTestFunctionError("function foo(x: Int, y: Bool): Int { return x; } function main(): Int { return foo(x=1i, true); }", "Required argument y not provided");
     });
 
     it("should check simple default", function () {

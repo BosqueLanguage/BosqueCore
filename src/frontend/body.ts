@@ -218,6 +218,7 @@ enum ExpressionTag {
     SpecialConverterExpression = "SpecialConverterExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallTypeFunctionExpression = "CallTypeFunctionExpression",
+    CallRefVariableExpression = "CallRefVariableExpression",
     CallRefThisExpression = "CallRefThisExpression",
     CallRefSelfExpression = "CallRefSelfExpression",
     CallTaskActionExpression = "CallTaskActionExpression",
@@ -698,14 +699,23 @@ class CallTypeFunctionExpression extends Expression {
     }
 }
 
-class CallRefThisExpression extends Expression {
+class CallRefInvokeExpression extends Expression {
+    readonly rcvr: AccessVariableExpression;
+    readonly specificResolve: TypeSignature | undefined;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefThisExpression, sinfo);
+    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    resttype: TypeSignature | undefined = undefined;
+    restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
+    resolvedTrgt: TypeSignature | undefined = undefined;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, rcvr: AccessVariableExpression, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(tag, sinfo);
+        this.rcvr = rcvr;
+        this.specificResolve = specificResolve;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
@@ -723,36 +733,25 @@ class CallRefThisExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `ref ${this.rcvr.emit(true, fmt)}.${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
-class CallRefSelfExpression extends Expression {
-    readonly name: string;
-    readonly rec: RecursiveAnnotation;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
-        super(ExpressionTag.CallRefSelfExpression, sinfo);
-        this.name = name;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
+class CallRefVariableExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefVariableExpression, sinfo, rcvr, specificResolve, name, terms, rec, args);
     }
+}
 
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let rec = "";
-        if(this.rec !== "no") {
-            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
-        }
-        
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
+class CallRefThisExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefThisExpression, sinfo, rcvr, specificResolve, name, terms, rec, args);
+    }
+}
 
-        return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+class CallRefSelfExpression extends CallRefInvokeExpression {
+    constructor(sinfo: SourceInfo, rcvr: AccessVariableExpression, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefSelfExpression, sinfo, rcvr, undefined, name, terms, rec, args);
     }
 }
 
@@ -2107,33 +2106,36 @@ class VoidRefCallStatement extends Statement {
     }
 }
 
-class VarUpdateStatement extends Statement {
-    readonly name: string;
+abstract class UpdateStatement extends Statement {
+    readonly vexp: AccessVariableExpression;
     readonly updates: [string, Expression][];
 
-    constructor(sinfo: SourceInfo, name: string, updates: [string, Expression][]) {
-        super(StatementTag.VarUpdateStatement, sinfo);
-        this.name = name;
+    constructor(sinfo: SourceInfo, tag: StatementTag, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(tag, sinfo);
+
+        this.vexp = vexp;
         this.updates = updates;
     }
 
     emit(fmt: CodeFormatter): string {
         const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `ref ${this.name}[${updates}];`;
+        return `ref ${this.vexp.emit(true, fmt)}[${updates}];`;
+    }
+
+    updatetype: TypeSignature | undefined = undefined;
+    updateinfo: {fieldname: string, fieldtype: TypeSignature, etype: TypeSignature}[] = [];
+    isdirect: boolean = false;
+}
+
+class VarUpdateStatement extends UpdateStatement {
+    constructor(sinfo: SourceInfo, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(sinfo, StatementTag.VarUpdateStatement, vexp, updates);
     }
 }
 
-class ThisUpdateStatement extends Statement {
-    readonly updates: [string, Expression][];
-
-    constructor(sinfo: SourceInfo, updates: [string, Expression][]) {
-        super(StatementTag.ThisUpdateStatement, sinfo);
-        this.updates = updates;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `ref this[${updates}];`;
+class ThisUpdateStatement extends UpdateStatement {
+    constructor(sinfo: SourceInfo, vexp: AccessVariableExpression, updates: [string, Expression][]) {
+        super(sinfo, StatementTag.ThisUpdateStatement, vexp, updates);
     }
 }
 
@@ -2142,6 +2144,7 @@ class SelfUpdateStatement extends Statement {
 
     constructor(sinfo: SourceInfo, updates: [string, Expression][]) {
         super(StatementTag.SelfUpdateStatement, sinfo);
+
         this.updates = updates;
     }
 
@@ -2398,8 +2401,9 @@ export {
     ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
     LetExpression,
     LambdaInvokeExpression,
-    CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
-    CallRefSelfExpression, CallTaskActionExpression,
+    CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
+    CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
+    CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
@@ -2425,7 +2429,7 @@ export {
     VariableRetypeStatement,
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
-    VoidRefCallStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
+    VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
     TaskYieldStatement,

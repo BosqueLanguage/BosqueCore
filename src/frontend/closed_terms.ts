@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl, AbstractCollectionTypeDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { AutoTypeSignature, EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 import { SourceInfo } from "./build_decls.js";
 
 function computeTBindsKey(tbinds: TypeSignature[]): string {
@@ -994,12 +994,49 @@ class InstantiationPropagator {
         }
     }
 
+    private instantiateCallRefInvokeExpression(exp: CallRefInvokeExpression) {
+        this.instantiateExpression(exp.rcvr);
+
+        if(exp.specificResolve !== undefined) {
+            this.instantiateTypeSignature(exp.specificResolve, this.currentMapping);
+        }
+
+        this.instantiateArgumentList(exp.args.args);
+
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            if(exp.shuffleinfo[i][1] !== undefined) {
+                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
+            }
+        }
+        if(exp.restinfo !== undefined) {
+            const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
+            let rargs: ArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                this.instantiateTypeSignature(exp.restinfo[i][2], this.currentMapping);
+                rargs.push(exp.args.args[exp.restinfo[i][0]]);
+            }
+
+            this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
+        }
+
+        this.instantiateTypeSignature(exp.resolvedTrgt as TypeSignature, this.currentMapping);
+
+        const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
+        const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => !m.isThisRef && m.name === exp.name) as MethodDecl;
+        this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms, this.currentMapping);
+    }
+
+    private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
+        this.instantiateCallRefInvokeExpression(exp);
+    }
+
     private instantiateCallRefThisExpression(exp: CallRefThisExpression) {
-        assert(false, "Not Implemented -- instantiateCallRefThisExpression");
+        this.instantiateCallRefInvokeExpression(exp);
     }
 
     private instantiateCallRefSelfExpression(exp: CallRefSelfExpression) {
-        assert(false, "Not Implemented -- instantiateCallRefSelfExpression");
+        this.instantiateCallRefInvokeExpression(exp);
     }
 
     private instantiateCallTaskActionExpression(exp: CallTaskActionExpression) {
@@ -1029,6 +1066,10 @@ class InstantiationPropagator {
     private instantiateExpressionRHS(exp: Expression) {
         const ttag = exp.tag;
         switch (ttag) {
+            case ExpressionTag.CallRefVariableExpression: {
+                this.instantiateCallRefVariableExpression(exp as CallRefVariableExpression);
+                break;
+            }
             case ExpressionTag.CallRefThisExpression: {
                 this.instantiateCallRefThisExpression(exp as CallRefThisExpression);
                 break;
@@ -1234,15 +1275,30 @@ class InstantiationPropagator {
     }
 
     private instantiateVoidRefCallStatement(stmt: VoidRefCallStatement) {
-        assert(false, "Not implemented -- VoidRefCallStatement");
+        this.instantiateExpression(stmt.exp);
+    }
+
+    private instantiateUpdateStatement(stmt: UpdateStatement) {
+        this.instantiateExpression(stmt.vexp);
+        
+        for(let i = 0; i < stmt.updates.length; ++i) {
+            this.instantiateExpression(stmt.updates[i][1]);
+        }
+
+        this.instantiateTypeSignature(stmt.updatetype as TypeSignature, this.currentMapping);
+
+        for(let i = 0; i < stmt.updateinfo.length; ++i) {
+            this.instantiateTypeSignature(stmt.updateinfo[i].fieldtype, this.currentMapping);
+            this.instantiateTypeSignature(stmt.updateinfo[i].etype, this.currentMapping);
+        }
     }
 
     private instantiateVarUpdateStatement(stmt: VarUpdateStatement) {
-        assert(false, "Not implemented -- VarUpdateStatement");
+        this.instantiateUpdateStatement(stmt);
     }
 
     private instantiateThisUpdateStatement(stmt: ThisUpdateStatement) {
-        assert(false, "Not implemented -- ThisUpdateStatement");
+        this.instantiateUpdateStatement(stmt);
     }
 
     private instantiateSelfUpdateStatement(stmt: SelfUpdateStatement) {

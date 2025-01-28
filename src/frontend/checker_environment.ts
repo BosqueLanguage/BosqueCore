@@ -156,16 +156,16 @@ class TypeEnvironment {
         return this.args.find((v) => v.srcname === vname);
     }
 
-    resolveLocalVarInfoFromScopeName(vname: string): VarInfo | undefined {
+    resolveLocalVarInfoFromSrcNameWithIsParam(vname: string): [VarInfo | undefined, boolean] {
         for(let i = this.locals.length - 1; i >= 0; i--) {
             for(let j = 0; j < this.locals[i].length; j++) {
-                if(this.locals[i][j].scopename === vname) {
-                    return this.locals[i][j];
+                if(this.locals[i][j].srcname === vname) {
+                    return [this.locals[i][j], false];
                 }
             }
         }
 
-        return this.args.find((v) => v.srcname === vname);
+        return [this.args.find((v) => v.srcname === vname), true];
     }
 
     addLocalVar(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
@@ -250,6 +250,18 @@ class TypeEnvironment {
     popLocalScope(): TypeEnvironment {
         assert(this.locals.length > 0);
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
+    }
+
+    resolveLocalVarInfoFromScopeName(vname: string): VarInfo | undefined {
+        for(let i = this.locals.length - 1; i >= 0; i--) {
+            for(let j = 0; j < this.locals[i].length; j++) {
+                if(this.locals[i][j].scopename === vname) {
+                    return this.locals[i][j];
+                }
+            }
+        }
+
+        return this.args.find((v) => v.srcname === vname);
     }
 
     resetRetypes(origenv: TypeEnvironment): TypeEnvironment {
