@@ -2652,7 +2652,13 @@ class Parser {
         return recursive;
     }
 
-    private checkArgsStd(args: ArgumentValue[]) {
+    private checkArgs(args: ArgumentValue[]) {
+        const spreadidx = args.findIndex((arg) => arg instanceof SpreadArgumentValue);
+        const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof PositionalArgumentValue) && !(arg instanceof SpreadArgumentValue));
+        if(badspread) {
+            this.recordErrorGeneral(this.peekToken(), "Spread arguments must be the last arguments and either ... or positional");
+        }
+
         const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
         const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
         if(duplicateNames !== undefined) {
@@ -2662,14 +2668,6 @@ class Parser {
         const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
         if(multiplerefs) {
             this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
-        }
-    }
-
-    private checkArgsStdSpread(args: ArgumentValue[]) {
-        const spreadidx = args.findIndex((arg) => arg instanceof SpreadArgumentValue);
-        const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof PositionalArgumentValue) && !(arg instanceof SpreadArgumentValue));
-        if(badspread) {
-            this.recordErrorGeneral(this.peekToken(), "Spread arguments must be the last arguments and either ... or positional");
         }
     }
 
@@ -2712,21 +2710,22 @@ class Parser {
             }
         });
 
-        this.checkArgsStd(args);
-        this.checkArgsStdSpread(args);
+        this.checkArgs(args);
 
         return new ArgumentList(args);
     }
 
-    private parseArgumentsCallLambda(lparen: string, rparen: string, sep: string): ArgumentList {
+    private parseArgumentsCallLambda(lparen: string, rparen: string, sep: string, refok: boolean): ArgumentList {
         //args must be of the form (note each of the sets could be empty)
-        //First all positional (ref is not allowed) arguments
+        //First all positional (and possibly ref) arguments
         //NO -- named arguments
         //Finally any spread arguments 
 
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
-                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in lambda call context");
+                if(!refok) {
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
+                }
 
                 this.consumeToken();
                 const exp = this.parseExpression();
@@ -2758,23 +2757,21 @@ class Parser {
             }
         });
 
-        this.checkArgsStd(args);
-        this.checkArgsStdSpread(args);
+        this.checkArgs(args);
 
         return new ArgumentList(args);
     }
 
-    private parseArgumentsCollection(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean, anyspreadok: boolean, mapargs: boolean, lambdaok: boolean): ArgumentList {
+    private parseArgumentsCollection(lparen: string, rparen: string, sep: string, mapargs: boolean): ArgumentList {
         //args must be of the form (note each of the sets could be empty)
-        //First all positional (and possibly ref) arguments
-        //Then all named arguments
-        //Finally any spread arguments 
+        //First all positional (and not ref) arguments
+        //NO -- named arguments
+        //Finally spread arguments 
 
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
-                if(!refok) {
-                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
-                }
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in collection constructor context");
+
                 this.consumeToken();
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
@@ -2784,15 +2781,14 @@ class Parser {
                 return new RefArgumentValue(exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
-                if(!spreadok) {
-                    this.recordErrorGeneral(this.peekToken(), "Cannot have a spread argument in this context");
-                }
                 this.consumeToken();
                 const exp = this.parseExpression();
 
                 return new SpreadArgumentValue(exp);
             }
             else if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have named arguments in collection constructor");
+
                 const name = this.parseIdentifierAsStdVariable();
                 this.consumeToken();
                 const exp = this.parseExpression();
@@ -2804,9 +2800,6 @@ class Parser {
                 if(mapargs) {
                     exp = this.parseMapEntryConstructorExpression();
                 }
-                else if(lambdaok) {
-                    exp = this.parseLambdaOkExpression();
-                }
                 else {
                     exp = this.parseExpression();
                 }
@@ -2815,24 +2808,7 @@ class Parser {
             }
         });
 
-        const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
-        const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
-        if(duplicateNames !== undefined) {
-            this.recordErrorGeneral(this.peekToken(), `Duplicate argument name ${duplicateNames}`);
-        }
-
-        const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
-        if(multiplerefs) {
-            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
-        }
-
-        if(!anyspreadok) {
-            const spreadidx = args.findIndex((arg, index) => arg instanceof SpreadArgumentValue && index !== args.length - 1);
-            const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof PositionalArgumentValue) && !(arg instanceof SpreadArgumentValue));
-            if(badspread) {
-                this.recordErrorGeneral(this.peekToken(), "Spread argument must be the last argument");
-            }
-        }
+        this.checkArgs(args);
 
         return new ArgumentList(args);
     }
@@ -2942,7 +2918,7 @@ class Parser {
         else {
             const rec = this.parseInvokeRecursiveArgs();
             const targs = this.parseInvokeTemplateArguments();
-            const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+            const args = this.parseArgumentsCallStd(SYM_lparen, SYM_rparen, SYM_coma, true);
 
             const specialop = this.trySpecialNamespaceCall(sinfo, ns, idname, targs, args);
             if(specialop !== undefined) {
@@ -2970,7 +2946,7 @@ class Parser {
         else if(isFunOpt) {
             const rec = this.parseInvokeRecursiveArgs();
             const targs = this.parseInvokeTemplateArguments();
-            const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+            const args = this.parseArgumentsCallStd(SYM_lparen, SYM_rparen, SYM_coma, true);
 
             const specialop = this.trySpecialNamespaceCall(sinfo, nspace, idname, targs, args);
             if(specialop !== undefined) {
@@ -3008,9 +2984,15 @@ class Parser {
             else {
                 const isContainer = tsig instanceof NominalTypeSignature && tsig.decl instanceof AbstractCollectionTypeDecl;
                 const isMap = isContainer && (tsig instanceof NominalTypeSignature) && (tsig.decl instanceof MapTypeDecl);
-                const args = this.parseArguments(SYM_lbrace, SYM_rbrace, SYM_coma, false, isContainer, isContainer, isMap, false);
 
-                return new ConstructorPrimaryExpression(sinfo, tsig, args);
+                if(isContainer) {
+                    const args = this.parseArgumentsCollection(SYM_lbrace, SYM_rbrace, SYM_coma, isMap);
+                    return new ConstructorPrimaryExpression(sinfo, tsig, args);
+                }
+                else {
+                    const args = this.parseArgumentsCallStd(SYM_lbrace, SYM_rbrace, SYM_coma, false);
+                    return new ConstructorPrimaryExpression(sinfo, tsig, args);
+                }
             }
         }
         else if(this.testToken(SYM_coloncolon)) {
@@ -3041,7 +3023,7 @@ class Parser {
             const targs = this.parseInvokeTemplateArguments();
 
             if(this.testToken(SYM_lparen)) {
-                const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+                const args = this.parseArgumentsCallStd(SYM_lparen, SYM_rparen, SYM_coma, true);
 
                 return new CallTypeFunctionExpression(sinfo, tsig, idname, targs, isrecursive, args);
             }
@@ -3070,7 +3052,7 @@ class Parser {
 
             if(this.testToken(SYM_lparen) || this.testFollows(SYM_lbrack, KW_recursive) || this.testFollows(SYM_lbrack, KW_recursive_q)) {
                 const recursive = this.parseInvokeRecursiveArgs();
-                const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+                const args = this.parseArgumentsCallLambda(SYM_lparen, SYM_rparen, SYM_coma, true);
                 return new LambdaInvokeExpression(sinfo, idname, recursive, args);
             }
             else {
@@ -3442,7 +3424,7 @@ class Parser {
                     else {
                         const rec = this.parseInvokeRecursiveArgs();
                         const targs = this.parseInvokeTemplateArguments();
-                        const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+                        const args = this.parseArgumentsCallStd(SYM_lparen, SYM_rparen, SYM_coma, true);
 
                         ops.push(new PostfixInvoke(sinfo, resolvedScope, name, targs, rec, args));
                     }
@@ -3811,7 +3793,7 @@ class Parser {
 
             const rec = this.parseInvokeRecursiveArgs();
             const targs = this.parseInvokeTemplateArguments();
-            const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, false, true);
+            const args = this.parseArgumentsCallStd(SYM_lparen, SYM_rparen, SYM_coma, false);
 
             if(rcvr.srcname === "this") {
                 return new CallRefThisExpression(sinfo, rcvr, name, targs, rec, args);

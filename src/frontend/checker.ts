@@ -674,12 +674,7 @@ class TypeChecker {
         return rtypes;
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
-        
-        //Args options
-        //(positional..., named..., rest)
-        xxxx;
-
+    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         let argsuffletype: (TypeSignature | undefined)[] = [];
@@ -689,36 +684,45 @@ class TypeChecker {
             argsuffletype.push(undefined);
         }
 
+        //fill in all the parameter arg shuggle info
+        let plast = args.findIndex((arg) => !(arg instanceof SpreadArgumentValue) && !(arg instanceof PositionalArgumentValue)); 
+        if(plast === -1) {
+            plast = args.length;
+        }
+
+        for(let i = 0; i < plast; ++i) {
+            argsuffle[i] = args[i];
+            argsuffleidx[i] = i;
+
+            this.checkError(args[i].exp.sinfo, !refok && (args[i] instanceof RefArgumentValue), `Reference argument only allowed in top-level contexts`);
+        }
+
         //fill in all the named arguments
-        for(let i = 0; i < args.length; ++i) {
-            if(args[i] instanceof NamedArgumentValue) {
-                const narg = args[i] as NamedArgumentValue;
-                const paramidx = params.findIndex((p) => p.name === narg.name);
-                if(paramidx === -1) {
-                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} not found in parameter list`);
-                }
-                else if(params[paramidx].isRestParam) {
-                    this.reportError(narg.exp.sinfo, `Named argument ${narg.name} cannot be assigned to rest parameter`);
-                }
-                else {
-                    argsuffle[paramidx] = narg;
-                    argsuffleidx[paramidx] = i;
-                }
+        let nlast = args.slice(plast).findIndex((arg) => !(arg instanceof NamedArgumentValue));
+        if(nlast === -1) {
+            nlast = args.length;
+        }
+    
+        for(let i = plast; i < nlast; ++i) {
+            const narg = args[i] as NamedArgumentValue;
+            const paramidx = params.findIndex((p) => p.name === narg.name);
+            if(paramidx === -1) {
+                this.reportError(narg.exp.sinfo, `Named argument ${narg.name} not found in parameter list`);
+            }
+            else if(params[paramidx].isRestParam) {
+                this.reportError(narg.exp.sinfo, `Named argument ${narg.name} cannot be assigned to rest parameter`);
+            }
+            else if(argsuffleidx[paramidx] !== -1) {
+                this.reportError(narg.exp.sinfo, `Named argument ${narg.name} already assigned to parameter`);
+            }
+            else {
+                argsuffle[paramidx] = narg;
+                argsuffleidx[paramidx] = i;
             }
         }
 
         const nonrestparams = params.filter((p) => !p.isRestParam);
         const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
-
-        let ppos = argsuffle.findIndex((av) => av === undefined);
-        let apos = args.findIndex((av) => !(av instanceof NamedArgumentValue));
-        while(ppos !== -1 && ppos < nonrestparams.length && apos !== -1 && apos < args.length) {
-            argsuffle[ppos] = args[apos];
-            argsuffleidx[ppos] = apos;
-
-            ppos = argsuffle.findIndex((av, j) => j > ppos && av === undefined);
-            apos = args.findIndex((av, j) =>  j > apos && !(av instanceof NamedArgumentValue));
-        }
 
         for(let i = argsuffleidx.length; i < nonrestparams.length; ++i) {
             argsuffleidx.push(-1);
@@ -728,9 +732,11 @@ class TypeChecker {
             this.reportError(sinfo, `Too many arguments provided to function`);
         }
             
+        let usingdeafults = false;
         for(let i = 0; i < nonrestparams.length; ++i) {
             if(argsuffle[i] === undefined) {
                 this.checkError(sinfo, nonrestparams[i].optDefaultValue === undefined, `Required argument ${nonrestparams[i].name} not provided`);
+                usingdeafults = true;
             }
             else {
                 const pp = nonrestparams[i];
@@ -742,6 +748,8 @@ class TypeChecker {
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
             let restargs = args.slice(nonrestparams.length);
+            this.checkError(sinfo, restargs.length !== 0 && usingdeafults, `Cannot use (implicit) default arguments with rest parameter as uses are ambigious`);
+
             const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
 
             resttype = restparam.type.remapTemplateBindings(imapper);
@@ -760,7 +768,7 @@ class TypeChecker {
         return { shuffleinfo: shuffleinfo, resttype: resttype, restinfo: restinfo };
     }
 
-    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
+    private checkLambdaArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: LambdaParameterSignature[]): { arginfo: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
         if(args.some((av) => av instanceof NamedArgumentValue)) {
             this.reportError(sinfo, `Named arguments not allowed in lambda argument list`);
         }
@@ -795,15 +803,16 @@ class TypeChecker {
         return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
     }
 
-    private checkConstructorArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
-        xxxx;
-        
+    private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < args.length; ++i) {
             argsuffle.push(undefined);
             argsuffleidx.push(-1);
         }
+
+
+        xxxx;
 
         //fill in all the named arguments
         for(let i = 0; i < args.length; ++i) {
@@ -854,6 +863,10 @@ class TypeChecker {
         }
 
         return argsuffleidx.map((idx, i) => [idx, bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);
+    }
+
+    private checkConstructorCollectionArgumentList(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], etype: TypeSignature, imapper: TemplateNameMapper): [number, string, TypeSignature][] {
+        xxxx;
     }
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {
@@ -2631,6 +2644,7 @@ class TypeChecker {
                 return this.checkTaskRaceExpression(env, exp as TaskRaceExpression);
             }
             default: {
+                xxxx;
                 return this.checkExpression(env, exp, typeinfer);
             }
         }
