@@ -10,8 +10,8 @@ describe ("Parser -- simple ref updates", () => {
     });
 
     it("should parse simple ref updates (fail)", function () {
-        parseTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[x 2i]; return v.x; }');
-        parseTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[x] = 2i; return v.x; }');
+        parseTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[x 2i]; return v.x; }', 'Expected "=" but got "2i" when parsing "variable update list"');
+        parseTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[x] = 2i; return v.x; }', 'Expected "=" but got "]" when parsing "variable update list"');
     });
 });
 
