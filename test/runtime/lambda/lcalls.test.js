@@ -3,7 +3,6 @@
 import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it, run } from "node:test";
 
-
 describe ("Exec -- Lambda calls (no template)", () => {
     it("should exec simple lambda", function () {
         runMainCode("function foo(f: fn(Int) -> Int): Int { return f(1i); } public function main(): Int { return foo(fn(x) => { return x + 1i; }); }", "2i");

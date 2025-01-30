@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'let _$consts = {};\n' +
 '\n' +
-'import { $VRepr, _$rv, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
+'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
 'import { _$setnone_lit, _$parsemap, _$emitmap, _$parseBSQON, _$emitBSQON } from "./bsqon.mjs";\n' +
 '\n'
 ;
@@ -714,7 +714,7 @@ class JSEmitter {
                     restl.push(exp.args.args[rri[0]]);
                 }
                 else {
-                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                    assert(false, "Not implemented -- LambdaFunction -- spread into rest");
                 }
             }
 
@@ -724,7 +724,7 @@ class JSEmitter {
                 argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
             }
             else {
-                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+                assert(false, "Not implemented -- LambdaFunction -- rest");
             }
         }
 
@@ -1686,7 +1686,7 @@ class JSEmitter {
             case ExpressionTag.CallRefThisExpression:
             case ExpressionTag.CallRefSelfExpression: {
                 const vv = this.emitAccessVariableExpression((exp as CallRefInvokeExpression).rcvr);
-                opstr = `_$rv = ${estr}, ${vv} = _$rv[0], _$rv[1]`;
+                opstr = `(_$rv = ${estr}, ${vv} = _$rv.ref, _$rv.return)`;
                 break;
             }
             default: {
@@ -1715,7 +1715,7 @@ class JSEmitter {
                 }
                 else {
                     const vv = this.emitAccessVariableExpression((vvopt.exp as AccessVariableExpression));
-                    opstr = `_$rv = ${estr}, ${vv} = _$rv[0], _$rv[1]`;
+                    opstr = `(_$rv = ${estr}, ${vv} = _$rv.ref, _$rv.return)`;
                 }
 
                 break;
@@ -1802,10 +1802,10 @@ class JSEmitter {
         assert(this.optrefreturn !== undefined);
 
         if(this.returncompletecall === undefined) {
-            return `return [${this.optrefreturn}];`;
+            return `return {return: null, ref: ${this.optrefreturn}};`;
         }
         else {
-            return `return [${this.optrefreturn}, ${this.returncompletecall}];`;
+            return `return {return: ${this.returncompletecall}, ref: ${this.optrefreturn} };`;
         }
     }
 
@@ -1817,7 +1817,7 @@ class JSEmitter {
                 return `return ${rexp};`;
             }
             else {
-                return `return [${this.optrefreturn}, ${rexp}];`;
+                return `return {return: ${rexp}, ref: ${this.optrefreturn}};`;
             }
         }
         else {
@@ -1825,7 +1825,7 @@ class JSEmitter {
                 return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
             }
             else {
-                return `return [${this.optrefreturn}, ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}];`;
+                return `return {return: ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}, ref: ${this.optrefreturn}};`;
             }
         }
     }
@@ -1838,7 +1838,7 @@ class JSEmitter {
                 return `return ${rexp};`;
             }
             else {
-                return `return [${this.optrefreturn}, ${rexp}];`;
+                return `return {return: ${rexp}, ref: ${this.optrefreturn}];`;
             }
         }
         else {
@@ -1846,7 +1846,7 @@ class JSEmitter {
                 return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
             }
             else {
-                return `return [${this.optrefreturn}, ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}];`;
+                return `return {return: ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}, ref: ${this.optrefreturn}};`;
             }
         }
     }
@@ -2042,9 +2042,9 @@ class JSEmitter {
 
     private emitUpdateStatement(stmt: UpdateStatement): string {
         const vexp = this.emitExpression(stmt.vexp, true);
-        const upobj = `{ ${stmt.updates.map((upd) => upd[0] + ": " + this.emitExpression(upd[1], true)).join(", ")} }`
+        const updatecalls = stmt.updates.map((upd) => upd[0] + `: (($${upd[0]}) => { return ` + this.emitExpression(upd[1], true) + `; })(${vexp}.${upd[0]})`).join(", ");
 
-        return `${vexp} = ${vexp}.$update(${upobj});`;
+        return `${vexp} = ${vexp}.$update({ ${updatecalls} });`;
     }
 
     private emitVarUpdateStatement(stmt: VarUpdateStatement): string {
@@ -2291,7 +2291,12 @@ class JSEmitter {
         else {
             let stmts: string[] = [];
             if(body instanceof ExpressionBodyImplementation) {
-                stmts.push(`return ${this.emitExpression(body.exp, true)};`);
+                if(optrefreturn === undefined) {
+                    stmts.push(`return ${this.emitExpression(body.exp, true)};`);
+                }
+                else {
+                    stmts.push(`return {return: ${this.emitExpression(body.exp, true)}, ref: ${optrefreturn}};`);
+                }
             }
             else {
                 assert(body instanceof StandardBodyImplementation);
@@ -2936,14 +2941,15 @@ class JSEmitter {
             return `_$invariant(${chkcall}(${args}), ${info});`
         });
 
-        const ccons = "let vobj = {...vtrgt, ...updates};"
-        const updop = "return Object.assign(vtrgt.constructor(), updates);";
+        const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
+        const ccons = "let vobj = {...this, ...updates};"
+        const updop = `return Object.assign(Object.create(${protoref}), vobj);`;
 
         fmt.indentPush();
         const bbody = [ccons, ...cchks, updop].map((ee) => fmt.indent(ee)).join(fmt.nl());
         fmt.indentPop();
 
-        return `$update: { value: (vtrgt, updates) => {${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")} }`;
+        return `$update: { value: function(updates) {${fmt.nl()}${bbody}${fmt.nl()}${fmt.indent("}")} }`;
     }
 
     private emitCreateAPIValidate(tdecl: AbstractNominalTypeDecl, ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] | undefined, rcvr: NominalTypeSignature, fmt: JSCodeFormatter): string {
@@ -3872,6 +3878,8 @@ class JSEmitter {
             if(decl.name !== "Core") {
                 imports += `import * as $Core from "./Core.mjs";${fmt.nl(2)}`;
             }
+
+            imports += ("let _$rv = {};" + fmt.nl(2));
 
             let loadop = "";
             let mainop = fmt.nl();

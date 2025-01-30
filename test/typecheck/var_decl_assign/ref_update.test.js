@@ -9,7 +9,7 @@ describe ("Checker -- simple ref updates", () => {
         checkTestFunctionInFile('entity Foo{ field x: Int; } public function main(): Int { var v = Foo{1i}; ref v[x = $x + 1i]; return v.x; }');
     });
 
-    it("should parse simple ref updates (fail)", function () {
+    it("should check simple ref updates (fail)", function () {
         checkTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[x = 2n]; return v.x; }', 'Expression of type Nat cannot be assigned to field x of type Int');
         checkTestFunctionInFileError('entity Foo{ field x: Int; } function main(): Int { var v = Foo{1i}; ref v[y = 2i]; return v.x; }', 'Field y is not a member of type Foo');
 
