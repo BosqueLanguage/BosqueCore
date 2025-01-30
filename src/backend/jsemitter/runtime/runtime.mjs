@@ -2,6 +2,8 @@
 
 import { accepts } from "@bosque/jsbrex";
 
+let _$rv = undefined;
+
 let _$softfails = [];
 
 const MIN_SAFE_INT = -9223372036854775807n;
@@ -336,6 +338,7 @@ function _$accepts(pattern, input, inns) {
 
 export {
     $VRepr,
+    _$rv,
     _$softfails,
     _$supertypes,
     _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype,

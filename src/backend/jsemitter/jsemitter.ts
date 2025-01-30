@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl, TestAssociation } from "../../frontend/assembly.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../../frontend/build_decls.js";
@@ -11,7 +11,7 @@ const prefix =
 '"use strict";\n' +
 'let _$consts = {};\n' +
 '\n' +
-'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
+'import { $VRepr, _$rv, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
 'import { _$setnone_lit, _$parsemap, _$emitmap, _$parseBSQON, _$emitBSQON } from "./bsqon.mjs";\n' +
 '\n'
 ;
@@ -33,6 +33,7 @@ class JSEmitter {
     currentns: NamespaceDeclaration | undefined;
 
     mapper: TemplateNameMapper | undefined;
+    optrefreturn: string | undefined = undefined;
     returncompletecall: string | undefined = undefined;
 
     bindernames: Set<string> = new Set();
@@ -513,6 +514,11 @@ class JSEmitter {
             aname = exp.scopename;
         }
 
+        //handle special names here)
+        if(aname === "this") {
+            return "$this$";
+        }
+
         if(exp.specialaccess.length !== 0) {
             for(let i = 0; i < exp.specialaccess.length; ++i) {
                 if(exp.specialaccess[i].specialaccess !== undefined) {
@@ -678,7 +684,9 @@ class JSEmitter {
     
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
         const params = `(${exp.invoke.params.map((pp) => pp.name).join(", ")})`;
-        const body = this.emitBodyImplementation(exp.invoke.body, [], [], [], undefined, new JSCodeFormatter(undefined));
+
+        const optrefv = exp.invoke.params.find((pp) => pp.isRefParam);
+        const body = this.emitBodyImplementation(exp.invoke.body, false, [], [], [], optrefv !== undefined ? optrefv.name : undefined, undefined, new JSCodeFormatter(undefined));
 
         return `${params} => ${body}`;
     }
@@ -1612,38 +1620,109 @@ class JSEmitter {
     //TODO: late update this to return 2 strings -- first the sequence to compute the RHS (incl ref updates and early exits) then the actual value expression
     private emitExpressionRHS(exp: Expression): string {
         const ttag = exp.tag;
+
+        let estr = "";
         switch (ttag) {
             case ExpressionTag.CallRefVariableExpression: {
-                return this.emitCallRefVariableExpression(exp as CallRefVariableExpression);
+                estr = this.emitCallRefVariableExpression(exp as CallRefVariableExpression);
+                break;
             }
             case ExpressionTag.CallRefThisExpression: {
-                return this.emitCallRefThisExpression(exp as CallRefThisExpression);
+                estr = this.emitCallRefThisExpression(exp as CallRefThisExpression);
+                break;
             }
             case ExpressionTag.CallRefSelfExpression: {
-                return this.emitCallRefSelfExpression(exp as CallRefSelfExpression);
+                estr = this.emitCallRefSelfExpression(exp as CallRefSelfExpression);
+                break;
             }
             case ExpressionTag.CallTaskActionExpression: {
-                return this.emitCallTaskActionExpression(exp as CallTaskActionExpression);
+                estr = this.emitCallTaskActionExpression(exp as CallTaskActionExpression);
+                break;
             }
             case ExpressionTag.TaskRunExpression: {
-                return this.emitTaskRunExpression(exp as TaskRunExpression);
+                estr = this.emitTaskRunExpression(exp as TaskRunExpression);
+                break;
             }
             case ExpressionTag.TaskMultiExpression: {
-                return this.emitTaskMultiExpression(exp as TaskMultiExpression);
+                estr = this.emitTaskMultiExpression(exp as TaskMultiExpression);
+                break;
             }
             case ExpressionTag.TaskDashExpression: {
-                return this.emitTaskDashExpression(exp as TaskDashExpression);
+                estr = this.emitTaskDashExpression(exp as TaskDashExpression);
+                break;
             }
             case ExpressionTag.TaskAllExpression: {
-                return this.emitTaskAllExpression(exp as TaskAllExpression);
+                estr = this.emitTaskAllExpression(exp as TaskAllExpression);
+                break;
             }
             case ExpressionTag.TaskRaceExpression: {
-                return this.emitTaskRaceExpression(exp as TaskRaceExpression);
+                estr = this.emitTaskRaceExpression(exp as TaskRaceExpression);
+                break;
             }
             default: {
-                return this.emitExpression(exp, true);
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    estr = this.emitCallNamespaceFunctionExpression(exp as CallNamespaceFunctionExpression);
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    estr = this.emitCallTypeFunctionExpression(exp as CallTypeFunctionExpression);
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    estr = this.emitLambdaInvokeExpression(exp as LambdaInvokeExpression);
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    estr = this.emitPostfixOp(exp as PostfixOp, true);
+                }
+                else {
+                    estr = this.emitExpression(exp, true);
+                }
+
+                break;
             }
         }
+
+        let opstr = "";
+        switch (ttag) {
+            case ExpressionTag.CallRefVariableExpression:
+            case ExpressionTag.CallRefThisExpression:
+            case ExpressionTag.CallRefSelfExpression: {
+                const vv = this.emitAccessVariableExpression((exp as CallRefInvokeExpression).rcvr);
+                opstr = `_$rv = ${estr}, ${vv} = _$rv[0], _$rv[1]`;
+                break;
+            }
+            default: {
+                let vvopt: RefArgumentValue | undefined = undefined;
+
+                if(ttag === ExpressionTag.CallNamespaceFunctionExpression) {
+                    vvopt = (exp as CallNamespaceFunctionExpression).args.args.find((arg) => arg instanceof RefArgumentValue);
+                }
+                else if(ttag === ExpressionTag.CallTypeFunctionExpression) {
+                    vvopt = (exp as CallTypeFunctionExpression).args.args.find((arg) => arg instanceof RefArgumentValue);
+                }
+                else if(ttag === ExpressionTag.LambdaInvokeExpression) {
+                    vvopt = (exp as LambdaInvokeExpression).args.args.find((arg) => arg instanceof RefArgumentValue);
+                }
+                else if(ttag === ExpressionTag.PostfixOpExpression) {
+                    const pop = exp as PostfixOp;
+                    const lop = pop.ops[pop.ops.length - 1];
+                    vvopt = (lop instanceof PostfixInvoke) ? lop.args.args.find((arg) => arg instanceof RefArgumentValue) : undefined;
+                }
+                else {
+                    ;
+                }
+
+                if(vvopt === undefined) {
+                    opstr = estr;
+                }
+                else {
+                    const vv = this.emitAccessVariableExpression((vvopt.exp as AccessVariableExpression));
+                    opstr = `_$rv = ${estr}, ${vv} = _$rv[0], _$rv[1]`;
+                }
+
+                break;
+            }
+        }
+
+        return opstr;
     }
 
     private emitEmptyStatement(stmt: EmptyStatement): string {
@@ -1720,11 +1799,13 @@ class JSEmitter {
     }
 
     private emitReturnVoidStatement(stmt: ReturnVoidStatement): string {
+        assert(this.optrefreturn !== undefined);
+
         if(this.returncompletecall === undefined) {
-            return "return;";
+            return `return [${this.optrefreturn}];`;
         }
         else {
-            return `return ${this.returncompletecall};`;
+            return `return [${this.optrefreturn}, ${this.returncompletecall}];`;
         }
     }
 
@@ -1732,10 +1813,20 @@ class JSEmitter {
         const rexp = this.emitExpressionRHS(stmt.value);
 
         if(this.returncompletecall === undefined) {
-            return `return ${rexp};`;
+            if(this.optrefreturn === undefined) {
+                return `return ${rexp};`;
+            }
+            else {
+                return `return [${this.optrefreturn}, ${rexp}];`;
+            }
         }
         else {
-            return `return ${this.returncompletecall.replace("$[RESULT ARG]$", this.emitExpressionRHS(stmt.value))};`;
+            if(this.optrefreturn === undefined) {
+                return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
+            }
+            else {
+                return `return [${this.optrefreturn}, ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}];`;
+            }
         }
     }
 
@@ -1743,10 +1834,20 @@ class JSEmitter {
         const rexp = `[${stmt.value.map((vv) => this.emitExpression(vv, true)).join(", ")}]`;
 
         if(this.returncompletecall === undefined) {
-            return `return ${rexp};`;
+            if(this.optrefreturn === undefined) {
+                return `return ${rexp};`;
+            }
+            else {
+                return `return [${this.optrefreturn}, ${rexp}];`;
+            }
         }
         else {
-            return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
+            if(this.optrefreturn === undefined) {
+                return `return ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)};`;
+            }
+            else {
+                return `return [${this.optrefreturn}, ${this.returncompletecall.replace("$[RESULT ARG]$", rexp)}];`;
+            }
         }
     }
 
@@ -1936,14 +2037,14 @@ class JSEmitter {
     }
 
     private emitVoidRefCallStatement(stmt: VoidRefCallStatement): string {
-        return this.emitExpression(stmt.exp, true) + ";";
+        return this.emitExpressionRHS(stmt.exp) + ";";
     }
 
     private emitUpdateStatement(stmt: UpdateStatement): string {
         const vexp = this.emitExpression(stmt.vexp, true);
         const upobj = `{ ${stmt.updates.map((upd) => upd[0] + ": " + this.emitExpression(upd[1], true)).join(", ")} }`
 
-        return `${vexp}.$update(${upobj});`;
+        return `${vexp} = ${vexp}.$update(${upobj});`;
     }
 
     private emitVarUpdateStatement(stmt: VarUpdateStatement): string {
@@ -2176,7 +2277,7 @@ class JSEmitter {
         return `{ return ${bop}; }`;
     }
 
-    private emitBodyImplementation(body: BodyImplementation, initializers: string[], preconds: string[], refsaves: string[], returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
+    private emitBodyImplementation(body: BodyImplementation, ismethod: boolean, initializers: string[], preconds: string[], refsaves: string[], optrefreturn: string | undefined, returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
         if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation) {
             return undefined;
         }
@@ -2190,15 +2291,28 @@ class JSEmitter {
         else {
             let stmts: string[] = [];
             if(body instanceof ExpressionBodyImplementation) {
-                fmt.indentPush();
                 stmts.push(`return ${this.emitExpression(body.exp, true)};`);
-                fmt.indentPop();
             }
             else {
                 assert(body instanceof StandardBodyImplementation);
                 
+                const origOptRef = this.optrefreturn;
+                const origCompleteCall = this.returncompletecall;
+
+                this.optrefreturn = optrefreturn;
                 this.returncompletecall = returncompletecall;
+
                 stmts = this.emitStatementArray(body.statements, fmt);
+
+                this.optrefreturn = origOptRef;
+                this.returncompletecall = origCompleteCall;
+            }
+
+            let renames: string[] = [];
+            if(ismethod) {
+                fmt.indentPush();
+                renames = [fmt.indent("let $this$ = this;")]
+                fmt.indentPop();
             }
 
             if(this.bindernames.size !== 0) {
@@ -2211,7 +2325,8 @@ class JSEmitter {
             this.bindernames.clear();
 
             if(initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
-                return ["{", fmt.nl(), ...stmts, fmt.indent("}")].join("");
+                const renamesstr = renames.join(fmt.nl());
+                return ["{", fmt.nl(), renamesstr, (renames.length !== 0 ? fmt.nl() : ""), ...stmts, fmt.indent("}")].join("");
             }
             else {
                 fmt.indentPush();
@@ -2220,11 +2335,12 @@ class JSEmitter {
                 fmt.indentPop()
                 const ideclstr = initializers.length !== 0 ? `${fmt.indent("{")}${fmt.nl()}${ideclops}${fmt.nl()}${fmt.indent("}\n")}` : "";
 
+                const renamesstr = renames.join(fmt.nl());
                 const precondstr = preconds.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 const refsavestr = refsaves.map((ii) => fmt.indent(ii)).join(fmt.nl());
                 fmt.indentPop();
 
-                return ["{", fmt.nl(), ideclstr, (initializers.length !== 0 ? fmt.nl(2) : ""), precondstr, (preconds.length !== 0 ? fmt.nl(2) : ""), refsavestr, (refsaves.length !== 0 ? fmt.nl(2) : ""), ...stmts, fmt.indent("}")].join("");
+                return ["{", fmt.nl(), ideclstr, (initializers.length !== 0 ? fmt.nl(2) : ""), renamesstr, (renames.length !== 0 ? fmt.nl() : ""), precondstr, (preconds.length !== 0 ? fmt.nl(2) : ""), refsavestr, (refsaves.length !== 0 ? fmt.nl(2) : ""), ...stmts, fmt.indent("}")].join("");
             }
         }
     }
@@ -2416,7 +2532,7 @@ class JSEmitter {
             //TODO: we will need to handle ref params here too
             assert(fdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
 
-            const resb = ensures.map((e) => fmt.indent(e)).join(fmt.nl());
+            const resb = [...ensures.map((e) => fmt.indent(e)), fmt.indent("return $return;")].join(fmt.nl());
 
             let [resf, rss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateOnCompleteDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateOnCompleteDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
             const decl = `(${fdecl.params.map((p) => p.name).join(", ")}, $return)${rss ? " => " : " "}{${fmt.nl()}${resb}${fmt.nl()}${fmt.indent("}")}`;
@@ -2428,7 +2544,8 @@ class JSEmitter {
             }
         }
 
-        const body = this.emitBodyImplementation(fdecl.body, initializers, preconds, refsaves, resf, fmt);
+        const optrefv = fdecl.params.find((p) => p.isRefParam);
+        const body = this.emitBodyImplementation(fdecl.body, false, initializers, preconds, refsaves, optrefv !== undefined ? optrefv.name : undefined, resf, fmt);
         this.mapper = omap;
 
         const [nf, nss] = fdecl instanceof NamespaceFunctionDecl ? EmitNameManager.generateDeclarationNameForNamespaceFunction(this.getCurrentNamespace(), fdecl as NamespaceFunctionDecl, optmapping) : [EmitNameManager.generateDeclarationNameForTypeFunction(fdecl as TypeFunctionDecl, optmapping), true];
@@ -2546,7 +2663,7 @@ class JSEmitter {
             //TODO: we will need to handle ref params here too
             assert(!mdecl.isThisRef && mdecl.params.every((p) => !p.isRefParam), "Not implemented -- checkEnsuresRefParams");
 
-            const resb = ensures.map((e) => fmt.indent(e)).join(fmt.nl());
+            const resb = [...ensures.map((e) => fmt.indent(e)), fmt.indent("return $return;")].join(fmt.nl());
 
             let resf = EmitNameManager.generateOnCompleteDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
             const decl = `(${mdecl.params.map((p) => p.name).join(", ")}, $return) => {${fmt.nl()}${resb}${fmt.nl()}${fmt.indent("}")}`;
@@ -2558,7 +2675,9 @@ class JSEmitter {
             }
         }
 
-        const body = this.emitBodyImplementation(mdecl.body, initializers, preconds, refsaves, resf, fmt);
+        const optreft = mdecl.isThisRef ? "$this$" : undefined
+        const optrefv = mdecl.params.find((p) => p.isRefParam);
+        const body = this.emitBodyImplementation(mdecl.body, true, initializers, preconds, refsaves, optreft || (optrefv !== undefined ? optrefv.name : undefined), resf, fmt);
         this.mapper = omap;
 
         const nf = EmitNameManager.generateDeclarationNameForMethod(rcvrtype[0], mdecl, optmapping);
@@ -2818,7 +2937,7 @@ class JSEmitter {
         });
 
         const ccons = "let vobj = {...vtrgt, ...updates};"
-        const updop = "return Object.assign(vtrgt, updates);";
+        const updop = "return Object.assign(vtrgt.constructor(), updates);";
 
         fmt.indentPush();
         const bbody = [ccons, ...cchks, updop].map((ee) => fmt.indent(ee)).join(fmt.nl());
