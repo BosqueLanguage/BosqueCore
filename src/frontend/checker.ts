@@ -463,7 +463,7 @@ class TypeChecker {
                     return false;
                 }
 
-                this.checkError(pp.type.sinfo, pp.isRefParam && TypeChecker.isTypeRefUpdatable(pp.type)[0], `Ref parameter must be of an updatable type`);
+                this.checkError(pp.type.sinfo, pp.isRefParam && !TypeChecker.isTypeRefUpdatable(pp.type)[0], `Ref parameter must be of an updatable type`);
             }
 
             if(type.name === "pred" && type.resultType.tkeystr !== "Bool") {
@@ -629,6 +629,23 @@ class TypeChecker {
         if(isRefParam) {
             this.checkError(arg.exp.sinfo, !(arg instanceof RefArgumentValue), `Parameter ${paramname} is a reference parameter and must be passed by reference`);
         }
+        if(arg instanceof RefArgumentValue) {
+            this.checkError(arg.exp.sinfo, !isRefParam, `Parameter ${paramname} is not a reference parameter and argument cannot be passed by reference`);
+            
+            this.checkError(arg.exp.sinfo, !(arg.exp instanceof AccessVariableExpression), `Reference parameter must be on an variable name`);
+            if(arg.exp instanceof AccessVariableExpression) {
+                const vname = (arg.exp as AccessVariableExpression).srcname;
+                const [vinfo, isparam] = env.resolveLocalVarInfoFromSrcNameWithIsParam(vname);
+                if(vinfo === undefined) {
+                    this.reportError(arg.exp.sinfo, `Variable ${vname} is not declared`);
+                }
+                else {
+                    if((!isparam && vinfo.isConst) || (isparam && !vinfo.isRef)) {
+                        this.reportError(arg.exp.sinfo, `Variable ${vname} is cannot be updated (is local const or not a ref param)`);
+                    }
+                }
+            }
+        }
 
         if(arg instanceof NamedArgumentValue) {
             this.checkError(arg.exp.sinfo, arg.name !== paramname, `Named argument ${arg.name} does not match parameter name ${paramname}`);
@@ -745,7 +762,7 @@ class TypeChecker {
         let resttype: TypeSignature | undefined = undefined;
         let restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
         if(restparam !== undefined) {
-            let restargs = args.slice(nonrestparams.length);
+            let restargs = args.slice(Math.min(nlast, nonrestparams.length));
             this.checkError(sinfo, restargs.length !== 0 && usingdeafults, `Cannot use (implicit) default arguments with rest parameter as uses are ambigious`);
 
             const restypes = this.checkRestParam(env, restargs, restparam.name, restparam.type, imapper);
@@ -1804,6 +1821,11 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        if(mresolve.member.isThisRef) {
+            this.reportError(exp.sinfo, `Method ${exp.name} is a "ref" method and cannot be called without a ref rcvr`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
         const refinemap = this.relations.generateTemplateMappingForTypeDecl(mresolve.typeinfo.tsig);
         const imapper = this.checkTemplateBindingsOnInvoke(exp.sinfo, env, exp.terms, mresolve.member, refinemap);
         if(imapper === undefined) {
@@ -2598,6 +2620,22 @@ class TypeChecker {
         if(mresolve === undefined) {
             this.reportError(exp.sinfo, `Could not find method ${exp.name} in type ${rcvrtype.emit()}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        if(!mresolve.member.isThisRef) {
+            this.reportError(exp.sinfo, `Method ${exp.name} is not a "ref" method and cannot be called with a ref rcvr`);
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        const rcvrname = exp.rcvr.srcname;
+        const [vinfo, isparam] = env.resolveLocalVarInfoFromSrcNameWithIsParam(rcvrname);
+        if(vinfo === undefined) {
+            this.reportError(exp.sinfo, `Variable ${rcvrname} is not declared`);
+        }
+        else {
+            if((!isparam && vinfo.isConst) || (isparam && !vinfo.isRef)) {
+                this.reportError(exp.sinfo, `Variable ${rcvrname} is cannot be updated (is local const or not a ref param)`);
+            }
         }
 
         const refinemap = this.relations.generateTemplateMappingForTypeDecl(mresolve.typeinfo.tsig);
@@ -3818,7 +3856,7 @@ class TypeChecker {
                 this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
             }
 
-            this.checkError(p.type.sinfo, p.isRefParam && TypeChecker.isTypeRefUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
+            this.checkError(p.type.sinfo, p.isRefParam && !TypeChecker.isTypeRefUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
         }
 
         this.checkTypeSignature(idecl.resultType);
@@ -3826,7 +3864,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
         const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))];
-        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => "$" + p.name)];
+        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
         this.checkRequires(ienv, idecl.preconditions);
@@ -3895,7 +3933,7 @@ class TypeChecker {
             const thisvinfo = new VarInfo("this", "this", rcvr, [], true, true, mdecl.isThisRef);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
-            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["$this"] : [], undefined);
+            this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType, this.constraints);
             const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);

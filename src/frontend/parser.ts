@@ -3,7 +3,7 @@ import assert from "node:assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LogicActionAndExpression, LogicActionOrExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LogicActionAndExpression, LogicActionOrExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, SYM_land, SYM_lor } from "./parser_kw.js";
@@ -3795,7 +3795,7 @@ class Parser {
             const sinfo = this.peekToken().getSourceInfo();
             this.consumeToken();
 
-            if(this.testToken(TokenStrings.IdentifierName)) {
+            if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
                 this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
                 return new ErrorExpression(sinfo, undefined, undefined);
             }
@@ -3832,12 +3832,70 @@ class Parser {
         }
     }
 
-    private parseStatementExpression(isref: boolean): Statement {
+    private parseStatementExpression(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
 
-        if(!isref) {
+        if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_at)) {
+            this.consumeToken(); //consume ref
+
+            const name = this.parseIdentifierAsStdVariable();
+            this.consumeToken();
+
+            const badbinder = name.startsWith("$");
+            const lambdacapture = this.env.identifierResolvesAsVariable(name)
+            if(badbinder || lambdacapture) {
+                this.recordErrorGeneral(sinfo, "Cannot retype lambda captured or binder variables");
+                return new ErrorStatement(sinfo);
+            }
+
+            const ttest = this.parseITest();
+            if(ttest === undefined) {
+                this.recordErrorGeneral(sinfo, "Expected test expression after @");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new VariableRetypeStatement(sinfo, name, ttest);
+        }
+        else if(this.testFollows(KW_ref, KW_this, SYM_lbrack)) {
+            this.consumeToken(); //consume ref
+
+            const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), "this");
+            this.consumeToken(); //consume this
+
+            const updates = this.parseVarUpdates();
+
+            if(updates.length === 0) {
+                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new ThisUpdateStatement(sinfo, vexp, updates);
+        }
+        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
+            this.consumeToken(); //consume ref
+
+            this.consumeToken(); //consume self
+            this.parseVarUpdates();
+
+            this.recordErrorGeneral(sinfo, `NOT IMPLEMENTED -- update self fields`);
+            return new ErrorStatement(sinfo);
+        }
+        else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
+            this.consumeToken(); //consume ref
+
+            const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
+            const updates = this.parseVarUpdates();
+
+            if(updates.length === 0) {
+                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new VarUpdateStatement(sinfo, vexp, updates);
+        }
+        else {
             const rhs = this.parseRHSExpression(); //must be a call (with a ref/out param)
-            if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp)) {
+            if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp) && !(rhs instanceof CallRefInvokeExpression)) {
                 this.recordErrorGeneral(sinfo, "Expected a call expression");
                 return new ErrorStatement(sinfo);
             }
@@ -3847,65 +3905,7 @@ class Parser {
                 return new ErrorStatement(sinfo);
             }
 
-            return new VoidRefCallStatement(sinfo, rhs);
-        }
-        else {
-            this.consumeToken(); //consume ref
-
-            if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
-                const name = this.parseIdentifierAsStdVariable();
-                this.consumeToken();
-
-                const badbinder = name.startsWith("$");
-                const lambdacapture = this.env.identifierResolvesAsVariable(name)
-                if(badbinder || lambdacapture) {
-                    this.recordErrorGeneral(sinfo, "Cannot retype lambda captured or binder variables");
-                    return new ErrorStatement(sinfo);
-                }
-
-                const ttest = this.parseITest();
-                if(ttest === undefined) {
-                    this.recordErrorGeneral(sinfo, "Expected test expression after @");
-                    return new ErrorStatement(sinfo);
-                }
-
-                return new VariableRetypeStatement(sinfo, name, ttest);
-            }
-            else if(this.testFollows(KW_this, SYM_lbrack)) {
-                const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), "this");
-                this.consumeToken(); //consume this
-
-                const updates = this.parseVarUpdates();
-
-                if(updates.length === 0) {
-                    this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
-                    return new ErrorStatement(sinfo);
-                }
-
-                return new ThisUpdateStatement(sinfo, vexp, updates);
-            }
-            else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
-                this.consumeToken(); //consume self
-                this.parseVarUpdates();
-
-                this.recordErrorGeneral(sinfo, `NOT IMPLEMENTED -- update self fields`);
-                return new ErrorStatement(sinfo);
-            }
-            else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
-                const vexp = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
-                const updates = this.parseVarUpdates();
-
-                if(updates.length === 0) {
-                    this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
-                    return new ErrorStatement(sinfo);
-                }
-
-                return new VarUpdateStatement(sinfo, vexp, updates);
-            }
-            else {
-                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Unknown statment expression starting with -- " + this.peekToken().kind);
-                return new ErrorStatement(this.peekToken().getSourceInfo());    
-            }
+            return new VoidRefCallStatement(sinfo, rhs);  
         }
     }
 
@@ -3978,7 +3978,7 @@ class Parser {
     }
 
     parseVarUpdates(): [string, Expression][] {
-        return this.parseListOf<[string, Expression]>("variable update list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+        return this.parseListOf<[string, Expression]>("variable update list", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "variable update list");
             const name = this.consumeTokenAndGetValue();
 
@@ -4420,8 +4420,7 @@ class Parser {
         }
         */
         else {
-            const isref = this.testToken(KW_ref);
-            return this.parseStatementExpression(isref);
+            return this.parseStatementExpression();
         }
     }
 

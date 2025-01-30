@@ -113,7 +113,10 @@ class InstantiationPropagator {
             return;
         }
 
-        if(rt instanceof NominalTypeSignature) {
+        if(rt instanceof VoidTypeSignature) {
+            ; //nothing to do
+        }
+        else if(rt instanceof NominalTypeSignature) {
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
         }
@@ -1023,7 +1026,7 @@ class InstantiationPropagator {
         this.instantiateTypeSignature(exp.resolvedTrgt as TypeSignature, this.currentMapping);
 
         const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
-        const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => !m.isThisRef && m.name === exp.name) as MethodDecl;
+        const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => m.isThisRef && m.name === exp.name) as MethodDecl;
         this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms, this.currentMapping);
     }
 
@@ -1275,7 +1278,7 @@ class InstantiationPropagator {
     }
 
     private instantiateVoidRefCallStatement(stmt: VoidRefCallStatement) {
-        this.instantiateExpression(stmt.exp);
+        this.instantiateExpressionRHS(stmt.exp);
     }
 
     private instantiateUpdateStatement(stmt: UpdateStatement) {

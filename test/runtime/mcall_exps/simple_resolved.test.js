@@ -1,6 +1,6 @@
 "use strict";
 
-import { runMainCode, runMainCodeError } from "../../../bin/test/runtime/runtime_nf.js";
+import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Exec -- entity methods", () => {
