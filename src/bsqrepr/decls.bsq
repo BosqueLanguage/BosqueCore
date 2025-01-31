@@ -1,4 +1,4 @@
-declare namespace IRDecl;
+declare namespace IR;
 
 const min_safe_int: Int = -4611686018427387903i;
 const max_safe_int: Int = 4611686018427387903i;
@@ -7,39 +7,37 @@ const max_safe_int: Int = 4611686018427387903i;
 const max_safe_nat: Nat = 4611686018427387903n;
 
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-type NamespaceComponent = CString of IRDecl::namespaceComponentRE;
-type FullyQualifiedNamespaceKey = CString of /(${IRDecl::namespaceComponentRE}'::')*${IRDecl::namespaceComponentRE}?/c; %%Core is implicit here
+const namespaceKeyRE: CRegex = /(${IR::namespaceComponentRE}'::')*${IR::namespaceComponentRE}/c; %%Core is implicit here
+type NamespaceComponentKey = CString of IR::namespaceComponentRE;
+type NamespaceKey = CString of IR::namespaceKeyRE; %%Core is implicit here
 
 entity FullyQualifiedNamespace {
-    field key: FullyQualifiedNamespaceKey;
+    field key: NamespaceKey;
     field scopes: List<NamespaceComponent>; %%Core is explicit here
 }
 
-const templateTypeKeyRE: CRegex = /[A-Z]/c;
-const basicNominalTypeKeyRE: CRegex = /(${IRDecl::namespaceComponentRE}'::')*[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const basicNominalTypeKeyRE: CRegex = /(${IR::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
-const nominalTypeKeyRE: CRegex = /(${IRDecl::basicNominalTypeKeyRE}|${IRDecl::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
+const nominalTypeKeyRE: CRegex = /(${IR::basicNominalTypeKeyRE}|${IR::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}/c;
-const typeKeyRE: CRegex = /${IRDecl::templateTypeKeyRE}|${IRDecl::nominalTypeKeyRE}|${IRDecl::elistTypeKeyRE}|${IRDecl::lambdaTypeKeyRE}/c; 
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IR::templateTypeKeyRE}|${IR::nominalTypeKeyRE}|${IR::elistTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${IR::nominalTypeKeyRE}|${IR::elistTypeKeyRE}|${IR::lambdaTypeKeyRE}/c; 
+type TypeKey = CString of IR::typeKeyRE;
 
-type TemplateName = CString of IRDecl::templateTypeKeyRE;
-type TypeKey = CString of IRDecl::typeKeyRE;
+const invokeKeyRE: CRegex = /(${IR::namespaceKeyRE}|${IR::nominalTypeKeyRE})'::'[_a-zA-Z0-9]+/c;
+type InvokeKey = CString of IR::invokeKeyRE;
+
+const identifierRE: CRegex = /[_a-zA-Z][_a-zA-Z0-9]+/c;
+const videntifierRE: CRegex = /'$'?[_a-zA-Z][_a-zA-Z0-9]+/c;
+type Identifier = CString of IR::identifierRE;
+type VarIdentifier = CString of IR::videntifierRE;
 
 entity SourceInfo {
     field line: Nat;
     field column: Nat;
     field pos: Nat;
     field span: Nat;
-}
-
-enum BuildLevel {
-    BuildSpec,
-    BuildDebug,
-    BuildTest,
-    BuildRrelease,
-    BuildSafety
 }
 
 enum RecursiveAnnotation {

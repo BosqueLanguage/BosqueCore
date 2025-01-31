@@ -1,4 +1,4 @@
-namespace IRAssembly;
+namespace IR;
 
 entity LambdaParameterSignature {
     field ptype: TypeSignature;

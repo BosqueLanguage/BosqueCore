@@ -1,10 +1,8 @@
-declare namespace IRAssembly {
-    using IRDecl as IR;
-}
+namespace IR;
 
 concept AbstractDecl {
     field file: CString;
-    field sinfo: IR::SourceInfo;
+    field sinfo: SourceInfo;
 }
 
 concept ConditionDecl provides AbstractDecl {
@@ -12,19 +10,16 @@ concept ConditionDecl provides AbstractDecl {
 }
 
 entity PreConditionDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field issoft: Bool;
     field exp: Expression;
 }
 
 entity PostConditionDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field issoft: Bool;
     field exp: Expression;
 }
 
 entity InvariantDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field exp: Expression;
 }
 
@@ -33,18 +28,18 @@ entity ValidateDecl extends ConditionDecl {
 }
 
 entity DeclarationAttibute {
-    field name: CString;
+    field name: Identifier;
     field tags: List<(|TypeSignature, CString|)>; %%tags are enum names
-    field text: Option<String>;
+    field text: Option<CString>;
 }
 
 concept AbstractCoreDecl provides AbstractDecl {
     field attributes: List<DeclarationAttibute>;
-    field name: CString;
+    field name: Identifier;
 }
 
 entity InvokeParameterDecl {
-    field pname: CString;
+    field pname: Identifier;
     field ptype: TypeSignature;
     field defaultval: Option<Expression>;
     field isRefParam: Bool;
@@ -52,7 +47,7 @@ entity InvokeParameterDecl {
 }
 
 concept AbstractInvokeDecl provides AbstractCoreDecl {
-    field irecursive: IR::RecursiveAnnotation;
+    field irecursive: RecursiveAnnotation;
 
     field params: List<InvokeParameterDecl>;
     field resultType: TypeSignature;
@@ -60,17 +55,9 @@ concept AbstractInvokeDecl provides AbstractCoreDecl {
     field body: BodyImplementation;
 }
 
-entity LambdaDecl provides AbstractInvokeDecl {
-}
-
 concept ExplicitInvokeDecl provides AbstractInvokeDecl {
-    field terms: List<InvokeTemplateTermDecl>;
-    field termRestriction: Option<InvokeTemplateTypeRestriction>;
-
     field preconditions: List<PreConditionDecl>;
     field postconditions: List<PostConditionDecl>;
-
-    field examples: List<InvokeExample>;
 }
 
 concept FunctionInvokeDecl provides ExplicitInvokeDecl {
