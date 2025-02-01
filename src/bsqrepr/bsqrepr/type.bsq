@@ -7,8 +7,8 @@ entity LambdaParameterSignature {
 }
 
 datatype TypeSignature using {
-    field sinfo: IR::SourceInfo;
-    field tkeystr: IR::TypeKey;
+    field sinfo: SourceInfo;
+    field tkeystr: TypeKey;
 } 
 of 
 VoidTypeSignature { }

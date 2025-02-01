@@ -1,11 +1,8 @@
 namespace IRAssembly;
 
-const c_varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/;
-type VarName = CString of c_varnameRE;
-
 entity BinderInfo {
-    field srcname: VarName;      %%the name in the source code
-    field scopename: VarName;    %%maybe a different name that gets used for shadowing binders
+    field srcname: VarIdentifier;      %%the name in the source code
+    field scopename: VarIdentifier;    %%maybe a different name that gets used for shadowing binders
     field implicitdef: Bool;
     field refineonfollow: Bool;
 }
