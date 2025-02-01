@@ -1,8 +1,7 @@
 namespace IRAssembly;
 
 entity BinderInfo {
-    field srcname: VarIdentifier;      %%the name in the source code
-    field scopename: VarIdentifier;    %%maybe a different name that gets used for shadowing binders
+    field srcname: VarIdentifier;
     field implicitdef: Bool;
     field refineonfollow: Bool;
 }
@@ -33,7 +32,7 @@ entity ArgumentList {
 }
 
 concept Expression {
-    field sinfo: IR::SourceInfo;
+    field sinfo: SourceInfo;
     field etype: TypeSignature;
 }
 
@@ -66,13 +65,13 @@ entity LiteralTypeDeclValueExpression provides Expression {
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
-    field ns: FullyQualifiedNamespace;
-    field name: CString;
+    field ns: NamespaceKey;
+    field name: Identifier;
 }
 
 entity AccessStaticFieldExpression provides Expression {
     field stype: NominalTypeSignature;
-    field name: CString;
+    field name: Identifier;
 
     field resolvedDeclType: TypeSignature;
 }
@@ -83,7 +82,7 @@ entity AccessEnumExpression provides Expression {
 }
 
 entity AccessVariableExpression provides Expression {
-    field vname: CString;
+    field vname: VarIdentifier;
     field layouttype: TypeSignature;
 }
 
@@ -93,10 +92,10 @@ entity AccessRetypeStep {
 }
 
 entity AccessVariableExpressionSpecial provides Expression {
-    field vname: CString;
+    field vname: VarIdentifier;
     field layouttype: TypeSignature;
-
-    field vname: CString;
+    field isCaptured: Bool;
+    
     field steps: List<AccessRetypeStep>;
 }
 
@@ -120,7 +119,7 @@ ConstructorPrimaryCollectionSingletonsExpression {
     field ofcheck: Expression;
 }
 | ConstructorStdExpression { 
-    field shuffleinfo: List<(|Int, CString, TypeSignature|)>;
+    field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
 }
 ;
 
@@ -128,11 +127,13 @@ entity ConstructorEListExpression provides ConstructorExpression {
 }
 
 entity ConstructorLambdaExpression provides Expression {
-    field invoke: LambdaDecl;
+    %%most of the info is in the etype field (which is a LambdaTypeSignature)
+
+    field body: BodyImplementation;
 }
 
 entity LetExpression provides Expression {
-    field decls: List<(|CString, TypeSignature, Expression|)>;
+    field decls: List<(|VarIdentifier, TypeSignature, Expression|)>;
     field body: Expression;
 }
 
@@ -141,6 +142,7 @@ entity LambdaInvokeExpression provides Expression {
     field rec: RecursiveAnnotation;
     field args: ArgumentList;
 
+    field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;
     field arginfo: List<TypeSignature>;
     field resttype: Option<TypeSignature>;
@@ -148,9 +150,10 @@ entity LambdaInvokeExpression provides Expression {
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
-    field ns: FullyQualifiedNamespace;
+    field ikey: InvokeKey;
+    field ns: NamespaceKey;
 
-    field name: CString;
+    field name: Identifier;
     field rec: RecursiveAnnotation;
     field args: ArgumentList;
 
@@ -160,8 +163,10 @@ entity CallNamespaceFunctionExpression provides Expression {
 }
 
 entity CallTypeFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+
     field ttype: NominalTypeSignature;
-    field name: string;
+    field name: Identifier;
     field rec: RecursiveAnnotation;
     field args: ArgumentList;
 
@@ -171,7 +176,6 @@ entity CallTypeFunctionExpression provides Expression {
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Int, Bool, TypeSignature|)>;
 }
-
 
 entity CallRefVariableExpression provides Expression {
     field rcvr: CString;

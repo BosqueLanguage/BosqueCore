@@ -17,7 +17,7 @@ VoidTypeSignature { }
     field entries: List<TypeSignature>;
 }
 | LambdaTypeSignature {
-    field frecursive: IR::RecursiveAnnotation;
+    field frecursive: RecursiveAnnotation;
     field isPredLambda: Bool;
     field params: List<LambdaParameterSignature>;
     field resultType: TypeSignature;

@@ -11,11 +11,6 @@ const namespaceKeyRE: CRegex = /(${IR::namespaceComponentRE}'::')*${IR::namespac
 type NamespaceComponentKey = CString of IR::namespaceComponentRE;
 type NamespaceKey = CString of IR::namespaceKeyRE; %%Core is implicit here
 
-entity FullyQualifiedNamespace {
-    field key: NamespaceKey;
-    field scopes: List<NamespaceComponent>; %%Core is explicit here
-}
-
 const basicNominalTypeKeyRE: CRegex = /(${IR::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /(${IR::basicNominalTypeKeyRE}|${IR::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
@@ -25,11 +20,11 @@ const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IR::templateTypeK
 const typeKeyRE: CRegex = /${IR::nominalTypeKeyRE}|${IR::elistTypeKeyRE}|${IR::lambdaTypeKeyRE}/c; 
 type TypeKey = CString of IR::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${IR::namespaceKeyRE}|${IR::nominalTypeKeyRE})'::'[_a-zA-Z0-9]+/c;
+const invokeKeyRE: CRegex = /(${IR::namespaceKeyRE}|${IR::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9&]+/c;
 type InvokeKey = CString of IR::invokeKeyRE;
 
-const identifierRE: CRegex = /[_a-zA-Z][_a-zA-Z0-9]+/c;
-const videntifierRE: CRegex = /'$'?[_a-zA-Z][_a-zA-Z0-9]+/c;
+const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9&]+/c; %%we allow & inside these identifiers so we can make special names
+const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9]+/c;
 type Identifier = CString of IR::identifierRE;
 type VarIdentifier = CString of IR::videntifierRE;
 

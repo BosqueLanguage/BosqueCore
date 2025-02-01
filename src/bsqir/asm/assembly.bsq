@@ -241,7 +241,7 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
 %%
 
 entity NamespaceConstDecl provides AbstractCoreDecl {
-    field declaredInNS: FullyQualifiedNamespace;
+    field declaredInNS: NamespaceKey;
 
     field declaredType: TypeSignature;
     field value: Expression;
