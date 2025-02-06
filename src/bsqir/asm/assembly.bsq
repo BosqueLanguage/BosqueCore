@@ -1,7 +1,7 @@
 namespace IR;
 
 concept AbstractDecl {
-    field file: CString;
+    field file: String;
     field sinfo: SourceInfo;
 }
 
@@ -120,7 +120,7 @@ entity SaturatedFieldInfo {
 
 entity SaturatedInvariantInfo {
     field declaredInType: NominalTypeSignature;
-    field file: CString;
+    field file: String;
     field sinfo: SourceInfo;
     field tag: Option<CString>;
 }
