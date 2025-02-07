@@ -2,7 +2,7 @@ namespace SMTEmitter;
 
 namespace SMTNameManager {
     function generateStructConstructorName(tkey: SMTAssembly::TypeKey): CString {
-        return String::concat(tkey.value, '-mk');
+        return CString::concat(tkey.value, '-mk');
     }
 
     function generateStructFieldName(tkey: SMTAssembly::TypeKey, vname: CString): CString {
@@ -92,12 +92,12 @@ function emitLiteralNoneValue(): CString {
 
 function emitLiteralSimpleValue(v: SMTAssembly::LiteralSimpleValue): CString {
     switch(v.vtype) {
-        'Bool'<TypeKey>     => { return v.value; }
-        | 'Nat'<TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
-        | 'Int'<TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
-        | 'BigNat'<TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
-        | 'BigInt'<TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
-        | 'Float'<TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
+        'Bool'<SMTAssembly::TypeKey>     => { return v.value; }
+        | 'Nat'<SMTAssembly::TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
+        | 'Int'<SMTAssembly::TypeKey>    => { return emitTaggedNumericType(v.value, 'i'); }
+        | 'BigNat'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(v.value, 'N'); }
+        | 'BigInt'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(v.value, 'I'); }
+        | 'Float'<SMTAssembly::TypeKey>  => { return emitTaggedNumericType(v.value, 'f'); }
     }
 }
 

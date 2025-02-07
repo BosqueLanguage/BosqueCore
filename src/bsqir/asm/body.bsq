@@ -23,7 +23,7 @@ datatype ArgumentValue using {
 of 
 RefArgumentValue { }
 | PositionalArgumentValue { }
-| NamedArgumentValue { field name: VarName; }
+| NamedArgumentValue { field name: VarIdentifier; }
 | SpreadArgumentValue { }
 ;
 
@@ -88,7 +88,7 @@ entity AccessVariableExpression provides Expression {
 
 entity AccessRetypeStep {
     field ttype: TypeSignature;
-    field specialfname: CString
+    field specialfname: CString;
 }
 
 entity AccessVariableExpressionSpecial provides Expression {
@@ -177,7 +177,7 @@ entity CallTypeFunctionExpression provides Expression {
     field restinfo: List<(|Int, Bool, TypeSignature|)>;
 }
 
-datatype CallRefInvokeExpression extends Expression using {
+datatype CallRefInvokeExpression provides Expression using {
     field rcvr: AccessVariableExpression;
     field specificResolve: Option<NominalTypeSignature>;
     field name: Identifier;
@@ -246,7 +246,7 @@ PostfixAccessFromName {
     field resolvedType: Option<NominalTypeSignature>;
     field updates: List<(|Identifier, NominalTypeSignature, Expression|)>;
 }
-| PostfixInvokeStatic extends PostfixOperation {
+| PostfixInvokeStatic {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
 
@@ -258,7 +258,7 @@ PostfixAccessFromName {
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Int, Bool, TypeSignature|)>;
 }
-| PostfixInvokeVirtual extends PostfixOperation {
+| PostfixInvokeVirtual {
     field resolvedBase: NominalTypeSignature;
     field name: Identifier;
     field rec: RecursiveAnnotation;
@@ -377,7 +377,7 @@ entity IfTest {
 entity IfExpression provides Expression {
     field iftest: IfTest;
     field binder: Option<BinderInfo>;
-    field trueValue: Expression
+    field trueValue: Expression;
     field falseValue: Expression;
 
     field trueBindType: Option<TypeSignature>;

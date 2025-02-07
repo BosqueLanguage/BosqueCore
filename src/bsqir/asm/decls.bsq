@@ -12,11 +12,11 @@ type NamespaceComponentKey = CString of BSQAssembly::namespaceComponentRE;
 type NamespaceKey = CString of BSQAssembly::namespaceKeyRE; %%Core is implicit here
 
 const basicNominalTypeKeyRE: CRegex = /(${BSQAssembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
-const specialScopedTypeKeyRE: CRegex = /('Result'|'APBSQAssemblyesult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /(${BSQAssembly::basicNominalTypeKeyRE}|${BSQAssembly::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${BSQAssembly::templateTypeKeyRE}|${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}/c;
 const typeKeyRE: CRegex = /${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}|${BSQAssembly::lambdaTypeKeyRE}/c; 
 type TypeKey = CString of BSQAssembly::typeKeyRE;
 

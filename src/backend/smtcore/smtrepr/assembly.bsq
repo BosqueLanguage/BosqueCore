@@ -1,4 +1,4 @@
-namespace SMTAssembly;
+declare namespace SMTAssembly;
 
 entity SourceInfo {
     field line: Nat;

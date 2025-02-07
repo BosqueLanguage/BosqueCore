@@ -23,7 +23,7 @@ entity InvariantDecl provides ConditionDecl {
     field exp: Expression;
 }
 
-entity ValidateDecl extends ConditionDecl {
+entity ValidateDecl provides ConditionDecl {
     field exp: Expression;
 }
 
@@ -177,7 +177,7 @@ OkTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
-datatype AbstractCollectionTypeDecl provides InternalEntityTypeDecl 
+datatype CollectionTypeDecl provides InternalEntityTypeDecl 
 of
 ListTypeDecl { field oftype: TypeSignature; }
 | StackTypeDecl { }

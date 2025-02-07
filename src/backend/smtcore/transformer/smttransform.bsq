@@ -7,60 +7,60 @@ declare namespace SMTEmitter {
     using SMTAssembly;
 }
 
-const s_sample_asm: SMTEmitter::Assembly = SMTEmitter::Assembly{
-    nsconsts = List<SMTEmitter::NamespaceConstDecl>{
-        SMTEmitter::NamespaceConstDecl{
-            'Main'<SMTEmitter::NamespaceKey>, 
+const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
+    nsconsts = List<SMTAssembly::NamespaceConstDecl>{
+        SMTAssembly::NamespaceConstDecl{
+            'Main'<SMTAssembly::NamespaceKey>, 
             'c1', 
-            SMTEmitter::DirectResult{'Int'<SMTEmitter::TypeKey>}, 
-            SMTEmitter::ReturnValueOperation{SMTEmitter::LiteralSimpleValue{'Int'<SMTEmitter::TypeKey>, '3i'}}
+            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
+            SMTAssembly::ReturnValueOperation{SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '3i'}}
         }
     },
-    typeconsts = List<SMTEmitter::ConstMemberDecl>{
+    typeconsts = List<SMTAssembly::ConstMemberDecl>{
     },
-    nspreds = List<SMTEmitter::NamespacePredicateFunctionDecl>{
+    nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{
     },
-    nsbuiltins = List<SMTEmitter::NamespaceBuiltinFunctionDecl>{
+    nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{
     },
-    nsfuncs = Map<SMTEmitter::InvokeKey, SMTEmitter::NamespaceFunctionDecl>{
-        'Main@f1'<SMTEmitter::InvokeKey> => SMTEmitter::NamespaceFunctionDecl{
-            'Main'<SMTEmitter::NamespaceKey>,
+    nsfuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{
+        'Main@main'<SMTAssembly::InvokeKey> => SMTAssembly::NamespaceFunctionDecl{
+            'Main'<SMTAssembly::NamespaceKey>,
             'main',
-            'Main@main'<SMTEmitter::InvokeKey>, 
-            List<SMTEmitter::InvokeParameterDecl>{
-                SMTEmitter::InvokeParameterDecl{'x', 'Int'<SMTEmitter::ParamTypeKey>},
+            'Main@main'<SMTAssembly::InvokeKey>, 
+            List<SMTAssembly::InvokeParameterDecl>{
+                SMTAssembly::InvokeParameterDecl{'x', 'Int'<SMTAssembly::ParamTypeKey>},
             }, 
-            SMTEmitter::DirectResult{'Int'<SMTEmitter::TypeKey>}, 
-            SMTEmitter::ReturnValueOperation{
-                SMTEmitter::BinAddValue{
-                    SMTEmitter::AccessNamespaceConstantValue{'Main'<SMTEmitter::NamespaceKey>, 'c1'}, 
-                    SMTEmitter::LiteralSimpleValue{'Int'<SMTEmitter::TypeKey>, '1i'}
+            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
+            SMTAssembly::ReturnValueOperation{
+                SMTAssembly::BinAddValue{
+                    SMTAssembly::AccessNamespaceConstantValue{'Main'<SMTAssembly::NamespaceKey>, 'c1'}, 
+                    SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '1i'}
                 }
             }
         }
     },
-    typefuncs = Map<SMTEmitter::InvokeKey, SMTEmitter::TypeFunctionDecl>{
+    typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{
     },
-    funcorder = List<SMTEmitter::InvokeKey>{
-        'Main@main'<SMTEmitter::InvokeKey>
+    funcorder = List<SMTAssembly::InvokeKey>{
+        'Main@main'<SMTAssembly::InvokeKey>
     },
-    enums = List<SMTEmitter::EnumTypeDecl>{
+    enums = List<SMTAssembly::EnumTypeDecl>{
     },
-    typedecls = List<SMTEmitter::TypedeclTypeDecl>{
+    typedecls = List<SMTAssembly::TypedeclTypeDecl>{
     },
-    constructables = List<SMTEmitter::ConstructableTypeDecl>{
+    constructables = List<SMTAssembly::ConstructableTypeDecl>{
     },
-    collections = List<SMTEmitter::CollectionTypeDecl>{
+    collections = List<SMTAssembly::CollectionTypeDecl>{
     },
-    entities = List<SMTEmitter::EntityTypeDecl>{
+    entities = List<SMTAssembly::EntityTypeDecl>{
     },
-    datamembers = List<SMTEmitter::DatatypeMemberEntityTypeDecl>{
+    datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{
     },
-    pconcepts = List<SMTEmitter::PrimitiveConceptTypeDecl>{
+    pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{
     },
-    concepts = List<SMTEmitter::ConceptTypeDecl>{
+    concepts = List<SMTAssembly::ConceptTypeDecl>{
     },
-    datatypes = List<SMTEmitter::DatatypeTypeDecl>{
+    datatypes = List<SMTAssembly::DatatypeTypeDecl>{
     }
 };
 

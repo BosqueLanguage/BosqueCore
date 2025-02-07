@@ -1,4 +1,4 @@
-namespace IR;
+namespace BSQAssembly;
 
 %*
  * Transform a IR program to have unique identifiers for variables --
