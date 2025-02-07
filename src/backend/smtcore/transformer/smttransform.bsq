@@ -7,8 +7,69 @@ declare namespace SMTEmitter {
     using SMTAssembly;
 }
 
+const s_sample_asm: SMTEmitter::Assembly = SMTEmitter::Assembly{
+    nsconsts = List<SMTEmitter::NamespaceConstDecl>{
+        SMTEmitter::NamespaceConstDecl{
+            'Main'<SMTEmitter::NamespaceKey>, 
+            'c1', 
+            SMTEmitter::DirectResult{'Int'<SMTEmitter::TypeKey>}, 
+            SMTEmitter::ReturnValueOperation{SMTEmitter::LiteralSimpleValue{'Int'<SMTEmitter::TypeKey>, '3i'}}
+        }
+    },
+    typeconsts = List<SMTEmitter::ConstMemberDecl>{
+    },
+    nspreds = List<SMTEmitter::NamespacePredicateFunctionDecl>{
+    },
+    nsbuiltins = List<SMTEmitter::NamespaceBuiltinFunctionDecl>{
+    },
+    nsfuncs = Map<SMTEmitter::InvokeKey, SMTEmitter::NamespaceFunctionDecl>{
+        'Main@f1'<SMTEmitter::InvokeKey> => SMTEmitter::NamespaceFunctionDecl{
+            'Main'<SMTEmitter::NamespaceKey>,
+            'main',
+            'Main@main'<SMTEmitter::InvokeKey>, 
+            List<SMTEmitter::InvokeParameterDecl>{
+                SMTEmitter::InvokeParameterDecl{'x', 'Int'<SMTEmitter::ParamTypeKey>},
+            }, 
+            SMTEmitter::DirectResult{'Int'<SMTEmitter::TypeKey>}, 
+            SMTEmitter::ReturnValueOperation{
+                SMTEmitter::BinAddValue{
+                    SMTEmitter::AccessNamespaceConstantValue{'Main'<SMTEmitter::NamespaceKey>, 'c1'}, 
+                    SMTEmitter::LiteralSimpleValue{'Int'<SMTEmitter::TypeKey>, '1i'}
+                }
+            }
+        }
+    },
+    typefuncs = Map<SMTEmitter::InvokeKey, SMTEmitter::TypeFunctionDecl>{
+    },
+    funcorder = List<SMTEmitter::InvokeKey>{
+        'Main@main'<SMTEmitter::InvokeKey>
+    },
+    enums = List<SMTEmitter::EnumTypeDecl>{
+    },
+    typedecls = List<SMTEmitter::TypedeclTypeDecl>{
+    },
+    constructables = List<SMTEmitter::ConstructableTypeDecl>{
+    },
+    collections = List<SMTEmitter::CollectionTypeDecl>{
+    },
+    entities = List<SMTEmitter::EntityTypeDecl>{
+    },
+    datamembers = List<SMTEmitter::DatatypeMemberEntityTypeDecl>{
+    },
+    pconcepts = List<SMTEmitter::PrimitiveConceptTypeDecl>{
+    },
+    concepts = List<SMTEmitter::ConceptTypeDecl>{
+    },
+    datatypes = List<SMTEmitter::DatatypeTypeDecl>{
+    }
+};
+
 entity Transformer {
     function transformAssembly(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
-        return "ok";
+        return SMTEmitter::s_sample_asm;
     }
+}
+
+public function main(): CString {
+    return SMTEmitter::emitAssembly(SMTEmitter::s_sample_asm, SMTEmitter::s_ignoreErrTrgt);
 }
