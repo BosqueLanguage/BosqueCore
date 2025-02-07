@@ -1,75 +1,56 @@
-%*
- * Take a Bosque IR Assembly and transform it into a SMT representation:
- *%
 
-declare namespace SMTEmitter {
-    using BSQAssembly;
-    using SMTAssembly;
-}
+namespace SMTEmitter;
 
-const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
-    nsconsts = List<SMTAssembly::NamespaceConstDecl>{
-        SMTAssembly::NamespaceConstDecl{
-            'Main'<SMTAssembly::NamespaceKey>, 
-            'c1', 
-            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
-            SMTAssembly::ReturnValueOperation{SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '3i'}}
-        }
-    },
-    typeconsts = List<SMTAssembly::ConstMemberDecl>{
-    },
-    nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{
-    },
-    nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{
-    },
-    nsfuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{
-        'Main@main'<SMTAssembly::InvokeKey> => SMTAssembly::NamespaceFunctionDecl{
-            'Main'<SMTAssembly::NamespaceKey>,
-            'main',
-            'Main@main'<SMTAssembly::InvokeKey>, 
-            List<SMTAssembly::InvokeParameterDecl>{
-                SMTAssembly::InvokeParameterDecl{'x', 'Int'<SMTAssembly::ParamTypeKey>},
-            }, 
-            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
-            SMTAssembly::ReturnValueOperation{
-                SMTAssembly::BinAddValue{
-                    SMTAssembly::AccessNamespaceConstantValue{'Main'<SMTAssembly::NamespaceKey>, 'c1'}, 
-                    SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '1i'}
-                }
-            }
-        }
-    },
-    typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{
-    },
-    funcorder = List<SMTAssembly::InvokeKey>{
-        'Main@main'<SMTAssembly::InvokeKey>
-    },
-    enums = List<SMTAssembly::EnumTypeDecl>{
-    },
-    typedecls = List<SMTAssembly::TypedeclTypeDecl>{
-    },
-    constructables = List<SMTAssembly::ConstructableTypeDecl>{
-    },
-    collections = List<SMTAssembly::CollectionTypeDecl>{
-    },
-    entities = List<SMTAssembly::EntityTypeDecl>{
-    },
-    datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{
-    },
-    pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{
-    },
-    concepts = List<SMTAssembly::ConceptTypeDecl>{
-    },
-    datatypes = List<SMTAssembly::DatatypeTypeDecl>{
+
+namespace TransformNameManager {
+    function resymbolCStringForSMT(cstr: CString): CString {
+        xxxx;
     }
-};
 
-entity Transformer {
-    function transformAssembly(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
-        return SMTEmitter::s_sample_asm;
+    function convertNamespaceKey(nskey: BSQAssembly::NamespaceKey): SMTAssembly::NamespaceKey {
+        return SMTAssembly::NamespaceKey::from(resymbolCStringForSMT(nskey.value));
     }
 }
 
-public function main(): CString {
-    return SMTEmitter::emitAssembly(SMTEmitter::s_sample_asm, SMTEmitter::s_ignoreErrTrgt);
+function transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
+    xxxx;
+
+    field declaredType: TypeSignature;
+    field value: Expression;
+
+    return SMTAssembly::NamespaceConstDecl {
+        ns = TransformNameManager::convertNamespaceKey(decl.declaredInNS),
+        cname = decl.name.value,
+
+        vtype: ResultType;
+        value: FlowOperation;
+    };
+}
+
+function transformAssemblyToSMT(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
+    
+    return Assembly {
+        nsconsts = List<NamespaceConstDecl>{asm.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformNamspaceConstDeclToSMT(nsc))},
+        typeconsts = List<ConstMemberDecl>{},
+
+        nspreds = List<NamespacePredicateFunctionDecl>{},
+        nsbuiltins = List<NamespaceBuiltinFunctionDecl>{},
+    
+        nsfuncs = Map<InvokeKey, NamespaceFunctionDecl>{},
+        typefuncs = Map<InvokeKey, TypeFunctionDecl>{},
+        allfuncs = List<InvokeKey>{},
+    
+        enums = List<EnumTypeDecl>{},
+        typedecls = List<TypedeclTypeDecl>{},
+        constructables = List<ConstructableTypeDecl>{},
+        collections = List<CollectionTypeDecl>{},
+
+        entities = List<EntityTypeDecl>{},
+        datamembers = List<DatatypeMemberEntityTypeDecl>{},
+
+        pconcepts = List<PrimitiveConceptTypeDecl>{},
+        concepts = List<ConceptTypeDecl>{},
+
+        datatypes = List<DatatypeTypeDecl>{}
+    };
 }

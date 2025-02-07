@@ -1,0 +1,75 @@
+%*
+ * Take a Bosque IR Assembly and transform it into a SMT representation:
+ *%
+
+declare namespace SMTEmitter {
+    using BSQAssembly;
+    using SMTAssembly;
+}
+
+const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
+    nsconsts = List<SMTAssembly::NamespaceConstDecl>{
+        SMTAssembly::NamespaceConstDecl{
+            'Main'<SMTAssembly::NamespaceKey>, 
+            'c1', 
+            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
+            SMTAssembly::ReturnValueOperation{SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '3i'}}
+        }
+    },
+    typeconsts = List<SMTAssembly::ConstMemberDecl>{
+    },
+    nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{
+    },
+    nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{
+    },
+    nsfuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{
+        'Main@main'<SMTAssembly::InvokeKey> => SMTAssembly::NamespaceFunctionDecl{
+            'Main'<SMTAssembly::NamespaceKey>,
+            'main',
+            'Main@main'<SMTAssembly::InvokeKey>, 
+            List<SMTAssembly::InvokeParameterDecl>{
+                SMTAssembly::InvokeParameterDecl{'x', 'Int'<SMTAssembly::ParamTypeKey>},
+            }, 
+            SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
+            SMTAssembly::ReturnValueOperation{
+                SMTAssembly::BinAddValue{
+                    SMTAssembly::AccessNamespaceConstantValue{'Main'<SMTAssembly::NamespaceKey>, 'c1'}, 
+                    SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '1i'}
+                }
+            }
+        }
+    },
+    typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{
+    },
+    allfuncs = List<SMTAssembly::InvokeKey>{
+        'Main@main'<SMTAssembly::InvokeKey>
+    },
+    enums = List<SMTAssembly::EnumTypeDecl>{
+    },
+    typedecls = List<SMTAssembly::TypedeclTypeDecl>{
+    },
+    constructables = List<SMTAssembly::ConstructableTypeDecl>{
+    },
+    collections = List<SMTAssembly::CollectionTypeDecl>{
+    },
+    entities = List<SMTAssembly::EntityTypeDecl>{
+    },
+    datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{
+    },
+    pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{
+    },
+    concepts = List<SMTAssembly::ConceptTypeDecl>{
+    },
+    datatypes = List<SMTAssembly::DatatypeTypeDecl>{
+    }
+};
+
+entity Transformer {
+    function transformAssembly(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
+        return SMTEmitter::s_sample_asm;
+    }
+}
+
+public function main(): CString {
+    return SMTEmitter::emitAssembly(SMTEmitter::s_sample_asm, SMTEmitter::s_ignoreErrTrgt);
+}

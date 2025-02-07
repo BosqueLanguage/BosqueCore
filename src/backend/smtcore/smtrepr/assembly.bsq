@@ -212,7 +212,7 @@ entity Assembly {
     
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
-    field funcorder: List<InvokeKey>;
+    field allfuncs: List<InvokeKey>;
     
     field enums: List<EnumTypeDecl>;
     field typedecls: List<TypedeclTypeDecl>;
@@ -227,5 +227,5 @@ entity Assembly {
 
     field datatypes: List<DatatypeTypeDecl>;
 
-    validate $funcorder.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
+    validate $allfuncs.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }
