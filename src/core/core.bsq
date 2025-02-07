@@ -152,7 +152,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>('', fn(acc, s) => StringOps::s_concat2(acc, s));
+            return strs.reduce<String>("", fn(acc, s) => StringOps::s_concat2(acc, s));
         }
     }
 
@@ -162,7 +162,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>('', fn(acc, s) => StringOps::s_concat2(acc, s));
+            return strs.reduce<String>("", fn(acc, s) => StringOps::s_concat2(acc, s));
         }
     }
 
@@ -172,7 +172,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>('', fn(acc, s) => {
+            return strs.reduce<String>("", fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }
@@ -189,7 +189,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>('', fn(acc, s) => {
+            return strs.reduce<String>("", fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }

@@ -17,7 +17,7 @@ namespace CStringOps {
     function s_removePrefixString(s: CString, prefix: CString): CString = cstring_remove_prefix_string;
     function s_removeSuffixString(s: CString, suffix: CString): CString = cstring_remove_suffix_string;
 
-    function s_replaceUniqueStringOccurrences(s: CString, target: CString, replacement: CString): CString = cstring_replace_unique_string_occurrence;
+    function s_replaceUniqueStringOccurrence(s: CString, target: CString, replacement: CString): CString = cstring_replace_unique_string_occurrence;
     function s_replaceAllStringOccurrences(s: CString, target: CString, replacement: CString): CString = cstring_replace_all_string_occurrences;
 }
 #else

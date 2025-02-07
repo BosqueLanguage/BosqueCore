@@ -4,7 +4,7 @@ namespace Core;
 #else
 #if EXEC_LIBS
 namespace StringOps {
-    function s_fromCString(s: String): Bool = string_from_cstring;
+    function s_fromCString(s: CString): String = string_from_cstring;
 
     function s_empty(s: String): Bool = string_empty;
 
@@ -19,7 +19,7 @@ namespace StringOps {
     function s_removePrefixString(s: String, prefix: String): String = string_remove_prefix_string;
     function s_removeSuffixString(s: String, suffix: String): String = string_remove_suffix_string;
 
-    function s_replaceUniqueStringOccurrences(s: String, target: String, replacement: String): String = string_replace_unique_string_occurrence;
+    function s_replaceUniqueStringOccurrence(s: String, target: String, replacement: String): String = string_replace_unique_string_occurrence;
     function s_replaceAllStringOccurrences(s: String, target: String, replacement: String): String = string_replace_all_string_occurrences;
 }
 #else
