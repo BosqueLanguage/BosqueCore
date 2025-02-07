@@ -1,0 +1,15 @@
+namespace BSQAssembly;
+
+%*
+ * Transform a IR program to have unique identifiers for variables --
+ * 1) Shadowed definitions are renamed to have a unique identifiers and uses
+ * 2) Any dangerous names (reserved words in a transpilation target) are renamed as specified
+ * 3) If enabled (and the code is tree-ified) then re-assignments are turned into fresh initializations
+ *%
+
+ entity UniqueIdentifierTransform {
+    field shadowed: Map<VarIdentifier, VarIdentifier>;
+    field dangerous: Map<VarIdentifier, VarIdentifier>;
+    field freshassign: Bool;
+ }
+ 

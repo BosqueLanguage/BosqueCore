@@ -1,4 +1,4 @@
-namespace SMTEmitter;
+declare namespace SMTAssembly;
 
 entity SourceInfo {
     field line: Nat;
@@ -6,27 +6,27 @@ entity SourceInfo {
 }
 
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-const namespaceKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*${SMTEmitter::namespaceComponentRE}/c; %%Core is implicit here
-type NamespaceKey = CString of SMTEmitter::namespaceKeyRE; 
+const namespaceKeyRE: CRegex = /(${SMTAssembly::namespaceComponentRE}'@')*${SMTAssembly::namespaceComponentRE}/c; %%Core is implicit here
+type NamespaceKey = CString of SMTAssembly::namespaceKeyRE; 
 
-const basicNominalTypeKeyRE: CRegex = /(${SMTEmitter::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('$'.+'$')?/c; %%Core is implicit here
-const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'$'.+'$''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
-const nominalTypeKeyRE: CRegex = /${SMTEmitter::basicNominalTypeKeyRE}|${SMTEmitter::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
-const elistTypeKeyRE: CRegex = /'@EList$'.*'$'/c;
-const typeKeyRE: CRegex = /'@Term'|${SMTEmitter::elistTypeKeyRE}|${SMTEmitter::nominalTypeKeyRE}/c;
+const basicNominalTypeKeyRE: CRegex = /(${SMTAssembly::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /${SMTAssembly::basicNominalTypeKeyRE}|${SMTAssembly::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
+const elistTypeKeyRE: CRegex = /'@EList<'.*'>'/c;
+const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '_$'.*'$_' '-' ${SMTEmitter::typeKeyRE}/c;
-const paramTypeKeyRE: CRegex = /${SMTEmitter::typeKeyRE}|${lambdaTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('@fn'|'@pred') '<'.*'>' '-' ${SMTAssembly::typeKeyRE}/c;
+const paramTypeKeyRE: CRegex = /${SMTAssembly::typeKeyRE}|${lambdaTypeKeyRE}/c;
 
-const resultTypeKeyRE: CRegex = /'(@Result '${SMTEmitter::typeKeyRE}')'/c;
-const returnTypeKeyRE: CRegex = /'${SMTEmitter::typeKeyRE}|${SMTEmitter::resultTypeKeyRE}'/c;
+const resultTypeKeyRE: CRegex = /'(@Result '${SMTAssembly::typeKeyRE}')'/c;
+const returnTypeKeyRE: CRegex = /'${SMTAssembly::typeKeyRE}|${SMTAssembly::resultTypeKeyRE}'/c;
 
-type TypeKey = CString of SMTEmitter::typeKeyRE;
-type ParamTypeKey = CString of SMTEmitter::paramTypeKeyRE;
-type ReturnTypeKey = CString of SMTEmitter::resultTypeKeyRE;
+type TypeKey = CString of SMTAssembly::typeKeyRE;
+type ParamTypeKey = CString of SMTAssembly::paramTypeKeyRE;
+type ReturnTypeKey = CString of SMTAssembly::resultTypeKeyRE;
 
-const invokeKeyRE: CRegex = /(${SMTEmitter::namespaceKeyRE}|${SMTEmitter::nominalTypeKeyRE})'@'[_a-zA-Z0-9]+/c;
-type InvokeKey = CString of SMTEmitter::invokeKeyRE;
+const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$]+/c;
+type InvokeKey = CString of SMTAssembly::invokeKeyRE;
 
 datatype ResultType using {
     field rtype: TypeKey;

@@ -505,15 +505,8 @@ class JSEmitter {
     }
 
     private emitAccessVariableExpression(exp: AccessVariableExpression): string {
-        let aname: string;
-
-        if(!exp.isCaptured) {
-            aname = exp.srcname;
-        }
-        else {
-            aname = exp.scopename;
-        }
-
+        let aname = exp.srcname;
+        
         //handle special names here)
         if(aname === "this") {
             return "$this$";
@@ -1285,12 +1278,14 @@ class JSEmitter {
                 return !toplevel ? `(${eexp})` : eexp;
             }
             else {
-                this.bindernames.add(exp.binder.scopename);
+                //TODO: this setup means that if we shaddow this binder then we don't have proper stack discipline in the code
+                const bbn = exp.binder.srcname;
+                this.bindernames.add(bbn);
 
                 const ttest = this.processITestAsTest(vval, exp.test.exp.getType(), exp.test.itestopt);
                 const bexptrue = this.processITestAsConvert(exp.sinfo, vval, exp.test.exp.getType(), exp.test.itestopt, exp.test.itestopt.isnot);
                 const bexpfalse = this.processITestAsConvert(exp.sinfo, vval, exp.test.exp.getType(), exp.test.itestopt, !exp.test.itestopt.isnot);
-                const eexp = `${ttest} ? (${exp.binder.scopename} = ${bexptrue}, ${texp}) : (${exp.binder.scopename} = ${bexpfalse}, ${fexp})`;
+                const eexp = `${ttest} ? (${bbn} = ${bexptrue}, ${texp}) : (${bbn} = ${bexpfalse}, ${fexp})`;
                 return !toplevel ? `(${eexp})` : eexp;
             }
         }
@@ -1874,7 +1869,7 @@ class JSEmitter {
 
                 fmt.indentPush();
                 const body = this.emitBlockStatement(stmt.trueBlock, fmt);
-                const bassign = fmt.indent(`let ${stmt.binder.scopename} = ${bexp};`) + " " + body + fmt.nl();
+                const bassign = fmt.indent(`let ${stmt.binder.srcname} = ${bexp};`) + " " + body + fmt.nl();
                 fmt.indentPop();
 
                 return `if(${test}) {${fmt.nl()}${bassign}${fmt.indent("}")}`;
@@ -1911,10 +1906,10 @@ class JSEmitter {
 
                 fmt.indentPush();
                 const tbody = this.emitBlockStatement(stmt.trueBlock, fmt);
-                const tbassign = fmt.indent(`let ${stmt.binder.scopename} = ${btrue};`) + " " + tbody + fmt.nl();
+                const tbassign = fmt.indent(`let ${stmt.binder.srcname} = ${btrue};`) + " " + tbody + fmt.nl();
 
                 const fbody = this.emitBlockStatement(stmt.falseBlock, fmt);
-                const fbassign = fmt.indent(`let ${stmt.binder.scopename} = ${bfalse};`) + " " + fbody + fmt.nl();
+                const fbassign = fmt.indent(`let ${stmt.binder.srcname} = ${bfalse};`) + " " + fbody + fmt.nl();
                 fmt.indentPop();
 
                 return `if(${test}) {${fmt.nl()}${tbassign}${fmt.indent("}")}${fmt.nl()}${fmt.indent("else {")}${fmt.nl()}${fbassign}${fmt.indent("}")}`;
@@ -1976,13 +1971,13 @@ class JSEmitter {
             return [ttest, this.emitBlockStatement(value, fmt)];
         }
         else {
-            this.bindernames.add(binderinfo.scopename);
+            this.bindernames.add(binderinfo.srcname);
 
             fmt.indentPush();
             const blck = this.emitBlockStatement(value, fmt);
             fmt.indentPop();
 
-            return [ttest, `{ let ${binderinfo.scopename} = ${vval}; ${blck}${fmt.nl()}${fmt.indent("}")}`];
+            return [ttest, `{ let ${binderinfo.srcname} = ${vval}; ${blck}${fmt.nl()}${fmt.indent("}")}`];
         }
     }
 
@@ -2255,6 +2250,12 @@ class JSEmitter {
         else if(bname === "cstring_ends_with_string") {
             bop = `s.endsWith(suffix)`;
         }
+        else if(bname === "cstring_contains_string") {
+            bop = `s.includes(find)`;
+        }
+        else if(bname === "cstring_contains_string_unique") {
+            bop = `[...s.matchAll(target)].length === 1`
+        }
         else if(bname === "cstring_append") {
             bop = `s + c`;
         }
@@ -2269,6 +2270,51 @@ class JSEmitter {
         }
         else if(bname === "cstring_remove_suffix_string") {
             bop = `s.slice(0, s.length - suffix.length)`;
+        }
+        else if(bname === "cstring_replace_unique_string_occurrence") {
+            bop = `s.replace(find, replace)`;
+        }
+        else if(bname === "cstring_replace_all_string_occurrences") {
+            bop = `s.replaceAll(find, replace)`;
+        }
+        else if(bname === "string_from_cstring") {
+            bop = `s`;
+        }
+        else if(bname === "string_empty") {
+            bop = `s === ""`;
+        }
+        else if(bname === "string_starts_with_string") {
+            bop = `s.startsWith(prefix)`;
+        }
+        else if(bname === "string_ends_with_string") {
+            bop = `s.endsWith(suffix)`;
+        }
+        else if(bname === "string_contains_string") {
+            bop = `s.includes(find)`;
+        }
+        else if(bname === "string_contains_string_unique") {
+            bop = `[...s.matchAll(target)].length === 1`
+        }
+        else if(bname === "string_append") {
+            bop = `s + c`;
+        }
+        else if(bname === "string_prepend") {
+            bop = `c + s`;
+        }
+        else if(bname === "string_concat2") {
+            bop = `s1 + s2`;
+        }
+        else if(bname === "string_remove_prefix_string") {
+            bop = `s.slice(prefix.length)`;
+        }
+        else if(bname === "string_remove_suffix_string") {
+            bop = `s.slice(0, s.length - suffix.length)`;
+        }
+        else if(bname === "string_replace_unique_string_occurrence") {
+            bop = `s.replace(find, replace)`;
+        }
+        else if(bname === "string_replace_all_string_occurrences") {
+            bop = `s.replaceAll(find, replace)`;
         }
         else {
             assert(false, `Unknown builtin function -- ${bname}`);

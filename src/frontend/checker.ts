@@ -1198,9 +1198,8 @@ class TypeChecker {
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
         const vinfo = env.resolveLocalVarInfoFromSrcName(exp.srcname);
         if(vinfo !== undefined) {
-            this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+            this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
-            exp.scopename = vinfo.scopename;
             exp.layouttype = vinfo.decltype;
             exp.specialaccess = [...vinfo.itype];
             return exp.setType(vinfo.itype.length !== 0 ? vinfo.itype[vinfo.itype.length - 1].ttype : vinfo.decltype);
@@ -1208,14 +1207,13 @@ class TypeChecker {
         else {
             const cinfo = env.resolveLambdaCaptureVarInfoFromSrcName(exp.srcname);
             if(cinfo === undefined) {
-                this.reportError(exp.sinfo, `Variable ${exp.scopename} is not declared here`);
+                this.reportError(exp.sinfo, `Variable ${exp.srcname} is not declared here`);
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             else {
-                this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+                this.checkError(exp.sinfo, !cinfo.mustDefined, `Variable ${exp.srcname} may not be defined on all control flow paths`);
 
                 exp.isCaptured = true;
-                exp.scopename = cinfo.scopename;
                 exp.layouttype = cinfo.decltype;
                 exp.specialaccess = [...cinfo.itype];
                 return exp.setType(cinfo.itype.length !== 0 ? cinfo.itype[cinfo.itype.length - 1].ttype : cinfo.decltype);
@@ -1458,7 +1456,7 @@ class TypeChecker {
                     const iptype = itype.params[i];
                     const ipdecl = exp.invoke.params[i];
 
-                    args.push(new VarInfo(ipdecl.name, ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
+                    args.push(new VarInfo(ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
                     params.push(new LambdaParameterSignature(iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
                 }
             }
@@ -1467,7 +1465,7 @@ class TypeChecker {
             for(let i = 0; i < exp.invoke.params.length; ++i) {
                 const ipdecl = exp.invoke.params[i];
 
-                args.push(new VarInfo(ipdecl.name, ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
+                args.push(new VarInfo(ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
                 params.push(new LambdaParameterSignature(ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
             }
         }
@@ -2337,14 +2335,12 @@ class TypeChecker {
                 tfalse = this.checkExpression(env, exp.falseValue, typeinfer);
             }
             else {
-                exp.binder.scopename = env.getBindScopeName(exp.binder.srcname);
-
                 exp.trueBindType = splits.ttrue || eetype;
-                const tenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.ttrue || eetype);
+                const tenv = env.pushNewLocalBinderScope(exp.binder.srcname, splits.ttrue || eetype);
                 ttrue = this.checkExpression(tenv, exp.trueValue, typeinfer);
 
                 exp.falseBindType = splits.tfalse || eetype;
-                const fenv = env.pushNewLocalBinderScope(exp.binder.srcname, exp.binder.scopename, splits.tfalse || eetype);
+                const fenv = env.pushNewLocalBinderScope(exp.binder.srcname, splits.tfalse || eetype);
                 tfalse = this.checkExpression(fenv, exp.falseValue, typeinfer);
             }
         }
@@ -3063,10 +3059,9 @@ class TypeChecker {
                 return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
             }
             else {
-                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
                 stmt.trueBindType = splits.ttrue || eetype;
 
-                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
+                const nenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
 
                 const retypename = stmt.binder.srcname.slice(1);
@@ -3113,14 +3108,13 @@ class TypeChecker {
                 return TypeEnvironment.mergeEnvironmentsSimple(env, ttrue, tfalse);
             }
             else {
-                stmt.binder.scopename = env.getBindScopeName(stmt.binder.srcname);
                 stmt.trueBindType = splits.ttrue || eetype;
                 stmt.falseBindType = splits.tfalse || eetype;
 
-                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.ttrue || eetype);
+                const tenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.ttrue || eetype);
                 const ttrue = this.checkStatement(tenv, stmt.trueBlock).popLocalScope();
 
-                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, stmt.binder.scopename, splits.tfalse || eetype);
+                const fenv = env.pushNewLocalBinderScope(stmt.binder.srcname, splits.tfalse || eetype);
                 const tfalse = this.checkStatement(fenv, stmt.falseBlock).popLocalScope();
 
                 const retypename = stmt.binder.srcname.slice(1);
@@ -3219,10 +3213,6 @@ class TypeChecker {
         let exhaustive = false;
         let results: TypeEnvironment[] = [];
 
-        if(stmt.sval[1] !== undefined) {
-            stmt.sval[1].scopename = env.getBindScopeName(stmt.sval[1].srcname);
-        }
-
         this.checkError(stmt.sinfo, stmt.matchflow.length < 2, "Switch statement must have 2 or more choices");
 
         for (let i = 0; i < stmt.matchflow.length && !exhaustive; ++i) {
@@ -3237,7 +3227,7 @@ class TypeChecker {
 
                 let cenv = env;
                 if(stmt.sval[1] !== undefined) {
-                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, defaulttype)
+                    cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, defaulttype)
                 }
                 
                 cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
@@ -3264,7 +3254,7 @@ class TypeChecker {
 
                     let cenv = env;
                     if(stmt.sval[1] !== undefined) {
-                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, stmt.sval[1].scopename, mtype);
+                        cenv = env.pushNewLocalBinderScope(stmt.sval[1].srcname, mtype);
                     }
                     cenv = this.checkBlockStatement(cenv, stmt.matchflow[i].value);
 
@@ -3368,7 +3358,7 @@ class TypeChecker {
                 return {fieldname: upd[0], fieldtype: new ErrorTypeSignature(stmt.sinfo, undefined), etype: new ErrorTypeSignature(stmt.sinfo, undefined)};
             }
 
-            const cenv = env.pushNewLocalBinderScope(bname, env.getBindScopeName(bname), ftype);
+            const cenv = env.pushNewLocalBinderScope(bname, ftype);
             const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));
             if(!(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, ftype, this.constraints)) {
                 this.reportError(stmt.sinfo, `Expression of type ${etype.emit()} cannot be assigned to field ${upd[0]} of type ${ftype.emit()}`);
@@ -3794,7 +3784,7 @@ class TypeChecker {
     }
 
     private checkInvariants(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], invariants: InvariantDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
@@ -3804,7 +3794,7 @@ class TypeChecker {
     }
 
     private checkValidates(bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], validates: ValidateDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
             const validate = validates[i];
@@ -3842,7 +3832,7 @@ class TypeChecker {
 
     private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[]) {
         let argnames = new Set<string>();
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, "$" + p.name, p.type, [], true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo("$" + p.name, p.type, [], true, true, p.isRefParam))];
         for(let i = 0; i < idecl.params.length; ++i) {
             const p = idecl.params[i];
             this.checkError(idecl.sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
@@ -3863,7 +3853,7 @@ class TypeChecker {
     }
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam))];
         const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
@@ -3886,7 +3876,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3911,7 +3901,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3930,13 +3920,13 @@ class TypeChecker {
                 this.constraints.pushConstraintScope(mdecl.terms, mdecl.termRestriction);
             }
 
-            const thisvinfo = new VarInfo("this", "this", rcvr, [], true, true, mdecl.isThisRef);
+            const thisvinfo = new VarInfo("this", rcvr, [], true, true, mdecl.isThisRef);
 
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
             this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);
             this.checkBodyImplementation(env, mdecl.body);
 
             if(mdecl.terms.length !== 0) {
@@ -3978,7 +3968,7 @@ class TypeChecker {
             if(this.checkTypeSignature(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
                     const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
-                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, "$" + bn.name, bn.type, [], true, true, false)), f.declaredType, infertype);
+                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit()} but got ${decltype.emit()}`);

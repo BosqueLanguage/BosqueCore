@@ -1,4 +1,4 @@
-namespace IRAssembly;
+namespace BSQAssembly;
 
 entity LambdaParameterSignature {
     field ptype: TypeSignature;
@@ -7,8 +7,8 @@ entity LambdaParameterSignature {
 }
 
 datatype TypeSignature using {
-    field sinfo: IR::SourceInfo;
-    field tkeystr: IR::TypeKey;
+    field sinfo: SourceInfo;
+    field tkeystr: TypeKey;
 } 
 of 
 VoidTypeSignature { }
@@ -17,7 +17,7 @@ VoidTypeSignature { }
     field entries: List<TypeSignature>;
 }
 | LambdaTypeSignature {
-    field frecursive: IR::RecursiveAnnotation;
+    field frecursive: RecursiveAnnotation;
     field isPredLambda: Bool;
     field params: List<LambdaParameterSignature>;
     field resultType: TypeSignature;

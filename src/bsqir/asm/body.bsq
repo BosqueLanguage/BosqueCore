@@ -1,0 +1,578 @@
+namespace BSQAssembly;
+
+entity BinderInfo {
+    field srcname: VarIdentifier;
+    field implicitdef: Bool;
+    field refineonfollow: Bool;
+}
+
+datatype ITest using {
+    field isnot: Bool;
+}
+of
+ITestType { field ttype: TypeSignature; }
+| ITestNone { }
+| ITestSome { }
+| ITestOk { }
+| ITestFail { }
+;
+
+datatype ArgumentValue using {
+    field exp: Expression;
+}
+of 
+RefArgumentValue { }
+| PositionalArgumentValue { }
+| NamedArgumentValue { field name: VarIdentifier; }
+| SpreadArgumentValue { }
+;
+
+entity ArgumentList {
+    field args: List<ArgumentValue>;
+}
+
+concept Expression {
+    field sinfo: SourceInfo;
+    field etype: TypeSignature;
+}
+
+entity LiteralNoneExpression provides Expression {
+}
+
+entity LiteralSimpleExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralCStringExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralStringExpression provides Expression {
+    field value: String;
+}
+
+entity LiteralCRegexExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralRegexExpression provides Expression {
+    field value: String;
+}
+
+entity LiteralTypeDeclValueExpression provides Expression {
+    field value: Expression;
+    field constype: NominalTypeSignature;
+}
+
+entity AccessNamespaceConstantExpression provides Expression {
+    field ns: NamespaceKey;
+    field name: Identifier;
+}
+
+entity AccessStaticFieldExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field name: Identifier;
+
+    field resolvedDeclType: TypeSignature;
+}
+
+entity AccessEnumExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field name: CString;
+}
+
+entity AccessVariableExpression provides Expression {
+    field vname: VarIdentifier;
+    field layouttype: TypeSignature;
+}
+
+entity AccessRetypeStep {
+    field ttype: TypeSignature;
+    field specialfname: CString;
+}
+
+entity AccessVariableExpressionSpecial provides Expression {
+    field vname: VarIdentifier;
+    field layouttype: TypeSignature;
+    field isCaptured: Bool;
+    
+    field steps: List<AccessRetypeStep>;
+}
+
+concept ConstructorExpression provides Expression {
+    field args: ArgumentList;
+}
+
+datatype ConstructorPrimaryExpression provides ConstructorExpression using {
+    field ctype: NominalTypeSignature;
+}
+of 
+ConstructorPrimaryCollectionSingletonsExpression {
+    field elemtype: TypeSignature;
+}
+| ConstructorPrimarySpecialConstructableExpression { }
+| ConstructorTypeDeclExpression {
+    field invchecks: Bool;
+}
+| ConstructorTypeDeclStringExpression {
+    field invchecks: Bool;
+    field ofcheck: Expression;
+}
+| ConstructorStdExpression { 
+    field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
+}
+;
+
+entity ConstructorEListExpression provides ConstructorExpression {
+}
+
+entity ConstructorLambdaExpression provides Expression {
+    %%most of the info is in the etype field (which is a LambdaTypeSignature)
+
+    field body: BodyImplementation;
+}
+
+entity LetExpression provides Expression {
+    field decls: List<(|VarIdentifier, TypeSignature, Expression|)>;
+    field body: Expression;
+}
+
+entity LambdaInvokeExpression provides Expression {
+    field name: CString;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field isCapturedLambda: Bool;
+    field lambda: LambdaTypeSignature;
+    field arginfo: List<TypeSignature>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
+entity CallNamespaceFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+    field ns: NamespaceKey;
+
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
+entity CallTypeFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+
+    field ttype: NominalTypeSignature;
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field resolvedDeclType: NominalTypeSignature;
+    
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
+datatype CallRefInvokeExpression provides Expression using {
+    field rcvr: AccessVariableExpression;
+    field specificResolve: Option<NominalTypeSignature>;
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+
+    field resolvedType: Option<NominalTypeSignature>;
+    field resolvedTrgt: Option<InvokeKey>;
+}
+of
+CallRefVariableExpression { }
+| CallRefThisExpression { }
+| CallRefSelfExpression { }
+;
+
+entity LogicActionAndExpression provides Expression {
+    field args: List<Expression>;
+}
+
+entity LogicActionOrExpression provides Expression {
+    field args: List<Expression>;
+}
+
+entity SafeConvertExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CreateDirectExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+datatype PostfixOperation using {
+    field sinfo: SourceInfo;
+    field baseType: TypeSignature;
+}
+of 
+PostfixAccessFromName {
+    field declaredInType: NominalTypeSignature;
+    field resolvedType: Option<NominalTypeSignature>;
+    field name: Identifier;
+}
+| PostfixProjectFromNames {
+    field declOnType: NominalTypeSignature;
+    field resolvedType: Option<NominalTypeSignature>;
+    field names: List<(|Identifier, NominalTypeSignature|)>;
+}
+| PostfixAccessFromIndex {
+    field idx: Nat;
+}
+| PostfixIsTest {
+    field ttest: ITest;
+}
+| PostfixAsConvert {
+    field ttest: ITest;
+}
+| PostfixAssignFields {
+    field declOnType: NominalTypeSignature;
+    field resolvedType: Option<NominalTypeSignature>;
+    field updates: List<(|Identifier, NominalTypeSignature, Expression|)>;
+}
+| PostfixInvokeStatic {
+    field resolvedType: NominalTypeSignature;
+    field resolvedTrgt: InvokeKey;
+
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+| PostfixInvokeVirtual {
+    field resolvedBase: NominalTypeSignature;
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+| PostfixLiteralKeyAccess {
+    field kexp: Expression;
+}
+;
+
+entity PostfixOp provides Expression {
+    field rootExp: Expression;
+    field ops: List<PostfixOperation>;
+}
+
+datatype UnaryExpression provides Expression using {
+    field exp: Expression;
+    field opertype: TypeSignature;
+}
+of
+PrefixNotOpExpression { }
+| PrefixNegateOpExpression { }
+| PrefixPlusOpExpression { }
+;
+
+datatype BinaryArithExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+    field opertype: TypeSignature;
+}
+of
+BinAddExpression { }
+| BinSubExpression { }
+| BinMultExpression { }
+| BinDivExpression { }
+;
+
+datatype BinaryKeyEqExpression provides Expression using {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+}
+of
+BinKeyEqNoneExpression { 
+    field exp: Expression;
+}
+| BinKeyNotEqNoneExpression { 
+    field exp: Expression;
+}
+| BinKeySomeEqExpression {
+    field eoption: Expression;
+    field eval: Expression;
+}
+| BinKeyNotSomeEqExpression {
+    field eoption: Expression;
+    field eval: Expression;
+}
+| BinKeyEqExpression {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+| BinKeyNotEqExpression {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+;
+
+entity KeyCompareExpression provides Expression {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
+datatype BinaryNumericExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+
+    field etype: TypeSignature;
+    field opertype: TypeSignature;
+}
+of
+NumericEqExpression { }
+| NumericNeqExpression { }
+| NumericLessExpression { }
+| NumericLessEqExpression { }
+| NumericGreaterExpression { }
+| NumericGreaterEqExpression { }
+;
+
+datatype BinLogicExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+of
+BinLogicAndExpression { }
+| BinLogicOrExpression { }
+| BinLogicImpliesExpression { }
+| BinLogicIFFExpression { }
+;
+
+entity MapEntryConstructorExpression provides Expression {
+    field kexp: Expression;
+    field vexp: Expression;
+}
+
+entity IfTest {
+    field exp: Expression;
+    field itestopt: Option<ITest>;
+}
+
+entity IfExpression provides Expression {
+    field iftest: IfTest;
+    field binder: Option<BinderInfo>;
+    field trueValue: Expression;
+    field falseValue: Expression;
+
+    field trueBindType: Option<TypeSignature>;
+    field falseBindType: Option<TypeSignature>;
+}
+
+concept Statement {
+    field sinfo: SourceInfo;
+}
+
+entity VariableDeclarationStatement provides Statement {
+    field name: Identifier;
+    field vtype: TypeSignature;
+}
+
+entity VariableMultiDeclarationStatement provides Statement {
+    field decls: List<(|Identifier, TypeSignature|)>;
+
+    invariant !$decls.empty();
+}
+
+entity VariableInitializationStatement provides Statement {
+    field name: Identifier;
+    field vtype: TypeSignature;
+    field exp: Expression;
+}
+
+entity VariableMultiInitializationExplicitStatement provides Statement {
+    field decls: List<(|Identifier, TypeSignature|)>;
+    field exps: List<Expression>;
+
+    invariant !$decls.empty();
+    invariant $decls.size() == $exps.size();
+}
+
+entity VariableMultiInitializationImplicitStatement provides Statement {
+    field decls: List<(|Identifier, TypeSignature|)>;
+    field exp: Expression;
+
+    invariant !$decls.empty();
+}
+
+entity VariableAssignmentStatement provides Statement {
+    field name: Identifier;
+    field vtype: TypeSignature;
+    field exp: Expression;
+}
+
+entity VariableMultiAssignmentExplicitStatement provides Statement {
+    field vinfos: List<(|Identifier, TypeSignature|)>;
+    field exps: List<Expression>;
+
+    invariant !$vinfos.empty();
+    invariant $vinfos.size() == $exps.size();
+}
+
+entity VariableMultiAssignmentImplicitStatement provides Statement {
+    field vinfos: List<(|Identifier, TypeSignature|)>;
+    field exp: Expression;
+
+    invariant !$vinfos.empty();
+}
+
+entity VariableRetypeStatement provides Statement {
+    field name: Identifier;
+    field vtype: TypeSignature;
+    field newvtype: TypeSignature;
+    field ttest: ITest;
+}
+
+entity ReturnVoidStatement provides Statement {
+}
+
+entity ReturnSingleStatement provides Statement {
+    field value: Expression;
+    field rtype: TypeSignature;
+}
+
+entity ReturnMultiStatement provides Statement {
+    field values: List<(|Expression, TypeSignature|)>;
+
+    invariant !$values.empty();
+}
+
+entity IfStatement provides Statement {
+    field cond: IfTest;
+    field binder: Option<BinderInfo>;
+    field trueBlock: BlockStatement;
+    
+    field trueBindType: Option<TypeSignature>;
+}
+
+entity IfElseStatement provides Statement {
+    field cond: IfTest;
+    field binder: Option<BinderInfo>;
+    field trueBlock: BlockStatement;
+    field falseBlock: BlockStatement;
+
+    field trueBindType: Option<TypeSignature>;
+    field falseBindType: Option<TypeSignature>;
+}
+
+entity IfElifElseStatement provides Statement {
+    field ifcond: Expression;
+    field ifflow: BlockStatement;
+    field condflow: List<(|Expression, BlockStatement|)>;
+    field elseflow: BlockStatement;
+
+    invariant !$condflow.empty();
+}
+
+entity SwitchStatement provides Statement {
+    field sval: Expression;
+    field switchflow: List<(|Option<Expression>, BlockStatement|)>;
+
+    field mustExhaustive: Bool;
+    field optypes: List<TypeSignature>;
+
+    invariant !$switchflow.empty();
+}
+
+entity MatchStatement provides Statement {
+    field sval: Expression;
+    field bindInfo: Option<BinderInfo>;
+    field matchflow: List<(|Option<TypeSignature>, BlockStatement|)>;
+
+    field mustExhaustive: Bool;
+    field implicitFinalType: TypeSignature;
+
+    invariant !$matchflow.empty();
+}
+
+entity AbortStatement provides Statement {
+}
+
+entity AssertStatement provides Statement {
+    field cond: Expression;
+}
+
+entity ValidateStatement provides Statement {
+    field cond: Expression;
+    field diagnosticTag: Option<CString>;
+}
+
+entity DebugStatement provides Statement {
+    field value: Expression;
+}
+
+entity VoidRefCallStatement provides Statement {
+    field exp: Expression;
+}
+
+datatype UpdateDirectStatement provides Statement using {
+    field vexp: AccessVariableExpression;
+    field updates: List<(|Identifier, Expression|)>;
+
+    field updatetype: NominalTypeSignature;
+    field updateinfo: List<(|Identifier, TypeSignature|)>;
+
+    invariant !$updates.empty();
+    invariant $updates.size() == $updateinfo.size();
+}
+of
+VarUpdateDirectStatement { }
+| ThisUpdateDirectStatement { }
+| SelfUpdateDirectStatement { }
+;
+
+datatype UpdateIndirectStatement provides Statement using {
+    field vexp: AccessVariableExpression;
+    field updates: List<(|Identifier, Expression|)>;
+
+    field updatetype: NominalTypeSignature;
+    field updateinfo: List<(|NominalTypeSignature, Identifier, TypeSignature|)>;
+
+    invariant !$updates.empty();
+    invariant $updates.size() == $updateinfo.size();
+}
+of
+VarUpdateIndirectStatement { }
+| ThisUpdateIndirectStatement { }
+;
+
+entity BlockStatement provides Statement {
+    field statements: List<Statement>;
+    field isScoping: Bool;
+}
+
+datatype BodyImplementation 
+of
+AbstractBodyImplementation { }
+| PredicateUFBodyImplementation { }
+| BuiltinBodyImplementation { field builtin: CString; }
+| SynthesisBodyImplementation { }
+| ExpressionBodyImplementation { field exp: Expression; }
+| StandardBodyImplementation { field statements: List<Statement>; }
+;
+

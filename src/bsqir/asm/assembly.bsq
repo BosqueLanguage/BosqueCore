@@ -1,10 +1,8 @@
-declare namespace IRAssembly {
-    using IRDecl as IR;
-}
+declare namespace BSQAssembly;
 
 concept AbstractDecl {
-    field file: CString;
-    field sinfo: IR::SourceInfo;
+    field file: String;
+    field sinfo: SourceInfo;
 }
 
 concept ConditionDecl provides AbstractDecl {
@@ -12,39 +10,36 @@ concept ConditionDecl provides AbstractDecl {
 }
 
 entity PreConditionDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field issoft: Bool;
     field exp: Expression;
 }
 
 entity PostConditionDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field issoft: Bool;
     field exp: Expression;
 }
 
 entity InvariantDecl provides ConditionDecl {
-    field level: IR::BuildLevel;
     field exp: Expression;
 }
 
-entity ValidateDecl extends ConditionDecl {
+entity ValidateDecl provides ConditionDecl {
     field exp: Expression;
 }
 
 entity DeclarationAttibute {
-    field name: CString;
+    field name: Identifier;
     field tags: List<(|TypeSignature, CString|)>; %%tags are enum names
-    field text: Option<String>;
+    field text: Option<CString>;
 }
 
 concept AbstractCoreDecl provides AbstractDecl {
     field attributes: List<DeclarationAttibute>;
-    field name: CString;
+    field name: Identifier;
 }
 
 entity InvokeParameterDecl {
-    field pname: CString;
+    field pname: Identifier;
     field ptype: TypeSignature;
     field defaultval: Option<Expression>;
     field isRefParam: Bool;
@@ -52,7 +47,8 @@ entity InvokeParameterDecl {
 }
 
 concept AbstractInvokeDecl provides AbstractCoreDecl {
-    field irecursive: IR::RecursiveAnnotation;
+    field ikey: InvokeKey;
+    field irecursive: RecursiveAnnotation;
 
     field params: List<InvokeParameterDecl>;
     field resultType: TypeSignature;
@@ -60,17 +56,9 @@ concept AbstractInvokeDecl provides AbstractCoreDecl {
     field body: BodyImplementation;
 }
 
-entity LambdaDecl provides AbstractInvokeDecl {
-}
-
 concept ExplicitInvokeDecl provides AbstractInvokeDecl {
-    field terms: List<InvokeTemplateTermDecl>;
-    field termRestriction: Option<InvokeTemplateTypeRestriction>;
-
     field preconditions: List<PreConditionDecl>;
     field postconditions: List<PostConditionDecl>;
-
-    field examples: List<InvokeExample>;
 }
 
 concept FunctionInvokeDecl provides ExplicitInvokeDecl {
@@ -103,11 +91,15 @@ entity TaskActionDecl provides ExplicitInvokeDecl {
 }
 
 entity ConstMemberDecl provides AbstractCoreDecl {
+    field declaredInType: NominalTypeSignature;
+
     field declaredType: TypeSignature;
     field value: Expression;
 }
 
 entity MemberFieldDecl provides AbstractCoreDecl {
+    field declaredInType: NominalTypeSignature;
+
     field declaredType: TypeSignature;
     field defaultValue: Option<Expression>;
     field isSpecialAccess: Bool;
@@ -121,21 +113,21 @@ enum AdditionalTypeDeclTag {
 
 entity SaturatedFieldInfo {
     field containingtype: NominalTypeSignature;
-    field fname: CString;
+    field fname: Identifier;
     field ftype: TypeSignature;
     field hasdefault: Bool;
 }
 
 entity SaturatedInvariantInfo {
-    field containingtype: NominalTypeSignature;
-    field file: CString;
-    field sinfo: IR::SourceInfo;
+    field declaredInType: NominalTypeSignature;
+    field file: String;
+    field sinfo: SourceInfo;
     field tag: Option<CString>;
 }
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field attributes: List<DeclarationAttibute>;
-    field tkey: IR::TypeKey;
+    field tkey: TypeKey;
 
     field invariants: List<InvariantDecl>;
     field validates: List<ValidateDecl>;
@@ -144,7 +136,6 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field functions: List<TypeFunctionDecl>;
     field methods: List<MethodDecl>;
 
-    
     field saturatedProvides: List<NominalTypeSignature>;
     field saturatedBFieldInfo: List<SaturatedFieldInfo>;
 
@@ -160,11 +151,11 @@ entity EnumTypeDecl provides AbstractEntityTypeDecl {
 }
 
 entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
-    field valuetype: TypeSignature;
+    field valuetype: NominalTypeSignature;
 }
 
 entity TypedeclStringOfTypeDecl provides AbstractEntityTypeDecl {
-    field valuetype: TypeSignature;
+    field valuetype: NominalTypeSignature;
     field ofexp: Expression;
 }
 
@@ -182,13 +173,13 @@ OkTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
 | APIFailedTypeDecl { }
 | APIErrorTypeDecl { }
 | APISuccessTypeDecl { }
-| SomeTypeDecl { field vtype: TypeSignature; }
+| SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
-datatype AbstractCollectionTypeDecl provides InternalEntityTypeDecl 
+datatype CollectionTypeDecl provides InternalEntityTypeDecl 
 of
-ListTypeDecl { field ttype: TypeSignature; }
+ListTypeDecl { field oftype: TypeSignature; }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
@@ -204,11 +195,16 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
 concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
+    field subtypes: List<NominalTypeSignature>;
 }
 
-datatype InternalConceptTypeDecl provides AbstractConceptTypeDecl 
+datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
 of
-OptionTypeDecl { }
+OptionTypeDecl { 
+    field oftype: TypeSignature; 
+
+    field someType: SomeTypeDecl;
+}
 | ResultTypeDecl {
     field ttype: TypeSignature; 
     field etype: TypeSignature;
@@ -237,7 +233,7 @@ entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
 
 entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
     field fields: List<MemberFieldDecl>;
-    field associatedMemberEntityDecls: List<DatatypeMemberEntityTypeDecl>;
+    field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
 
 %%
@@ -245,21 +241,34 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
 %%
 
 entity NamespaceConstDecl provides AbstractCoreDecl {
+    field declaredInNS: NamespaceKey;
+
     field declaredType: TypeSignature;
     field value: Expression;
 }
 
-entity NamespaceDeclaration {
-    field name: CString; 
-    field fullnamespace: FullyQualifiedNamespace;
-
-    field subns: List<NamespaceDeclaration>;
-
-    field consts: List<NamespaceConstDecl>;
-    field functions: List<NamespaceFunctionDecl>;
-    field typedecls: List<AbstractNominalTypeDecl>;
-}
-
 entity Assembly {
-    field toplevelNamespaces: List<NamespaceDeclaration>;
+    field nsconsts: List<NamespaceConstDecl>;
+    field typeconsts: List<ConstMemberDecl>;
+    
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
+    
+    field enums: Map<TypeKey, EnumTypeDecl>;
+    field typedecls: Map<TypeKey, TypedeclTypeDecl>;
+    field constructables: Map<TypeKey, ConstructableTypeDecl>;
+    field collections: Map<TypeKey, CollectionTypeDecl>;
+
+    field entities: Map<TypeKey, EntityTypeDecl>;
+    field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
+
+    field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>;
+    field concepts: Map<TypeKey, ConceptTypeDecl>;
+
+    field datatypes: Map<TypeKey, DatatypeTypeDecl>;
+
+    field allfuncs: List<InvokeKey>;
+    field allconcretetypes: List<TypeKey>;
+    field allabstracttypes: List<TypeKey>;
+    field alltypes: List<TypeKey>;
 }

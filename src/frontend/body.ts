@@ -7,20 +7,17 @@ import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
-    scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
     readonly refineonfollow: boolean;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
-        this.scopename = srcname;
         this.implicitdef = implicitdef;
         this.refineonfollow = refineonfollow;
     }
 
     emit(): [string, string] {
-        const tag = (this.srcname !== this.scopename) ? `%*${this.scopename}*%` : "";
-        return [!this.implicitdef ? `${this.srcname}${tag} = ` : "", this.refineonfollow ? "@@" : "@"];
+        return [!this.implicitdef ? `${this.srcname} = ` : "", this.refineonfollow ? "@@" : "@"];
     }
 }
 
@@ -485,18 +482,16 @@ class AccessVariableExpression extends Expression {
 
     specialaccess: { ttype: TypeSignature, specialaccess: string | undefined }[] = []; //field name to access to a special re-typed variable (specifically extracting an option or result value)
     layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
-    scopename: string; //maybe a different name that gets used for shadowing binders
     isCaptured: boolean;
 
     constructor(sinfo: SourceInfo, srcname: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
-        this.scopename = srcname;
         this.isCaptured = false;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.srcname + (this.scopename !== this.srcname ? `%*${this.scopename}*%` : "");
+        return this.srcname;
     }
 }
 
