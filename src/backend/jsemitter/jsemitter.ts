@@ -2250,6 +2250,12 @@ class JSEmitter {
         else if(bname === "cstring_ends_with_string") {
             bop = `s.endsWith(suffix)`;
         }
+        else if(bname === "cstring_contains_string") {
+            bop = `s.includes(find)`;
+        }
+        else if(bname === "cstring_contains_string_unique") {
+            bop = `[...s.matchAll(target)].length === 1`
+        }
         else if(bname === "cstring_append") {
             bop = `s + c`;
         }
@@ -2264,6 +2270,51 @@ class JSEmitter {
         }
         else if(bname === "cstring_remove_suffix_string") {
             bop = `s.slice(0, s.length - suffix.length)`;
+        }
+        else if(bname === "cstring_replace_unique_string_occurrence") {
+            bop = `s.replace(find, replace)`;
+        }
+        else if(bname === "cstring_replace_all_string_occurrences") {
+            bop = `s.replaceAll(find, replace)`;
+        }
+        else if(bname === "string_from_cstring") {
+            bop = `s`;
+        }
+        else if(bname === "string_empty") {
+            bop = `s === ""`;
+        }
+        else if(bname === "string_starts_with_string") {
+            bop = `s.startsWith(prefix)`;
+        }
+        else if(bname === "string_ends_with_string") {
+            bop = `s.endsWith(suffix)`;
+        }
+        else if(bname === "string_contains_string") {
+            bop = `s.includes(find)`;
+        }
+        else if(bname === "string_contains_string_unique") {
+            bop = `[...s.matchAll(target)].length === 1`
+        }
+        else if(bname === "string_append") {
+            bop = `s + c`;
+        }
+        else if(bname === "string_prepend") {
+            bop = `c + s`;
+        }
+        else if(bname === "string_concat2") {
+            bop = `s1 + s2`;
+        }
+        else if(bname === "string_remove_prefix_string") {
+            bop = `s.slice(prefix.length)`;
+        }
+        else if(bname === "string_remove_suffix_string") {
+            bop = `s.slice(0, s.length - suffix.length)`;
+        }
+        else if(bname === "string_replace_unique_string_occurrence") {
+            bop = `s.replace(find, replace)`;
+        }
+        else if(bname === "string_replace_all_string_occurrences") {
+            bop = `s.replaceAll(find, replace)`;
         }
         else {
             assert(false, `Unknown builtin function -- ${bname}`);

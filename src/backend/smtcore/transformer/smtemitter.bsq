@@ -1,9 +1,55 @@
-declare namespace SMTEmitter;
+namespace SMTEmitter;
+
+namespace SMTNameManager {
+    function generateStructConstructorName(tkey: SMTAssembly::TypeKey): CString {
+        return String::concat(tkey.value, '-mk');
+    }
+
+    function generateStructFieldName(tkey: SMTAssembly::TypeKey, vname: CString): CString {
+        return CString::concat(tkey.value, '-', vname);
+    }
+
+    function generateStructTermConstructorName(tkey: SMTAssembly::TypeKey): CString {
+        return CString::concat('@Term-', tkey.value, '-mk');
+    }
+
+    function generateStructTermFieldName(tkey: SMTAssembly::TypeKey): CString {
+        return CString::concat('@Term-', tkey.value, '-value');
+    }
+
+    function generateNamespaceConstName(ns: SMTAssembly::NamespaceKey, cname: CString): CString {
+        return CString::concat(ns.value, '@', cname);
+    }
+
+    function generateNamespaceFunctionName(ns: SMTAssembly::NamespaceKey, name: CString): CString {
+        return CString::concat(ns.value, '@', name);
+    }
+
+    function generateTypeConstName(tkey: SMTAssembly::TypeKey, cname: CString): CString {
+        return CString::concat(tkey.value, '@', cname);
+    }
+
+    function generateTypeFunctionName(tkey: SMTAssembly::TypeKey, name: CString): CString {
+        return CString::concat(tkey.value, '@', name);
+    }
+
+    function generateTermSubtypeFunctionName(tkey: SMTAssembly::TypeKey): CString {
+        return CString::concat('@SubtypeOf-', tkey.value);
+    }
+
+    function generateResultName(rtype: SMTAssembly::ResultType): CString {
+        if(rtype)@<SMTAssembly::DirectResult> {
+            return rtype.rtype.value;
+        } else {
+            return CString::concat('(@Result ', rtype.rtype.value, ')');
+        }
+    }
+}
 
 const s_ignoreErrTrgt: CString = '[ignore]';
 
 entity SMTEmitterEnv {
-    field expectedResultType: ResultType;
+    field expectedResultType: SMTAssembly::ResultType;
     field errtrgt: CString;
 }
 
@@ -26,9 +72,9 @@ function tidyNewlineJoin(s1: CString, s2: CString): CString {
     }
 }
 
-function tryGetConstFlowOperation(value: FlowOperation): Option<ConstantValue> {
-    if(value)@<ReturnValueOperation> {
-        if($vv = $value.val)@<ConstantValue> {
+function tryGetConstFlowOperation(value: SMTAssembly::FlowOperation): Option<SMTAssembly::ConstantValue> {
+    if(value)@<SMTAssembly::ReturnValueOperation> {
+        if($vv = $value.val)@<SMTAssembly::ConstantValue> {
             return some($vv);
         }
     }
@@ -44,7 +90,7 @@ function emitLiteralNoneValue(): CString {
     return 'none';
 }
 
-function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
+function emitLiteralSimpleValue(v: SMTAssembly::LiteralSimpleValue): CString {
     switch(v.vtype) {
         'Bool'<TypeKey>     => { return v.value; }
         | 'Nat'<TypeKey>    => { return emitTaggedNumericType(v.value, 'n'); }
@@ -55,84 +101,84 @@ function emitLiteralSimpleValue(v: LiteralSimpleValue): CString {
     }
 }
 
-function emitLiteralCStringValue(v: LiteralCStringValue): CString {
+function emitLiteralCStringValue(v: SMTAssembly::LiteralCStringValue): CString {
     return CString::concat('"', v.value, '"');
 }
 
-function emitLiteralStringValue(v: LiteralStringValue): CString {
+function emitLiteralStringValue(v: SMTAssembly::LiteralStringValue): CString {
     return CString::concat('"', v.value, '"');
 }
 
-function emitLiteralCRegexValue(v: LiteralCRegexValue): CString {
+function emitLiteralCRegexValue(v: SMTAssembly::LiteralCRegexValue): CString {
     %%TODO
     abort;
 }
 
-function emitLiteralRegexValue(v: LiteralRegexValue): CString {
+function emitLiteralRegexValue(v: SMTAssembly::LiteralRegexValue): CString {
     %%TODO
     abort;
 }
 
-function emitConstantValue(v: ConstantValue): CString {
+function emitConstantValue(v: SMTAssembly::ConstantValue): CString {
     match(v)@ {
-        LiteralNoneValue => { return emitLiteralNoneValue(); }
-        | LiteralSimpleValue => { return emitLiteralSimpleValue($v); }
-        | LiteralCStringValue => { return emitLiteralCStringValue($v); }
-        | LiteralStringValue => { return emitLiteralStringValue($v); }
-        | LiteralCRegexValue => { return emitLiteralCRegexValue($v); }
-        | LiteralRegexValue => { return emitLiteralRegexValue($v); }
+        SMTAssembly::LiteralNoneValue => { return emitLiteralNoneValue(); }
+        | SMTAssembly::LiteralSimpleValue => { return emitLiteralSimpleValue($v); }
+        | SMTAssembly::LiteralCStringValue => { return emitLiteralCStringValue($v); }
+        | SMTAssembly::LiteralStringValue => { return emitLiteralStringValue($v); }
+        | SMTAssembly::LiteralCRegexValue => { return emitLiteralCRegexValue($v); }
+        | SMTAssembly::LiteralRegexValue => { return emitLiteralRegexValue($v); }
     }
 }
 
-function emitAccessNamespaceConstantValue(v: AccessNamespaceConstantValue): CString {
+function emitAccessNamespaceConstantValue(v: SMTAssembly::AccessNamespaceConstantValue): CString {
     return CString::concat(v.ns.value, '@', v.name);
 }
 
-function emitAccessStaticFieldValue(v: AccessStaticFieldValue): CString {
+function emitAccessStaticFieldValue(v: SMTAssembly::AccessStaticFieldValue): CString {
     return CString::concat(v.tresolved.value, '@', v.name);
 }
 
-function emitAccessEnumValue(v: AccessEnumValue): CString {
+function emitAccessEnumValue(v: SMTAssembly::AccessEnumValue): CString {
     return CString::concat(v.enumtype.value, '$$', v.name);
 }
 
-function emitAccessVariableValue(v: AccessVariableValue): CString {
+function emitAccessVariableValue(v: SMTAssembly::AccessVariableValue): CString {
     return v.vname;
 }
 
-function emitAccessVariableRetypeStepValue(v: AccessVariableRetypeStepValue): CString {
+function emitAccessVariableRetypeStepValue(v: SMTAssembly::AccessVariableRetypeStepValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.step.ttype,  v.step.specialfname);
     
     return CString::concat('(', access, ' ',  v.vname, ')');
 }
 
-function emitAccessVariableRetypeMultiStepValue(v: AccessVariableRetypeMultiStepValue): CString {
+function emitAccessVariableRetypeMultiStepValue(v: SMTAssembly::AccessVariableRetypeMultiStepValue): CString {
     %%TODO
     abort;
 }
 
-recursive function emitTermifyValue(v: TermifyValue): CString {
+recursive function emitTermifyValue(v: SMTAssembly::TermifyValue): CString {
     let consname = SMTNameManager::generateStructTermConstructorName(v.fromtype);
     let vv = emitValue[recursive](v.value);
     
     return CString::concat('(', consname, ' ', vv, ')');
 }
 
-recursive function emitUntermifyValue(v: UntermifyValue): CString {
+recursive function emitUntermifyValue(v: SMTAssembly::UntermifyValue): CString {
     let access = SMTNameManager::generateStructTermFieldName(v.fromtype);
     let vv = emitValue[recursive](v.value);
     
     return CString::concat('(', access, ' ', vv, ')');
 }
 
-function emitLiteralTypeDeclValue(v: LiteralTypeDeclValue): CString {
+function emitLiteralTypeDeclValue(v: SMTAssembly::LiteralTypeDeclValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let vv = emitConstantValue(v.value);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
 
-recursive function emitConstructorListSingletonsValue(v: ConstructorListSingletonsValue): CString {
+recursive function emitConstructorListSingletonsValue(v: SMTAssembly::ConstructorListSingletonsValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
 
     if(v.args.empty()) {
@@ -154,26 +200,26 @@ recursive function emitConstructorListSingletonsValue(v: ConstructorListSingleto
     }
 }
 
-recursive function emitConstructorMapSingletonsValue(v: ConstructorMapSingletonsValue): CString {
+recursive function emitConstructorMapSingletonsValue(v: SMTAssembly::ConstructorMapSingletonsValue): CString {
     %%TODO
     abort;
 }
 
-recursive function emitConstructorPrimarySpecialConstructableValue(v: ConstructorPrimarySpecialConstructableValue): CString {
+recursive function emitConstructorPrimarySpecialConstructableValue(v: SMTAssembly::ConstructorPrimarySpecialConstructableValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let vv = emitValue[recursive](v.arg);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
 
-recursive function emitConstructorTypeDeclValue(v: ConstructorTypeDeclValue): CString {
+recursive function emitConstructorTypeDeclValue(v: SMTAssembly::ConstructorTypeDeclValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let vv = emitValue[recursive](v.arg);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
 
-recursive function emitConstructorStdValue(v: ConstructorStdValue): CString {
+recursive function emitConstructorStdValue(v: SMTAssembly::ConstructorStdValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     if(v.args.empty()) {
         return consname;
@@ -186,17 +232,17 @@ recursive function emitConstructorStdValue(v: ConstructorStdValue): CString {
     }
 }
 
-recursive function emitConstructorPrimaryValue(v: ConstructorPrimaryValue): CString {
+recursive function emitConstructorPrimaryValue(v: SMTAssembly::ConstructorPrimaryValue): CString {
     match(v)@ {
-        ConstructorListSingletonsValue => { return emitConstructorListSingletonsValue[recursive]($v); }
-        | ConstructorMapSingletonsValue => { return emitConstructorMapSingletonsValue[recursive]($v); }
-        | ConstructorPrimarySpecialConstructableValue => { return emitConstructorPrimarySpecialConstructableValue[recursive]($v); }
-        | ConstructorTypeDeclValue => { return emitConstructorTypeDeclValue[recursive]($v); }
-        | ConstructorStdValue => { return emitConstructorStdValue[recursive]($v); }
+        SMTAssembly::ConstructorListSingletonsValue => { return emitConstructorListSingletonsValue[recursive]($v); }
+        | SMTAssembly::ConstructorMapSingletonsValue => { return emitConstructorMapSingletonsValue[recursive]($v); }
+        | SMTAssembly::ConstructorPrimarySpecialConstructableValue => { return emitConstructorPrimarySpecialConstructableValue[recursive]($v); }
+        | SMTAssembly::ConstructorTypeDeclValue => { return emitConstructorTypeDeclValue[recursive]($v); }
+        | SMTAssembly::ConstructorStdValue => { return emitConstructorStdValue[recursive]($v); }
     }
 }
 
-recursive function emitConstructorEListValue(v: ConstructorEListValue): CString {
+recursive function emitConstructorEListValue(v: SMTAssembly::ConstructorEListValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     if(v.args.empty()) {
         return consname;
@@ -209,7 +255,7 @@ recursive function emitConstructorEListValue(v: ConstructorEListValue): CString 
     }
 }
 
-recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue): CString {
+recursive function emitCallNamespaceFunctionValue(v: SMTAssembly::CallNamespaceFunctionValue): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(v.ns, v.name);
     if(v.args.empty()) {
         return fname;
@@ -222,7 +268,7 @@ recursive function emitCallNamespaceFunctionValue(v: CallNamespaceFunctionValue)
     }
 }
 
-recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString {
+recursive function emitCallTypeFunctionValue(v: SMTAssembly::CallTypeFunctionValue): CString {
     let fname = SMTNameManager::generateTypeFunctionName(v.resolvedType, v.name);
     if(v.args.empty()) {
         return fname;
@@ -235,46 +281,46 @@ recursive function emitCallTypeFunctionValue(v: CallTypeFunctionValue): CString 
     }
 }
 
-recursive function emitLogicActionAndValue(v: LogicActionAndValue): CString {
+recursive function emitLogicActionAndValue(v: SMTAssembly::LogicActionAndValue): CString {
     let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
     let argsl = CString::joinAll(' ', cvals);
 
     return CString::concat('(and ', argsl, ')');
 }
 
-recursive function emitLogicActionOrValue(v: LogicActionOrValue): CString {
+recursive function emitLogicActionOrValue(v: SMTAssembly::LogicActionOrValue): CString {
     let cvals = v.args.map[recursive]<CString>(fn(x) => emitValue[recursive](x));
     let argsl = CString::joinAll(' ', cvals);
 
     return CString::concat('(or ', argsl, ')');
 }
 
-recursive function emitUnwrapTypeDeclToPrimitiveValue(v: UnwrapTypeDeclToPrimitiveValue): CString {
+recursive function emitUnwrapTypeDeclToPrimitiveValue(v: SMTAssembly::UnwrapTypeDeclToPrimitiveValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.decltype, 'value');
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
-recursive function emitAccessFromNameResolvedValue(v: AccessFromNameResolvedValue): CString {
+recursive function emitAccessFromNameResolvedValue(v: SMTAssembly::AccessFromNameResolvedValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
-recursive function emitAccessFromIndexValue(v: AccessFromIndexValue): CString {
+recursive function emitAccessFromIndexValue(v: SMTAssembly::AccessFromIndexValue): CString {
     let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
     return CString::concat('(', access, ' ', emitValue(v.arg), ')');
 }
 
-recursive function emitIsNoneTestValue(v: IsNoneTestValue): CString {
+recursive function emitIsNoneTestValue(v: SMTAssembly::IsNoneTestValue): CString {
     let vv = emitValue[recursive](v.arg);
     return CString::concat('(= ', vv, ' @Term-mk-None)');
 }
 
-recursive function emitIsSomeTestValue(v: IsSomeTestValue): CString {
+recursive function emitIsSomeTestValue(v: SMTAssembly::IsSomeTestValue): CString {
     let vv = emitValue[recursive](v.arg);
     return CString::concat('(not (= ', vv, ' @Term-mk-None))');
 }
 
-recursive function emitIsTypeTestValue(v: IsTypeTestValue): CString {
+recursive function emitIsTypeTestValue(v: SMTAssembly::IsTypeTestValue): CString {
     let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
     let ttchk = CString::concat('(_ is ', ccons, ')');
     let vv = emitValue[recursive](v.arg);
@@ -283,7 +329,7 @@ recursive function emitIsTypeTestValue(v: IsTypeTestValue): CString {
     return CString::concat('(', ttchk, ' ', vv, ')');
 }
 
-recursive function emitIsSubtypeTestValue(v: IsSubtypeTestValue): CString {
+recursive function emitIsSubtypeTestValue(v: SMTAssembly::IsSubtypeTestValue): CString {
     let subchk = SMTNameManager::generateTermSubtypeFunctionName(v.oftype);
     let vv = emitValue[recursive](v.arg);
 
@@ -291,7 +337,7 @@ recursive function emitIsSubtypeTestValue(v: IsSubtypeTestValue): CString {
     return CString::concat('(', subchk, ' ', vv, ')');
 }
 
-recursive function emitConvertOptionToSomeTValue(v: ConvertOptionToSomeTValue): CString {
+recursive function emitConvertOptionToSomeTValue(v: SMTAssembly::ConvertOptionToSomeTValue): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
     let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
 
@@ -299,7 +345,7 @@ recursive function emitConvertOptionToSomeTValue(v: ConvertOptionToSomeTValue): 
     return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
-recursive function emitConvertResultToOkTValue(v: ConvertResultToOkTValue): CString {
+recursive function emitConvertResultToOkTValue(v: SMTAssembly::ConvertResultToOkTValue): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
     let extract = SMTNameManager::generateStructFieldName(v.oktype, 'value');
 
@@ -307,7 +353,7 @@ recursive function emitConvertResultToOkTValue(v: ConvertResultToOkTValue): CStr
     return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
-recursive function emitConvertResultToFailEValue(v: ConvertResultToFailEValue): CString {
+recursive function emitConvertResultToFailEValue(v: SMTAssembly::ConvertResultToFailEValue): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
     let extract = SMTNameManager::generateStructFieldName(v.failtype, 'value');
 
@@ -315,7 +361,7 @@ recursive function emitConvertResultToFailEValue(v: ConvertResultToFailEValue): 
     return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
-recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CString {
+recursive function emitMethodInvokeStaticValue(v: SMTAssembly::MethodInvokeStaticValue): CString {
     let fname = SMTNameManager::generateTypeFunctionName(v.resolvedTrgt, v.name);
     let rootv = emitValue[recursive](v.rootExp);
 
@@ -331,41 +377,41 @@ recursive function emitMethodInvokeStaticValue(v: MethodInvokeStaticValue): CStr
     }
 }
 
-recursive function emitPrefixNotOpValue(v: PrefixNotOpValue): CString {
+recursive function emitPrefixNotOpValue(v: SMTAssembly::PrefixNotOpValue): CString {
     let vv = emitValue[recursive](v.exp);
     return CString::concat('(not ', vv, ')');
 }
 
-recursive function emitPrefixNegateOpValue(v: PrefixNegateOpValue): CString {
+recursive function emitPrefixNegateOpValue(v: SMTAssembly::PrefixNegateOpValue): CString {
     let vv = emitValue[recursive](v.exp);
     return CString::concat('(- ', vv, ')');
 }
 
-recursive function emitPrefixPlusOpValue(v: PrefixPlusOpValue): CString {
+recursive function emitPrefixPlusOpValue(v: SMTAssembly::PrefixPlusOpValue): CString {
     return emitValue[recursive](v.exp);
 }
 
-recursive function emitUnaryValue(v: UnaryValue): CString {
+recursive function emitUnaryValue(v: SMTAssembly::UnaryValue): CString {
     match(v)@ {
-        PrefixNotOpValue => { return emitPrefixNotOpValue[recursive]($v); }
-        | PrefixNegateOpValue => { return emitPrefixNegateOpValue[recursive]($v); }
-        | PrefixPlusOpValue => { return emitPrefixPlusOpValue[recursive]($v); }
+        SMTAssembly::PrefixNotOpValue => { return emitPrefixNotOpValue[recursive]($v); }
+        | SMTAssembly::PrefixNegateOpValue => { return emitPrefixNegateOpValue[recursive]($v); }
+        | SMTAssembly::PrefixPlusOpValue => { return emitPrefixPlusOpValue[recursive]($v); }
     }
 }
 
-recursive function emitBinAddValue(v: BinAddValue): CString {
+recursive function emitBinAddValue(v: SMTAssembly::BinAddValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
     return CString::concat('(+ ', lhs, ' ', rhs, ')');
 }
 
-recursive function emitBinSubValue(v: BinSubValue): CString {
+recursive function emitBinSubValue(v: SMTAssembly::BinSubValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
     return CString::concat('(- ', lhs, ' ', rhs, ')');
 }
 
-recursive function emitBinMultValue(v: BinMultValue): CString {
+recursive function emitBinMultValue(v: SMTAssembly::BinMultValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
 
@@ -377,7 +423,7 @@ recursive function emitBinMultValue(v: BinMultValue): CString {
     }
 }
 
-recursive function emitBinDivValue(v: BinDivValue): CString {
+recursive function emitBinDivValue(v: SMTAssembly::BinDivValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
     
@@ -389,26 +435,26 @@ recursive function emitBinDivValue(v: BinDivValue): CString {
     }
 }
 
-recursive function emitBinaryArithValue(v: BinaryArithValue): CString {
+recursive function emitBinaryArithValue(v: SMTAssembly::BinaryArithValue): CString {
     match(v)@ {
-        BinAddValue => { return emitBinAddValue[recursive]($v); }
-        | BinSubValue => { return emitBinSubValue[recursive]($v); }
-        | BinMultValue => { return emitBinMultValue[recursive]($v); }
-        | BinDivValue => { return emitBinDivValue[recursive]($v); }
+        SMTAssembly::BinAddValue => { return emitBinAddValue[recursive]($v); }
+        | SMTAssembly::BinSubValue => { return emitBinSubValue[recursive]($v); }
+        | SMTAssembly::BinMultValue => { return emitBinMultValue[recursive]($v); }
+        | SMTAssembly::BinDivValue => { return emitBinDivValue[recursive]($v); }
     }
 }
 
-recursive function emitBinKeyEqNoneValue(v: BinKeyEqNoneValue): CString {
+recursive function emitBinKeyEqNoneValue(v: SMTAssembly::BinKeyEqNoneValue): CString {
     let vv = emitValue[recursive](v.exp);
     return CString::concat('(= ', vv, ' @Term-mk-None)');
 }
 
-recursive function emitBinKeyNotEqNoneValue(v: BinKeyNotEqNoneValue): CString {
+recursive function emitBinKeyNotEqNoneValue(v: SMTAssembly::BinKeyNotEqNoneValue): CString {
     let vv = emitValue[recursive](v.exp);
     return CString::concat('(not (= ', vv, ' @Term-mk-None))');
 }
 
-recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
+recursive function emitBinKeySomeEqValue(v: SMTAssembly::BinKeySomeEqValue): CString {
     let eopt = emitValue[recursive](v.eoption);
     let val = emitValue[recursive](v.val);
     
@@ -424,7 +470,7 @@ recursive function emitBinKeySomeEqValue(v: BinKeySomeEqValue): CString {
     return CString::concat('(and ', notnoneop, ' ', eqop, ')');
 }
 
-recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
+recursive function emitBinKeyNotSomeEqValue(v: SMTAssembly::BinKeyNotSomeEqValue): CString {
     let eopt = emitValue[recursive](v.eoption);
     let val = emitValue[recursive](v.val);
     
@@ -440,70 +486,70 @@ recursive function emitBinKeyNotSomeEqValue(v: BinKeyNotSomeEqValue): CString {
     return CString::concat('(or ', noneop, ' ', neqop, ')');
 }
 
-recursive function emitBinKeyEqValue(v: BinKeyEqValue): CString {
+recursive function emitBinKeyEqValue(v: SMTAssembly::BinKeyEqValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
     return CString::concat('(= ', lhs, ' ', rhs, ')');
 }
 
-recursive function emitBinKeyNotEqValue(v: BinKeyNotEqValue): CString {
+recursive function emitBinKeyNotEqValue(v: SMTAssembly::BinKeyNotEqValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
     return CString::concat('(not (= ', lhs, ' ', rhs, '))');
 }
 
-recursive function emitBinaryKeyEqValue(v: BinaryKeyEqValue): CString {
+recursive function emitBinaryKeyEqValue(v: SMTAssembly::BinaryKeyEqValue): CString {
     match(v)@ {
-        BinKeyEqNoneValue => { return emitBinKeyEqNoneValue[recursive]($v); }
-        | BinKeyNotEqNoneValue => { return emitBinKeyNotEqNoneValue[recursive]($v); }
-        | BinKeySomeEqValue => { return emitBinKeySomeEqValue[recursive]($v); }
-        | BinKeyNotSomeEqValue => { return emitBinKeyNotSomeEqValue[recursive]($v); }
-        | BinKeyEqValue => { return emitBinKeyEqValue[recursive]($v); }
-        | BinKeyNotEqValue => { return emitBinKeyNotEqValue[recursive]($v); }
+        SMTAssembly::BinKeyEqNoneValue => { return emitBinKeyEqNoneValue[recursive]($v); }
+        | SMTAssembly::BinKeyNotEqNoneValue => { return emitBinKeyNotEqNoneValue[recursive]($v); }
+        | SMTAssembly::BinKeySomeEqValue => { return emitBinKeySomeEqValue[recursive]($v); }
+        | SMTAssembly::BinKeyNotSomeEqValue => { return emitBinKeyNotSomeEqValue[recursive]($v); }
+        | SMTAssembly::BinKeyEqValue => { return emitBinKeyEqValue[recursive]($v); }
+        | SMTAssembly::BinKeyNotEqValue => { return emitBinKeyNotEqValue[recursive]($v); }
     }
 }
 
-recursive function emitKeyLessValue(v: KeyLessValue): CString {
+recursive function emitKeyLessValue(v: SMTAssembly::KeyLessValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
 
     switch(v.kind) {
-        KeyLessKind#KeyBool => {return CString::concat('(and (not ', lhs, ') ', rhs, ')'); }
-        | KeyLessKind#KeyNumber => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
-        | KeyLessKind#KeyString => { return CString::concat('(str.< ', lhs, ' ', rhs, ')'); }
-        | KeyLessKind#KeyUUID => { abort; }
-        | KeyLessKind#KeyHash => { abort; }
-        | KeyLessKind#KeyDataInfo => { abort; }
+        SMTAssembly::KeyLessKind#KeyBool => {return CString::concat('(and (not ', lhs, ') ', rhs, ')'); }
+        | SMTAssembly::KeyLessKind#KeyNumber => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::KeyLessKind#KeyString => { return CString::concat('(str.< ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::KeyLessKind#KeyUUID => { abort; }
+        | SMTAssembly::KeyLessKind#KeyHash => { abort; }
+        | SMTAssembly::KeyLessKind#KeyDataInfo => { abort; }
     }
 }
 
-recursive function emitBinaryNumericCompareValue(v: BinaryNumericCompareValue): CString {
+recursive function emitBinaryNumericCompareValue(v: SMTAssembly::BinaryNumericCompareValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
 
     match(v)@ {
-        NumericEqValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
-        | NumericNeqValue => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
-        | NumericLessValue => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
-        | NumericLessEqValue => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
-        | NumericGreaterValue => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
-        | NumericGreaterEqValue => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
+        SMTAssembly::NumericEqValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::NumericNeqValue => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
+        | SMTAssembly::NumericLessValue => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::NumericLessEqValue => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::NumericGreaterValue => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::NumericGreaterEqValue => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
     }
 }
 
-recursive function emitBinLogicValue(v: BinLogicValue): CString {
+recursive function emitBinLogicValue(v: SMTAssembly::BinLogicValue): CString {
     let lhs = emitValue[recursive](v.lhs);
     let rhs = emitValue[recursive](v.rhs);
 
     match(v)@ {
-        BinLogicAndValue => { return CString::concat('(and ', lhs, ' ', rhs, ')'); }
-        | BinLogicOrValue => { return CString::concat('(or ', lhs, ' ', rhs, ')'); }
-        | BinLogicImpliesValue => { return CString::concat('(=> ', lhs, ' ', rhs, ')'); }
-        | BinLogicIFFValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+        SMTAssembly::BinLogicAndValue => { return CString::concat('(and ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::BinLogicOrValue => { return CString::concat('(or ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::BinLogicImpliesValue => { return CString::concat('(=> ', lhs, ' ', rhs, ')'); }
+        | SMTAssembly::BinLogicIFFValue => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
     }
 }
 
-recursive function emitMapEntryConstructorValue(v: MapEntryConstructorValue): CString {
+recursive function emitMapEntryConstructorValue(v: SMTAssembly::MapEntryConstructorValue): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let key = emitValue[recursive](v.kexp);
     let val = emitValue[recursive](v.vexp);
@@ -512,7 +558,7 @@ recursive function emitMapEntryConstructorValue(v: MapEntryConstructorValue): CS
     return CString::concat('(', consname, ops, ')');
 }
 
-recursive function emitIfValue(v: IfValue): CString {
+recursive function emitIfValue(v: SMTAssembly::IfValue): CString {
     let tst = emitValue[recursive](v.iftest);
     let tv = emitValue[recursive](v.trueValue);
     let fv = emitValue[recursive](v.falseValue);
@@ -521,47 +567,47 @@ recursive function emitIfValue(v: IfValue): CString {
     return CString::concat('(ite ', tst, flows, ')');
 }
 
-recursive function emitValue(v: Value): CString {
+recursive function emitValue(v: SMTAssembly::Value): CString {
     match(v)@ {
-        ConstantValue => { return emitConstantValue($v); }
-        | AccessNamespaceConstantValue => { return emitAccessNamespaceConstantValue($v); }
-        | AccessStaticFieldValue => { return emitAccessStaticFieldValue($v); }
-        | AccessEnumValue => { return emitAccessEnumValue($v); }
-        | AccessVariableValue => { return emitAccessVariableValue($v); }
-        | AccessVariableRetypeStepValue => { return emitAccessVariableRetypeStepValue($v); }
-        | AccessVariableRetypeMultiStepValue => { return emitAccessVariableRetypeMultiStepValue($v); }
-        | TermifyValue => { return emitTermifyValue[recursive]($v); }
-        | UntermifyValue => { return emitUntermifyValue[recursive]($v); }
-        | LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
-        | ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
-        | ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
-        | CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
-        | CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
-        | LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
-        | LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
-        | UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
-        | AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
-        | AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
-        | IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
-        | IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
-        | IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
-        | IsSubtypeTestValue => { return emitIsSubtypeTestValue[recursive]($v); }
-        | ConvertOptionToSomeTValue => { return emitConvertOptionToSomeTValue[recursive]($v); }
-        | ConvertResultToOkTValue => { return emitConvertResultToOkTValue[recursive]($v); }
-        | ConvertResultToFailEValue => { return emitConvertResultToFailEValue[recursive]($v); }
-        | MethodInvokeStaticValue => { return emitMethodInvokeStaticValue[recursive]($v); }
-        | UnaryValue => { return emitUnaryValue[recursive]($v); }
-        | BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
-        | BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
-        | KeyLessValue => { return emitKeyLessValue($v); }
-        | BinaryNumericCompareValue => { return emitBinaryNumericCompareValue[recursive]($v); }
-        | BinLogicValue => { return emitBinLogicValue[recursive]($v); }
-        | MapEntryConstructorValue => { return emitMapEntryConstructorValue[recursive]($v); }
-        | IfValue => { return emitIfValue[recursive]($v); }
+        SMTAssembly::ConstantValue => { return emitConstantValue($v); }
+        | SMTAssembly::AccessNamespaceConstantValue => { return emitAccessNamespaceConstantValue($v); }
+        | SMTAssembly::AccessStaticFieldValue => { return emitAccessStaticFieldValue($v); }
+        | SMTAssembly::AccessEnumValue => { return emitAccessEnumValue($v); }
+        | SMTAssembly::AccessVariableValue => { return emitAccessVariableValue($v); }
+        | SMTAssembly::AccessVariableRetypeStepValue => { return emitAccessVariableRetypeStepValue($v); }
+        | SMTAssembly::AccessVariableRetypeMultiStepValue => { return emitAccessVariableRetypeMultiStepValue($v); }
+        | SMTAssembly::TermifyValue => { return emitTermifyValue[recursive]($v); }
+        | SMTAssembly::UntermifyValue => { return emitUntermifyValue[recursive]($v); }
+        | SMTAssembly::LiteralTypeDeclValue => { return emitLiteralTypeDeclValue($v); }
+        | SMTAssembly::ConstructorPrimaryValue => { return emitConstructorPrimaryValue[recursive]($v); }
+        | SMTAssembly::ConstructorEListValue => { return emitConstructorEListValue[recursive]($v); }
+        | SMTAssembly::CallNamespaceFunctionValue => { return emitCallNamespaceFunctionValue[recursive]($v); }
+        | SMTAssembly::CallTypeFunctionValue => { return emitCallTypeFunctionValue[recursive]($v); }
+        | SMTAssembly::LogicActionAndValue => { return emitLogicActionAndValue[recursive]($v); }
+        | SMTAssembly::LogicActionOrValue => { return emitLogicActionOrValue[recursive]($v); }
+        | SMTAssembly::UnwrapTypeDeclToPrimitiveValue => { return emitUnwrapTypeDeclToPrimitiveValue($v); }
+        | SMTAssembly::AccessFromNameResolvedValue => { return emitAccessFromNameResolvedValue[recursive]($v); }
+        | SMTAssembly::AccessFromIndexValue => { return emitAccessFromIndexValue[recursive]($v); }
+        | SMTAssembly::IsNoneTestValue => { return emitIsNoneTestValue[recursive]($v); }
+        | SMTAssembly::IsSomeTestValue => { return emitIsSomeTestValue[recursive]($v); }
+        | SMTAssembly::IsTypeTestValue => { return emitIsTypeTestValue[recursive]($v); }
+        | SMTAssembly::IsSubtypeTestValue => { return emitIsSubtypeTestValue[recursive]($v); }
+        | SMTAssembly::ConvertOptionToSomeTValue => { return emitConvertOptionToSomeTValue[recursive]($v); }
+        | SMTAssembly::ConvertResultToOkTValue => { return emitConvertResultToOkTValue[recursive]($v); }
+        | SMTAssembly::ConvertResultToFailEValue => { return emitConvertResultToFailEValue[recursive]($v); }
+        | SMTAssembly::MethodInvokeStaticValue => { return emitMethodInvokeStaticValue[recursive]($v); }
+        | SMTAssembly::UnaryValue => { return emitUnaryValue[recursive]($v); }
+        | SMTAssembly::BinaryArithValue => { return emitBinaryArithValue[recursive]($v); }
+        | SMTAssembly::BinaryKeyEqValue => { return emitBinaryKeyEqValue[recursive]($v); }
+        | SMTAssembly::KeyLessValue => { return emitKeyLessValue($v); }
+        | SMTAssembly::BinaryNumericCompareValue => { return emitBinaryNumericCompareValue[recursive]($v); }
+        | SMTAssembly::BinLogicValue => { return emitBinLogicValue[recursive]($v); }
+        | SMTAssembly::MapEntryConstructorValue => { return emitMapEntryConstructorValue[recursive]($v); }
+        | SMTAssembly::IfValue => { return emitIfValue[recursive]($v); }
     }
 }
 
-recursive function emitLambdaConstructor(v: LambdaConstructor, evv: SMTEmitterEnv): CString {
+recursive function emitLambdaConstructor(v: SMTAssembly::LambdaConstructor, evv: SMTEmitterEnv): CString {
     let plist = v.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -571,14 +617,14 @@ recursive function emitLambdaConstructor(v: LambdaConstructor, evv: SMTEmitterEn
     return CString::concat('(lambda ', pll, ' ', body, ')');
 }
 
-recursive function emitCallArgExpression(v: CallArgExpression, evv: SMTEmitterEnv): CString {
+recursive function emitCallArgExpression(v: SMTAssembly::CallArgExpression, evv: SMTEmitterEnv): CString {
     match(v)@ {
-        LambdaConstructor => { return emitLambdaConstructor[recursive]($v, evv); }
-        | Value => { return emitValue($v); }
+        SMTAssembly::LambdaConstructor => { return emitLambdaConstructor[recursive]($v, evv); }
+        | SMTAssembly::Value => { return emitValue($v); }
     }
 }
 
-recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression, evv: SMTEmitterEnv): CString {
+recursive function emitLambdaInvokeExpression(e: SMTAssembly::LambdaInvokeExpression, evv: SMTEmitterEnv): CString {
     if(e.args.isSingleElement()) {
         return CString::concat('(', e.name, ' ', emitCallArgExpression[recursive](e.args.single(), evv), ')');
     }
@@ -590,7 +636,7 @@ recursive function emitLambdaInvokeExpression(e: LambdaInvokeExpression, evv: SM
     }
 }
 
-recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression, evv: SMTEmitterEnv): CString {
+recursive function emitCallNamespaceFunctionExpression(e: SMTAssembly::CallNamespaceFunctionExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(e.ns, e.name);
     if(e.args.empty()) {
         return fname;
@@ -603,7 +649,7 @@ recursive function emitCallNamespaceFunctionExpression(e: CallNamespaceFunctionE
     }
 }
 
-recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression, evv: SMTEmitterEnv): CString {
+recursive function emitCallTypeFunctionExpression(e: SMTAssembly::CallTypeFunctionExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateTypeFunctionName(e.resolvedType, e.name);
     if(e.args.empty()) {
         return fname;
@@ -616,7 +662,7 @@ recursive function emitCallTypeFunctionExpression(e: CallTypeFunctionExpression,
     }
 }
 
-recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpression, evv: SMTEmitterEnv): CString {
+recursive function emitMethodInvokeStaticExpression(e: SMTAssembly::MethodInvokeStaticExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateTypeFunctionName(e.resolvedTrgt, e.name);
     let rootv = emitValue(e.rootExp);
 
@@ -632,20 +678,20 @@ recursive function emitMethodInvokeStaticExpression(e: MethodInvokeStaticExpress
     }
 }
 
-recursive function emitExpression(e: Expression, evv: SMTEmitterEnv): CString {
+recursive function emitExpression(e: SMTAssembly::Expression, evv: SMTEmitterEnv): CString {
     match(e)@ {
-        LambdaInvokeExpression => { return emitLambdaInvokeExpression[recursive]($e, evv); }
-        | CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($e, evv); }
-        | CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($e, evv); }
-        | MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($e, evv); }
+        SMTAssembly::LambdaInvokeExpression => { return emitLambdaInvokeExpression[recursive]($e, evv); }
+        | SMTAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($e, evv); }
+        | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($e, evv); }
+        | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($e, evv); }
     }
 }
 
-function doLetIndent(enext: FlowOperation): Bool {
-    return !\/(enext?<LetOperation>, enext?<ResultErrorProcessOperation>);
+function doLetIndent(enext: SMTAssembly::FlowOperation): Bool {
+    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::ResultErrorProcessOperation>);
 }
 
-recursive function emitLetOperation(e: LetOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitLetOperation(e: SMTAssembly::LetOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let vbind = CString::concat('((', e.vname, ' ', emitValue(e.value), '))');
 
     if(indent)@none {
@@ -664,7 +710,7 @@ recursive function emitLetOperation(e: LetOperation, evv: SMTEmitterEnv, indent:
     }
 }
 
-recursive function emitIfOperation(e: IfOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitIfOperation(e: SMTAssembly::IfOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let tst = emitValue[recursive](e.iftest);
     let ttst = CString::concat('(ite ', tst);
 
@@ -682,10 +728,10 @@ recursive function emitIfOperation(e: IfOperation, evv: SMTEmitterEnv, indent: O
     }
 }
 
-function emitReturnOperation(e: ReturnValueOperation, evv: SMTEmitterEnv): CString {
+function emitReturnOperation(e: SMTAssembly::ReturnValueOperation, evv: SMTEmitterEnv): CString {
     let vval = emitValue(e.val);
 
-    if(evv.expectedResultType)<DirectResult> {
+    if(evv.expectedResultType)<SMTAssembly::DirectResult> {
         return vval;
     }
     else {
@@ -693,7 +739,7 @@ function emitReturnOperation(e: ReturnValueOperation, evv: SMTEmitterEnv): CStri
     }
 }
 
-recursive function emitResultErrorProcessOperation(e: ResultErrorProcessOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitResultErrorProcessOperation(e: SMTAssembly::ResultErrorProcessOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let vval = emitExpression[recursive](e.val, evv);
 
     let bbind = CString::concat('(let ((', e.tmpvar, ' ', vval, '))');
@@ -714,7 +760,7 @@ recursive function emitResultErrorProcessOperation(e: ResultErrorProcessOperatio
     }
 }
 
-function emitAbortOperation(e: AbortOperation, evv: SMTEmitterEnv): CString {
+function emitAbortOperation(e: SMTAssembly::AbortOperation, evv: SMTEmitterEnv): CString {
     if(e.label === evv.errtrgt) {
         return '@Result-errtrgt';
     }
@@ -723,7 +769,7 @@ function emitAbortOperation(e: AbortOperation, evv: SMTEmitterEnv): CString {
     }
 }
 
-recursive function emitAssertOperation(e: AssertOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let cond = emitValue(e.cond);
     let rop = if(e.label === evv.errtrgt) then '@Result-errtrgt' else '@Result-errother';
 
@@ -741,7 +787,7 @@ recursive function emitAssertOperation(e: AssertOperation, evv: SMTEmitterEnv, i
     }
 }
 
-recursive function emitAssumeOperation(e: AssumeOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let cond = emitValue(e.cond);
 
     let chk = CString::concat('(ite (not ', cond, ') @Result-errother ');
@@ -758,16 +804,16 @@ recursive function emitAssumeOperation(e: AssumeOperation, evv: SMTEmitterEnv, i
     }
 }
 
-recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitFlowOperation(op: SMTAssembly::FlowOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     var eexp: CString;
     match(op)@ {
-        LetOperation => { eexp = emitLetOperation[recursive]($op, evv, indent); }
-        | IfOperation => { eexp = emitIfOperation[recursive]($op, evv, indent); }
-        | ReturnValueOperation => { eexp = emitReturnOperation($op, evv); }
-        | ResultErrorProcessOperation => { eexp = emitResultErrorProcessOperation[recursive]($op, evv, indent); }
-        | AbortOperation => { eexp = emitAbortOperation($op, evv); }
-        | AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, indent); }
-        | AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, indent); }
+        SMTAssembly::LetOperation => { eexp = emitLetOperation[recursive]($op, evv, indent); }
+        | SMTAssembly::IfOperation => { eexp = emitIfOperation[recursive]($op, evv, indent); }
+        | SMTAssembly::ReturnValueOperation => { eexp = emitReturnOperation($op, evv); }
+        | SMTAssembly::ResultErrorProcessOperation => { eexp = emitResultErrorProcessOperation[recursive]($op, evv, indent); }
+        | SMTAssembly::AbortOperation => { eexp = emitAbortOperation($op, evv); }
+        | SMTAssembly::AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, indent); }
+        | SMTAssembly::AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, indent); }
     }
 
     if(indent)@none {
@@ -778,7 +824,7 @@ recursive function emitFlowOperation(op: FlowOperation, evv: SMTEmitterEnv, inde
     }
 }
 
-function emitConstDeclarationHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+function emitConstDeclarationHelper(cname: CString, vtype: SMTAssembly::ResultType, value: SMTAssembly::FlowOperation): CString {
     var optconstv = tryGetConstFlowOperation(value);
     var opteagerinit = '';
     if(optconstv)@some {
@@ -792,7 +838,7 @@ function emitConstDeclarationHelper(cname: CString, vtype: ResultType, value: Fl
         return CString::join(' ', cdecl, cinit);
     }
     else {
-        if(vtype)<DirectResult> {
+        if(vtype)<SMTAssembly::DirectResult> {
             return cdecl;
         }
         else {
@@ -805,11 +851,11 @@ function emitConstDeclarationHelper(cname: CString, vtype: ResultType, value: Fl
     }
 }
 
-function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: FlowOperation): CString {
+function emitConstInitializerHelper(cname: CString, vtype: SMTAssembly::ResultType, value: SMTAssembly::FlowOperation): CString {
     let evv = SMTEmitterEnv{vtype, '[NO_CONST_ERRORS]'};
     let cval = emitFlowOperation(value, evv, none);
 
-    if(vtype)<DirectResult> {
+    if(vtype)<SMTAssembly::DirectResult> {
         return CString::concat('(assert (= ', cname, ' ', cval, '))');
     }
     else {
@@ -823,7 +869,7 @@ function emitConstInitializerHelper(cname: CString, vtype: ResultType, value: Fl
 }
 
 %** Return the declarations and definitions as 2 seperate components **%
-function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<ConstMemberDecl>): CString, CString {
+function emitConstInfo(nsconsts: List<SMTAssembly::NamespaceConstDecl>, typeconsts: List<SMTAssembly::ConstMemberDecl>): CString, CString {
     let nsconstdecls = nsconsts.map<CString>(fn(c) => {
         let cname = SMTNameManager::generateNamespaceConstName(c.ns, c.cname);
         return emitConstDeclarationHelper(cname, c.vtype, c.value);
@@ -855,7 +901,7 @@ function emitConstInfo(nsconsts: List<NamespaceConstDecl>, typeconsts: List<Cons
     return tidyNewlineJoin(nsconstdecls_str, tconstdecls_str), tidyNewlineJoin(nsconstinits_str, tconstinits_str);
 }
 
-function emitNamespacePredicateFunctionDecl(f: NamespacePredicateFunctionDecl): CString {
+function emitNamespacePredicateFunctionDecl(f: SMTAssembly::NamespacePredicateFunctionDecl): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
@@ -863,7 +909,7 @@ function emitNamespacePredicateFunctionDecl(f: NamespacePredicateFunctionDecl): 
     return CString::concat('(declare-fun ', fname, ' ', pll, ' Bool)');
 }
 
-function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, trgterr: CString): CString {
+function emitNamespaceBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFunctionDecl, trgterr: CString): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
@@ -880,7 +926,7 @@ function emitNamespaceBuiltinFunctionDecl(f: NamespaceBuiltinFunctionDecl, trgte
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, trgterr: CString): CString {
+function emitNamespaceFunctionDecl(f: SMTAssembly::NamespaceFunctionDecl, trgterr: CString): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
@@ -890,7 +936,7 @@ function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, trgterr: CString): 
     let evv = SMTEmitterEnv{f.resultType, trgterr};
 
     var body: CString;
-    if($rb = f.body)@<ReturnValueOperation> {
+    if($rb = f.body)@<SMTAssembly::ReturnValueOperation> {
         body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
     }
     else {
@@ -900,7 +946,7 @@ function emitNamespaceFunctionDecl(f: NamespaceFunctionDecl, trgterr: CString): 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
 }
 
-function emitTypeFunctionDecl(f: TypeFunctionDecl, trgterr: CString): CString {
+function emitTypeFunctionDecl(f: SMTAssembly::TypeFunctionDecl, trgterr: CString): CString {
     let fname = SMTNameManager::generateTypeFunctionName(f.tkey, f.name);
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
@@ -910,7 +956,7 @@ function emitTypeFunctionDecl(f: TypeFunctionDecl, trgterr: CString): CString {
     let evv = SMTEmitterEnv{f.resultType, trgterr};
 
     var body: CString;
-    if($rb = f.body)@<ReturnValueOperation> {
+    if($rb = f.body)@<SMTAssembly::ReturnValueOperation> {
         body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
     }
     else {
@@ -920,18 +966,18 @@ function emitTypeFunctionDecl(f: TypeFunctionDecl, trgterr: CString): CString {
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
 }
 
-function emitEnumTypeDecl(ttype: EnumTypeDecl): CString {
+function emitEnumTypeDecl(ttype: SMTAssembly::EnumTypeDecl): CString {
     let tvals = CString::joinAll(' ', ttype.members.map<CString>(fn(v) => CString::concat(ttype.tkey.value, '$$', v)));
 
     return CString::concat('(declare-datatype ', ttype.tkey.value, ' (', tvals, '))');
 }
 
-function emitEnumTypeDecls(ttypes: List<EnumTypeDecl>): CString {
+function emitEnumTypeDecls(ttypes: List<SMTAssembly::EnumTypeDecl>): CString {
     let tdecls = ttypes.map<CString>(fn(t) => emitEnumTypeDecl(t));
     return CString::joinAll('%n;', tdecls);
 }
 
-function emitTypedeclTypeDecl(ttype: TypedeclTypeDecl): CString {
+function emitTypedeclTypeDecl(ttype: SMTAssembly::TypedeclTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
     let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
 
@@ -941,45 +987,45 @@ function emitTypedeclTypeDecl(ttype: TypedeclTypeDecl): CString {
     return CString::concat('(declare-datatype ', ttype.tkey.value, ' ( ', vval, ' ))');
 }
 
-function emitTypedeclTypeDeclTermCons(ttype: TypedeclTypeDecl): CString {
+function emitTypedeclTypeDeclTermCons(ttype: SMTAssembly::TypedeclTypeDecl): CString {
     let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
     let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
     let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
     return CString::concat('            (', termcons, ' ', cval, ')');
 }
 
-function emitTypedeclTypes(ttypes: List<TypedeclTypeDecl>): CString, CString {
+function emitTypedeclTypes(ttypes: List<SMTAssembly::TypedeclTypeDecl>): CString, CString {
     let tds = ttypes.map<CString>(fn(t) => emitTypedeclTypeDecl(t));
     let ttcons = ttypes.filter(pred(t) => t.termable).map<CString>(fn(t) => emitTypedeclTypeDeclTermCons(t));
 
     return CString::joinAll('%n;', tds), CString::joinAll('%n;', ttcons);
 }
 
-function emitConstructableTypeDeclDeclaration(ttype: ConstructableTypeDecl): CString {
+function emitConstructableTypeDeclDeclaration(ttype: SMTAssembly::ConstructableTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
-function emitConstructableTypeDeclConstructor(ttype: ConstructableTypeDecl): CString {
+function emitConstructableTypeDeclConstructor(ttype: SMTAssembly::ConstructableTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
 
     var tlist: List<CString>;
     match(ttype)@ {
-        OkTypeDecl => { 
+        SMTAssembly::OkTypeDecl => { 
             tlist = List<CString>{
                 CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.ttype.value, ')'),
             };
         }
-        | FailTypeDecl => {
+        | SMTAssembly::FailTypeDecl => {
             tlist = List<CString>{
                 CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.etype.value, ')'),
             };
         }
-        | SomeTypeDecl => {
+        | SMTAssembly::SomeTypeDecl => {
             tlist = List<CString>{
                 CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.vtype.value, ')'),
             };
         }
-        | MapEntryTypeDecl => {
+        | SMTAssembly::MapEntryTypeDecl => {
             tlist = List<CString>{
                 CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'key'), ' ', $ttype.ktype.value, ')'),
                 CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, 'value'), ' ', $ttype.vtype.value, ')'),
@@ -999,14 +1045,14 @@ function emitConstructableTypeDeclConstructor(ttype: ConstructableTypeDecl): CSt
     }
 }
 
-function emitConstructableTypeDeclTermConstructor(ttype: ConstructableTypeDecl): CString {
+function emitConstructableTypeDeclTermConstructor(ttype: SMTAssembly::ConstructableTypeDecl): CString {
     let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
     let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
     let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
     return CString::concat('            (', termcons, ' ', cval, ')');
 }
 
-function emitConstructableTypeDecls(ttypes: List<ConstructableTypeDecl>): CString, CString, CString {
+function emitConstructableTypeDecls(ttypes: List<SMTAssembly::ConstructableTypeDecl>): CString, CString, CString {
    let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclDeclaration(t)));
    let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclConstructor(t)));
    let tcons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitConstructableTypeDeclTermConstructor(t)));
@@ -1014,29 +1060,29 @@ function emitConstructableTypeDecls(ttypes: List<ConstructableTypeDecl>): CStrin
    return idecls, cons, tcons;
 }
 
-function emitCollectionTypeDeclDeclaration(ttype: CollectionTypeDecl): CString {
+function emitCollectionTypeDeclDeclaration(ttype: SMTAssembly::CollectionTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
-function emitCollectionTypeDeclConstructor(ttype: CollectionTypeDecl): CString {
+function emitCollectionTypeDeclConstructor(ttype: SMTAssembly::CollectionTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
     let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
     let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
     return CString::concat('        (', consname, ' ', cval, ')');
 }
 
-function emitCollectionTypeDecls(ttypes: List<CollectionTypeDecl>): CString, CString {
+function emitCollectionTypeDecls(ttypes: List<SMTAssembly::CollectionTypeDecl>): CString, CString {
     let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitCollectionTypeDeclDeclaration(t)));
     let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitCollectionTypeDeclConstructor(t)));
     
     return idecls, cons;
 }
 
-function emitEntityTypeDeclDeclaration(ttype: EntityTypeDecl): CString {
+function emitEntityTypeDeclDeclaration(ttype: SMTAssembly::EntityTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
-function emitEntityTypeDeclConstructor(ttype: EntityTypeDecl): CString {
+function emitEntityTypeDeclConstructor(ttype: SMTAssembly::EntityTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
 
     if(ttype.allfields.empty()) {
@@ -1048,14 +1094,14 @@ function emitEntityTypeDeclConstructor(ttype: EntityTypeDecl): CString {
     }
 }
 
-function emitEntityTypeDeclTermConstructor(ttype: EntityTypeDecl): CString {
+function emitEntityTypeDeclTermConstructor(ttype: SMTAssembly::EntityTypeDecl): CString {
     let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
     let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
     let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
     return CString::concat('            (', termcons, ' ', cval, ')');
 }
 
-function emitEntityTypeDecls(ttypes: List<EntityTypeDecl>): CString, CString, CString {
+function emitEntityTypeDecls(ttypes: List<SMTAssembly::EntityTypeDecl>): CString, CString, CString {
     let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitEntityTypeDeclDeclaration(t)));
     let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitEntityTypeDeclConstructor(t)));
     let tcons = CString::joinAll('%n;', ttypes.filter(pred(t) => t.termable).map<CString>(fn(t) => emitEntityTypeDeclTermConstructor(t)));
@@ -1063,11 +1109,11 @@ function emitEntityTypeDecls(ttypes: List<EntityTypeDecl>): CString, CString, CS
     return idecls, cons, tcons;
 }
 
-function emitDatatypeMemberTypeDeclDeclaration(ttype: DatatypeMemberEntityTypeDecl): CString {
+function emitDatatypeMemberTypeDeclDeclaration(ttype: SMTAssembly::DatatypeMemberEntityTypeDecl): CString {
     return CString::concat('    (', ttype.tkey.value, ' 0)');
 }
 
-function emitDatatypeMemberEntityTypeDeclConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+function emitDatatypeMemberEntityTypeDeclConstructor(ttype: SMTAssembly::DatatypeMemberEntityTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
 
     if(ttype.allfields.empty()) {
@@ -1079,14 +1125,14 @@ function emitDatatypeMemberEntityTypeDeclConstructor(ttype: DatatypeMemberEntity
     }
 }
 
-function emitDatatypeMemberEntityTypeDeclTermConstructor(ttype: DatatypeMemberEntityTypeDecl): CString {
+function emitDatatypeMemberEntityTypeDeclTermConstructor(ttype: SMTAssembly::DatatypeMemberEntityTypeDecl): CString {
     let termcons = SMTNameManager::generateStructTermConstructorName(ttype.tkey);
     let termfield = SMTNameManager::generateStructTermFieldName(ttype.tkey);
     let cval = CString::concat('(', termfield, ' ', ttype.tkey.value, ')');
     return CString::concat('            (', termcons, ' ', cval, ')');
 }
 
-function emitDatatypeMemberEntityTypeDecls(ttypes: List<DatatypeMemberEntityTypeDecl>): CString, CString, CString {
+function emitDatatypeMemberEntityTypeDecls(ttypes: List<SMTAssembly::DatatypeMemberEntityTypeDecl>): CString, CString, CString {
     let idecls = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberTypeDeclDeclaration(t)));
     let cons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclConstructor(t)));
     let tcons = CString::joinAll('%n;', ttypes.map<CString>(fn(t) => emitDatatypeMemberEntityTypeDeclTermConstructor(t)));
@@ -1094,7 +1140,7 @@ function emitDatatypeMemberEntityTypeDecls(ttypes: List<DatatypeMemberEntityType
     return idecls, cons, tcons;
 }
 
-function emitSubtypePredicate(ctype: TypeKey, subtypes: List<TypeKey>): CString {
+function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAssembly::TypeKey>): CString {
     let tname = SMTNameManager::generateTermSubtypeFunctionName(ctype);
     
     if(subtypes.empty()) {
@@ -1109,7 +1155,7 @@ function emitSubtypePredicate(ctype: TypeKey, subtypes: List<TypeKey>): CString 
     }
 }
 
-function emitSpecialOptionSubtypePredicate(otype: OptionTypeDecl): CString {
+function emitSpecialOptionSubtypePredicate(otype: SMTAssembly::OptionTypeDecl): CString {
     let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
     let tlist = List<CString>{
         CString::concat('((_ is ', otype.someType.value, ') tt)'),
@@ -1119,17 +1165,17 @@ function emitSpecialOptionSubtypePredicate(otype: OptionTypeDecl): CString {
     return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
 }
 
-function emitPrimitiveConceptSubtypeChecks(ctype: List<PrimitiveConceptTypeDecl>): CString {
+function emitPrimitiveConceptSubtypeChecks(ctype: List<SMTAssembly::PrimitiveConceptTypeDecl>): CString {
     let ccks = ctype.map<CString>(fn(c) => {
         match(c)@{
-            OptionTypeDecl => {
+            SMTAssembly::OptionTypeDecl => {
                 return emitSpecialOptionSubtypePredicate($c);
             }
-            | ResultTypeDecl => {
-                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.okType, $c.failType});
+            | SMTAssembly::ResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<SMTAssembly::TypeKey>{$c.okType, $c.failType});
             }
-            | APIResultTypeDecl => {
-                return emitSubtypePredicate(c.tkey, List<TypeKey>{$c.errorType, $c.failedType, $c.rejectedType, $c.successType});
+            | SMTAssembly::APIResultTypeDecl => {
+                return emitSubtypePredicate(c.tkey, List<SMTAssembly::TypeKey>{$c.errorType, $c.failedType, $c.rejectedType, $c.successType});
             }
         }
     });
@@ -1137,17 +1183,17 @@ function emitPrimitiveConceptSubtypeChecks(ctype: List<PrimitiveConceptTypeDecl>
     return CString::joinAll('%n;', ccks);
 }
 
-function emitConceptSubtypeChecks(ctype: List<ConceptTypeDecl>): CString {
+function emitConceptSubtypeChecks(ctype: List<SMTAssembly::ConceptTypeDecl>): CString {
     let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
     return CString::joinAll('%n;', ccks);
 }
 
-function emitDatatypeSubtypeChecks(ctype: List<DatatypeTypeDecl>): CString {
+function emitDatatypeSubtypeChecks(ctype: List<SMTAssembly::DatatypeTypeDecl>): CString {
     let ccks = ctype.map<CString>(fn(c) => emitSubtypePredicate(c.tkey, c.subtypes));
     return CString::joinAll('%n;', ccks);
 }
 
-function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concepts: List<ConceptTypeDecl>, dconcepts: List<DatatypeTypeDecl>): CString {
+function emitAllSubtypeChecks(pconcepts: List<SMTAssembly::PrimitiveConceptTypeDecl>, concepts: List<SMTAssembly::ConceptTypeDecl>, dconcepts: List<SMTAssembly::DatatypeTypeDecl>): CString {
     let pcks = emitPrimitiveConceptSubtypeChecks(pconcepts);
     let ccks = emitConceptSubtypeChecks(concepts);
     let dcks = emitDatatypeSubtypeChecks(dconcepts);
@@ -1155,7 +1201,7 @@ function emitAllSubtypeChecks(pconcepts: List<PrimitiveConceptTypeDecl>, concept
     return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
 }
 
-function emitAssembly(asm: Assembly, trgterr: CString): CString {
+function emitAssembly(asm: SMTAssembly::Assembly, trgterr: CString): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
     let conststr = CString::join('%n;',
         '#BEGIN ;;--GLOBAL_DECLS--;;',
@@ -1272,10 +1318,4 @@ function emitAssembly(asm: Assembly, trgterr: CString): CString {
     );
 
     return CString::join('%n;', predecl_str, CString::join('%n;', stddecls, stdcons, termcons), subchecks_str, efuncs);
-}
-
-public function main(): Int {
-    var asm: Assembly;
-
-    return 0i;
 }

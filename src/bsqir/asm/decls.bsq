@@ -1,4 +1,4 @@
-declare namespace IR;
+namespace BSQAssembly;
 
 const min_safe_int: Int = -4611686018427387903i;
 const max_safe_int: Int = 4611686018427387903i;
@@ -7,26 +7,26 @@ const max_safe_int: Int = 4611686018427387903i;
 const max_safe_nat: Nat = 4611686018427387903n;
 
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-const namespaceKeyRE: CRegex = /(${IR::namespaceComponentRE}'::')*${IR::namespaceComponentRE}/c; %%Core is implicit here
-type NamespaceComponentKey = CString of IR::namespaceComponentRE;
-type NamespaceKey = CString of IR::namespaceKeyRE; %%Core is implicit here
+const namespaceKeyRE: CRegex = /(${BSQAssembly::namespaceComponentRE}'::')*${BSQAssembly::namespaceComponentRE}/c; %%Core is implicit here
+type NamespaceComponentKey = CString of BSQAssembly::namespaceComponentRE;
+type NamespaceKey = CString of BSQAssembly::namespaceKeyRE; %%Core is implicit here
 
-const basicNominalTypeKeyRE: CRegex = /(${IR::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
-const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
-const nominalTypeKeyRE: CRegex = /(${IR::basicNominalTypeKeyRE}|${IR::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
+const basicNominalTypeKeyRE: CRegex = /(${BSQAssembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
+const specialScopedTypeKeyRE: CRegex = /('Result'|'APBSQAssemblyesult')'<'.+'>''::'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
+const nominalTypeKeyRE: CRegex = /(${BSQAssembly::basicNominalTypeKeyRE}|${BSQAssembly::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${IR::templateTypeKeyRE}|${IR::nominalTypeKeyRE}|${IR::elistTypeKeyRE}/c;
-const typeKeyRE: CRegex = /${IR::nominalTypeKeyRE}|${IR::elistTypeKeyRE}|${IR::lambdaTypeKeyRE}/c; 
-type TypeKey = CString of IR::typeKeyRE;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${BSQAssembly::templateTypeKeyRE}|${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}|${BSQAssembly::lambdaTypeKeyRE}/c; 
+type TypeKey = CString of BSQAssembly::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${IR::namespaceKeyRE}|${IR::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9&]+/c;
-type InvokeKey = CString of IR::invokeKeyRE;
+const invokeKeyRE: CRegex = /(${BSQAssembly::namespaceKeyRE}|${BSQAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]+/c;
+type InvokeKey = CString of BSQAssembly::invokeKeyRE;
 
 const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9&]+/c; %%we allow & inside these identifiers so we can make special names
 const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9]+/c;
-type Identifier = CString of IR::identifierRE;
-type VarIdentifier = CString of IR::videntifierRE;
+type Identifier = CString of BSQAssembly::identifierRE;
+type VarIdentifier = CString of BSQAssembly::videntifierRE;
 
 entity SourceInfo {
     field line: Nat;

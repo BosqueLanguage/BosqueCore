@@ -1,4 +1,4 @@
-namespace IR;
+namespace BSQAssembly;
 
 entity BinderInfo {
     field srcname: VarIdentifier;
@@ -385,7 +385,7 @@ entity IfExpression provides Expression {
 }
 
 concept Statement {
-    field sinfo: IR::SourceInfo;
+    field sinfo: SourceInfo;
 }
 
 entity VariableDeclarationStatement provides Statement {

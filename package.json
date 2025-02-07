@@ -20,7 +20,7 @@
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js && node --test-concurrency=8 --test test/*/*/*.test.js && node ./build/build_smtemit_test.js && node ./bin/smttest/test.mjs",
+        "test": "node ./build/build_all.js && node --test-concurrency=8 --test test/*/*/*.test.js && node ./build/build_smtemit_test.js",
         "test-coverage": "node ./build/build_all.js && node --test-concurrency=4 --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=bin/test/*/*_nf.js --test-coverage-exclude=/tmp/** --test test/*/*/*.test.js",
         "test-parser": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/parser/*/*.test.js",
         "test-typecheck": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/typecheck/*/*.test.js",

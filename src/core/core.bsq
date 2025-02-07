@@ -104,6 +104,129 @@ __internal __typedeclable __numeric entity Complex {
 
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {
+    #if STRIPPED_CORE
+#else
+    %** Convert a CString to a String **%
+    function fromCString(s: CString): String {
+        return StringOps::s_fromCString(s);
+    }
+
+    %** Check if the string is empty **%
+    method empty(): Bool {
+        return StringOps::s_empty(this);
+    }
+
+    %** Check if the string starts with the given prefix **%
+    method startsWithString(prefix: String): Bool {
+        return StringOps::s_startsWithString(this, prefix);
+    }
+
+    %** Check if the string ends with the given suffix **%
+    method endsWithString(suffix: String): Bool {
+        return StringOps::s_endsWithString(this, suffix);
+    }
+
+    %** Check if the string contains the given substring **%
+    method containsString(sub: String): Bool {
+        return StringOps::s_containsString(this, sub);
+    }
+
+    %** Check if the string contains the given substring uniquely (exactly once) **%
+    method containsStringUnique(sub: String): Bool {
+        return StringOps::s_containsStringUnique(this, sub);
+    }
+
+    %** Append String s to back of this **%
+    method append(s: String): String {
+        return StringOps::s_concat2(this, s);
+    }
+
+    %** Prepend String s to the front of this **%
+    method prepend(s: String): String {
+        return StringOps::s_concat2(s, this);
+    }
+
+    %** Concatenate all of the strings **%
+    function concat(...strs: List<String>): String {
+        if(strs.empty()) {
+            return "";
+        }
+        else {
+            return strs.reduce<String>('', fn(acc, s) => StringOps::s_concat2(acc, s));
+        }
+    }
+
+    %** Concatenate all of the strings in the list **%
+    function concatAll(strs: List<String>): String {
+        if(strs.empty()) {
+            return "";
+        }
+        else {
+            return strs.reduce<String>('', fn(acc, s) => StringOps::s_concat2(acc, s));
+        }
+    }
+
+    %** Join all of the strings with the given separator **%
+    function join(sep: String, ...strs: List<String>): String {
+        if(strs.empty()) {
+            return "";
+        }
+        else {
+            return strs.reduce<String>('', fn(acc, s) => {
+                if(acc.empty()) {
+                    return s;
+                }
+                else {
+                    return StringOps::s_concat2(StringOps::s_concat2(acc, sep), s);
+                }
+            });
+        }
+    }
+
+    %** Concatenate all of the strings in the list (using the given separator) **%
+    function joinAll(sep: String, strs: List<String>): String {
+        if(strs.empty()) {
+            return "";
+        }
+        else {
+            return strs.reduce<String>('', fn(acc, s) => {
+                if(acc.empty()) {
+                    return s;
+                }
+                else {
+                    return StringOps::s_concat2(StringOps::s_concat2(acc, sep), s);
+                }
+            });
+        }
+    }
+
+    %%%%
+    %%TODO: we want to support regex versions of these operations too
+
+    %** Remove a given prefix string **%
+    method removePrefixString(prefix: String): String 
+        requires this.startsWithString(prefix);
+    {
+        return StringOps::s_removePrefixString(this, prefix);
+    }
+    
+    %** Remove a given suffix string **%
+    method removeSuffixString(suffix: String): String 
+        requires this.endsWithString(suffix);
+    {
+        return StringOps::s_removeSuffixString(this, suffix);
+    }
+
+    %** Replace the unique occurrence of the target string with the replace string **%
+    method replaceUniqueStringOccurrences(target: String, replace: String): String {
+        return StringOps::s_replaceUniqueStringOccurrence(this, target, replace);
+    }
+
+    %** Replace all occurrences of the target string with the replace string **%
+    method replaceAllStringOccurrences(target: String, replace: String): String {
+        return StringOps::s_replaceAllStringOccurrences(this, target, replace);
+    }
+#endif %% STRIPPED_CORE
 }
 
 %** Primitive string value. **%
@@ -123,6 +246,16 @@ __internal __typedeclable __keycomparable entity CString {
     %** Check if the string ends with the given suffix **%
     method endsWithString(suffix: CString): Bool {
         return CStringOps::s_endsWithString(this, suffix);
+    }
+
+    %** Check if the string contains the given substring **%
+    method containsString(sub: CString): Bool {
+        return CStringOps::s_containsString(this, sub);
+    }
+
+    %** Check if the string contains the given substring uniquely (exactly once) **%
+    method containsStringUnique(sub: CString): Bool {
+        return CStringOps::s_containsStringUnique(this, sub);
     }
 
     %** Append CString s to back of this **%
@@ -204,6 +337,18 @@ __internal __typedeclable __keycomparable entity CString {
         requires this.endsWithString(suffix);
     {
         return CStringOps::s_removeSuffixString(this, suffix);
+    }
+
+    %** Replace the unique occurrence of the target string with the replace string **%
+    method replaceUniqueStringOccurrences(target: CString, replace: CString): CString 
+        requires this.containsStringUnique(target);
+    {
+        return CStringOps::s_replaceUniqueStringOccurrence(this, target, replace);
+    }
+
+    %** Replace all occurrences of the target string with the replace string **%
+    method replaceAllStringOccurrences(target: CString, replace: CString): CString {
+        return CStringOps::s_replaceAllStringOccurrences(this, target, replace);
     }
 #endif %% STRIPPED_CORE
 }

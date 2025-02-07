@@ -1,4 +1,4 @@
-namespace IR;
+namespace BSQAssembly;
 
 entity LambdaParameterSignature {
     field ptype: TypeSignature;

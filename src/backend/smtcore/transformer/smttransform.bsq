@@ -1,0 +1,14 @@
+%*
+ * Take a Bosque IR Assembly and transform it into a SMT representation:
+ *%
+
+declare namespace SMTEmitter {
+    using BSQAssembly;
+    using SMTAssembly;
+}
+
+entity Transformer {
+    function transformAssembly(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
+        return "ok";
+    }
+}

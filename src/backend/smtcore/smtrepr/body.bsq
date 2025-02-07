@@ -1,7 +1,7 @@
-namespace SMTEmitter;
+namespace SMTAssembly;
 
 const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
-type VarName = CString of SMTEmitter::varnameRE;
+type VarName = CString of SMTAssembly::varnameRE;
 
 concept CallArgExpression {
 }

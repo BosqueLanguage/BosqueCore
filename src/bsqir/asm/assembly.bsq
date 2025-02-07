@@ -1,4 +1,4 @@
-namespace IR;
+declare namespace BSQAssembly;
 
 concept AbstractDecl {
     field file: String;
