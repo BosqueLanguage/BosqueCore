@@ -4,53 +4,128 @@ namespace SMTEmitter;
 
 namespace TransformNameManager {
     function resymbolCStringForSMT(cstr: CString): CString {
-        xxxx;
+        return cstr.replaceAllStringOccurrences('::', '@')
+            .replaceAllStringOccurrences(', ', '-')
+            .replaceAllStringOccurrences('(|', '@EList<')
+            .replaceAllStringOccurrences('|)', '>');
     }
 
     function convertNamespaceKey(nskey: BSQAssembly::NamespaceKey): SMTAssembly::NamespaceKey {
         return SMTAssembly::NamespaceKey::from(resymbolCStringForSMT(nskey.value));
     }
+
+    function convertTypeKey(nskey: BSQAssembly::TypeKey): SMTAssembly::TypeKey {
+        return SMTAssembly::TypeKey::from(resymbolCStringForSMT(nskey.value));
+    }
 }
 
-function transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
-    xxxx;
+entity SMTTransformer {
+    field assembly: BSQAssembly::Assembly;
 
-    field declaredType: TypeSignature;
-    field value: Expression;
+    method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
+        if(tsig)@!<BSQAssembly::NominalTypeSignature> {
+            let smtk = TransformNameManager::convertTypeKey(tsig.tkeystr);
+            return smtk;
+        }
+        else {
+            if(this.assembly.isNominalTypeConcrete($tsig)) {
+                return SMTAssembly::TypeKey::from($tsig.tkeystr);
+            }
+            else {
+                return SMTAssembly::TypeKey::from("@BTerm");
+            }
+        }
+    }
 
-    return SMTAssembly::NamespaceConstDecl {
-        ns = TransformNameManager::convertNamespaceKey(decl.declaredInNS),
-        cname = decl.name.value,
+    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeSignature {
+        if(tsig)@!<BSQAssembly::LambdaTypeSignature> {
+            return this.transformStdTypeToSMT(tsig);
+        }
+        else {
+            abort; %% NOT IMPLEMENTED LAMBDA TYPES
+        }
+    }
 
-        vtype: ResultType;
-        value: FlowOperation;
-    };
-}
+    method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::Value {
+        return SMTAssembly::LiteralNoneValue{};
+    }
 
-function transformAssemblyToSMT(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
+    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): SMTAssembly::Value {
+        let tkey = this.transformStdTypeToSMT(exp.etype);
+        return SMTAssembly::LiteralSimpleValue{tkey, exp.value};
+    }
+
+    method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): SMTAssembly::Value {
+        return SMTAssembly::LiteralCStringValue{exp.value};
+    }
+
+    method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): SMTAssembly::Value {
+        return SMTAssembly::LiteralStringValue{exp.value};
+    }
+
+    method transformExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): List<SMTAssembly::FlowOperation>, SMTAssembly::Value {
+        match(exp)@ {
+            BSQAssembly::LiteralNoneExpression => { 
+                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralNoneExpression($exp); 
+            }
+            | BSQAssembly::LiteralSimpleExpression { 
+                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralSimpleExpression($exp); 
+            }
+            | BSQAssembly::LiteralCStringExpression { 
+                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralCStringExpression($exp);
+            }
+            | BSQAssembly::LiteralStringExpression { 
+                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralStringExpression($exp); 
+            }
+            | _ => { 
+                abort; %% NOT IMPLEMENTED
+            }
+        }
+    }
+
+    method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
+        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let declaredtype = this.transformStdTypeToSMT(decl.declaredType);
+
+        let preops, value = this.transformExpressionToSMT(decl.value, decl.declaredInType);
+        let body = SMTAssembly::SequenceFlowOperation{preops, value};
+
+        if(preops.empty()) {
+            let vtype = SMTAssembly::DirectResultType{ declaredtype };
+            return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
+        }
+        else {
+            let vtype = SMTAssembly::OptionResult{ declaredtype };
+            return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
+        }
+    }
+
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
+        let transformer = SMTTransformer{assembly};
+
+        return Assembly {
+            nsconsts = List<NamespaceConstDecl>{assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc))},
+            typeconsts = List<ConstMemberDecl>{},
+
+            nspreds = List<NamespacePredicateFunctionDecl>{},
+            nsbuiltins = List<NamespaceBuiltinFunctionDecl>{},
     
-    return Assembly {
-        nsconsts = List<NamespaceConstDecl>{asm.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformNamspaceConstDeclToSMT(nsc))},
-        typeconsts = List<ConstMemberDecl>{},
-
-        nspreds = List<NamespacePredicateFunctionDecl>{},
-        nsbuiltins = List<NamespaceBuiltinFunctionDecl>{},
+            nsfuncs = Map<InvokeKey, NamespaceFunctionDecl>{},
+            typefuncs = Map<InvokeKey, TypeFunctionDecl>{},
+            allfuncs = List<InvokeKey>{},
     
-        nsfuncs = Map<InvokeKey, NamespaceFunctionDecl>{},
-        typefuncs = Map<InvokeKey, TypeFunctionDecl>{},
-        allfuncs = List<InvokeKey>{},
-    
-        enums = List<EnumTypeDecl>{},
-        typedecls = List<TypedeclTypeDecl>{},
-        constructables = List<ConstructableTypeDecl>{},
-        collections = List<CollectionTypeDecl>{},
+            enums = List<EnumTypeDecl>{},
+            typedecls = List<TypedeclTypeDecl>{},
+            constructables = List<ConstructableTypeDecl>{},
+            collections = List<CollectionTypeDecl>{},
 
-        entities = List<EntityTypeDecl>{},
-        datamembers = List<DatatypeMemberEntityTypeDecl>{},
+            entities = List<EntityTypeDecl>{},
+            datamembers = List<DatatypeMemberEntityTypeDecl>{},
 
-        pconcepts = List<PrimitiveConceptTypeDecl>{},
-        concepts = List<ConceptTypeDecl>{},
+            pconcepts = List<PrimitiveConceptTypeDecl>{},
+            concepts = List<ConceptTypeDecl>{},
 
-        datatypes = List<DatatypeTypeDecl>{}
-    };
+            datatypes = List<DatatypeTypeDecl>{}
+        };
+    }
 }

@@ -10,7 +10,7 @@ entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: FlowOperation;
+    field body: SequenceFlowOperation;
 }
 
 concept Value provides CallArgExpression {
@@ -346,51 +346,58 @@ entity MethodInvokeStaticExpression provides Expression {
     field args: List<CallArgExpression>;
 }
 
+concept TerminalOperation {
+}
+
+entity ReturnValueOperation provides TerminalOperation {
+    field val: Value;
+}
+
+entity YieldValueOperation provides TerminalOperation {
+    field val: Value;
+}
+
+entity AbortOperation provides TerminalOperation {
+    field label: CString;
+}
+
+entity IfOperation provides TerminalOperation {
+    field iftest: Value;
+    field trueOps: SequenceFlowOperation;
+    field falseOps: SequenceFlowOperation;
+}
+
 concept FlowOperation {
 }
 
 entity LetOperation provides FlowOperation {
     field vname: CString;
     field value: Value;
-    field body: FlowOperation;
 }
 
-entity IfOperation provides FlowOperation {
-    field iftest: Value;
-    field trueExpression: FlowOperation;
-    field falseExpression: FlowOperation;
+entity LetWithErrorProcessOperation provides FlowOperation {
+    field tmpvar: CString;
+    field val: Expression;
+    field bindvar: CString;
+}
+
+entity AssertOperation provides FlowOperation {
+    field label: CString;
+    field cond: Value;
+}
+
+entity AssumeOperation provides FlowOperation {
+    field cond: Value;
+}
+
+entity SequenceFlowOperation provides FlowOperation {
+    field ops: List<FlowOperation>;
+    field resop: TerminalOperation;
 }
 
 %%
 %%TODO Match and Switch operations -- handle large case statements and avoid overloading SMT in cases per function
 %%
 
-entity ReturnValueOperation provides FlowOperation {
-    field val: Value;
-}
 
-entity ResultErrorProcessOperation provides FlowOperation {
-    field val: Expression;
-    field tmpvar: CString;
-
-    field follow: FlowOperation;
-    field bindvar: CString;
-}
-
-entity AbortOperation provides FlowOperation {
-    field label: CString;
-}
-
-entity AssertOperation provides FlowOperation {
-    field label: CString;
-    field cond: Value;
-
-    field follow: FlowOperation;
-}
-
-entity AssumeOperation provides FlowOperation {
-    field cond: Value;
-
-    field follow: FlowOperation;
-}
 

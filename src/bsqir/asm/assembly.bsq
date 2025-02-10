@@ -271,4 +271,46 @@ entity Assembly {
     field allconcretetypes: List<TypeKey>;
     field allabstracttypes: List<TypeKey>;
     field alltypes: List<TypeKey>;
+
+    method lookupNominalTypeDeclaration(tkey: TypeKey): AbstractNominalTypeDecl {
+        if(this.enums.has(tkey)) {
+            return this.enums.get(tkey);
+        }
+        else if(this.typedecls.has(tkey)) {
+            return this.typedecls.get(tkey);
+        }
+        else if(this.constructables.has(tkey)) {
+            return this.constructables.get(tkey);
+        }
+        else if(this.collections.has(tkey)) {
+            return this.collections.get(tkey);
+        }
+        else if(this.entities.has(tkey)) {
+            return this.entities.get(tkey);
+        }
+        else if(this.datamembers.has(tkey)) {
+            return this.datamembers.get(tkey);
+        }
+        else if(this.pconcepts.has(tkey)) {
+            return this.pconcepts.get(tkey);
+        }
+        else if(this.concepts.has(tkey)) {
+            return this.concepts.get(tkey);
+        }
+        else if(this.datatypes.has(tkey)) {
+            return this.datatypes.get(tkey);
+        }
+        else {
+            %% Unknown type key
+            abort;
+        }
+    }
+
+    method isNominalTypeConcrete(tkey: TypeKey): Bool {
+        return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
+    }
+
+    method isNominalTypeConcept(tkey: TypeKey): Bool {
+        return this.lookupNominalTypeDeclaration(tkey)?<AbstractConceptTypeDecl>;
+    }
 }
