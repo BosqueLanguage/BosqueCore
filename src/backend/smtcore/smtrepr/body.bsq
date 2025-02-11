@@ -353,10 +353,6 @@ entity ReturnValueOperation provides TerminalOperation {
     field val: Value;
 }
 
-entity YieldValueOperation provides TerminalOperation {
-    field val: Value;
-}
-
 entity AbortOperation provides TerminalOperation {
     field label: CString;
 }
@@ -378,6 +374,7 @@ entity LetOperation provides FlowOperation {
 entity LetWithErrorProcessOperation provides FlowOperation {
     field tmpvar: CString;
     field val: Expression;
+    field valtype: TypeKey;
     field bindvar: CString;
 }
 

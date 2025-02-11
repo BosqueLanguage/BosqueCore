@@ -50,7 +50,6 @@ const s_ignoreErrTrgt: CString = '[ignore]';
 
 entity SMTEmitterEnv {
     field expectedResultType: SMTAssembly::ResultType;
-    field expectedValueType: SMTAssembly::ResultType;
     field errtrgt: CString;
 }
 
@@ -699,23 +698,46 @@ function emitReturnValueOperation(e: SMTAssembly::ReturnValueOperation, evv: SMT
     }
 }
 
-function emitYieldValueOperation(e: SMTAssembly::YieldValueOperation, evv: SMTEmitterEnv): CString {
-    let vval = emitValue(e.val);
+function emitResultErrTrgtTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
+    return CString::concat('(=', testval, ' (as @Result-errtrgt (@Result ', tkey, ')))');
+}
 
-    if(evv.expectedValueType)<SMTAssembly::DirectResult> {
-        return vval;
+function emitResultErrOtherTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
+    return CString::concat('(', testval, ' (as @Result-errother (@Result ', tkey, ')))');
+}
+
+function emitResultErrTrgtAs(evv: SMTEmitterEnv): CString {
+    return CString::concat('(as @Result-errtrgt (@Result ', eev.expectedResultType.rtype, '))');
+}
+
+function emitResultErrOtherAs(evv: SMTEmitterEnv): CString {
+    return CString::concat('(as @Result-errother (@Result ', eev.expectedResultType.rtype, '))');
+}
+
+function emitResultErrTypeConvert(cval: CString, tkey: SMTAssembly::TypeKey, evv: SMTEmitterEnv): CString {
+    let ttest = emitResultErrTrgtTest(cval, tkey);
+    let astrgt = emitResultErrTrgtAs(evv);
+    let asother = emitResultErrOtherAs(evv);
+
+    let opack = CString::join(' ', ttest, astrgt, asother);
+    return CString::concat('(ite ', opack, ')');
+}
+
+function emitResultErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::TypeKey, evv: SMTEmitterEnv): CString {
+    if(tkey === evv.expectedResultType.rtype) {
+        return cval;
     }
     else {
-        return CString::concat('(@Result-ok ', vval, ')');
+        return emitResultErrTypeConvert(cval, tkey, evv);
     }
 }
 
 function emitAbortOperation(e: SMTAssembly::AbortOperation, evv: SMTEmitterEnv): CString {
     if(e.label === evv.errtrgt) {
-        return '@Result-errtrgt';
+        return this.emitResultErrTrgtAs(evv);
     }
     else {
-        return '@Result-errother';
+        return this.emitResultErrOtherAs(evv);
     }
 }
 
@@ -779,24 +801,32 @@ recursive function emitLetOperation(e: SMTAssembly::LetOperation, evv: SMTEmitte
 recursive function emitLetWithErrorProcessOperation(e: SMTAssembly::LetWithErrorProcessOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>, nnindent: Bool): CString {
     let vval = emitExpression[recursive](e.val, evv);
 
-    let bbind = CString::concat('(let ((', e.tmpvar, ' ', vval, '))');
-    let chk = CString::concat('(ite (not ((_ is (@Result-ok ', evv.expectedValueType.rtype.value, ')) ', e.tmpvar, '))');
-    let lop = CString::concat(e.tmpvar, ' (let ((', e.bindvar, ' (@Result-value ', e.tmpvar, ')))');
+    let bbind = CString::concat('((', e.tmpvar, ' ', vval, '))');
+    let chktest = CString::concat('(not ((_ is (@Result-ok ', e.valtype.value, ')) ', e.tmpvar, ')) ');
+    let errop = emitResultErrTypeConvertAsNeeded(e.tmpvar, e.valtype.value, evv);
 
-    let prefix = CString::concat(bbind, chk, lop);
+    let okbind = CString::concat('((', e.bindvar, ' (@Result-value ', e.tmpvar, ')))');
 
     if(indent)@none {
-        return CString::concat(prefix, ' ', emitFlowOperation[recursive](e.follow, evv, none), '))');
+        let innerop = CString::concat(' (let ', okbind, ' ', inexp, ')');
+        let wcheck = CString::concat('(ite ', chktest, ' ', errop, innerop, ')');
+
+        return CString::concat('(let ', bbind, ' ', wcheck, ')');
     }
     else {
-        let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, '))');
+        var iident = $indent;
+        var tident = ')';
+        if(nnindent) {
+            iident = CString::concat('    ', $indent);
+            tident = CString::concat('%n;', $indent, ')');
+        }
 
-        let body = emitFlowOperation[recursive](e.follow, evv, some(iident));
-        return CString::concat(prefix, '%n;', body, tident);
+        let innerop = CString::concat(' (let ', okbind, '%n;', inexp, tident);
+        let wcheck = CString::concat('(ite ', chktest, ' ', errop, innerop, ')');
+
+        return CString::concat('(let ', bbind, ' ', wcheck, ')');
     }
 }
-
 
 recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
     let cond = emitValue(e.cond);
