@@ -10,7 +10,7 @@ entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: SequenceFlowOperation;
+    field body: OperationBlock;
 }
 
 concept Value provides CallArgExpression {
@@ -359,8 +359,8 @@ entity AbortOperation provides TerminalOperation {
 
 entity IfOperation provides TerminalOperation {
     field iftest: Value;
-    field trueOps: SequenceFlowOperation;
-    field falseOps: SequenceFlowOperation;
+    field trueOps: OperationBlock;
+    field falseOps: OperationBlock;
 }
 
 concept FlowOperation {
@@ -387,7 +387,7 @@ entity AssumeOperation provides FlowOperation {
     field cond: Value;
 }
 
-entity SequenceFlowOperation provides FlowOperation {
+entity OperationBlock {
     field ops: List<FlowOperation>;
     field resop: TerminalOperation;
 }

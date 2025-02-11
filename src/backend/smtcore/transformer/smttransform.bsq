@@ -88,16 +88,11 @@ entity SMTTransformer {
         let declaredtype = this.transformStdTypeToSMT(decl.declaredType);
 
         let preops, value = this.transformExpressionToSMT(decl.value, decl.declaredInType);
-        let body = SMTAssembly::SequenceFlowOperation{preops, value};
+        let body = SMTAssembly::OperationBlock{preops, value};
 
-        if(preops.empty()) {
-            let vtype = SMTAssembly::DirectResultType{ declaredtype };
-            return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
-        }
-        else {
-            let vtype = SMTAssembly::OptionResult{ declaredtype };
-            return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
-        }
+        
+        let vtype = SMTAssembly::OptionResult{ declaredtype };
+        return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {

@@ -72,9 +72,13 @@ function tidyNewlineJoin(s1: CString, s2: CString): CString {
     }
 }
 
-function tryGetConstFlowOperation(value: SMTAssembly::FlowOperation): Option<SMTAssembly::ConstantValue> {
-    if(value)@<SMTAssembly::ReturnValueOperation> {
-        if($vv = $value.val)@<SMTAssembly::ConstantValue> {
+function tryGetConstFlowOperation(value: SMTAssembly::OperationBlock): Option<SMTAssembly::ConstantValue> {
+    if(!value.ops.empty()) {
+        return none;
+    }
+
+    if($rop = value.resop)@<SMTAssembly::ReturnValueOperation> {
+        if($vv = $rop.val)@<SMTAssembly::ConstantValue> {
             return some($vv);
         }
     }
@@ -612,7 +616,7 @@ recursive function emitLambdaConstructor(v: SMTAssembly::LambdaConstructor, evv:
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     let elambda = SMTEmitterEnv{v.resultType, evv.errtrgt};
-    let body = emitFlowOperation[recursive](v.body, elambda, none);
+    let body = emitOperationBlock[recursive](v.body, elambda, none);
 
     return CString::concat('(lambda ', pll, ' ', body, ')');
 }
@@ -787,18 +791,12 @@ recursive function emitLetOperation(e: SMTAssembly::LetOperation, evv: SMTEmitte
         return CString::concat('(let ', vbind, ' ', inexp, ')');
     }
     else {
-        var iident = $indent;
-        var tident = ')';
-        if(nnindent) {
-            iident = CString::concat('    ', $indent);
-            tident = CString::concat('%n;', $indent, ')');
-        }
-
+        let tident = if(nnindent) then CString::concat('%n;', $indent, ')') else ')';
         return CString::concat('(let ', vbind, '%n;', bbody, tident);
     }
 }
 
-recursive function emitLetWithErrorProcessOperation(e: SMTAssembly::LetWithErrorProcessOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>, nnindent: Bool): CString {
+recursive function emitLetWithErrorProcessOperation(e: SMTAssembly::LetWithErrorProcessOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>): CString {
     let vval = emitExpression[recursive](e.val, evv);
 
     let bbind = CString::concat('((', e.tmpvar, ' ', vval, '))');
@@ -814,12 +812,7 @@ recursive function emitLetWithErrorProcessOperation(e: SMTAssembly::LetWithError
         return CString::concat('(let ', bbind, ' ', wcheck, ')');
     }
     else {
-        var iident = $indent;
-        var tident = ')';
-        if(nnindent) {
-            iident = CString::concat('    ', $indent);
-            tident = CString::concat('%n;', $indent, ')');
-        }
+        let tident = CString::concat('%n;', $indent, ')');
 
         let innerop = CString::concat(' (let ', okbind, '%n;', inexp, tident);
         let wcheck = CString::concat('(ite ', chktest, ' ', errop, innerop, ')');
@@ -828,51 +821,43 @@ recursive function emitLetWithErrorProcessOperation(e: SMTAssembly::LetWithError
     }
 }
 
-recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
-    let cond = emitValue(e.cond);
-    let rop = if(e.label === evv.errtrgt) then '@Result-errtrgt' else '@Result-errother';
-
-    let chk = CString::concat('(ite (not ', cond, ') ', rop, ' ');
+recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>): CString {
+    let chk = CString::concat('(not ', emitValue(e.cond), ') ', rop, ' ');
+    let rop = if(e.label === evv.errtrgt) then this.emitResultErrTrgtAs(evv) else this.emitResultErrOtherAs(evv);
 
     if(indent)@none {
-        return CString::concat(chk, emitFlowOperation[recursive](e.follow, evv, none), ')');
+        let ops = CString::join(' ', chk, rop, inexp);
+        return CString::concat('(ite ', ops, ')');
     }
     else {
-        let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, '))');
-
-        let follow = emitFlowOperation[recursive](e.follow, evv, some(iident));
-        return CString::concat(chk, '%n;', follow, tident);
+        let tident = CString::concat('%n;', $indent, ')');
+        let ops = CString::concat(chk, ' ', rop, '%n;', inexp);
+        return CString::concat('(ite ', ops, tident);
     }
 }
 
-recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
-    let cond = emitValue(e.cond);
-
-    let chk = CString::concat('(ite (not ', cond, ') @Result-errother ');
+recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>): CString {
+    let chk = CString::concat('(not ', emitValue(e.cond), ') ', rop, ' ');
+    let rop = this.emitResultErrOtherAs(evv);
 
     if(indent)@none {
-        return CString::concat(chk, emitFlowOperation[recursive](e.follow, evv, none), ')');
+        let ops = CString::join(' ', chk, rop, inexp);
+        return CString::concat('(ite ', ops, ')');
     }
     else {
-        let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, '))');
-
-        let follow = emitFlowOperation[recursive](e.follow, evv, some(iident));
-        return CString::concat(chk, '%n;', follow, tident);
+        let tident = CString::concat('%n;', $indent, ')');
+        let ops = CString::concat(chk, ' ', rop, '%n;', inexp);
+        return CString::concat('(ite ', ops, tident);
     }
 }
 
-recursive function emitFlowOperation(op: SMTAssembly::FlowOperation, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+recursive function emitFlowOperation(op: SMTAssembly::FlowOperation, evv: SMTEmitterEnv, inexp: CString, indent: Option<CString>, nnindent: Bool): CString {
     var eexp: CString;
     match(op)@ {
-        SMTAssembly::LetOperation => { eexp = emitLetOperation[recursive]($op, evv, indent); }
-        | SMTAssembly::IfOperation => { eexp = emitIfOperation[recursive]($op, evv, indent); }
-        | SMTAssembly::ReturnValueOperation => { eexp = emitReturnOperation($op, evv); }
-        | SMTAssembly::ResultErrorProcessOperation => { eexp = emitResultErrorProcessOperation[recursive]($op, evv, indent); }
-        | SMTAssembly::AbortOperation => { eexp = emitAbortOperation($op, evv); }
-        | SMTAssembly::AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, indent); }
-        | SMTAssembly::AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, indent); }
+        SMTAssembly::LetOperation => { eexp = emitLetOperation[recursive]($op, evv, inexp, indent, nnindent); }
+        | SMTAssembly::LetWithErrorProcessOperation => { eexp = emitLetWithErrorProcessOperation[recursive]($op, evv, inexp, indent); }
+        | SMTAssembly::AssertOperation => { eexp = emitAssertOperation[recursive]($op, evv, inexp, indent); }
+        | SMTAssembly::AssumeOperation => { eexp = emitAssumeOperation[recursive]($op, evv, inexp, indent); }
     }
 
     if(indent)@none {
@@ -881,6 +866,32 @@ recursive function emitFlowOperation(op: SMTAssembly::FlowOperation, evv: SMTEmi
     else {
         return CString::concat($indent, eexp);
     }
+}
+
+recursive function emitOperationBlockStep(ops: List<FlowOperation>, iidx: Nat, evv: SMTEmitterEnv, vexp: TerminalOperation, indent: Option<CString>): CString {
+    if(iidx === ops.size()) {
+        return emitTerminalOperation(vexp, evv, indent);
+    }
+    
+    if(indent)@none {
+        let inexp = emitOperationBlockStep[recursive](ops, iidx + 1n, evv, vexp, indent);
+        return emitFlowOperation[recursive](ops.get(iidx), evv, inexp, indent, false);
+    }
+    else {
+        var iident = $indent;
+        var nnindent = false;
+        if(iidx >= ops.lastIndex() || doLetIndent(ops.get(iidx + 1))) {
+            iident = CString::concat('    ', $indent);
+            nnindent = true;
+        }
+        
+        let inexp = emitOperationBlockStep[recursive](ops, iidx + 1n, evv, vexp, iident);
+        return emitFlowOperation[recursive](ops.get(iidx), evv, inexp, $indent, nnindent);
+    }
+}
+
+recursive function emitOperationBlock(block: SMTAssembly::OperationBlock, evv: SMTEmitterEnv, indent: Option<CString>): CString {
+    return emitOperationBlockStep(block.ops, 0n, evv, block.retval, indent);
 }
 
 function emitConstDeclarationHelper(cname: CString, vtype: SMTAssembly::ResultType, value: SMTAssembly::FlowOperation): CString {
@@ -912,7 +923,7 @@ function emitConstDeclarationHelper(cname: CString, vtype: SMTAssembly::ResultTy
 
 function emitConstInitializerHelper(cname: CString, vtype: SMTAssembly::ResultType, value: SMTAssembly::FlowOperation): CString {
     let evv = SMTEmitterEnv{vtype, '[NO_CONST_ERRORS]'};
-    let cval = emitFlowOperation(value, evv, none);
+    let cval = emitOperationBlock(value, evv, none);
 
     if(vtype)<SMTAssembly::DirectResult> {
         return CString::concat('(assert (= ', cname, ' ', cval, '))');
@@ -999,7 +1010,7 @@ function emitNamespaceFunctionDecl(f: SMTAssembly::NamespaceFunctionDecl, trgter
         body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
     }
     else {
-        body = CString::concat('%n;', emitFlowOperation(f.body, evv, some('    ')));
+        body = CString::concat('%n;', emitOperationBlock(f.body, evv, some('    ')));
     }
 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
@@ -1019,7 +1030,7 @@ function emitTypeFunctionDecl(f: SMTAssembly::TypeFunctionDecl, trgterr: CString
         body = CString::concat('%n;    ', emitReturnOperation($rb, evv));
     }
     else {
-        body = CString::concat('%n;', emitFlowOperation(f.body, evv, some('    ')));
+        body = CString::concat('%n;', emitOperationBlock(f.body, evv, some('    ')));
     }
 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');

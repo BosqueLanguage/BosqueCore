@@ -70,7 +70,7 @@ entity NamespaceFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: SequenceFlowOperation;
+    field body: OperationBlock;
 }
 
 entity TypeFunctionDecl {
@@ -81,7 +81,7 @@ entity TypeFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: SequenceFlowOperation;
+    field body: OperationBlock;
 }
 
 entity ConstMemberDecl {
@@ -89,7 +89,7 @@ entity ConstMemberDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: SequenceFlowOperation;
+    field value: OperationBlock;
 }
 
 entity MemberFieldDecl {
@@ -200,7 +200,7 @@ entity NamespaceConstDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: SequenceFlowOperation;
+    field value: OperationBlock;
 }
 
 entity Assembly {

@@ -65,8 +65,12 @@ const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
 };
 
 entity Transformer {
-    function transformAssembly(asm: BSQAssembly::Assembly): SMTAssembly::Assembly {
-        return SMTEmitter::s_sample_asm;
+    function transformAssembly(ssembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
+        %% TODO -- calls to special process bsq assembly 
+        %%         (1) generic calls from bsqir simplifier like rename and tree convert ...
+        %%         (2) specific calls from transformer to ground recursive calls ...
+
+        return SMTTransformer::transformAssemblyToSMT(assembly);
     }
 }
 
