@@ -773,46 +773,59 @@ class JSEmitter {
         return `${EmitNameManager.generateAccssorNameForNamespaceFunction(this.getCurrentNamespace(), cns, ffinv, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
     }
     
+    private emitCallTypeFunctionExpressionSpecial(exp: CallTypeFunctionExpression, rtrgt: NominalTypeSignature): string {
+        const argv = this.emitExpression(exp.args.args[0].exp, true);
+        const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
+
+        xxxx;
+    }
+
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
-        const fdecl = rtrgt.decl.functions.find((m) => m.name === exp.name) as FunctionInvokeDecl;
 
-        const argl: string[] = [];
-        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            const ii = exp.shuffleinfo[i];
-            if(ii[0] === -1) {
-                argl.push("undefined");
-            }
-            else {
-                const aaexp = this.emitExpression(exp.args.args[ii[0]].exp, true);
-                argl.push(aaexp);
-            }
+        if(exp.isSpecialCall) {
+            return this.emitCallTypeFunctionExpressionSpecial(exp, rtrgt);
         }
+        else {
+            const fdecl = rtrgt.decl.functions.find((m) => m.name === exp.name) as FunctionInvokeDecl;
 
-        if(exp.restinfo !== undefined) {
-            const restl: ArgumentValue[] = [];
-
-            for(let i = 0; i < exp.restinfo.length; ++i) {
-                const rri = exp.restinfo[i];
-                if(!rri[1]) {
-                    restl.push(exp.args.args[rri[0]]);
+            const argl: string[] = [];
+            for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+                const ii = exp.shuffleinfo[i];
+                if(ii[0] === -1) {
+                    argl.push("undefined");
                 }
                 else {
-                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                    const aaexp = this.emitExpression(exp.args.args[ii[0]].exp, true);
+                    argl.push(aaexp);
                 }
             }
 
-            const rparams = fdecl.params[fdecl.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
-            if(rtype.decl instanceof ListTypeDecl) {
-                argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
-            }
-            else {
-                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
-            }
-        }
+            if(exp.restinfo !== undefined) {
+                const restl: ArgumentValue[] = [];
 
-        return `${EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), rtrgt, fdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+                for(let i = 0; i < exp.restinfo.length; ++i) {
+                    const rri = exp.restinfo[i];
+                    if(!rri[1]) {
+                        restl.push(exp.args.args[rri[0]]);
+                    }
+                    else {
+                        assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                    }
+                }
+
+                const rparams = fdecl.params[fdecl.params.length - 1];
+                const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+                if(rtype.decl instanceof ListTypeDecl) {
+                    argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+                }
+            }
+
+            return `${EmitNameManager.generateAccssorNameForTypeFunction(this.getCurrentNamespace(), rtrgt, fdecl, exp.terms.map((tt) => this.tproc(tt)))}(${argl.join(", ")})`;
+        }
     }
     
     private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {

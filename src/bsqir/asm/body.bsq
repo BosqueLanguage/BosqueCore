@@ -172,6 +172,7 @@ entity CallTypeFunctionExpression provides Expression {
 
     field resolvedDeclType: NominalTypeSignature;
     
+    field isSpecialCall: Bool;
     field shuffleinfo: List<(|Int, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Int, Bool, TypeSignature|)>;

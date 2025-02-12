@@ -664,6 +664,7 @@ class CallTypeFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
+    isSpecialCall: boolean = false;
     resolvedDeclType: TypeSignature | undefined = undefined;
     resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
     shuffleinfo: [number, TypeSignature | undefined][] = [];
