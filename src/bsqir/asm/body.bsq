@@ -48,7 +48,7 @@ entity LiteralCStringExpression provides Expression {
 }
 
 entity LiteralStringExpression provides Expression {
-    field value: String;
+    field value: CString;
 }
 
 entity LiteralCRegexExpression provides Expression {
@@ -56,7 +56,7 @@ entity LiteralCRegexExpression provides Expression {
 }
 
 entity LiteralRegexExpression provides Expression {
-    field value: String;
+    field value: CString;
 }
 
 entity LiteralTypeDeclValueExpression provides Expression {

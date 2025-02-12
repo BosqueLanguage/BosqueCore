@@ -13,7 +13,10 @@ const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
             'Main'<SMTAssembly::NamespaceKey>, 
             'c1', 
             SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
-            SMTAssembly::ReturnValueOperation{SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '3i'}}
+            SMTAssembly::OperationBlock{
+                List<SMTAssembly::FlowOperation>{},
+                SMTAssembly::ReturnValueOperation{SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '3i'}}
+            }
         }
     },
     typeconsts = List<SMTAssembly::ConstMemberDecl>{
@@ -31,10 +34,13 @@ const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
                 SMTAssembly::InvokeParameterDecl{'x', 'Int'<SMTAssembly::ParamTypeKey>},
             }, 
             SMTAssembly::DirectResult{'Int'<SMTAssembly::TypeKey>}, 
-            SMTAssembly::ReturnValueOperation{
-                SMTAssembly::BinAddValue{
-                    SMTAssembly::AccessNamespaceConstantValue{'Main'<SMTAssembly::NamespaceKey>, 'c1'}, 
-                    SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '1i'}
+            SMTAssembly::OperationBlock{
+                List<SMTAssembly::FlowOperation>{},
+                SMTAssembly::ReturnValueOperation{
+                    SMTAssembly::BinAddValue{
+                        SMTAssembly::AccessNamespaceConstantValue{'Main'<SMTAssembly::NamespaceKey>, 'c1'}, 
+                        SMTAssembly::LiteralSimpleValue{'Int'<SMTAssembly::TypeKey>, '1i'}
+                    }
                 }
             }
         }
@@ -65,7 +71,7 @@ const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
 };
 
 entity Transformer {
-    function transformAssembly(ssembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
+    function transformAssembly(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
         %% TODO -- calls to special process bsq assembly 
         %%         (1) generic calls from bsqir simplifier like rename and tree convert ...
         %%         (2) specific calls from transformer to ground recursive calls ...

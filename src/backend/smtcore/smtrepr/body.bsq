@@ -315,31 +315,31 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
-concept Expression {
+concept InvokeExpression {
 }
 
-entity LambdaInvokeExpression provides Expression {
+entity LambdaInvokeExpression provides InvokeExpression {
     field name: CString;
     field args: List<CallArgExpression>;
     
     invariant !$args.empty();
 }
 
-entity CallNamespaceFunctionExpression provides Expression {
+entity CallNamespaceFunctionExpression provides InvokeExpression {
     field ns: NamespaceKey;
     field name: CString;
 
     field args: List<CallArgExpression>;
 }
 
-entity CallTypeFunctionExpression provides Expression {
+entity CallTypeFunctionExpression provides InvokeExpression {
     field resolvedType: TypeKey;
     field name: CString;
     
     field args: List<CallArgExpression>;
 }
 
-entity MethodInvokeStaticExpression provides Expression {
+entity MethodInvokeStaticExpression provides InvokeExpression {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
@@ -373,7 +373,7 @@ entity LetOperation provides FlowOperation {
 
 entity LetWithErrorProcessOperation provides FlowOperation {
     field tmpvar: CString;
-    field val: Expression;
+    field val: InvokeExpression;
     field valtype: TypeKey;
     field bindvar: CString;
 }

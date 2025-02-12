@@ -19,6 +19,18 @@ namespace TransformNameManager {
     }
 }
 
+datatype ExpressionTransformResult using {
+    field preops: List<SMTAssembly::FlowOperation>;
+}
+of
+ValueTransformResult {
+    field value: SMTAssembly::Value;
+}
+| InvokeExpressionTransformResult {
+    field iexp: SMTAssembly::InvokeExpression;
+}
+;
+
 entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
 
@@ -28,7 +40,7 @@ entity SMTTransformer {
             return smtk;
         }
         else {
-            if(this.assembly.isNominalTypeConcrete($tsig)) {
+            if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
                 return SMTAssembly::TypeKey::from($tsig.tkeystr);
             }
             else {
@@ -37,7 +49,7 @@ entity SMTTransformer {
         }
     }
 
-    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeSignature {
+    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@!<BSQAssembly::LambdaTypeSignature> {
             return this.transformStdTypeToSMT(tsig);
         }
@@ -63,19 +75,19 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringValue{exp.value};
     }
 
-    method transformExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): List<SMTAssembly::FlowOperation>, SMTAssembly::Value {
+    method transformExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): ExpressionTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
-                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralNoneExpression($exp); 
+                return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralNoneExpression($exp)}; 
             }
-            | BSQAssembly::LiteralSimpleExpression { 
-                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralSimpleExpression($exp); 
+            | BSQAssembly::LiteralSimpleExpression => { 
+                return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralSimpleExpression($exp)}; 
             }
-            | BSQAssembly::LiteralCStringExpression { 
-                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralCStringExpression($exp);
+            | BSQAssembly::LiteralCStringExpression => { 
+                return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralCStringExpression($exp)};
             }
-            | BSQAssembly::LiteralStringExpression { 
-                return List<SMTAssembly::FlowOperation>{}, this.transformLiteralStringExpression($exp); 
+            | BSQAssembly::LiteralStringExpression => { 
+                return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralStringExpression($exp)}; 
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED
@@ -83,44 +95,53 @@ entity SMTTransformer {
         }
     }
 
+    method transformToplevelExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): SMTAssembly::OperationBlock {
+        let etr = this.transformExpressionToSMT(exp, ttype);
+
+        if(etr)@<ValueTransformResult> {
+            return SMTAssembly::OperationBlock{$etr.preops, SMTAssembly::ReturnValueOperation{$etr.value}};
+        }
+        else {
+            abort; %% NOT IMPLEMENTED
+        }
+    }
+
     method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+
         let declaredtype = this.transformStdTypeToSMT(decl.declaredType);
-
-        let preops, value = this.transformExpressionToSMT(decl.value, decl.declaredInType);
-        let body = SMTAssembly::OperationBlock{preops, value};
-
-        
         let vtype = SMTAssembly::OptionResult{ declaredtype };
+
+        let body = this.transformToplevelExpressionToSMT(decl.value, decl.declaredType);
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly};
 
-        return Assembly {
-            nsconsts = List<NamespaceConstDecl>{assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc))},
-            typeconsts = List<ConstMemberDecl>{},
+        return SMTAssembly::Assembly {
+            nsconsts = assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc)),
+            typeconsts = List<SMTAssembly::ConstMemberDecl>{},
 
-            nspreds = List<NamespacePredicateFunctionDecl>{},
-            nsbuiltins = List<NamespaceBuiltinFunctionDecl>{},
+            nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{},
+            nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{},
     
-            nsfuncs = Map<InvokeKey, NamespaceFunctionDecl>{},
-            typefuncs = Map<InvokeKey, TypeFunctionDecl>{},
-            allfuncs = List<InvokeKey>{},
+            nsfuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{},
+            typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{},
+            allfuncs = List<SMTAssembly::InvokeKey>{},
     
-            enums = List<EnumTypeDecl>{},
-            typedecls = List<TypedeclTypeDecl>{},
-            constructables = List<ConstructableTypeDecl>{},
-            collections = List<CollectionTypeDecl>{},
+            enums = List<SMTAssembly::EnumTypeDecl>{},
+            typedecls = List<SMTAssembly::TypedeclTypeDecl>{},
+            constructables = List<SMTAssembly::ConstructableTypeDecl>{},
+            collections = List<SMTAssembly::CollectionTypeDecl>{},
 
-            entities = List<EntityTypeDecl>{},
-            datamembers = List<DatatypeMemberEntityTypeDecl>{},
+            entities = List<SMTAssembly::EntityTypeDecl>{},
+            datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{},
 
-            pconcepts = List<PrimitiveConceptTypeDecl>{},
-            concepts = List<ConceptTypeDecl>{},
+            pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{},
+            concepts = List<SMTAssembly::ConceptTypeDecl>{},
 
-            datatypes = List<DatatypeTypeDecl>{}
+            datatypes = List<SMTAssembly::DatatypeTypeDecl>{}
         };
     }
 }

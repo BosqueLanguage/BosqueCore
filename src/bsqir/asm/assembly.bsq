@@ -276,28 +276,28 @@ entity Assembly {
         if(this.enums.has(tkey)) {
             return this.enums.get(tkey);
         }
-        else if(this.typedecls.has(tkey)) {
+        elif(this.typedecls.has(tkey)) {
             return this.typedecls.get(tkey);
         }
-        else if(this.constructables.has(tkey)) {
+        elif(this.constructables.has(tkey)) {
             return this.constructables.get(tkey);
         }
-        else if(this.collections.has(tkey)) {
+        elif(this.collections.has(tkey)) {
             return this.collections.get(tkey);
         }
-        else if(this.entities.has(tkey)) {
+        elif(this.entities.has(tkey)) {
             return this.entities.get(tkey);
         }
-        else if(this.datamembers.has(tkey)) {
+        elif(this.datamembers.has(tkey)) {
             return this.datamembers.get(tkey);
         }
-        else if(this.pconcepts.has(tkey)) {
+        elif(this.pconcepts.has(tkey)) {
             return this.pconcepts.get(tkey);
         }
-        else if(this.concepts.has(tkey)) {
+        elif(this.concepts.has(tkey)) {
             return this.concepts.get(tkey);
         }
-        else if(this.datatypes.has(tkey)) {
+        elif(this.datatypes.has(tkey)) {
             return this.datatypes.get(tkey);
         }
         else {
