@@ -44,7 +44,7 @@ entity SMTTransformer {
                 return SMTAssembly::TypeKey::from($tsig.tkeystr);
             }
             else {
-                return SMTAssembly::TypeKey::from("@BTerm");
+                return SMTAssembly::TypeKey::from('@BTerm');
             }
         }
     }

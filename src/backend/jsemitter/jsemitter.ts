@@ -774,10 +774,17 @@ class JSEmitter {
     }
     
     private emitCallTypeFunctionExpressionSpecial(exp: CallTypeFunctionExpression, rtrgt: NominalTypeSignature): string {
-        const argv = this.emitExpression(exp.args.args[0].exp, true);
-        const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
+        const taccess = EmitNameManager.generateAccessorForSpecialTypeConstructor(this.getCurrentNamespace(), rtrgt);
 
-        xxxx;
+        const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
+        const simple = (sexp === "CString" || sexp === "String");
+
+        if(simple) {
+            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, true)})`;
+        }
+        else {
+            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, false)}.value)`;
+        }
     }
 
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
