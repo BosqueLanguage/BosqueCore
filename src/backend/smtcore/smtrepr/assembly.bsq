@@ -70,7 +70,7 @@ entity NamespaceFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: FlowOperation;
+    field body: OperationBlock;
 }
 
 entity TypeFunctionDecl {
@@ -81,7 +81,7 @@ entity TypeFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: FlowOperation;
+    field body: OperationBlock;
 }
 
 entity ConstMemberDecl {
@@ -89,7 +89,7 @@ entity ConstMemberDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: FlowOperation;
+    field value: OperationBlock;
 }
 
 entity MemberFieldDecl {
@@ -200,7 +200,7 @@ entity NamespaceConstDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: FlowOperation;
+    field value: OperationBlock;
 }
 
 entity Assembly {
@@ -212,7 +212,7 @@ entity Assembly {
     
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
-    field funcorder: List<InvokeKey>;
+    field allfuncs: List<InvokeKey>;
     
     field enums: List<EnumTypeDecl>;
     field typedecls: List<TypedeclTypeDecl>;
@@ -227,5 +227,5 @@ entity Assembly {
 
     field datatypes: List<DatatypeTypeDecl>;
 
-    validate $funcorder.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
+    validate $allfuncs.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }

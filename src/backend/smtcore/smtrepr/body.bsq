@@ -10,7 +10,7 @@ entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: FlowOperation;
+    field body: OperationBlock;
 }
 
 concept Value provides CallArgExpression {
@@ -315,35 +315,52 @@ entity IfValue provides Value {
     field falseValue: Value;
 }
 
-concept Expression {
+concept InvokeExpression {
 }
 
-entity LambdaInvokeExpression provides Expression {
+entity LambdaInvokeExpression provides InvokeExpression {
     field name: CString;
     field args: List<CallArgExpression>;
     
     invariant !$args.empty();
 }
 
-entity CallNamespaceFunctionExpression provides Expression {
+entity CallNamespaceFunctionExpression provides InvokeExpression {
     field ns: NamespaceKey;
     field name: CString;
 
     field args: List<CallArgExpression>;
 }
 
-entity CallTypeFunctionExpression provides Expression {
+entity CallTypeFunctionExpression provides InvokeExpression {
     field resolvedType: TypeKey;
     field name: CString;
     
     field args: List<CallArgExpression>;
 }
 
-entity MethodInvokeStaticExpression provides Expression {
+entity MethodInvokeStaticExpression provides InvokeExpression {
     field resolvedTrgt: TypeKey;
     field name: CString;
     field rootExp: Value;
     field args: List<CallArgExpression>;
+}
+
+concept TerminalOperation {
+}
+
+entity ReturnValueOperation provides TerminalOperation {
+    field val: Value;
+}
+
+entity AbortOperation provides TerminalOperation {
+    field label: CString;
+}
+
+entity IfOperation provides TerminalOperation {
+    field iftest: Value;
+    field trueOps: OperationBlock;
+    field falseOps: OperationBlock;
 }
 
 concept FlowOperation {
@@ -352,45 +369,32 @@ concept FlowOperation {
 entity LetOperation provides FlowOperation {
     field vname: CString;
     field value: Value;
-    field body: FlowOperation;
 }
 
-entity IfOperation provides FlowOperation {
-    field iftest: Value;
-    field trueExpression: FlowOperation;
-    field falseExpression: FlowOperation;
+entity LetWithErrorProcessOperation provides FlowOperation {
+    field tmpvar: CString;
+    field val: InvokeExpression;
+    field valtype: TypeKey;
+    field bindvar: CString;
+}
+
+entity AssertOperation provides FlowOperation {
+    field label: CString;
+    field cond: Value;
+}
+
+entity AssumeOperation provides FlowOperation {
+    field cond: Value;
+}
+
+entity OperationBlock {
+    field ops: List<FlowOperation>;
+    field resop: TerminalOperation;
 }
 
 %%
 %%TODO Match and Switch operations -- handle large case statements and avoid overloading SMT in cases per function
 %%
 
-entity ReturnValueOperation provides FlowOperation {
-    field val: Value;
-}
 
-entity ResultErrorProcessOperation provides FlowOperation {
-    field val: Expression;
-    field tmpvar: CString;
-
-    field follow: FlowOperation;
-    field bindvar: CString;
-}
-
-entity AbortOperation provides FlowOperation {
-    field label: CString;
-}
-
-entity AssertOperation provides FlowOperation {
-    field label: CString;
-    field cond: Value;
-
-    field follow: FlowOperation;
-}
-
-entity AssumeOperation provides FlowOperation {
-    field cond: Value;
-
-    field follow: FlowOperation;
-}
 

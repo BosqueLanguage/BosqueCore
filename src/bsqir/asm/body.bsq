@@ -48,7 +48,7 @@ entity LiteralCStringExpression provides Expression {
 }
 
 entity LiteralStringExpression provides Expression {
-    field value: String;
+    field value: CString;
 }
 
 entity LiteralCRegexExpression provides Expression {
@@ -56,7 +56,7 @@ entity LiteralCRegexExpression provides Expression {
 }
 
 entity LiteralRegexExpression provides Expression {
-    field value: String;
+    field value: CString;
 }
 
 entity LiteralTypeDeclValueExpression provides Expression {
@@ -172,6 +172,7 @@ entity CallTypeFunctionExpression provides Expression {
 
     field resolvedDeclType: NominalTypeSignature;
     
+    field isSpecialCall: Bool;
     field shuffleinfo: List<(|Int, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Int, Bool, TypeSignature|)>;
@@ -312,12 +313,12 @@ BinKeyEqNoneExpression {
     field exp: Expression;
 }
 | BinKeySomeEqExpression {
-    field eoption: Expression;
-    field eval: Expression;
+    field eqoption: Expression;
+    field eqval: Expression;
 }
 | BinKeyNotSomeEqExpression {
-    field eoption: Expression;
-    field eval: Expression;
+    field neoption: Expression;
+    field neval: Expression;
 }
 | BinKeyEqExpression {
     field lhs: Expression;
@@ -341,7 +342,7 @@ datatype BinaryNumericExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
 
-    field etype: TypeSignature;
+    field eqtype: TypeSignature;
     field opertype: TypeSignature;
 }
 of

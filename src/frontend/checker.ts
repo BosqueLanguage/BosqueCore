@@ -1650,28 +1650,59 @@ class TypeChecker {
         if(!oktype) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
-
+        
         const fdecl = this.relations.resolveTypeFunction(exp.ttype, exp.name, this.constraints);
         if(fdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find type scoped function ${exp.ttype.emit()}::${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
-        const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member, refinemap);
-        if(imapper === undefined) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        //special case for type Foo = String of ... Foo::from
+        if(fdecl.member === null) {
+            if(exp.args.args.length !== 1 || !(exp.args.args[0] instanceof PositionalArgumentValue)) {
+                this.reportError(exp.sinfo, `Conversion from expects 1 argument`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+
+            const etype = this.checkExpression(env, exp.args.args[0].exp, undefined);
+            this.checkError(exp.sinfo, !(etype instanceof NominalTypeSignature), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
+
+            if(etype instanceof NominalTypeSignature) {
+                if(etype.tkeystr === "String" || etype.tkeystr === "CString") {
+                    this.checkError(exp.sinfo, !this.relations.areSameTypes((fdecl.typeinfo.tsig.decl as TypedeclTypeDecl).valuetype, etype), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
+                }
+                else if(etype.decl instanceof TypedeclTypeDecl) {
+                    this.checkError(exp.sinfo, !this.relations.areSameTypes((fdecl.typeinfo.tsig.decl as TypedeclTypeDecl).valuetype, (etype.decl as TypedeclTypeDecl).valuetype), `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
+                }
+                else {
+                    this.reportError(exp.sinfo, `Invalid arg type for conversion from ${etype.emit()} -- converting to ${fdecl.typeinfo.tsig.emit()}`);
+                }
+            }
+
+            exp.isSpecialCall = true;
+            exp.resolvedDeclType = fdecl.typeinfo.tsig;
+            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
+            exp.shuffleinfo = [[0, etype]];
+
+            return exp.setType(fdecl.typeinfo.tsig);
         }
+        else {
+            const refinemap = this.relations.generateTemplateMappingForTypeDecl(fdecl.typeinfo.tsig as NominalTypeSignature);
+            const imapper = this.checkTemplateBindingsOnInvoke(exp. sinfo, env, exp.terms, fdecl.member, refinemap);
+            if(imapper === undefined) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
 
-        const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
-        const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
-        exp.resolvedDeclType = fdecl.typeinfo.tsig;
-        exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
-        exp.shuffleinfo = arginfo.shuffleinfo;
-        exp.resttype = arginfo.resttype;
-        exp.restinfo = arginfo.restinfo;
+            const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
+            const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
+            exp.resolvedDeclType = fdecl.typeinfo.tsig;
+            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
+            exp.shuffleinfo = arginfo.shuffleinfo;
+            exp.resttype = arginfo.resttype;
+            exp.restinfo = arginfo.restinfo;
 
-        return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
+            return exp.setType(fdecl.member.resultType.remapTemplateBindings(fullmapper));
+        }
     }
     
     private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {

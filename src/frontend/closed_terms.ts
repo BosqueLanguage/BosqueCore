@@ -574,9 +574,11 @@ class InstantiationPropagator {
             this.instantiateCollectionConstructor(rparamtype.decl as AbstractCollectionTypeDecl, rparamtype, rargs);
         }
 
-        const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
-        const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
-        this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
+        if(!exp.isSpecialCall) {
+            const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
+            const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
+            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
+        }
     }
     
     private instantiateLogicActionAndExpression(exp: LogicActionAndExpression) {

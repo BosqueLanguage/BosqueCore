@@ -914,7 +914,7 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl> | undefined {
+    resolveTypeFunction(tsig: TypeSignature, name: string, tconstrain: TemplateConstraintScope): MemberLookupInfo<TypeFunctionDecl | null> | undefined {
         const tn = this.resolveTemplateAsNeededForNameLookup(tsig, tconstrain);
         if(tn === undefined || !(tn instanceof NominalTypeSignature)) {
             return undefined;
@@ -924,10 +924,14 @@ class TypeCheckerRelations {
             return undefined;
         }
 
+        if(tsig.decl instanceof TypedeclTypeDecl && (tsig.decl.valuetype.tkeystr === "String" || tsig.decl.valuetype.tkeystr === "CString") && name === "from") {
+            return new MemberLookupInfo<TypeFunctionDecl | null>(new TypeLookupInfo(tn, TemplateNameMapper.createEmpty()), null);
+        }
+
         const cci = tsig.decl.functions.find((c) => c.name === name);
         if(cci !== undefined) {
             const tlinfo = new TypeLookupInfo(tsig, this.generateTemplateMappingForTypeDecl(tsig));
-            return new MemberLookupInfo<TypeFunctionDecl>(tlinfo, cci);
+            return new MemberLookupInfo<TypeFunctionDecl | null>(tlinfo, cci);
         }
         else {
             const provides = this.resolveDirectProvidesDecls(tsig, tconstrain);
