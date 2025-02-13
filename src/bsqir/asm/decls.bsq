@@ -37,6 +37,6 @@ entity SourceInfo {
 
 enum RecursiveAnnotation {
     RecursiveTag,
-    RecursiveNoTag,
-    RecursiveCondTag
+    NonRecursiveTag,
+    CondRecursiveTag
 }
