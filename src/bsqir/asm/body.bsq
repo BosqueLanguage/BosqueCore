@@ -313,12 +313,12 @@ BinKeyEqNoneExpression {
     field exp: Expression;
 }
 | BinKeySomeEqExpression {
-    field eoption: Expression;
-    field eval: Expression;
+    field eqoption: Expression;
+    field eqval: Expression;
 }
 | BinKeyNotSomeEqExpression {
-    field eoption: Expression;
-    field eval: Expression;
+    field neoption: Expression;
+    field neval: Expression;
 }
 | BinKeyEqExpression {
     field lhs: Expression;
@@ -342,7 +342,7 @@ datatype BinaryNumericExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
 
-    field etype: TypeSignature;
+    field eqtype: TypeSignature;
     field opertype: TypeSignature;
 }
 of

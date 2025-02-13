@@ -7,7 +7,100 @@ declare namespace SMTEmitter {
     using SMTAssembly;
 }
 
-const s_sample_asm: SMTAssembly::Assembly = SMTAssembly::Assembly{
+const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
+    nsconsts = List<BSQAssembly::NamespaceConstDecl>{
+        BSQAssembly::NamespaceConstDecl{
+            file = "Main.bsq",
+            sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            attributes = List<BSQAssembly::DeclarationAttibute>{},
+            name = 'c1'<BSQAssembly::Identifier>,
+            declaredInNS = 'Main'<BSQAssembly::NamespaceKey>,
+            declaredType = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
+            value = BSQAssembly::LiteralSimpleExpression{
+                sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+                etype = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
+                value = '2i'
+            }
+        }
+    },
+    typeconsts = List<BSQAssembly::ConstMemberDecl>{
+    },
+    nsfuncs = Map<BSQAssembly::InvokeKey, BSQAssembly::NamespaceFunctionDecl>{
+        'Main::main'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{
+            file = "Main.bsq",
+            sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            attributes = List<BSQAssembly::DeclarationAttibute>{},
+            name = 'main'<BSQAssembly::Identifier>,
+            ikey = 'Main::main'<BSQAssembly::InvokeKey>,
+            irecursive = BSQAssembly::RecursiveAnnotation#RecursiveNoTag,
+            params = List<BSQAssembly::InvokeParameterDecl>{},
+            resultType = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
+            body = BSQAssembly::StandardBodyImplementation{
+                List<BSQAssembly::Statement>{
+                    BSQAssembly::ReturnSingleStatement{
+                        sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+                        value = BSQAssembly::LiteralSimpleExpression{
+                            sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+                            etype = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
+                            value = '2i'
+                        },
+                        rtype = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> }
+                    }
+                }
+            },
+            preconditions = List<BSQAssembly::PreConditionDecl>{},
+            postconditions = List<BSQAssembly::PostConditionDecl>{},
+            fkind = BSQAssembly::FunctionDeclKindTag#Function
+        }
+    },
+    typefuncs = Map<BSQAssembly::InvokeKey, BSQAssembly::TypeFunctionDecl>{
+    },
+    enums = Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{
+    },
+    typedecls = Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{
+    },
+    primtives = Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveEntityTypeDecl>{
+        'Int'<BSQAssembly::TypeKey> => BSQAssembly::PrimitiveEntityTypeDecl{
+            file = "Core.bsq",
+            sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            attributes = List<BSQAssembly::DeclarationAttibute>{},
+            tkey = 'Int'<BSQAssembly::TypeKey>,
+            invariants = List<BSQAssembly::InvariantDecl>{},
+            validates = List<BSQAssembly::ValidateDecl>{},
+            consts = List<BSQAssembly::ConstMemberDecl>{},
+            functions = List<BSQAssembly::TypeFunctionDecl>{},
+            methods = List<BSQAssembly::MethodDecl>{},
+            saturatedProvides = List<BSQAssembly::NominalTypeSignature>{},
+            saturatedBFieldInfo = List<BSQAssembly::SaturatedFieldInfo>{},
+            allInvariants = List<BSQAssembly::SaturatedInvariantInfo>{},
+            allValidates = List<BSQAssembly::SaturatedInvariantInfo>{}
+        }
+    },
+    constructables = Map<BSQAssembly::TypeKey, BSQAssembly::ConstructableTypeDecl>{
+    },
+    collections = Map<BSQAssembly::TypeKey, BSQAssembly::CollectionTypeDecl>{
+    },
+    entities = Map<BSQAssembly::TypeKey, BSQAssembly::EntityTypeDecl>{
+    },
+    datamembers = Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeMemberEntityTypeDecl>{
+    },
+    pconcepts = Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveConceptTypeDecl>{
+    },
+    concepts = Map<BSQAssembly::TypeKey, BSQAssembly::ConceptTypeDecl>{
+    },
+    datatypes = Map<BSQAssembly::TypeKey, BSQAssembly::DatatypeTypeDecl>{
+    },
+    allfuncs = List<BSQAssembly::InvokeKey>{
+        'Main::main'<BSQAssembly::InvokeKey>
+    },
+    allconcretetypes = List<BSQAssembly::TypeKey>{
+        'Int'<BSQAssembly::TypeKey>
+    },
+    allabstracttypes = List<BSQAssembly::TypeKey>{
+    }
+};
+
+const s_sample_smtasm: SMTAssembly::Assembly = SMTAssembly::Assembly{
     nsconsts = List<SMTAssembly::NamespaceConstDecl>{
         SMTAssembly::NamespaceConstDecl{
             'Main'<SMTAssembly::NamespaceKey>, 
@@ -81,5 +174,8 @@ entity Transformer {
 }
 
 public function main(): CString {
-    return SMTEmitter::emitAssembly(SMTEmitter::s_sample_asm, SMTEmitter::s_ignoreErrTrgt);
+    let tasm = Transformer::transformAssembly(SMTEmitter::s_sample_bsqasm);
+    let smtstr = SMTEmitter::emitAssembly(tasm, SMTEmitter::s_ignoreErrTrgt);
+
+    return smtstr;
 }

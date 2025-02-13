@@ -2292,10 +2292,10 @@ class JSEmitter {
             bop = `s.slice(0, s.length - suffix.length)`;
         }
         else if(bname === "cstring_replace_unique_string_occurrence") {
-            bop = `s.replace(find, replace)`;
+            bop = `s.replace(target, replacement)`;
         }
         else if(bname === "cstring_replace_all_string_occurrences") {
-            bop = `s.replaceAll(find, replace)`;
+            bop = `s.replaceAll(target, replacement)`;
         }
         else if(bname === "string_from_cstring") {
             bop = `s`;
@@ -2331,10 +2331,10 @@ class JSEmitter {
             bop = `s.slice(0, s.length - suffix.length)`;
         }
         else if(bname === "string_replace_unique_string_occurrence") {
-            bop = `s.replace(find, replace)`;
+            bop = `s.replace(target, replacement)`;
         }
         else if(bname === "string_replace_all_string_occurrences") {
-            bop = `s.replaceAll(find, replace)`;
+            bop = `s.replaceAll(target, replacement)`;
         }
         else {
             assert(false, `Unknown builtin function -- ${bname}`);
