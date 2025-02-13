@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { Assembly, NamespaceDeclaration, TestAssociation } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, NamespaceDeclaration, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, ConstructorExpression, ConstructorPrimaryExpression, Expression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, ConstructorEListExpression, ConstructorExpression, ConstructorPrimaryExpression, Expression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body.js";
 
 
 class BSQIREmitter {
@@ -116,7 +116,23 @@ class BSQIREmitter {
     }
 
     private emitArgumentValue(arg: ArgumentValue): string {
-        xxxx;
+        const eexp = this.emitExpression(arg.exp);
+
+        if(arg instanceof RefArgumentValue) {
+            return `RefArgumentValue{ exp=${eexp} }`;
+        }
+        else if(arg instanceof PositionalArgumentValue) {
+            return `PositionalArgumentValue{ exp=${eexp} }`;
+        }
+        else if(arg instanceof NamedArgumentValue) {
+            return `NamedArgumentValue{ exp=${eexp}, name='${arg.name}'<VarIdentifier> }`;
+        }
+        else if(arg instanceof SpreadArgumentValue) {
+            return `SpreadArgumentValue{ exp=${eexp} }`;
+        }
+        else {
+            assert(false, "Unknown argument value");
+        }
     }
 
     private emitArgumentList(argl: ArgumentList): string {
@@ -157,7 +173,10 @@ class BSQIREmitter {
         const value = this.emitExpression(exp.value);
         const constype = this.emitTypeSignature(exp.constype);
 
-        return `LiteralTypeDeclValueExpression{ ${ebase}, value=${value}, constype=${constype} }`;
+        const ttdecl = (exp.constype as NominalTypeSignature).decl as TypedeclTypeDecl;
+        const invchecks = ttdecl.allInvariants.length !== 0 || ttdecl.optofexp !== undefined;
+
+        return `LiteralTypeDeclValueExpression{ ${ebase}, value=${value}, constype=${constype}, invchecks=${invchecks} }`;
     }
 
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
@@ -189,7 +208,7 @@ class BSQIREmitter {
     }
 
     private emitConstructorExpressionBase(exp: ConstructorExpression): string {
-        const 
+        return `args=${this.emitArgumentList(exp.args)}`;
     }
 
     private emitConstructorPrimaryExpressionBase(exp: ConstructorPrimaryExpression): string {
@@ -199,9 +218,88 @@ class BSQIREmitter {
         return `${cebase}, ctype=${ctype}`;
     }
 
-    private emitCollectionConstructor(exp: ConstructorPrimaryExpression): string {
+    private emitCollectionConstructorOfArgType(elemtype: TypeSignature, exp: ConstructorPrimaryExpression): string {
+        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+
+        if(exp.args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
+            return `ConstructorPrimaryCollectionSingletonsExpression{ ${cpee}, elemtype=${this.emitTypeSignature(elemtype)} }`;
+        }
+        else {
+            assert(false, "Not implemented -- ConstructorPrimaryCollection -- Spreads");
+        }
     }
 
+    private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
+        const ctype = this.tproc(exp.ctype) as NominalTypeSignature;
+
+        if(cdecl instanceof ListTypeDecl) {
+            const ttype = ctype.alltermargs[0];
+            return this.emitCollectionConstructorOfArgType(ttype, exp);
+        }
+        else if(cdecl instanceof MapTypeDecl) {
+            const tval = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as AbstractNominalTypeDecl;
+            const mentry = new NominalTypeSignature(ctype.sinfo, undefined, tval, ctype.alltermargs);
+
+            return this.emitCollectionConstructorOfArgType(mentry, exp);
+        }
+        else {
+            assert(false, "Unknown collection type -- emitCollectionConstructor");
+        }
+    }
+
+    private emitSpecialConstructableConstructor(exp: ConstructorPrimaryExpression): string {
+        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+
+        return `ConstructorPrimarySpecialConstructableExpression{ ${cpee} }`;
+    }
+
+    private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
+        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+        const invchecks = cdecl.allInvariants.length !== 0;
+
+        if(cdecl.valuetype.tkeystr !== "CString" && cdecl.valuetype.tkeystr !== "String") {
+            return `ConstructorTypeDeclExpression{ ${cpee}, invchecks=${invchecks} }`;
+            
+        }
+        else {
+            const opcheck = cdecl.optofexp !== undefined ? "Some<Expression>{this.emitExpression(cdecl.optofexp.exp)}" : "none";
+            return `ConstructorTypeDeclStringExpression{ ${cpee}, invchecks=${invchecks}, opcheck=${opcheck} }`;
+        }
+    }
+
+    private emitConstructorStdExpression(cdecl: EntityTypeDecl, exp: ConstructorPrimaryExpression): string {
+        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+        const invchecks = cdecl.allInvariants.length !== 0;
+
+        const shuffleinfo = exp.shuffleinfo.map((si) => {
+            return `(${si[0]}i, '${si[1]}'<Identifier>, ${this.emitTypeSignature(si[2])})`;
+        });
+        
+        return `ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Int, Identifier, TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
+    }
+
+    private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
+        const ctype = exp.ctype as NominalTypeSignature;
+        const decl = ctype.decl;
+        if(decl instanceof AbstractCollectionTypeDecl) {
+            return this.emitCollectionConstructor(decl, exp);
+        }
+        else if(decl instanceof ConstructableTypeDecl) {
+            return this.emitSpecialConstructableConstructor(exp);
+        }
+        else if(decl instanceof TypedeclTypeDecl) {
+            return this.emitTypeDeclConstructor(decl, exp);
+        }
+        else {
+            return this.emitConstructorStdExpression(decl as EntityTypeDecl, exp);
+        }
+    }
+
+    private emitConstructorEListExpression(exp: ConstructorEListExpression): string {
+        const cebase = this.emitConstructorExpressionBase(exp);
+
+        return `ConstructorEListExpression{ ${cebase} }`;
+    }
 
     private emitExpression(exp: Expression): string {
         xxxx;
