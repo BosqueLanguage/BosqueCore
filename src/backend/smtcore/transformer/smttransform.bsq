@@ -1,13 +1,25 @@
 
 namespace SMTEmitter;
 
-
 namespace TransformNameManager {
+    const c_dangerous: Map<CString, CString> = Map<CString, CString>{
+        'ite' => '@ite'
+    };
+
     function resymbolCStringForSMT(cstr: CString): CString {
         return cstr.replaceAllStringOccurrences('::', '@')
             .replaceAllStringOccurrences(', ', '-')
             .replaceAllStringOccurrences('(|', '@EList<')
             .replaceAllStringOccurrences('|)', '>');
+    }
+
+    function safeifyName(name: CString): CString {
+        if(!TransformNameManager::c_dangerous.has(name)) {
+            return name;
+        }
+        else {
+            return TransformNameManager::c_dangerous.get(name);
+        }    
     }
 
     function convertNamespaceKey(nskey: BSQAssembly::NamespaceKey): SMTAssembly::NamespaceKey {
@@ -16,6 +28,10 @@ namespace TransformNameManager {
 
     function convertTypeKey(nskey: BSQAssembly::TypeKey): SMTAssembly::TypeKey {
         return SMTAssembly::TypeKey::from(resymbolCStringForSMT(nskey.value));
+    }
+
+    function convertInvokeKey(ikey: BSQAssembly::InvokeKey): SMTAssembly::InvokeKey {
+        return SMTAssembly::InvokeKey::from(resymbolCStringForSMT(ikey.value));
     }
 }
 
@@ -49,9 +65,9 @@ entity SMTTransformer {
         }
     }
 
-    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
+    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::ParamTypeKey {
         if(tsig)@!<BSQAssembly::LambdaTypeSignature> {
-            return this.transformStdTypeToSMT(tsig);
+            return SMTAssembly::ParamTypeKey::from(this.transformStdTypeToSMT(tsig));
         }
         else {
             abort; %% NOT IMPLEMENTED LAMBDA TYPES
@@ -106,6 +122,57 @@ entity SMTTransformer {
         }
     }
 
+    method transformStatementListToSMT(stmts: List<BSQAssembly::Statement>, ttype: BSQAssembly::TypeSignature): SMTAssembly::OperationBlock {
+        %% special case for return singletons
+        if(stmts.isSingleElement()) {
+            let etr = stmts.single();
+            match(etr)@ {
+                BSQAssembly::ReturnVoidStatement => {
+                    abort; %% NOT IMPLEMENTED
+                }
+                | BSQAssembly::ReturnSingleStatement => {
+                    %%TODO: do coerce checking here
+                    return this.transformToplevelExpressionToSMT($etr.value, ttype);
+                }
+                | BSQAssembly::ReturnMultiStatement => {
+                    abort; %% NOT IMPLEMENTED
+                }
+            }
+        }
+        else {
+            abort; %% NOT IMPLEMENTED
+        }
+    }
+
+    method transformRealBodyImplementationToSMT(impl: BSQAssembly::BodyImplementation, ttype: BSQAssembly::TypeSignature): SMTAssembly::OperationBlock {
+        match(impl)@ {
+            BSQAssembly::BuiltinBodyImplementation => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::ExpressionBodyImplementation => {
+                return this.transformToplevelExpressionToSMT($impl.exp, ttype);
+            }
+            | BSQAssembly::StandardBodyImplementation => {
+                return this.transformStatementListToSMT($impl.statements, ttype);
+            }
+            | _ => {
+                abort; %% NOT IMPLEMENTED
+            }
+        }
+    }
+
+    method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::NamespaceFunctionDecl {
+        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
+
+        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{p.pname.value, this.transformCallTypeToSMT(p.ptype)});
+        let rtype = this.transformStdTypeToSMT(decl.resultType);
+        let artype = if(errinvokes.get(decl.ikey)) then SMTAssembly::OptionResult{ rtype } else SMTAssembly::DirectResult{ rtype };
+
+        let body = this.transformToplevelExpressionToSMT(decl.body, decl.resultType);
+        return SMTAssembly::NamespaceFunctionDecl{ nskey, decl.name.value, ikey, params, artype, body };
+    }
+
     method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
 
@@ -116,8 +183,20 @@ entity SMTTransformer {
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
-    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly};
+
+        let tnsfuncs = assembly.allfuncs
+            .filter(pred(ikey) => assembly.nsfuncs.has(ikey))
+            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>{}, 
+                fn(acc, ikey) => {
+                    let bsqdecl = assembly.nsfuncs.get(ikey);
+                    let smtdecl = transformer.transformNamespaceFunctionDeclToSMT(bsqdecl, errinvokes);
+                    return acc.set(smtdecl.ikey, smtdecl);
+                });
+
+        let tallfuncs = assembly.allfuncs.map(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
+        %% TODO -- topo sort this
 
         return SMTAssembly::Assembly {
             nsconsts = assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc)),
@@ -126,9 +205,9 @@ entity SMTTransformer {
             nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{},
             nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{},
     
-            nsfuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{},
+            nsfuncs = tnsfuncs,
             typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{},
-            allfuncs = List<SMTAssembly::InvokeKey>{},
+            allfuncs = tallfuncs,
     
             enums = List<SMTAssembly::EnumTypeDecl>{},
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},

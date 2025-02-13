@@ -3,6 +3,8 @@ declare namespace BSQAssembly;
 concept AbstractDecl {
     field file: String;
     field sinfo: SourceInfo;
+
+    field declaredInNS: NamespaceKey;
 }
 
 concept ConditionDecl provides AbstractDecl {
@@ -241,8 +243,6 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
 %%
 
 entity NamespaceConstDecl provides AbstractCoreDecl {
-    field declaredInNS: NamespaceKey;
-
     field declaredType: TypeSignature;
     field value: Expression;
 }
