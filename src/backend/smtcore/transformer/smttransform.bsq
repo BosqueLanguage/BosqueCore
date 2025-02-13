@@ -50,6 +50,10 @@ ValueTransformResult {
 entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
 
+    function isTermSMTTypeKey(tkey: SMTAssembly::TypeKey): Bool {
+        return tkey === '@Term'<SMTAssembly::TypeKey>;
+    }
+
     method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@!<BSQAssembly::NominalTypeSignature> {
             let smtk = TransformNameManager::convertTypeKey(tsig.tkeystr);
@@ -74,6 +78,31 @@ entity SMTTransformer {
         }
     }
 
+    method emitTermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, v: SMTAssembly::Value): SMTAssembly::Value {
+        return SMTAssembly::TermifyValue{v, smtfrom, smtinto};
+    }
+
+    method emitUntermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, v: SMTAssembly::Value): SMTAssembly::Value {
+        return SMTAssembly::UntermifyValue{v, smtfrom, smtinto};
+    }
+
+    method emitCoerceAsNeeded(from: BSQAssembly::TypeSignature, into: BSQAssembly::TypeSignature, v: SMTAssembly::Value): SMTAssembly::Value {
+        let smtfrom = this.transformStdTypeToSMT(from);
+        let smtinto = this.transformStdTypeToSMT(into);
+
+        if(smtfrom === smtinto) {
+            return v;
+        }
+        else {
+            if(SMTTransformer::isTermSMTTypeKey(smtinto)) {
+                return this.emitTermify(smtfrom, smtinto, v);
+            }
+            else {
+                return this.emitUntermify(smtfrom, smtinto, v);
+            }
+        }
+    } 
+
     method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::Value {
         return SMTAssembly::LiteralNoneValue{};
     }
@@ -91,7 +120,7 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringValue{exp.value};
     }
 
-    method transformExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): ExpressionTransformResult {
+    method transformExpressionToSMT(exp: BSQAssembly::Expression): ExpressionTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
                 return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralNoneExpression($exp)}; 
@@ -112,10 +141,11 @@ entity SMTTransformer {
     }
 
     method transformToplevelExpressionToSMT(exp: BSQAssembly::Expression, ttype: BSQAssembly::TypeSignature): SMTAssembly::OperationBlock {
-        let etr = this.transformExpressionToSMT(exp, ttype);
+        let etr = this.transformExpressionToSMT(exp);
 
         if(etr)@<ValueTransformResult> {
-            return SMTAssembly::OperationBlock{$etr.preops, SMTAssembly::ReturnValueOperation{$etr.value}};
+            let rval = this.emitCoerceAsNeeded(exp.etype, ttype, $etr.value);
+            return SMTAssembly::OperationBlock{$etr.preops, SMTAssembly::ReturnValueOperation{rval}};
         }
         else {
             abort; %% NOT IMPLEMENTED
@@ -131,7 +161,6 @@ entity SMTTransformer {
                     abort; %% NOT IMPLEMENTED
                 }
                 | BSQAssembly::ReturnSingleStatement => {
-                    %%TODO: do coerce checking here
                     return this.transformToplevelExpressionToSMT($etr.value, ttype);
                 }
                 | BSQAssembly::ReturnMultiStatement => {
@@ -169,7 +198,7 @@ entity SMTTransformer {
         let rtype = this.transformStdTypeToSMT(decl.resultType);
         let artype = if(errinvokes.get(decl.ikey)) then SMTAssembly::OptionResult{ rtype } else SMTAssembly::DirectResult{ rtype };
 
-        let body = this.transformToplevelExpressionToSMT(decl.body, decl.resultType);
+        let body = this.transformRealBodyImplementationToSMT(decl.body, decl.resultType);
         return SMTAssembly::NamespaceFunctionDecl{ nskey, decl.name.value, ikey, params, artype, body };
     }
 
@@ -188,14 +217,14 @@ entity SMTTransformer {
 
         let tnsfuncs = assembly.allfuncs
             .filter(pred(ikey) => assembly.nsfuncs.has(ikey))
-            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>{}, 
+            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{}, 
                 fn(acc, ikey) => {
                     let bsqdecl = assembly.nsfuncs.get(ikey);
                     let smtdecl = transformer.transformNamespaceFunctionDeclToSMT(bsqdecl, errinvokes);
-                    return acc.set(smtdecl.ikey, smtdecl);
+                    return acc.insert(smtdecl.invokeKey, smtdecl);
                 });
 
-        let tallfuncs = assembly.allfuncs.map(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
+        let tallfuncs = assembly.allfuncs.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
         %% TODO -- topo sort this
 
         return SMTAssembly::Assembly {
