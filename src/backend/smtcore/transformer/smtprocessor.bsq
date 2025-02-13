@@ -12,9 +12,9 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
         BSQAssembly::NamespaceConstDecl{
             file = "Main.bsq",
             sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            declaredInNS = 'Main'<BSQAssembly::NamespaceKey>,
             attributes = List<BSQAssembly::DeclarationAttibute>{},
             name = 'c1'<BSQAssembly::Identifier>,
-            declaredInNS = 'Main'<BSQAssembly::NamespaceKey>,
             declaredType = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
             value = BSQAssembly::LiteralSimpleExpression{
                 sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
@@ -29,6 +29,7 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
         'Main::main'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{
             file = "Main.bsq",
             sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            declaredInNS = 'Main'<BSQAssembly::NamespaceKey>,
             attributes = List<BSQAssembly::DeclarationAttibute>{},
             name = 'main'<BSQAssembly::Identifier>,
             ikey = 'Main::main'<BSQAssembly::InvokeKey>,
@@ -63,6 +64,7 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
         'Int'<BSQAssembly::TypeKey> => BSQAssembly::PrimitiveEntityTypeDecl{
             file = "Core.bsq",
             sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
+            declaredInNS = 'Core'<BSQAssembly::NamespaceKey>,
             attributes = List<BSQAssembly::DeclarationAttibute>{},
             tkey = 'Int'<BSQAssembly::TypeKey>,
             invariants = List<BSQAssembly::InvariantDecl>{},
@@ -169,7 +171,12 @@ entity Transformer {
         %%         (1) generic calls from bsqir simplifier like rename and tree convert ...
         %%         (2) specific calls from transformer to ground recursive calls ...
 
-        return SMTTransformer::transformAssemblyToSMT(assembly);
+        %%TODO compute errinvokes info
+        let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = Map<BSQAssembly::InvokeKey, Bool>{ 
+            'Main::main'<BSQAssembly::InvokeKey> => false
+        };
+
+        return SMTTransformer::transformAssemblyToSMT(assembly, errinvokes);
     }
 }
 

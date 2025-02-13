@@ -169,7 +169,7 @@ recursive function emitTermifyValue(v: SMTAssembly::TermifyValue): CString {
 }
 
 recursive function emitUntermifyValue(v: SMTAssembly::UntermifyValue): CString {
-    let access = SMTNameManager::generateStructTermFieldName(v.fromtype);
+    let access = SMTNameManager::generateStructTermFieldName(v.intotype);
     let vv = emitValue[recursive](v.value);
     
     return CString::concat('(', access, ' ', vv, ')');
