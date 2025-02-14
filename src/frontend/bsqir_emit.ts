@@ -1,11 +1,39 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, NamespaceDeclaration, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
-import { EListTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, ConstructorEListExpression, ConstructorExpression, ConstructorPrimaryExpression, Expression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body.js";
+import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
+
+class EmitNameManager {
+    static resolveNamespaceDecl(assembly: Assembly, ns: FullyQualifiedNamespace): NamespaceDeclaration {
+        let curns = assembly.getToplevelNamespace(ns.ns[0]) as NamespaceDeclaration;
+
+        for(let i = 1; i < ns.ns.length; ++i) {
+            curns = curns.subns.find((nns) => nns.name === ns.ns[i]) as NamespaceDeclaration;
+        }
+
+        return curns as NamespaceDeclaration;
+    }
+
+    static generateNamespaceKey(ns: FullyQualifiedNamespace): string {
+        xxxx;
+    }
+
+    static generateTypeKey(tsig: TypeSignature): string {
+        xxxx;
+    }
+
+    static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string): string {
+        xxxx;
+    }
+
+    static generateTypeInvokeKey(tsig: TypeSignature, name: string): string {
+        xxxx;
+    }
+}
 
 class BSQIREmitter {
     readonly assembly: Assembly;
@@ -299,6 +327,99 @@ class BSQIREmitter {
         const cebase = this.emitConstructorExpressionBase(exp);
 
         return `ConstructorEListExpression{ ${cebase} }`;
+    }
+
+    private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
+       assert(false, "Not implemented -- ConstructorLambda");
+    }
+
+    private emitLetExpression(exp: LetExpression): string {
+        assert(false, "Not implemented -- Let");
+    }
+
+    private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
+        assert(false, "Not implemented -- LambdaInvoke");
+    }
+
+    private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {
+        const ebase = this.emitExpressionBase(exp);
+
+        return `ConstructorPrimarySpecialConstructableExpression{ ${ebase} }`;
+    }
+
+    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
+        const ebase = this.emitExpressionBase(exp);
+
+        const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
+        const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
+
+        const argl: string[] = [];
+        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
+            const ii = exp.shuffleinfo[i];
+            if(ii[0] === -1) {
+                argl.push("undefined");
+            }
+            else {
+                const aaexp = this.emitExpression(exp.args.args[ii[0]].exp, true);
+                argl.push(aaexp);
+            }
+        }
+
+        if(exp.restinfo !== undefined) {
+            const restl: ArgumentValue[] = [];
+
+            for(let i = 0; i < exp.restinfo.length; ++i) {
+                const rri = exp.restinfo[i];
+                if(!rri[1]) {
+                    restl.push(exp.args.args[rri[0]]);
+                }
+                else {
+                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
+                }
+            }
+
+            const rparams = ffinv.params[ffinv.params.length - 1];
+            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            if(rtype.decl instanceof ListTypeDecl) {
+                argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
+            }
+            else {
+                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
+            }
+        }
+
+        return `CallNamespaceFunctionExpression{ 
+        ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, 
+        name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, 
+        shuffleinfo=List<(|Int, TypeSignature|)>{${exp.shuffleinfo.map((si) => `(${si[0]}i, ${this.emitTypeSignature(si[1])})`).join(", ")}},
+        resttype=${exp.resttype !== undefined ? this.emitTypeSignature(exp.resttype) : "none"},
+        restinfo=List<(|Int, Bool, TypeSignature|)>{${exp.restinfo.map((ri) => `(${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])})`).join(", ")}} 
+        }`;
+    }
+    
+    private emitCallTypeFunctionExpressionSpecial(exp: CallTypeFunctionExpression, rtrgt: NominalTypeSignature): string {
+        const taccess = EmitNameManager.generateAccessorForSpecialTypeConstructor(this.getCurrentNamespace(), rtrgt);
+
+        const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
+        const simple = (sexp === "CString" || sexp === "String");
+
+        if(simple) {
+            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, true)})`;
+        }
+        else {
+            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, false)}.value)`;
+        }
+    }
+
+    private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
+        const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
+
+        if(exp.isSpecialCall) {
+            return this.emitCallTypeFunctionExpressionSpecial(exp, rtrgt);
+        }
+        else {
+            assert(false, "Not implemented -- CallTypeFunction");
+        }
     }
 
     private emitExpression(exp: Expression): string {
