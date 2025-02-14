@@ -19,19 +19,19 @@ class EmitNameManager {
     }
 
     static generateNamespaceKey(ns: FullyQualifiedNamespace): string {
-        xxxx;
+        return ns.ns.join("::"); //Core is explicit here
     }
 
     static generateTypeKey(tsig: TypeSignature): string {
-        xxxx;
+        return tsig.tkeystr;
     }
 
     static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string): string {
-        xxxx;
+        return `${this.generateNamespaceKey(ns)}::${name}`;
     }
 
     static generateTypeInvokeKey(tsig: TypeSignature, name: string): string {
-        xxxx;
+        return `${this.generateTypeKey(tsig)}::${name}`;
     }
 }
 
@@ -353,6 +353,13 @@ class BSQIREmitter {
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
         const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
+        const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
+        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
+
+        const sinfocc = exp.shuffleinfo.map((si) => {
+            return `(${si[0]}i, ${this.emitTypeSignature(si[1])})`;
+        });
+
         const argl: string[] = [];
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
             const ii = exp.shuffleinfo[i];
@@ -388,9 +395,7 @@ class BSQIREmitter {
             }
         }
 
-        return `CallNamespaceFunctionExpression{ 
-        ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, 
-        name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, 
+        return `CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, 
         shuffleinfo=List<(|Int, TypeSignature|)>{${exp.shuffleinfo.map((si) => `(${si[0]}i, ${this.emitTypeSignature(si[1])})`).join(", ")}},
         resttype=${exp.resttype !== undefined ? this.emitTypeSignature(exp.resttype) : "none"},
         restinfo=List<(|Int, Bool, TypeSignature|)>{${exp.restinfo.map((ri) => `(${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])})`).join(", ")}} 

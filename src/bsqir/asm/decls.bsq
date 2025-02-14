@@ -7,7 +7,7 @@ const max_safe_int: Int = 4611686018427387903i;
 const max_safe_nat: Nat = 4611686018427387903n;
 
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
-const namespaceKeyRE: CRegex = /(${BSQAssembly::namespaceComponentRE}'::')*${BSQAssembly::namespaceComponentRE}/c; %%Core is implicit here
+const namespaceKeyRE: CRegex = /(${BSQAssembly::namespaceComponentRE}'::')*${BSQAssembly::namespaceComponentRE}/c; %%Core is explicit here
 type NamespaceComponentKey = CString of BSQAssembly::namespaceComponentRE;
 type NamespaceKey = CString of BSQAssembly::namespaceKeyRE; %%Core is implicit here
 
