@@ -4,7 +4,7 @@ import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, Construc
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, Expression, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
 
 class EmitNameManager {
@@ -168,6 +168,11 @@ class BSQIREmitter {
         return `ArgumentList{ List<ArgumentValue>{${args}} }`;
     }
 
+    private emitArgumentListSinglePositional(exp: Expression): string {
+        const arg = `PositionalArgumentValue{ exp=${this.emitExpression(exp)} }`
+        return `ArgumentList{ List<ArgumentValue>{${arg}} }`;
+    }
+
     private emitExpressionBase(exp: Expression): string {
         return `sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${this.emitTypeSignature(exp.getType())}`;
     }
@@ -290,7 +295,7 @@ class BSQIREmitter {
             
         }
         else {
-            const opcheck = cdecl.optofexp !== undefined ? "Some<Expression>{this.emitExpression(cdecl.optofexp.exp)}" : "none";
+            const opcheck = cdecl.optofexp !== undefined ? `some(${this.emitExpression(cdecl.optofexp.exp)}` : "none";
             return `ConstructorTypeDeclStringExpression{ ${cpee}, invchecks=${invchecks}, opcheck=${opcheck} }`;
         }
     }
@@ -356,63 +361,29 @@ class BSQIREmitter {
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
         const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
 
-        const sinfocc = exp.shuffleinfo.map((si) => {
-            return `(${si[0]}i, ${this.emitTypeSignature(si[1])})`;
-        });
+        const sinfocc = exp.shuffleinfo.map((si) => `(|${si[0]}i, ${this.emitTypeSignature(si[1])}|)`).join(", ");
+        const resttypecc = exp.resttype !== undefined ? `some(this.emitTypeSignature(exp.resttype))` : "none"
+        const restinfocc = (exp.restinfo || []).map((ri) => `(|${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`).join(", ");
 
-        const argl: string[] = [];
-        for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            const ii = exp.shuffleinfo[i];
-            if(ii[0] === -1) {
-                argl.push("undefined");
-            }
-            else {
-                const aaexp = this.emitExpression(exp.args.args[ii[0]].exp, true);
-                argl.push(aaexp);
-            }
-        }
-
-        if(exp.restinfo !== undefined) {
-            const restl: ArgumentValue[] = [];
-
-            for(let i = 0; i < exp.restinfo.length; ++i) {
-                const rri = exp.restinfo[i];
-                if(!rri[1]) {
-                    restl.push(exp.args.args[rri[0]]);
-                }
-                else {
-                    assert(false, "Not implemented -- CallNamespaceFunction -- spread into rest");
-                }
-            }
-
-            const rparams = ffinv.params[ffinv.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
-            if(rtype.decl instanceof ListTypeDecl) {
-                argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
-            }
-            else {
-                assert(false, "Not implemented -- CallNamespaceFunction -- rest");
-            }
-        }
-
-        return `CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, 
-        shuffleinfo=List<(|Int, TypeSignature|)>{${exp.shuffleinfo.map((si) => `(${si[0]}i, ${this.emitTypeSignature(si[1])})`).join(", ")}},
-        resttype=${exp.resttype !== undefined ? this.emitTypeSignature(exp.resttype) : "none"},
-        restinfo=List<(|Int, Bool, TypeSignature|)>{${exp.restinfo.map((ri) => `(${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])})`).join(", ")}} 
-        }`;
+        return `CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, shuffleinfo=List<(|Int, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Int, Bool, TypeSignature|)>{${restinfocc}} }`;
     }
     
     private emitCallTypeFunctionExpressionSpecial(exp: CallTypeFunctionExpression, rtrgt: NominalTypeSignature): string {
-        const taccess = EmitNameManager.generateAccessorForSpecialTypeConstructor(this.getCurrentNamespace(), rtrgt);
-
         const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
         const simple = (sexp === "CString" || sexp === "String");
 
+        const cbe = this.emitExpressionBase(exp);
+
+        const cdecl = rtrgt.decl as TypedeclTypeDecl;
+        const invchecks = cdecl.allInvariants.length !== 0;
+
         if(simple) {
-            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, true)})`;
+            const arg = this.emitArgumentListSinglePositional(exp.args.args[0].exp);
+            const opcheck = cdecl.optofexp !== undefined ? `some(${this.emitExpression(cdecl.optofexp.exp)}` : "none";
+            return `ConstructorTypeDeclStringExpression{ ${cbe}, args=${arg}, ctype=${this.emitTypeSignature(rtrgt)}, invchecks=${invchecks}, opcheck=${opcheck} }`;
         }
         else {
-            return `${taccess}(${this.emitExpression(exp.args.args[0].exp, false)}.value)`;
+            assert(false, "Not implemented -- CallTypeFunctionExpressionSpecial with complex arg access");
         }
     }
 
@@ -425,6 +396,26 @@ class BSQIREmitter {
         else {
             assert(false, "Not implemented -- CallTypeFunction");
         }
+    }
+
+    private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {
+        assert(false, "Not implemented -- LogicActionAnd");
+    }
+    
+    private emitLogicActionOrExpression(exp: LogicActionOrExpression): string {
+        assert(false, "Not implemented -- LogicActionOr");
+    }
+    
+    private emitParseAsTypeExpression(exp: ParseAsTypeExpression): string {
+        assert(false, "Not implemented -- ParseAsType");
+    }
+
+    private emitSafeConvertExpression(exp: SafeConvertExpression): string {
+        assert(false, "Not implemented -- SafeConvert");
+    }
+
+    private emitCreateDirectExpression(exp: CreateDirectExpression): string {
+        assert(false, "Not implemented -- CreateDirect");
     }
 
     private emitExpression(exp: Expression): string {

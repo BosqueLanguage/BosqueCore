@@ -628,7 +628,7 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
@@ -667,7 +667,7 @@ class CallTypeFunctionExpression extends Expression {
     isSpecialCall: boolean = false;
     resolvedDeclType: TypeSignature | undefined = undefined;
     resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
@@ -703,7 +703,7 @@ class CallRefInvokeExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;
@@ -1018,7 +1018,7 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;

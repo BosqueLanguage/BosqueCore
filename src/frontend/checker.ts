@@ -693,17 +693,15 @@ class TypeChecker {
         return rtypes;
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature | undefined][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
+    private checkArgumentList(sinfo: SourceInfo, env: TypeEnvironment, refok: boolean, args: ArgumentValue[], params: InvokeParameterDecl[], imapper: TemplateNameMapper): { shuffleinfo: [number, TypeSignature][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined } {
         const nonrestparams = params.filter((p) => !p.isRestParam);
         const restparam = params.find((p) => p.isRestParam); //is only 1 at the end (from parser)
         
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
-        let argsuffletype: (TypeSignature | undefined)[] = [];
         for(let i = 0; i < nonrestparams.length; ++i) {
             argsuffle.push(undefined);
             argsuffleidx.push(-1);
-            argsuffletype.push(undefined);
         }
 
         //fill in all the parameter arg shuggle info
@@ -748,10 +746,12 @@ class TypeChecker {
         }
             
         let usingdeafults = false;
+        let argsuffletype: TypeSignature[] = [];
         for(let i = 0; i < nonrestparams.length; ++i) {
             if(argsuffle[i] === undefined) {
                 this.checkError(sinfo, nonrestparams[i].optDefaultValue === undefined, `Required argument ${nonrestparams[i].name} not provided`);
                 usingdeafults = true;
+                argsuffletype[i] = nonrestparams[i].type;
             }
             else {
                 const pp = nonrestparams[i];
@@ -775,7 +775,7 @@ class TypeChecker {
             }
         }
 
-        let shuffleinfo: [number, TypeSignature | undefined][] = [];
+        let shuffleinfo: [number, TypeSignature][] = [];
         for(let i = 0; i < nonrestparams.length; ++i) {
             shuffleinfo.push([argsuffleidx[i], argsuffletype[i]]);
         }
