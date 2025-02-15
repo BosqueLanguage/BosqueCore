@@ -227,12 +227,10 @@ datatype PostfixOperation using {
 of 
 PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
     field name: Identifier;
 }
 | PostfixProjectFromNames {
     field declOnType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
     field names: List<(|Identifier, NominalTypeSignature|)>;
 }
 | PostfixAccessFromIndex {
@@ -246,7 +244,6 @@ PostfixAccessFromName {
 }
 | PostfixAssignFields {
     field declOnType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
     field updates: List<(|Identifier, NominalTypeSignature, Expression|)>;
 }
 | PostfixInvokeStatic {

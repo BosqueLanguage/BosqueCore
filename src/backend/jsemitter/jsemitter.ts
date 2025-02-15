@@ -859,7 +859,7 @@ class JSEmitter {
 
         return `${consop}(${eexp})`;
     }
-        
+    
     private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
         const fdecl = exp.fieldDecl as MemberFieldDecl;
         return `${val}.${fdecl.name}`;

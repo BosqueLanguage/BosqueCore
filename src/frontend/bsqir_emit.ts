@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, NamespaceDeclaration, NamespaceFunctionDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
 
 class EmitNameManager {
@@ -171,6 +171,10 @@ class BSQIREmitter {
     private emitArgumentListSinglePositional(exp: Expression): string {
         const arg = `PositionalArgumentValue{ exp=${this.emitExpression(exp)} }`
         return `ArgumentList{ List<ArgumentValue>{${arg}} }`;
+    }
+
+    private emitITest(itest: ITest): string {
+        assert(false, "Not implemented -- ITest");
     }
 
     private emitExpressionBase(exp: Expression): string {
@@ -416,6 +420,379 @@ class BSQIREmitter {
 
     private emitCreateDirectExpression(exp: CreateDirectExpression): string {
         assert(false, "Not implemented -- CreateDirect");
+    }
+
+    private emitPostfixOperationBase(exp: PostfixOperation): string {
+        return `sinfo=${this.emitSourceInfo(exp.sinfo)}, rcvrType=${this.emitTypeSignature(exp.getRcvrType())}, etype=${this.emitTypeSignature(exp.getType())}`;
+    }
+
+    private emitPostfixAccessFromName(exp: PostfixAccessFromName): string {
+        const opbase = this.emitPostfixOperationBase(exp);
+        const declaredInType = this.emitTypeSignature(exp.declaredInType as TypeSignature);
+
+        return `PostfixAccessFromName{ ${opbase}, declaredInType=${declaredInType}, name='${exp.name}'<Identifier> }`;
+    }
+
+    private emitPostfixProjectFromNames(exp: PostfixProjectFromNames): string {
+        assert(false, "Not Implemented -- emitPostfixProjectFromNames");
+    }
+
+    private emitPostfixAccessFromIndex(exp: PostfixAccessFromIndex): string {
+        const opbase = this.emitPostfixOperationBase(exp);
+
+        return `PostfixAccessFromIndex{ ${opbase}, idx=${exp.idx}n }`;
+    }
+
+    private emitPostfixIsTest(exp: PostfixIsTest): string {
+        const opbase = this.emitPostfixOperationBase(exp);
+        const ttest = this.emitITest(exp.ttest);
+
+        return `PostfixIsTest{ ${opbase}, ttest=${ttest} }`;
+    }
+
+    private emitPostfixAsConvert(exp: PostfixAsConvert): string {
+        const opbase = this.emitPostfixOperationBase(exp);
+        const ttype = this.emitITest(exp.ttest);
+
+        return `PostfixAsConvert{ ${opbase}, ttype=${ttype} }`;
+    }
+
+    private emitPostfixAssignFields(exp: PostfixAssignFields): string {
+        assert(false, "Not Implemented -- emitPostfixAssignFields");
+    }
+
+    private emitResolvedPostfixInvoke(exp: PostfixInvoke): string {
+        const rtrgt = (this.tproc(exp.resolvedTrgt as TypeSignature) as NominalTypeSignature);
+        
+        //TODO: same as emitCallTypeFunctionExpression
+
+        assert(false, "Not Implemented -- emitResolvedPostfixInvoke");
+    }
+
+    private emitVirtualPostfixInvoke(exp: PostfixInvoke): string {
+        assert(false, "Not Implemented -- emitResolvedPostfixInvoke Virtual");
+    }
+
+    private emitPostfixInvoke(exp: PostfixInvoke): string {
+        if(exp.resolvedTrgt !== undefined) {
+            return this.emitResolvedPostfixInvoke(exp);
+        }
+        else {
+            return this.emitVirtualPostfixInvoke(exp);
+        }
+    }
+
+    private emitPostfixLiteralKeyAccess(exp: PostfixLiteralKeyAccess): string {
+        assert(false, "Not Implemented -- emitPostfixLiteralKeyAccess");
+    }
+
+    private emitPostfixOp(exp: PostfixOp): string {
+        const rootExp = this.emitExpression(exp.rootExp);
+        const ops = exp.ops.map((op) => {
+            switch(op.tag) {
+                case PostfixOpTag.PostfixAccessFromName: {
+                    return this.emitPostfixAccessFromName(op as PostfixAccessFromName);
+                }
+                case PostfixOpTag.PostfixProjectFromNames: {
+                    return this.emitPostfixProjectFromNames(op as PostfixProjectFromNames);
+                }
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    return this.emitPostfixAccessFromIndex(op as PostfixAccessFromIndex);
+                }
+                case PostfixOpTag.PostfixIsTest: {
+                    return this.emitPostfixIsTest(op as PostfixIsTest);
+                }
+                case PostfixOpTag.PostfixAsConvert: {
+                    return this.emitPostfixAsConvert(op as PostfixAsConvert);
+                }
+                case PostfixOpTag.PostfixAssignFields: {
+                    return this.emitPostfixAssignFields(op as PostfixAssignFields);
+                }
+                case PostfixOpTag.PostfixInvoke: {
+                    return this.emitPostfixInvoke(op as PostfixInvoke);
+                }
+                case PostfixOpTag.PostfixLiteralKeyAccess: {
+                    return this.emitPostfixLiteralKeyAccess(op as PostfixLiteralKeyAccess);
+                }
+                default: {
+                    assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
+                }
+            }
+        });
+
+        return `PostfixOp{ rootExp=${rootExp}, ops=List<PostfixOp>{${ops}} }`;
+    }
+
+    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression, toplevel: boolean): string {
+        const optype = exp.opertype as TypeSignature;
+
+        if(EmitNameManager.isPrimitiveType(optype)) {
+            const eexp = `!${this.emitExpression(exp.exp, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const eexp = this.emitExpression(exp.exp, true);
+            const cc = EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature);
+
+            return `_$not(${eexp}, ${cc})`;
+        }
+    }
+
+    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression, toplevel: boolean): string {
+        if(exp.op === "+") {
+            return this.emitExpression(exp.exp, toplevel);
+        }
+        else {
+            const optype = exp.opertype as TypeSignature;
+            
+            if(EmitNameManager.isPrimitiveType(optype)) {
+                const eexp = `-${this.emitExpression(exp.exp, false)}`;
+                return !toplevel ? `(${eexp})` : eexp;
+            }
+            else {
+                const eexp = this.emitExpression(exp.exp, true);
+                const cc = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.getType()) as NominalTypeSignature)}`;
+
+                const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+                return `_$negate.${optype}(${eexp}, ${cc})`;
+            }
+        }
+    }
+
+    private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+        const etype = this.tproc(exp.getType());
+
+        let ccepr = "";
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
+        }
+
+        return `_$add.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
+    }
+
+    private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+        const etype = this.tproc(exp.getType());
+
+        let ccepr = "";
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
+        }
+
+        return `_$sub.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
+    }
+    
+    private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+        const etype = this.tproc(exp.getType());
+
+        let ccepr = "";
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
+        }
+
+        return `_$mult.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
+    }
+    
+    private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+        const etype = this.tproc(exp.getType());
+
+        let ccepr = "";
+        if(!EmitNameManager.isPrimitiveType(etype)) {
+            ccepr = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), etype as NominalTypeSignature)}`;
+        }
+
+        return `_$div.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
+    }
+    
+    private emitBinKeyEqExpression(exp: BinKeyEqExpression, toplevel: boolean): string {
+        const kcop = exp.operkind;
+
+        if(kcop === "lhsnone") {
+            return `${this.emitExpression(exp.rhs, false)}._$isNone()`;
+        }
+        else if(kcop === "rhsnone") {
+            return `${this.emitExpression(exp.lhs, false)}._$isNone()`;
+        }
+        else if(kcop === "lhskeyeqoption") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkeqopt.${optype}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+        else if(kcop === "rhskeyeqoption") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkeqopt.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(kcop === "stricteq") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkeq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            assert(false, "Unknown key eq kind");
+        }
+    }
+
+    private emitBinKeyNeqExpression(exp: BinKeyNeqExpression, toplevel: boolean): string {
+        const kcop = exp.operkind;
+
+        if(kcop === "lhsnone") {
+            return `${this.emitExpression(exp.rhs, false)}._$isNotNone()`;
+        }
+        else if(kcop === "rhsnone") {
+            return `${this.emitExpression(exp.lhs, false)}._$isNotNone()`;
+        }
+        else if(kcop === "lhskeyeqoption") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkneqopt.${optype}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+        else if(kcop === "rhskeyeqoption") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkneqopt.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(kcop === "stricteq") {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fkneq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            assert(false, "Unknown key eq kind");
+        }
+    }
+
+    private emitKeyCompareEqExpression(exp: KeyCompareEqExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.optype as TypeSignature));
+        return `_$fkeq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+    }
+
+    private emitKeyCompareLessExpression(exp: KeyCompareLessExpression, toplevel: boolean): string {
+        const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.optype as TypeSignature));
+        return `_$fkless.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+    }
+
+    private emitNumericEqExpression(exp: NumericEqExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} === ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fnumeq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;            
+        }
+    }
+
+    private emitNumericNeqExpression(exp: NumericNeqExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} !== ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `(!_$fnumeq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}))`;
+        }
+    }
+    
+    private emitNumericLessExpression(exp: NumericLessExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} < ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fnumless.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+    }
+    
+    private emitNumericLessEqExpression(exp: NumericLessEqExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} <= ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fnumlesseq.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        }
+    }
+    
+    private emitNumericGreaterExpression(exp: NumericGreaterExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} > ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fnumless.${optype}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+    }
+
+    private emitNumericGreaterEqExpression(exp: NumericGreaterEqExpression, toplevel: boolean): string {
+        if(EmitNameManager.isPrimitiveType(this.tproc(exp.lhs.getType() as TypeSignature))) {
+            const eexp = `${this.emitExpression(exp.lhs, false)} >= ${this.emitExpression(exp.rhs, false)}`;
+            return !toplevel ? `(${eexp})` : eexp;
+        }
+        else {
+            const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
+            return `_$fnumlesseq.${optype}(${this.emitExpression(exp.rhs, true)}, ${this.emitExpression(exp.lhs, true)})`;
+        }
+    }
+
+    private emitBinLogicAndExpression(exp: BinLogicAndExpression, toplevel: boolean): string {
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+        
+        const eexp = `${ee1} && ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
+    }
+
+    private emitBinLogicOrExpression(exp: BinLogicOrExpression, toplevel: boolean): string {
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eexp = `${ee1} || ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
+    }
+
+    private emitBinLogicImpliesExpression(exp: BinLogicImpliesExpression, toplevel: boolean): string {
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eeexp = `!${ee1} || ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eeexp})` : eeexp;
+    }
+
+    private emitBinLogicIFFExpression(exp: BinLogicIFFExpression, toplevel: boolean): string {
+        let ee1 = this.emitExpression(exp.lhs, !exp.purebool);
+        let ee2 = this.emitExpression(exp.rhs, !exp.purebool);
+
+        if(!exp.purebool) {
+            ee1 = `_$bval${ee1}`;
+            ee2 = `_$bval${ee2}`;
+        }
+
+        const eexp = `${ee1} === ${ee2}`;
+        return !toplevel && exp.purebool ? `(${eexp})` : eexp;
+    }
+    
+    private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
+        let ekey = this.emitExpression(exp.kexp, true);
+        let evalue = this.emitExpression(exp.vexp, true);
+
+        const cname = EmitNameManager.generateAccessorForSpecialTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.ctype as TypeSignature) as NominalTypeSignature);
+        return `${cname}(${ekey}, ${evalue})`;
     }
 
     private emitExpression(exp: Expression): string {
