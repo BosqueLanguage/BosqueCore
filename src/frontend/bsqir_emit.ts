@@ -4,14 +4,10 @@ import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, Construc
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
 
 class EmitNameManager {
-    static isPrimitiveType(ttype: TypeSignature): boolean {
-        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
-    }
-    
     static resolveNamespaceDecl(assembly: Assembly, ns: FullyQualifiedNamespace): NamespaceDeclaration {
         let curns = assembly.getToplevelNamespace(ns.ns[0]) as NamespaceDeclaration;
 
@@ -259,39 +255,12 @@ class BSQIREmitter {
         return `${cebase}, ctype=${ctype}`;
     }
 
-    private emitCollectionConstructorOfArgType(elemtype: TypeSignature, exp: ConstructorPrimaryExpression): string {
-        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-
-        if(exp.args.args.every((arg) => arg instanceof PositionalArgumentValue)) {
-            return `ConstructorPrimaryCollectionSingletonsExpression{ ${cpee}, elemtype=${this.emitTypeSignature(elemtype)} }`;
-        }
-        else {
-            assert(false, "Not implemented -- ConstructorPrimaryCollection -- Spreads");
-        }
-    }
-
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
-        const ctype = this.tproc(exp.ctype) as NominalTypeSignature;
-
-        if(cdecl instanceof ListTypeDecl) {
-            const ttype = ctype.alltermargs[0];
-            return this.emitCollectionConstructorOfArgType(ttype, exp);
-        }
-        else if(cdecl instanceof MapTypeDecl) {
-            const tval = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "MapEntry") as AbstractNominalTypeDecl;
-            const mentry = new NominalTypeSignature(ctype.sinfo, undefined, tval, ctype.alltermargs);
-
-            return this.emitCollectionConstructorOfArgType(mentry, exp);
-        }
-        else {
-            assert(false, "Unknown collection type -- emitCollectionConstructor");
-        }
+        assert(false, "Not implemented -- CollectionConstructor");
     }
 
     private emitSpecialConstructableConstructor(exp: ConstructorPrimaryExpression): string {
-        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-
-        return `ConstructorPrimarySpecialConstructableExpression{ ${cpee} }`;
+        assert(false, "Not implemented -- SpecialConstructableConstructor");
     }
 
     private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
@@ -303,6 +272,7 @@ class BSQIREmitter {
             
         }
         else {
+            xxxx;
             const opcheck = cdecl.optofexp !== undefined ? `some(${this.emitExpression(cdecl.optofexp.exp)}` : "none";
             return `ConstructorTypeDeclStringExpression{ ${cpee}, invchecks=${invchecks}, opcheck=${opcheck} }`;
         }
@@ -376,30 +346,11 @@ class BSQIREmitter {
         return `CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<InvokeKey>, ns='${nskey}'<NamespaceKey>, name='${ffinv.name}'<Identifier>, rec=${this.emitRecInfo(exp.rec)}, args=${this.emitArgumentList(exp.args)}, shuffleinfo=List<(|Int, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Int, Bool, TypeSignature|)>{${restinfocc}} }`;
     }
     
-    private emitCallTypeFunctionExpressionSpecial(exp: CallTypeFunctionExpression, rtrgt: NominalTypeSignature): string {
-        const sexp = (exp.shuffleinfo[0][1] as TypeSignature).tkeystr
-        const simple = (sexp === "CString" || sexp === "String");
-
-        const cbe = this.emitExpressionBase(exp);
-
-        const cdecl = rtrgt.decl as TypedeclTypeDecl;
-        const invchecks = cdecl.allInvariants.length !== 0;
-
-        if(simple) {
-            const arg = this.emitArgumentListSinglePositional(exp.args.args[0].exp);
-            const opcheck = cdecl.optofexp !== undefined ? `some(${this.emitExpression(cdecl.optofexp.exp)}` : "none";
-            return `ConstructorTypeDeclStringExpression{ ${cbe}, args=${arg}, ctype=${this.emitTypeSignature(rtrgt)}, invchecks=${invchecks}, opcheck=${opcheck} }`;
-        }
-        else {
-            assert(false, "Not implemented -- CallTypeFunctionExpressionSpecial with complex arg access");
-        }
-    }
-
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
-        const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
+        //const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
 
         if(exp.isSpecialCall) {
-            return this.emitCallTypeFunctionExpressionSpecial(exp, rtrgt);
+            assert(false, "Not implemented -- CallTypeFunction Special");
         }
         else {
             assert(false, "Not implemented -- CallTypeFunction");
@@ -434,6 +385,7 @@ class BSQIREmitter {
         const opbase = this.emitPostfixOperationBase(exp);
         const declaredInType = this.emitTypeSignature(exp.declaredInType as TypeSignature);
 
+        xxxx;
         return `PostfixAccessFromName{ ${opbase}, declaredInType=${declaredInType}, name='${exp.name}'<Identifier> }`;
     }
 

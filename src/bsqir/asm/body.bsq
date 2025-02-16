@@ -31,6 +31,16 @@ entity ArgumentList {
     field args: List<ArgumentValue>;
 }
 
+entity InvokeArgumentInfo {
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
 concept Expression {
     field sinfo: SourceInfo;
     field etype: TypeSignature;
@@ -104,26 +114,49 @@ concept ConstructorExpression provides Expression {
     field args: ArgumentList;
 }
 
-datatype ConstructorPrimaryExpression provides ConstructorExpression using {
+concept ConstructorPrimaryExpression provides ConstructorExpression {
     field ctype: NominalTypeSignature;
 }
-of 
-ConstructorPrimaryCollectionSingletonsExpression {
+
+datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorExpression using {
     field elemtype: TypeSignature;
 }
-| ConstructorPrimarySpecialConstructableExpression { }
-| ConstructorTypeDeclExpression {
+of
+ConstructorPrimaryListExpression { }
+| ConstructorPrimaryMapExpression { keytype: TypeSignature; valuetype: TypeSignature; }
+;
+
+%%TODO: 1) constructor collection expression that are all union/append operations
+%%      2) constructor collection expression that are mixed single and union/append operations
+
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorExpression 
+of
+ConstructorPrimarySpecialSomeExpression {
+    field ofttype: TypeSignature;
+}
+| ConstructorPrimarySpecialOkExpression { 
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+| ConstructorPrimarySpecialFailExpression {
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+;
+
+entity ConstructorTypeDeclExpression provides ConstructorExpression {
     field invchecks: Bool;
 }
-| ConstructorTypeDeclStringExpression {
+
+entity ConstructorTypeDeclStringExpression provides ConstructorExpression {
     field invchecks: Bool;
     field ofcheck: Option<Expression>;
 }
-| ConstructorStdExpression { 
+
+entity ConstructorStdExpression provides ConstructorExpression { 
     field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
     field invchecks: Bool;
 }
-;
 
 entity ConstructorEListExpression provides ConstructorExpression {
 }
@@ -140,59 +173,54 @@ entity LetExpression provides Expression {
 }
 
 entity LambdaInvokeExpression provides Expression {
-    field name: CString;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
     field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;
-    field arginfo: List<TypeSignature>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+
+    field argsinfo: InvokeArgumentInfo;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
 
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field ikey: InvokeKey;
-
     field ttype: NominalTypeSignature;
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
     field resolvedDeclType: NominalTypeSignature;
-    
-    field isSpecialCall: Bool;
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+
+    field argsinfo: InvokeArgumentInfo;
 }
 
-datatype CallRefInvokeExpression provides Expression using {
-    field rcvr: AccessVariableExpression;
-    field specificResolve: Option<NominalTypeSignature>;
+entity CallTypeFunctionSpecialExpression provides Expression {
+    field ikey: InvokeKey;
+    field ttype: NominalTypeSignature;
+    field resolvedDeclType: NominalTypeSignature;
+
     field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field exp: Expression;
+}
 
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+datatype CallRefInvokeStaticResolveExpression provides Expression using {
+    field rcvr: AccessVariableExpression;
+    field resolvedType: NominalTypeSignature;
+    field resolvedTrgt: InvokeKey;
 
-    field resolvedType: Option<NominalTypeSignature>;
-    field resolvedTrgt: Option<InvokeKey>;
+    field argsinfo: InvokeArgumentInfo;
+}
+of
+CallRefVariableExpression { }
+| CallRefThisExpression { }
+| CallRefSelfExpression { }
+;
+
+datatype CallRefInvokeVirtualExpression provides Expression using {
+    field rcvr: AccessVariableExpression;
+    field definedInType: NominalTypeSignature;
+    
+    field argsinfo: InvokeArgumentInfo;
 }
 of
 CallRefVariableExpression { }
@@ -212,6 +240,18 @@ entity TypeDeclPrimitiveFieldAccessExpression provides Expression {
     field exp: Expression;
 }
 
+entity CoerceNarrowTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CoerceWidenTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
 entity SafeConvertExpression provides Expression {
     field exp: Expression;
     field srctype: NominalTypeSignature;
@@ -229,13 +269,21 @@ datatype PostfixOperation using {
     field baseType: TypeSignature;
 }
 of 
-PostfixAccessFromName {
-    field declaredInType: NominalTypeSignature;
+PostfixAccessFromNameStatic {
     field name: Identifier;
+    field declaredInType: NominalTypeSignature;
 }
-| PostfixProjectFromNames {
+| PostfixAccessFromNameVirtual{
+    field name: Identifier;
+    field declaredInType: NominalTypeSignature;
+}
+| PostfixProjectFromNamesStatic {
     field declOnType: NominalTypeSignature;
-    field names: List<(|Identifier, NominalTypeSignature|)>;
+    field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
+}
+| PostfixProjectFromNamesVirtual {
+    field declOnType: NominalTypeSignature;
+    field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
 }
 | PostfixAccessFromIndex {
     field idx: Nat;
@@ -246,31 +294,24 @@ PostfixAccessFromName {
 | PostfixAsConvert {
     field ttest: ITest;
 }
-| PostfixAssignFields {
+| PostfixAssignFieldsStatic {
     field declOnType: NominalTypeSignature;
-    field updates: List<(|Identifier, NominalTypeSignature, Expression|)>;
+    field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
+}
+| PostfixAssignFieldsVirtual {
+    field declOnType: NominalTypeSignature;
+    field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
 }
 | PostfixInvokeStatic {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
 
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 | PostfixInvokeVirtual {
-    field resolvedBase: NominalTypeSignature;
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field definedInType: NominalTypeSignature;
 
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 | PostfixLiteralKeyAccess {
     field kexp: Expression;
