@@ -1,13 +1,17 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, ListTypeDecl, MapTypeDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PrimitiveEntityTypeDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
 
 class EmitNameManager {
+    static isPrimitiveType(ttype: TypeSignature): boolean {
+        return (ttype instanceof NominalTypeSignature) && (ttype.decl instanceof PrimitiveEntityTypeDecl);
+    }
+    
     static resolveNamespaceDecl(assembly: Assembly, ns: FullyQualifiedNamespace): NamespaceDeclaration {
         let curns = assembly.getToplevelNamespace(ns.ns[0]) as NamespaceDeclaration;
 
@@ -523,43 +527,43 @@ class BSQIREmitter {
         return `PostfixOp{ rootExp=${rootExp}, ops=List<PostfixOp>{${ops}} }`;
     }
 
-    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression, toplevel: boolean): string {
-        const optype = exp.opertype as TypeSignature;
+    private emitPrefixNotOpExpression(exp: PrefixNotOpExpression): string {
+        const optype = this.tproc(exp.opertype as TypeSignature);
 
         if(EmitNameManager.isPrimitiveType(optype)) {
-            const eexp = `!${this.emitExpression(exp.exp, false)}`;
-            return !toplevel ? `(${eexp})` : eexp;
+            const ebase = this.emitExpressionBase(exp);
+            return `PrefixNotOpExpression{ ${ebase}, exp=${this.emitExpression(exp.exp)}, opertype=${this.emitTypeSignature(optype)} }`;
         }
         else {
-            const eexp = this.emitExpression(exp.exp, true);
-            const cc = EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), exp.getType() as NominalTypeSignature);
+            const tdecl = ((optype as NominalTypeSignature).decl as TypedeclTypeDecl);
+            const vtype = tdecl.valuetype;
 
-            return `_$not(${eexp}, ${cc})`;
+            const vvexp = `TypeDeclPrimitiveFieldAccessExpression{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${vtype}, exp=${this.emitExpression(exp.exp)} }`;
+            const nexp = `PrefixNotOpExpression{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${vtype}, exp=${vvexp}, opertype=${this.emitTypeSignature(vtype)} }`;
+            const wrexp = `ConstructorTypeDeclExpression{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${optype}, args=ArgumentList{ List<ArgumentValue>{PositionalArgumentValue{ exp=${nexp} }} }, invchecks=${tdecl.invariants.length !== 0} }`;
+            
+            return wrexp;
         }
     }
 
-    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression, toplevel: boolean): string {
+    private emitPrefixNegateOrPlusOpExpression(exp: PrefixNegateOrPlusOpExpression): string {
         if(exp.op === "+") {
-            return this.emitExpression(exp.exp, toplevel);
+            return this.emitExpression(exp.exp);
         }
         else {
-            const optype = exp.opertype as TypeSignature;
+            const optype = this.tproc(exp.opertype as TypeSignature);
             
             if(EmitNameManager.isPrimitiveType(optype)) {
-                const eexp = `-${this.emitExpression(exp.exp, false)}`;
-                return !toplevel ? `(${eexp})` : eexp;
+                const ebase = this.emitExpressionBase(exp);
+                return `PrefixNegateOrPlusOpExpression{ sinfo=${ebase}, exp=${this.emitExpression(exp.exp)}, opertype=${this.emitTypeSignature(optype)} }`;
             }
             else {
-                const eexp = this.emitExpression(exp.exp, true);
-                const cc = `, ${EmitNameManager.generateAccessorForTypedeclTypeConstructor(this.getCurrentNamespace(), this.tproc(exp.getType()) as NominalTypeSignature)}`;
-
-                const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
-                return `_$negate.${optype}(${eexp}, ${cc})`;
+                assert(false, "Not implemented -- PrefixNegateOrPlusOpExpression on typedecl (unwrap/wrap)");
             }
         }
     }
 
-    private emitBinAddExpression(exp: BinAddExpression, toplevel: boolean): string {
+    private emitBinAddExpression(exp: BinAddExpression): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
         const etype = this.tproc(exp.getType());
 
@@ -571,7 +575,7 @@ class BSQIREmitter {
         return `_$add.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
     }
 
-    private emitBinSubExpression(exp: BinSubExpression, toplevel: boolean): string {
+    private emitBinSubExpression(exp: BinSubExpression,): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
         const etype = this.tproc(exp.getType());
 
@@ -583,7 +587,7 @@ class BSQIREmitter {
         return `_$sub.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
     }
     
-    private emitBinMultExpression(exp: BinMultExpression, toplevel: boolean): string {
+    private emitBinMultExpression(exp: BinMultExpression): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
         const etype = this.tproc(exp.getType());
 
@@ -595,7 +599,7 @@ class BSQIREmitter {
         return `_$mult.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
     }
     
-    private emitBinDivExpression(exp: BinDivExpression, toplevel: boolean): string {
+    private emitBinDivExpression(exp: BinDivExpression): string {
         const optype = EmitNameManager.generateFunctionLookupKeyForOperators(this.tproc(exp.opertype as TypeSignature));
         const etype = this.tproc(exp.getType());
 
@@ -607,7 +611,7 @@ class BSQIREmitter {
         return `_$div.${optype}(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)}${ccepr})`;
     }
     
-    private emitBinKeyEqExpression(exp: BinKeyEqExpression, toplevel: boolean): string {
+    private emitBinKeyEqExpression(exp: BinKeyEqExpression): string {
         const kcop = exp.operkind;
 
         if(kcop === "lhsnone") {
