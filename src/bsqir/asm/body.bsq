@@ -269,19 +269,12 @@ datatype PostfixOperation using {
     field baseType: TypeSignature;
 }
 of 
-PostfixAccessFromNameStatic {
+PostfixAccessFromName {
     field name: Identifier;
     field declaredInType: NominalTypeSignature;
+    field ftype: TypeSignature;
 }
-| PostfixAccessFromNameVirtual{
-    field name: Identifier;
-    field declaredInType: NominalTypeSignature;
-}
-| PostfixProjectFromNamesStatic {
-    field declOnType: NominalTypeSignature;
-    field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
-}
-| PostfixProjectFromNamesVirtual {
+| PostfixProjectFromNames {
     field declOnType: NominalTypeSignature;
     field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
 }
@@ -294,11 +287,7 @@ PostfixAccessFromNameStatic {
 | PostfixAsConvert {
     field ttest: ITest;
 }
-| PostfixAssignFieldsStatic {
-    field declOnType: NominalTypeSignature;
-    field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
-}
-| PostfixAssignFieldsVirtual {
+| PostfixAssignFields {
     field declOnType: NominalTypeSignature;
     field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
 }

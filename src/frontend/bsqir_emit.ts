@@ -4,7 +4,7 @@ import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, Assembly, Construc
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
+import { AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, Expression, ITest, LambdaInvokeExpression, LetExpression, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, NamedArgumentValue, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SafeConvertExpression, SpecialConstructorExpression, SpreadArgumentValue } from "./body.js";
 
 
 class EmitNameManager {
@@ -272,9 +272,8 @@ class BSQIREmitter {
             
         }
         else {
-            xxxx;
-            const opcheck = cdecl.optofexp !== undefined ? `some(${this.emitExpression(cdecl.optofexp.exp)}` : "none";
-            return `ConstructorTypeDeclStringExpression{ ${cpee}, invchecks=${invchecks}, opcheck=${opcheck} }`;
+            //TODO: we need to figure out how to encode regex expressions in general and Literals in particular
+            assert(false, "Not implemented -- TypeDeclConstructor");
         }
     }
 
