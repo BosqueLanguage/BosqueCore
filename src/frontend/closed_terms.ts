@@ -636,7 +636,7 @@ class InstantiationPropagator {
             this.instantiateTypeSignature(exp.resolvedTrgt, this.currentMapping);
 
             const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
-            const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => !m.isThisRef && m.name === exp.name) as MethodDecl;
+            const mm = (exp.resolvedMethod as MethodDecl);
             this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt, mm, exp.terms, this.currentMapping);
         }
         else {

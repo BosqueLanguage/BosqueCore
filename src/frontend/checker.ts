@@ -1877,6 +1877,7 @@ class TypeChecker {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
             if(smresolve !== undefined) {
                 exp.resolvedTrgt = smresolve.typeinfo.tsig;
+                exp.resolvedMethod = smresolve.member;
             }
         }
 

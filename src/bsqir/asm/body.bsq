@@ -97,17 +97,10 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
-entity AccessRetypeStep {
-    field ttype: TypeSignature;
-    field specialfname: CString;
-}
-
-entity AccessVariableExpressionSpecial provides Expression {
+entity AccessCapturedVariableExpressionSpecial provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
     field isCaptured: Bool;
-    
-    field steps: List<AccessRetypeStep>;
 }
 
 concept ConstructorExpression provides Expression {
@@ -335,7 +328,6 @@ BinAddExpression { }
 ;
 
 datatype BinaryKeyEqExpression provides Expression using {
-    field ktype: TypeSignature;
     field opertype: TypeSignature;
 }
 of
@@ -363,7 +355,15 @@ BinKeyEqNoneExpression {
 }
 ;
 
-entity KeyCompareExpression provides Expression {
+entity KeyCmpEqualExpression provides Expression {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
+entity KeyCmpLessExpression provides Expression {
     field ktype: TypeSignature;
     field opertype: TypeSignature;
 
@@ -372,11 +372,10 @@ entity KeyCompareExpression provides Expression {
 }
 
 datatype BinaryNumericExpression provides Expression using {
+    field opertype: TypeSignature;
+
     field lhs: Expression;
     field rhs: Expression;
-
-    field eqtype: TypeSignature;
-    field opertype: TypeSignature;
 }
 of
 NumericEqExpression { }
@@ -486,32 +485,47 @@ entity ReturnVoidStatement provides Statement {
 }
 
 entity ReturnSingleStatement provides Statement {
-    field value: Expression;
     field rtype: TypeSignature;
+    field value: Expression;
 }
 
 entity ReturnMultiStatement provides Statement {
-    field values: List<(|Expression, TypeSignature|)>;
+    field values: List<(|TypeSignature, Expression|)>;
 
     invariant !$values.empty();
 }
 
 entity IfStatement provides Statement {
-    field cond: IfTest;
-    field binder: Option<BinderInfo>;
+    field cond: Expression;
     field trueBlock: BlockStatement;
-    
-    field trueBindType: Option<TypeSignature>;
+}
+
+entity IfBinderStatement provides Statement {
+    field cond: Expression;
+
+    field itest: ITest;
+    field binder: BinderInfo;
+    field trueBindType: TypeSignature;
+
+    field trueBlock: BlockStatement;
 }
 
 entity IfElseStatement provides Statement {
-    field cond: IfTest;
-    field binder: Option<BinderInfo>;
+    field cond: Expression;
     field trueBlock: BlockStatement;
     field falseBlock: BlockStatement;
+}
 
-    field trueBindType: Option<TypeSignature>;
-    field falseBindType: Option<TypeSignature>;
+entity IfElseBinderStatement provides Statement {
+    field cond: Expression;
+    
+    field itest: ITest;
+    field binder: BinderInfo;
+    field trueBindType: TypeSignature;
+    field falseBindType: TypeSignature;
+
+    field trueBlock: BlockStatement;
+    field falseBlock: BlockStatement;
 }
 
 entity IfElifElseStatement provides Statement {
