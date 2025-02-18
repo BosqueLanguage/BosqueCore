@@ -7,27 +7,22 @@ concept AbstractDecl {
     field declaredInNS: NamespaceKey;
 }
 
-concept ConditionDecl provides AbstractDecl {
+datatype ConditionDecl provides AbstractDecl using {
     field diagnosticTag: Option<CString>;
+    field exp: Expression;
 }
-
-entity PreConditionDecl provides ConditionDecl {
+of
+| PreConditionDecl {
     field issoft: Bool;
-    field exp: Expression;
 }
-
-entity PostConditionDecl provides ConditionDecl {
+| PostConditionDecl {
     field issoft: Bool;
-    field exp: Expression;
 }
-
-entity InvariantDecl provides ConditionDecl {
-    field exp: Expression;
+| InvariantDecl {
 }
-
-entity ValidateDecl provides ConditionDecl {
-    field exp: Expression;
+| ValidateDecl {
 }
+;
 
 entity DeclarationAttibute {
     field name: Identifier;

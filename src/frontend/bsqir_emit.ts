@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, Assembly, ConstructableTypeDecl, EntityTypeDecl, FunctionInvokeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, TestAssociation, TypedeclTypeDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractInvokeDecl, Assembly, ConditionDecl, ConstructableTypeDecl, DeclarationAttibute, EntityTypeDecl, ExplicitInvokeDecl, FunctionInvokeDecl, InvariantDecl, InvokeParameterDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
 import { NamespaceInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
@@ -1262,6 +1262,81 @@ class BSQIREmitter {
         }
 
         return matchfile || matchfilter;
+    }
+
+    private emitAbstractDeclBase(decl: AbstractDecl, nskey: string): string {
+        return `file='${decl.file}', sinfo=${this.emitSourceInfo(decl.sinfo)}, declaredInNS='${nskey}'<NamespaceKey>`;
+    }
+
+    private emitConditionDeclBase(decl: ConditionDecl, nskey: string, exp: Expression): string {
+        const dbase = this.emitAbstractDeclBase(decl, nskey);
+        const dtag = decl.diagnosticTag !== undefined ? `some('${decl.diagnosticTag}')` : "none";
+
+        return `${dbase}, diagnosticTag=${dtag}, exp=${this.emitExpression(exp)}`;
+    }
+
+
+    private emitPreConditionDecl(decl: PreConditionDecl, nskey: string): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+        return `PreConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
+    }
+
+    private emitPostConditionDecl(decl: PostConditionDecl, nskey: string): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+        return `PostConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
+    }
+
+    private emitInvariantDecl(decl: InvariantDecl, nskey: string): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+        return `InvariantDecl{ ${cbase} }`;
+    }
+
+    private emitValidateDecl(decl: ValidateDecl, nskey: string): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+        return `ValidateDecl{ ${cbase} }`;
+    }
+
+    private emitDeclarationAttibuteBase(att: DeclarationAttibute, nskey: string): string {
+        const tags = att.tags.map((t) => `(${this.emitTypeSignature(t.enumType)}, '${t.tag}')`);
+        const text = att.text !== undefined ? `some('${att.text}')` : "none";
+
+        return `DeclarationAttibute{name='${att.name}'<Identifier>, tags=List<(|TypeSignature, CString|)>{ ${tags.join(", ")} }, text=${text} }`;
+    }
+
+    private emitAbstractCoreDecl(decl: AbstractCoreDecl, nskey: string): string {
+        const dbase = this.emitAbstractDeclBase(decl, nskey);
+        const atts = decl.attributes.map((att) => this.emitDeclarationAttibuteBase(att, nskey));
+
+        return `${dbase}, attributes=List<DeclarationAttibute>{ ${atts.join(", ")} }, name='${decl.name}'<Identifier>`;
+    }
+
+    private emitInvokeParameterDecl(pdecl: InvokeParameterDecl): string {
+        const ptype = this.emitTypeSignature(pdecl.ptype);
+        const defaultval = pdecl.defaultval !== undefined ? `some(${this.emitExpression(pdecl.defaultval)})` : "none";
+
+        return `InvokeParameterDecl{ name='${pdecl.name}'<Identifier>, ptype=${ptype}, defaultval=${defaultval}, isRefParam=${pdecl.isRefParam}, isRestParam=${pdecl.isRestParam} }`;
+    }
+
+    private emitAbstractInvokeDecl(decl: AbstractInvokeDecl, nskey: string, ikey: string): string {
+        const dbase = this.emitAbstractCoreDecl(decl, nskey);
+
+        const isrecursive = this.emitRecInfo(decl.recursive);
+        const params = decl.params.map((p) => this.emitInvokeParameterDecl(p));
+        const resultType = this.emitTypeSignature(decl.resultType);
+
+        let fmt = new BsqonCodeFormatter(4);
+        const body = this.emitBodyImplementation(decl.body, fmt);
+
+        return `${dbase}, ikey='${ikey}'<InvokeKey>, irecursive=${isrecursive}, params=List<InvokeParameterDecl>{ ${params.join(", ")} }, resultType=${resultType}, body=${body}`;
+    }
+
+    private emitExplicitInvokeDecl(decl: ExplicitInvokeDecl, nskey: string, ikey: string): string {
+        const ibase = this.emitAbstractInvokeDecl(decl, nskey, ikey);
+
+        const preconds = decl.preconditions.map((p) => this.emitPreConditionDecl(p, nskey)).join(", ");
+        const postconds = decl.postconditions.map((p) => this.emitPostConditionDecl(p, nskey)).join(", ");
+
+        return `${ibase}, preconditions=List<PreConditionDecl>{ ${preconds}}, postconditions=List<PostConditionDecl>{ ${postconds} }`;
     }
 
     private emitFunctionDecl(fdecl: FunctionInvokeDecl, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined] | undefined, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
