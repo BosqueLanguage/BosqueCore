@@ -31,6 +31,16 @@ entity ArgumentList {
     field args: List<ArgumentValue>;
 }
 
+entity InvokeArgumentInfo {
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field args: ArgumentList;
+
+    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+}
+
 concept Expression {
     field sinfo: SourceInfo;
     field etype: TypeSignature;
@@ -62,6 +72,7 @@ entity LiteralRegexExpression provides Expression {
 entity LiteralTypeDeclValueExpression provides Expression {
     field value: Expression;
     field constype: NominalTypeSignature;
+    field invchecks: Bool;
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
@@ -86,42 +97,59 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
-entity AccessRetypeStep {
-    field ttype: TypeSignature;
-    field specialfname: CString;
-}
-
-entity AccessVariableExpressionSpecial provides Expression {
+entity AccessCapturedVariableExpressionSpecial provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
     field isCaptured: Bool;
-    
-    field steps: List<AccessRetypeStep>;
 }
 
 concept ConstructorExpression provides Expression {
     field args: ArgumentList;
 }
 
-datatype ConstructorPrimaryExpression provides ConstructorExpression using {
+concept ConstructorPrimaryExpression provides ConstructorExpression {
     field ctype: NominalTypeSignature;
 }
-of 
-ConstructorPrimaryCollectionSingletonsExpression {
+
+datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorExpression using {
     field elemtype: TypeSignature;
 }
-| ConstructorPrimarySpecialConstructableExpression { }
-| ConstructorTypeDeclExpression {
-    field invchecks: Bool;
+of
+ConstructorPrimaryListExpression { }
+| ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
+;
+
+%%TODO: 1) constructor collection expression that are all union/append operations
+%%      2) constructor collection expression that are mixed single and union/append operations
+
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorExpression 
+of
+ConstructorPrimarySpecialSomeExpression {
+    field ofttype: TypeSignature;
 }
-| ConstructorTypeDeclStringExpression {
-    field invchecks: Bool;
-    field ofcheck: Expression;
+| ConstructorPrimarySpecialOkExpression { 
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
 }
-| ConstructorStdExpression { 
-    field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
+| ConstructorPrimarySpecialFailExpression {
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
 }
 ;
+
+entity ConstructorTypeDeclExpression provides ConstructorExpression {
+    field invchecks: Bool;
+}
+
+entity ConstructorTypeDeclStringExpression provides ConstructorExpression {
+    field invchecks: Bool;
+    field ofcheck: Option<Expression>;
+}
+
+entity ConstructorStdExpression provides ConstructorExpression { 
+    field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
+    field invchecks: Bool;
+}
 
 entity ConstructorEListExpression provides ConstructorExpression {
 }
@@ -138,64 +166,59 @@ entity LetExpression provides Expression {
 }
 
 entity LambdaInvokeExpression provides Expression {
-    field name: CString;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
     field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;
-    field arginfo: List<TypeSignature>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+
+    field argsinfo: InvokeArgumentInfo;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
 
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field ikey: InvokeKey;
-
     field ttype: NominalTypeSignature;
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
     field resolvedDeclType: NominalTypeSignature;
-    
-    field isSpecialCall: Bool;
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+
+    field argsinfo: InvokeArgumentInfo;
 }
 
-datatype CallRefInvokeExpression provides Expression using {
-    field rcvr: AccessVariableExpression;
-    field specificResolve: Option<NominalTypeSignature>;
+entity CallTypeFunctionSpecialExpression provides Expression {
+    field ikey: InvokeKey;
+    field ttype: NominalTypeSignature;
+    field resolvedDeclType: NominalTypeSignature;
+
     field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field exp: Expression;
+}
 
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+datatype CallRefInvokeStaticResolveExpression provides Expression using {
+    field rcvr: AccessVariableExpression;
+    field resolvedType: NominalTypeSignature;
+    field resolvedTrgt: InvokeKey;
 
-    field resolvedType: Option<NominalTypeSignature>;
-    field resolvedTrgt: Option<InvokeKey>;
+    field argsinfo: InvokeArgumentInfo;
 }
 of
 CallRefVariableExpression { }
 | CallRefThisExpression { }
 | CallRefSelfExpression { }
+;
+
+datatype CallRefInvokeVirtualExpression provides Expression using {
+    field rcvr: AccessVariableExpression;
+    field definedInType: NominalTypeSignature;
+    
+    field argsinfo: InvokeArgumentInfo;
+}
+of
+CallRefVariableVirtualExpression { }
+| CallRefThisVirtualExpression { }
+| CallRefSelfVirtualExpression { }
 ;
 
 entity LogicActionAndExpression provides Expression {
@@ -204,6 +227,22 @@ entity LogicActionAndExpression provides Expression {
 
 entity LogicActionOrExpression provides Expression {
     field args: List<Expression>;
+}
+
+entity TypeDeclPrimitiveFieldAccessExpression provides Expression {
+    field exp: Expression;
+}
+
+entity CoerceNarrowTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CoerceWidenTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
 }
 
 entity SafeConvertExpression provides Expression {
@@ -224,14 +263,13 @@ datatype PostfixOperation using {
 }
 of 
 PostfixAccessFromName {
-    field declaredInType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
     field name: Identifier;
+    field declaredInType: NominalTypeSignature;
+    field ftype: TypeSignature;
 }
 | PostfixProjectFromNames {
     field declOnType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
-    field names: List<(|Identifier, NominalTypeSignature|)>;
+    field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
 }
 | PostfixAccessFromIndex {
     field idx: Nat;
@@ -244,30 +282,18 @@ PostfixAccessFromName {
 }
 | PostfixAssignFields {
     field declOnType: NominalTypeSignature;
-    field resolvedType: Option<NominalTypeSignature>;
-    field updates: List<(|Identifier, NominalTypeSignature, Expression|)>;
+    field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
 }
 | PostfixInvokeStatic {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
 
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
-
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 | PostfixInvokeVirtual {
-    field resolvedBase: NominalTypeSignature;
-    field name: Identifier;
-    field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field definedInType: NominalTypeSignature;
 
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
-    field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field argsinfo: InvokeArgumentInfo;
 }
 | PostfixLiteralKeyAccess {
     field kexp: Expression;
@@ -302,7 +328,6 @@ BinAddExpression { }
 ;
 
 datatype BinaryKeyEqExpression provides Expression using {
-    field ktype: TypeSignature;
     field opertype: TypeSignature;
 }
 of
@@ -330,7 +355,15 @@ BinKeyEqNoneExpression {
 }
 ;
 
-entity KeyCompareExpression provides Expression {
+entity KeyCmpEqualExpression provides Expression {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
+entity KeyCmpLessExpression provides Expression {
     field ktype: TypeSignature;
     field opertype: TypeSignature;
 
@@ -339,11 +372,10 @@ entity KeyCompareExpression provides Expression {
 }
 
 datatype BinaryNumericExpression provides Expression using {
+    field opertype: TypeSignature;
+
     field lhs: Expression;
     field rhs: Expression;
-
-    field eqtype: TypeSignature;
-    field opertype: TypeSignature;
 }
 of
 NumericEqExpression { }
@@ -453,32 +485,47 @@ entity ReturnVoidStatement provides Statement {
 }
 
 entity ReturnSingleStatement provides Statement {
-    field value: Expression;
     field rtype: TypeSignature;
+    field value: Expression;
 }
 
 entity ReturnMultiStatement provides Statement {
-    field values: List<(|Expression, TypeSignature|)>;
+    field values: List<(|TypeSignature, Expression|)>;
 
     invariant !$values.empty();
 }
 
 entity IfStatement provides Statement {
-    field cond: IfTest;
-    field binder: Option<BinderInfo>;
+    field cond: Expression;
     field trueBlock: BlockStatement;
-    
-    field trueBindType: Option<TypeSignature>;
+}
+
+entity IfBinderStatement provides Statement {
+    field cond: Expression;
+
+    field itest: ITest;
+    field binder: BinderInfo;
+    field trueBindType: TypeSignature;
+
+    field trueBlock: BlockStatement;
 }
 
 entity IfElseStatement provides Statement {
-    field cond: IfTest;
-    field binder: Option<BinderInfo>;
+    field cond: Expression;
     field trueBlock: BlockStatement;
     field falseBlock: BlockStatement;
+}
 
-    field trueBindType: Option<TypeSignature>;
-    field falseBindType: Option<TypeSignature>;
+entity IfElseBinderStatement provides Statement {
+    field cond: Expression;
+    
+    field itest: ITest;
+    field binder: BinderInfo;
+    field trueBindType: TypeSignature;
+    field falseBindType: TypeSignature;
+
+    field trueBlock: BlockStatement;
+    field falseBlock: BlockStatement;
 }
 
 entity IfElifElseStatement provides Statement {

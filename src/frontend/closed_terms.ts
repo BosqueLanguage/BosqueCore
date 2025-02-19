@@ -530,9 +530,7 @@ class InstantiationPropagator {
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            if(exp.shuffleinfo[i][1] !== undefined) {
-                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
-            }
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
@@ -558,9 +556,7 @@ class InstantiationPropagator {
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            if(exp.shuffleinfo[i][1] !== undefined) {
-                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
-            }
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
@@ -622,9 +618,7 @@ class InstantiationPropagator {
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            if(exp.shuffleinfo[i][1] !== undefined) {
-                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
-            }
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;
@@ -642,7 +636,7 @@ class InstantiationPropagator {
             this.instantiateTypeSignature(exp.resolvedTrgt, this.currentMapping);
 
             const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
-            const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => !m.isThisRef && m.name === exp.name) as MethodDecl;
+            const mm = (exp.resolvedMethod as MethodDecl);
             this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt, mm, exp.terms, this.currentMapping);
         }
         else {
@@ -1009,9 +1003,7 @@ class InstantiationPropagator {
         this.instantiateArgumentList(exp.args.args);
 
         for(let i = 0; i < exp.shuffleinfo.length; ++i) {
-            if(exp.shuffleinfo[i][1] !== undefined) {
-                this.instantiateTypeSignature(exp.shuffleinfo[i][1] as TypeSignature, this.currentMapping);
-            }
+            this.instantiateTypeSignature(exp.shuffleinfo[i][1], this.currentMapping);
         }
         if(exp.restinfo !== undefined) {
             const rparamtype = (this.currentMapping !== undefined ? (exp.resttype as TypeSignature).remapTemplateBindings(this.currentMapping) : (exp.resttype as TypeSignature)) as NominalTypeSignature;

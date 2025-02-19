@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature, TemplateNameMapper, LambdaTypeSignature, NominalTypeSignature } from "./type.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { LambdaDecl, MemberFieldDecl, NamespaceDeclaration } from "./assembly.js";
+import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -628,7 +628,7 @@ class CallNamespaceFunctionExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
@@ -667,7 +667,7 @@ class CallTypeFunctionExpression extends Expression {
     isSpecialCall: boolean = false;
     resolvedDeclType: TypeSignature | undefined = undefined;
     resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
 
@@ -703,7 +703,7 @@ class CallRefInvokeExpression extends Expression {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;
@@ -1018,10 +1018,11 @@ class PostfixInvoke extends PostfixOperation {
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
-    shuffleinfo: [number, TypeSignature | undefined][] = [];
+    shuffleinfo: [number, TypeSignature][] = [];
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;
+    resolvedMethod: MethodDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(sinfo, PostfixOpTag.PostfixInvoke);

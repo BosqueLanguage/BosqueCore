@@ -7,27 +7,22 @@ concept AbstractDecl {
     field declaredInNS: NamespaceKey;
 }
 
-concept ConditionDecl provides AbstractDecl {
+datatype ConditionDecl provides AbstractDecl using {
     field diagnosticTag: Option<CString>;
+    field exp: Expression;
 }
-
-entity PreConditionDecl provides ConditionDecl {
+of
+PreConditionDecl {
     field issoft: Bool;
-    field exp: Expression;
 }
-
-entity PostConditionDecl provides ConditionDecl {
+| PostConditionDecl {
     field issoft: Bool;
-    field exp: Expression;
 }
-
-entity InvariantDecl provides ConditionDecl {
-    field exp: Expression;
+| InvariantDecl {
 }
-
-entity ValidateDecl provides ConditionDecl {
-    field exp: Expression;
+| ValidateDecl {
 }
+;
 
 entity DeclarationAttibute {
     field name: Identifier;
@@ -81,9 +76,15 @@ entity NamespaceFunctionDecl provides FunctionInvokeDecl {
 entity TypeFunctionDecl provides FunctionInvokeDecl {
 }
 
-entity MethodDecl provides ExplicitInvokeDecl {
+datatype MethodDecl provides ExplicitInvokeDecl using {
     field isThisRef: Bool;
 }
+of
+MethodDeclStatic { }
+| MethodDeclAbstract {}
+| MethodDeclVirtual {}
+| MethodDeclOverride {}
+;
 
 entity TaskMethodDecl provides ExplicitInvokeDecl {
     field isSelfRef: Bool;
@@ -107,12 +108,6 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     field isSpecialAccess: Bool;
 }
 
-enum AdditionalTypeDeclTag {
-    Std,
-    Status,
-    Event
-}
-
 entity SaturatedFieldInfo {
     field containingtype: NominalTypeSignature;
     field fname: Identifier;
@@ -128,15 +123,15 @@ entity SaturatedInvariantInfo {
 }
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
-    field attributes: List<DeclarationAttibute>;
     field tkey: TypeKey;
 
     field invariants: List<InvariantDecl>;
     field validates: List<ValidateDecl>;
 
-    field consts: List<ConstMemberDecl>;
-    field functions: List<TypeFunctionDecl>;
-    field methods: List<MethodDecl>;
+    field absmethods: List<InvokeKey>;
+    field virtmethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
+    field staticmethods: List<InvokeKey>;
 
     field saturatedProvides: List<NominalTypeSignature>;
     field saturatedBFieldInfo: List<SaturatedFieldInfo>;
@@ -169,8 +164,8 @@ entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 
 datatype ConstructableTypeDecl provides InternalEntityTypeDecl 
 of
-OkTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
-| FailTypeDecl { field ttype: TypeSignature; field etype: TypeSignature; }
+OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
+| FailTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | APIRejectedTypeDecl { }
 | APIFailedTypeDecl { }
 | APIErrorTypeDecl { }
@@ -254,6 +249,11 @@ entity Assembly {
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
     
+    field absmethods: Map<InvokeKey, MethodDeclAbstract>;
+    field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
+    field overmethods: Map<InvokeKey, MethodDeclOverride>;
+    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
+
     field enums: Map<TypeKey, EnumTypeDecl>;
     field typedecls: Map<TypeKey, TypedeclTypeDecl>;
 
@@ -270,6 +270,9 @@ entity Assembly {
     field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
     field allfuncs: List<InvokeKey>;
+    field allmethods: List<InvokeKey>;
+    field allvmethods: List<InvokeKey>;
+
     field allconcretetypes: List<TypeKey>;
     field allabstracttypes: List<TypeKey>;
 

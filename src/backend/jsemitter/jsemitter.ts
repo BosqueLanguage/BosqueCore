@@ -859,7 +859,7 @@ class JSEmitter {
 
         return `${consop}(${eexp})`;
     }
-        
+    
     private emitPostfixAccessFromName(val: string, exp: PostfixAccessFromName): string {
         const fdecl = exp.fieldDecl as MemberFieldDecl;
         return `${val}.${fdecl.name}`;
@@ -2263,6 +2263,9 @@ class JSEmitter {
         }
         else if(bname === "cstring_empty") {
             bop = `s === ""`;
+        }
+        else if(bname === "cstring_size") {
+            bop = `BigInt(s.length)`;
         }
         else if(bname === "cstring_starts_with_string") {
             bop = `s.startsWith(prefix)`;

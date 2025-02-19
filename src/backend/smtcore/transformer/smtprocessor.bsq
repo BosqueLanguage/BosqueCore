@@ -33,7 +33,7 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
             attributes = List<BSQAssembly::DeclarationAttibute>{},
             name = 'main'<BSQAssembly::Identifier>,
             ikey = 'Main::main'<BSQAssembly::InvokeKey>,
-            irecursive = BSQAssembly::RecursiveAnnotation#RecursiveNoTag,
+            irecursive = BSQAssembly::RecursiveAnnotation#NonRecursiveTag,
             params = List<BSQAssembly::InvokeParameterDecl>{},
             resultType = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Int'<BSQAssembly::TypeKey> },
             body = BSQAssembly::StandardBodyImplementation{
@@ -56,6 +56,14 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
     },
     typefuncs = Map<BSQAssembly::InvokeKey, BSQAssembly::TypeFunctionDecl>{
     },
+    absmethods = Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclAbstract>{
+    },
+    virtmethods = Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclVirtual>{
+    },
+    overmethods = Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclOverride>{
+    },
+    staticmethods = Map<BSQAssembly::InvokeKey, BSQAssembly::MethodDeclStatic>{
+    },
     enums = Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{
     },
     typedecls = Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{
@@ -65,13 +73,13 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
             file = "Core.bsq",
             sinfo = BSQAssembly::SourceInfo{0n, 0n, 0n, 0n},
             declaredInNS = 'Core'<BSQAssembly::NamespaceKey>,
-            attributes = List<BSQAssembly::DeclarationAttibute>{},
             tkey = 'Int'<BSQAssembly::TypeKey>,
             invariants = List<BSQAssembly::InvariantDecl>{},
             validates = List<BSQAssembly::ValidateDecl>{},
-            consts = List<BSQAssembly::ConstMemberDecl>{},
-            functions = List<BSQAssembly::TypeFunctionDecl>{},
-            methods = List<BSQAssembly::MethodDecl>{},
+            absmethods = List<BSQAssembly::InvokeKey>{},
+            virtmethods = List<BSQAssembly::InvokeKey>{},
+            overmethods = List<BSQAssembly::InvokeKey>{},
+            staticmethods = List<BSQAssembly::InvokeKey>{},
             saturatedProvides = List<BSQAssembly::NominalTypeSignature>{},
             saturatedBFieldInfo = List<BSQAssembly::SaturatedFieldInfo>{},
             allInvariants = List<BSQAssembly::SaturatedInvariantInfo>{},
@@ -94,6 +102,10 @@ const s_sample_bsqasm: BSQAssembly::Assembly = BSQAssembly::Assembly{
     },
     allfuncs = List<BSQAssembly::InvokeKey>{
         'Main::main'<BSQAssembly::InvokeKey>
+    },
+    allmethods = List<BSQAssembly::InvokeKey>{
+    },
+    allvmethods = List<BSQAssembly::InvokeKey>{
     },
     allconcretetypes = List<BSQAssembly::TypeKey>{
         'Int'<BSQAssembly::TypeKey>
