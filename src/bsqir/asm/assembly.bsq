@@ -12,7 +12,7 @@ datatype ConditionDecl provides AbstractDecl using {
     field exp: Expression;
 }
 of
-| PreConditionDecl {
+PreConditionDecl {
     field issoft: Bool;
 }
 | PostConditionDecl {
@@ -130,7 +130,7 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
 
     field absmethods: List<InvokeKey>;
     field virtmethods: List<InvokeKey>;
-    field overridemethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
     field staticmethods: List<InvokeKey>;
 
     field saturatedProvides: List<NominalTypeSignature>;
@@ -251,7 +251,7 @@ entity Assembly {
     
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
-    field overridemethods: Map<InvokeKey, MethodDeclOverride>;
+    field overmethods: Map<InvokeKey, MethodDeclOverride>;
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
 
     field enums: Map<TypeKey, EnumTypeDecl>;

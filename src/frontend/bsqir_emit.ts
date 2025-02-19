@@ -1,10 +1,10 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { BuildLevel, SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbortStatement, AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, Statement, StatementTag, SwitchStatement, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 
 class BsqonCodeFormatter {
     private level: number | undefined;
@@ -98,7 +98,7 @@ class BSQIREmitter {
     
     absmethods: string[] = [];
     virtmethods: string[] = [];
-    overridemethods: string[] = [];
+    overmethods: string[] = [];
     staticmethods: string[] = [];
 
     enums: string[] = [];
@@ -1271,7 +1271,28 @@ class BSQIREmitter {
     }
 
     private emitBodyImplementation(body: BodyImplementation, fmt: BsqonCodeFormatter): string {
-        xxxx;
+        if(body instanceof AbstractBodyImplementation) {
+            return "AbstractBodyImplementation { }";
+        }
+        else if(body instanceof PredicateUFBodyImplementation) {
+            return "PredicateUFBodyImplementation { }";
+        }
+        else if(body instanceof BuiltinBodyImplementation) {
+            return `BuiltinBodyImplementation { '${body.builtin}' }`;
+        }
+        else if(body instanceof SynthesisBodyImplementation) {
+            return "SynthesisBodyImplementation { }";
+        }
+        else if(body instanceof ExpressionBodyImplementation) {
+            return `ExpressionBodyImplementation { ${this.emitExpression(body.exp)} }`;
+        }
+        else if(body instanceof StandardBodyImplementation) {
+            const stmts = this.emitStatementArray(body.statements, fmt);
+            return ["StandardBodyImplementation {", fmt.nl(), "List<Statement>{", ...stmts, fmt.indent("}}")].join("");
+        }
+        else {
+            assert(false, "Unknown body implementation kind");
+        }
     }
 
     private testEmitEnabled(fdecl: NamespaceFunctionDecl): boolean {
@@ -1487,27 +1508,6 @@ class BSQIREmitter {
         }
     }
 
-    private tryLookupBindsFor(ptype: NominalTypeSignature, mdecl: MethodDecl): MethodInstantiationInfo | undefined {
-        const inns = ptype.decl.ns.emit();
-        const nsii = this.asminstantiation.find((ai) => ai.ns.emit() === inns);
-        if(nsii === undefined) {
-            return undefined;
-        }
-    
-        const tii = nsii.typebinds.get(ptype.decl.name);
-        if(tii === undefined) {
-            return undefined;
-        }
-    
-        const btti = tii.find((ii) => ii.tkey === ptype.tkeystr);
-        if(btti === undefined) {
-            return undefined;
-        }
-    
-        return btti.methodbinds.get(mdecl.name);
-    }
-
-
     private emitMemberFieldDecl(ns: FullyQualifiedNamespace, enclosingtype: TypeSignature, fdecl: MemberFieldDecl): string {
         const dbase = this.emitAbstractCoreDecl(fdecl, EmitNameManager.generateNamespaceKey(ns));
 
@@ -1536,7 +1536,7 @@ class BSQIREmitter {
 
         this.emitConstMemberDecls(ns, tdecl.consts);
 
-        const [absmethods, virtmethods, overridemethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
@@ -1544,7 +1544,7 @@ class BSQIREmitter {
         const allInvariants = tdecl.allInvariants.map((ai) => this.emitSaturatedInvariantInfo(ai)).join(", ");
         const allValidates = tdecl.allValidates.map((av) => this.emitSaturatedInvariantInfo(av)).join(", ");
 
-        return `${tbase}, tkey='${tkey}'<TypeKey>, invariants=List<InvariantDecl>{ ${invariants} }, validates=List<ValidateDecl>{ ${validates} }, absmethods=List<InvokeKey>{ ${absmethods} }, virtmethods=List<InvokeKey>{ ${virtmethods} }, overridemethods=List<InvokeKey>{ ${overridemethods} }, staticmethods=List<InvokeKey>{ ${staticmethods} }, saturatedProvides=List<NominalTypeSignature>{ ${provides} }, saturatedBFieldInfo=List<SaturatedFieldInfo>{ ${bfields} }, allInvariants=List<SaturatedInvariantInfo>{ ${allInvariants} }, allValidates=List<SaturatedInvariantInfo>{ ${allValidates} }`;
+        return `${tbase}, tkey='${tkey}'<TypeKey>, invariants=List<InvariantDecl>{ ${invariants} }, validates=List<ValidateDecl>{ ${validates} }, absmethods=List<InvokeKey>{ ${absmethods} }, virtmethods=List<InvokeKey>{ ${virtmethods} }, overmethods=List<InvokeKey>{ ${overmethods} }, staticmethods=List<InvokeKey>{ ${staticmethods} }, saturatedProvides=List<NominalTypeSignature>{ ${provides} }, saturatedBFieldInfo=List<SaturatedFieldInfo>{ ${bfields} }, allInvariants=List<SaturatedInvariantInfo>{ ${allInvariants} }, allValidates=List<SaturatedInvariantInfo>{ ${allValidates} }`;
     }
 
     private emitAbstractEntityTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
@@ -1896,36 +1896,20 @@ class BSQIREmitter {
     }
 
     private computeSubtypes() {
-        let pcalls: string[] = [];
+        //
+        //TODO: this is a NOP we need to implement this -- walk all namespaces/types/instantiations and build an inverse map that we lookup below
+        //
+    }
 
-        for(let i = 0; i < tdecl.saturatedProvides.length; ++i) {
-            const ptype = this.tproc(tdecl.saturatedProvides[i]) as NominalTypeSignature;
-
-            const smethods = ptype.decl.methods.filter((m) => !m.attributes.some((attr) => attr.name === "override" || attr.name === "virtual" || attr.name === "abstract"));
-            for(let j = 0; j < smethods.length; ++j) {
-                const mbind = this.tryLookupBindsFor(ptype, smethods[j]);
-
-                if(mbind !== undefined) {
-                    if(mbind.binds === undefined) {
-                        pcalls.push(`${smethods[j].name}: { value: ${EmitNameManager.generateAccssorNameForMethodFull(this.currentns as NamespaceDeclaration, ptype, smethods[j], [])} }`);
-                    }
-                    else {
-                        assert(false, "Not implemented -- emitStaticInherits");
-                    }
-                }
-            }
-        }
-
-        return pcalls;
+    private getSubtypes(tt: AbstractNominalTypeDecl, binds: TemplateNameMapper | undefined): TypeSignature[] {
+        return [];    
     }
 
     static emitAssembly(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): string {
         const emitter = new BSQIREmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, false, undefined, undefined);
-
         emitter.computeSubtypes();
 
         //emit each of the assemblies
-        let results: {ns: FullyQualifiedNamespace, contents: string}[] = [];
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
@@ -1935,7 +1919,39 @@ class BSQIREmitter {
             }
         }
 
-        xxxx;
+        let fmt = new BsqonCodeFormatter(4);
+
+        return "Assembly{\n" +
+            fmt.indent(`List<NamespaceConstDecl>{ ${emitter.nsconsts.join(", ")} },\n`) +
+            fmt.indent(`List<ConstMemberDecl>{ ${emitter.typeconsts.join(", ")} },\n`) +
+
+            fmt.indent(`Map<InvokeKey, NamespaceFunctionDecl>{ ${emitter.nsfuncs.join(", ")} },\n`) +
+            fmt.indent(`Map<InvokeKey, TypeFunctionDecl>{ ${emitter.typefuncs.join(", ")} },\n`) +
+            
+            fmt.indent(`Map<InvokeKey, MethodDeclAbstract>{ ${emitter.absmethods.join(", ")} },\n`) +
+            fmt.indent(`Map<InvokeKey, MethodDeclVirtual>{ ${emitter.virtmethods.join(", ")} },\n`) +
+            fmt.indent(`Map<InvokeKey, MethodDeclOverride>{ ${emitter.overmethods.join(", ")} },\n`) +
+            fmt.indent(`Map<InvokeKey, MethodDeclStatic>{ ${emitter.staticmethods.join(", ")} },\n`) +
+            
+            fmt.indent(`Map<TypeKey, EnumTypeDecl>{ ${emitter.enums.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, TypedeclTypeDecl>{ ${emitter.typedecls.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, PrimitiveEntityTypeDecl>{ ${emitter.primtives.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, ConstructableTypeDecl>{ ${emitter.constructables.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, CollectionTypeDecl>{ ${emitter.collections.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, EntityTypeDecl>{ ${emitter.entities.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, DatatypeMemberEntityTypeDecl>{ ${emitter.datamembers.join(", ")} },\n`) +
+            
+            fmt.indent(`Map<TypeKey, PrimitiveConceptTypeDecl>{ ${emitter.pconcepts.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, ConceptTypeDecl>{ ${emitter.concepts.join(", ")} },\n`) +
+            fmt.indent(`Map<TypeKey, DatatypeTypeDecl>{ ${emitter.datatypes.join(", ")} },\n`) +
+            
+            fmt.indent(`List<InvokeKey>{ ${emitter.allfuncs.join(", ")} },\n`) +
+            fmt.indent(`List<InvokeKey>{ ${emitter.allmethods.join(", ")} },\n`) +
+            fmt.indent(`List<InvokeKey>{ ${emitter.allvmethods.join(", ")} },\n`) +
+            
+            fmt.indent(`List<TypeKey>{ ${emitter.allconcretetypes.join(", ")} },\n`) +
+            fmt.indent(`List<TypeKey>{ ${emitter.allabstracttypes.join(", ")} }\n`) +
+        "}";
     }
 }
 

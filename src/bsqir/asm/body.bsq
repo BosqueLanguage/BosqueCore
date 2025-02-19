@@ -116,7 +116,7 @@ datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorEx
 }
 of
 ConstructorPrimaryListExpression { }
-| ConstructorPrimaryMapExpression { keytype: TypeSignature; valuetype: TypeSignature; }
+| ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
 ;
 
 %%TODO: 1) constructor collection expression that are all union/append operations
@@ -216,9 +216,9 @@ datatype CallRefInvokeVirtualExpression provides Expression using {
     field argsinfo: InvokeArgumentInfo;
 }
 of
-CallRefVariableExpression { }
-| CallRefThisExpression { }
-| CallRefSelfExpression { }
+CallRefVariableVirtualExpression { }
+| CallRefThisVirtualExpression { }
+| CallRefSelfVirtualExpression { }
 ;
 
 entity LogicActionAndExpression provides Expression {
