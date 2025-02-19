@@ -52,7 +52,7 @@ These items are more defined in scope, and will make a big difference for the pr
 - Power-Proroguing -- take the idea [here](https://earlbarr.com/publications/prorogue.pdf) and use the capabilities of [BSQON](https://github.com/BosqueLanguage/BSQON/blob/main/docs/publications/bsqon_techreport.pdf) (full-fidelity literals and references) to make it practical -- also maybe have some fun with LLMs!
 
 
-### Chunckable Work Items
+### Chunkable Work Items
 These are well-defined items that can be done in a few hours to a maybe a couple weeks and don't require much (if any) special expertise. They are great for someone looking to get started with the project -- also see good-first-issues.
 
 - Standard Library -- build out the standard library with a focus on the core data structures and algorithms that are needed for general programming tasks.
