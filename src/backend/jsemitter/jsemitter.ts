@@ -2264,6 +2264,9 @@ class JSEmitter {
         else if(bname === "cstring_empty") {
             bop = `s === ""`;
         }
+        else if(bname === "cstring_size") {
+            bop = `BigInt(s.length)`;
+        }
         else if(bname === "cstring_starts_with_string") {
             bop = `s.startsWith(prefix)`;
         }

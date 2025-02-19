@@ -9,5 +9,11 @@ describe ("CString -- empty", () => {
         runMainCode("public function main(): Bool { return ''.empty(); }", "true"); 
         runMainCode("public function main(): Bool { return 'ok'.empty(); }", "false"); 
     });
+
+    it("should do sizes cstring", function () {
+        runMainCode("public function main(): Nat { return ''.size(); }", "0n"); 
+        runMainCode("public function main(): Nat { return 'abc'.size(); }", "3n"); 
+        runMainCode("public function main(): Nat { return 'ok'.lastIndex(); }", "1n"); 
+    });
 });
 

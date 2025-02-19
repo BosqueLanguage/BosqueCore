@@ -238,6 +238,18 @@ __internal __typedeclable __keycomparable entity CString {
         return CStringOps::s_empty(this);
     }
 
+    %** Get size of CString **%
+    method size(): Nat {
+        return CStringOps::s_size(this);
+    }
+
+    %** Get last valid index of (non-empty) CString **%
+    method lastIndex(): Nat 
+        requires !this.empty();
+    {
+        return CStringOps::s_size(this) - 1n;
+    }
+
     %** Check if the string starts with the given prefix **%
     method startsWithString(prefix: CString): Bool {
         return CStringOps::s_startsWithString(this, prefix);
