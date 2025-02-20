@@ -62,12 +62,12 @@ function workflowLoadAllSrc(files: string[]): CodeFileInfo[] | undefined {
     }
 }
 
-function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+function generateASMGeneral(usercode: PackageConfig, macrodefs: string[]): [Assembly | undefined, ParserError[], TypeError[]]{
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
 
     const pstart = Date.now();
     Status.output(`Parsing...\n`);
-    const parseres = Parser.parse(corecode, usercode.src, ["EXEC_LIBS"]);
+    const parseres = Parser.parse(corecode, usercode.src, macrodefs);
     const pend = Date.now();
 
     let tasm: Assembly | undefined = undefined;
@@ -94,6 +94,16 @@ function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserErro
     return [tasm, parseerrors, typeerrors];
 }
 
+
+function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+    return generateASMGeneral(usercode, ["EXEC_LIBS"]);
+}
+
+
+function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+    return generateASMGeneral(usercode, ["SMT_LIBS"]);
+}
+
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, generateASMSMT
 };

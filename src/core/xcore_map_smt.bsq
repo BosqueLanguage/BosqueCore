@@ -1,0 +1,24 @@
+namespace Core;
+
+#if STRIPPED_CORE
+#else
+#if SMT_LIBS
+namespace MapOps {
+    function s_map_empty<K: keytype, V>(m: Map<K, V>): Bool = s_map_empty;
+    function s_map_size<K: keytype, V>(m: Map<K, V>): Nat = s_map_size;
+
+    function s_map_min<K: keytype, V>(m: Map<K, V>): MapEntry<K, V> = s_map_min;
+    function s_map_max<K: keytype, V>(m: Map<K, V>): MapEntry<K, V> = s_map_max;
+
+    function s_map_has<K: keytype, V>(m: Map<K, V>, k: K): Bool = s_map_has;
+
+    function s_map_get_direct<K: keytype, V>(m: Map<K, V>, k: K): V = s_map_get_direct;
+    function s_map_get_option<K: keytype, V>(m: Map<K, V>, k: K): Option<V> = s_map_get_option;
+
+    function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_insert;
+
+    function s_map_create_empty<K: keytype, V>(): Map<K, V> = s_map_create_empty;
+}
+#else
+#endif %% SMT_LIBS
+#endif %% STRIPPED_CORE

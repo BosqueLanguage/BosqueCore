@@ -3,7 +3,7 @@ import { BSQIREmitter } from "../frontend/bsqir_emit.js";
 import { Assembly } from "../frontend/assembly.js";
 import { InstantiationPropagator } from "../frontend/closed_terms.js";
 import { Status } from "./status_output.js";
-import { generateASM, workflowLoadUserSrc } from "./workflows.js";
+import { generateASMSMT, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
 import { PackageConfig } from "../frontend/build_decls.js";
@@ -64,7 +64,7 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
     Status.output(`    User sources loaded [${(dend - lstart) / 1000}s]\n\n`);
 
     const userpackage = new PackageConfig([], usersrcinfo)
-    const [asm, perrors, terrors] = generateASM(userpackage);
+    const [asm, perrors, terrors] = generateASMSMT(userpackage);
 
     if(perrors.length === 0 && terrors.length === 0) {
         return asm;
