@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
-import { BuildLevel, SourceInfo } from "./build_decls.js";
+import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 
@@ -77,8 +77,6 @@ class EmitNameManager {
 class BSQIREmitter {
     readonly assembly: Assembly;
     readonly asminstantiation: NamespaceInstantiationInfo[];
-    readonly mode: "release" | "debug";
-    readonly buildlevel: BuildLevel;
 
     readonly generateTestInfo: boolean;
     readonly testfilefilter: string[] | undefined;
@@ -123,12 +121,9 @@ class BSQIREmitter {
     allconcretetypes: string[] = [];
     allabstracttypes: string[] = [];
 
-    constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], mode: "release" | "debug", buildlevel: BuildLevel, generateTestInfo: boolean, testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined) {
+    constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], generateTestInfo: boolean, testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined) {
         this.assembly = assembly;
         this.asminstantiation = asminstantiation;
-
-        this.mode = mode;
-        this.buildlevel = buildlevel;
 
         this.generateTestInfo = generateTestInfo;
         this.testfilefilter = testfilefilter;
@@ -1494,8 +1489,17 @@ class BSQIREmitter {
         return decls;
     }
 
-    private emitConstMemberDecls(ns: FullyQualifiedNamespace, decls: ConstMemberDecl[]): string[] {
-        assert(false, "Not implemented -- emitConstMemberDecls");
+    private emitConstMemberDecls(ns: FullyQualifiedNamespace, declInType: NominalTypeSignature, decls: ConstMemberDecl[]) {
+        for(let i = 0; i < decls.length; ++i) {
+            const dd = decls[i];
+
+            const dbase = this.emitAbstractCoreDecl(dd, EmitNameManager.generateNamespaceKey(ns));
+            const intype = this.emitTypeSignature(declInType);
+            const dtype = this.emitTypeSignature(dd.declaredType);
+            const value = this.emitExpression(dd.value.exp);
+
+            this.typeconsts.push(`ConstMemberDecl{ ${dbase}, declaredInType=${intype}, declaredType=${dtype}, value=${value} }`);
+        }
     }
 
     private static generateRcvrForNominalAndBinds(ntype: AbstractNominalTypeDecl, binds: TemplateNameMapper | undefined, implicitbinds: string[] | undefined): NominalTypeSignature {
@@ -1534,7 +1538,7 @@ class BSQIREmitter {
         const invariants = tdecl.invariants.map((inv) => this.emitInvariantDecl(inv, EmitNameManager.generateNamespaceKey(ns))).join(", ");
         const validates = tdecl.validates.map((val) => this.emitValidateDecl(val, EmitNameManager.generateNamespaceKey(ns))).join(", ");
 
-        this.emitConstMemberDecls(ns, tdecl.consts);
+        this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
 
@@ -1905,8 +1909,8 @@ class BSQIREmitter {
         return [];    
     }
 
-    static emitAssembly(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, asminstantiation: NamespaceInstantiationInfo[]): string {
-        const emitter = new BSQIREmitter(assembly, asminstantiation, mode == "release" ? "release" : "debug", buildlevel, false, undefined, undefined);
+    static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[]): string {
+        const emitter = new BSQIREmitter(assembly, asminstantiation, false, undefined, undefined);
         emitter.computeSubtypes();
 
         //emit each of the assemblies
