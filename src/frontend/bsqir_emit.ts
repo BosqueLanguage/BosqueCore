@@ -44,6 +44,19 @@ class BsqonCodeFormatter {
             return "    ".repeat(this.level) + code;
         }
     }
+
+    formatListOf(prestr: string, l: string[], poststr: string): string {
+        if(l.length === 0) {
+            return `${this.indent(prestr)} ${poststr}`;
+        }
+        else {
+            this.indentPush();
+            const vstr = l.map((v) => this.indent(v));
+            this.indentPop();
+
+            return `${this.indent(prestr)}${this.nl()}${vstr.join(",\n")}${this.nl()}${this.indent(poststr)}`;
+        }
+    }
 }
 
 class EmitNameManager {
@@ -1165,10 +1178,9 @@ class BSQIREmitter {
         fmt.indentPush();
         for(let i = 0; i < stmts.length; ++i) {
             const stmti = stmts[i];
-            const sstr = fmt.indent(this.emitStatement(stmti, fmt));
+            const sstr = this.emitStatement(stmti, fmt);
 
             stmtstrs.push(sstr);
-            stmtstrs.push(fmt.nl());
         }
         fmt.indentPop();
 
@@ -1283,7 +1295,8 @@ class BSQIREmitter {
         }
         else if(body instanceof StandardBodyImplementation) {
             const stmts = this.emitStatementArray(body.statements, fmt);
-            return ["StandardBodyImplementation {", fmt.nl(), "List<Statement>{", ...stmts, fmt.indent("}}")].join("");
+            const bbody = fmt.formatListOf("List<Statement>{", stmts, "}");
+            return `StandardBodyImplementation {${fmt.nl()}${bbody}}`;
         }
         else {
             assert(false, "Unknown body implementation kind");
@@ -1353,11 +1366,12 @@ class BSQIREmitter {
         return `DeclarationAttibute{name='${att.name}'<Identifier>, tags=List<(|TypeSignature, CString|)>{ ${tags.join(", ")} }, text=${text} }`;
     }
 
-    private emitAbstractCoreDecl(decl: AbstractCoreDecl, nskey: string): string {
+    private emitAbstractCoreDecl(decl: AbstractCoreDecl, nskey: string, fmt: BsqonCodeFormatter): string {
         const dbase = this.emitAbstractDeclBase(decl, nskey);
         const atts = decl.attributes.map((att) => this.emitDeclarationAttibuteBase(att, nskey));
 
-        return `${dbase}, attributes=List<DeclarationAttibute>{ ${atts.join(", ")} }, name='${decl.name}'<Identifier>`;
+        const nn = `name='${decl.name}'<Identifier>`;
+        return `${dbase}, attributes=List<DeclarationAttibute>{ ${atts.join(", ")} },${fmt.nl() + fmt.indent(nn)}`;
     }
 
     private emitInvokeParameterDecl(pdecl: InvokeParameterDecl): string {
@@ -1368,15 +1382,17 @@ class BSQIREmitter {
     }
 
     private emitAbstractInvokeDecl(decl: AbstractInvokeDecl, nskey: string, ikey: string, fmt: BsqonCodeFormatter): string {
-        const dbase = this.emitAbstractCoreDecl(decl, nskey);
+        const dbase = this.emitAbstractCoreDecl(decl, nskey, fmt);
 
-        const isrecursive = this.emitRecInfo(decl.recursive);
-        const params = decl.params.map((p) => this.emitInvokeParameterDecl(p));
-        const resultType = this.emitTypeSignature(decl.resultType);
+        const ikeystr = `ikey='${ikey}'<InvokeKey>`;
+        const isrecursive = `irecursive={this.emitRecInfo(decl.recursive)}`;
+        const params = `params=List<InvokeParameterDecl>{ ${decl.params.map((p) => this.emitInvokeParameterDecl(p))} }`;
+        const resultType = `resultType=${this.emitTypeSignature(decl.resultType)}`;
 
         const body = this.emitBodyImplementation(decl.body, fmt);
+        const bodystr = `body=${body}`;
 
-        return `${dbase}, ikey='${ikey}'<InvokeKey>, irecursive=${isrecursive}, params=List<InvokeParameterDecl>{ ${params.join(", ")} }, resultType=${resultType}, body=${body}`;
+        return `${dbase},${fmt.nl() + fmt.indent(ikeystr)}, ${isrecursive},${fmt.nl() + fmt.indent(params)},${fmt.nl() + fmt.indent(resultType)},${fmt.nl() + fmt.indent(bodystr)}`;
     }
 
     private emitExplicitInvokeDecl(decl: ExplicitInvokeDecl, nskey: string, ikey: string, fmt: BsqonCodeFormatter): string {
@@ -1385,7 +1401,8 @@ class BSQIREmitter {
         const preconds = decl.preconditions.map((p) => this.emitPreConditionDecl(p, nskey)).join(", ");
         const postconds = decl.postconditions.map((p) => this.emitPostConditionDecl(p, nskey)).join(", ");
 
-        return `${ibase}, preconditions=List<PreConditionDecl>{ ${preconds}}, postconditions=List<PostConditionDecl>{ ${postconds} }`;
+        const conds = `preconditions=List<PreConditionDecl>{ ${preconds} }, postconditions=List<PostConditionDecl>{ ${postconds} }`;
+        return `${ibase},${fmt.nl() + fmt.indent(conds)}`;
     }
 
     private emitFKindTag(fkind: "function" | "predicate" | "errtest" | "chktest" | "example"): string {
@@ -1425,10 +1442,15 @@ class BSQIREmitter {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
             if(ftag === "function" || ftag === "predicate" || this.testEmitEnabled(fdecl as NamespaceFunctionDecl)) {
                 const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
+
+                fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
+                const fkind = fmt.indent(`fkind=${this.emitFKindTag((fdecl as NamespaceFunctionDecl).fkind)}`);
+                
                 this.mapper = omap;
-            
-                this.nsfuncs.push(`'${ikey}'<InvokeKey> => NamespaceFunctionDecl{ ${ibase}, fkind=${this.emitFKindTag((fdecl as NamespaceFunctionDecl).fkind)} }`);
+                fmt.indentPop();
+
+                this.nsfuncs.push(`'${ikey}'<InvokeKey> => NamespaceFunctionDecl{ ${ibase},${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
                 this.allfuncs.push(`'${ikey}'<InvokeKey>`);
             }
         }
@@ -1493,7 +1515,7 @@ class BSQIREmitter {
         for(let i = 0; i < decls.length; ++i) {
             const dd = decls[i];
 
-            const dbase = this.emitAbstractCoreDecl(dd, EmitNameManager.generateNamespaceKey(ns));
+            const dbase = this.emitAbstractCoreDecl(dd, EmitNameManager.generateNamespaceKey(ns), new BsqonCodeFormatter(undefined));
             const intype = this.emitTypeSignature(declInType);
             const dtype = this.emitTypeSignature(dd.declaredType);
             const value = this.emitExpression(dd.value.exp);
@@ -1513,7 +1535,7 @@ class BSQIREmitter {
     }
 
     private emitMemberFieldDecl(ns: FullyQualifiedNamespace, enclosingtype: TypeSignature, fdecl: MemberFieldDecl): string {
-        const dbase = this.emitAbstractCoreDecl(fdecl, EmitNameManager.generateNamespaceKey(ns));
+        const dbase = this.emitAbstractCoreDecl(fdecl, EmitNameManager.generateNamespaceKey(ns), new BsqonCodeFormatter(undefined));
 
         const declin = this.emitTypeSignature(enclosingtype);
         const decltype = this.emitTypeSignature(fdecl.declaredType);
@@ -1719,11 +1741,11 @@ class BSQIREmitter {
         return [`${EmitNameManager.generateTypeKey(tsig)}<TypeKey>`, `DatatypeTypeDecl{ ${ibase}, fields=List<MemberFieldDecl>{ ${fields} }, associatedMemberEntityDecls=List<NominalTypeSignature>{ ${associatedMemberEntityDecls} } }`];
     }
 
-    private emitNamespaceConstDecls(ns: FullyQualifiedNamespace, decls: NamespaceConstDecl[], fmt: BsqonCodeFormatter) {
+    private emitNamespaceConstDecls(ns: FullyQualifiedNamespace, decls: NamespaceConstDecl[]) {
         for(let i = 0; i < decls.length; ++i) {
             const dd = decls[i];
 
-            const dbase = this.emitAbstractCoreDecl(dd, EmitNameManager.generateNamespaceKey(ns));
+            const dbase = this.emitAbstractCoreDecl(dd, EmitNameManager.generateNamespaceKey(ns), new BsqonCodeFormatter(undefined));
             const dtype = this.emitTypeSignature(dd.declaredType);
             const value = this.emitExpression(dd.value.exp);
 
@@ -1892,7 +1914,7 @@ class BSQIREmitter {
             }
         }
 
-        this.emitNamespaceConstDecls(decl.fullnamespace, decl.consts, fmt);
+        this.emitNamespaceConstDecls(decl.fullnamespace, decl.consts);
 
         this.emitFunctionDecls(decl.fullnamespace, undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), fmt);
         
@@ -1909,6 +1931,8 @@ class BSQIREmitter {
         return [];    
     }
 
+    
+
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[]): string {
         const emitter = new BSQIREmitter(assembly, asminstantiation, false, undefined, undefined);
         emitter.computeSubtypes();
@@ -1919,42 +1943,41 @@ class BSQIREmitter {
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
             
             if(nsii !== undefined) {
-                emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(0));
+                emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
             }
         }
 
-        let fmt = new BsqonCodeFormatter(4);
-
+        let fmt = new BsqonCodeFormatter(1);
         return "Assembly{\n" +
-            fmt.indent(`List<NamespaceConstDecl>{ ${emitter.nsconsts.join(", ")} },\n`) +
-            fmt.indent(`List<ConstMemberDecl>{ ${emitter.typeconsts.join(", ")} },\n`) +
+            fmt.formatListOf("List<NamespaceConstDecl>{", emitter.nsconsts, "},\n") +
+            fmt.formatListOf("List<ConstMemberDecl>{", emitter.typeconsts, "},\n") +
 
-            fmt.indent(`Map<InvokeKey, NamespaceFunctionDecl>{ ${emitter.nsfuncs.join(", ")} },\n`) +
-            fmt.indent(`Map<InvokeKey, TypeFunctionDecl>{ ${emitter.typefuncs.join(", ")} },\n`) +
+            fmt.formatListOf("Map<InvokeKey, NamespaceFunctionDecl>{", emitter.nsfuncs, "},\n") +
+            fmt.formatListOf("Map<InvokeKey, TypeFunctionDecl>{", emitter.typefuncs, "},\n") +
             
-            fmt.indent(`Map<InvokeKey, MethodDeclAbstract>{ ${emitter.absmethods.join(", ")} },\n`) +
-            fmt.indent(`Map<InvokeKey, MethodDeclVirtual>{ ${emitter.virtmethods.join(", ")} },\n`) +
-            fmt.indent(`Map<InvokeKey, MethodDeclOverride>{ ${emitter.overmethods.join(", ")} },\n`) +
-            fmt.indent(`Map<InvokeKey, MethodDeclStatic>{ ${emitter.staticmethods.join(", ")} },\n`) +
+            fmt.formatListOf("Map<InvokeKey, MethodDeclAbstract>{", emitter.absmethods, "},\n") +
+            fmt.formatListOf("Map<InvokeKey, MethodDeclVirtual>{", emitter.virtmethods, "},\n") +
+            fmt.formatListOf("Map<InvokeKey, MethodDeclOverride>{", emitter.overmethods, "},\n") +
+            fmt.formatListOf("Map<InvokeKey, MethodDeclStatic>{", emitter.staticmethods, "},\n") +
             
-            fmt.indent(`Map<TypeKey, EnumTypeDecl>{ ${emitter.enums.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, TypedeclTypeDecl>{ ${emitter.typedecls.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, PrimitiveEntityTypeDecl>{ ${emitter.primtives.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, ConstructableTypeDecl>{ ${emitter.constructables.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, CollectionTypeDecl>{ ${emitter.collections.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, EntityTypeDecl>{ ${emitter.entities.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, DatatypeMemberEntityTypeDecl>{ ${emitter.datamembers.join(", ")} },\n`) +
+            fmt.formatListOf("Map<TypeKey, EnumTypeDecl>{", emitter.enums, "},\n") +
+            fmt.formatListOf("Map<TypeKey, TypedeclTypeDecl>{", emitter.typedecls, "},\n") +
+            fmt.formatListOf("Map<TypeKey, PrimitiveEntityTypeDecl>{", emitter.primtives, "},\n") +
+            fmt.formatListOf("Map<TypeKey, ConstructableTypeDecl>{", emitter.constructables, "},\n") +
+            fmt.formatListOf("Map<TypeKey, CollectionTypeDecl>{", emitter.collections, "},\n") +
+            fmt.formatListOf("Map<TypeKey, EntityTypeDecl>{", emitter.entities, "},\n") +
+            fmt.formatListOf("Map<TypeKey, DatatypeMemberEntityTypeDecl>{", emitter.datamembers, "},\n") +
             
-            fmt.indent(`Map<TypeKey, PrimitiveConceptTypeDecl>{ ${emitter.pconcepts.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, ConceptTypeDecl>{ ${emitter.concepts.join(", ")} },\n`) +
-            fmt.indent(`Map<TypeKey, DatatypeTypeDecl>{ ${emitter.datatypes.join(", ")} },\n`) +
+            fmt.formatListOf("Map<TypeKey, PrimitiveConceptTypeDecl>{", emitter.pconcepts, "},\n") +
+            fmt.formatListOf("Map<TypeKey, ConceptTypeDecl>{", emitter.concepts, "},\n") +
+            fmt.formatListOf("Map<TypeKey, DatatypeTypeDecl>{", emitter.datatypes, "},\n") +
             
-            fmt.indent(`List<InvokeKey>{ ${emitter.allfuncs.join(", ")} },\n`) +
-            fmt.indent(`List<InvokeKey>{ ${emitter.allmethods.join(", ")} },\n`) +
-            fmt.indent(`List<InvokeKey>{ ${emitter.allvmethods.join(", ")} },\n`) +
+            fmt.formatListOf("List<InvokeKey>{", emitter.allfuncs, "},\n") +
+            fmt.formatListOf("List<InvokeKey>{", emitter.allmethods, "},\n") +
+            fmt.formatListOf("List<InvokeKey>{", emitter.allvmethods, "},\n") +
             
-            fmt.indent(`List<TypeKey>{ ${emitter.allconcretetypes.join(", ")} },\n`) +
-            fmt.indent(`List<TypeKey>{ ${emitter.allabstracttypes.join(", ")} }\n`) +
+            fmt.formatListOf("List<TypeKey>{", emitter.allconcretetypes, "},\n") +
+            fmt.formatListOf("List<TypeKey>{", emitter.allabstracttypes, "}\n") +
         "}";
     }
 }
