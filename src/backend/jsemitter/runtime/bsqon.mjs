@@ -584,7 +584,7 @@ BSQONLexer.prototype.tryLexCString = function() {
     let strval = this.input.slice(this.jsStrPos, jepos);
 
     this.updatePositionInfo(this.jsStrPos, jepos);
-    this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateCString : TokenStrings.CString, strval);
+    this.recordLexTokenWData(jepos, TokenStrings.CString, strval);
     return true;
 }
 /**
@@ -745,9 +745,6 @@ BSQONLexer.prototype.lex = function() {
             //continue
         }
         else if (this.tryLexNumberLikeToken()) {
-            //continue
-        }
-        else if(this.tryLexAttribute()) {
             //continue
         }
         else if (this.tryLexSymbol() || this.tryLexName()) {
@@ -1317,11 +1314,11 @@ BSQONParser.prototype.peekScopedType = function() {
     }
 
     let ii = this.idx;
-    let sctype = this.input[ii].data;
+    let sctype = this.tokens[ii].data;
     ii++;
 
-    while(ii < this.input.length && s_typeTokens.includes(this.input[ii].kind)) {
-        sctype += this.input[ii].data;
+    while(ii < this.tokens.length && s_typeTokens.includes(this.tokens[ii].kind)) {
+        sctype += this.tokens[ii].data;
         ii++;
     }
 
@@ -1336,11 +1333,11 @@ BSQONParser.prototype.parseScopedType = function() {
         throw new ParserError(this.peek().sinfo, "Expected scoped type");
     }
 
-    let sctype = this.input[this.idx].data;
+    let sctype = this.tokens[this.idx].data;
     this.idx++;
 
-    while(this.idx < this.input.length && s_typeTokens.includes(this.input[this.idx].kind)) {
-        sctype += this.input[this.idx].data;
+    while(this.idx < this.tokens.length && s_typeTokens.includes(this.tokens[this.idx].kind)) {
+        sctype += this.tokens[this.idx].data;
         this.idx++;
     }
 
@@ -1425,7 +1422,7 @@ BSQONParser.prototype.parseValue = function(tkey) {
     }
 
     let res = null;
-    if(this.test(TokenStrings.IdentifierName)) {
+    if(this.test(TokenStrings.IdentifierName) && /^[_a-z][_a-zA-Z0-9]*$/.test(this.peek().data)) {
         res = this.parseIdentifier(tkey);
     }
     else if(this.test(KW_LET)) {

@@ -1028,8 +1028,8 @@ class BSQIREmitter {
         }
     }
 
-    private emitStatementBase(): string {
-        return "sinfo=${this.emitSourceInfo(stmt.sinfo)}";
+    private emitStatementBase(stmt: Statement): string {
+        return `sinfo=${this.emitSourceInfo(stmt.sinfo)}`;
     }
 
     private emitEmptyStatement(stmt: EmptyStatement): string {
@@ -1037,7 +1037,7 @@ class BSQIREmitter {
     }
     
     private emitVariableDeclarationStatement(stmt: VariableDeclarationStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const vtype = this.emitTypeSignature(stmt.vtype);
 
         return `VariableDeclarationStatement{ ${sbase}, name='${stmt.name}'<Identifier>, vtype=${vtype} }`;
@@ -1048,7 +1048,7 @@ class BSQIREmitter {
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const vtype = this.emitTypeSignature(stmt.vtype);
         const rhsexp = this.emitExpressionRHS(stmt.exp);
         
@@ -1060,7 +1060,7 @@ class BSQIREmitter {
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const vtype = this.emitTypeSignature(stmt.vtype as TypeSignature);
         const rhsexp = this.emitExpressionRHS(stmt.exp);
 
@@ -1080,7 +1080,7 @@ class BSQIREmitter {
     }
 
     private emitReturnSingleStatement(stmt: ReturnSingleStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const rtype = this.emitTypeSignature(stmt.rtype as TypeSignature);
         const rexp = this.emitExpressionRHS(stmt.value);
 
@@ -1092,7 +1092,7 @@ class BSQIREmitter {
     }
 
     private emitIfStatement(stmt: IfStatement, fmt: BsqonCodeFormatter): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
 
         const cond = this.emitExpression(stmt.cond.exp);
         const tblock = this.emitBlockStatement(stmt.trueBlock, fmt);
@@ -1106,7 +1106,7 @@ class BSQIREmitter {
     }
 
     private emitIfElseStatement(stmt: IfElseStatement, fmt: BsqonCodeFormatter): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
 
         const cond = this.emitExpression(stmt.cond.exp);
         const tblock = this.emitBlockStatement(stmt.trueBlock, fmt);
@@ -1133,19 +1133,19 @@ class BSQIREmitter {
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         return `AbortStatement{ ${sbase} }`;
     }
 
     private emitAssertStatement(stmt: AssertStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const cond = this.emitExpression(stmt.cond);
 
         return `AssertStatement{ ${sbase}, cond=${cond} }`;
     }
 
     private emitValidateStatement(stmt: ValidateStatement): string {
-        const sbase = this.emitStatementBase();
+        const sbase = this.emitStatementBase(stmt);
         const cond = this.emitExpression(stmt.cond);
         const dtag = stmt.diagnosticTag !== undefined ? `some('${stmt.diagnosticTag}')` : "none";
 
