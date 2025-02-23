@@ -1487,7 +1487,7 @@ class BSQIREmitter {
         assert(false, "Not implemented -- emitMethodDecl");
     }
 
-    private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): string[] {
+    private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
@@ -1508,7 +1508,11 @@ class BSQIREmitter {
             }
         }
 
-        return decls;
+        //
+        //TODO: need to split these up based on the kind of method (abstract, virtual, override, static)
+        //
+
+        return [decls, [], [], []];
     }
 
     private emitConstMemberDecls(ns: FullyQualifiedNamespace, declInType: NominalTypeSignature, decls: ConstMemberDecl[]) {
@@ -1582,21 +1586,21 @@ class BSQIREmitter {
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
         const fields = tdecl.members.map((mname) => `'${mname}'`).join(", ");
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::EnumTypeDecl{ ${tbase}, members=List<CString>{ ${fields} } }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::EnumTypeDecl{ ${tbase}, members=List<CString>{ ${fields} } }`];
     }
 
     private emitTypedeclTypeDecl(ns: FullyQualifiedNamespace, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::TypedeclTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)} }`];
     }
 
     private emitTypedeclStringOfTypeDecl(ns: FullyQualifiedNamespace, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
     
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofexp=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofexp=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
     }
 
     private emitInternalEntityTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: InternalEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
@@ -1607,21 +1611,21 @@ class BSQIREmitter {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::PrimitiveEntityTypeDecl{ ${ibase} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::PrimitiveEntityTypeDecl{ ${ibase} }`];
     }
 
     private emitOkTypeDecl(ns: FullyQualifiedNamespace, tdecl: OkTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::OkTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OkTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitFailTypeDecl(ns: FullyQualifiedNamespace, tdecl: FailTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::FailTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::FailTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitAPIRejectedTypeDecl(ns: FullyQualifiedNamespace, tdecl: APIRejectedTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -1644,7 +1648,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::SomeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::SomeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }
 
     private emitMapEntryTypeDecl(ns: FullyQualifiedNamespace, tdecl: MapEntryTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -1655,7 +1659,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::ListTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ListTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }
 
     private emitStackTypeDecl(ns: FullyQualifiedNamespace, tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -1683,7 +1687,7 @@ class BSQIREmitter {
         const ibase = this.emitAbstractEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
         
         const mfields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::EntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${mfields} } }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::EntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${mfields} } }`];
     }
 
     private emitAbstractConceptTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractConceptTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): string {
@@ -1702,7 +1706,7 @@ class BSQIREmitter {
         const somedecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as AbstractNominalTypeDecl;
         const sometype = new NominalTypeSignature(tdecl.sinfo, undefined, somedecl, tsig.alltermargs);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::OptionTypeDecl{ ${ibase}, oftype=${oftype}, sometype=${this.emitTypeSignature(sometype)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OptionTypeDecl{ ${ibase}, oftype=${oftype}, sometype=${this.emitTypeSignature(sometype)} }`];
     }
 
     private emitResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
@@ -1718,7 +1722,7 @@ class BSQIREmitter {
         const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, subtypes, fmt);
 
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::ConceptTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} } }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ConceptTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} } }`];
     }
 
     private emitDatatypeMemberEntityTypeDecl(ns: FullyQualifiedNamespace, tdecl: DatatypeMemberEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -1728,7 +1732,7 @@ class BSQIREmitter {
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         const parenttype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.parentTypeDecl, tsig.alltermargs);
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::DatatypeMemberEntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} }, parentTypeDecl=${this.emitTypeSignature(parenttype)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::DatatypeMemberEntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} }, parentTypeDecl=${this.emitTypeSignature(parenttype)} }`];
     }
 
     private emitDatatypeTypeDecl(ns: FullyQualifiedNamespace, tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
@@ -1738,7 +1742,7 @@ class BSQIREmitter {
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         const associatedMemberEntityDecls = tdecl.associatedMemberEntityDecls.map((dd) => this.emitTypeSignature(new NominalTypeSignature(dd.sinfo, undefined, dd, tsig.alltermargs))).join(", ");
 
-        return [`${EmitNameManager.generateTypeKey(tsig)}<BSQAssembly::TypeKey>`, `BSQAssembly::DatatypeTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} }, associatedMemberEntityDecls=List<BSQAssembly::NominalTypeSignature>{ ${associatedMemberEntityDecls} } }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::DatatypeTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} }, associatedMemberEntityDecls=List<BSQAssembly::NominalTypeSignature>{ ${associatedMemberEntityDecls} } }`];
     }
 
     private emitNamespaceConstDecls(ns: FullyQualifiedNamespace, decls: NamespaceConstDecl[]) {

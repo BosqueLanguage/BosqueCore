@@ -3471,9 +3471,9 @@ class JSEmitter {
         const emptyconstdecl = mmns.functions.find((ff) => ff.name === "s_map_create_empty") as NamespaceFunctionDecl;
         const pushdecl = mmns.functions.find((ff) => ff.name === "s_map_insert") as NamespaceFunctionDecl;
         const emptyconst = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, emptyconstdecl, rcvr.alltermargs) + "()";
-        const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0]]);
+        const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0], rcvr.alltermargs[1]]);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v.key, v.value); }, ${emptyconst}); } }`,
             `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
