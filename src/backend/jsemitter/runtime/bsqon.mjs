@@ -9,6 +9,10 @@ let _$none_lit = null;
 let _$parsemap = {};
 let _$emitmap = {};
 
+function resolveParseMapEntry(name) {
+    return _$parsemap[name];
+}
+
 function NOT_IMPLEMENTED(name) {
     throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
 }
@@ -208,6 +212,10 @@ const s_typeTokens = [
     SYM_rparenbar,
     SYM_coma
 ];
+
+function isTypeIdentifierName(nstr) {
+    return /^[A-Z][_a-zA-Z0-9]+$/.test(nstr);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Lexer and parser
@@ -1011,7 +1019,7 @@ BSQONParser.prototype.parseComplex = function() {
 BSQONParser.prototype.parseString = function() {
     const ss = this.consumeExpectedAndGetData(TokenStrings.String);
     try {
-        return validateStringLiteral(ss);
+        return validateStringLiteral(ss.slice(1, -1));
     }
     catch(e) {
         throw new ParserError(this.peek().sinfo, "Invalid Unicode string literal");
@@ -1024,7 +1032,7 @@ BSQONParser.prototype.parseString = function() {
 BSQONParser.prototype.parseCString = function() {
     const ss = this.consumeExpectedAndGetData(TokenStrings.CString);
     try {
-        return validateCStringLiteral(ss);
+        return validateCStringLiteral(ss.slice(1, -1));
     }
     catch(e) {
         throw new ParserError(this.peek().sinfo, "Invalid CString literal");
@@ -1313,6 +1321,10 @@ BSQONParser.prototype.peekScopedType = function() {
         return null;
     }
 
+    if(!isTypeIdentifierName(this.peek().data)) {
+        return null;
+    }
+
     let ii = this.idx;
     let sctype = this.tokens[ii].data;
     ii++;
@@ -1333,6 +1345,10 @@ BSQONParser.prototype.parseScopedType = function() {
         throw new ParserError(this.peek().sinfo, "Expected scoped type");
     }
 
+    if(!isTypeIdentifierName(this.peek().data)) {
+        throw new ParserError(this.peek().sinfo, "Expected scoped type");
+    }
+
     let sctype = this.tokens[this.idx].data;
     this.idx++;
 
@@ -1347,20 +1363,19 @@ BSQONParser.prototype.parseScopedType = function() {
  * @returns {string | null}
  */
 BSQONParser.prototype.peekScopedTypeTailing = function() {
-    if(this.idx + 3 >= this.input.length || this.input[this.idx + 1].kind !== SYM_langle || this.input[this.idx + 2].kind !== TokenStrings.IdentifierName) {
+    if(this.idx + 3 >= this.tokens.length || this.tokens[this.idx].kind !== SYM_langle || this.tokens[this.idx + 1].kind !== TokenStrings.IdentifierName) {
         return null;
     }
 
-    let ii = this.idx + 2;
-    let sctype = this.input[ii].data;
-    ii++;
+    let ii = this.idx + 1;
+    let sctype = "";
 
-    while(ii < this.input.length && (this.input[ii].kind === SYM_coloncolon || this.input[ii].kind === TokenStrings.IdentifierName)) {
-        sctype += this.input[ii].data;
+    while(ii < this.tokens.length && (this.tokens[ii].kind === SYM_coloncolon || this.tokens[ii].kind === TokenStrings.IdentifierName)) {
+        sctype += this.tokens[ii].data;
         ii++;
     }
 
-    if(ii >= this.input.length || this.input[ii].kind !== SYM_rangle) {
+    if(ii >= this.tokens.length || this.tokens[ii].kind !== SYM_rangle) {
         return null;
     }
 
@@ -1371,17 +1386,18 @@ BSQONParser.prototype.peekScopedTypeTailing = function() {
  * @throws {ParserError}
  */
 BSQONParser.prototype.parseScopedTypeTailing = function() {
-    if(this.idx + 3 >= this.input.length || this.input[this.idx + 1].kind !== SYM_langle || this.input[this.idx + 2].kind !== TokenStrings.IdentifierName) {
+    if(this.idx + 3 >= this.tokens.length || this.tokens[this.idx].kind !== SYM_langle || this.tokens[this.idx + 1].kind !== TokenStrings.IdentifierName) {
         throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
     }
     this.idx++;
 
-    while(this.idx < this.input.length && (this.input[this.idx].kind === SYM_coloncolon || this.input[this.idx].kind === TokenStrings.IdentifierName)) {
-        sctype += this.input[this.idx].data;
+    let sctype = "";
+    while(this.idx < this.tokens.length && (this.tokens[this.idx].kind === SYM_coloncolon || this.tokens[this.idx].kind === TokenStrings.IdentifierName)) {
+        sctype += this.tokens[this.idx].data;
         this.idx++;
     }
 
-    if(this.idx >= this.input.length || this.input[this.idx].kind !== SYM_rangle) {
+    if(this.idx >= this.tokens.length || this.tokens[this.idx].kind !== SYM_rangle) {
         throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
     }
     this.idx++;
@@ -1422,8 +1438,16 @@ BSQONParser.prototype.parseValue = function(tkey) {
     }
 
     let res = null;
-    if(this.test(TokenStrings.IdentifierName) && /^[_a-z][_a-zA-Z0-9]*$/.test(this.peek().data)) {
-        res = this.parseIdentifier(tkey);
+    if(this.test(TokenStrings.IdentifierName)) {
+        const tt = this.peekScopedType();
+
+        if(tt === null) {
+            res = this.parseIdentifier(tkey);
+        }
+        else {
+            const pf = resolveParseMapEntry(tkey)
+            res = pf(this);
+        }
     }
     else if(this.test(KW_LET)) {
         res = this.parseLetIn(tkey);
@@ -1432,7 +1456,8 @@ BSQONParser.prototype.parseValue = function(tkey) {
         res = this.parseValuePrimitive(tkey);
     }
     else {
-        res = _$parsemap[tkey](this);
+        const pf = resolveParseMapEntry(tkey)
+        res = pf(this);
     }
 
     if(hasparen) {
@@ -1519,41 +1544,52 @@ BSQONParser.prototype.parseArgListGeneral = function(tkeys) {
     if(!this.test(SYM_lbrace)) {
         throw new ParserError(this.peek().sinfo, "Expected argument list");
     }
-    
-    let positional = true;
-    let pval = 0;
-    while(this.test(SYM_lbrace) || this.test(SYM_coma)) {
+    this.consume();
+
+    if(this.test(SYM_rbrace)) {
         this.consume();
-
-        if(this.testTokens(TokenStrings.IdentifierName, SYM_eq)) {
-            positional = false;
-
-            const nval = this.consumeAndGetData();
-            this.consume();
-
-            const ffidx = tkeys.findIndex((mm) => mm[0] === nval);
-            if(ff === -1) {
-                throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
-            }
-
-            if(res[ffidx] !== undefined) {
-                throw new ParserError(this.peek().sinfo, `Duplicate argument: ${nval}`);
-            }
-
-            res[ffidx] = this.parseValue(tkeys[ffidx][1]);
-        }
-        else {
-            if(!positional) {
-                throw new ParserError(this.peek().sinfo, "All positional arguments must come before named arguments");
-            }
-
-            res[pval] = this.parseValue(tkeys[pval][1]);
-            pval++;
-        }
+        return res;
     }
+    else {
+        let first = true;
+        let positional = true;
+        let pval = 0;
+        while(first || this.test(SYM_coma)) {
+            first = false;
+            if(this.test(SYM_coma)) {
+                this.consume();
+            }
 
-    this.consumeExpected(SYM_rbrace);
-    return res;
+            if(this.testTokens(TokenStrings.IdentifierName, SYM_eq)) {
+                positional = false;
+
+                const nval = this.consumeAndGetData();
+                this.consume();
+
+                const ffidx = tkeys.findIndex((mm) => mm[0] === nval);
+                if(ffidx === -1) {
+                    throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
+                }
+
+                if(res[ffidx] !== undefined) {
+                    throw new ParserError(this.peek().sinfo, `Duplicate argument: ${nval}`);
+                }
+
+                res[ffidx] = this.parseValue(tkeys[ffidx][1]);
+            }
+            else {
+                if(!positional) {
+                    throw new ParserError(this.peek().sinfo, "All positional arguments must come before named arguments");
+                }
+
+                res[pval] = this.parseValue(tkeys[pval][1]);
+                pval++;
+            }
+        }
+
+        this.consumeExpected(SYM_rbrace);
+        return res;
+    }
 }
 /**
  * @param {string} ktype
@@ -1578,15 +1614,24 @@ BSQONParser.prototype.parseCollectionConsArgs = function(etype) {
     if(!this.test(SYM_lbrace)) {
         throw new ParserError(this.peek().sinfo, "Expected collection argument list");
     }
+    this.consume();
 
-    while(this.test(SYM_lbrace) || this.test(SYM_coma)) {
+    if(this.test(SYM_rbrace)) {
         this.consume();
-
-        res.push(this.parseValue(etype));
+        return res;
     }
+    else {
+        res.push(this.parseValue(etype));
 
-    this.consumeExpected(SYM_rbrace);
-    return res;
+        while(this.test(SYM_coma)) {
+            this.consume();
+
+            res.push(this.parseValue(etype));
+        }
+
+        this.consumeExpected(SYM_rbrace);
+        return res;
+    }
 }
 
 

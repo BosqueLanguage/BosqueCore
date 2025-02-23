@@ -3027,15 +3027,15 @@ class JSEmitter {
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
-                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else {
                 const nsaccess = this.emitAccessNamespaceConstantExpression(tdecl.optofexp.exp as AccessNamespaceConstantExpression);
                 const retag = `'${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).name}'`;
-                rechks.push(`_$formatchk(_$accepts(${nsaccess}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
+                rechks.push(`_$formatchk(_$accepts(${nsaccess}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
             }
         }
 
@@ -3414,7 +3414,7 @@ class JSEmitter {
 
         const createcall = EmitNameManager.generateAccessorForConstructorParseAPI(this.currentns as NamespaceDeclaration, rcvr, false);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { const ee = parser.parseMapEnty("${rcvr.alltermargs[0].tkeystr}", "${rcvr.alltermargs[1].tkeystr}"); return ${createcall}(ee[0], ee[1]); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseMapEnty("${rcvr.alltermargs[0].tkeystr}", "${rcvr.alltermargs[1].tkeystr}"); return ${createcall}(ee[0], ee[1]); } }`,
             `$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${rcvr.alltermargs[0].tkeystr}", value.key) + " => " + emitter.emitValue("${rcvr.alltermargs[1].tkeystr}", value.value); } }`
         ];
 
@@ -3433,7 +3433,7 @@ class JSEmitter {
         const emptyconst = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, emptyconstdecl, rcvr.alltermargs) + "()";
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, pushdecl, rcvr.alltermargs);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
             `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
@@ -3470,7 +3470,7 @@ class JSEmitter {
         const emptyconst = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, emptyconstdecl, rcvr.alltermargs) + "()";
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0]]);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
             `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
@@ -3859,7 +3859,7 @@ class JSEmitter {
         return {decls: alldecls, supers: allsupertypes, parses: allparsedecls, emits: allemitdecls};
     }
 
-    private emitReadArgsFromStdInAndCall(paramtypes: string[]): string {
+    private emitReadArgsFromStdInAndCall(defaultns: string, paramtypes: string[]): string {
         if(paramtypes.length === 0) {
             return "let res; try { res = main(); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); process.exit(1); }";
         }
@@ -3964,7 +3964,7 @@ class JSEmitter {
                     mainop = "\nprocess.stdout.write(`Error -- main function not found in main namespace\\n`);";
                 }
                 else {
-                    const params = this.emitReadArgsFromStdInAndCall(mainf.params.map((pt) => pt.type.tkeystr));
+                    const params = this.emitReadArgsFromStdInAndCall(decl.name, mainf.params.map((pt) => pt.type.tkeystr));
                     const op = this.emitOutputResultToStdOut(mainf.resultType.tkeystr, "main");
 
                     mainop = `\n${params}${fmt.nl()}${op}`;
