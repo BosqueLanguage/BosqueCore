@@ -1295,7 +1295,7 @@ class BSQIREmitter {
         }
         else if(body instanceof StandardBodyImplementation) {
             const stmts = this.emitStatementArray(body.statements, fmt);
-            const bbody = fmt.formatListOf("List<Statement>{", stmts, "}");
+            const bbody = fmt.formatListOf("List<BSQAssembly::Statement>{", stmts, "}");
             return `BSQAssembly::StandardBodyImplementation {${fmt.nl()}${bbody}}`;
         }
         else {
@@ -1378,14 +1378,14 @@ class BSQIREmitter {
         const ptype = this.emitTypeSignature(pdecl.type);
         const defaultval = pdecl.optDefaultValue !== undefined ? `some(${this.emitExpression(pdecl.optDefaultValue.exp)})` : "none";
 
-        return `BSQAssembly::InvokeParameterDecl{ name='${pdecl.name}'<BSQAssembly::Identifier>, ptype=${ptype}, defaultval=${defaultval}, isRefParam=${pdecl.isRefParam}, isRestParam=${pdecl.isRestParam} }`;
+        return `BSQAssembly::InvokeParameterDecl{ pname='${pdecl.name}'<BSQAssembly::Identifier>, ptype=${ptype}, defaultval=${defaultval}, isRefParam=${pdecl.isRefParam}, isRestParam=${pdecl.isRestParam} }`;
     }
 
     private emitAbstractInvokeDecl(decl: AbstractInvokeDecl, nskey: string, ikey: string, fmt: BsqonCodeFormatter): string {
         const dbase = this.emitAbstractCoreDecl(decl, nskey, fmt);
 
         const ikeystr = `ikey='${ikey}'<BSQAssembly::InvokeKey>`;
-        const isrecursive = `irecursive={this.emitRecInfo(decl.recursive)}`;
+        const isrecursive = `irecursive=${this.emitRecInfo(decl.recursive)}`;
         const params = `params=List<BSQAssembly::InvokeParameterDecl>{ ${decl.params.map((p) => this.emitInvokeParameterDecl(p))} }`;
         const resultType = `resultType=${this.emitTypeSignature(decl.resultType)}`;
 

@@ -1330,7 +1330,13 @@ BSQONParser.prototype.peekScopedType = function() {
     ii++;
 
     while(ii < this.tokens.length && s_typeTokens.includes(this.tokens[ii].kind)) {
-        sctype += this.tokens[ii].data;
+        const tkval = this.tokens[ii].data;
+        sctype += tkval;
+
+        if(tkval === ",") {
+            sctype += " ";
+        }
+
         ii++;
     }
 
@@ -1353,7 +1359,13 @@ BSQONParser.prototype.parseScopedType = function() {
     this.idx++;
 
     while(this.idx < this.tokens.length && s_typeTokens.includes(this.tokens[this.idx].kind)) {
-        sctype += this.tokens[this.idx].data;
+        const tkval = this.tokens[this.idx].data;
+        sctype += tkval;
+
+        if(tkval === ",") {
+            sctype += " ";
+        }
+
         this.idx++;
     }
 
@@ -1633,7 +1645,14 @@ BSQONParser.prototype.parseCollectionConsArgs = function(etype) {
         return res;
     }
 }
-
+/**
+ * @returns {string}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseEnumNameComponent = function() {
+    this.consumeExpected(SYM_hash); 
+    return this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Emitter

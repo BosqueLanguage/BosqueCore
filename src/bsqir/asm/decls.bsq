@@ -23,8 +23,8 @@ type TypeKey = CString of BSQAssembly::typeKeyRE;
 const invokeKeyRE: CRegex = /(${BSQAssembly::namespaceKeyRE}|${BSQAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]+/c;
 type InvokeKey = CString of BSQAssembly::invokeKeyRE;
 
-const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9&]+/c; %%we allow & inside these identifiers so we can make special names
-const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9]+/c;
+const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9&]*/c; %%we allow & inside these identifiers so we can make special names
+const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9]*/c;
 type Identifier = CString of BSQAssembly::identifierRE;
 type VarIdentifier = CString of BSQAssembly::videntifierRE;
 

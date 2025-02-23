@@ -3305,8 +3305,11 @@ class JSEmitter {
             return `${mm}: {value: function() { return _$memoconstval(this._$memomap, "${mm}", ${lexp}); } }`;
         }));
 
-        decls.push(`$parseAPI: { value: (parser) => { return "[ENUM TODO]"; } }`);
-        decls.push(`$emitAPI: { value: (emitter, value) => { return "[ENUM TODO]"; } }`);
+        const parselookup = EmitNameManager.generateEnumNameLookupForParse(this.currentns as NamespaceDeclaration, rcvr, "ename");
+        const emitgen = "[" + tdecl.members.map((mm) => "mm").join(", ") + "][value.value]";
+
+        decls.push(`$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ename = parser.parseEnumNameComponent(); return ${parselookup}; } }`);
+        decls.push(`$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "#" + ${emitgen}; } }`);
 
         const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
@@ -3414,7 +3417,7 @@ class JSEmitter {
 
         const createcall = EmitNameManager.generateAccessorForConstructorParseAPI(this.currentns as NamespaceDeclaration, rcvr, false);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseMapEnty("${rcvr.alltermargs[0].tkeystr}", "${rcvr.alltermargs[1].tkeystr}"); return ${createcall}(ee[0], ee[1]); } }`,
+            `$parseAPI: { value: (parser) => { const ee = parser.parseMapEnty("${rcvr.alltermargs[0].tkeystr}", "${rcvr.alltermargs[1].tkeystr}"); return ${createcall}(ee[0], ee[1]); } }`,
             `$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${rcvr.alltermargs[0].tkeystr}", value.key) + " => " + emitter.emitValue("${rcvr.alltermargs[1].tkeystr}", value.value); } }`
         ];
 
