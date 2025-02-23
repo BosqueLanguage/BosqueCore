@@ -120,6 +120,22 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringValue{exp.value};
     }
 
+    method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::Value {
+        return SMTAssembly::AccessVariableValue{exp.vname.value};
+    }
+
+    method transformBinAddExpression(exp: BSQAssembly::BinAddExpression): ExpressionTransformResult {
+        let lhs = this.transformExpressionToSMT(exp.lhs);
+        let rhs = this.transformExpressionToSMT(exp.rhs);
+
+        if(lhs?<ValueTransformResult> && rhs?<ValueTransformResult>) {
+            return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, SMTAssembly::BinAddValue{lhs@<ValueTransformResult>.value, rhs@<ValueTransformResult>.value}};
+        }
+        else {
+            abort; %% NOT IMPLEMENTED
+        }
+    }
+
     method transformExpressionToSMT(exp: BSQAssembly::Expression): ExpressionTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -133,6 +149,12 @@ entity SMTTransformer {
             }
             | BSQAssembly::LiteralStringExpression => { 
                 return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformLiteralStringExpression($exp)}; 
+            }
+            | BSQAssembly::AccessVariableExpression => { 
+                return ValueTransformResult{List<SMTAssembly::FlowOperation>{}, this.transformAccessVariableExpression($exp)}; 
+            }
+            | BSQAssembly::BinAddExpression => { 
+                return this.transformBinAddExpression($exp);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED
