@@ -3,7 +3,6 @@
 import { runishMainCodeUnsat } from "../../../bin/test/smtoutput/smtemit_nf.js";
 import { describe, it } from "node:test";
 
-
 describe ("SMT evaluate -- Nat", () => {
     it("should smt eval simple nats", function () {
         runishMainCodeUnsat("public function main(): Nat { return 0n; }", "(declare-const a Nat) (assert (= a Main@main)) (assert (not (= a 0)))");
