@@ -1,5 +1,0 @@
-namespace TreeIR;
-
-export function main(asm: Assembly): Assembly {
-    return asm;
-}

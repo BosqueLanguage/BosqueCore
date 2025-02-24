@@ -47,9 +47,14 @@ function processSingleComponent(formula: string, smtcomponents: string, rterm: s
 
     const sidx = smtcomponents.indexOf(sstr) + sstr.length;
     const eidx = smtcomponents.indexOf(estr);
-    const repl = smtcomponents.substring(sidx, eidx);
+    const repl = smtcomponents.substring(sidx, eidx).trim();
 
-    return formula.replace(rterm, repl);
+    if(repl === "") {
+        return formula.replace(rterm, `;;no content -- ${rterm}`);
+    }
+    else {
+        return formula.replace(rterm, repl);
+    }
 }
 
 const smtcomponenttags = [
@@ -59,10 +64,10 @@ const smtcomponenttags = [
     ";;--FUNCTION_DECLS--;;",
     ";;--ENUM_DECLS--;;",
     ";;--TYPEDECL_DECLS--;;",
-    ";;--CONSTRUCTABLE_DECLS--;;",
+    ";;--SPECIAL_DECLS--;;",
     ";;--COLLECTION_DECLS--;;",
     ";;--ENTITY_DECLS--;;",
-    ";;--DATAMEMBER_DECLS--;;",
+    ";;--DATATYPE_DECLS--;;",
     ";;--SPECIAL_CONSTRUCTORS--;;",
     ";;--COLLECTION_CONSTRUCTORS--;;",
     ";;--ENTITY_CONSTRUCTORS--;;",

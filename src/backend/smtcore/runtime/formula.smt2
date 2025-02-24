@@ -2,14 +2,6 @@
 ;;Template file for building SMTLIB models of Bosque code
 ;;
 
-;;
-;;Bounds on input numeric/string/container sizes -- TODO: in the future let solver set these....
-;;
-(declare-const _@INPUT_NUMBER_MIN Int) (assert (= _@INPUT_NUMBER_MIN -256))
-(declare-const _@INPUT_NUMBER_MAX Int) (assert (= _@INPUT_NUMBER_MAX 256))
-(declare-const _@INPUT_STRING_MAX_SIZE Int) (assert (= _@INPUT_STRING_MAX_SIZE 64))
-(declare-const _@INPUT_CONTAINER_MAX_SIZE Int) (assert (= _@INPUT_CONTAINER_MAX_SIZE 3))
-
 (declare-datatype @Result (par (T) (
     (@Result-err-trgt)
     (@Result-err-other) 
@@ -23,6 +15,8 @@
 ;;Bool is Bool
 (define-sort Nat () Int)
 ;;Int is Int
+(define-sort BigNat () Int)
+(define-sort BigInt () Int)
 (define-sort Float () Real)
 (define-sort CString () String)
 ;;String is String
@@ -66,5 +60,5 @@
 
 ;;--FUNCTION_DECLS--;;
 
-;;--GLOBAL_DEFINITIONS--;;
+;;--GLOBAL_IMPLS--;;
 
