@@ -6,7 +6,16 @@ import { Status } from "./status_output.js";
 import { generateASMSMT, workflowLoadUserSrc } from "./workflows.js";
 import * as path from "path";
 
+import { fileURLToPath } from 'url';
 import { PackageConfig } from "../frontend/build_decls.js";
+import { execSync } from "child_process";
+import { validateCStringLiteral } from "@bosque/jsbrex";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const bosque_dir: string = path.join(__dirname, "../../../");
+const smt_transform_bin_path = path.join(bosque_dir, "bin/smtemit/SMTEmitter.mjs");
+const smt_runtime_code_path = path.join(bosque_dir, "bin/smtruntime/formula.smt2");
 
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
@@ -30,6 +39,87 @@ if(outdiridx !== -1) {
 
 function getSimpleFilename(fn: string): string {
     return path.basename(fn);
+}
+
+function processSingleComponent(formula: string, smtcomponents: string, rterm: string): string {
+    const sstr = `#BEGIN ${rterm}`;
+    const estr = `#END ${rterm}`;
+
+    const sidx = smtcomponents.indexOf(sstr) + sstr.length;
+    const eidx = smtcomponents.indexOf(estr);
+    const repl = smtcomponents.substring(sidx, eidx);
+
+    return formula.replace(rterm, repl);
+}
+
+const smtcomponenttags = [
+    ";;--GLOBAL_DECLS--;;",
+    ";;--GLOBAL_IMPLS--;;",
+    ";;--PRE_FUNCS--;;",
+    ";;--FUNCTION_DECLS--;;",
+    ";;--ENUM_DECLS--;;",
+    ";;--TYPEDECL_DECLS--;;",
+    ";;--CONSTRUCTABLE_DECLS--;;",
+    ";;--COLLECTION_DECLS--;;",
+    ";;--ENTITY_DECLS--;;",
+    ";;--DATAMEMBER_DECLS--;;",
+    ";;--SPECIAL_CONSTRUCTORS--;;",
+    ";;--COLLECTION_CONSTRUCTORS--;;",
+    ";;--ENTITY_CONSTRUCTORS--;;",
+    ";;--DATATYPE_CONSTRUCTORS--;;",
+    ";;--TYPEDECL_TERM_CONSTRUCTORS--;;",
+    ";;--SPECIAL_TERM_CONSTRUCTORS--;;",
+    ";;--ENTITY_TERM_CONSTRUCTORS--;;",
+    ";;--DATATYPE_TERM_CONSTRUCTORS--;;",
+    ";;--SUBTYPE_PREDICATES--;;"
+];
+
+function generateFormulaFile(smtcomponents: string, outname: string) {
+    Status.output("Processing SMT Formula...\n");
+    const nndir = path.normalize(outname);
+
+    Status.output("    Reading SMT Formula Template File...\n");
+    let formula: string = "";
+    try {
+        formula = fs.readFileSync(smt_runtime_code_path).toString();
+    }
+    catch(e) {
+        Status.error("Failed to read SMT runtime file!\n");
+    }
+
+    Status.output("    Processing Formula Template File...\n");
+    for(let i = 0; i < smtcomponenttags.length; ++i) {
+        const rterm = smtcomponenttags[i];
+        formula = processSingleComponent(formula, smtcomponents, rterm);
+    }
+
+    Status.output("    Writing SMT Formula File...\n");
+    try {
+        const fname = path.join(nndir, "formula.smt2");
+        fs.writeFileSync(fname, formula);
+    }
+    catch(e) {
+        Status.error("Failed to write SMT formula file!\n");
+    }
+
+
+    Status.output(`SMT Formula generation successful -- emitted to ${nndir}\n\n`);
+}
+
+function runSMTEmit(outname: string): string {
+    Status.output("Processing IR into SMT Components...\n");
+   
+    const nndir = path.normalize(outname);
+    let res = "";
+    try {
+        const fname = path.join(nndir, "bsqir.bsqon");
+        res = execSync(`node ${smt_transform_bin_path} --file ${fname}`).toString();
+    }
+    catch(e) {      
+        Status.error("Failed to write bsqir info file!\n");
+    }
+
+    return validateCStringLiteral(res.slice(1, -1));
 }
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
@@ -101,9 +191,8 @@ fs.mkdirSync(outdir);
 
 buildBSQONAssembly(asm, mainns, outdir);
 
-//
-//TODO: now invoke the SMT translator code genereated from Bosque
-//
+const smtcomponents = runSMTEmit(outdir);
+generateFormulaFile(smtcomponents, outdir);
 
 //
 //TODO: later various options to setup the solver and invoke the stuff
