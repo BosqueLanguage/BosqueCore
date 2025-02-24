@@ -29,7 +29,7 @@
         "test-stdlib": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/stdlib/*/*.test.js",
         "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
         "test-apps": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/apps/*/*.test.js",
-        "test-smt": "node ./build/build_all.js && node ./build/build_smtemit_test.js && node ./bin/smttest/test.mjs"
+        "test-smtoutput": "node ./build/build_all.js && node ./build/build_smtemit.js && node --test-concurrency=8 --test ./test/smtoutput/*/*.test.js"
     },
     "files": [
         "bin/*"
