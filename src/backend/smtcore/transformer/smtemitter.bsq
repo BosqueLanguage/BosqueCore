@@ -1310,9 +1310,9 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: CString): CString {
 
     let stddecls = CString::join('%n;',
         CString::join('%n;',
-            '#BEGIN ;;--CONSTRUCTABLE_DECLS--;;',
+            '#BEGIN ;;--SPECIAL_DECLS--;;',
             special_edcls,
-            '#END ;;--CONSTRUCTABLE_DECLS--;;',
+            '#END ;;--SPECIAL_DECLS--;;',
             '#BEGIN ;;--COLLECTION_DECLS--;;',
             collection_edcls,
             '#END ;;--COLLECTION_DECLS--;;'
@@ -1321,9 +1321,9 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: CString): CString {
             '#BEGIN ;;--ENTITY_DECLS--;;',
             entity_edcls,
             '#END ;;--ENTITY_DECLS--;;',
-            '#BEGIN ;;--DATAMEMBER_DECLS--;;',
+            '#BEGIN ;;--DATATYPE_DECLS--;;',
             datamember_edcls,
-            '#END ;;--DATAMEMBER_DECLS--;;'
+            '#END ;;--DATATYPE_DECLS--;;'
         )
     );
 
