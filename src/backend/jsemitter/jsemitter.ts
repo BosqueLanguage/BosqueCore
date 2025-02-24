@@ -3027,15 +3027,15 @@ class JSEmitter {
         let rechks: string[] = [];
         if(tdecl instanceof TypedeclTypeDecl && tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralUnicodeRegexExpression) {
-                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralUnicodeRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else if(tdecl.optofexp.exp.tag === ExpressionTag.LiteralCRegexExpression) {
-                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
+                rechks.push(`_$formatchk(_$accepts(${this.emitLiteralCRegexExpression(tdecl.optofexp.exp as LiteralRegexExpression)}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex", tdecl.optofexp.exp.sinfo, undefined)});`);
             }
             else {
                 const nsaccess = this.emitAccessNamespaceConstantExpression(tdecl.optofexp.exp as AccessNamespaceConstantExpression);
                 const retag = `'${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).ns.ns.join("::")}::${(tdecl.optofexp.exp as AccessNamespaceConstantExpression).name}'`;
-                rechks.push(`_$formatchk(_$accepts(${nsaccess}, $value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
+                rechks.push(`_$formatchk(_$accepts(${nsaccess}, value, ${this.getCurrentINNS()}), ${this.getErrorInfo("failed regex -- " + (tdecl.optofexp.exp as AccessNamespaceConstantExpression).name, tdecl.optofexp.exp.sinfo, retag)});`);
             }
         }
 
@@ -3305,8 +3305,11 @@ class JSEmitter {
             return `${mm}: {value: function() { return _$memoconstval(this._$memomap, "${mm}", ${lexp}); } }`;
         }));
 
-        decls.push(`$parseAPI: { value: (parser) => { return "[ENUM TODO]"; } }`);
-        decls.push(`$emitAPI: { value: (emitter, value) => { return "[ENUM TODO]"; } }`);
+        const parselookup = EmitNameManager.generateEnumNameLookupForParse(this.currentns as NamespaceDeclaration, rcvr, "ename");
+        const emitgen = "[" + tdecl.members.map((mm) => "mm").join(", ") + "][value.value]";
+
+        decls.push(`$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ename = parser.parseEnumNameComponent(); return ${parselookup}; } }`);
+        decls.push(`$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "#" + ${emitgen}; } }`);
 
         const declsentry = [...decls].map((dd) => fmt.indent(dd)).join("," + fmt.nl());
 
@@ -3433,7 +3436,7 @@ class JSEmitter {
         const emptyconst = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, emptyconstdecl, rcvr.alltermargs) + "()";
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, pushdecl, rcvr.alltermargs);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
             `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
@@ -3468,9 +3471,9 @@ class JSEmitter {
         const emptyconstdecl = mmns.functions.find((ff) => ff.name === "s_map_create_empty") as NamespaceFunctionDecl;
         const pushdecl = mmns.functions.find((ff) => ff.name === "s_map_insert") as NamespaceFunctionDecl;
         const emptyconst = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, emptyconstdecl, rcvr.alltermargs) + "()";
-        const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0]]);
+        const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0], rcvr.alltermargs[1]]);
         const pedecls = [
-            `$parseAPI: { value: (parser) => { const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
+            `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v.key, v.value); }, ${emptyconst}); } }`,
             `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
         ];
 
@@ -3859,14 +3862,15 @@ class JSEmitter {
         return {decls: alldecls, supers: allsupertypes, parses: allparsedecls, emits: allemitdecls};
     }
 
-    private emitReadArgsFromStdInAndCall(paramtypes: string[]): string {
+    private emitReadArgsFromStdInAndCall(defaultns: string, paramtypes: string[]): string {
         if(paramtypes.length === 0) {
             return "let res; try { res = main(); } catch(e) { process.stdout.write(`Error -- ${e.$info || e}\\n`); process.exit(1); }";
         }
         else {
-            const input = `import { readFileSync } from "fs";\nlet input = readFileSync(0, 'utf-8');`;
+            const usefile = `const usefile = process.argv.length === 4 && process.argv[2] === "--file";`;
+            const input = `import { readFileSync } from "fs";\nlet input = readFileSync(usefile ? process.argv[3] : 0, 'utf-8');`;
             const pdecls = `try { args = _$parseBSQON([${paramtypes.map((tt) => `"${tt}"`).join(", ")}], input); } catch(pe) { process.stdout.write(\`ParseError -- \${pe.message || pe}\\n\`); process.exit(1); }`;
-            return `${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); }`;
+            return `${usefile}\n${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); }`;
         }
     }
 
@@ -3963,7 +3967,7 @@ class JSEmitter {
                     mainop = "\nprocess.stdout.write(`Error -- main function not found in main namespace\\n`);";
                 }
                 else {
-                    const params = this.emitReadArgsFromStdInAndCall(mainf.params.map((pt) => pt.type.tkeystr));
+                    const params = this.emitReadArgsFromStdInAndCall(decl.name, mainf.params.map((pt) => pt.type.tkeystr));
                     const op = this.emitOutputResultToStdOut(mainf.resultType.tkeystr, "main");
 
                     mainop = `\n${params}${fmt.nl()}${op}`;

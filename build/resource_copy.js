@@ -24,6 +24,7 @@ process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core/", "core/");
 copyResourceDir("backend/jsemitter/runtime/", "jsruntime/");
+copyResourceDir("backend/smtcore/runtime/", "smtruntime/");
 
 copyResourceDir("samples/", "samples/");
 

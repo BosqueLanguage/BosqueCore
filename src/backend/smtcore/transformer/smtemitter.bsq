@@ -1340,9 +1340,9 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: CString): CString {
             '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
             entity_econs,
             '#END ;;--ENTITY_CONSTRUCTORS--;;',
-            '#BEGIN ;;--ENTITY_CONSTRUCTORS--;;',
+            '#BEGIN ;;--DATATYPE_CONSTRUCTORS--;;',
             datamember_econs,
-            '#END ;;--ENTITY_CONSTRUCTORS--;;'
+            '#END ;;--DATATYPE_CONSTRUCTORS--;;'
         )
     );
 
@@ -1359,9 +1359,9 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: CString): CString {
             '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
             entity_etcons,
             '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;',
-            '#BEGIN ;;--ENTITY_TERM_CONSTRUCTORS--;;',
+            '#BEGIN ;;--DATATYPE_TERM_CONSTRUCTORS--;;',
             datamember_etcons,
-            '#END ;;--ENTITY_TERM_CONSTRUCTORS--;;'
+            '#END ;;--DATATYPE_TERM_CONSTRUCTORS--;;'
         )
     );
 

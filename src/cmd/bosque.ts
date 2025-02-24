@@ -89,7 +89,6 @@ function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
     Status.output(`    Code generation successful -- Type Info emitted to ${nndir}\n\n`);
 }
 
-
 function buildExeCodeTest(assembly: Assembly, outname: string) {
     Status.output("Generating JS code...\n");
     const iim = InstantiationPropagator.computeInstantiations(assembly, undefined);

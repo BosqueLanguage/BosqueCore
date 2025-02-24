@@ -297,6 +297,10 @@ class EmitNameManager {
         return `${this.emitTypeAccess(currentns, ttype)}.${ename}()`;
     }
 
+    static generateEnumNameLookupForParse(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, pval: string): string {
+        return `${this.emitTypeAccess(currentns, ttype)}[${pval}]()`;
+    }
+
     static generateAccssorNameForTypeConstant(currentns: NamespaceDeclaration, ttype: NominalTypeSignature, cv: ConstMemberDecl): string {
         return `${this.emitTypeAccess(currentns, ttype)}.${cv.name}()`;
     }

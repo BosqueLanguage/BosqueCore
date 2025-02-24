@@ -1,0 +1,12 @@
+namespace Core;
+
+#if STRIPPED_CORE
+#else
+#if SMT_LIBS
+namespace NumericOps {
+    function s_floatPower(a: Float, b: Float): Float = s_float_power;
+    function s_floatSqrt(a: Float): Float = s_float_sqrt;
+}
+#else
+#endif %% SMT_LIBS
+#endif %% STRIPPED_CORE

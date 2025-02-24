@@ -192,8 +192,8 @@ entity Transformer {
     }
 }
 
-public function main(): CString {
-    let tasm = Transformer::transformAssembly(SMTEmitter::s_sample_bsqasm);
+public function main(assembly: BSQAssembly::Assembly): CString {
+    let tasm = Transformer::transformAssembly(assembly);
     let smtstr = SMTEmitter::emitAssembly(tasm, SMTEmitter::s_ignoreErrTrgt);
 
     return smtstr;
