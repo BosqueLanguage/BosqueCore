@@ -68,5 +68,14 @@ __internal entity Map<K: keytype, V> {
 
     %% TODO: also insert with a MapEntry -- maybe einsert
 
+    recursive? method map<U>(f: recursive? fn(K, V) -> U): Map<K, U> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return Map<K, U>{};
+        }
+        else {
+            return MapOps::s_map_map<K, V, U>(this, f);
+        }
+    }
+
 #endif %% STRIPPED_CORE
 }

@@ -17,6 +17,8 @@ namespace MapOps {
 
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_insert;
 
+    recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> = s_map_map;
+
     function s_map_create_empty<K: keytype, V>(): Map<K, V> = s_map_create_empty;
 }
 #else

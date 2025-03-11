@@ -1,0 +1,9 @@
+namespace BSQAssembly;
+
+%*
+ * Support for alpha renaming of expressions and bodies
+ *%
+entity AlphaRenameTransform {
+   field postfix: CString; %%This is the postfix to add to all identifiers -- of the form &[0-9]+
+}
+ 

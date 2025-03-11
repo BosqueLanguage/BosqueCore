@@ -1,0 +1,43 @@
+namespace BSQAssembly;
+
+%*
+ * Rewrite the IR to make all type conversions and accesses explicit
+ *%
+entity ExplicitifyTransform {
+%*
+   function process(assembly: Assembly): Assembly {
+      field nsconsts: List<NamespaceConstDecl>;
+    field typeconsts: List<ConstMemberDecl>;
+    
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
+    
+    field absmethods: Map<InvokeKey, MethodDeclAbstract>;
+    field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
+    field overmethods: Map<InvokeKey, MethodDeclOverride>;
+    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
+
+    field enums: Map<TypeKey, EnumTypeDecl>;
+    field typedecls: Map<TypeKey, TypedeclTypeDecl>;
+
+    field primtives: Map<TypeKey, PrimitiveEntityTypeDecl>;
+    field constructables: Map<TypeKey, ConstructableTypeDecl>;
+    field collections: Map<TypeKey, CollectionTypeDecl>;
+
+    field entities: Map<TypeKey, EntityTypeDecl>;
+    field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
+
+    field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>;
+    field concepts: Map<TypeKey, ConceptTypeDecl>;
+
+    field datatypes: Map<TypeKey, DatatypeTypeDecl>;
+
+    field allfuncs: List<InvokeKey>;
+    field allmethods: List<InvokeKey>;
+    field allvmethods: List<InvokeKey>;
+
+    field allconcretetypes: List<TypeKey>;
+    field allabstracttypes: List<TypeKey>;
+   }
+*%
+}
