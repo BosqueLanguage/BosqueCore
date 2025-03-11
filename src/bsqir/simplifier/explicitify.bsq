@@ -1,7 +1,7 @@
 namespace BSQAssembly;
 
 %*
- * Rewrite the IR to make all type conversions and accesses explicit
+ * Rewrite the IR to make all type conversions and accesses explicit -- also eliminate any shadowed local names
  *%
 entity ExplicitifyTransform {
 
