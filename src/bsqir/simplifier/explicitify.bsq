@@ -1,12 +1,12 @@
 namespace BSQAssembly;
 
 entity VarMapping {
-   field seenmap: Map<VarIdentifier, CString>; %%This is the map from the original name to the next suffix to use
+   field seenmap: Map<VarIdentifier, VarIdentifier>; %%This is the map from the original name to the next var name to use
    field remap: List<Map<VarIdentifier, VarIdentifier>>; %%This is the map from the original name to the new name if required
 
    function createEmpty(): VarMapping {
       return VarMapping{
-         Map<VarIdentifier, CString>{},
+         Map<VarIdentifier, VarIdentifier>{},
          List<Map<VarIdentifier, VarIdentifier>>{}
       };
    }
@@ -14,28 +14,28 @@ entity VarMapping {
    method pushScope(): VarMapping {
       return VarMapping{
          this.seenmap,
-         this.remap.push_back(Map<VarIdentifier, VarIdentifier>{})
+         this.remap.pushBack(Map<VarIdentifier, VarIdentifier>{})
       };
    }
 
-   method mergeSeenMapInto(seenmap: Map<VarIdentifier, CString>): VarMapping {
+   method mergeSeenMapInto(seenmap: Map<VarIdentifier, VarIdentifier>): VarMapping {
       return VarMapping{
          seenmap,
-         this.remap.pop()
+         this.remap
       };
    }
 
    method extendMapping(name: VarIdentifier): VarMapping {
-      var nseen: Map<VarIdentifier, CString>;
+      var nseen: Map<VarIdentifier, VarIdentifier>;
       var nrmap: List<Map<VarIdentifier, VarIdentifier>>;
 
       if(!this.seenmap.has(name)) {
-         nseen = this.seenmap.insert(name, name.append("_$frsh"));
+         nseen = this.seenmap.insert(name, VarIdentifier::from(name.value.append('_$frsh')));
          nrmap = this.remap;
       }
       else {
          let nname = this.seenmap.get(name);
-         nseen = this.seenmap.set(name, nname.append("$"));
+         nseen = this.seenmap.set(name, VarIdentifier::from(nname.value.append('$')));
          nrmap = this.remap.setBack(this.remap.back().insert(name, nname));
       }
 
@@ -46,16 +46,20 @@ entity VarMapping {
    }
 
    method resolveVariableAsNeeded(name: VarIdentifier): VarIdentifier {
-      xxxx;
+      let mmp = this.remap.findLast(pred(m) => m.has(name));
+      if(mmp)@none {
+         return name;
+      }
+      else {
+         return $mmp.get(name);
+      }
    }
 
    method remapDeclarationAsNeeded(name: VarIdentifier): VarMapping, VarIdentifier {
       let nmapping = this.extendMapping(name);
-      if()
-      else {
-         
-         return nmapping.seenmap.get(name), nmapping;
-      }
+      let nname = nmapping.resolveVariableAsNeeded(name);
+      
+      return nmapping, nname;
    }
 }
 
@@ -65,11 +69,11 @@ entity VarMapping {
 entity ExplicitifyTransform {
 
    function processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
-      xxxx;
+      abort;
    }
 
    function processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
-      xxxx;
+      abort;
    }
 
    function processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
@@ -84,10 +88,14 @@ entity ExplicitifyTransform {
       abort;
    }
 
+   function processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
+        abort;
+    }
+
    function processBodyImpl(body: BodyImplementation): BodyImplementation {
-      match(body) {
+      match(body)@ {
          ExpressionBodyImplementation => { return ExpressionBodyImplementation{ ExplicitifyTransform::processExpression($body.exp, VarMapping::createEmpty()).0 }; }
-         | StandardBodyImplementation => { field statements: List<Statement>; }
+         | StandardBodyImplementation => { return StandardBodyImplementation{ ExplicitifyTransform::processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
          | _ => { return body; }
       }
    }

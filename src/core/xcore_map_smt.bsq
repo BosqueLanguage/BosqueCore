@@ -16,6 +16,7 @@ namespace MapOps {
     function s_map_get_option<K: keytype, V>(m: Map<K, V>, k: K): Option<V> = s_map_get_option;
 
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_insert;
+    function s_map_set<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_set;
 
     recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> = s_map_map;
 

@@ -41,6 +41,15 @@ namespace MapOps {
         return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(insert<K, V>(m.value, k, v));
     }
 
+    function s_map_set<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> {
+        if(m.value?<BBLeaf<K, V>>) {
+            return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
+        }
+        else {
+            return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(set<K, V>(m.value, k, v));
+        }
+    }
+
     recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> {
         return XCore::s_createDirect<Tree<K, U>, Map<K, U>>(Tree<K, V>::map[recursive]<U>(m.value, f));
     }
@@ -501,6 +510,26 @@ namespace MapOps {
         }
         else {
             return Tree<K, V>::createNode(Color#Black, $tt.l, $tt.r);
+        }
+    }
+
+    function set<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
+        if(t)@<Leaf<K, V>> {
+            assert KeyComparator::equal<K>($t.v.key, k);
+            return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v});
+        }
+        else {
+            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            let rmin = mink<K, V>(nn.r);
+
+            if(KeyComparator::less<K>(k, rmin)) {
+                let nl = set<K, V>(nn.l, k, v);
+                return balance<K, V>(nn.c, nl, nn.r);
+            }
+            else {
+                let nr = set<K, V>(nn.r, k, v);
+                return balance<K, V>(nn.c, nn.l, nr);
+            }
         }
     }
 
