@@ -1,9 +1,76 @@
 namespace BSQAssembly;
 
+entity VarMapping {
+   field seenmap: Map<VarIdentifier, CString>; %%This is the map from the original name to the next suffix to use
+   field remap: List<Map<VarIdentifier, VarIdentifier>>; %%This is the map from the original name to the new name if required
+
+   function createEmpty(): VarMapping {
+      return VarMapping{
+         Map<VarIdentifier, CString>{},
+         List<Map<VarIdentifier, VarIdentifier>>{}
+      };
+   }
+
+   method pushScope(): VarMapping {
+      return VarMapping{
+         this.seenmap,
+         this.remap.push_back(Map<VarIdentifier, VarIdentifier>{})
+      };
+   }
+
+   method mergeSeenMapInto(seenmap: Map<VarIdentifier, CString>): VarMapping {
+      return VarMapping{
+         seenmap,
+         this.remap.pop()
+      };
+   }
+
+   method extendMapping(name: VarIdentifier): VarMapping {
+      var nseen: Map<VarIdentifier, CString>;
+      var nrmap: List<Map<VarIdentifier, VarIdentifier>>;
+
+      if(!this.seenmap.has(name)) {
+         nseen = this.seenmap.insert(name, name.append("_$frsh"));
+         nrmap = this.remap;
+      }
+      else {
+         let nname = this.seenmap.get(name);
+         nseen = this.seenmap.set(name, nname.append("$"));
+         nrmap = this.remap.setBack(this.remap.back().insert(name, nname));
+      }
+
+      return VarMapping{
+         nseen,
+         nrmap
+      };
+   }
+
+   method resolveVariableAsNeeded(name: VarIdentifier): VarIdentifier {
+      xxxx;
+   }
+
+   method remapDeclarationAsNeeded(name: VarIdentifier): VarMapping, VarIdentifier {
+      let nmapping = this.extendMapping(name);
+      if()
+      else {
+         
+         return nmapping.seenmap.get(name), nmapping;
+      }
+   }
+}
+
 %*
- * Rewrite the IR to make all type conversions and accesses explicit -- also eliminate any shadowed local names
+ * Rewrite the IR to make all type conversions and accesses explicit -- ensure all variable names are unique (no shadowing or duplicates)
  *%
 entity ExplicitifyTransform {
+
+   function processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
+      xxxx;
+   }
+
+   function processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
+      xxxx;
+   }
 
    function processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
       abort;
@@ -18,7 +85,11 @@ entity ExplicitifyTransform {
    }
 
    function processBodyImpl(body: BodyImplementation): BodyImplementation {
-      abort;
+      match(body) {
+         ExpressionBodyImplementation => { return ExpressionBodyImplementation{ ExplicitifyTransform::processExpression($body.exp, VarMapping::createEmpty()).0 }; }
+         | StandardBodyImplementation => { field statements: List<Statement>; }
+         | _ => { return body; }
+      }
    }
 
    function processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {

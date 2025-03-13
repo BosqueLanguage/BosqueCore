@@ -151,6 +151,14 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<U>, List<U>>(Tree<T>::mapidx[recursive?]<U>(l.value, 0n, f));
     }
 
+    recursive? function s_list_find<T>(l: List<T>, p: recursive? pred(T) -> Bool): Option<T> {
+        return Tree<T>::find[recursive?](l.value, p);
+    }
+
+    recursive? function s_list_find_last<T>(l: List<T>, p: recursive? pred(T) -> Bool): Option<T> {
+        return Tree<T>::findlast[recursive?](l.value, p);
+    }
+
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::filter[recursive?](l.value, Tree<T>::emptyTree, p));
     }
@@ -703,6 +711,52 @@ namespace ListOps {
                     let nl = Tree<T>::mapidx[recursive?]<U>($t.l, cidx, f);
                     let nr = Tree<T>::mapidx[recursive?]<U>($t.r, cidx + size<T>($t.l), f);
                     return Node<U>{$t.c, $t.count, nl, nr};
+                }
+            }
+        }
+
+        recursive? function find(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
+            match(t)@ {
+                Leaf<T> => { 
+                    let tval = p[recursive?]($t.v);
+                    if(tval) { 
+                        return some($t.v); 
+                    }
+                    else {
+                        return none;
+                    }
+                }
+                | Node<T> => { 
+                    let nl = Tree<T>::find[recursive?]($t.l, p);
+                    if(nl)@!none {
+                        return nl;
+                    }
+                    else {
+                        return Tree<T>::find[recursive?]($t.r, p);
+                    }
+                }
+            }
+        }
+
+        recursive? function findlast(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
+            match(t)@ {
+                Leaf<T> => { 
+                    let tval = p[recursive?]($t.v);
+                    if(tval) { 
+                        return some($t.v); 
+                    }
+                    else {
+                        return none;
+                    }
+                }
+                | Node<T> => { 
+                    let nr = Tree<T>::findlast[recursive?]($t.r, p);
+                    if(nr)@!none {
+                        return nr;
+                    }
+                    else {
+                        return Tree<T>::findlast[recursive?]($t.l, p);
+                    }
                 }
             }
         }

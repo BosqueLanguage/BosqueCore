@@ -107,6 +107,24 @@ __internal entity List<T> {
         }
     }
     
+    recursive? method find(p: recursive? pred(T) -> Bool): Option<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return none;
+        }
+        else {
+            return ListOps::s_list_find[recursive?]<T>(this, p);
+        }
+    }
+
+    recursive? method findLast(p: recursive? pred(T) -> Bool): Option<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return none;
+        }
+        else {
+            return ListOps::s_list_find_last[recursive?]<T>(this, p);
+        }
+    }
+
     recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
