@@ -1,0 +1,7 @@
+namespace BSQAssembly;
+
+%*
+ * Rewrite the IR to do constant folding, constant propagation, flow/test simplification, and dead code elimination
+ *%
+entity ConstantSimplification {
+}

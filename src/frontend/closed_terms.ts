@@ -611,7 +611,16 @@ class InstantiationPropagator {
     }
 
     private instantiatePostfixAssignFields(exp: PostfixAssignFields) {
-        assert(false, "Not Implemented -- instantiatePostfixAssignFields");
+        for(let i = 0; i < exp.updates.length; ++i) {
+            this.instantiateExpression(exp.updates[i][1]);
+        }
+
+        this.instantiateTypeSignature(exp.updatetype as TypeSignature, this.currentMapping);
+
+        for(let i = 0; i < exp.updateinfo.length; ++i) {
+            this.instantiateTypeSignature(exp.updateinfo[i].fieldtype, this.currentMapping);
+            this.instantiateTypeSignature(exp.updateinfo[i].etype, this.currentMapping);
+        }
     }
 
     private instantiatePostfixInvoke(exp: PostfixInvoke) {

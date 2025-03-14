@@ -463,7 +463,7 @@ class TypeChecker {
                     return false;
                 }
 
-                this.checkError(pp.type.sinfo, pp.isRefParam && !TypeChecker.isTypeRefUpdatable(pp.type)[0], `Ref parameter must be of an updatable type`);
+                this.checkError(pp.type.sinfo, pp.isRefParam && !TypeChecker.isTypeUpdatable(pp.type)[0], `Ref parameter must be of an updatable type`);
             }
 
             if(type.name === "pred" && type.resultType.tkeystr !== "Bool") {
@@ -1427,7 +1427,14 @@ class TypeChecker {
             let ttypes: TypeSignature[] = [];
             for(let i = 0; i < exp.args.args.length; ++i) {
                 const etype = this.checkExpression(env, (exp.args.args[i] as PositionalArgumentValue).exp, i < iopts.length ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined);
-                ttypes.push(etype);
+                
+                if(iopts[i] === undefined) {
+                    ttypes.push(etype);
+                }
+                else {
+                    this.checkError(exp.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, iopts[i] as TypeSignature, this.constraints), `Type ${etype.emit()} is not a subtype of ${(iopts[i] as TypeSignature).emit()} as expected`);
+                    ttypes.push(iopts[i] as TypeSignature);
+                }
             }
 
             const rel = new EListTypeSignature(exp.sinfo, ttypes);
@@ -1819,7 +1826,35 @@ class TypeChecker {
     }
 
     private checkPostfixAssignFields(env: TypeEnvironment, exp: PostfixAssignFields, rcvrtype: TypeSignature): TypeSignature {
-        assert(false, "Not Implemented -- checkPostfixAssignFields");
+        const [okupdate, isdirect] = TypeChecker.isTypeUpdatable(rcvrtype);
+        if(!okupdate) {
+            this.reportError(rcvrtype.sinfo, `Expression is not an updatable type (entity/concept or datatype)`);
+            return rcvrtype;
+        }
+
+        const updates = exp.updates.map((upd) => {
+            const bname = "$" + upd[0];
+            const ftype = this.getFieldType(rcvrtype, upd[0]);
+
+            if(ftype === undefined) {
+                this.reportError(exp.sinfo, `Field ${upd[0]} is not a member of type ${rcvrtype.emit()}`);
+                return {fieldname: upd[0], fieldtype: new ErrorTypeSignature(exp.sinfo, undefined), etype: new ErrorTypeSignature(exp.sinfo, undefined)};
+            }
+
+            const cenv = env.pushNewLocalBinderScope(bname, ftype);
+            const etype = this.checkExpression(cenv, upd[1], new SimpleTypeInferContext(ftype));
+            if(!(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, ftype, this.constraints)) {
+                this.reportError(exp.sinfo, `Expression of type ${etype.emit()} cannot be assigned to field ${upd[0]} of type ${ftype.emit()}`);
+            }
+
+            return {fieldname: upd[0], fieldtype: ftype, etype: etype};
+        });
+
+        exp.updatetype = rcvrtype;
+        exp.updateinfo = updates;
+        exp.isdirect = isdirect;
+
+        return rcvrtype;
     }
 
     private postfixInvokeStaticResolve(env: TypeEnvironment, mdeclaration: MemberLookupInfo<MethodDecl>, name: string, resolvefrom: TypeSignature): MemberLookupInfo<MethodDecl> | undefined {
@@ -2897,7 +2932,7 @@ class TypeChecker {
 
         const rhs = this.checkExpressionRHS(env, stmt.exp, decltype !== undefined ? new SimpleTypeInferContext(decltype) : undefined);
 
-        this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
+        this.checkError(stmt.sinfo, decltype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
         
         stmt.vtype = decltype || rhs;
         return stmt.name !== "_" ? env.assignLocalVariable(stmt.name) : env;
@@ -3340,7 +3375,7 @@ class TypeChecker {
         return env;
     }
 
-    private static isTypeRefUpdatable(ttype: TypeSignature): [boolean, boolean] {
+    private static isTypeUpdatable(ttype: TypeSignature): [boolean, boolean] {
         if(!(ttype instanceof NominalTypeSignature)) {
             return [false, false];
         }
@@ -3375,7 +3410,7 @@ class TypeChecker {
             return env;
         }
 
-        const [okupdate, isdirect] = TypeChecker.isTypeRefUpdatable(vtype);
+        const [okupdate, isdirect] = TypeChecker.isTypeUpdatable(vtype);
         if(!okupdate) {
             this.reportError(stmt.sinfo, `Variable ${vname} is not an updatable type (entity/concept or datatype)`);
             return env;
@@ -3878,7 +3913,7 @@ class TypeChecker {
                 this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit()} but got ${etype.emit()}`);
             }
 
-            this.checkError(p.type.sinfo, p.isRefParam && !TypeChecker.isTypeRefUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
+            this.checkError(p.type.sinfo, p.isRefParam && !TypeChecker.isTypeUpdatable(p.type)[0], `Ref parameter must be of an updatable type`);
         }
 
         this.checkTypeSignature(idecl.resultType);

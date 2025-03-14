@@ -882,7 +882,9 @@ class JSEmitter {
     }
 
     private emitPostfixAssignFields(val: string, exp: PostfixAssignFields): string {
-        assert(false, "Not Implemented -- emitPostfixAssignFields");
+        const updatecalls = exp.updates.map((upd) => upd[0] + `: (($${upd[0]}) => { return ` + this.emitExpression(upd[1], true) + `; })($$v$$.${upd[0]})`).join(", ");
+
+        return `((($$v$$) => $$v$$.$update({ ${updatecalls} }))(${val}))`;
     }
 
     private emitResolvedPostfixInvoke(val: string, exp: PostfixInvoke): string {
@@ -2960,7 +2962,7 @@ class JSEmitter {
     }
 
     private generateObjectCreationExp(ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature): string {
-        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name} }`).join(", ");
+        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name}, enumerable: true }`).join(", ");
         const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
 
         return `return Object.create(${protoref}, { ${paramargs} });`;
@@ -3870,7 +3872,7 @@ class JSEmitter {
             const usefile = `const usefile = process.argv.length === 4 && process.argv[2] === "--file";`;
             const input = `import { readFileSync } from "fs";\nlet input = readFileSync(usefile ? process.argv[3] : 0, 'utf-8');`;
             const pdecls = `try { args = _$parseBSQON([${paramtypes.map((tt) => `"${tt}"`).join(", ")}], input); } catch(pe) { process.stdout.write(\`ParseError -- \${pe.message || pe}\\n\`); process.exit(1); }`;
-            return `${usefile}\n${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); }`;
+            return `${usefile}\n${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); process.exit(1); }`;
         }
     }
 
