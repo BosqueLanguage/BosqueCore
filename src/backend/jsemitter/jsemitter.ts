@@ -2962,7 +2962,7 @@ class JSEmitter {
     }
 
     private generateObjectCreationExp(ffinfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], rcvr: NominalTypeSignature): string {
-        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name} }`).join(", ");
+        const paramargs = ffinfo.map((fi) => `${fi.name}: { value: ${fi.name}, enumerable: true }`).join(", ");
         const protoref = EmitNameManager.generateAccessorForTypeConstructorProto(this.currentns as NamespaceDeclaration, rcvr);
 
         return `return Object.create(${protoref}, { ${paramargs} });`;

@@ -83,6 +83,13 @@ entity ExplicitifyTransform {
       }
    }
 
+   method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression, VarMapping {
+      let nlhs, nmaplhs = this.processExpression(e.lhs, vmap);
+      let nrhs, nmaprhs = this.processExpression(e.rhs, nmaplhs);
+
+      return e[lhs=nlhs, rhs=nrhs], nmaprhs;
+   }
+
    method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
       match(e)@ {
          LiteralNoneExpression => { return e, vmap; }
@@ -115,7 +122,7 @@ entity ExplicitifyTransform {
          | CreateDirectExpression => { abort; }
          | PostfixOp => { abort; }
          | UnaryExpression => { abort; }
-         | BinaryArithExpression => { abort; }
+         | BinaryArithExpression => { return this.processBinaryArithExpression($e, vmap); }
          | BinaryKeyEqExpression => { abort; }
          | KeyCmpEqualExpression => { abort; }
          | KeyCmpLessExpression => { abort; }
@@ -146,7 +153,12 @@ entity ExplicitifyTransform {
    }
 
    method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
-      abort;
+      if(param.defaultval)@none {
+         return param;
+      }
+      else {
+         abort;
+      }
    }
 
    method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
