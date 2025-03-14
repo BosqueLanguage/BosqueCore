@@ -35,6 +35,7 @@ namespace ListOps {
     recursive? function s_list_filteridx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): List<T> = s_list_filteridx;
 
     recursive? function s_list_reduce<T, U>(l: List<T>, init: U, f: recursive? fn(U, T) -> U): U = s_list_reduce;
+    recursive? function s_list_transduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> = s_list_transduce;
 
     function s_list_sum<T: numeric>(l: List<T>, zero: T): T = s_list_sum;
 }

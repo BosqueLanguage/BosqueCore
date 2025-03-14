@@ -1427,7 +1427,7 @@ class TypeChecker {
             let ttypes: TypeSignature[] = [];
             for(let i = 0; i < exp.args.args.length; ++i) {
                 const etype = this.checkExpression(env, (exp.args.args[i] as PositionalArgumentValue).exp, i < iopts.length ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined);
-                ttypes.push(etype);
+                ttypes.push(i < iopts.length ? (iopts[i] as TypeSignature) : etype);
             }
 
             const rel = new EListTypeSignature(exp.sinfo, ttypes);

@@ -170,6 +170,15 @@ __internal entity List<T> {
         }
     }
 
+    recursive? method transduce<E, U>(environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return environment, List<U>{};
+        }
+        else {
+            return ListOps::s_list_transduce[recursive?]<T, E, U>(this, environment, f);
+        }
+    }
+
     method {when T: numeric} sum(): T {
         if(ListOps::s_list_empty<T>(this)) {
             return T::zero;
