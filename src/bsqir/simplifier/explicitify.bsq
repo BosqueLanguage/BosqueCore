@@ -67,20 +67,33 @@ entity VarMapping {
  * Rewrite the IR to make all type conversions and accesses explicit -- ensure all variable names are unique (no shadowing or duplicates)
  *%
 entity ExplicitifyTransform {
+   field assembly: Assembly;
 
-   function processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
+   method processCoerceTypeAsNeeded(e: Expression, into: TypeSignature): Expression {
+      abort;
+      %*
+      if(xxxx e.etype == into) {
+         return e;
+      }
+      else {
+         return CoerceExpression{ e, into };
+      }
+      *%
+   }
+
+   method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
       abort;
    }
 
-   function processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
+   method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
       match(s)@ {
          ReturnVoidStatement => {
             return s, vmap;
          }
          | ReturnSingleStatement => {
             let nr, nm = this.processExpression($s.value, vmap);
-            abort; %% TODO -- here is where we put an explicit cast if needed
-            return $s[value = nr], nm;
+            let nc = this.processCoerceTypeAsNeeded(nr, $s.rtype);
+            return $s[value = nc], nm;
          }
          | ReturnMultiStatement => {
             abort; %% NOT IMPLEMENTED
@@ -91,39 +104,39 @@ entity ExplicitifyTransform {
       }
    }
 
-   function processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
+   method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
       abort;
    }
 
-   function processPrecondition(precond: PreConditionDecl): PreConditionDecl {
+   method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
       abort;
    }
 
-   function processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
+   method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
       abort;
    }
 
-   function processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
-        reuturn stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => ExplicitifyTransform::processStatement(stmt, vmap));
+   method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
+        return stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => this.processStatement(stmt, vmap));
     }
 
-   function processBodyImpl(body: BodyImplementation): BodyImplementation {
+   method processBodyImpl(body: BodyImplementation): BodyImplementation {
       match(body)@ {
-         ExpressionBodyImplementation => { return ExpressionBodyImplementation{ ExplicitifyTransform::processExpression($body.exp, VarMapping::createEmpty()).0 }; }
-         | StandardBodyImplementation => { return StandardBodyImplementation{ ExplicitifyTransform::processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
+         ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()).0 }; }
+         | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
          | _ => { return body; }
       }
    }
 
-   function processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
+   method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
       abort;
    }
 
-   function processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
+   method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
       abort;
    }
 
-   function processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
+   method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
       return NamespaceFunctionDecl{
          file = nsfunc.file,
          sinfo = nsfunc.sinfo,
@@ -134,104 +147,106 @@ entity ExplicitifyTransform {
 
          ikey = nsfunc.ikey,
          irecursive = nsfunc.irecursive,
-         params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => ExplicitifyTransform::processInvokeParameter(param)),
+         params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
          resultType = nsfunc.resultType,
 
-         body = ExplicitifyTransform::processBodyImpl(nsfunc.body),
+         body = this.processBodyImpl(nsfunc.body),
 
-         preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => ExplicitifyTransform::processPrecondition(precond)),
-         postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => ExplicitifyTransform::processPostcondition(postcond)),
+         preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
+         postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
          fkind = nsfunc.fkind
       };
    }
 
-   function processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
+   method processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
       abort;
    }
 
-   function processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
+   method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
       abort;
    }
 
-   function processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
+   method processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
       abort;
    }
 
-   function processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {
+   method processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {
       abort;
    }
 
-   function processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
+   method processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
       abort;
    }
 
-   function processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
+   method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
       abort;
    }
 
-   function processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+   method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
       abort;
    }
 
-   function processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
+   method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
       abort;
    }
 
-   function processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
+   method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
       abort;
    }
 
-   function processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
+   method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
       abort;
    }
 
-   function processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
+   method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
       abort;
    }
 
-   function processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
+   method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
       abort;
    }
 
-   function processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
+   method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
       abort;
    }
 
-   function processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
+   method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
       abort;
    }
 
-   function processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
+   method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
       abort;
    }
 
-   function process(assembly: Assembly): Assembly {
+   method process(assembly: Assembly): Assembly {
+      let explicitifier = ExplicitifyTransform{ assembly };
+
       return Assembly{
-         nsconsts = assembly.nsconsts.map<NamespaceConstDecl>(fn(nsconst) => ExplicitifyTransform::processNamespaceConstDecl(nsconst)),
-         typeconsts = assembly.typeconsts.map<ConstMemberDecl>(fn(typeconst) => ExplicitifyTransform::processConstMemberDecl(typeconst)),
+         nsconsts = assembly.nsconsts.map<NamespaceConstDecl>(fn(nsconst) => explicitifier.processNamespaceConstDecl(nsconst)),
+         typeconsts = assembly.typeconsts.map<ConstMemberDecl>(fn(typeconst) => explicitifier.processConstMemberDecl(typeconst)),
 
-         nsfuncs = assembly.nsfuncs.map<NamespaceFunctionDecl>(fn(ikey, nsfunc) => ExplicitifyTransform::processNamespaceFunctionDecl(nsfunc)),
-         typefuncs = assembly.typefuncs.map<TypeFunctionDecl>(fn(ikey, typefunc) => ExplicitifyTransform::processTypeFunctionDecl(typefunc)),
+         nsfuncs = assembly.nsfuncs.map<NamespaceFunctionDecl>(fn(ikey, nsfunc) => explicitifier.processNamespaceFunctionDecl(nsfunc)),
+         typefuncs = assembly.typefuncs.map<TypeFunctionDecl>(fn(ikey, typefunc) => explicitifier.processTypeFunctionDecl(typefunc)),
 
-         absmethods = assembly.absmethods.map<MethodDeclAbstract>(fn(ikey, absmethod) => ExplicitifyTransform::processMethodDeclAbstract(absmethod)),
-         virtmethods = assembly.virtmethods.map<MethodDeclVirtual>(fn(ikey, virtmethod) => ExplicitifyTransform::processMethodDeclVirtual(virtmethod)),
-         overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => ExplicitifyTransform::processMethodDeclOverride(overmethod)),
-         staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => ExplicitifyTransform::processMethodDeclStatic(staticmethod)),
+         absmethods = assembly.absmethods.map<MethodDeclAbstract>(fn(ikey, absmethod) => explicitifier.processMethodDeclAbstract(absmethod)),
+         virtmethods = assembly.virtmethods.map<MethodDeclVirtual>(fn(ikey, virtmethod) => explicitifier.processMethodDeclVirtual(virtmethod)),
+         overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => explicitifier.processMethodDeclOverride(overmethod)),
+         staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => explicitifier.processMethodDeclStatic(staticmethod)),
 
-         enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => ExplicitifyTransform::processEnumTypeDecl(enumdecl)),
-         typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => ExplicitifyTransform::processTypedeclTypeDecl(typedecl)),
+         enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => explicitifier.processEnumTypeDecl(enumdecl)),
+         typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclTypeDecl(typedecl)),
 
-         primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => ExplicitifyTransform::processPrimitiveEntityTypeDecl(primtype)),
-         constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => ExplicitifyTransform::processConstructableTypeDecl(ctype)),
-         collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => ExplicitifyTransform::processCollectionTypeDecl(ctype)),
+         primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => explicitifier.processPrimitiveEntityTypeDecl(primtype)),
+         constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => explicitifier.processConstructableTypeDecl(ctype)),
+         collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => explicitifier.processCollectionTypeDecl(ctype)),
 
-         entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => ExplicitifyTransform::processEntityTypeDecl(etype)),
-         datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => ExplicitifyTransform::processDatatypeMemberEntityTypeDecl(dmtype)),
+         entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => explicitifier.processEntityTypeDecl(etype)),
+         datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => explicitifier.processDatatypeMemberEntityTypeDecl(dmtype)),
 
-         pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => ExplicitifyTransform::processPrimitiveConceptTypeDecl(pconcept)),
-         concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => ExplicitifyTransform::processConceptTypeDecl(cconcept)),
+         pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => explicitifier.processPrimitiveConceptTypeDecl(pconcept)),
+         concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => explicitifier.processConceptTypeDecl(cconcept)),
 
-         datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => ExplicitifyTransform::processDatatypeTypeDecl(ddatatype)),
+         datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => explicitifier.processDatatypeTypeDecl(ddatatype)),
 
          allfuncs = assembly.allfuncs,
          allmethods = assembly.allmethods,
