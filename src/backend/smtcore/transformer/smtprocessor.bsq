@@ -179,16 +179,14 @@ const s_sample_smtasm: SMTAssembly::Assembly = SMTAssembly::Assembly{
 
 entity Transformer {
     function transformAssembly(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
-        %% TODO -- calls to special process bsq assembly 
-        %%         (1) generic calls from bsqir simplifier like rename and tree convert ...
-        %%         (2) specific calls from transformer to ground recursive calls ...
+        let explicitAssembly = BSQAssembly::ExplicitifyTransform::process(assembly);
 
         %%TODO compute errinvokes info
         let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = Map<BSQAssembly::InvokeKey, Bool>{ 
             'Main::main'<BSQAssembly::InvokeKey> => false
         };
 
-        return SMTTransformer::transformAssemblyToSMT(assembly, errinvokes);
+        return SMTTransformer::transformAssemblyToSMT(explicitAssembly, errinvokes);
     }
 }
 

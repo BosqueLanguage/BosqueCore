@@ -84,7 +84,46 @@ entity ExplicitifyTransform {
    }
 
    method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
-      abort;
+      match(e)@ {
+         LiteralNoneExpression => { return e, vmap; }
+         | LiteralSimpleExpression => { return e, vmap; }
+         | LiteralCStringExpression => { return e, vmap; }
+         | LiteralStringExpression => { return e, vmap; }
+         | LiteralCRegexExpression => { return e, vmap; }
+         | LiteralRegexExpression => { return e, vmap; }
+         | LiteralTypeDeclValueExpression => { abort; }
+         | AccessNamespaceConstantExpression => { return e, vmap; }
+         | AccessStaticFieldExpression => { return e, vmap; }
+         | AccessEnumExpression => { return e, vmap; }
+         | AccessVariableExpression => { return $e[vname = vmap.resolveVariableAsNeeded($vname)], vmap; }
+         | AccessCapturedVariableExpressionSpecial => { abort; }
+         | ConstructorExpression => { abort; }
+         | ConstructorLambdaExpression => { abort; }
+         | LetExpression => { abort; }
+         | LambdaInvokeExpression => { abort; }
+         | CallNamespaceFunctionExpression => { abort; }
+         | CallTypeFunctionExpression => { abort; }
+         | CallTypeFunctionSpecialExpression => { abort; }
+         | CallRefInvokeStaticResolveExpression => { abort; }
+         | CallRefInvokeVirtualExpression => { abort; }
+         | LogicActionAndExpression => { abort; }
+         | LogicActionOrExpression => { abort; }
+         | TypeDeclPrimitiveFieldAccessExpression => { abort; }
+         | CoerceNarrowTypeExpression => { abort; }
+         | CoerceWidenTypeExpression => { abort; }
+         | SafeConvertExpression => { abort; }
+         | CreateDirectExpression => { abort; }
+         | PostfixOp => { abort; }
+         | UnaryExpression => { abort; }
+         | BinaryArithExpression => { abort; }
+         | BinaryKeyEqExpression => { abort; }
+         | KeyCmpEqualExpression => { abort; }
+         | KeyCmpLessExpression => { abort; }
+         | BinaryNumericExpression => { abort; }
+         | BinLogicExpression => { abort; }
+         | MapEntryConstructorExpression => { abort; }
+         | IfExpression => { abort; }
+      }
    }
 
    method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
@@ -136,11 +175,13 @@ entity ExplicitifyTransform {
    }
 
    method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
-      abort;
+      let evalue = this.processExpression(nsconst.value, VarMapping::createEmpty()).0;
+      return nsconst[value=evalue];
    }
 
    method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
-      abort;
+      let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty()).0;
+      return typeconst[value=evalue];
    }
 
    method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
@@ -194,7 +235,7 @@ entity ExplicitifyTransform {
    }
 
    method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
-      abort;
+      return primtype;
    }
 
    method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
@@ -225,7 +266,7 @@ entity ExplicitifyTransform {
       abort;
    }
 
-   method process(assembly: Assembly): Assembly {
+   function process(assembly: Assembly): Assembly {
       let explicitifier = ExplicitifyTransform{ assembly };
 
       return Assembly{

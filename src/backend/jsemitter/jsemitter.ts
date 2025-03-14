@@ -3872,7 +3872,7 @@ class JSEmitter {
             const usefile = `const usefile = process.argv.length === 4 && process.argv[2] === "--file";`;
             const input = `import { readFileSync } from "fs";\nlet input = readFileSync(usefile ? process.argv[3] : 0, 'utf-8');`;
             const pdecls = `try { args = _$parseBSQON([${paramtypes.map((tt) => `"${tt}"`).join(", ")}], input); } catch(pe) { process.stdout.write(\`ParseError -- \${pe.message || pe}\\n\`); process.exit(1); }`;
-            return `${usefile}\n${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); }`;
+            return `${usefile}\n${input}\nlet args;\n${pdecls}\nlet res;\ntry { res = main(...args); } catch(e) { process.stdout.write(\`Error -- \${e.$info || e}\\n\`); process.exit(1); }`;
         }
     }
 
