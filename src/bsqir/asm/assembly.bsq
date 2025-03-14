@@ -320,4 +320,17 @@ entity Assembly {
     method isNominalTypeConcept(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractConceptTypeDecl>;
     }
+
+    method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
+        return t1.tkeystr === t2.tkeystr;
+    }
+
+    method isSubtypeOf(t1: TypeSignature, t2: TypeSignature): Bool {
+        if(t1.tkeystr === t2.tkeystr) {
+            return true;
+        }
+        else {
+            abort;
+        }
+    }
 }

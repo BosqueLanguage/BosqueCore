@@ -70,15 +70,17 @@ entity ExplicitifyTransform {
    field assembly: Assembly;
 
    method processCoerceTypeAsNeeded(e: Expression, into: TypeSignature): Expression {
-      abort;
-      %*
-      if(xxxx e.etype == into) {
+      if(this.assembly.areTypesSame(e.etype, into)) {
          return e;
       }
       else {
-         return CoerceExpression{ e, into };
+         if(this.assembly.isSubtypeOf(e.etype, into)) {
+            return CoerceWidenTypeExpression{ e.sinfo, into, e, e.etype@<NominalTypeSignature>, into@<NominalTypeSignature> };
+         }
+         else {
+            return CoerceNarrowTypeExpression{ e.sinfo, into, e, e.etype@<NominalTypeSignature>, into@<NominalTypeSignature> };
+         }
       }
-      *%
    }
 
    method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
@@ -117,7 +119,12 @@ entity ExplicitifyTransform {
    }
 
    method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
-        return stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => this.processStatement(stmt, vmap));
+        let rr = stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => {
+            let rs = this.processStatement(stmt, vmap);
+            return rs.1, rs.0;
+         });
+
+         return rr.1, rr.0; %%TODO: in our language we might also want to have a project elist to allow for quick reshuffles in cases like this
     }
 
    method processBodyImpl(body: BodyImplementation): BodyImplementation {

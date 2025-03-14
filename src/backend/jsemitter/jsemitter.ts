@@ -882,7 +882,9 @@ class JSEmitter {
     }
 
     private emitPostfixAssignFields(val: string, exp: PostfixAssignFields): string {
-        assert(false, "Not Implemented -- emitPostfixAssignFields");
+        const updatecalls = exp.updates.map((upd) => upd[0] + `: (($${upd[0]}) => { return ` + this.emitExpression(upd[1], true) + `; })($$v$$.${upd[0]})`).join(", ");
+
+        return `((($$v$$) => $$v$$.$update({ ${updatecalls} }))(${val}))`;
     }
 
     private emitResolvedPostfixInvoke(val: string, exp: PostfixInvoke): string {

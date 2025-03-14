@@ -15,7 +15,7 @@ describe ("Checker -- elist return", () => {
     });
 
     it("should check fail elist returns", function () {
-        checkTestFunctionError('function foo(): (|Int, Bool|) { return (|2i, 3i|); } function main(): Int { return foo().0; }', 'Expected a return value of type (|Int, Bool|) but got (|Int, Int|)');
+        checkTestFunctionError('function foo(): (|Int, Bool|) { return (|2i, 3i|); } function main(): Int { return foo().0; }', 'Type Int is not a subtype of Bool as expected');
         checkTestFunctionError('function foo(): (|Int, Int, Int|) { return 2i, 3i; } function main(): Int { return foo().0; }', 'Mismatch in number of return values and expected return types');
     });
 });
