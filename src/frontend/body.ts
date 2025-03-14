@@ -999,16 +999,21 @@ class PostfixAsConvert extends PostfixOperation {
 }
 
 class PostfixAssignFields extends PostfixOperation {
-    readonly updates: ArgumentList;
+    readonly updates: [string, Expression][];
 
-    constructor(sinfo: SourceInfo, updates: ArgumentList) {
+    constructor(sinfo: SourceInfo, updates: [string, Expression][]) {
         super(sinfo, PostfixOpTag.PostfixAssignFields);
         this.updates = updates;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.updates.emit(fmt, "[|", "|]")}`;
+        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
+        return `[${updates}]`;
     }
+
+    updatetype: TypeSignature | undefined = undefined;
+    updateinfo: {fieldname: string, fieldtype: TypeSignature, etype: TypeSignature}[] = [];
+    isdirect: boolean = false;
 }
 
 class PostfixInvoke extends PostfixOperation {

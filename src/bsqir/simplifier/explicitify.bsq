@@ -73,7 +73,22 @@ entity ExplicitifyTransform {
    }
 
    function processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
-      abort;
+      match(s)@ {
+         ReturnVoidStatement => {
+            return s, vmap;
+         }
+         | ReturnSingleStatement => {
+            let nr, nm = this.processExpression($s.value, vmap);
+            abort; %% TODO -- here is where we put an explicit cast if needed
+            return $s[value = nr], nm;
+         }
+         | ReturnMultiStatement => {
+            abort; %% NOT IMPLEMENTED
+         }
+         | _ => { 
+            abort;
+         }
+      }
    }
 
    function processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
@@ -89,7 +104,7 @@ entity ExplicitifyTransform {
    }
 
    function processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
-        abort;
+        reuturn stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => ExplicitifyTransform::processStatement(stmt, vmap));
     }
 
    function processBodyImpl(body: BodyImplementation): BodyImplementation {
