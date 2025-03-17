@@ -201,7 +201,7 @@ __internal __typedeclable __keycomparable entity String {
     }
 
     %%%%
-    %%TODO: we want to support regex versions of these operations too
+    %%TODO: we want to support regex versions of these operations too -- probably want to make this a sliceFront/sliceBack operation with numbers/Regex/Literals
 
     %** Remove a given prefix string **%
     method removePrefixString(prefix: String): String 

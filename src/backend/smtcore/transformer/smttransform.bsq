@@ -35,16 +35,13 @@ namespace TransformNameManager {
     }
 }
 
-datatype ExpressionTransformResult using {
-    field preops: List<SMTAssembly::FlowOperation>;
+datatype SMTOpTransformResult using {
+    field oftype: SMTAssembly::TypeKey;
+    field opstr: CString;
 }
-of
-ValueTransformResult {
-    field value: SMTAssembly::Value;
-}
-| InvokeExpressionTransformResult {
-    field iexp: SMTAssembly::InvokeExpression;
-}
+of 
+DirectResult { }
+| PossibleErrorResult { }
 ;
 
 entity SMTTransformer {
@@ -78,15 +75,15 @@ entity SMTTransformer {
         }
     }
 
-    method emitTermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, v: SMTAssembly::Value): SMTAssembly::Value {
-        return SMTAssembly::TermifyValue{v, smtfrom, smtinto};
+    method emitTermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, exp: SMTAssembly::Expression): SMTAssembly::Expression {
+        return SMTAssembly::TermifyValue{exp, smtfrom, smtinto};
     }
 
-    method emitUntermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, v: SMTAssembly::Value): SMTAssembly::Value {
-        return SMTAssembly::UntermifyValue{v, smtfrom, smtinto};
+    method emitUntermify(smtfrom: SMTAssembly::TypeKey, smtinto: SMTAssembly::TypeKey, exp: SMTAssembly::Expression): SMTAssembly::Expression {
+        return SMTAssembly::UntermifyValue{exp, smtfrom, smtinto};
     }
 
-    method emitCoerceAsNeeded(from: BSQAssembly::TypeSignature, into: BSQAssembly::TypeSignature, v: SMTAssembly::Value): SMTAssembly::Value {
+    method emitCoerceAsNeeded(from: BSQAssembly::TypeSignature, into: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression): SMTAssembly::Expression {
         let smtfrom = this.transformStdTypeToSMT(from);
         let smtinto = this.transformStdTypeToSMT(into);
 
@@ -103,11 +100,11 @@ entity SMTTransformer {
         }
     } 
 
-    method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::Value {
+    method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTOpTransformResult {
         return SMTAssembly::LiteralNoneValue{};
     }
 
-    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): SMTAssembly::Value {
+    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): SMTOpTransformResult {
         let tkey = this.transformStdTypeToSMT(exp.etype);
         return SMTAssembly::LiteralSimpleValue{tkey, exp.value};
     }

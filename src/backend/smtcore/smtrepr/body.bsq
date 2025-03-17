@@ -1,6 +1,6 @@
 namespace SMTAssembly;
 
-const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_]*/c;
+const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
 type VarName = CString of SMTAssembly::varnameRE;
 
 concept CallArgExpression {
@@ -13,252 +13,242 @@ entity LambdaConstructor provides CallArgExpression {
     field body: OperationBlock;
 }
 
-concept Value provides CallArgExpression {
+concept Expression provides CallArgExpression {
 }
 
-datatype ConstantValue provides Value
+datatype ConstantExpression provides Expression
 of
-LiteralNoneValue { }
-| LiteralSimpleValue {
+LiteralNoneExpression { }
+| LiteralSimpleExpression {
     field vtype: TypeKey;
     field value: CString;
 }
-| LiteralCStringValue {
+| LiteralCStringExpression {
     field value: CString;
 }
-| LiteralStringValue {
+| LiteralStringExpression {
     field value: CString;
 }
-| LiteralCRegexValue {
+| LiteralCRegexExpression {
     field value: CString;
 }
-| LiteralRegexValue {
+| LiteralRegexExpression {
     field value: String;
 }
 ;
 
-entity AccessNamespaceConstantValue provides Value {
+entity AccessNamespaceConstantExpression provides Expression {
     field ns: NamespaceKey;
     field name: CString;
 }
 
-entity AccessStaticFieldValue provides Value {
+entity AccessStaticFieldExpression provides Expression {
     field tresolved: TypeKey;
     field name: CString;
 }
 
-entity AccessEnumValue provides Value {
+entity AccessEnumExpression provides Expression {
     field enumtype: TypeKey;
     field name: CString;
 }
 
-entity AccessVariableValue provides Value {
+entity AccessVariableExpression provides Expression {
     field vname: CString;
 }
 
-entity AccessRetypeStep {
-    field ttype: TypeKey;
-    field specialfname: CString;
-}
-
-entity AccessVariableRetypeStepValue provides Value {
-    field vname: CString;
-    field step: AccessRetypeStep;
-}
-
-entity AccessVariableRetypeMultiStepValue provides Value {
-    field vname: CString;
-    field steps: List<AccessRetypeStep>;
-}
-
-entity TermifyValue provides Value {
-    field value: Value;
+entity TermifyExpression provides Expression {
+    field value: Expression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
 
-entity UntermifyValue provides Value {
-    field value: Value;
+entity UntermifyExpression provides Expression {
+    field value: Expression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
 
-entity LiteralTypeDeclValue provides Value {
-    field value: ConstantValue;
+entity LiteralTypeDeclExpression provides Expression {
+    field value: ConstantExpression;
     field constype: TypeKey;
 }
 
-%% Assume that checks are always inlined explicitly so that these are simple values
-datatype ConstructorPrimaryValue provides Value using {
+%% Assume that checks are always inlined explicitly 
+datatype ConstructorPrimaryExpression provides Expression using {
     field constype: TypeKey;
 }
 of 
-ConstructorListSingletonsValue { 
+ConstructorListSingletonsExpression { 
     field oftype: TypeKey;
-    field args: List<Value>;
+    field args: List<Expression>;
 }
-| ConstructorMapSingletonsValue { 
+| ConstructorMapSingletonsExpression { 
     field oftype: TypeKey;
-    field args: List<Value>;
+    field args: List<Expression>;
 }
-| ConstructorPrimarySpecialConstructableValue { 
-    field arg: Value;
+| ConstructorPrimarySpecialConstructableExpression { 
+    field arg: Expression;
 }
-| ConstructorTypeDeclValue { 
-    field arg: Value;
+| ConstructorTypeDeclExpression { 
+    field arg: Expression;
 }
-| ConstructorStdValue { 
-    field args: List<Value>;
+| ConstructorStdExpression { 
+    field args: List<Expression>;
 }
 ;
 
-entity ConstructorEListValue provides Value {
+entity ConstructorEListExpression provides Expression {
     field constype: TypeKey;
-    field args: List<Value>;
+    field args: List<Expression>;
 }
 
-entity CallNamespaceFunctionValue provides Value {
+entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<Value>;
+    field args: List<Expression>;
 }
 
-entity CallTypeFunctionValue provides Value {
+entity CallTypeFunctionExpression provides Expression {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Value>;
+    field args: List<Expression>;
 }
 
-entity LogicActionAndValue provides Value {
-    field args: List<Value>;
+entity LogicActionAndExpression provides Expression {
+    field args: List<Expression>;
 
     invariant $args.size() >= 2n;
 }
 
-entity LogicActionOrValue provides Value {
-    field args: List<Value>;
+entity LogicActionOrExpression provides Expression {
+    field args: List<Expression>;
 
     invariant $args.size() >= 2n;
 }
 
-entity UnwrapTypeDeclToPrimitiveValue provides Value {
+entity LogicActionImpliesExpression provides Expression {
+    field argl: Expression;
+    field argr: Expression;
+}
+
+entity UnwrapTypeDeclToPrimitiveExpression provides Expression {
     field decltype: TypeKey;
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity AccessFromNameResolvedValue provides Value {
+entity AccessFromNameResolvedExpression provides Expression {
     field ontype: TypeKey;
     field name: CString;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity AccessFromIndexValue provides Value {
+entity AccessFromIndexExpression provides Expression {
     field elisttype: TypeKey;
     field idx: CString;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity IsNoneTestValue provides Value {
-    field arg: Value;
+entity IsNoneTestExpression provides Expression {
+    field arg: Expression;
 }
 
-entity IsSomeTestValue provides Value {
-    field arg: Value;
+entity IsSomeTestExpression provides Expression {
+    field arg: Expression;
 }
 
-entity IsTypeTestValue provides Value {
+entity IsTypeTestExpression provides Expression {
     field istype: TypeKey;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity IsSubtypeTestValue provides Value {
+entity IsSubtypeTestExpression provides Expression {
     field oftype: TypeKey;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity ConvertOptionToSomeTValue provides Value {
+entity ConvertOptionToSomeTExpression provides Expression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity ConvertResultToOkTValue provides Value {
+entity ConvertResultToOkTExpression provides Expression {
     field resulttype: TypeKey;
     field oktype: TypeKey;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity ConvertResultToFailEValue provides Value {
+entity ConvertResultToFailEExpression provides Expression {
     field resulttype: TypeKey;
     field failtype: TypeKey;
 
-    field arg: Value;
+    field arg: Expression;
 }
 
-entity MethodInvokeStaticValue provides Value {
+entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: TypeKey;
     field name: CString;
-    field rootExp: Value;
-    field args: List<Value>;
+    field rootExp: Expression;
+    field args: List<Expression>;
 }
 
-datatype UnaryValue provides Value using {
-    field exp: Value;
+datatype UnaryExpression provides Expression using {
+    field exp: Expression;
 }
 of
-PrefixNotOpValue { }
-| PrefixNegateOpValue { }
-| PrefixPlusOpValue { }
+PrefixNotOpExpression { }
+| PrefixNegateOpExpression { }
+| PrefixPlusOpExpression { }
 ;
 
-datatype BinaryArithValue provides Value using {
-    field lhs: Value;
-    field rhs: Value;
+datatype BinaryArithExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
 }
 of
-BinAddValue { }
-| BinSubValue { }
-| BinMultValue { field useUninterpreted: Bool; }
-| BinDivValue {field useUninterpreted: Bool; }
+BinAddExpression { }
+| BinSubExpression { }
+| BinMultExpression { field useUninterpreted: Bool; }
+| BinDivExpression {field useUninterpreted: Bool; }
 ;
 
-datatype BinaryKeyEqValue provides Value 
+datatype BinaryKeyEqExpression provides Expression 
 of
-BinKeyEqNoneValue { 
-    field exp: Value;
+BinKeyEqNoneExpression { 
+    field exp: Expression;
 }
-| BinKeyNotEqNoneValue { 
-    field exp: Value;
+| BinKeyNotEqNoneExpression { 
+    field exp: Expression;
 }
-| BinKeySomeEqValue {
+| BinKeySomeEqExpression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
 
-    field eoption: Value;
-    field val: Value;
+    field eoption: Expression;
+    field val: Expression;
 }
-| BinKeyNotSomeEqValue {
+| BinKeyNotSomeEqExpression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
     
-    field eoption: Value;
-    field val: Value;
+    field eoption: Expression;
+    field val: Expression;
 }
-| BinKeyEqValue{
-    field lhs: Value;
-    field rhs: Value;
+| BinKeyEqExpression{
+    field lhs: Expression;
+    field rhs: Expression;
 }
-| BinKeyNotEqValue {
-    field lhs: Value;
-    field rhs: Value;
+| BinKeyNotEqExpression {
+    field lhs: Expression;
+    field rhs: Expression;
 }
 ;
 
@@ -271,130 +261,98 @@ enum KeyLessKind {
     KeyDataInfo
 }
 
-entity KeyLessValue provides Value {
+entity KeyLessExpression provides Expression {
     field kind: KeyLessKind;
 
-    field lhs: Value;
-    field rhs: Value;
+    field lhs: Expression;
+    field rhs: Expression;
 }
 
-datatype BinaryNumericCompareValue provides Value using {
-    field lhs: Value;
-    field rhs: Value;
-}
-of
-NumericEqValue { }
-| NumericNeqValue { }
-| NumericLessValue { }
-| NumericLessEqValue { }
-| NumericGreaterValue { }
-| NumericGreaterEqValue { }
-;
-
-datatype BinLogicValue provides Value using {
-    field lhs: Value;
-    field rhs: Value;
+datatype BinaryNumericCompareExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
 }
 of
-BinLogicAndValue { }
-| BinLogicOrValue { }
-| BinLogicImpliesValue { }
-| BinLogicIFFValue { }
+NumericEqExpression { }
+| NumericNeqExpression { }
+| NumericLessExpression { }
+| NumericLessEqExpression { }
+| NumericGreaterExpression { }
+| NumericGreaterEqExpression { }
 ;
 
-entity MapEntryConstructorValue provides Value {
+entity MapEntryConstructorExpression provides Expression {
     field constype: TypeKey;
 
-    field kexp: Value;
-    field vexp: Value;
+    field kexp: Expression;
+    field vexp: Expression;
 }
 
-entity IfValue provides Value {
-    field iftest: Value;
-    field trueValue: Value;
-    field falseValue: Value;
+entity LetExpression provides Expression {
+    field vbind: VarIdentifier;
+    field value: Expression;
+    field body: Expression;
 }
 
-concept InvokeExpression {
+entity IfThenElseExpression provides Expression {
+    field iftest: Expression;
+    field trueexp: Expression;
+    field falseexp: Expression;
 }
 
-entity LambdaInvokeExpression provides InvokeExpression {
-    field name: CString;
-    field args: List<CallArgExpression>;
-    
-    invariant !$args.empty();
+entity AbortExpression provides Expression {
+    field label: Nat;
 }
 
-entity CallNamespaceFunctionExpression provides InvokeExpression {
-    field ns: NamespaceKey;
-    field name: CString;
-
-    field args: List<CallArgExpression>;
-}
-
-entity CallTypeFunctionExpression provides InvokeExpression {
-    field resolvedType: TypeKey;
-    field name: CString;
-    
-    field args: List<CallArgExpression>;
-}
-
-entity MethodInvokeStaticExpression provides InvokeExpression {
-    field resolvedTrgt: TypeKey;
-    field name: CString;
-    field rootExp: Value;
-    field args: List<CallArgExpression>;
-}
-
-concept TerminalOperation {
-}
-
-entity ReturnValueOperation provides TerminalOperation {
-    field val: Value;
-}
-
-entity AbortOperation provides TerminalOperation {
-    field label: CString;
-}
-
-entity IfOperation provides TerminalOperation {
-    field iftest: Value;
-    field trueOps: OperationBlock;
-    field falseOps: OperationBlock;
-}
-
-concept FlowOperation {
-}
-
-entity LetOperation provides FlowOperation {
-    field vname: CString;
-    field value: Value;
-}
-
-entity LetWithErrorProcessOperation provides FlowOperation {
-    field tmpvar: CString;
-    field val: InvokeExpression;
-    field valtype: TypeKey;
-    field bindvar: CString;
-}
-
-entity AssertOperation provides FlowOperation {
-    field label: CString;
+entity AssumeExpression provides FlowExpression {
     field cond: Value;
 }
 
-entity AssumeOperation provides FlowOperation {
-    field cond: Value;
+entity WrapAsResultExpression provides Expression {
+    field etype: TypeKey;
+    field arg: Expression;
 }
 
-entity OperationBlock {
-    field ops: List<FlowOperation>;
-    field resop: TerminalOperation;
+entity ConvertResultExpression provides Expression {
+    field etype: TypeKey;
+    field intotype: TypeKey;
+    field arg: Expression;
 }
 
-%%
-%%TODO Match and Switch operations -- handle large case statements and avoid overloading SMT in cases per function
-%%
+entity LetWErrorsExpression provides Expression {
+    field vvbind: List<(|Expression, VarIdentifier|)>;
+    field inexp: Expression;
 
+    invariant !$vvbind.empty();
+}
 
+concept Operation {
+}
 
+entity ReturnOperation provides Operation {
+    field exp: Expression;
+    field isDirectResult: Bool;
+}
+
+entity LetOperation provides Operation {
+    field vbind: VarIdentifier;
+    field value: Expression;
+    field inops: List<Operation>;
+}
+
+entity LetOperationWError provides Operation {
+    field vebind: VarIdentifier;
+    field vbind: VarIdentifier;
+    field value: Expression;
+    field inops: List<Operation>;
+}
+
+entity IfThenElseOperation provides Operation {
+    field iftest: Expression;
+    field trueexp: List<Operation>;
+    field falseexp: List<Operation>;
+}
+
+entity Body {
+    field value: Operation;
+}
