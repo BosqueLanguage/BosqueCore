@@ -551,6 +551,15 @@ recursive function emitIfExpression(v: SMTAssembly::IfExpression): CString {
     return CString::concat('(ite ', tst, flows, ')');
 }
 *%
+recursive function emitIfThenElseExpression(e: SMTAssembly::IfThenElseExpression, trgterr: Nat): CString {
+    let tst = emitExpression[recursive](e.iftest, SMTEmitter::s_ignoreErrTrgt);
+    let tv = emitExpression[recursive](e.trueexp, trgterr);
+    let fv = emitExpression[recursive](e.falseexp, trgterr);
+
+    let flows = CString::concat(' ', tv, ' ', fv);
+    return CString::concat('(ite ', tst, flows, ')');
+}
+
 recursive function emitExpression(e: SMTAssembly::Expression, trgterr: Nat): CString {
     match(e)@ {
         SMTAssembly::ConstantExpression => { return emitConstantExpression($e); }
@@ -588,8 +597,8 @@ recursive function emitExpression(e: SMTAssembly::Expression, trgterr: Nat): CSt
         | SMTAssembly::BinaryNumericCompareExpression => { return emitBinaryNumericCompareExpression[recursive]($v); }
         | SMTAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($v); }
         | SMTAssembly::MapEntryConstructorExpression => { return emitMapEntryConstructorExpression[recursive]($v); }
-        | SMTAssembly::IfExpression => { return emitIfExpression[recursive]($v); }
         *%
+        | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, trgterr); }
     }
 }
 %*
