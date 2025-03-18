@@ -126,7 +126,7 @@ entity SMTTransformer {
     }
 
     recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::Expression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
-        let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(arg) => this.transformExpressionToSMT[recursive](ctx, arg));
+        let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
 
         return this.unpackExpressionErrors(subexps, nctx);
     }
@@ -149,7 +149,7 @@ entity SMTTransformer {
         }
         else {
             let rexp = SMTAssembly::WrapIntoResultExpression{smtetype, exp};
-            let lerr = SMTAssembly::LetWErrorsExpression{binds, rexp};
+            let lerr = SMTAssembly::LetWErrorsExpression{$binds, rexp};
 
             return PossibleErrorResult{smtetype, lerr};
         }
@@ -162,7 +162,7 @@ entity SMTTransformer {
             return PossibleErrorResult{smtetype, exp};
         }
         else {
-            return PossibleErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{binds, exp}};
+            return PossibleErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{$binds, exp}};
         }
     }
 
@@ -206,13 +206,18 @@ entity SMTTransformer {
             let lesstest = SMTAssembly::NumericLessExpression{lexp, rexp};
             let chekd = SMTAssembly::IfThenElseExpression{lesstest, SMTAssembly::AbortExpression{nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, subop}};
             
-            return nctx.addError(exp.sinfo), this.wrapOperationResultErr(exp.etype, subop, obinds);
+            return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, subop, obinds);
         }
+    }
+
+
+    function useUninterpretedOps(tkey: BSQAssembly::TypeKey): Bool {
+        return \/(tkey === 'Int'<BSQAssembly::TypeKey>, tkey === 'BigInt'<BSQAssembly::TypeKey>, tkey === 'Nat'<BSQAssembly::TypeKey>, tkey === 'BigNat'<BSQAssembly::TypeKey>);
     }
 
     recursive method transformBinMultExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let multop = SMTAssembly::BinMultExpression{lexp, rexp};
+        let multop = SMTAssembly::BinMultExpression{lexp, rexp, SMTTransformer::useUninterpretedOps(exp.etype.tkeystr)};
 
         return nctx, this.wrapOperationResult(exp.etype, multop, obinds);
     }
@@ -221,12 +226,12 @@ entity SMTTransformer {
         let smtetype = this.transformStdTypeToSMT(exp.etype);
 
         let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let divop = SMTAssembly::BinDivExpression{lexp, rexp};
+        let divop = SMTAssembly::BinDivExpression{lexp, rexp, SMTTransformer::useUninterpretedOps(exp.etype.tkeystr)};
 
-        let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, "zero"}};
+        let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}};
         let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
         
-        return nctx.addError(exp.sinfo), this.wrapOperationResultErr(exp.etype, divop, obinds);
+        return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, divop, obinds);
     }
 
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -316,12 +321,13 @@ entity SMTTransformer {
     }
 
     method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
+        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let nctx, eres = this.transformExpressionToSMT(decl.value, ctx);
+
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let vtype = SMTAssembly::PossibleErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
 
-        let declaredtype = this.transformStdTypeToSMT(decl.declaredType);
-        let vtype = SMTAssembly::PossibleErrorResult{ declaredtype };
-
-        let body = this.transformExpressionToSMT(decl.value, decl.file, none, true, decl.declaredType);
+        let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{eres.exp}, nctx.errors};
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
