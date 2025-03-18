@@ -29,6 +29,15 @@ __internal __typedeclable __keycomparable __numeric entity Nat {
 #else
     const zero: Nat = 0n;
     const one: Nat = 1n;
+
+    method toCString(): CString {
+        return NumericOps::s_natToCString(this);
+    }
+
+    function fromCString(str: CString): Nat {
+        return NumericOps::s_natFromCString(str);
+    }
+
 #endif %% STRIPPED_CORE
 }
 
@@ -38,6 +47,14 @@ __internal __typedeclable __keycomparable __numeric entity Int {
 #else
     const zero: Int = 0i;
     const one: Int = 1i;
+
+    method toCString(): CString {
+        return NumericOps::s_intToCString(this);
+    }
+
+    function fromCString(str: CString): Nat {
+        return NumericOps::s_intFromCString(str);
+    }
 #endif %% STRIPPED_CORE
 }
 

@@ -53,7 +53,7 @@ entity AccessEnumExpression provides Expression {
 }
 
 entity AccessVariableExpression provides Expression {
-    field vname: CString;
+    field vname: VarIdentifier;
 }
 
 entity TermifyExpression provides Expression {
@@ -308,7 +308,12 @@ entity AssumeExpression provides FlowExpression {
     field cond: Value;
 }
 
-entity WrapAsResultExpression provides Expression {
+entity UnwrapValueFromResultExpression provides Expression {
+    field etype: TypeKey;
+    field arg: Expression;
+}
+
+entity WrapValueAsResultExpression provides Expression {
     field etype: TypeKey;
     field arg: Expression;
 }

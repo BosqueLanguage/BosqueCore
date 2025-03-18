@@ -2257,7 +2257,19 @@ class JSEmitter {
         const bname = body.builtin;
 
         var bop: string = "";
-        if(bname === "s_float_power") {
+        if(bname === "s_nat_to_cstring") {
+            bop = `v.toString()`;
+        }
+        else if(bname === "s_nat_from_cstring") {
+            bop = `BigInt(str)`;
+        }
+        else if(bname === "s_int_to_cstring") {
+            bop = `v.toString()`;
+        }
+        else if(bname === "s_int_from_cstring") {
+            bop = `BigInt(str)`;
+        }
+        else if(bname === "s_float_power") {
             bop = `Math.pow(a, b)`;
         }
         else if(bname === "s_float_sqrt") {
