@@ -304,7 +304,7 @@ entity AbortExpression provides Expression {
     field label: Nat;
 }
 
-entity AssumeExpression provides FlowExpression {
+entity AssumeExpression provides Expression {
     field cond: Value;
 }
 
@@ -337,6 +337,20 @@ concept Operation {
 entity ReturnOperation provides Operation {
     field exp: Expression;
     field isDirectResult: Bool;
+}
+
+entity AbortOperation provides Operation {
+    field label: Nat;
+}
+
+entity AssertOperation provides Operation {
+    field label: Nat;
+
+    field cond: Value;
+}
+
+entity AssumeOperation provides Operation {
+    field cond: Value;
 }
 
 entity LetOperation provides Operation {

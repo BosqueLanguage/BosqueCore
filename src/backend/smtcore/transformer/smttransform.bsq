@@ -44,9 +44,28 @@ DirectResult { }
 | PossibleErrorResult { }
 ;
 
+entity SMTErrorInfo {
+    field errCtr: Nat;
+    field infile: String;
+    field sinfo: SMTAssembly::SourceInfo;
+    field ininvoke: Option<BSQAssembly::InvokeKey>;
+}
+
 entity SMTTransformerCtx {
+    field currentFile: String;
+    field currentInvoke: Option<BSQAssembly::InvokeKey>;
+
     field tempCtr: Nat;
     field errCtr: Nat;
+
+    field errors: List<SMTErrorInfo>;
+
+    method addError(bsqsinfo: BSQAssembly::SourceInfo): SMTTransformerCtx {
+        let smtsinfo = SMTAssembly::SourceInfo{bsqsinfo.line, bsqsinfo.column};
+        let errinfo = SMTErrorInfo{this.errCtr, this.currentFile, smtsinfo, this.currentInvoke};
+
+        return this[errors = $errors.pushBack(errinfo), errCtr = $errCtr + 1n];
+    }
 }
 
 entity SMTTransformer {
@@ -152,35 +171,93 @@ entity SMTTransformer {
         return rexps.get(0), rexps.get(1), nctx, obinds;
     }
 
+    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, VarIdentifier|)>>): SMTExpTransformResult {
+        let smtetype = this.transformStdTypeToSMT(etype);
+
+        if(binds)@none {
+            return DirectResult{smtetype, exp};
+        }
+        else {
+            let rexp = WrapValueAsResultExpression{smtetype, exp};
+            let lerr = LetWErrorsExpression{binds, rexp};
+
+            return PossibleErrorResult{smtetype, lerr};
+        }
+    }
+
+    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, VarIdentifier|)>>): SMTExpTransformResult {
+        let smtetype = this.transformStdTypeToSMT(etype);
+
+        if(binds)@none {
+            return PossibleErrorResult{smtetype, exp};
+        }
+        else {
+            return PossibleErrorResult{smtetype, LetWErrorsExpression{binds, exp}};
+        }
+    }
+
     method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::Expression {
-        return SMTAssembly::LiteralNoneValue{};
+        return SMTAssembly::LiteralNoneExpression{};
     }
 
     method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): SMTAssembly::Expression {
-        return SMTAssembly::LiteralSimpleValue{this.transformStdTypeToSMT(exp.etype), exp.value};
+        return SMTAssembly::LiteralSimpleExpression{this.transformStdTypeToSMT(exp.etype), exp.value};
     }
 
     method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): SMTAssembly::Expression {
-        return SMTAssembly::LiteralCStringValue{exp.value};
+        return SMTAssembly::LiteralCStringExpression{exp.value};
     }
 
     method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): SMTAssembly::Expression {
-        return SMTAssembly::LiteralStringValue{exp.value};
+        return SMTAssembly::LiteralStringExpression{exp.value};
     }
 
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::Expression {
-        return SMTAssembly::AccessVariableValue{exp.vname.value};
+        return SMTAssembly::AccessVariableExpression{exp.vname.value};
     }
 
     recursive method transformBinAddExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, ExpressionTransformResult {
         let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let addop = SMTAssembly::BinAddExpression{lexp, rexp};
 
-        if(obinds)@none {
-            return ctx, DirectResult{this.transformStdTypeToSMT(exp.etype), SMTAssembly::BinAddValue{lexp, rexp}};
+        return nctx, this.wrapOperationResult(exp.etype, addop, obinds);
+    }
+
+    recursive method transformBinSubExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, ExpressionTransformResult {
+        let smtetype = this.transformStdTypeToSMT(exp.etype);
+
+        let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let subop = SMTAssembly::BinSubExpression{lexp, rexp};
+
+        if(exp.etype.tkeystr !== 'Nat'<BSQAssembly::TypeKey> && exp.etype.tkeystr !== 'BigNat'<BSQAssembly::TypeKey>) {
+            return nctx, this.wrapOperationResult(exp.etype, subop, obinds);
         }
         else {
-            abort; %% NOT IMPLEMENTED
+            let lesstest = SMTAssembly::NumericLessExpression{lexp, rexp};
+            let chekd = SMTAssembly::IfThenElseExpression{lesstest, SMTAssembly::AbortExpression{nctx.errCtr}, WrapValueAsResultExpression{smtetype, subop}};
+            
+            return nctx.addError(exp.sinfo), this.wrapOperationResultErr(exp.etype, subop, obinds);
         }
+    }
+
+    recursive method transformBinMultExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, ExpressionTransformResult {
+        let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let multop = SMTAssembly::BinMultExpression{lexp, rexp};
+
+        return nctx, this.wrapOperationResult(exp.etype, multop, obinds);
+    }
+
+    recursive method transformBinDivExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, ExpressionTransformResult {
+        let smtetype = this.transformStdTypeToSMT(exp.etype);
+
+        let rexp, lexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let divop = SMTAssembly::BinDivExpression{lexp, rexp};
+        let ztest = SMTAssembly::BinEqExpression{rexp, SMTAssembly::LiteralSimpleExpression{smtetype, "0"}};
+
+        let ztest = SMTAssembly::BinEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, "zero"}};
+        let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{nctx.errCtr}, WrapValueAsResultExpression{smtetype, divop}};
+        
+        return nctx.addError(exp.sinfo), this.wrapOperationResultErr(exp.etype, divop, obinds);
     }
 
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
