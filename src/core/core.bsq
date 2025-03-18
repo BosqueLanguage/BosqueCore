@@ -52,7 +52,7 @@ __internal __typedeclable __keycomparable __numeric entity Int {
         return NumericOps::s_intToCString(this);
     }
 
-    function fromCString(str: CString): Nat {
+    function fromCString(str: CString): Int {
         return NumericOps::s_intFromCString(str);
     }
 #endif %% STRIPPED_CORE

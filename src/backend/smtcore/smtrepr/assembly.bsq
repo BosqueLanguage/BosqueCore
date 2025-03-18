@@ -37,6 +37,13 @@ DirectResult { }
 %% TODO -- later add inf on ref (etc.) stuff
 ;
 
+entity ErrorInfo {
+    field errCtr: Nat;
+    field infile: String;
+    field sinfo: SourceInfo;
+    field ininvoke: Option<InvokeKey>;
+}
+
 entity InvokeParameterDecl {
     field pname: CString;
     field ptype: ParamTypeKey;

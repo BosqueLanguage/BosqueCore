@@ -1,7 +1,7 @@
 namespace SMTAssembly;
 
-const varnameRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
-type VarName = CString of SMTAssembly::varnameRE;
+const varidentifierRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
+type VarIdentifier = CString of SMTAssembly::varidentifierRE;
 
 concept CallArgExpression {
 }
@@ -10,7 +10,7 @@ entity LambdaConstructor provides CallArgExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: OperationBlock;
+    field body: Body;
 }
 
 concept Expression provides CallArgExpression {
@@ -305,15 +305,15 @@ entity AbortExpression provides Expression {
 }
 
 entity AssumeExpression provides Expression {
-    field cond: Value;
+    field cond: Expression;
 }
 
-entity UnwrapValueFromResultExpression provides Expression {
+entity UnwrapFromResultExpression provides Expression {
     field etype: TypeKey;
     field arg: Expression;
 }
 
-entity WrapValueAsResultExpression provides Expression {
+entity WrapIntoResultExpression provides Expression {
     field etype: TypeKey;
     field arg: Expression;
 }
@@ -336,7 +336,6 @@ concept Operation {
 
 entity ReturnOperation provides Operation {
     field exp: Expression;
-    field isDirectResult: Bool;
 }
 
 entity AbortOperation provides Operation {
@@ -344,13 +343,12 @@ entity AbortOperation provides Operation {
 }
 
 entity AssertOperation provides Operation {
+    field cond: Expression;
     field label: Nat;
-
-    field cond: Value;
 }
 
 entity AssumeOperation provides Operation {
-    field cond: Value;
+    field cond: Expression;
 }
 
 entity LetOperation provides Operation {
@@ -373,5 +371,6 @@ entity IfThenElseOperation provides Operation {
 }
 
 entity Body {
-    field value: Operation;
+    field op: Operation;
+    field errors: List<ErrorInfo>;
 }
