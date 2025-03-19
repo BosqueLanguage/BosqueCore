@@ -342,29 +342,35 @@ entity AbortOperation provides Operation {
 entity AssertOperation provides Operation {
     field cond: Expression;
     field label: Nat;
+
+    field inop: Operation;
 }
 
 entity AssumeOperation provides Operation {
     field cond: Expression;
+
+    field inop: Operation;
 }
 
 entity LetOperation provides Operation {
     field vbind: VarIdentifier;
     field value: Expression;
-    field inops: List<Operation>;
+
+    field inop: Operation;
 }
 
 entity LetOperationWError provides Operation {
     field vebind: VarIdentifier;
     field vbind: VarIdentifier;
     field value: Expression;
-    field inops: List<Operation>;
+
+    field inop: Operation;
 }
 
 entity IfThenElseOperation provides Operation {
     field iftest: Expression;
-    field trueexp: List<Operation>;
-    field falseexp: List<Operation>;
+    field trueop: Operation;
+    field falseop: Operation;
 }
 
 entity Body {

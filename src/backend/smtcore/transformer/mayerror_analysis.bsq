@@ -1,111 +1,49 @@
-namespace BSQAssembly;
+namespace SMTEmitter;
 
-entity VarMapping {
-    field seenmap: Map<VarIdentifier, VarIdentifier>; %%This is the map from the original name to the next var name to use
-    field remap: List<Map<VarIdentifier, VarIdentifier>>; %%This is the map from the original name to the new name if required
+entity ErrorAnalysisCtx {
+    field cinvoke: BSQAssembly::InvokeKey;
+    field vstack: List<BSQAssembly::InvokeKey>;
+    field merrors: Map<BSQAssembly::InvokeKey, Bool>;
 
-    function createEmpty(): VarMapping {
-        return VarMapping{
-            Map<VarIdentifier, VarIdentifier>{},
-            List<Map<VarIdentifier, VarIdentifier>>{}
-        };
+    method isRecursiveCall(ikey: BSQAssembly::InvokeKey): Bool {
+        return this.vstack.(ctx);
     }
 
-    method pushScope(): VarMapping {
-        return VarMapping{
-            this.seenmap,
-            this.remap.pushBack(Map<VarIdentifier, VarIdentifier>{})
-        };
-    }
-
-    method mergeSeenMapInto(seenmap: Map<VarIdentifier, VarIdentifier>): VarMapping {
-        return VarMapping{
-            seenmap,
-            this.remap
-        };
-    }
-
-    method extendMapping(name: VarIdentifier): VarMapping {
-        var nseen: Map<VarIdentifier, VarIdentifier>;
-        var nrmap: List<Map<VarIdentifier, VarIdentifier>>;
-
-        if(!this.seenmap.has(name)) {
-            nseen = this.seenmap.insert(name, VarIdentifier::from(name.value.append('_$frsh')));
-            nrmap = this.remap;
-        }
-        else {
-            let nname = this.seenmap.get(name);
-            nseen = this.seenmap.set(name, VarIdentifier::from(nname.value.append('$')));
-            nrmap = this.remap.setBack(this.remap.back().insert(name, nname));
-        }
-
-        return VarMapping{
-            nseen,
-            nrmap
-        };
-    }
-
-    method resolveVariableAsNeeded(name: VarIdentifier): VarIdentifier {
-        let mmp = this.remap.findLast(pred(m) => m.has(name));
-        if(mmp)@none {
-            return name;
-        }
-        else {
-            return $mmp.get(name);
-        }
-    }
-
-    method remapDeclarationAsNeeded(name: VarIdentifier): VarMapping, VarIdentifier {
-        let nmapping = this.extendMapping(name);
-        let nname = nmapping.resolveVariableAsNeeded(name);
-      
-        return nmapping, nname;
+    method pushInvoke(ikey: BSQAssembly::InvokeKey): ErrorAnalysisCtx 
+        requires !this.isRecursiveCall(ikey);
+    {
+        return ErrorAnalysisCtx{ikey, this.vstack.append(ikey), this.merrors};
     }
 }
 
 %*
- * Rewrite the IR to make all type conversions and accesses explicit -- ensure all variable names are unique (no shadowing or duplicates)
+ * Compute the may error status of every invoke in the assembly
  *%
-entity ExplicitifyTransform {
-    field assembly: Assembly;
+entity MayErrorAnalysis {
+    field assembly: BSQAssembly::Assembly;
 
-    method processCoerceTypeAsNeeded(e: Expression, into: TypeSignature): Expression {
-        if(this.assembly.areTypesSame(e.etype, into)) {
-            return e;
-        }
-        else {
-            if(this.assembly.isSubtypeOf(e.etype, into)) {
-                return CoerceWidenTypeExpression{ e.sinfo, into, e, e.etype@<NominalTypeSignature>, into@<NominalTypeSignature> };
-            }
-            else {
-                return CoerceNarrowTypeExpression{ e.sinfo, into, e, e.etype@<NominalTypeSignature>, into@<NominalTypeSignature> };
-            }
-        }
+    recursive method processArgs(args: List<BSQAssembly::Expression>, ctx: ErrorAnalysisCtx): ErrorAnalysisCtx, Bool {
+        let nctx, ell = args.transduce<ErrorAnalysisCtx, Bool>(ctx, recursive fn(ctx, arg) => this.processExpression[recursive](arg, ctx));
+
+        return nctx, ell.someOf(pred(err) => err);
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression, VarMapping {
-        let nlhs, nmaplhs = this.processExpression(e.lhs, vmap);
-        let nrhs, nmaprhs = this.processExpression(e.rhs, nmaplhs);
-
-        return e[lhs=nlhs, rhs=nrhs], nmaprhs;
-    }
-
-    method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
+    method processExpression(e: Expression, ectx: ErrorAnalysisCtx): ErrorAnalysisCtx, Bool {
         match(e)@ {
-            LiteralNoneExpression => { return e, vmap; }
-            | LiteralSimpleExpression => { return e, vmap; }
-            | LiteralCStringExpression => { return e, vmap; }
-            | LiteralStringExpression => { return e, vmap; }
-            | LiteralCRegexExpression => { return e, vmap; }
-            | LiteralRegexExpression => { return e, vmap; }
-            | LiteralTypeDeclValueExpression => { abort; }
-            | AccessNamespaceConstantExpression => { return e, vmap; }
-            | AccessStaticFieldExpression => { return e, vmap; }
-            | AccessEnumExpression => { return e, vmap; }
-            | AccessVariableExpression => { return $e[vname = vmap.resolveVariableAsNeeded($vname)], vmap; }
-            | AccessCapturedVariableExpressionSpecial => { abort; }
+            LiteralNoneExpression => { return ectx, false; }
+            | LiteralSimpleExpression => { return ectx, false; }
+            | LiteralCStringExpression => { return ectx, false; }
+            | LiteralStringExpression => { return ectx, false; }
+            | LiteralCRegexExpression => { return ectx, false; }
+            | LiteralRegexExpression => { return ectx, false; }
+            | LiteralTypeDeclValueExpression => { return ectx, $e.invchecks; }
+            | AccessNamespaceConstantExpression => { return ectx, false; }
+            | AccessStaticFieldExpression => { return ectx, false; }
+            | AccessEnumExpression => { return ectx, false; }
+            | AccessVariableExpression => { return ectx, false; }
+            | AccessCapturedVariableExpressionSpecial => { return ectx, false; }
             | ConstructorExpression => { abort; }
-            | ConstructorLambdaExpression => { abort; }
+            | ConstructorLambdaExpression => { return ectx, false; }
             | LetExpression => { abort; }
             | LambdaInvokeExpression => { abort; }
             | CallNamespaceFunctionExpression => { abort; }
@@ -122,7 +60,7 @@ entity ExplicitifyTransform {
             | CreateDirectExpression => { abort; }
             | PostfixOp => { abort; }
             | UnaryExpression => { abort; }
-            | BinaryArithExpression => { return this.processBinaryArithExpression($e, vmap); }
+            | BinaryArithExpression => { return this.processArgs(List<BSQAssembly::Expression>{$e.lhs, $e.rhs}, ectx); }
             | BinaryKeyEqExpression => { abort; }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
@@ -133,15 +71,13 @@ entity ExplicitifyTransform {
         }
     }
 
-    method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
+    method processStatement(s: Statement, ectx: ErrorAnalysisCtx): ErrorAnalysisCtx, Bool {
         match(s)@ {
             ReturnVoidStatement => {
-                return s, vmap;
+                return ectx, false;
             }
             | ReturnSingleStatement => {
-                let nr, nm = this.processExpression($s.value, vmap);
-                let nc = this.processCoerceTypeAsNeeded(nr, $s.rtype);
-                return $s[value = nc], nm;
+                return this.processExpression($s.value, ectx);
             }
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
