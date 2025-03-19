@@ -204,7 +204,7 @@ entity SMTTransformer {
         }
         else {
             let lesstest = SMTAssembly::NumericLessExpression{lexp, rexp};
-            let chekd = SMTAssembly::IfThenElseExpression{lesstest, SMTAssembly::AbortExpression{nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, subop}};
+            let chekd = SMTAssembly::IfThenElseExpression{lesstest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, subop}};
             
             return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, chekd, obinds);
         }
@@ -228,7 +228,7 @@ entity SMTTransformer {
         let divop = SMTAssembly::BinDivExpression{lexp, rexp, SMTTransformer::useUninterpretedOps(exp.etype.tkeystr)};
 
         let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}};
-        let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
+        let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
         
         return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, chekd, obinds);
     }

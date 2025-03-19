@@ -301,11 +301,8 @@ entity IfThenElseExpression provides Expression {
 }
 
 entity AbortExpression provides Expression {
+    field etype: TypeKey;
     field label: Nat;
-}
-
-entity AssumeExpression provides Expression {
-    field cond: Expression;
 }
 
 entity UnwrapFromResultExpression provides Expression {
