@@ -1,0 +1,134 @@
+namespace SMTEmitter;
+
+%*
+ * Compute the may error status of every invoke in the assembly
+ *%
+entity MayErrorAnalysis {
+    recursive function processArgs(args: List<BSQAssembly::Expression>): Bool {
+        return args.anyOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg, ctx));
+    }
+
+    function processExpression(e: BSQAssembly::Expression): Bool {
+        match(e)@ {
+            BSQAssembly::LiteralNoneExpression => { return false; }
+            | BSQAssembly::LiteralSimpleExpression => { return false; }
+            | BSQAssembly::LiteralCStringExpression => { return false; }
+            | BSQAssembly::LiteralStringExpression => { return false; }
+            | BSQAssembly::LiteralCRegexExpression => { return false; }
+            | BSQAssembly::LiteralRegexExpression => { return false; }
+            | BSQAssembly::LiteralTypeDeclValueExpression => { return $e.invchecks; }
+            | BSQAssembly::AccessNamespaceConstantExpression => { return false; }
+            | BSQAssembly::AccessStaticFieldExpression => { return false; }
+            | BSQAssembly::AccessEnumExpression => { return false; }
+            | BSQAssembly::AccessVariableExpression => { return false; }
+            | BSQAssembly::AccessCapturedVariableExpressionSpecial => { return false; }
+            | BSQAssembly::ConstructorExpression => { abort; }
+            | BSQAssembly::ConstructorLambdaExpression => { return false; }
+            | BSQAssembly::LetExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { abort; }
+            | BSQAssembly::CallNamespaceFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
+            | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
+            | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { abort; }
+            | BSQAssembly::LogicActionOrExpression => { abort; }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | BSQAssembly::CoerceNarrowTypeExpression => { abort; }
+            | BSQAssembly::CoerceWidenTypeExpression => { abort; }
+            | BSQAssembly::SafeConvertExpression => { abort; }
+            | BSQAssembly::CreateDirectExpression => { abort; }
+            | BSQAssembly::PostfixOp => { abort; }
+            | BSQAssembly::UnaryExpression => { abort; }
+            | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processArgs(List<BSQAssembly::Expression>{$e.lhs, $e.rhs}); }
+            | BSQAssembly::BinaryKeyEqExpression => { abort; }
+            | BSQAssembly::KeyCmpEqualExpression => { abort; }
+            | BSQAssembly::KeyCmpLessExpression => { abort; }
+            | BSQAssembly::BinaryNumericExpression => { abort; }
+            | BSQAssembly::BinLogicExpression => { abort; }
+            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::IfExpression => { abort; }
+        }
+    }
+
+    recursive function processStatement(s: Statement): Bool {
+        match(s)@ {
+            ReturnVoidStatement => {
+                return false;
+            }
+            | ReturnSingleStatement => {
+                return MayErrorAnalysis::processExpression($s.value);
+            }
+            | ReturnMultiStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+        }
+    }
+
+    recursive function processBodyStatementList(stmts: List<Statement>): Bool {
+        return stmts.anyOf[recursive](recursive, pred(stmt) => MayErrorAnalysis::processStatement[recursive](stmt));
+    }
+
+    function processBodyImpl(body: BodyImplementation): Bool {
+        match(body)@ {
+            ExpressionBodyImplementation => { return MayErrorAnalysis::processExpression($body.exp); }
+            | StandardBodyImplementation => { return MayErrorAnalysis::processBodyStatementList($body.statements); }
+            | _ => { return false; }
+        }
+    }
+
+    function processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): Bool {
+        return this.processBodyImpl(nsfunc.body),
+    }
+
+    function processTypeFunctionDecl(typefunc: TypeFunctionDecl): Bool {
+        abort;
+    }
+
+    function processMethodDeclVirtual(virtmethod: MethodDeclVirtual): Bool {
+        abort;
+    }
+
+    function processMethodDeclOverride(overmethod: MethodDeclOverride): Bool {
+        abort;
+    }
+
+    function processMethodDeclStatic(staticmethod: MethodDeclStatic): Bool {
+        abort;
+    }
+
+    function setDirectMayErrorInfo(assembly: BSQAssembly::Assembly): Map<BSQAssembly::InvokeKey, Bool> {
+        let nsferrinvokes = assembly.nsfuncs.map<Bool>(fn(ikey, nsfunc) => this.processNamespaceFunctionDecl(nsfunc));
+        let tferrinvokes = assembly.typefuncs.map<Bool>(fn(ikey, typefunc) => this.processTypeFunctionDecl(typefunc));
+        let smethoderrinvokes = assembly.staticmethods.map<Bool>(fn(ikey, staticmethod) => this.processMethodDeclStatic(staticmethod));
+
+        %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
+        assert assembly.absmethods.empty();
+        assert assembly.virtmethods.empty();
+        assert assembly.overmethods.empty();
+
+        return Map<BSQAssembly::InvokeKey, Bool>::union(nsferrinvokes, tferrinvokes, smethoderrinvokes);
+    }
+
+    function generate(assembly: BSQAssembly::Assembly, callg: BSQAssembly::CallGraph): Map<BSQAssembly::InvokeKey, Bool> {
+        let baseerrinvokes = this.setDirectMayErrorInfo(assembly);
+
+        let properrinvokes = callg.topoorder.reduce<Map<BSQAssembly::InvokeKey, Bool>>(fn(emap, ikey) => {
+            let err = baseerrinvokes.get(ikey);
+            if(err) {
+                return emap;
+            }
+            else {
+                if(callg.isInSCC(ikey)) {
+                    return emap.set(ikey, true);
+                }
+                else {
+                    let callees = callg.callgraph.get(ikey);
+                    let transerr = callees.anyOf(pred(ckey) => emap.get(ckey));
+
+                    return emap.set(ikey, transerr);
+                }
+            }
+        });
+    }
+}

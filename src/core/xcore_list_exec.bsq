@@ -159,6 +159,10 @@ namespace ListOps {
         return Tree<T>::findlast[recursive?](l.value, p);
     }
 
+    function s_list_contains<T: keytype>(l: List<T>, v: T): Bool {
+        return Tree<T>::contains(l.value, v);
+    }
+
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::filter[recursive?](l.value, Tree<T>::emptyTree, p));
     }
@@ -762,6 +766,17 @@ namespace ListOps {
                     else {
                         return Tree<T>::findlast[recursive]($t.l, p);
                     }
+                }
+            }
+        }
+
+        function {when T: keytype} contains(t: Tree<T>, v: T): Bool {
+            match(t)@ {
+                Leaf<T> => { 
+                    return KeyComparator::equal<T>($t.v, v);
+                }
+                | Node<T> => { 
+                    return Tree<T>::contains($t.l, v) || Tree<T>::contains($t.r, v);
                 }
             }
         }

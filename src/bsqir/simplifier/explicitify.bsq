@@ -83,14 +83,29 @@ entity ExplicitifyTransform {
         }
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression, VarMapping {
-        let nlhs, nmaplhs = this.processExpression(e.lhs, vmap);
-        let nrhs, nmaprhs = this.processExpression(e.rhs, nmaplhs);
+    recursive method processArgsInOrder(args: List<Expression>, vmap: VarMapping): List<Expression>, VarMapping {
+        let nvmap, subexps = args.transduce<VarMapping, Expression>(vmap, recursive fn(vmap, arg) => this.processExpression[recursive](arg, vmap));
 
-        return e[lhs=nlhs, rhs=nrhs], nmaprhs;
+        return subexps, nvmap;
     }
 
-    method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
+    recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression, VarMapping {
+        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{arg}, vmap);
+        return rexps.get(0n), nvmap;
+    }
+
+    recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression, VarMapping {
+        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{lhs, rhs}, ctx);
+        return rexps.get(0n), rexps.get(1n), nvmap;
+    }
+
+    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression, VarMapping {
+        let nlhs, nrhs, nvmap = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+
+        return e[lhs=nlhs, rhs=nrhs], nvmap;
+    }
+
+    recursive method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
         match(e)@ {
             LiteralNoneExpression => { return e, vmap; }
             | LiteralSimpleExpression => { return e, vmap; }
@@ -122,7 +137,7 @@ entity ExplicitifyTransform {
             | CreateDirectExpression => { abort; }
             | PostfixOp => { abort; }
             | UnaryExpression => { abort; }
-            | BinaryArithExpression => { return this.processBinaryArithExpression($e, vmap); }
+            | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
             | BinaryKeyEqExpression => { abort; }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
@@ -133,7 +148,7 @@ entity ExplicitifyTransform {
         }
     }
 
-    method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
+    recursive method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
         match(s)@ {
             ReturnVoidStatement => {
                 return s, vmap;
@@ -149,168 +164,168 @@ entity ExplicitifyTransform {
         }
     }
 
-   method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
-      if(param.defaultval)@none {
-         return param;
-      }
-      else {
-         abort;
-      }
-   }
-
-   method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
-      abort;
-   }
-
-   method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
-      abort;
-   }
-
-   method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
-        let rr = stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => {
-            let rs = this.processStatement(stmt, vmap);
-            return rs.1, rs.0;
-         });
-
-         return rr.1, rr.0; %%TODO: in our language we might also want to have a project elist to allow for quick reshuffles in cases like this
+    method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
+        if(param.defaultval)@none {
+            return param;
+        }
+        else {
+            abort;
+        }
     }
 
-   method processBodyImpl(body: BodyImplementation): BodyImplementation {
-      match(body)@ {
-         ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()).0 }; }
-         | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
-         | _ => { return body; }
-      }
-   }
+    method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
+        abort;
+    }
 
-   method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
-      let evalue = this.processExpression(nsconst.value, VarMapping::createEmpty()).0;
-      return nsconst[value=evalue];
-   }
+    method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
+        abort;
+    }
 
-   method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
-      let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty()).0;
-      return typeconst[value=evalue];
-   }
+    recursive method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
+        let rr = stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => {
+            let rs = this.processStatement[recursive](stmt, vmap);
+            return rs.1, rs.0;
+        });
 
-   method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
-      return NamespaceFunctionDecl{
-         file = nsfunc.file,
-         sinfo = nsfunc.sinfo,
-         declaredInNS = nsfunc.declaredInNS,
+        return rr.1, rr.0; %%TODO: in our language we might also want to have a project elist to allow for quick reshuffles in cases like this
+    }
 
-         attributes = nsfunc.attributes,
-         name = nsfunc.name,
+    method processBodyImpl(body: BodyImplementation): BodyImplementation {
+        match(body)@ {
+            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()).0 }; }
+            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
+            | _ => { return body; }
+        }
+    }
 
-         ikey = nsfunc.ikey,
-         irecursive = nsfunc.irecursive,
-         params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
-         resultType = nsfunc.resultType,
+    method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
+        let evalue = this.processExpression(nsconst.value, VarMapping::createEmpty()).0;
+        return nsconst[value=evalue];
+    }
 
-         body = this.processBodyImpl(nsfunc.body),
+    method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
+        let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty()).0;
+        return typeconst[value=evalue];
+    }
 
-         preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
-         postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-         fkind = nsfunc.fkind
-      };
-   }
+    method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
+        return NamespaceFunctionDecl{
+            file = nsfunc.file,
+            sinfo = nsfunc.sinfo,
+            declaredInNS = nsfunc.declaredInNS,
 
-   method processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
-      abort;
-   }
+            attributes = nsfunc.attributes,
+            name = nsfunc.name,
 
-   method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
-      abort;
-   }
+            ikey = nsfunc.ikey,
+            irecursive = nsfunc.irecursive,
+            params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
+            resultType = nsfunc.resultType,
 
-   method processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
-      abort;
-   }
+            body = this.processBodyImpl(nsfunc.body),
 
-   method processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {
-      abort;
-   }
+            preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
+            postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
+            fkind = nsfunc.fkind
+        };
+    }
 
-   method processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
-      abort;
-   }
+    method processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
+        abort;
+    }
 
-   method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
-      abort;
-   }
+    method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
+        abort;
+    }
 
-   method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
-      abort;
-   }
+    method processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
+        abort;
+    }
 
-   method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
-      return primtype;
-   }
+    method processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {
+        abort;
+    }
 
-   method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
-      abort;
-   }
+    method processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
+        abort;
+    }
 
-   method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
-      abort;
-   }
+    method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
+        abort;
+    }
 
-   method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
-      abort;
-   }
+    method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+        abort;
+    }
 
-   method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
-      abort;
-   }
+    method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
+        return primtype;
+    }
 
-   method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
-      abort;
-   }
+    method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
+        abort;
+    }
 
-   method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
-      abort;
-   }
+    method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
+        abort;
+    }
 
-   method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
-      abort;
-   }
+    method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
+        abort;
+    }
 
-   function process(assembly: Assembly): Assembly {
-      let explicitifier = ExplicitifyTransform{ assembly };
+    method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
+        abort;
+    }
 
-      return Assembly{
-         nsconsts = assembly.nsconsts.map<NamespaceConstDecl>(fn(nsconst) => explicitifier.processNamespaceConstDecl(nsconst)),
-         typeconsts = assembly.typeconsts.map<ConstMemberDecl>(fn(typeconst) => explicitifier.processConstMemberDecl(typeconst)),
+    method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
+        abort;
+    }
 
-         nsfuncs = assembly.nsfuncs.map<NamespaceFunctionDecl>(fn(ikey, nsfunc) => explicitifier.processNamespaceFunctionDecl(nsfunc)),
-         typefuncs = assembly.typefuncs.map<TypeFunctionDecl>(fn(ikey, typefunc) => explicitifier.processTypeFunctionDecl(typefunc)),
+    method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
+        abort;
+    }
 
-         absmethods = assembly.absmethods.map<MethodDeclAbstract>(fn(ikey, absmethod) => explicitifier.processMethodDeclAbstract(absmethod)),
-         virtmethods = assembly.virtmethods.map<MethodDeclVirtual>(fn(ikey, virtmethod) => explicitifier.processMethodDeclVirtual(virtmethod)),
-         overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => explicitifier.processMethodDeclOverride(overmethod)),
-         staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => explicitifier.processMethodDeclStatic(staticmethod)),
+    method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
+        abort;
+    }
 
-         enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => explicitifier.processEnumTypeDecl(enumdecl)),
-         typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclTypeDecl(typedecl)),
+    function process(assembly: Assembly): Assembly {
+        let explicitifier = ExplicitifyTransform{ assembly };
 
-         primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => explicitifier.processPrimitiveEntityTypeDecl(primtype)),
-         constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => explicitifier.processConstructableTypeDecl(ctype)),
-         collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => explicitifier.processCollectionTypeDecl(ctype)),
+        return Assembly{
+            nsconsts = assembly.nsconsts.map<NamespaceConstDecl>(fn(nsconst) => explicitifier.processNamespaceConstDecl(nsconst)),
+            typeconsts = assembly.typeconsts.map<ConstMemberDecl>(fn(typeconst) => explicitifier.processConstMemberDecl(typeconst)),
 
-         entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => explicitifier.processEntityTypeDecl(etype)),
-         datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => explicitifier.processDatatypeMemberEntityTypeDecl(dmtype)),
+            nsfuncs = assembly.nsfuncs.map<NamespaceFunctionDecl>(fn(ikey, nsfunc) => explicitifier.processNamespaceFunctionDecl(nsfunc)),
+            typefuncs = assembly.typefuncs.map<TypeFunctionDecl>(fn(ikey, typefunc) => explicitifier.processTypeFunctionDecl(typefunc)),
 
-         pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => explicitifier.processPrimitiveConceptTypeDecl(pconcept)),
-         concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => explicitifier.processConceptTypeDecl(cconcept)),
+            absmethods = assembly.absmethods.map<MethodDeclAbstract>(fn(ikey, absmethod) => explicitifier.processMethodDeclAbstract(absmethod)),
+            virtmethods = assembly.virtmethods.map<MethodDeclVirtual>(fn(ikey, virtmethod) => explicitifier.processMethodDeclVirtual(virtmethod)),
+            overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => explicitifier.processMethodDeclOverride(overmethod)),
+            staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => explicitifier.processMethodDeclStatic(staticmethod)),
 
-         datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => explicitifier.processDatatypeTypeDecl(ddatatype)),
+            enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => explicitifier.processEnumTypeDecl(enumdecl)),
+            typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclTypeDecl(typedecl)),
 
-         allfuncs = assembly.allfuncs,
-         allmethods = assembly.allmethods,
-         allvmethods = assembly.allvmethods,
+            primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => explicitifier.processPrimitiveEntityTypeDecl(primtype)),
+            constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => explicitifier.processConstructableTypeDecl(ctype)),
+            collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => explicitifier.processCollectionTypeDecl(ctype)),
 
-         allconcretetypes = assembly.allconcretetypes,
-         allabstracttypes = assembly.allabstracttypes
-      };
-   }
+            entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => explicitifier.processEntityTypeDecl(etype)),
+            datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => explicitifier.processDatatypeMemberEntityTypeDecl(dmtype)),
+
+            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => explicitifier.processPrimitiveConceptTypeDecl(pconcept)),
+            concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => explicitifier.processConceptTypeDecl(cconcept)),
+
+            datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => explicitifier.processDatatypeTypeDecl(ddatatype)),
+
+            allfuncs = assembly.allfuncs,
+            allmethods = assembly.allmethods,
+            allvmethods = assembly.allvmethods,
+
+            allconcretetypes = assembly.allconcretetypes,
+            allabstracttypes = assembly.allabstracttypes
+        };
+    }
 }

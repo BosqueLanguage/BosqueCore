@@ -125,6 +125,10 @@ __internal entity List<T> {
         }
     }
 
+    method {when T: keytype} contains(v: T): Bool {
+        return ListOps::s_list_contains<T>(this, v);
+    }
+
     recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};

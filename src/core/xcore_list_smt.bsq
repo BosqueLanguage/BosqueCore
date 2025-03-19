@@ -31,6 +31,8 @@ namespace ListOps {
     recursive? function s_list_find<T>(l: List<T>, p: recursive? pred(T) -> Bool): Option<T> = s_list_find;
     recursive? function s_list_find_last<T>(l: List<T>, p: recursive? pred(T) -> Bool): Option<T> = s_list_find_last;
 
+    function s_list_contains<T: keytype>(l: List<T>, v: T): Bool = s_list_contains;
+
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = s_list_filter;
     recursive? function s_list_filteridx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): List<T> = s_list_filteridx;
 
