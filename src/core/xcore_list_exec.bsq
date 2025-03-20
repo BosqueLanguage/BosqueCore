@@ -131,6 +131,18 @@ namespace ListOps {
         );
     }
 
+    function s_concat2<T>(l1: List<T>, l2: List<T>): List<T> {
+        if(s_list_empty<T>(l1)) {
+            return l2;
+        }
+        elif(s_list_empty<T>(l2)) {
+            return l1;
+        }
+        else {
+            return ListOps::s_list_reduce<T, List<T>>(l2, l1, fn(ll: List<T>, v: T): List<T> => ListOps::s_list_push_back<T>(ll, v));
+        }
+    }
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
         return Tree<T>::allof[recursive?](l.value, p);
     }
@@ -157,6 +169,10 @@ namespace ListOps {
 
     recursive? function s_list_find_last<T>(l: List<T>, p: recursive? pred(T) -> Bool): Option<T> {
         return Tree<T>::findlast[recursive?](l.value, p);
+    }
+
+    function s_list_contains<T: keytype>(l: List<T>, v: T): Bool {
+        return Tree<T>::contains(l.value, v);
     }
 
     recursive? function s_list_filter<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> {
@@ -650,77 +666,77 @@ namespace ListOps {
             return Node<T>{c, size<T>(l) + size<T>(r), l, r};
         }
 
-        recursive? function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+        recursive function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
                 Leaf<T> => { return p[recursive?]($t.v); }
                 | Node<T> => { 
-                    let nl = Tree<T>::allof[recursive?]($t.l, p);
+                    let nl = Tree<T>::allof[recursive]($t.l, p);
                     if(!nl) { 
                         return false; 
                     }
                     else {
-                        let nr = Tree<T>::allof[recursive?]($t.r, p);
+                        let nr = Tree<T>::allof[recursive]($t.r, p);
                         return nr;
                     }
                 }
             }
         }
 
-        recursive? function noneof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+        recursive function noneof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
                 Leaf<T> => { return !p[recursive?]($t.v); }
                 | Node<T> => { 
-                    let nl = Tree<T>::noneof[recursive?]($t.l, p);
+                    let nl = Tree<T>::noneof[recursive]($t.l, p);
                     if(!nl) { 
                         return false; 
                     }
                     else {
-                        let nr = Tree<T>::noneof[recursive?]($t.r, p);
+                        let nr = Tree<T>::noneof[recursive]($t.r, p);
                         return nr;
                     }
                 }
             }
         }
 
-        recursive? function someof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
+        recursive function someof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
                 Leaf<T> => { return p[recursive?]($t.v); }
                 | Node<T> => { 
-                    let nl = Tree<T>::someof[recursive?]($t.l, p);
+                    let nl = Tree<T>::someof[recursive]($t.l, p);
                     if(nl) { 
                         return true; 
                     }
                     else {
-                        let nr = Tree<T>::someof[recursive?]($t.r, p);
+                        let nr = Tree<T>::someof[recursive]($t.r, p);
                         return nr;
                     }
                 }
             }
         }
 
-        recursive? function map<U>(t: Tree<T>, f: recursive? fn(T) -> U): Tree<U> {
+        recursive function map<U>(t: Tree<T>, f: recursive? fn(T) -> U): Tree<U> {
             match(t)@ {
                 Leaf<T> => { return Leaf<U>{f[recursive?]($t.v)}; }
                 | Node<T> => { 
-                    let nl = Tree<T>::map[recursive?]<U>($t.l, f);
-                    let nr = Tree<T>::map[recursive?]<U>($t.r, f);
+                    let nl = Tree<T>::map[recursive]<U>($t.l, f);
+                    let nr = Tree<T>::map[recursive]<U>($t.r, f);
                     return Node<U>{$t.c, $t.count, nl, nr};
                 }
             }
         }
 
-        recursive? function mapidx<U>(t: Tree<T>, cidx: Nat, f: recursive? fn(T, Nat) -> U): Tree<U> {
+        recursive function mapidx<U>(t: Tree<T>, cidx: Nat, f: recursive? fn(T, Nat) -> U): Tree<U> {
             match(t)@ {
                 Leaf<T> => { return Leaf<U>{f[recursive?]($t.v, cidx)}; }
                 | Node<T> => { 
-                    let nl = Tree<T>::mapidx[recursive?]<U>($t.l, cidx, f);
-                    let nr = Tree<T>::mapidx[recursive?]<U>($t.r, cidx + size<T>($t.l), f);
+                    let nl = Tree<T>::mapidx[recursive]<U>($t.l, cidx, f);
+                    let nr = Tree<T>::mapidx[recursive]<U>($t.r, cidx + size<T>($t.l), f);
                     return Node<U>{$t.c, $t.count, nl, nr};
                 }
             }
         }
 
-        recursive? function find(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
+        recursive function find(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
             match(t)@ {
                 Leaf<T> => { 
                     let tval = p[recursive?]($t.v);
@@ -732,18 +748,18 @@ namespace ListOps {
                     }
                 }
                 | Node<T> => { 
-                    let nl = Tree<T>::find[recursive?]($t.l, p);
+                    let nl = Tree<T>::find[recursive]($t.l, p);
                     if(nl)@!none {
                         return nl;
                     }
                     else {
-                        return Tree<T>::find[recursive?]($t.r, p);
+                        return Tree<T>::find[recursive]($t.r, p);
                     }
                 }
             }
         }
 
-        recursive? function findlast(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
+        recursive function findlast(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
             match(t)@ {
                 Leaf<T> => { 
                     let tval = p[recursive?]($t.v);
@@ -755,18 +771,29 @@ namespace ListOps {
                     }
                 }
                 | Node<T> => { 
-                    let nr = Tree<T>::findlast[recursive?]($t.r, p);
+                    let nr = Tree<T>::findlast[recursive]($t.r, p);
                     if(nr)@!none {
                         return nr;
                     }
                     else {
-                        return Tree<T>::findlast[recursive?]($t.l, p);
+                        return Tree<T>::findlast[recursive]($t.l, p);
                     }
                 }
             }
         }
 
-        recursive? function filter(t: Tree<T>, ct: Tree<T>, p: recursive? pred(T) -> Bool): Tree<T> {
+        function {when T: keytype} contains(t: Tree<T>, v: T): Bool {
+            match(t)@ {
+                Leaf<T> => { 
+                    return KeyComparator::equal<T>($t.v, v);
+                }
+                | Node<T> => { 
+                    return Tree<T>::contains($t.l, v) || Tree<T>::contains($t.r, v);
+                }
+            }
+        }
+
+        recursive function filter(t: Tree<T>, ct: Tree<T>, p: recursive? pred(T) -> Bool): Tree<T> {
             match(t)@ {
                 Leaf<T> => { 
                     let tval = p[recursive?]($t.v);
@@ -778,12 +805,12 @@ namespace ListOps {
                     }
                 }
                 | Node<T> => { 
-                    return Tree<T>::filter[recursive?]($t.r, Tree<T>::filter[recursive?]($t.l, ct, p), p);
+                    return Tree<T>::filter[recursive]($t.r, Tree<T>::filter[recursive]($t.l, ct, p), p);
                 }
             }
         }
 
-        recursive? function filteridx(t: Tree<T>, ct: Tree<T>, cidx: Nat, p: recursive? pred(T, Nat) -> Bool): Tree<T> {
+        recursive function filteridx(t: Tree<T>, ct: Tree<T>, cidx: Nat, p: recursive? pred(T, Nat) -> Bool): Tree<T> {
             match(t)@ {
                 Leaf<T> => { 
                     let tval = p[recursive?]($t.v, cidx);
@@ -795,43 +822,43 @@ namespace ListOps {
                     }
                 }
                 | Node<T> => {
-                    return Tree<T>::filteridx[recursive?]($t.r, Tree<T>::filteridx[recursive?]($t.l, ct, cidx, p), cidx + size<T>($t.l), p);
+                    return Tree<T>::filteridx[recursive]($t.r, Tree<T>::filteridx[recursive]($t.l, ct, cidx, p), cidx + size<T>($t.l), p);
                 }
             }
         }
 
-        recursive? function reduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
+        recursive function reduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
             match(t)@ {
                 Leaf<T> => { 
                     return f[recursive?](acc, $t.v);
                 }
                 | Node<T> => {
-                    return Tree<T>::reduce[recursive?]<U>($t.r, Tree<T>::reduce[recursive?]<U>($t.l, acc, f), f);
+                    return Tree<T>::reduce[recursive]<U>($t.r, Tree<T>::reduce[recursive]<U>($t.l, acc, f), f);
                 }
             }
         }
 
-        recursive? function transduce<E, U>(t: Tree<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, Tree<U> {
+        recursive function transduce<E, U>(t: Tree<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, Tree<U> {
             match(t)@ {
                 Leaf<T> => { 
                     let res = f[recursive?](environment, $t.v);
                     return (|res.0, Tree<U>::createLeaf(res.1)|);
                 }
                 | Node<T> => {
-                    let lres = Tree<T>::transduce[recursive?]<E, U>($t.l, environment, f);
-                    let rres = Tree<T>::transduce[recursive?]<E, U>($t.r, lres.0, f);
+                    let lres = Tree<T>::transduce[recursive]<E, U>($t.l, environment, f);
+                    let rres = Tree<T>::transduce[recursive]<E, U>($t.r, lres.0, f);
                     return (|rres.0, Tree<U>::createNode($t.c, lres.1, rres.1)|);
                 }
             }
         }
 
-        function {when T: numeric} sum(t: Tree<T>, acc: T): T {
+        recursive function {when T: numeric} sum(t: Tree<T>, acc: T): T {
             match(t)@ {
                 Leaf<T> => { 
                     return acc + $t.v;
                 }
                 | Node<T> => { 
-                    return Tree<T>::sum($t.r, Tree<T>::sum($t.l, acc));
+                    return Tree<T>::sum[recursive]($t.r, Tree<T>::sum[recursive]($t.l, acc));
                 }
             }
         }

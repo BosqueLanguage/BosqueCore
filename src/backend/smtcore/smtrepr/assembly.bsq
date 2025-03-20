@@ -25,7 +25,7 @@ type TypeKey = CString of SMTAssembly::typeKeyRE;
 type ParamTypeKey = CString of SMTAssembly::paramTypeKeyRE;
 type ReturnTypeKey = CString of SMTAssembly::resultTypeKeyRE;
 
-const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$]+/c;
+const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+/c;
 type InvokeKey = CString of SMTAssembly::invokeKeyRE;
 
 datatype ResultType using {
@@ -33,9 +33,16 @@ datatype ResultType using {
 }
 of
 DirectResult { }
-| OptionResult { }
-%% TODO -- later add result types with ref (etc.) stuff
+| PossibleErrorResult { }
+%% TODO -- later add inf on ref (etc.) stuff
 ;
+
+entity ErrorInfo {
+    field errCtr: Nat;
+    field infile: String;
+    field sinfo: SourceInfo;
+    field ininvoke: Option<InvokeKey>;
+}
 
 entity InvokeParameterDecl {
     field pname: CString;
@@ -70,7 +77,7 @@ entity NamespaceFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: OperationBlock;
+    field body: Body;
 }
 
 entity TypeFunctionDecl {
@@ -81,7 +88,7 @@ entity TypeFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
-    field body: OperationBlock;
+    field body: Body;
 }
 
 entity ConstMemberDecl {
@@ -89,7 +96,7 @@ entity ConstMemberDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: OperationBlock;
+    field value: Body;
 }
 
 entity MemberFieldDecl {
@@ -200,7 +207,7 @@ entity NamespaceConstDecl {
     field cname: CString;
 
     field vtype: ResultType;
-    field value: OperationBlock;
+    field value: Body;
 }
 
 entity Assembly {

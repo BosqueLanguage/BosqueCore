@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { JSCodeFormatter, EmitNameManager } from "./jsemitter_support.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "../../frontend/body.js";
 import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, FailTypeDecl, EventListTypeDecl, FunctionInvokeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, AbstractEntityTypeDecl, TestAssociation } from "../../frontend/assembly.js";
-import { EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
+import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
 
@@ -689,8 +689,6 @@ class JSEmitter {
     }
 
     private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
-        const lambda = exp.lambda as LambdaTypeSignature;
-
         const argl: string[] = [];
         for(let i = 0; i < exp.arginfo.length; ++i) {
             const arg = exp.args.args[i].exp;
@@ -711,8 +709,7 @@ class JSEmitter {
                 }
             }
 
-            const rparams = lambda.params[lambda.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            const rtype = exp.resttype as NominalTypeSignature;
             if(rtype.decl instanceof ListTypeDecl) {
                 argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
             }
@@ -760,8 +757,7 @@ class JSEmitter {
                 }
             }
 
-            const rparams = ffinv.params[ffinv.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            const rtype = exp.resttype as NominalTypeSignature;
             if(rtype.decl instanceof ListTypeDecl) {
                 argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
             }
@@ -821,8 +817,7 @@ class JSEmitter {
                     }
                 }
 
-                const rparams = fdecl.params[fdecl.params.length - 1];
-                const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+                const rtype = exp.resttype as NominalTypeSignature;
                 if(rtype.decl instanceof ListTypeDecl) {
                     argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
                 }
@@ -916,8 +911,7 @@ class JSEmitter {
                 }
             }
 
-            const rparams = mdecl.params[mdecl.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            const rtype = exp.resttype as NominalTypeSignature;
             if(rtype.decl instanceof ListTypeDecl) {
                 argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
             }
@@ -1575,8 +1569,7 @@ class JSEmitter {
                 }
             }
 
-            const rparams = mdecl.params[mdecl.params.length - 1];
-            const rtype = this.tproc(rparams.type as TypeSignature) as NominalTypeSignature;
+            const rtype = exp.resttype as NominalTypeSignature;
             if(rtype.decl instanceof ListTypeDecl) {
                 argl.push(this.processEmitListConstructor(rtype.alltermargs[0], restl));
             }
@@ -2257,7 +2250,19 @@ class JSEmitter {
         const bname = body.builtin;
 
         var bop: string = "";
-        if(bname === "s_float_power") {
+        if(bname === "s_nat_to_cstring") {
+            bop = `v.toString()`;
+        }
+        else if(bname === "s_nat_from_cstring") {
+            bop = `BigInt(str)`;
+        }
+        else if(bname === "s_int_to_cstring") {
+            bop = `v.toString()`;
+        }
+        else if(bname === "s_int_from_cstring") {
+            bop = `BigInt(str)`;
+        }
+        else if(bname === "s_float_power") {
             bop = `Math.pow(a, b)`;
         }
         else if(bname === "s_float_sqrt") {

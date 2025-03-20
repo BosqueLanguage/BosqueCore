@@ -18,3 +18,11 @@ describe ("List -- findLast basic", () => {
         runMainCode('public function main(): Bool { return List<Int>{1i, 2i, 3i}.findLast(pred(x) => x >= 4i)?none; }', "true");
     });
 });
+
+describe ("List -- contains basic", () => {
+    it("should do simple contains", function () {
+        runMainCode('public function main(): Bool { return List<Int>{}.contains(0i); }', "false");
+        runMainCode('public function main(): Bool { return List<Int>{1i, 2i, 3i, 1i}.contains(2i); }', "true");
+        runMainCode('public function main(): Bool { return List<Int>{1i, 2i, 3i}.contains(4i); }', "false");
+    });
+});
