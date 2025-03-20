@@ -78,11 +78,11 @@ function tryGetConstOperation(op: SMTAssembly::Operation): Option<SMTAssembly::C
 }
 
 function emitResultErrTrgtAs(astype: SMTAssembly::TypeKey): CString {
-    return CString::concat('(as @Result-errtrgt (@Result ', astype.value, '))');
+    return CString::concat('(as @Result-err-trgt (@Result ', astype.value, '))');
 }
 
 function emitResultErrOtherAs(astype: SMTAssembly::TypeKey): CString {
-    return CString::concat('(as @Result-errother (@Result ', astype.value, '))');
+    return CString::concat('(as @Result-err-other (@Result ', astype.value, '))');
 }
 
 function emitTaggedNumericType(nstr: CString, tag: CString): CString {

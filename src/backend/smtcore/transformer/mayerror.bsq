@@ -8,7 +8,28 @@ entity MayErrorAnalysis {
         return args.someOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg));
     }
 
-    function processExpression(e: BSQAssembly::Expression): Bool {
+    function maySubtractionUnderflow(e: BSQAssembly::BinaryArithExpression): Bool {
+        if(e)!<BSQAssembly::BinSubExpression> {
+            return false;
+        }
+        else {
+            return \/(e.etype.tkeystr === 'Nat'<BSQAssembly::TypeKey>, e.etype.tkeystr === 'BigNat'<BSQAssembly::TypeKey>);
+        }
+    }
+
+    recursive function processBinaryArithExpression(e: BSQAssembly::BinaryArithExpression): Bool {
+        if(e?<BSQAssembly::BinDivExpression>) { 
+            return true; %%div zero may always happen
+        }
+        elif(MayErrorAnalysis::maySubtractionUnderflow(e)) {
+            return true;
+        }
+        else {
+            return MayErrorAnalysis::processArgs(List<BSQAssembly::Expression>{e.lhs, e.rhs});
+        }
+    }
+
+    recursive function processExpression(e: BSQAssembly::Expression): Bool {
         match(e)@ {
             BSQAssembly::LiteralNoneExpression => { return false; }
             | BSQAssembly::LiteralSimpleExpression => { return false; }
@@ -40,7 +61,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::CreateDirectExpression => { abort; }
             | BSQAssembly::PostfixOp => { abort; }
             | BSQAssembly::UnaryExpression => { abort; }
-            | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processArgs(List<BSQAssembly::Expression>{$e.lhs, $e.rhs}); }
+            | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processBinaryArithExpression($e); }
             | BSQAssembly::BinaryKeyEqExpression => { abort; }
             | BSQAssembly::KeyCmpEqualExpression => { abort; }
             | BSQAssembly::KeyCmpLessExpression => { abort; }

@@ -51,7 +51,15 @@ namespace MapOps {
     }
 
     function s_map_union2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> {
-        return MapOps::s_map_reduce<K, V, Map<K, V>>(m1, m2, fn(mm: Map<K, V>, k: K, v: V): Map<K, V> => MapOps::s_map_insert<K, V>(mm, k, v));
+        if(s_map_empty<K, V>(m1)) {
+            return m2;
+        }
+        elif(s_map_empty<K, V>(m2)) {
+            return m1;
+        }
+        else {
+            return MapOps::s_map_reduce<K, V, Map<K, V>>(m1, m2, fn(mm: Map<K, V>, k: K, v: V): Map<K, V> => MapOps::s_map_insert<K, V>(mm, k, v));
+        }
     }
 
     recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> {
