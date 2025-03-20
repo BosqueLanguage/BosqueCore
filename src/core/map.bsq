@@ -44,10 +44,8 @@ __internal entity Map<K: keytype, V> {
     }
 
     method get(k: K): V 
-        requires test this.has(k);
+        requires this.has(k);
     {
-        assert !MapOps::s_map_empty<K, V>(this);
-
         return MapOps::s_map_get_direct<K, V>(this, k);
     }
 
@@ -61,18 +59,44 @@ __internal entity Map<K: keytype, V> {
     }
 
     method insert(k: K, v: V): Map<K, V> 
-        requires test !this.has(k);
+        requires !this.has(k);
     {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
 
     method set(k: K, v: V): Map<K, V> 
-        requires test this.has(k);
+        requires this.has(k);
     {
         return MapOps::s_map_set<K, V>(this, k, v);
     }
 
-    %% TODO: also insert with a MapEntry -- maybe einsert
+    function union(...maps: List<Map<K, V>>): Map<K, V> {
+        if(maps.empty()) {
+            return Map<K, V>{};
+        }
+        else {
+            if(maps.isSingleElement()) {
+                return maps.single();
+            }
+            else {
+                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m));
+            }
+        }
+    }
+
+    function unionAll(maps: List<Map<K, V>>): Map<K, V> {
+        if(maps.empty()) {
+            return Map<K, V>{};
+        }
+        else {
+            if(maps.isSingleElement()) {
+                return maps.single();
+            }
+            else {
+                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m));
+            }
+        }
+    }
 
     recursive? method map<U>(f: recursive? fn(K, V) -> U): Map<K, U> {
         if(MapOps::s_map_empty<K, V>(this)) {
@@ -80,6 +104,15 @@ __internal entity Map<K: keytype, V> {
         }
         else {
             return MapOps::s_map_map<K, V, U>(this, f);
+        }
+    }
+
+    recursive? method reduce<U>(init: U, f: recursive? fn(U, K, V) -> U): U {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return init;
+        }
+        else {
+            return MapOps::s_map_reduce<K, V, U>(this, init, f);
         }
     }
 

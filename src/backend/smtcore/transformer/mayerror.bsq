@@ -5,7 +5,7 @@ namespace SMTEmitter;
  *%
 entity MayErrorAnalysis {
     recursive function processArgs(args: List<BSQAssembly::Expression>): Bool {
-        return args.anyOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg, ctx));
+        return args.someOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg));
     }
 
     function processExpression(e: BSQAssembly::Expression): Bool {
@@ -51,56 +51,56 @@ entity MayErrorAnalysis {
         }
     }
 
-    recursive function processStatement(s: Statement): Bool {
+    recursive function processStatement(s: BSQAssembly::Statement): Bool {
         match(s)@ {
-            ReturnVoidStatement => {
+            BSQAssembly::ReturnVoidStatement => {
                 return false;
             }
-            | ReturnSingleStatement => {
+            | BSQAssembly::ReturnSingleStatement => {
                 return MayErrorAnalysis::processExpression($s.value);
             }
-            | ReturnMultiStatement => {
+            | BSQAssembly::ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
         }
     }
 
-    recursive function processBodyStatementList(stmts: List<Statement>): Bool {
-        return stmts.anyOf[recursive](recursive, pred(stmt) => MayErrorAnalysis::processStatement[recursive](stmt));
+    recursive function processBodyStatementList(stmts: List<BSQAssembly::Statement>): Bool {
+        return stmts.someOf[recursive](recursive pred(stmt) => MayErrorAnalysis::processStatement[recursive](stmt));
     }
 
-    function processBodyImpl(body: BodyImplementation): Bool {
+    function processBodyImpl(body: BSQAssembly::BodyImplementation): Bool {
         match(body)@ {
-            ExpressionBodyImplementation => { return MayErrorAnalysis::processExpression($body.exp); }
-            | StandardBodyImplementation => { return MayErrorAnalysis::processBodyStatementList($body.statements); }
+            BSQAssembly::ExpressionBodyImplementation => { return MayErrorAnalysis::processExpression($body.exp); }
+            | BSQAssembly::StandardBodyImplementation => { return MayErrorAnalysis::processBodyStatementList($body.statements); }
             | _ => { return false; }
         }
     }
 
-    function processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): Bool {
-        return this.processBodyImpl(nsfunc.body),
+    function processNamespaceFunctionDecl(nsfunc: BSQAssembly::NamespaceFunctionDecl): Bool {
+        return MayErrorAnalysis::processBodyImpl(nsfunc.body);
     }
 
-    function processTypeFunctionDecl(typefunc: TypeFunctionDecl): Bool {
+    function processTypeFunctionDecl(typefunc: BSQAssembly::TypeFunctionDecl): Bool {
         abort;
     }
 
-    function processMethodDeclVirtual(virtmethod: MethodDeclVirtual): Bool {
+    function processMethodDeclVirtual(virtmethod: BSQAssembly::MethodDeclVirtual): Bool {
         abort;
     }
 
-    function processMethodDeclOverride(overmethod: MethodDeclOverride): Bool {
+    function processMethodDeclOverride(overmethod: BSQAssembly::MethodDeclOverride): Bool {
         abort;
     }
 
-    function processMethodDeclStatic(staticmethod: MethodDeclStatic): Bool {
+    function processMethodDeclStatic(staticmethod: BSQAssembly::MethodDeclStatic): Bool {
         abort;
     }
 
     function setDirectMayErrorInfo(assembly: BSQAssembly::Assembly): Map<BSQAssembly::InvokeKey, Bool> {
-        let nsferrinvokes = assembly.nsfuncs.map<Bool>(fn(ikey, nsfunc) => this.processNamespaceFunctionDecl(nsfunc));
-        let tferrinvokes = assembly.typefuncs.map<Bool>(fn(ikey, typefunc) => this.processTypeFunctionDecl(typefunc));
-        let smethoderrinvokes = assembly.staticmethods.map<Bool>(fn(ikey, staticmethod) => this.processMethodDeclStatic(staticmethod));
+        let nsferrinvokes = assembly.nsfuncs.map<Bool>(fn(ikey, nsfunc) => MayErrorAnalysis::processNamespaceFunctionDecl(nsfunc));
+        let tferrinvokes = assembly.typefuncs.map<Bool>(fn(ikey, typefunc) => MayErrorAnalysis::processTypeFunctionDecl(typefunc));
+        let smethoderrinvokes = assembly.staticmethods.map<Bool>(fn(ikey, staticmethod) => MayErrorAnalysis::processMethodDeclStatic(staticmethod));
 
         %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
         assert assembly.absmethods.empty();
@@ -111,9 +111,9 @@ entity MayErrorAnalysis {
     }
 
     function generate(assembly: BSQAssembly::Assembly, callg: BSQAssembly::CallGraph): Map<BSQAssembly::InvokeKey, Bool> {
-        let baseerrinvokes = this.setDirectMayErrorInfo(assembly);
+        let baseerrinvokes = MayErrorAnalysis::setDirectMayErrorInfo(assembly);
 
-        let properrinvokes = callg.topoorder.reduce<Map<BSQAssembly::InvokeKey, Bool>>(fn(emap, ikey) => {
+        let properrinvokes = callg.topoorder.reduce<Map<BSQAssembly::InvokeKey, Bool>>(baseerrinvokes, fn(emap, ikey) => {
             let err = baseerrinvokes.get(ikey);
             if(err) {
                 return emap;
@@ -124,11 +124,13 @@ entity MayErrorAnalysis {
                 }
                 else {
                     let callees = callg.callgraph.get(ikey);
-                    let transerr = callees.anyOf(pred(ckey) => emap.get(ckey));
+                    let transerr = callees.someOf(pred(ckey) => emap.get(ckey));
 
                     return emap.set(ikey, transerr);
                 }
             }
         });
+
+        return properrinvokes;
     }
 }

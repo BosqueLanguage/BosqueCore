@@ -84,9 +84,11 @@ entity ExplicitifyTransform {
     }
 
     recursive method processArgsInOrder(args: List<Expression>, vmap: VarMapping): List<Expression>, VarMapping {
-        let nvmap, subexps = args.transduce<VarMapping, Expression>(vmap, recursive fn(vmap, arg) => this.processExpression[recursive](arg, vmap));
-
-        return subexps, nvmap;
+        let nvmap, nexps = args.transduce<VarMapping, Expression>(vmap, recursive fn(vmap, arg) => {
+            let e, m = this.processExpression[recursive](arg, vmap);
+            return m, e;
+        });
+        return nexps, nvmap;
     }
 
     recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression, VarMapping {
@@ -95,7 +97,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression, VarMapping {
-        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{lhs, rhs}, ctx);
+        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{lhs, rhs}, vmap);
         return rexps.get(0n), rexps.get(1n), nvmap;
     }
 

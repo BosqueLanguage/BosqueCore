@@ -131,6 +131,10 @@ namespace ListOps {
         );
     }
 
+    function s_concat2<T>(l1: List<T>, l2: List<T>): List<T> {
+        return ListOps::s_list_reduce<T, List<T>>(l1, l2, fn(ll: List<T>, v: T): List<T> => ListOps::s_list_push_back<T>(ll, v));
+    }
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
         return Tree<T>::allof[recursive?](l.value, p);
     }

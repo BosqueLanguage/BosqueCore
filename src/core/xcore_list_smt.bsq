@@ -21,6 +21,8 @@ namespace ListOps {
 
     function s_list_create_empty<T>(): List<T> = s_list_create_empty;
 
+    function s_concat2<T>(l1: List<T>, l2: List<T>): List<T> = s_list_concat2;
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_noneof;
     recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_someof;

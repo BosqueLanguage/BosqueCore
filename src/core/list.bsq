@@ -80,6 +80,42 @@ __internal entity List<T> {
         return ListOps::s_list_insert<T>(this, i, v);
     }
 
+    method append(l: List<T>): List<T> {
+        return ListOps::s_concat2<T>(this, l);
+    }
+
+    method prepend(l: List<T>): List<T> {
+        return ListOps::s_concat2<T>(l, this);
+    }
+
+    function concat(...ll: List<List<T>>): List<T> {
+        if(ll.empty()) {
+            return List<T>{};
+        }
+        else {
+            if(ll.isSingleElement()) {
+                return ll.single();
+            }
+            else {
+                return ll.reduce<List<T>>(List<T>{}, fn(acc, l) => ListOps::s_concat2<T>(acc, l));
+            }
+        }
+    }
+
+    function concatAll(ll: List<List<T>>): List<T> {
+        if(ll.empty()) {
+            return List<T>{};
+        }
+        else {
+            if(ll.isSingleElement()) {
+                return ll.single();
+            }
+            else {
+                return ll.reduce<List<T>>(List<T>{}, fn(acc, l) => ListOps::s_concat2<T>(acc, l));
+            }
+        }
+    }
+
     recursive? method allOf(p: recursive? pred(T) -> Bool): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return true;

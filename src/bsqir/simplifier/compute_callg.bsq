@@ -26,11 +26,10 @@ entity CallGraphBuilder {
 
         let callgraph = Map<InvokeKey, List<InvokeKey>>::union(cgnsfuncs, cgtypefuncs, cgabsmethods);
         let sccs = List<List<InvokeKey>>{};
-        let topoorder = List<InvokeKey>{};
 
         %%TODO: implement the SCC and topoorder computation -- right now just put all the keys in the topoorder
-        topoorder = assembly.allfuncs;
+        let topoorder = assembly.allfuncs;
 
-        return CallGraph{ callgraph = callgraph, sccs = sccs, topoorder = topoorder };
+        return CallGraph{ callgraph, sccs, topoorder };
     }
 }

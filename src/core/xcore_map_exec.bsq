@@ -50,8 +50,16 @@ namespace MapOps {
         }
     }
 
+    function s_map_union2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> {
+        return MapOps::s_map_reduce<K, V, Map<K, V>>(m1, m2, fn(mm: Map<K, V>, k: K, v: V): Map<K, V> => MapOps::s_map_insert<K, V>(mm, k, v));
+    }
+
     recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> {
         return XCore::s_createDirect<Tree<K, U>, Map<K, U>>(Tree<K, V>::map[recursive]<U>(m.value, f));
+    }
+
+    recursive? function s_map_reduce<K: keytype, V, U>(m: Map<K, V>, init: U, f: recursive? fn(U, K, V) -> U): U {
+        return Tree<K, V>::reduce[recursive?]<U>(m.value, init, f);
     }
 
     function s_map_create_empty<K: keytype, V>(): Map<K, V> {
@@ -561,6 +569,17 @@ namespace MapOps {
                     let nl = Tree<K, V>::map[recursive?]<U>($t.l, f);
                     let nr = Tree<K, V>::map[recursive?]<U>($t.r, f);
                     return Tree<K, U>::createNode($t.c, nl, nr);
+                }
+            }
+        }
+
+        recursive function reduce<U>(t: Tree<K, V>, acc: U, f: recursive? fn(U, K, V) -> U): U {
+            match(t)@ {
+                Leaf<K, V> => { 
+                    return f[recursive?](acc, $t.v.key, $t.v.value);
+                }
+                | Node<K, V> => {
+                    return Tree<K, V>::reduce[recursive]<U>($t.r, Tree<K, V>::reduce[recursive]<U>($t.l, acc, f), f);
                 }
             }
         }
