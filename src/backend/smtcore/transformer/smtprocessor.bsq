@@ -10,15 +10,15 @@ declare namespace SMTEmitter {
 entity Transformer {
     function transformAssembly(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
         let explicitAssembly = BSQAssembly::ExplicitifyTransform::process(assembly);
-        let simpleAssembly = explicitAssembly; %%TODO:: constssimplify.bsq
+        let simpleAssembly = BSQAssembly::ConstantSimplification::process(explicitAssembly);
 
-        let treeAssembly = simpleAssembly; %%TODO:: treeflow.bsq
-        let taggedAssembly = treeAssembly; %%TODO:: varuse.bsq
+        let taggedAssembly = simpleAssembly; %%TODO:: varuse.bsq
+        let treeAssembly = taggedAssembly; %%TODO:: treeflow.bsq
+        
+        let callg = BSQAssembly::CallGraphBuilder::buildCallGraph(treeAssembly);
+        let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generate(treeAssembly, callg);
 
-        let callg = BSQAssembly::CallGraphBuilder::buildCallGraph(assembly);
-        let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generate(assembly, callg);
-
-        return SMTTransformer::transformAssemblyToSMT(explicitAssembly, errinvokes);
+        return SMTTransformer::transformAssemblyToSMT(treeAssembly, errinvokes);
     }
 }
 

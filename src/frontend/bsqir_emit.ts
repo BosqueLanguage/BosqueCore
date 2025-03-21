@@ -283,7 +283,7 @@ class BSQIREmitter {
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
         const ebase = this.emitExpressionBase(exp);
         
-        return `BSQAssembly::AccessNamespaceConstantExpression{ ${ebase}, ns='${exp.ns.emit()}'<>, name='${exp.name}'<BSQAssembly::Identifier> }`;
+        return `BSQAssembly::AccessNamespaceConstantExpression{ ${ebase}, ns='${exp.ns.emit()}'<BSQAssembly::NamespaceKey>, name='${exp.name}'<BSQAssembly::Identifier> }`;
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {

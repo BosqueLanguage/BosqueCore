@@ -4,4 +4,303 @@ namespace BSQAssembly;
  * Rewrite the IR to do constant folding, constant propagation, flow/test simplification, and dead code elimination
  *%
 entity ConstantSimplification {
+    field assembly: Assembly;
+
+    recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
+        match(exp)@ {
+            AccessNamespaceConstantExpression => {
+                let cc = this.assembly.nsconsts.find(pred(nsconst) => /\(nsconst.name === $exp.name, nsconst.declaredInNS === $exp.ns));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessStaticFieldExpression => {
+                let cc = this.assembly.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.stype.tkeystr));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessEnumExpression => {
+                return some(exp);
+            }
+            | LiteralNoneExpression => {
+                return some(exp);
+            }
+            | LiteralSimpleExpression => {
+                return some(exp);
+            }
+            | LiteralCStringExpression => {
+                return some(exp);
+            }
+            | LiteralStringExpression => {
+                return some(exp);
+            }
+            | LiteralTypeDeclValueExpression => {
+                if($exp.invchecks) {
+                    return none;
+                }
+                else {
+                    return some(exp);
+                }
+            }
+            | _ => {
+                return none;
+            }
+        }
+    }
+
+    recursive method processArgs(args: List<Expression>): List<Expression> {
+        return args.map<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+    }
+
+    recursive method processUnaryArg(arg: Expression): Expression {
+        let rexps = this.processArgs[recursive](List<Expression>{arg});
+        return rexps.get(0n);
+    }
+
+    recursive method processBinaryArgs(lhs: Expression, rhs: Expression): Expression, Expression {
+        let rexps = this.processArgs[recursive](List<Expression>{lhs, rhs});
+        return rexps.get(0n), rexps.get(1n);
+    }
+
+    method processAccessNamespaceConstantExpression(e: AccessNamespaceConstantExpression): Expression {
+        let sexp = this.tryResolveExpAsLiteralExpression(e);
+        if(sexp)@none {
+            return e;
+        }
+        else {
+            return $sexp;
+        }
+    }
+
+    method processAccessStaticFieldExpression(e: AccessStaticFieldExpression): Expression {
+        let sexp = this.tryResolveExpAsLiteralExpression(e);
+        if(sexp)@none {
+            return e;
+        }
+        else {
+            return $sexp;
+        }
+    }
+
+    method processBinaryArithExpression(e: BinaryArithExpression): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        %%TODO: here is where we would like to do some constant folding and algebraic simplification
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
+    recursive method processExpression(e: Expression): Expression {
+        match(e)@ {
+            LiteralNoneExpression => { return e; }
+            | LiteralSimpleExpression => { return e; }
+            | LiteralCStringExpression => { return e; }
+            | LiteralStringExpression => { return e; }
+            | LiteralCRegexExpression => { return e; }
+            | LiteralRegexExpression => { return e; }
+            | LiteralTypeDeclValueExpression => { abort; }
+            | AccessNamespaceConstantExpression => { return this.processAccessNamespaceConstantExpression($e); }
+            | AccessStaticFieldExpression => { return this.processAccessStaticFieldExpression($e); }
+            | AccessEnumExpression => { return e; }
+            | AccessVariableExpression => { return e; }
+            | AccessCapturedVariableExpressionSpecial => { abort; }
+            | ConstructorExpression => { abort; }
+            | ConstructorLambdaExpression => { abort; }
+            | LetExpression => { abort; }
+            | LambdaInvokeExpression => { abort; }
+            | CallNamespaceFunctionExpression => { abort; }
+            | CallTypeFunctionExpression => { abort; }
+            | CallTypeFunctionSpecialExpression => { abort; }
+            | CallRefInvokeStaticResolveExpression => { abort; }
+            | CallRefInvokeVirtualExpression => { abort; }
+            | LogicActionAndExpression => { abort; }
+            | LogicActionOrExpression => { abort; }
+            | TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | CoerceNarrowTypeExpression => { abort; }
+            | CoerceWidenTypeExpression => { abort; }
+            | SafeConvertExpression => { abort; }
+            | CreateDirectExpression => { abort; }
+            | PostfixOp => { abort; }
+            | UnaryExpression => { abort; }
+            | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
+            | BinaryKeyEqExpression => { abort; }
+            | KeyCmpEqualExpression => { abort; }
+            | KeyCmpLessExpression => { abort; }
+            | BinaryNumericExpression => { abort; }
+            | BinLogicExpression => { abort; }
+            | MapEntryConstructorExpression => { abort; }
+            | IfExpression => { abort; }
+        }
+    }
+
+    recursive method processStatement(s: Statement): Statement {
+        match(s)@ {
+            ReturnVoidStatement => {
+                return s;
+            }
+            | ReturnSingleStatement => {
+                return $s[value = this.processExpression($value)];
+            }
+            | ReturnMultiStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+        }
+    }
+
+    method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {
+        if(param.defaultval)@none {
+            return param;
+        }
+        else {
+            abort;
+        }
+    }
+
+    method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
+        abort;
+    }
+
+    method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
+        abort;
+    }
+
+    recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
+        return stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+    }
+
+    method processBodyImpl(body: BodyImplementation): BodyImplementation {
+        match(body)@ {
+            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp) }; }
+            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements) }; }
+            | _ => { return body; }
+        }
+    }
+
+    method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
+        let evalue = this.processExpression(nsconst.value);
+        return nsconst[value=evalue];
+    }
+
+    method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
+        let evalue = this.processExpression(typeconst.value);
+        return typeconst[value=evalue];
+    }
+
+    method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
+        return NamespaceFunctionDecl{
+            file = nsfunc.file,
+            sinfo = nsfunc.sinfo,
+            declaredInNS = nsfunc.declaredInNS,
+
+            attributes = nsfunc.attributes,
+            name = nsfunc.name,
+
+            ikey = nsfunc.ikey,
+            irecursive = nsfunc.irecursive,
+            params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
+            resultType = nsfunc.resultType,
+
+            body = this.processBodyImpl(nsfunc.body),
+
+            preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
+            postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
+            fkind = nsfunc.fkind
+        };
+    }
+
+    method processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
+        abort;
+    }
+
+    method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
+        abort;
+    }
+
+    method processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
+        abort;
+    }
+
+    method processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {
+        abort;
+    }
+
+    method processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
+        abort;
+    }
+
+    method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
+        abort;
+    }
+
+    method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+        abort;
+    }
+
+    method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
+        return primtype;
+    }
+
+    method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
+        abort;
+    }
+
+    method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
+        abort;
+    }
+
+    method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
+        abort;
+    }
+
+    method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
+        abort;
+    }
+
+    method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
+        abort;
+    }
+
+    method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
+        abort;
+    }
+
+    method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
+        abort;
+    }
+
+    function process(assembly: Assembly): Assembly {
+        let simplifier = ConstantSimplification{ assembly };
+
+        return Assembly{
+            nsconsts = assembly.nsconsts.map<NamespaceConstDecl>(fn(nsconst) => simplifier.processNamespaceConstDecl(nsconst)),
+            typeconsts = assembly.typeconsts.map<ConstMemberDecl>(fn(typeconst) => simplifier.processConstMemberDecl(typeconst)),
+
+            nsfuncs = assembly.nsfuncs.map<NamespaceFunctionDecl>(fn(ikey, nsfunc) => simplifier.processNamespaceFunctionDecl(nsfunc)),
+            typefuncs = assembly.typefuncs.map<TypeFunctionDecl>(fn(ikey, typefunc) => simplifier.processTypeFunctionDecl(typefunc)),
+
+            absmethods = assembly.absmethods.map<MethodDeclAbstract>(fn(ikey, absmethod) => simplifier.processMethodDeclAbstract(absmethod)),
+            virtmethods = assembly.virtmethods.map<MethodDeclVirtual>(fn(ikey, virtmethod) => simplifier.processMethodDeclVirtual(virtmethod)),
+            overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => simplifier.processMethodDeclOverride(overmethod)),
+            staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => simplifier.processMethodDeclStatic(staticmethod)),
+
+            enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => simplifier.processEnumTypeDecl(enumdecl)),
+            typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => simplifier.processTypedeclTypeDecl(typedecl)),
+
+            primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => simplifier.processPrimitiveEntityTypeDecl(primtype)),
+            constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => simplifier.processConstructableTypeDecl(ctype)),
+            collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => simplifier.processCollectionTypeDecl(ctype)),
+
+            entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => simplifier.processEntityTypeDecl(etype)),
+            datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => simplifier.processDatatypeMemberEntityTypeDecl(dmtype)),
+
+            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => simplifier.processPrimitiveConceptTypeDecl(pconcept)),
+            concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => simplifier.processConceptTypeDecl(cconcept)),
+
+            datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => simplifier.processDatatypeTypeDecl(ddatatype)),
+
+            allfuncs = assembly.allfuncs,
+            allmethods = assembly.allmethods,
+            allvmethods = assembly.allvmethods,
+
+            allconcretetypes = assembly.allconcretetypes,
+            allabstracttypes = assembly.allabstracttypes
+        };
+    }
 }

@@ -46,7 +46,7 @@ entity VarMapping {
     }
 
     method resolveVariableAsNeeded(name: VarIdentifier): VarIdentifier {
-        let mmp = this.remap.findLast(pred(m) => m.has(name));
+        let mmp = this.remap.tryFindLast(pred(m) => m.has(name));
         if(mmp)@none {
             return name;
         }
