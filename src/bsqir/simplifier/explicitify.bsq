@@ -1,65 +1,36 @@
 namespace BSQAssembly;
 
 entity VarMapping {
-    field seenmap: Map<VarIdentifier, VarIdentifier>; %%This is the map from the original name to the next var name to use
-    field remap: List<Map<VarIdentifier, VarIdentifier>>; %%This is the map from the original name to the new name if required
+    field bnmap: Map<VarIdentifier, VarIdentifier>; %%This is the map from binder names to the new name (or the same name if no shadowing)
 
     function createEmpty(): VarMapping {
         return VarMapping{
-            Map<VarIdentifier, VarIdentifier>{},
-            List<Map<VarIdentifier, VarIdentifier>>{}
-        };
-    }
-
-    method pushScope(): VarMapping {
-        return VarMapping{
-            this.seenmap,
-            this.remap.pushBack(Map<VarIdentifier, VarIdentifier>{})
-        };
-    }
-
-    method mergeSeenMapInto(seenmap: Map<VarIdentifier, VarIdentifier>): VarMapping {
-        return VarMapping{
-            seenmap,
-            this.remap
+            Map<VarIdentifier, VarIdentifier>{}
         };
     }
 
     method extendMapping(name: VarIdentifier): VarMapping {
-        var nseen: Map<VarIdentifier, VarIdentifier>;
-        var nrmap: List<Map<VarIdentifier, VarIdentifier>>;
+        var nbm: Map<VarIdentifier, VarIdentifier>;
 
-        if(!this.seenmap.has(name)) {
-            nseen = this.seenmap.insert(name, VarIdentifier::from(name.value.append('_$frsh')));
-            nrmap = this.remap;
+        if(!this.bnmap.has(name)) {
+            nbm = this.bnmap.insert(name, VarIdentifier::from(name.value.append('_$v_')));
         }
         else {
-            let nname = this.seenmap.get(name);
-            nseen = this.seenmap.set(name, VarIdentifier::from(nname.value.append('$')));
-            nrmap = this.remap.setBack(this.remap.back().insert(name, nname));
+            let nname = this.bnmap.get(name);
+            nbm = this.bnmap.set(name, VarIdentifier::from(nname.value.append('$')));
         }
 
-        return VarMapping{
-            nseen,
-            nrmap
-        };
+        return VarMapping{ nbm };
     }
 
     method resolveVariableAsNeeded(name: VarIdentifier): VarIdentifier {
-        let mmp = this.remap.tryFindLast(pred(m) => m.has(name));
-        if(mmp)@none {
+        let nmapped = this.bnmap.tryGet(name);
+        if(nmapped)@none {
             return name;
         }
         else {
-            return $mmp.get(name);
+            return $nmapped;
         }
-    }
-
-    method remapDeclarationAsNeeded(name: VarIdentifier): VarMapping, VarIdentifier {
-        let nmapping = this.extendMapping(name);
-        let nname = nmapping.resolveVariableAsNeeded(name);
-      
-        return nmapping, nname;
     }
 }
 
@@ -83,43 +54,39 @@ entity ExplicitifyTransform {
         }
     }
 
-    recursive method processArgsInOrder(args: List<Expression>, vmap: VarMapping): List<Expression>, VarMapping {
-        let nvmap, nexps = args.transduce<VarMapping, Expression>(vmap, recursive fn(vmap, arg) => {
-            let e, m = this.processExpression[recursive](arg, vmap);
-            return m, e;
-        });
-        return nexps, nvmap;
+    recursive method processArgs(args: List<Expression>, vmap: VarMapping): List<Expression> {
+        return args.map<Expression>(recursive fn(arg) => this.processExpression[recursive](arg, vmap));
     }
 
-    recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression, VarMapping {
-        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{arg}, vmap);
-        return rexps.get(0n), nvmap;
+    recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression {
+        let rexps = this.processArgs[recursive](List<Expression>{arg}, vmap);
+        return rexps.get(0n);
     }
 
-    recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression, VarMapping {
-        let rexps, nvmap = this.processArgsInOrder[recursive](List<Expression>{lhs, rhs}, vmap);
-        return rexps.get(0n), rexps.get(1n), nvmap;
+    recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression {
+        let rexps = this.processArgs[recursive](List<Expression>{lhs, rhs}, vmap);
+        return rexps.get(0n), rexps.get(1n);
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression, VarMapping {
-        let nlhs, nrhs, nvmap = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
-        return e[lhs=nlhs, rhs=nrhs], nvmap;
+        return e[lhs=nlhs, rhs=nrhs];
     }
 
-    recursive method processExpression(e: Expression, vmap: VarMapping): Expression, VarMapping {
+    recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
-            LiteralNoneExpression => { return e, vmap; }
-            | LiteralSimpleExpression => { return e, vmap; }
-            | LiteralCStringExpression => { return e, vmap; }
-            | LiteralStringExpression => { return e, vmap; }
-            | LiteralCRegexExpression => { return e, vmap; }
-            | LiteralRegexExpression => { return e, vmap; }
+            LiteralNoneExpression => { return e; }
+            | LiteralSimpleExpression => { return e; }
+            | LiteralCStringExpression => { return e; }
+            | LiteralStringExpression => { return e; }
+            | LiteralCRegexExpression => { return e; }
+            | LiteralRegexExpression => { return e; }
             | LiteralTypeDeclValueExpression => { abort; }
-            | AccessNamespaceConstantExpression => { return e, vmap; }
-            | AccessStaticFieldExpression => { return e, vmap; }
-            | AccessEnumExpression => { return e, vmap; }
-            | AccessVariableExpression => { return $e[vname = vmap.resolveVariableAsNeeded($vname)], vmap; }
+            | AccessNamespaceConstantExpression => { return e; }
+            | AccessStaticFieldExpression => { return e; }
+            | AccessEnumExpression => { return e; }
+            | AccessVariableExpression => { return $e[vname = vmap.resolveVariableAsNeeded($vname)]; }
             | AccessCapturedVariableExpressionSpecial => { abort; }
             | ConstructorExpression => { abort; }
             | ConstructorLambdaExpression => { abort; }
@@ -150,15 +117,15 @@ entity ExplicitifyTransform {
         }
     }
 
-    recursive method processStatement(s: Statement, vmap: VarMapping): Statement, VarMapping {
+    recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
             ReturnVoidStatement => {
-                return s, vmap;
+                return s;
             }
             | ReturnSingleStatement => {
-                let nr, nm = this.processExpression($s.value, vmap);
+                let nr = this.processExpression($s.value, vmap);
                 let nc = this.processCoerceTypeAsNeeded(nr, $s.rtype);
-                return $s[value = nc], nm;
+                return $s[value = nc];
             }
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
@@ -183,30 +150,25 @@ entity ExplicitifyTransform {
         abort;
     }
 
-    recursive method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement>, VarMapping {
-        let rr = stmts.transduce<VarMapping, Statement>(vmap, fn(vmap, stmt) => {
-            let rs = this.processStatement[recursive](stmt, vmap);
-            return rs.1, rs.0;
-        });
-
-        return rr.1, rr.0; %%TODO: in our language we might also want to have a project elist to allow for quick reshuffles in cases like this
+    recursive method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement> {
+        return stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt, vmap));
     }
 
     method processBodyImpl(body: BodyImplementation): BodyImplementation {
         match(body)@ {
-            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()).0 }; }
-            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()).0 }; }
+            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()) }; }
+            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()) }; }
             | _ => { return body; }
         }
     }
 
     method processNamespaceConstDecl(nsconst: NamespaceConstDecl): NamespaceConstDecl {
-        let evalue = this.processExpression(nsconst.value, VarMapping::createEmpty()).0;
+        let evalue = this.processExpression(nsconst.value, VarMapping::createEmpty());
         return nsconst[value=evalue];
     }
 
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
-        let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty()).0;
+        let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty());
         return typeconst[value=evalue];
     }
 

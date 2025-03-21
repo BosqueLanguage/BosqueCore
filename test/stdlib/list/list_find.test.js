@@ -7,7 +7,7 @@ describe ("List -- find basic", () => {
     it("should do simple find", function () {
         runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i, 1i}.find(pred(x) => x >= 2i); }', "2i");
         
-        runMainCodeError('public function main(): Int { return List<Int>{1i, 2i, 3i}.find(pred(x) => x >= 4i)?none; }', "fail1");
+        runMainCodeError('public function main(): Int { return List<Int>{1i, 2i, 3i}.find(pred(x) => x >= 4i); }', "Error -- expected Some but got None @ list.bsq");
     });
 });
 
@@ -15,7 +15,7 @@ describe ("List -- findLast basic", () => {
     it("should do simple findLast", function () {
         runMainCode('public function main(): Int { return List<Int>{1i, 2i, 3i, 1i}.findLast(pred(x) => x >= 2i); }', "3i");
         
-        runMainCodeError('public function main(): Int { return List<Int>{1i, 2i, 3i}.findLast(pred(x) => x >= 4i); }', "fail2");
+        runMainCodeError('public function main(): Int { return List<Int>{1i, 2i, 3i}.findLast(pred(x) => x >= 4i); }', "Error -- expected Some but got None @ list.bsq");
     });
 });
 

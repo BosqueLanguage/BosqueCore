@@ -49,7 +49,7 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_get_direct<K, V>(this, k);
     }
 
-    method getOption(k: K): Option<V> {
+    method tryGet(k: K): Option<V> {
         if(MapOps::s_map_empty<K, V>(this)) {
             return none;
         }
