@@ -24,11 +24,11 @@ describe ("Map -- access", () => {
         runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.get(2i); }', "3i"); 
     });
 
-    it("should getOption key", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.getOption(1i)@some; }', "2i"); 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(1i)@some; }', "2i"); 
+    it("should tryGet key", function () {
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i}.tryGet(1i)@some; }', "2i"); 
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 2i => 3i}.tryGet(1i)@some; }', "2i"); 
 
-        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.getOption(5i)?none; }', "true"); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 2i => 3i}.tryGet(5i)?none; }', "true"); 
     });
 
     it("should fail get empty", function () {

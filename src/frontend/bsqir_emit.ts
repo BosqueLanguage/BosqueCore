@@ -283,7 +283,7 @@ class BSQIREmitter {
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
         const ebase = this.emitExpressionBase(exp);
         
-        return `BSQAssembly::AccessNamespaceConstantExpression{ ${ebase}, ns='${exp.ns.emit()}'<>, name='${exp.name}'<BSQAssembly::Identifier> }`;
+        return `BSQAssembly::AccessNamespaceConstantExpression{ ${ebase}, ns='${exp.ns.emit()}'<BSQAssembly::NamespaceKey>, name='${exp.name}'<BSQAssembly::Identifier> }`;
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
@@ -574,11 +574,13 @@ class BSQIREmitter {
     }
     
     private emitBinMultExpression(exp: BinMultExpression): string {
-        assert(false, "Not implemented -- BinMult");
+        const ebase = this.emitExpressionBase(exp);
+        return `BSQAssembly::BinMultExpression{ ${ebase}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)}, opertype=${this.emitTypeSignature(exp.opertype as TypeSignature)} }`;
     }
     
     private emitBinDivExpression(exp: BinDivExpression): string {
-        assert(false, "Not implemented -- BinDiv");
+        const ebase = this.emitExpressionBase(exp);
+        return `BSQAssembly::BinDivExpression{ ${ebase}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)}, opertype=${this.emitTypeSignature(exp.opertype as TypeSignature)} }`;
     }
     
     private emitBinKeyEqExpression(exp: BinKeyEqExpression): string {

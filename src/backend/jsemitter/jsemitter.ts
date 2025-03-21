@@ -1986,8 +1986,6 @@ class JSEmitter {
             return [ttest, this.emitBlockStatement(value, fmt)];
         }
         else {
-            this.bindernames.add(binderinfo.srcname);
-
             fmt.indentPush();
             const blck = this.emitBlockStatement(value, fmt);
             fmt.indentPop();

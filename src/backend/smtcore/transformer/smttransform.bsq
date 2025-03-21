@@ -367,6 +367,17 @@ entity SMTTransformer {
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
+    method transformTypeConstDeclToSMT(decl: BSQAssembly::ConstMemberDecl): SMTAssembly::ConstMemberDecl {
+        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let nctx, eres = this.transformExpressionToSMT(decl.value, ctx);
+
+        let tkey = TransformNameManager::convertTypeKey(decl.declaredInType.tkeystr);
+        let vtype = SMTAssembly::PossibleErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
+
+        let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{eres.exp}, nctx.errors};
+        return SMTAssembly::ConstMemberDecl{ tkey, decl.name.value, vtype, body };
+    }
+
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly};
 
@@ -380,11 +391,10 @@ entity SMTTransformer {
                 });
 
         let tallfuncs = assembly.allfuncs.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
-        %% TODO -- topo sort this
 
         return SMTAssembly::Assembly {
             nsconsts = assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc)),
-            typeconsts = List<SMTAssembly::ConstMemberDecl>{},
+            typeconsts = assembly.typeconsts.map<SMTAssembly::ConstMemberDecl>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc)),
 
             nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{},
             nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{},

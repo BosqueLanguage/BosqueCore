@@ -143,7 +143,15 @@ __internal entity List<T> {
         }
     }
     
-    recursive? method find(p: recursive? pred(T) -> Bool): Option<T> {
+    recursive? method find(p: recursive? pred(T) -> Bool): T {
+        return this.tryFind[recursive?](p)@some;
+    }
+
+    recursive? method findLast(p: recursive? pred(T) -> Bool): T {
+        return this.tryFindLast[recursive?](p)@some;
+    }
+
+    recursive? method tryFind(p: recursive? pred(T) -> Bool): Option<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return none;
         }
@@ -152,7 +160,7 @@ __internal entity List<T> {
         }
     }
 
-    recursive? method findLast(p: recursive? pred(T) -> Bool): Option<T> {
+    recursive? method tryFindLast(p: recursive? pred(T) -> Bool): Option<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return none;
         }
