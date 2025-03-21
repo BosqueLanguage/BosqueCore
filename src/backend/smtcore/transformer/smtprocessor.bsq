@@ -12,8 +12,7 @@ entity Transformer {
         let explicitAssembly = BSQAssembly::ExplicitifyTransform::process(assembly);
         let simpleAssembly = BSQAssembly::ConstantSimplification::process(explicitAssembly);
 
-        let taggedAssembly = simpleAssembly; %%TODO:: varuse.bsq
-        let treeAssembly = taggedAssembly; %%TODO:: treeflow.bsq
+        let treeAssembly = simpleAssembly; %%TODO:: treeflow.bsq
         
         let callg = BSQAssembly::CallGraphBuilder::buildCallGraph(treeAssembly);
         let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generate(treeAssembly, callg);
