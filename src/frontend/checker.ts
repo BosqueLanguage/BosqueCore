@@ -49,12 +49,12 @@ class TypeChecker {
 
     private doRegexValidation(sinfo: SourceInfo, ofexp: LiteralRegexExpression | AccessNamespaceConstantExpression, inns: string, input: string, literalstring: string): void {
         try {
-            const pattern = this.relations.assembly.resolveConstantRegexExpressionValue(ofexp);
+            const [pattern, pns] = this.relations.assembly.resolveConstantRegexExpressionValue(ofexp, inns);
             if(pattern === undefined) {
                 this.reportError(sinfo, `Unable to resolve regex pattern -- ${ofexp.emit(true, new CodeFormatter())}`);
             }
             else {
-                const isok = accepts(pattern, input, inns);
+                const isok = accepts(pattern, input, pns);
                 this.checkError(sinfo, !isok, `Literal value "${literalstring}" does not match regex -- ${pattern}`);
             }
         }

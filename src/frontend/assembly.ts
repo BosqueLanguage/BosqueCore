@@ -1538,24 +1538,25 @@ class Assembly {
         return curns;
     }
 
-    resolveConstantRegexExpressionValue(exp: LiteralRegexExpression | AccessNamespaceConstantExpression): string | undefined {
+    resolveConstantRegexExpressionValue(exp: LiteralRegexExpression | AccessNamespaceConstantExpression, inns: string): [string | undefined, string] {
         if(exp instanceof LiteralRegexExpression) {
-            return exp.value;
+            return [exp.value, inns];
         }
         else {
             const nsconst = this.resolveNamespaceConstant(exp.ns, exp.name);
             if(nsconst === undefined) {
-                return undefined;
+                return [undefined, inns];
             }
 
+            const nnins = exp.ns.emit();
             if(nsconst.value.exp instanceof LiteralRegexExpression) {
-                return nsconst.value.exp.value;
+                return [nsconst.value.exp.value, nnins];
             }
             else if(nsconst.value.exp instanceof AccessNamespaceConstantExpression) {
-                return this.resolveConstantRegexExpressionValue(nsconst.value.exp);
+                return this.resolveConstantRegexExpressionValue(nsconst.value.exp, nnins);
             }
             else {
-                return undefined;
+                return [undefined, inns];
             }
         }
     }
