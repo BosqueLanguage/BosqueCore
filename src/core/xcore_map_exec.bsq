@@ -50,6 +50,10 @@ namespace MapOps {
         }
     }
 
+    function s_map_delete<K: keytype>(m: Map<K, V>, k: K): Map<K, V> {
+        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(delete<K, V>(m.value, k));
+    }
+
     function s_map_union2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> {
         if(s_map_empty<K, V>(m1)) {
             return m2;
@@ -547,6 +551,35 @@ namespace MapOps {
                 return balance<K, V>(nn.c, nn.l, nr);
             }
         }
+    }
+
+    %% Deletion is implemented using Matt Might's algorithm.
+    %% https://matt.might.net/articles/red-black-delete/
+
+    %% To turn removal of a node with two children into removal of node with one child 
+    %% We find the max element in its left subtree, remove, and place its value as node to remove
+    recursive remove_max<K: keytype, V>(t: Tree<K, V>, v: V): Tree<K, V> {
+
+    }
+
+    %% Removes a node from the tree
+    function remove<K: keytype, V>(t: Tree<K, V>, v: V): Tree<K, V> {
+        %% Take care of leaves
+
+        %% Node with one child
+
+        %% Node with two sub trees
+
+    }
+
+    %% Search through tree until we finds node to delete, then call remove
+    recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, K: k): Tree<K, V> {
+        if(t)
+    }
+
+    %% Deletes node of given key, k, from our tree
+    function delete<K: keytype, V>(t: Tree<K, V>, K: k): Tree<K, V> {
+        
     }
 
     datatype Tree<K: keytype, V> of 

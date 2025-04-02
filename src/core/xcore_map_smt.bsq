@@ -18,6 +18,8 @@ namespace MapOps {
     function s_map_insert<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_insert;
     function s_map_set<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_set;
 
+    function s_map_delete<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> = s_map_delete;
+
     function s_map_union2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> = s_map_concat2;
 
     recursive? function s_map_map<K: keytype, V, U>(m: Map<K, V>, f: recursive? fn(K, V) -> U): Map<K, U> = s_map_map;

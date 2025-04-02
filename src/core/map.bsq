@@ -64,6 +64,12 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_insert<K, V>(this, k, v);
     }
 
+    method delete(k: K): Map<K, V>
+        requires this.has(k);
+    {
+        return MapOps::s_map_delete<K, V>(this, k);
+    }
+
     method set(k: K, v: V): Map<K, V> 
         requires this.has(k);
     {
