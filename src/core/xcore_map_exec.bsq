@@ -50,7 +50,7 @@ namespace MapOps {
         }
     }
 
-    function s_map_delete<K: keytype>(m: Map<K, V>, k: K): Map<K, V> {
+    function s_map_delete<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> {
         return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(delete<K, V>(m.value, k));
     }
 
@@ -556,74 +556,72 @@ namespace MapOps {
     %% Deletion is implemented using Matt Might's algorithm.
     %% https://matt.might.net/articles/red-black-delete/
 
+    %% To turn removal of a node with two children into removal of node with one child 
+    %% We find the max element in its left subtree, remove, and place its value as node to remove
+    recursive function remove_max<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
+        let n = t@<Node<K, V>>;
+
+        if(n.r?<BBLeaf<K, V>>) {
+            return remove<K, V>(n);
+        } 
+        else {
+            return bubble<K, V>(n.c, n.l, remove_max[recursive]<K, V>(n.r));
+        }
+    }
+
     %% Removes a node from the tree
     function remove<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
         %% If left and right subtree are empty, return empty nothing to remove
-        if(/\(t.l?<BBLeaf<K, V>>, t.r?<BBLeaf<K, V>)) {
+        let n = t@<Node<K, V>>;
+
+        if(/\(n.l?<BBLeaf<K, V>>, n.r?<BBLeaf<K, V>>)) {
             return Tree<K, V>::emptyTree;
         }
         else {
             %% If one red child and other subtree empty 
-            if(/\(t.r.c === Color#Red, t.r?<BBLeaf<K, V>>)) {
-                return Tree<K, V>::createNode(Color#Black, t.r.l, t.r.r);
+            let nl = n.l@<Node<K, V>>;
+            let nr = n.r@<Node<K, V>>;
+
+            if(/\(nr.c === Color#Red, n.l?<BBLeaf<K, V>>)) {
+                return Tree<K, V>::createNode(Color#Black, nr.l, nr.r);
             }
-            elif (/\(t.l.c === Color#Red, t.l?<BBLeaf<K, V>>)) {
-                return Tree<K, V>::createNode(Color#Black, t.l.l, t.l.r);
+            elif (/\(nl.c === Color#Red, n.r?<BBLeaf<K, V>>)) {
+                return Tree<K, V>::createNode(Color#Black, nl.l, nl.r);
             }
             else { %% Two children
-                let max = remove_max(t.l);
-                let n = t@<Node<K, V>>;
-                return bubble(n.c, max, t.r);
+                let max = remove_max[recursive]<K, V>(nl);
+                return bubble<K, V>(n.c, max, nr);
             }
         }
     }
 
-    %% To turn removal of a node with two children into removal of node with one child 
-    %% We find the max element in its left subtree, remove, and place its value as node to remove
-    recursive remove_max<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
-        if(t.r?<BBLeaf<K, V>>) {
-            remove<K, V>(t);
-        } 
-        else {
-            let n = t@<Node<K, V>>;
-            bubble(n.c, t.l, remove_max[recursive]<K, V>(t.r))
-        }
-    }
-
-
     %% Search through tree until we finds node to delete, then call remove
-    recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, K: k): Tree<K, V> {
+    recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         if(t?<BBLeaf<K, V>>) {
             return Tree<K, V>::emptyTree;
         }
         else {
-            let tl = tleft@<Node<K, V>>;
-            let tr = tright@<Node<K, V>>;
+            let n = t@<Node<K, V>>;
 
             %% If we are less bubble down left sub tree. If we are greater bubble down right.
             %% Otherwise call remove, we found our node.
-            if(KeyComparator::less<K>(k, $t.v.key)) {
-                return bubble($t.c, del<K, V>[recursive](t, k), tr);
+            if(KeyComparator::less<K>(k, n.mink)) {
+                return bubble<K, V>(n.c, delete_helper[recursive]<K, V>(n.l, k), n.r);
             }
-            elif(KeyComparator::greater<K>(k, $t.v.key)) {
-                return bubble($t.c, tl, del<K, V>[recursive](t, k));
+            elif(!KeyComparator::equal<K>(k, n.mink)) {
+                return bubble<K, V>(n.c, n.l, delete_helper[recursive]<K, V>(n.r, k));
             }
             else {
-                return remove<K, V>(t, n);
+                return remove<K, V>(t);
             }
         }
     }
 
     %% Deletes node of given key, k, from our tree
-    function delete<K: keytype, V>(t: Tree<K, V>, K: k): Tree<K, V> {
-        let result = delete_helper<K, V>(t, k);
-
-        if(result)@<Node<K, V>> {
-            return Tree<K, V>::createNode(Color#Black, $result.l, $result.r);
-        }
-        else {
-            return result;
-        }
+    function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
+        let nt = delete_helper[recursive]<K, V>(t, k);
+        let n = nt@<Node<K, V>>;
+        return Tree<K, V>::createNode(Color#Black, n.l, n.r);
     }
 
     datatype Tree<K: keytype, V> of 
