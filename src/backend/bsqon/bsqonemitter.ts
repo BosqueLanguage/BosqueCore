@@ -179,11 +179,11 @@ class BSQONTypeInfoEmitter {
 
         if(tdecl.optofexp !== undefined) {
             if(tdecl.optofexp.exp instanceof LiteralRegexExpression) {
-                decl.ofvalidator = tdecl.optofexp.exp.value;
+                decl.ofvalidators = [tdecl.optofexp.exp.value, tdecl.ns.emit()];
             }
             else {
-                const ane = tdecl.optofexp.exp as AccessNamespaceConstantExpression;
-                decl.ofvalidator = ane.ns.emit() + "::" + ane.name;
+                const [ane, nns] = this.assembly.resolveConstantRegexExpressionValue(tdecl.optofexp.exp as AccessNamespaceConstantExpression, tdecl.ns.emit());
+                decl.ofvalidators = [ane as string, nns];
             }
         }
 
