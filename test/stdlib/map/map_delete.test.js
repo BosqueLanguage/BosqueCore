@@ -5,8 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("Map -- delete", () => {
     it("should delete existing keys", function () {
-        runMainCode('public function main(): Nat { return Map<Int, Int>{1i => 0i, 3i => 5i}.delete(1i).size(); }', "1n"); 
+        runMainCode('public function main(): Bool { return Map<Int, Bool>{ 1i => true, 2i => false }.s_map_delete(2i).size() === 1n', "true"); 
 
-        // A better way to test would be to run has on the key we removed
     });
 });

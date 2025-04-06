@@ -41,6 +41,10 @@ namespace MapOps {
         return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(insert<K, V>(m.value, k, v));
     }
 
+    function s_map_delete<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> {
+        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(delete<K, V>(m.value, k));
+    }
+
     function s_map_set<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> {
         if(m.value?<BBLeaf<K, V>>) {
             return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
@@ -48,10 +52,6 @@ namespace MapOps {
         else {
             return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(set<K, V>(m.value, k, v));
         }
-    }
-
-    function s_map_delete<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> {
-        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(delete<K, V>(m.value, k));
     }
 
     function s_map_union2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> {
@@ -559,60 +559,79 @@ namespace MapOps {
     %% To turn removal of a node with two children into removal of node with one child 
     %% We find the max element in its left subtree, remove, and place its value as node to remove
     recursive function remove_max<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
-        let n = t@<Node<K, V>>;
-
-        if(n.r?<BBLeaf<K, V>>) {
-            return remove<K, V>(n);
-        } 
-        else {
-            return bubble<K, V>(n.c, n.l, remove_max[recursive]<K, V>(n.r));
+        match(t)@ {
+            BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
+            | Leaf<K, V> => { return Tree<K, V>::emptyTree; }
+            | Node<K, V> => {
+                if(\/($t.r?<Leaf<K, V>>, $t.r?<BBLeaf<K, V>>)) {
+                    return remove<K, V>($t);
+                } 
+                else {
+                    return bubble<K, V>($t.c, $t.l, remove_max[recursive]<K, V>($t.r));
+                }
+            }
         }
     }
 
+    %% Im going to need to take a deeper look at BBLeafs and stuff
+
     %% Removes a node from the tree
     function remove<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
-        %% If left and right subtree are empty, return empty nothing to remove
         let n = t@<Node<K, V>>;
 
+        %% Handle both leaf types
         if(/\(n.l?<BBLeaf<K, V>>, n.r?<BBLeaf<K, V>>)) {
             return Tree<K, V>::emptyTree;
         }
-        else {
-            %% If one red child and other subtree empty 
-            let nl = n.l@<Node<K, V>>;
-            let nr = n.r@<Node<K, V>>;
 
-            if(/\(nr.c === Color#Red, n.l?<BBLeaf<K, V>>)) {
+        %% Check for red child cases
+        if(/\(n.r?<Node<K, V>>, n.l?<BBLeaf<K, V>>)) {
+            let nr = n.r@<Node<K, V>>;
+            if(nr.c === Color#Red) {
                 return Tree<K, V>::createNode(Color#Black, nr.l, nr.r);
             }
-            elif (/\(nl.c === Color#Red, n.r?<BBLeaf<K, V>>)) {
-                return Tree<K, V>::createNode(Color#Black, nl.l, nl.r);
-            }
-            else { %% Two children
-                let max = remove_max[recursive]<K, V>(nl);
-                return bubble<K, V>(n.c, max, nr);
+        }
+        if(/\(n.r?<Leaf<K, V>>, n.l?<BBLeaf<K, V>>)) {
+            let nr = n.r@<Node<K, V>>;
+            if(nr.c === Color#Red) {
+                return Tree<K, V>::createNode(Color#Black, nr.l, nr.r);
             }
         }
+
+        if(/\(n.l?<Node<K, V>>, n.r?<BBLeaf<K, V>>)) {
+            let nl = n.l@<Node<K, V>>;
+            if(nl.c === Color#Red) {
+                return Tree<K, V>::createNode(Color#Black, nl.l, nl.r);
+            }
+        }
+
+        let max = remove_max[recursive]<K, V>(n.l);
+        return bubble<K, V>(n.c, max, n.r);
     }
 
     %% Search through tree until we finds node to delete, then call remove
     recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
-        if(t?<BBLeaf<K, V>>) {
-            return Tree<K, V>::emptyTree;
-        }
-        else {
-            let n = t@<Node<K, V>>;
+        match(t)@ {
+            BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
+            | Leaf<K, V> => {             
+                if(KeyComparator::equal<K>($t.v.key, k)) {
+                    return Tree<K, V>::emptyTree;
+                }
+                return t; 
+            }
+            | Node<K, V> => {
+                let rmin = mink<K, V>($t.r);
+                let lmin = mink<K, V>($t.l);
 
-            %% If we are less bubble down left sub tree. If we are greater bubble down right.
-            %% Otherwise call remove, we found our node.
-            if(KeyComparator::less<K>(k, n.mink)) {
-                return bubble<K, V>(n.c, delete_helper[recursive]<K, V>(n.l, k), n.r);
-            }
-            elif(!KeyComparator::equal<K>(k, n.mink)) {
-                return bubble<K, V>(n.c, n.l, delete_helper[recursive]<K, V>(n.r, k));
-            }
-            else {
-                return remove<K, V>(t);
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
+                }
+                elif(!KeyComparator::equal<K>(k, lmin)) {
+                    return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
+                }
+                else {
+                    return remove<K, V>(t);
+                }
             }
         }
     }
@@ -620,8 +639,17 @@ namespace MapOps {
     %% Deletes node of given key, k, from our tree
     function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         let nt = delete_helper[recursive]<K, V>(t, k);
-        let n = nt@<Node<K, V>>;
-        return Tree<K, V>::createNode(Color#Black, n.l, n.r);
+        match(nt)@ {
+            BBLeaf<K, V> => {
+                return Tree<K, V>::emptyTree;
+            }
+            | Leaf<K, V> => {
+                return Tree<K, V>::emptyTree;
+            }
+            | Node<K, V> => {
+                return Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r);
+            }
+        }
     }
 
     datatype Tree<K: keytype, V> of 
@@ -637,8 +665,9 @@ namespace MapOps {
 
         function createNode(c: Color, l: Tree<K, V>, r: Tree<K, V>): Node<K, V> {
             let nsize = size<K, V>(l) + size<K, V>(r);
-            let nmink = mink<K, V>(l);
-            let nmaxk = maxk<K, V>(r);
+            let nmink = if(l)@<BBLeaf<K, V>> then mink<K, V>(r) else mink<K, V>(l);
+            let nmaxk = if(r)@<BBLeaf<K, V>> then maxk<K, V>(l) else maxk<K, V>(r);
+
             return Node<K, V>{c, nsize, nmink, nmaxk, l, r};
         }
 
