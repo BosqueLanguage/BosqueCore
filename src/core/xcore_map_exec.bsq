@@ -126,7 +126,8 @@ namespace MapOps {
             let islred = if(t.l)@<Node<K, V>> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node<K, V>> then $_.c === Color#Red  else false;
 
-            return \/(islred, isrred);
+            %% We want to return true if neither child is red
+            return !\/(islred, isrred);
         }
         
         return checkRBChildColorInvariant[recursive]<K, V>(t.l) && checkRBChildColorInvariant[recursive]<K, V>(t.r);
@@ -385,7 +386,10 @@ namespace MapOps {
                 return balance<K, V>(blacken(tl.c), nl, nr);
             }
         }
-        
+        %% Handle case where bubble is called from remove on empty tree
+        if(/\(tleft?<BBLeaf<K, V>>, tright?<BBLeaf<K, V>>)) {
+            return Tree<K, V>::emptyTree;
+        }
         return Tree<K, V>::createNode(c, tleft, tright);
     }
 
@@ -434,18 +438,23 @@ namespace MapOps {
     }
 
     recursive function has<K: keytype, V>(t: Tree<K, V>, k: K): Bool {
-        if(t)@<Leaf<K, V>> {
-            return KeyComparator::equal<K>($t.v.key, k);
-        }
-        else {
-            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
-            let rmin = mink<K, V>(nn.r);
+        match(t)@ {
+            Leaf<K, V> => { return KeyComparator::equal<K>($t.v.key, k); }
+            | BBLeaf<K, V> => { return false; }
+            | Node<K, V> => {
+                let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+                if(nn.r?<BBLeaf<K, V>>) {
+                    return has[recursive]<K, V>(nn.l, k);
+                }
 
-            if(KeyComparator::less<K>(k, rmin)) {
-                return has[recursive]<K, V>(nn.l, k);
-            } 
-            else {
-                return has[recursive]<K, V>(nn.r, k);
+                let rmin = mink<K, V>(nn.r);
+
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return has[recursive]<K, V>(nn.l, k);
+                } 
+                else {
+                    return has[recursive]<K, V>(nn.r, k);
+                }
             }
         }
     }
@@ -458,6 +467,10 @@ namespace MapOps {
         }
         else {
             let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            if(nn.r?<BBLeaf<K, V>>) { %% Handle right tree being empty
+                return get_direct[recursive]<K, V>(nn.l, k);
+            }
+
             let rmin = mink<K, V>(nn.r);
 
             if(KeyComparator::less<K>(k, rmin)) {
@@ -480,6 +493,10 @@ namespace MapOps {
         }
         else {
             let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+            if(nn.r?<BBLeaf<K, V>>) { %% Handle right tree being empty
+                return get_option[recursive]<K, V>(nn.l, k);
+            }
+
             let rmin = mink<K, V>(nn.r);
 
             if(KeyComparator::less<K>(k, rmin)) {
@@ -497,10 +514,10 @@ namespace MapOps {
                 assert !KeyComparator::equal<K>(k, $t.v.key);
 
                 if(KeyComparator::less<K>(k, $t.v.key)) {
-                    return Tree<K, V>::createNode(Color#Black, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
+                    return Tree<K, V>::createNode(Color#Red, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
                 }
                 else {
-                    return Tree<K, V>::createNode(Color#Black, $t, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
+                    return Tree<K, V>::createNode(Color#Red, $t, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
                 }
             }
             | Node<K, V> => { 
@@ -509,11 +526,11 @@ namespace MapOps {
 
                 if(KeyComparator::less<K>(k, rmin)) {
                     let nr = insert_helper[recursive]<K, V>($t.l, k, v);
-                    return balance<K, V>(Color#Black, nr, $t.r); 
+                    return balance<K, V>($t.c, nr, $t.r); 
                 }
                 else {
                     let nr = insert_helper[recursive]<K, V>($t.r, k, v);
-                    return balance<K, V>(Color#Black, $t.l, nr); 
+                    return balance<K, V>($t.c, $t.l, nr); 
                 }
             }
         }
@@ -529,7 +546,10 @@ namespace MapOps {
             return tt;
         }
         else {
-            return Tree<K, V>::createNode(Color#Black, $tt.l, $tt.r);
+            let nt = tt@<Node<K, V>>;
+            let ntt = if(nt.c === Color#Red) then Tree<K, V>::createNode(Color#Black, nt.l, nt.r) else nt;
+            assert checkRBInvariants<K, V>(ntt);
+            return ntt;
         }
     }
 
@@ -553,14 +573,10 @@ namespace MapOps {
         }
     }
 
-    %% Deletion is implemented using Matt Might's algorithm.
-    %% https://matt.might.net/articles/red-black-delete/
-
-    %% To turn removal of a node with two children into removal of node with one child 
-    %% We find the max element in its left subtree, remove, and place its value as node to remove
+    %% Turn removal of node with two children into node with one child
     recursive function remove_max<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
         match(t)@ {
-            BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
+            BBLeaf<K, V> => { return t; }
             | Leaf<K, V> => { return Tree<K, V>::emptyTree; }
             | Node<K, V> => {
                 if(\/($t.r?<Leaf<K, V>>, $t.r?<BBLeaf<K, V>>)) {
@@ -573,31 +589,21 @@ namespace MapOps {
         }
     }
 
-    %% Im going to need to take a deeper look at BBLeafs and stuff
-
     %% Removes a node from the tree
     function remove<K: keytype, V>(t: Tree<K, V>): Tree<K, V> {
-        let n = t@<Node<K, V>>;
-
-        %% Handle both leaf types
-        if(/\(n.l?<BBLeaf<K, V>>, n.r?<BBLeaf<K, V>>)) {
+        %% If we are removing a leaf, just return empty
+        if(t?<Leaf<K, V>>) {
             return Tree<K, V>::emptyTree;
         }
 
-        %% Check for red child cases
+        let n = t@<Node<K, V>>;
+        %% Check for one red child cases
         if(/\(n.r?<Node<K, V>>, n.l?<BBLeaf<K, V>>)) {
             let nr = n.r@<Node<K, V>>;
             if(nr.c === Color#Red) {
                 return Tree<K, V>::createNode(Color#Black, nr.l, nr.r);
             }
         }
-        if(/\(n.r?<Leaf<K, V>>, n.l?<BBLeaf<K, V>>)) {
-            let nr = n.r@<Node<K, V>>;
-            if(nr.c === Color#Red) {
-                return Tree<K, V>::createNode(Color#Black, nr.l, nr.r);
-            }
-        }
-
         if(/\(n.l?<Node<K, V>>, n.r?<BBLeaf<K, V>>)) {
             let nl = n.l@<Node<K, V>>;
             if(nl.c === Color#Red) {
@@ -615,14 +621,22 @@ namespace MapOps {
             BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
             | Leaf<K, V> => {             
                 if(KeyComparator::equal<K>($t.v.key, k)) {
-                    return Tree<K, V>::emptyTree;
+                    return remove<K, V>(t);
                 }
-                return t; 
+                return t;
             }
             | Node<K, V> => {
+                %% Ensure we dont try to bubble with an empty tree
+                if($t.l)@<BBLeaf<K, V>> {
+                    return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
+                }
+                if($t.r)@<BBLeaf<K, V>> {
+                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
+                }
+
+                %% Determine if we need to recurse left or right
                 let rmin = mink<K, V>($t.r);
                 let lmin = mink<K, V>($t.l);
-
                 if(KeyComparator::less<K>(k, rmin)) {
                     return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
                 }
@@ -640,15 +654,12 @@ namespace MapOps {
     function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         let nt = delete_helper[recursive]<K, V>(t, k);
         match(nt)@ {
-            BBLeaf<K, V> => {
-                return Tree<K, V>::emptyTree;
+            Node<K, V> => {
+                let ntt = if($nt.c === Color#Red) then Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r) else $nt;
+                assert checkRBInvariants<K, V>(ntt);
+                return ntt;
             }
-            | Leaf<K, V> => {
-                return Tree<K, V>::emptyTree;
-            }
-            | Node<K, V> => {
-                return Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r);
-            }
+            | _ => { return nt; }
         }
     }
 
