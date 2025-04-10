@@ -41,6 +41,10 @@ namespace MapOps {
         return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(insert<K, V>(m.value, k, v));
     }
 
+    function s_map_delete<K: keytype, V>(m: Map<K, V>, k: K): Map<K, V> {
+        return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(delete<K, V>(m.value, k));
+    }
+
     function s_map_set<K: keytype, V>(m: Map<K, V>, k: K, v: V): Map<K, V> {
         if(m.value?<BBLeaf<K, V>>) {
             return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
@@ -122,7 +126,8 @@ namespace MapOps {
             let islred = if(t.l)@<Node<K, V>> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node<K, V>> then $_.c === Color#Red  else false;
 
-            return \/(islred, isrred);
+            %% We want to return true if neither child is red
+            return !\/(islred, isrred);
         }
         
         return checkRBChildColorInvariant[recursive]<K, V>(t.l) && checkRBChildColorInvariant[recursive]<K, V>(t.r);
@@ -371,18 +376,21 @@ namespace MapOps {
     }
 
     function bubble<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Tree<K, V> {
+        %% Handle case where we try to bubble an empty tree up
+        if(/\(tleft?<BBLeaf<K, V>>, tright?<BBLeaf<K, V>>)) {
+            return Tree<K, V>::emptyTree;
+        }
         if(/\(tleft?<Node<K, V>>, tright?<Node<K, V>>)) {
             let tl = tleft@<Node<K, V>>;
             let tr = tright@<Node<K, V>>;
 
             if(tl.c === Color#BB || tr.c === Color#BB) {
-                let nl = Tree<K, V>::createNode(redden(tl.c), tl.l, tl.r);
-                let nr = Tree<K, V>::createNode(redden(tr.c), tr.l, tr.r);
+                let nl = create_with_empty<K, V>(redden(tl.c), tl.l, tl.r);
+                let nr = create_with_empty<K, V>(redden(tr.c), tr.l, tr.r);
                 return balance<K, V>(blacken(tl.c), nl, nr);
             }
         }
-        
-        return Tree<K, V>::createNode(c, tleft, tright);
+        return balance<K, V>(c, tleft, tright);
     }
 
     function size<K: keytype, V>(t: Tree<K, V>): Nat {
@@ -430,59 +438,78 @@ namespace MapOps {
     }
 
     recursive function has<K: keytype, V>(t: Tree<K, V>, k: K): Bool {
-        if(t)@<Leaf<K, V>> {
-            return KeyComparator::equal<K>($t.v.key, k);
-        }
-        else {
-            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
-            let rmin = mink<K, V>(nn.r);
+        match(t)@ {
+            Leaf<K, V> => { return KeyComparator::equal<K>($t.v.key, k); }
+            | BBLeaf<K, V> => { return false; }
+            | Node<K, V> => {
+                let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+                if(nn.r?<BBLeaf<K, V>>) {
+                    return has[recursive]<K, V>(nn.l, k);
+                }
 
-            if(KeyComparator::less<K>(k, rmin)) {
-                return has[recursive]<K, V>(nn.l, k);
-            } 
-            else {
-                return has[recursive]<K, V>(nn.r, k);
+                let rmin = mink<K, V>(nn.r);
+
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return has[recursive]<K, V>(nn.l, k);
+                } 
+                else {
+                    return has[recursive]<K, V>(nn.r, k);
+                }
             }
         }
     }
 
     recursive function get_direct<K: keytype, V>(t: Tree<K, V>, k: K): V {
-        if(t)@<Leaf<K, V>> {
-            assert KeyComparator::equal<K>($t.v.key, k);
+        match(t)@ {
+            BBLeaf<K, V> => { abort; } %% No value
+            | Leaf<K, V> => {
+                assert KeyComparator::equal<K>($t.v.key, k);
             
-            return $t.v.value;
-        }
-        else {
-            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
-            let rmin = mink<K, V>(nn.r);
+                return $t.v.value;
+            }
+            | Node<K, V> => {
+                let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+                if(nn.r?<BBLeaf<K, V>>) { %% Handle right tree being empty
+                    return get_direct[recursive]<K, V>(nn.l, k);
+                }
 
-            if(KeyComparator::less<K>(k, rmin)) {
-                return get_direct[recursive]<K, V>(nn.l, k);
-            } 
-            else {
-                return get_direct[recursive]<K, V>(nn.r, k);
+                let rmin = mink<K, V>(nn.r);
+
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return get_direct[recursive]<K, V>(nn.l, k);
+                } 
+                else {
+                    return get_direct[recursive]<K, V>(nn.r, k);
+                }
             }
         }
     }
 
     recursive function get_option<K: keytype, V>(t: Tree<K, V>, k: K): Option<V> {
-        if(t)@<Leaf<K, V>> {
-            if(!KeyComparator::equal<K>($t.v.key, k)) {
-                return none;
+        match(t)@ {
+            BBLeaf<K, V> => { return none; }
+            | Leaf<K, V> => {
+                if(!KeyComparator::equal<K>($t.v.key, k)) {
+                    return none;
+                }
+                else {
+                    return some($t.v.value);
+                }
             }
-            else {
-                return some($t.v.value);
-            }
-        }
-        else {
-            let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
-            let rmin = mink<K, V>(nn.r);
+            | Node<K, V> => {
+                let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
+                if(nn.r?<BBLeaf<K, V>>) { %% Handle right tree being empty
+                    return get_option[recursive]<K, V>(nn.l, k);
+                }
 
-            if(KeyComparator::less<K>(k, rmin)) {
-                return get_option[recursive]<K, V>(nn.l, k);
-            } 
-            else {
-                return get_option[recursive]<K, V>(nn.r, k);
+                let rmin = mink<K, V>(nn.r);
+
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return get_option[recursive]<K, V>(nn.l, k);
+                } 
+                else {
+                    return get_option[recursive]<K, V>(nn.r, k);
+                }
             }
         }
     }
@@ -493,10 +520,10 @@ namespace MapOps {
                 assert !KeyComparator::equal<K>(k, $t.v.key);
 
                 if(KeyComparator::less<K>(k, $t.v.key)) {
-                    return Tree<K, V>::createNode(Color#Black, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
+                    return Tree<K, V>::createNode(Color#Red, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}), $t);
                 }
                 else {
-                    return Tree<K, V>::createNode(Color#Black, $t, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
+                    return Tree<K, V>::createNode(Color#Red, $t, Tree<K, V>::createLeaf(MapEntry<K, V>{k, v}));
                 }
             }
             | Node<K, V> => { 
@@ -505,11 +532,11 @@ namespace MapOps {
 
                 if(KeyComparator::less<K>(k, rmin)) {
                     let nr = insert_helper[recursive]<K, V>($t.l, k, v);
-                    return balance<K, V>(Color#Black, nr, $t.r); 
+                    return balance<K, V>($t.c, nr, $t.r); 
                 }
                 else {
                     let nr = insert_helper[recursive]<K, V>($t.r, k, v);
-                    return balance<K, V>(Color#Black, $t.l, nr); 
+                    return balance<K, V>($t.c, $t.l, nr); 
                 }
             }
         }
@@ -525,7 +552,10 @@ namespace MapOps {
             return tt;
         }
         else {
-            return Tree<K, V>::createNode(Color#Black, $tt.l, $tt.r);
+            let nt = tt@<Node<K, V>>;
+            let ntt = if(nt.c === Color#Red) then Tree<K, V>::createNode(Color#Black, nt.l, nt.r) else nt;
+            assert checkRBInvariants<K, V>(ntt);
+            return ntt;
         }
     }
 
@@ -549,6 +579,64 @@ namespace MapOps {
         }
     }
 
+    function create_with_empty<K: keytype, V>(c: Color, l: Tree<K, V>, r: Tree<K, V>): Tree<K, V> {
+        if(/\(l?<BBLeaf<K, V>>, r?<BBLeaf<K, V>>)) {
+            return Tree<K, V>::emptyTree;
+        }
+        if(l?<BBLeaf<K, V>>) {
+            if(c === Color#Red) {
+                return r;
+            }
+        }
+        if(r?<BBLeaf<K, V>>) {
+            if(c === Color#Red) {
+                return l;
+            }
+        }
+        assert /\(l?!<BBLeaf<K, V>>, r?!<BBLeaf<K, V>>);
+        return Tree<K, V>::createNode(c, l, r);
+    }
+
+    %% Search through tree until we find leaf of interest, then replace with empty tree
+    recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
+        match(t)@ {
+            BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
+            | Leaf<K, V> => {             
+                return Tree<K, V>::emptyTree;
+            }
+            | Node<K, V> => {
+                %% Ensure we dont try to bubble with an empty tree
+                if($t.l)@<BBLeaf<K, V>> {
+                    return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
+                }
+                if($t.r)@<BBLeaf<K, V>> {
+                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
+                }
+
+                %% Determine if we need to recurse left or right
+                let rmin = mink<K, V>($t.r);
+                let lmin = mink<K, V>($t.l);
+                if(KeyComparator::less<K>(k, rmin)) {
+                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
+                }
+                return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
+            }
+        }
+    }
+
+    %% Deletes node of given key, k, from our tree
+    function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
+        let nt = delete_helper[recursive]<K, V>(t, k);
+        match(nt)@ {
+            Node<K, V> => {
+                let ntt = balance<K, V>($nt.c, $nt.l, $nt.r);
+                assert checkRBInvariants<K, V>(ntt);
+                return ntt;
+            }
+            | _ => { return nt; }
+        }
+    }
+
     datatype Tree<K: keytype, V> of 
         BBLeaf {}
         | Leaf { v: MapEntry<K, V> }
@@ -562,8 +650,9 @@ namespace MapOps {
 
         function createNode(c: Color, l: Tree<K, V>, r: Tree<K, V>): Node<K, V> {
             let nsize = size<K, V>(l) + size<K, V>(r);
-            let nmink = mink<K, V>(l);
-            let nmaxk = maxk<K, V>(r);
+            let nmink = if(l)@<BBLeaf<K, V>> then mink<K, V>(r) else mink<K, V>(l);
+            let nmaxk = if(r)@<BBLeaf<K, V>> then maxk<K, V>(l) else maxk<K, V>(r);
+
             return Node<K, V>{c, nsize, nmink, nmaxk, l, r};
         }
 
