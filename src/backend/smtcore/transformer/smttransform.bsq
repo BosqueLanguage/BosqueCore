@@ -233,6 +233,23 @@ entity SMTTransformer {
         return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, chekd, obinds);
     }
 
+    recursive method transformBinaryArithExpression(exp: BSQAssembly::BinaryArithExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        match(exp)@ {
+            BSQAssembly::BinAddExpression => { 
+                return this.transformBinAddExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinSubExpression => { 
+                return this.transformBinSubExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinMultExpression => { 
+                return this.transformBinMultExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinDivExpression => { 
+                return this.transformBinDivExpression[recursive]($exp, ctx); 
+            }
+        }
+    }
+
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -250,17 +267,8 @@ entity SMTTransformer {
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, DirectResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 
             }
-            | BSQAssembly::BinAddExpression => { 
-                return this.transformBinAddExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::BinSubExpression => { 
-                return this.transformBinSubExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::BinMultExpression => { 
-                return this.transformBinMultExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::BinDivExpression => { 
-                return this.transformBinDivExpression[recursive]($exp, ctx);
+            | BSQAssembly::BinaryArithExpression => { 
+                return this.transformBinaryArithExpression[recursive]($exp, ctx);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED

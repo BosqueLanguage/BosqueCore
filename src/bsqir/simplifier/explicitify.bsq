@@ -69,9 +69,34 @@ entity ExplicitifyTransform {
     }
 
     method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
-        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+        var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
-        return e[lhs=nlhs, rhs=nrhs];
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(nlhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            nlhs = TypeDeclPrimitiveFieldAccessExpression{ nlhs.sinfo, $lhstype.valuetype, nlhs };
+        }
+
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(nrhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            nrhs = TypeDeclPrimitiveFieldAccessExpression{ nrhs.sinfo, $rhstype.valuetype, nrhs };
+        }
+
+        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        if(restype)@!<TypedeclTypeDecl> {
+            return e[lhs=nlhs, rhs=nrhs];            
+        }
+        else {
+            let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
+            let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
+
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, $restype.hasInvariants() };
+        }
+    }
+
+    method processBinaryKeyEqExpression(e: BinaryKeyEqExpression, vmap: VarMapping): Expression {
+        %%let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+
+        abort; %% NOT IMPLEMENTED;
     }
 
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
