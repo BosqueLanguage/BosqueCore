@@ -1,6 +1,6 @@
 "use strict";
 
-import { runMainCode } from "../../../bin/test/stdlib/stdlib_nf.js";
+import { runMainCode, runMainCodeError } from "../../../bin/test/stdlib/stdlib_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Map -- delete", () => {
@@ -21,7 +21,7 @@ describe ("Map -- delete", () => {
     });
 
     it("should fail delete doesnt exist", function () {
-        runMainCode('public function main(): Bool { return Map<Int, Bool>{ 1i => true, 2i => false }.delete(3i).size() === 1n; }', "Error -- this.has(k) @ map.bsq"); 
-        runMainCode('public function main(): Bool { return Map<Int, Bool>{ 1i => true, 2i => false }.insert(3i, true).delete(1i).get(1i) === true; }', "Error -- this.has(k) @ map.bsq"); 
+        runMainCodeError('public function main(): Bool { return Map<Int, Bool>{ 1i => true, 2i => false }.delete(3i).size() === 1n; }', "Error -- this.has(k) @ map.bsq"); 
+        runMainCodeError('public function main(): Bool { return Map<Int, Bool>{ 1i => true, 2i => false }.insert(3i, true).delete(1i).get(1i) === true; }', "Error -- this.has(k) @ map.bsq"); 
     });
 });
