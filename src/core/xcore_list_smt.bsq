@@ -19,6 +19,8 @@ namespace ListOps {
     function s_list_push_back<T>(l: List<T>, v: T): List<T> = s_list_push_back;
     function s_list_insert<T>(l: List<T>, idx: Nat, v: T): List<T> = s_list_insert;
 
+    function s_list_delete<T>(l: List<T>, idx: Nat): List<T> = s_list_delete;
+
     function s_list_create_empty<T>(): List<T> = s_list_create_empty;
 
     function s_concat2<T>(l1: List<T>, l2: List<T>): List<T> = s_list_concat2;
