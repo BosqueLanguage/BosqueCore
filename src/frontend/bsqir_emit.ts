@@ -587,7 +587,7 @@ class BSQIREmitter {
         const kcop = exp.operkind;
 
         const ebase = this.emitExpressionBase(exp);
-        const bkbase = `${ebase}, opertype=${this.emitTypeSignature(exp.opertype as TypeSignature)}`;
+        const bkbase = `${ebase}`;
 
         if(kcop === "lhsnone") {
             return `BSQAssembly::BinKeyEqNoneExpression{ ${bkbase}, exp=${this.emitExpression(exp.rhs)} }`;

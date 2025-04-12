@@ -59,13 +59,11 @@ entity ExplicitifyTransform {
     }
 
     recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression {
-        let rexps = this.processArgs[recursive](List<Expression>{arg}, vmap);
-        return rexps.get(0n);
+        return this.processExpression[recursive](arg, vmap);
     }
 
     recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression {
-        let rexps = this.processArgs[recursive](List<Expression>{lhs, rhs}, vmap);
-        return rexps.get(0n), rexps.get(1n);
+        return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
     method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
@@ -93,10 +91,45 @@ entity ExplicitifyTransform {
         }
     }
 
-    method processBinaryKeyEqExpression(e: BinaryKeyEqExpression, vmap: VarMapping): Expression {
-        %%let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+    recursive method procssBinKeyEqNoneExpression(e: BinKeyEqNoneExpression, vmap: VarMapping): Expression {
+        let nexp = this.processUnaryArg(e.exp, vmap);
+        return e[exp=nexp];
+    }
 
-        abort; %% NOT IMPLEMENTED;
+    recursive method procssBinKeyNotEqNoneExpression(e: BinKeyNotEqNoneExpression, vmap: VarMapping): Expression {
+        let nexp = this.processUnaryArg(e.exp, vmap);
+        return e[exp=nexp];
+    }
+
+    recursive method procssBinKeySomeEqExpression(e: BinKeySomeEqExpression, vmap: VarMapping): Expression {
+        let noption, nval = this.processBinaryArgs[recursive](e.eqoption, e.eqval, vmap);
+        return e[eqoption=noption, eqval=nval];
+    }
+
+    recursive method procssBinKeyNotSomeEqExpression(e: BinKeyNotSomeEqExpression, vmap: VarMapping): Expression {
+        let noption, nval = this.processBinaryArgs[recursive](e.neoption, e.neval, vmap);
+        return e[neoption=noption, neval=nval];
+    }
+
+    recursive method procssBinKeyEqExpression(e: BinKeyEqExpression, vmap: VarMapping): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
+    recursive method procssBinKeyNotEqExpression(e: BinKeyNotEqExpression, vmap: VarMapping): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
+    recursive method processBinaryKeyEqExpression(e: BinaryKeyEqExpression, vmap: VarMapping): Expression {
+        match(e)@ {
+            BinKeyEqNoneExpression => { return this.procssBinKeyEqNoneExpression[recursive]($e, vmap); }
+            | BinKeyNotEqNoneExpression => { return this.procssBinKeyNotEqNoneExpression[recursive]($e, vmap); }
+            | BinKeySomeEqExpression => { return this.procssBinKeySomeEqExpression[recursive]($e, vmap); }
+            | BinKeyNotSomeEqExpression => { return this.procssBinKeyNotSomeEqExpression[recursive]($e, vmap); }
+            | BinKeyEqExpression => { return this.procssBinKeyEqExpression[recursive]($e, vmap); }
+            | BinKeyNotEqExpression => { return this.procssBinKeyNotEqExpression[recursive]($e, vmap); }
+        }
     }
 
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
@@ -132,7 +165,7 @@ entity ExplicitifyTransform {
             | PostfixOp => { abort; }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
-            | BinaryKeyEqExpression => { abort; }
+            | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
             | BinaryNumericExpression => { abort; }

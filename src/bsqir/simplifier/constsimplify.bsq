@@ -50,13 +50,11 @@ entity ConstantSimplification {
     }
 
     recursive method processUnaryArg(arg: Expression): Expression {
-        let rexps = this.processArgs[recursive](List<Expression>{arg});
-        return rexps.get(0n);
+        return this.processExpression[recursive](arg);
     }
 
     recursive method processBinaryArgs(lhs: Expression, rhs: Expression): Expression, Expression {
-        let rexps = this.processArgs[recursive](List<Expression>{lhs, rhs});
-        return rexps.get(0n), rexps.get(1n);
+        return this.processExpression[recursive](lhs), this.processExpression[recursive](rhs);
     }
 
     method processAccessNamespaceConstantExpression(e: AccessNamespaceConstantExpression): Expression {
@@ -79,7 +77,7 @@ entity ConstantSimplification {
         }
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression): Expression {
+    recursive method processBinaryArithExpression(e: BinaryArithExpression): Expression {
         let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
 
         %%TODO: here is where we would like to do some constant folding and algebraic simplification
@@ -87,12 +85,47 @@ entity ConstantSimplification {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processBinKeyEqNoneExpression(e: BinKeyEqNoneExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinKeyNotEqNoneExpression(e: BinKeyNotEqNoneExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinKeySomeEqExpression(e: BinKeySomeEqExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinKeyNotSomeEqExpression(e: BinKeyNotSomeEqExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinKeyEqExpression(e: BinKeyEqExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinKeyNotEqExpression(e: BinKeyNotEqExpression): Expression {
+        abort;
+    }
+
+    recursive method processBinaryKeyEqExpression(e: BinaryKeyEqExpression): Expression {
+        match(e)@ {
+            BinKeyEqNoneExpression => { return this.processBinKeyEqNoneExpression[recursive]($e); }
+            | BinKeyNotEqNoneExpression => { return this.processBinKeyNotEqNoneExpression[recursive]($e); }
+            | BinKeySomeEqExpression => { return this.processBinKeySomeEqExpression[recursive]($e); }
+            | BinKeyNotSomeEqExpression => { return this.processBinKeyNotSomeEqExpression[recursive]($e); }
+            | BinKeyEqExpression => { return this.processBinKeyEqExpression[recursive]($e); }
+            | BinKeyNotEqExpression => { return this.processBinKeyNotEqExpression[recursive]($e); }
+        }
+    }
+
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
             | LiteralSimpleExpression => { return e; }
             | LiteralCStringExpression => { return e; }
-            | LiteralStringExpression => { return e; }
+            | LiteralStringExpression => { return e; }  
             | LiteralCRegexExpression => { return e; }
             | LiteralRegexExpression => { return e; }
             | LiteralTypeDeclValueExpression => { abort; }
@@ -120,7 +153,7 @@ entity ConstantSimplification {
             | PostfixOp => { abort; }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
-            | BinaryKeyEqExpression => { abort; }
+            | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
             | BinaryNumericExpression => { abort; }
