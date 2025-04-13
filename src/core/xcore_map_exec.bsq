@@ -629,9 +629,27 @@ namespace MapOps {
         let nt = delete_helper[recursive]<K, V>(t, k);
         match(nt)@ {
             Node<K, V> => {
-                let ntt = balance<K, V>($nt.c, $nt.l, $nt.r);
-                assert checkRBInvariants<K, V>(ntt);
-                return ntt;
+                %% If empty sub tree move root down
+                if($nt.l?<BBLeaf<K, V>>) {
+                    let r = $nt.r;
+                    if(r)@@!<Node<K, V>> {
+                        return r;
+                    }
+                    let nrt = balance<K, V>(r.c, r.l, r.r);
+                    assert checkRBInvariants<K, V>(nrt);
+                    return nrt;
+                }
+                if($nt.r?<BBLeaf<K, V>>) {
+                    let l = $nt.l;
+                    if(l)@@!<Node<K, V>> {
+                        return l;
+                    }
+                    let nlt = balance<K, V>(l.c, l.l, l.r);
+                    assert checkRBInvariants<K, V>(nlt);
+                    return nlt;
+                }
+                assert checkRBInvariants<K, V>(nt);
+                return nt;
             }
             | _ => { return nt; }
         }

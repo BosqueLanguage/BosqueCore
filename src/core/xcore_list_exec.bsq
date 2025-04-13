@@ -506,6 +506,9 @@ namespace ListOps {
         }
         else {
             let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+            if(nn.l?<BBLeaf<T>>) {
+                return front[recursive]<T>(nn.r);
+            }
             return front[recursive]<T>(nn.l);
         }
     }
@@ -516,6 +519,9 @@ namespace ListOps {
         }
         else {
             let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+            if(nn.r?<BBLeaf<T>>) {
+                return back[recursive]<T>(nn.l);
+            }
             return back[recursive]<T>(nn.r);
         }
     }
@@ -703,10 +709,8 @@ namespace ListOps {
     function delete<T>(t: Tree<T>, idx: Nat): Tree<T> {
         let nt = delete_helper<T>(t, idx); 
         match(nt)@ {
-            BBLeaf<T> => { return Tree<T>::emptyTree; }
-            | Leaf<T> => { return Tree<T>::emptyTree; }
-            | Node<T> => {
-                %% If empty sub tree move root down
+            Node<T> => {
+                %% If empty sub tree move root down to non empty slot
                 if($nt.l?<BBLeaf<T>>) {
                     let r = $nt.r;
                     if(r)@@!<Node<T>> {
@@ -728,6 +732,7 @@ namespace ListOps {
                 assert checkRBInvariants<T>(nt);
                 return nt;
             }
+            | _ => { return nt; }
         }
     }
 
