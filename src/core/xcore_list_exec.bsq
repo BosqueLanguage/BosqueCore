@@ -224,7 +224,7 @@ namespace ListOps {
             let islred = if(t.l)@<Node<T>> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node<T>> then $_.c === Color#Red  else false;
 
-            return \/(islred, isrred);
+            return !\/(islred, isrred);
         }
         
         return checkRBChildColorInvariant[recursive]<T>(t.l) && checkRBChildColorInvariant[recursive]<T>(t.r);
@@ -473,18 +473,23 @@ namespace ListOps {
     }
 
     function bubble<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
+        %% Handle case where we try to bubble an empty tree up
+        if(/\(tleft?<BBLeaf<T>>, tright?<BBLeaf<T>>)) {
+            return Tree<T>::emptyTree;
+        }
+
         if(/\(tleft?<Node<T>>, tright?<Node<T>>)) {
             let tl = tleft@<Node<T>>;
             let tr = tright@<Node<T>>;
 
             if(tl.c === Color#BB || tr.c === Color#BB) {
-                let nl = Tree<T>::createNode(redden(tl.c), tl.l, tl.r);
-                let nr = Tree<T>::createNode(redden(tr.c), tr.l, tr.r);
+                let nl = create_with_empty<T>(redden(tl.c), tl.l, tl.r);
+                let nr = create_with_empty<T>(redden(tr.c), tr.l, tr.r);
                 return balance<T>(blacken(tl.c), nl, nr);
             }
         }
         
-        return Tree<T>::createNode(c, tleft, tright);
+        return balance<T>(c, tleft, tright);
     }
 
     function size<T>(t: Tree<T>): Nat {
@@ -571,10 +576,10 @@ namespace ListOps {
 
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            Leaf<T> => { return balance<T>(Color#Black, $t, Tree<T>::createLeaf(v)); }
+            Leaf<T> => { return balance<T>(Color#Red, $t, Tree<T>::createLeaf(v)); }
             | Node<T> => { 
                 let nr = pushBack_helper[recursive]<T>($t.r, v);
-                return balance<T>(Color#Black, $t.l, nr); 
+                return balance<T>($t.c, $t.l, nr); 
             }
         }
     }
@@ -589,16 +594,18 @@ namespace ListOps {
             return tt;
         }
         else {
-            return Tree<T>::createNode(Color#Black, $tt.l, $tt.r);
+            let nt = if($tt.c === Color#Red) then Tree<T>::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            assert checkRBInvariants<T>(nt);
+            return nt;
         }
     }
 
     recursive function pushFront_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            Leaf<T> => { return balance<T>(Color#Black, Tree<T>::createLeaf(v), $t); }
+            Leaf<T> => { return balance<T>(Color#Red, Tree<T>::createLeaf(v), $t); }
             | Node<T> => { 
                 let nr = pushFront_helper[recursive]<T>($t.l, v);
-                return balance<T>(Color#Black, nr, $t.r); 
+                return balance<T>($t.c, nr, $t.r); 
             }
         }
     }
@@ -613,7 +620,9 @@ namespace ListOps {
             return tt;
         }
         else {
-            return Tree<T>::createNode(Color#Black, $tt.l, $tt.r);
+            let nt = if($tt.c === Color#Red) then Tree<T>::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            assert checkRBInvariants<T>(nt);
+            return nt;
         }
     }
 
@@ -657,6 +666,25 @@ namespace ListOps {
         }
     }
 
+    %% Forcefully bubble up leaves to red nodes, otherwise create new node
+    function create_with_empty<T>(c: Color, l: Tree<T>, r: Tree<T>): Tree<T> {
+        if(/\(l?<BBLeaf<T>>, r?<BBLeaf<T>>)) {
+            return Tree<T>::emptyTree;
+        }
+        if(l?<BBLeaf<T>>) {
+            if(c === Color#Red) {
+                return r;
+            }
+        }
+        if(r?<BBLeaf<T>>) {
+            if(c === Color#Red) {
+                return l;
+            }
+        }
+        assert /\(l?!<BBLeaf<T>>, r?!<BBLeaf<T>>);
+        return Tree<T>::createNode(c, l, r);
+    }
+
     recursive function delete_helper<T>(t: Tree<T>, idx: Nat): Tree<T> {
         match(t)@ {
             BBLeaf<T> => { return Tree<T>::emptyTree; }
@@ -672,12 +700,34 @@ namespace ListOps {
         }
     }
 
-    %% For now we just return delete_helpers tree, will need to likely blacken root
     function delete<T>(t: Tree<T>, idx: Nat): Tree<T> {
-        match(t)@ {
+        let nt = delete_helper<T>(t, idx); 
+        match(nt)@ {
             BBLeaf<T> => { return Tree<T>::emptyTree; }
             | Leaf<T> => { return Tree<T>::emptyTree; }
-            | Node<T> => { return delete_helper<T>(t, idx); }
+            | Node<T> => {
+                %% If empty sub tree move root down
+                if($nt.l?<BBLeaf<T>>) {
+                    let r = $nt.r;
+                    if(r)@@!<Node<T>> {
+                        return r;
+                    }
+                    let nrt = balance<T>(r.c, r.l, r.r);
+                    assert checkRBInvariants<T>(nrt);
+                    return nrt;
+                }
+                if($nt.r?<BBLeaf<T>>) {
+                    let l = $nt.l;
+                    if(l)@@!<Node<T>> {
+                        return l;
+                    }
+                    let nlt = balance<T>(l.c, l.l, l.r);
+                    assert checkRBInvariants<T>(nlt);
+                    return nlt;
+                }
+                assert checkRBInvariants<T>(nt);
+                return nt;
+            }
         }
     }
 
