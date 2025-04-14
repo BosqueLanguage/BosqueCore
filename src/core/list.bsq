@@ -80,12 +80,6 @@ __internal entity List<T> {
         return ListOps::s_list_insert<T>(this, i, v);
     }
 
-    method delete(i: Nat): List<T>
-        requires i <= this.size();
-    {
-        return ListOps::s_list_delete<T>(this, i);
-    }
-
     method popFront(): T, List<T>
         requires !this.empty();
     {
