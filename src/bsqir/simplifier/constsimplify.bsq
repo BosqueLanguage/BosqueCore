@@ -90,7 +90,7 @@ entity ConstantSimplification {
 
     recursive method processBinKeyEqNoneExpression(e: BinKeyEqNoneExpression): Expression {
         let ee = this.processUnaryArg(e.exp);
-        let etype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        let etype = this.assembly.lookupNominalTypeDeclaration(ee.etype.tkeystr);
 
         if(etype.tkey === 'None'<TypeKey>) {
             return ConstantSimplification::trueExp;
@@ -100,14 +100,14 @@ entity ConstantSimplification {
                 return ConstantSimplification::falseExp;
             }
             else {
-                return e;
+                return e[exp=ee];
             }
         }
     }
 
     recursive method processBinKeyNotEqNoneExpression(e: BinKeyNotEqNoneExpression): Expression {
         let ee = this.processUnaryArg(e.exp);
-        let etype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        let etype = this.assembly.lookupNominalTypeDeclaration(ee.etype.tkeystr);
 
         if(etype.tkey === 'None'<TypeKey>) {
             return ConstantSimplification::falseExp;
@@ -117,25 +117,59 @@ entity ConstantSimplification {
                 return ConstantSimplification::trueExp;
             }
             else {
-                return e;
+                return e[exp=ee];
             }
         }
     }
 
     recursive method processBinKeySomeEqExpression(e: BinKeySomeEqExpression): Expression {
-        abort;
+        let noption, nval = this.processBinaryArgs(e.eqoption, e.eqval);
+        let etype = this.assembly.lookupNominalTypeDeclaration(noption.etype.tkeystr);
+
+        if(etype.tkey === 'None'<TypeKey>) {
+            return ConstantSimplification::falseExp;
+        }
+        else {
+            if(etype)<SomeTypeDecl> {
+                abort; %%Not implemented -- explicitly unwrap and compare here
+            }
+            else {
+                return e[eqoption=noption, eqval=nval];
+            }
+        }
     }
 
     recursive method processBinKeyNotSomeEqExpression(e: BinKeyNotSomeEqExpression): Expression {
-        abort;
+        let noption, nval = this.processBinaryArgs(e.neoption, e.neval);
+        let etype = this.assembly.lookupNominalTypeDeclaration(noption.etype.tkeystr);
+
+        if(etype.tkey === 'None'<TypeKey>) {
+            return ConstantSimplification::trueExp;
+        }
+        else {
+            if(etype)<SomeTypeDecl> {
+                abort; %%Not implemented -- explicitly unwrap and compare here
+            }
+            else {
+                return e[neoption=noption, neval=nval];
+            }
+        }
     }
 
     recursive method processBinKeyEqExpression(e: BinKeyEqExpression): Expression {
-        abort;
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        %%TODO: here is where we would like to do some basic constant checks
+
+        return e[lhs=nlhs, rhs=nrhs];
     }
 
     recursive method processBinKeyNotEqExpression(e: BinKeyNotEqExpression): Expression {
-        abort;
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        %%TODO: here is where we would like to do some basic const checks
+
+        return e[lhs=nlhs, rhs=nrhs];
     }
 
     recursive method processBinaryKeyEqExpression(e: BinaryKeyEqExpression): Expression {

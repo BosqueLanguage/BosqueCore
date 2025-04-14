@@ -200,7 +200,7 @@ class BSQIREmitter {
             return `BSQAssembly::LambdaTypeSignature{ ${tsbase}, frecursive=${recinfo}, isPredLambda=${ispred}, params=List<BSQAssembly::LambdaParameterSignature>{${tparams}}, resultType=${tret} }`;
         }
         else {
-            assert(false, "Unknown type signature");
+            assert(false, "Unknown type signature " + ttype.tkeystr);
         }
     }
 
@@ -262,11 +262,11 @@ class BSQIREmitter {
     }
     
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
-        return `BSQAssembly::LiteralCStringExpression{ ${this.emitExpressionBase(exp)}, value='${exp.value}' }`;
+        return `BSQAssembly::LiteralCStringExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`;
     }
 
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
-        return `BSQAssembly::LiteralStringExpression{ ${this.emitExpressionBase(exp)}, value='${exp.value}' }`;
+        return `BSQAssembly::LiteralStringExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`;
     }
  
     private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression): string {
