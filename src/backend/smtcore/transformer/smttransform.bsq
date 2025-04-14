@@ -72,8 +72,7 @@ entity SMTTransformer {
 
     method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@!<BSQAssembly::NominalTypeSignature> {
-            let smtk = TransformNameManager::convertTypeKey(tsig.tkeystr);
-            return smtk;
+            return TransformNameManager::convertTypeKey(tsig.tkeystr);
         }
         else {
             if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
@@ -250,6 +249,85 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformBinKeyEqNoneExpression(exp: BSQAssembly::BinKeyEqNoneExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let nexp, nctx, obinds = this.processUnaryArg[recursive](exp.exp, ctx);
+        let noneop = SMTAssembly::BinKeyEqNoneExpression{nexp};
+
+        return nctx, this.wrapOperationResult(exp.etype, noneop, obinds);
+    }
+
+    recursive method transformBinKeyNotEqNoneExpression(exp: BSQAssembly::BinKeyNotEqNoneExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let nexp, nctx, obinds = this.processUnaryArg[recursive](exp.exp, ctx);
+        let noneop = SMTAssembly::BinKeyNotEqNoneExpression{nexp};
+
+        return nctx, this.wrapOperationResult(exp.etype, noneop, obinds);
+    }
+
+    recursive method transformBinKeySomeEqExpression(exp: BSQAssembly::BinKeySomeEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let neqoption, neqval, nctx, obinds = this.processBinaryArgs[recursive](exp.eqoption, exp.eqval, ctx);
+        let optiondecl = this.assembly.lookupNominalTypeDeclaration(exp.eqoption.etype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+
+        let someop = SMTAssembly::BinKeySomeEqExpression{ 
+            TransformNameManager::convertTypeKey(optiondecl.tkey),
+            TransformNameManager::convertTypeKey(optiondecl.someType.tkey),
+            neqoption,
+            neqval
+        };
+
+        return nctx, this.wrapOperationResult(exp.etype, someop, obinds);
+    }
+
+    recursive method transformBinKeyNotSomeEqExpression(exp: BSQAssembly::BinKeyNotSomeEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let neqoption, neqval, nctx, obinds = this.processBinaryArgs[recursive](exp.neoption, exp.neval, ctx);
+        let optiondecl = this.assembly.lookupNominalTypeDeclaration(exp.neoption.etype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+
+        let someop = SMTAssembly::BinKeyNotSomeEqExpression{ 
+            TransformNameManager::convertTypeKey(optiondecl.tkey),
+            TransformNameManager::convertTypeKey(optiondecl.someType.tkey),
+            neqoption,
+            neqval
+        };
+
+        return nctx, this.wrapOperationResult(exp.etype, someop, obinds);
+    }
+
+    recursive method transformBinKeyEqExpression(exp: BSQAssembly::BinKeyEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let eqop = SMTAssembly::BinKeyEqExpression{lexp, rexp};
+
+        return nctx, this.wrapOperationResult(exp.etype, eqop, obinds);
+    }
+
+    recursive method transformBinKeyNotEqExpression(exp: BSQAssembly::BinKeyNotEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+        let eqop = SMTAssembly::BinKeyNotEqExpression{lexp, rexp};
+
+        return nctx, this.wrapOperationResult(exp.etype, eqop, obinds);
+    }
+
+    recursive method transformBinaryKeyEqExpression(exp: BSQAssembly::BinaryKeyEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        match(exp)@ {
+            BSQAssembly::BinKeyEqNoneExpression => { 
+                return this.transformBinKeyEqNoneExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { 
+                return this.transformBinKeyNotEqNoneExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinKeySomeEqExpression => { 
+                return this.transformBinKeySomeEqExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { 
+                return this.transformBinKeyNotSomeEqExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinKeyEqExpression => { 
+                return this.transformBinKeyEqExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::BinKeyNotEqExpression => { 
+                return this.transformBinKeyNotEqExpression[recursive]($exp, ctx); 
+            }
+        }
+    }
+
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -269,6 +347,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::BinaryArithExpression => { 
                 return this.transformBinaryArithExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::BinaryKeyEqExpression => { 
+                return this.transformBinaryKeyEqExpression[recursive]($exp, ctx);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED

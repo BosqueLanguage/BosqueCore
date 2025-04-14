@@ -6,6 +6,9 @@ namespace BSQAssembly;
 entity ConstantSimplification {
     field assembly: Assembly;
 
+    const trueExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'true' };
+    const falseExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'false' };
+
     recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
         match(exp)@ {
             AccessNamespaceConstantExpression => {
@@ -86,11 +89,37 @@ entity ConstantSimplification {
     }
 
     recursive method processBinKeyEqNoneExpression(e: BinKeyEqNoneExpression): Expression {
-        abort;
+        let ee = this.processUnaryArg(e.exp);
+        let etype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+
+        if(etype.tkey === 'None'<TypeKey>) {
+            return ConstantSimplification::trueExp;
+        }
+        else {
+            if(etype)<SomeTypeDecl> {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                return e;
+            }
+        }
     }
 
     recursive method processBinKeyNotEqNoneExpression(e: BinKeyNotEqNoneExpression): Expression {
-        abort;
+        let ee = this.processUnaryArg(e.exp);
+        let etype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+
+        if(etype.tkey === 'None'<TypeKey>) {
+            return ConstantSimplification::falseExp;
+        }
+        else {
+            if(etype)<SomeTypeDecl> {
+                return ConstantSimplification::trueExp;
+            }
+            else {
+                return e;
+            }
+        }
     }
 
     recursive method processBinKeySomeEqExpression(e: BinKeySomeEqExpression): Expression {
