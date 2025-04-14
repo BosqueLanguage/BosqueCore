@@ -48,6 +48,22 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(insert<T>(l.value, idx, v));
     }
 
+    function s_list_pop_front<T>(l: List<T>): T, List<T> {
+        return front<T>(l.value), XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, 0n));
+    }
+
+    function s_list_pop_back<T>(l: List<T>): T, List<T> {
+        return back<T>(l.value), XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, size<T>(l.value) - 1n));
+    }
+
+    function s_list_delete_front<T>(l: List<T>): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, 0n));
+    }
+
+    function s_list_delete_back<T>(l: List<T>): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, size<T>(l.value) - 1n));
+    }
+
     function s_list_delete<T>(l: List<T>, idx: Nat): List<T> {
         return XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, idx));
     }
