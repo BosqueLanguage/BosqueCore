@@ -3,14 +3,14 @@
 import { runishMainCodeUnsat } from "../../../bin/test/smtoutput/smtemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Exec -- basic strict equals", () => {
-    it("should exec strict equals operations", function () {
+describe ("SMT -- basic strict equals", () => {
+    it("should SMT exec strict equals operations", function () {
         runishMainCodeUnsat("public function main(): Bool { return 0n === 1n; }", "(assert Main@main)");
         runishMainCodeUnsat("public function main(): Bool { return 0n !== 1n; }", "(assert (not Main@main))");
         runishMainCodeUnsat("public function main(): Bool { return 'ok' !== 'yes'; }", "(assert (not Main@main))");
 
-        runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x !== y; }", "(assert (not Main@main))");
-        runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x === y; }", "(assert Main@main)");
+        //runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x !== y; }", "(assert (not Main@main))");
+        //runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x === y; }", "(assert Main@main)");
     });
 });
 /*

@@ -1051,7 +1051,7 @@ class BSQIREmitter {
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
         const sbase = this.emitStatementBase(stmt);
-        const vtype = this.emitTypeSignature(stmt.vtype);
+        const vtype = this.emitTypeSignature(stmt.actualtype as TypeSignature);
         const rhsexp = this.emitExpressionRHS(stmt.exp);
         
         return `BSQAssembly::VariableInitializationStatement{ ${sbase}, name='${stmt.name}'<BSQAssembly::Identifier>, vtype=${vtype}, exp=${rhsexp} }`;
