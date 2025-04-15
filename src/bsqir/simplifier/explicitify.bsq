@@ -177,7 +177,37 @@ entity ExplicitifyTransform {
 
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
-            ReturnVoidStatement => {
+            VariableDeclarationStatement => {
+                return s;
+            }
+            | VariableMultiDeclarationStatement => {
+                return s;
+            }
+            | VariableInitializationStatement => {
+                let nr = this.processExpression($s.exp, vmap);
+                let nc = this.processCoerceTypeAsNeeded(nr, $s.vtype);
+                
+                return VariableInitializationStatement{ $s.sinfo, $s.name, $s.vtype, nc };
+            }
+            | VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableAssignmentStatement => {
+                let nr = this.processExpression($s.exp, vmap);
+                let nc = this.processCoerceTypeAsNeeded(nr, $s.vtype);
+
+                return VariableAssignmentStatement{ $s.sinfo, $s.name, $s.vtype, nc };
+            }
+            | VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | ReturnVoidStatement => {
                 return s;
             }
             | ReturnSingleStatement => {

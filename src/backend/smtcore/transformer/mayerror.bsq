@@ -93,7 +93,31 @@ entity MayErrorAnalysis {
 
     recursive function processStatement(s: BSQAssembly::Statement): Bool {
         match(s)@ {
-            BSQAssembly::ReturnVoidStatement => {
+            BSQAssembly::VariableDeclarationStatement => {
+                return false;
+            }
+            | BSQAssembly::VariableMultiDeclarationStatement => {
+                return false;
+            }
+            | BSQAssembly::VariableInitializationStatement => {
+                return MayErrorAnalysis::processExpression($s.exp);
+            }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableAssignmentStatement => {
+                return MayErrorAnalysis::processExpression($s.exp);
+            }
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::ReturnVoidStatement => {
                 return false;
             }
             | BSQAssembly::ReturnSingleStatement => {

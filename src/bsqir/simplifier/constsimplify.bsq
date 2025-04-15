@@ -228,7 +228,31 @@ entity ConstantSimplification {
 
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
-            ReturnVoidStatement => {
+            VariableDeclarationStatement => {
+                return s;
+            }
+            | VariableMultiDeclarationStatement => {
+                return s;
+            }
+            | VariableInitializationStatement => {
+                return $s[exp = this.processExpression($exp)];
+            }
+            | VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableAssignmentStatement => {
+                return $s[exp = this.processExpression($exp)];
+            }
+            | VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | ReturnVoidStatement => {
                 return s;
             }
             | ReturnSingleStatement => {

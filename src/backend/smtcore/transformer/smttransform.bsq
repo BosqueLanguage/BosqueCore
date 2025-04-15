@@ -357,8 +357,65 @@ entity SMTTransformer {
         }
     }
 
+    method transformVariableInitializationStatement(stmt: BSQAssembly::VariableInitializationStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+        
+        if(smtexp)<DirectResult> {
+            let vname = SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(stmt.name.value));    
+            return rctx, SMTAssembly::LetOperation{vname, smtexp.exp, tail};
+        }
+        else {
+            let tname = TransformNameManager::safeifyName(stmt.name.value);
+            let vebind = SMTAssembly::VarIdentifier::from(CString::concat('@tmpe-', tname));
+            let vbind = SMTAssembly::VarIdentifier::from(tname);
+
+            return rctx, SMTAssembly::LetOperationWError{vebind, vbind, smtexp.exp, tail};
+        }
+    }
+
+    method transformVariableAssignmentStatement(stmt: BSQAssembly::VariableAssignmentStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+        
+        if(smtexp)<DirectResult> {
+            let vname = SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(stmt.name.value));    
+            return rctx, SMTAssembly::LetOperation{vname, smtexp.exp, tail};
+        }
+        else {
+            let tname = TransformNameManager::safeifyName(stmt.name.value);
+            let vebind = SMTAssembly::VarIdentifier::from(CString::concat('@tmpe-', tname));
+            let vbind = SMTAssembly::VarIdentifier::from(tname);
+
+            return rctx, SMTAssembly::LetOperationWError{vebind, vbind, smtexp.exp, tail};
+        }
+    }
+
     recursive method transformStatementToSMT(stmt: BSQAssembly::Statement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
-        abort; %% NOT IMPLEMENTED
+        match(stmt)@ {
+            BSQAssembly::VariableDeclarationStatement => {
+                return ctx, tail;
+            }
+            | BSQAssembly::VariableMultiDeclarationStatement => {
+                return ctx, tail;
+            }
+            | BSQAssembly::VariableInitializationStatement => {
+                return this.transformVariableInitializationStatement($stmt, tail, ctx);
+            }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableAssignmentStatement => {
+                return this.transformVariableAssignmentStatement($stmt, tail, ctx);
+            }
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+        }
     }
 
     recursive method transformStatementListToSMTStep(stmts: List<BSQAssembly::Statement>, idx: Nat, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
@@ -377,7 +434,10 @@ entity SMTTransformer {
         var lop: SMTAssembly::Operation;
         var lctx: SMTTransformerCtx;
         match(tailop)@ {
-            BSQAssembly::ReturnSingleStatement => {
+            BSQAssembly::ReturnVoidStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::ReturnSingleStatement => {
                 let rctx, smtexp = this.transformExpressionToSMT($tailop.value, ctx);
 
                 if(ctx.mayErrorReturn && smtexp?<DirectResult>) {
@@ -387,6 +447,9 @@ entity SMTTransformer {
                     lop = SMTAssembly::ReturnOperation{smtexp.exp};
                 }
                 lctx = rctx;
+            }
+            | BSQAssembly::ReturnMultiStatement => {
+                abort; %% NOT IMPLEMENTED
             }
             | BSQAssembly::AbortStatement => {
                 lop = SMTAssembly::AbortOperation{ctx.errCtr};
