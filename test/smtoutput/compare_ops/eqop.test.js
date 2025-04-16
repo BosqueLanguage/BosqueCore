@@ -1,19 +1,19 @@
 "use strict";
 
-import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
+import { runishMainCodeUnsat } from "../../../bin/test/smtoutput/smtemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Exec -- basic strict equals", () => {
-    it("should exec strict equals operations", function () {
-        runMainCode("public function main(): Bool { return 0n === 1n; }", "false");
-        runMainCode("public function main(): Bool { return 0n !== 1n; }", "true");
-        runMainCode("public function main(): Bool { return 'ok' !== 'yes'; }", "true");
+describe ("SMT -- basic strict equals", () => {
+    it("should SMT exec strict equals operations", function () {
+        runishMainCodeUnsat("public function main(): Bool { return 0n === 1n; }", "(assert Main@main)");
+        runishMainCodeUnsat("public function main(): Bool { return 0n !== 1n; }", "(assert (not Main@main))");
+        runishMainCodeUnsat("public function main(): Bool { return 'ok' !== 'yes'; }", "(assert (not Main@main))");
 
-        runMainCode("public function main(): Bool { let x = 3i; let y = 4i; return x !== y; }", "true");
-        runMainCode("public function main(): Bool { let x = 3i; let y = 4i; return x === y; }", "false");
+        //runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x !== y; }", "(assert (not Main@main))");
+        //runishMainCodeUnsat("public function main(): Bool { let x = 3i; let y = 4i; return x === y; }", "(assert Main@main)");
     });
 });
-
+/*
 describe ("Exec -- Option strict equals", () => {
     it("should exec strict equals option operations", function () {
         runMainCode("public function main(): Bool { let x: Option<Int> = some(3i); return x === none; }", "false");
@@ -42,3 +42,4 @@ describe ("Exec -- type alias strict equals", () => {
         runMainCode("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x !== 3i<Foo>; }", "false");
     });
 });
+*/

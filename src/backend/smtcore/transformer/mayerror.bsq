@@ -8,6 +8,14 @@ entity MayErrorAnalysis {
         return args.someOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg));
     }
 
+    recursive function processUnaryArg(exp: BSQAssembly::Expression): Bool {
+        return MayErrorAnalysis::processExpression(exp);
+    }
+
+    recursive function processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression): Bool {
+        return \/(MayErrorAnalysis::processExpression(lhs), MayErrorAnalysis::processExpression(rhs));
+    }
+
     function maySubtractionUnderflow(e: BSQAssembly::BinaryArithExpression): Bool {
         if(e)!<BSQAssembly::BinSubExpression> {
             return false;
@@ -25,7 +33,18 @@ entity MayErrorAnalysis {
             return true;
         }
         else {
-            return MayErrorAnalysis::processArgs(List<BSQAssembly::Expression>{e.lhs, e.rhs});
+            return MayErrorAnalysis::processBinaryArgs(e.lhs, e.rhs);
+        }
+    }
+
+    recursive function processBinaryKeyEqExpression(e: BSQAssembly::BinaryKeyEqExpression): Bool {
+        match(e)@ {
+            BSQAssembly::BinKeyEqNoneExpression => { return MayErrorAnalysis::processUnaryArg($e.exp); }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { return MayErrorAnalysis::processUnaryArg($e.exp); }
+            | BSQAssembly::BinKeySomeEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.eqoption, $e.eqval); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.neoption, $e.neval); }
+            | BSQAssembly::BinKeyEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.lhs, $e.rhs); }
+            | BSQAssembly::BinKeyNotEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.lhs, $e.rhs); }
         }
     }
 
@@ -62,7 +81,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::PostfixOp => { abort; }
             | BSQAssembly::UnaryExpression => { abort; }
             | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processBinaryArithExpression($e); }
-            | BSQAssembly::BinaryKeyEqExpression => { abort; }
+            | BSQAssembly::BinaryKeyEqExpression => { return MayErrorAnalysis::processBinaryKeyEqExpression($e); }
             | BSQAssembly::KeyCmpEqualExpression => { abort; }
             | BSQAssembly::KeyCmpLessExpression => { abort; }
             | BSQAssembly::BinaryNumericExpression => { abort; }

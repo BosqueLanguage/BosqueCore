@@ -327,7 +327,7 @@ BinAddExpression { }
 | BinDivExpression { }
 ;
 
-datatype BinaryKeyEqExpression provides Expression using {
+datatype BinaryKeyEqExpression provides Expression  using {
     field opertype: TypeSignature;
 }
 of
