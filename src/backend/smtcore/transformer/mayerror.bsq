@@ -93,7 +93,10 @@ entity MayErrorAnalysis {
 
     recursive function processStatement(s: BSQAssembly::Statement): Bool {
         match(s)@ {
-            BSQAssembly::VariableDeclarationStatement => {
+            BSQAssembly::EmptyStatement => { 
+                return false; 
+            }
+            | BSQAssembly::VariableDeclarationStatement => {
                 return false;
             }
             | BSQAssembly::VariableMultiDeclarationStatement => {
@@ -125,6 +128,12 @@ entity MayErrorAnalysis {
             }
             | BSQAssembly::ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::AbortStatement => {
+                return true;
+            }
+            | BSQAssembly::AssertStatement => {
+                return true;
             }
         }
     }

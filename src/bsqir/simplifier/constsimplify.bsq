@@ -226,6 +226,22 @@ entity ConstantSimplification {
         }
     }
 
+    method processAssertStatement(s: AssertStatement): Statement {
+        let ncond = this.processExpression(s.cond);
+        
+        if(ncond)@!<LiteralSimpleExpression> {
+            return s[cond = ncond];
+        }
+        else {
+            if(ncond.value === 'true') {
+                return EmptyStatement{ s.sinfo };
+            }
+            else{
+                return AbortStatement{ s.sinfo };
+            }
+        }
+    }
+
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
             VariableDeclarationStatement => {
@@ -261,6 +277,12 @@ entity ConstantSimplification {
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
+            | AbortStatement => {
+                return s;
+            }
+            | AssertStatement => {
+                return this.processAssertStatement($s);
+            }
         }
     }
 
@@ -282,7 +304,10 @@ entity ConstantSimplification {
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
-        return stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+        const stmts = stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+
+        %%check to see if we had a dead code collapse -- find for terminal ops -- returns & abort drop all code that follows
+        xxxx;
     }
 
     method processBodyImpl(body: BodyImplementation): BodyImplementation {

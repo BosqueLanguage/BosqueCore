@@ -54,6 +54,15 @@ entity ExplicitifyTransform {
         }
     }
 
+    method processExplicitBoolConvertAsNeeded(e: Expression): Expression {
+        if(this.assembly.isBoolType(e.etype)) {
+            return e;
+        }
+        else {
+            abort;
+        }
+    }
+
     recursive method processArgs(args: List<Expression>, vmap: VarMapping): List<Expression> {
         return args.map<Expression>(recursive fn(arg) => this.processExpression[recursive](arg, vmap));
     }
@@ -177,7 +186,10 @@ entity ExplicitifyTransform {
 
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
-            VariableDeclarationStatement => {
+            EmptyStatement => {
+                return s;
+            }
+            | VariableDeclarationStatement => {
                 return s;
             }
             | VariableMultiDeclarationStatement => {
@@ -217,6 +229,14 @@ entity ExplicitifyTransform {
             }
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
+            }
+            | AbortStatement => {
+                return s;
+            }
+            | AssertStatement => {
+                let nr = this.processExpression($s.cond, vmap);
+                let nc = this.processExplicitBoolConvertAsNeeded(nr);
+                return $s[cond = nc];
             }
         }
     }

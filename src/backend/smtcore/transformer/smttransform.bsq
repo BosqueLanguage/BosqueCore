@@ -396,9 +396,24 @@ entity SMTTransformer {
         }
     }
 
+    method transformAssertStatement(stmt: BSQAssembly::AssertStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+        
+        if(smtexp)@<SafeResult> {
+            let aop = SMTAssembly::AssertOperation{$smtexp.exp, ctx.errCtr, tail};
+            return ctx.addError($tailop.sinfo), aop;
+        }
+        else {
+            abort;
+        }
+    }
+
     recursive method transformStatementToSMT(stmt: BSQAssembly::Statement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
         match(stmt)@ {
-            BSQAssembly::VariableDeclarationStatement => {
+            BSQAssembly::EmptyStatement => {
+                return ctx, tail;
+            }
+            | BSQAssembly::VariableDeclarationStatement => {
                 return ctx, tail;
             }
             | BSQAssembly::VariableMultiDeclarationStatement => {
@@ -421,6 +436,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => {
                 abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::AssertStatement => {
+                return this.transformAssertStatement($stmt, tail, ctx);
             }
         }
     }
