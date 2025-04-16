@@ -318,7 +318,7 @@ entity UnwrapFromResultExpression provides SafeExpression {
     field varg: VarIdentifier;
 }
 
-entity WrapIntoResultExpression provides Expression {
+entity WrapIntoResultExpression provides SafeExpression {
     field etype: TypeKey;
     field arg: SafeExpression;
 }

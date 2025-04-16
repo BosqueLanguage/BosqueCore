@@ -923,7 +923,7 @@ function emitConstDeclarationHelper(cname: CString, vtype: SMTAssembly::ResultTy
         else {
             let tname = CString::concat(cname, '-cc-temp');
             let ttype = CString::concat('(@Result ', vtype.rtype.value, ')');
-            let icompute = CString::concat('(declare-const ', tname, ' ', vtype.rtype.value, ')');
+            let icompute = CString::concat('(declare-const ', tname, ' ', ttype, ')');
 
             return CString::join(' ', cdecl, icompute);
         }
@@ -939,8 +939,8 @@ function emitConstInitializerHelper(cname: CString, vtype: SMTAssembly::ResultTy
     else {
         let tname = CString::concat(cname, '-cc-temp');
         let tval = CString::concat('(assert (= ', tname, ' ', cval, '))');
-        let chk = CString::concat('(assert ((_ is @Result-ok ', vtype.rtype.value, ') ', tname, '))');
-        let asgn = CString::concat('(assert (= ', cname, ' (@Result-value', tname, ')))');
+        let chk = CString::concat('(assert ((_ is @Result-ok) ', tname, '))');
+        let asgn = CString::concat('(assert (= ', cname, ' (@Result-value ', tname, ')))');
 
         return CString::join('%n;', tval, chk, asgn);
     }

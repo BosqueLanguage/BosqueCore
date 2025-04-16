@@ -447,12 +447,18 @@ entity SMTTransformer {
             | BSQAssembly::ReturnSingleStatement => {
                 let rctx, smtexp = this.transformExpressionToSMT($tailop.value, ctx);
 
-                if(ctx.mayErrorReturn && smtexp?<SafeResult>) {
-                    lop = SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT($tailop.rtype), smtexp@<SafeResult>.exp}};
+                if(smtexp)@<ErrorResult> {
+                    lop = SMTAssembly::ReturnOperation{$smtexp.exp};
                 }
                 else {
-                    lop = SMTAssembly::ReturnOperation{smtexp@<ErrorResult>.exp};
+                    if(!ctx.mayErrorReturn) {
+                        lop = SMTAssembly::ReturnOperation{$smtexp.exp};
+                    }
+                    else {
+                        lop = SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT($tailop.rtype), $smtexp.exp}};
+                    }
                 }
+
                 lctx = rctx;
             }
             | BSQAssembly::ReturnMultiStatement => {
@@ -486,11 +492,17 @@ entity SMTTransformer {
             }
             | BSQAssembly::ExpressionBodyImplementation => {
                 let rctx, smtexp = this.transformExpressionToSMT($impl.exp, ctx);
-                if(ctx.mayErrorReturn && smtexp?<SafeResult>) {
-                    return SMTAssembly::Body{SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(ttype), smtexp@<SafeResult>.exp}}, rctx.errors};
+
+                if(smtexp)@<ErrorResult> {
+                    return SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
                 }
                 else {
-                    return SMTAssembly::Body{SMTAssembly::ReturnOperation{smtexp@<ErrorResult>.exp}, rctx.errors};
+                    if(!ctx.mayErrorReturn) {
+                        return SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
+                    }
+                    else {
+                        return SMTAssembly::Body{SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(ttype), $smtexp.exp}}, rctx.errors};
+                    }
                 }
             }
             | BSQAssembly::StandardBodyImplementation => {
@@ -515,25 +527,32 @@ entity SMTTransformer {
         return SMTAssembly::NamespaceFunctionDecl{ nskey, decl.name.value, ikey, params, artype, body };
     }
 
-    method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
-        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
-        let nctx, eres = this.transformExpressionToSMT(decl.value, ctx);
+    method processConstExpression(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::Body {
+        let rctx, smtexp = this.transformExpressionToSMT(exp, ctx);
+        
+        if(smtexp)@<ErrorResult> {
+            return SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
+        }
+        else {
+            return SMTAssembly::Body{SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $smtexp.exp}}, rctx.errors};
+        }
+    }
 
+    method transformNamspaceConstDeclToSMT(decl: BSQAssembly::NamespaceConstDecl): SMTAssembly::NamespaceConstDecl {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let vtype = SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
 
-        let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{eres@<ErrorResult>.exp}, nctx.errors};
+        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let body = this.processConstExpression(decl.value, ctx);
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body };
     }
 
     method transformTypeConstDeclToSMT(decl: BSQAssembly::ConstMemberDecl): SMTAssembly::ConstMemberDecl {
-        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
-        let nctx, eres = this.transformExpressionToSMT(decl.value, ctx);
-
         let tkey = TransformNameManager::convertTypeKey(decl.declaredInType.tkeystr);
         let vtype = SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
 
-        let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{eres@<ErrorResult>.exp}, nctx.errors};
+        let ctx = SMTTransformerCtx{true, decl.file, none, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let body = this.processConstExpression(decl.value, ctx);
         return SMTAssembly::ConstMemberDecl{ tkey, decl.name.value, vtype, body };
     }
 
