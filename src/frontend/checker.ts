@@ -1073,7 +1073,7 @@ class TypeChecker {
 
     private checkLiteralCCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
-            const vc = exp.value.slice(2, 3); // extract literal
+            const vc = exp.value.slice(2, -1); // extract literal
             exp.resolvedValue = vc;
         } catch(err) {
             this.reportError(exp.sinfo, (err as Error).message);

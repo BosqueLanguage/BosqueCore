@@ -602,7 +602,7 @@ class Lexer {
     static _s_validCStringChars = /^[ -~\t\n]*$/;
     private tryLexCChar(): boolean {
         let ncpos = this.jsStrPos;
-        if(!this.input.startsWith("b'", this.jsStrPos)) {
+        if(!this.input.startsWith("b'", this.jsStrPos)) { // Byte char
             return false;
         }
         ncpos += 2;
@@ -623,7 +623,7 @@ class Lexer {
                 return true;
             }
 
-            if((jepos - ncpos) !== 1) {
+            if((jepos - ncpos) > 1) {
                 this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "More than one character in CChar literal");
                 this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
     

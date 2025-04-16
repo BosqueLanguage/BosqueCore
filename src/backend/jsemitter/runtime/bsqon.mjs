@@ -46,6 +46,7 @@ const s_coreTypes = {
     "DeltaISOTimestamp": true,
     "String": true, 
     "CString": true, 
+    "CChar": true,
     "Regex": true, 
     "CRegex": true, 
     "PathRegex": true,
@@ -96,6 +97,8 @@ const TokenStrings = {
     ByteBuffer: "[LITERAL_BYTEBUFFER]",
     UUIDValue: "[LITERAL_UUID]",
     ShaHashcode: "[LITERAL_SHA]",
+
+    CChar: "[LITERAL_CCHAR]",
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
@@ -599,6 +602,38 @@ BSQONLexer.prototype.tryLexCString = function() {
  * @returns {boolean}
  * @throws {ParserError}
  */
+BSQONLexer.prototype.tryLexCChar = function() {
+    if(!this.input.startsWith('b\'', this.jsStrPos)) {
+        return false;
+    }
+
+    let ncpos = this.jsStrPos + 2;
+        
+    let jepos = this.input.indexOf("'", ncpos);
+    if(jepos === -1) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated CChar literal");
+    }
+    
+    const mstr = this.input.slice(ncpos, jepos);
+    if(!_s_validCStringChars.test(mstr)) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in CChar literal");
+    }
+
+    if((jepos - ncpos) > 1) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "More than one character detected in CChar literal");
+    }
+
+    jepos++;
+    let strval = this.input.slice(this.jsStrPos, jepos);
+
+    this.updatePositionInfo(this.jsStrPos, jepos);
+    this.recordLexTokenWData(jepos, TokenStrings.CChar, strval);
+    return true;
+}
+/**
+ * @returns {boolean}
+ * @throws {ParserError}
+ */
 BSQONLexer.prototype.tryLexStringLike = function() {
     const us = this.tryLexUnicodeString();
     if(us) {
@@ -609,6 +644,20 @@ BSQONLexer.prototype.tryLexStringLike = function() {
     if(as) {
         return true;
     }
+
+    return false;
+}
+/**
+ * @returns {boolean}
+ * @throws {ParserError}
+ */
+BSQONLexer.prototype.tryLexCharLike = function() {
+    const cc = this.tryLexCChar();
+    if(cc) {
+        return true;
+    }
+
+    // TODO: Support unicode chars
 
     return false;
 }
@@ -744,6 +793,9 @@ BSQONLexer.prototype.lex = function() {
             //continue
         }
         else if(this.tryLexDateLike()) {
+            //continue
+        }
+        else if(this.tryLexCharLike()) {
             //continue
         }
         else if(this.tryLexStringLike()) {
@@ -1042,6 +1094,19 @@ BSQONParser.prototype.parseCString = function() {
  * @returns {any}
  * @throws {ParserError}
  */
+BSQONParser.prototype.parseCChar = function() {
+    const ss = this.consumeExpectedAndGetData(TokenStrings.CChar);
+    try {
+        return ss.slice(2, -1);
+    }
+    catch(e) {
+        throw new ParserError(this.peek().sinfo, "Invalid CChar literal");
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
 BSQONParser.prototype.parseByteBuffer = function() {
     NOT_IMPLEMENTED("parseByteBuffer");
 }
@@ -1227,6 +1292,9 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
     }
     else if(tkey === "CString") {
         return this.parseCString();
+    }
+    else if(tkey === "CChar") {
+        return this.parseCChar();
     }
     else if(tkey === "ByteBuffer") {
         return this.parseByteBuffer();
@@ -1780,6 +1848,13 @@ BSQONEmitter.prototype.emitCString = function(v) {
  * @param {any} v
  * @returns {string}
  */
+BSQONEmitter.prototype.emitCChar = function(v) {
+    return `'${v.toString()}'`;
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
 BSQONEmitter.prototype.emitByteBuffer = function(v) {
     NOT_IMPLEMENTED("emitByteBuffer");
 }
@@ -1965,6 +2040,9 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
     }
     else if(tkey === "CString") {
         return this.emitCString(v);
+    }
+    else if(tkey === "CChar") {
+        return this.emitCChar(v);
     }
     else if(tkey === "ByteBuffer") {
         return this.emitByteBuffer(v);
