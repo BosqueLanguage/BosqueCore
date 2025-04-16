@@ -188,6 +188,7 @@ enum ExpressionTag {
     LiteralCRegexExpression = "LiteralCRegexExpression",
 
     LiteralCCharExpression = "LiteralCCharExpression",
+    LiteralUnicodeCharExpression = "LiteralUnicodeCharExpression",
 
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",

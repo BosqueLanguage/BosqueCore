@@ -124,8 +124,8 @@ __internal __typedeclable __keycomparable entity CChar {
 }
 
 %** Unicode code point. **%
-%% __internal __typedeclable __keycomparable UnicodeChar { 
-%% }
+__internal __typedeclable __keycomparable entity UnicodeChar { 
+}
 
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {

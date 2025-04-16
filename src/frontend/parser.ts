@@ -43,7 +43,7 @@ const TokenStrings = {
     ShaHashcode: "[LITERAL_SHA]",
 
     CChar: "[LITERAL_CCHAR]",
-    // UnicodeChar: "[LITERAL_UNICODECHAR]",
+    UnicodeChar: "[LITERAL_UNICODECHAR]",
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
@@ -84,7 +84,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
-    "CChar", // "UnicodeChar",
+    "CChar", "UnicodeChar",
     "String", "CString", 
     "Regex", "CRegex", "PathRegex",
     "Path", "PathItem", "Glob"
@@ -566,7 +566,38 @@ class Lexer {
 
         return false;
     }
+    
+    private tryLexUnicodeChar(): boolean {
+        let ncpos = this.jsStrPos;
+        if(!this.input.startsWith("u'", this.jsStrPos)) {
+            return false;
+        }
+        ncpos += 2;
 
+        let jepos = this.input.indexOf("'", ncpos);
+        if(jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated UnicodeChar literal");
+            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            // TODO: Larger valid unicode chars (emojis) fail as they are mulitple chars, not confident on using external methods to parse these (large overhead?)
+            if((jepos - ncpos) > 1) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "More than one character detected in UnicodeChar literal");
+                this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+    
+                return true;
+            }
+            jepos++;
+            let strval = this.input.slice(this.jsStrPos, jepos);
+
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.UnicodeChar, strval);
+            return true;
+        }
+    }
+    
     private tryLexUnicodeString(): boolean {
         let ncpos = this.jsStrPos;
         let istemplate = false;
@@ -713,8 +744,10 @@ class Lexer {
             return true;
         }
 
-        // TODO: Add unicode char support (once cchar is ok)
-
+        const uc = this.tryLexUnicodeChar();
+        if(uc) {
+            return true;
+        }
         return false;
     }
 
@@ -3362,6 +3395,10 @@ class Parser {
         else if(tk === TokenStrings.CChar) {
             const cstr = this.consumeTokenAndGetValue();
             return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralCCharExpression, cstr);
+        }
+        else if(tk === TokenStrings.UnicodeChar) {
+            const cstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralUnicodeCharExpression, cstr);
         }
         else if(tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue();

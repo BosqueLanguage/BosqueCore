@@ -455,6 +455,10 @@ class JSEmitter {
     private emitLiteralCCharExpression(exp: LiteralSimpleExpression): string {
         return `'${exp.resolvedValue}'`;
     }
+        
+    private emitLiteralUnicodeCharExpression(exp: LiteralSimpleExpression): string {
+        return `'${exp.resolvedValue}'`;
+    }
 
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
         if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
@@ -1399,6 +1403,9 @@ class JSEmitter {
             }
             case ExpressionTag.LiteralCCharExpression: {
                 return this.emitLiteralCCharExpression(exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUnicodeCharExpression: {
+                return this.emitLiteralUnicodeCharExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);
