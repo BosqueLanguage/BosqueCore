@@ -32,8 +32,8 @@ datatype ResultType using {
     field rtype: TypeKey;
 }
 of
-DirectResult { }
-| PossibleErrorResult { }
+SafeResult { }
+| ErrorResult { }
 %% TODO -- later add inf on ref (etc.) stuff
 ;
 
