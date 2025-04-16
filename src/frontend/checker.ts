@@ -1071,6 +1071,17 @@ class TypeChecker {
         }
     }
 
+    private checkLiteralCCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+        try {
+            const vc = exp.value.slice(2, 3); // extract literal
+            exp.resolvedValue = vc;
+        } catch(err) {
+            this.reportError(exp.sinfo, (err as Error).message);
+        }
+
+        return exp.setType(this.getWellKnownType("CChar"));
+    }
+
     private checkLiteralStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
             const vs = validateStringLiteral(exp.value.slice(1, exp.value.length - 1));
@@ -2510,6 +2521,9 @@ class TypeChecker {
             }
             case ExpressionTag.LiteralCRegexExpression: {
                 return this.checkLiteralCRegexExpression(env, exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralCCharExpression: {
+                return this.checkLiteralCCharExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
@@ -4612,6 +4626,8 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "CChar", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "String", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "CString", wellknownTypes);

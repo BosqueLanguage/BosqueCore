@@ -452,6 +452,10 @@ class JSEmitter {
         return `'${restr}'`;
     }
     
+    private emitLiteralCCharExpression(exp: LiteralSimpleExpression): string {
+        return `'${exp.resolvedValue}'`;
+    }
+
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
         if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
             return `"${exp.resolvedValue}"`;
@@ -1392,6 +1396,9 @@ class JSEmitter {
             }
             case ExpressionTag.LiteralCRegexExpression: {
                 return this.emitLiteralCRegexExpression(exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralCCharExpression: {
+                return this.emitLiteralCCharExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);
