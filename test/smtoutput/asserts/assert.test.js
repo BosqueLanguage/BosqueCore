@@ -11,7 +11,7 @@ describe ("SMT -- simple abort", () => {
 
 describe ("SMT -- simple assert", () => {
     it("should SMT eval simple assert (ok)", function () {
-        runishMainCodeUnsat("public function main(): Int { assert true; return 1i; }", "(declare-const a (@Result Int)) (assert (= a Main@main)) (assert (not (= (@Result-ok 1) a)))");
+        runishMainCodeUnsat("public function main(): Int { assert true; return 1i; }", "(declare-const a Int) (assert (= a Main@main)) (assert (not (= 1 a)))");
     });
 
     it("should SMT eval error assert (fail)", function () {
