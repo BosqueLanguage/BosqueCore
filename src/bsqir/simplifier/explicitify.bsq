@@ -75,7 +75,7 @@ entity ExplicitifyTransform {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
+    recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
         var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
         let lhstype = this.assembly.lookupNominalTypeDeclaration(nlhs.etype.tkeystr);
@@ -141,6 +141,22 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processBinaryNumericExpression(e: BinaryNumericExpression, vmap: VarMapping): Expression {
+        var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(nlhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            nlhs = TypeDeclPrimitiveFieldAccessExpression{ nlhs.sinfo, $lhstype.valuetype, nlhs };
+        }
+
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(nrhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            nrhs = TypeDeclPrimitiveFieldAccessExpression{ nrhs.sinfo, $rhstype.valuetype, nrhs };
+        }
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -177,7 +193,7 @@ entity ExplicitifyTransform {
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
-            | BinaryNumericExpression => { abort; }
+            | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
             | IfExpression => { abort; }

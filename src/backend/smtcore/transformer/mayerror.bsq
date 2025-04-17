@@ -48,6 +48,10 @@ entity MayErrorAnalysis {
         }
     }
 
+    recursive function processBinaryNumericExpression(e: BSQAssembly::BinaryNumericExpression): Bool {
+        return MayErrorAnalysis::processBinaryArgs(e.lhs, e.rhs);
+    }
+
     recursive function processExpression(e: BSQAssembly::Expression): Bool {
         match(e)@ {
             BSQAssembly::LiteralNoneExpression => { return false; }
@@ -80,11 +84,11 @@ entity MayErrorAnalysis {
             | BSQAssembly::CreateDirectExpression => { abort; }
             | BSQAssembly::PostfixOp => { abort; }
             | BSQAssembly::UnaryExpression => { abort; }
-            | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processBinaryArithExpression($e); }
-            | BSQAssembly::BinaryKeyEqExpression => { return MayErrorAnalysis::processBinaryKeyEqExpression($e); }
+            | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processBinaryArithExpression[recursive]($e); }
+            | BSQAssembly::BinaryKeyEqExpression => { return MayErrorAnalysis::processBinaryKeyEqExpression[recursive]($e); }
             | BSQAssembly::KeyCmpEqualExpression => { abort; }
             | BSQAssembly::KeyCmpLessExpression => { abort; }
-            | BSQAssembly::BinaryNumericExpression => { abort; }
+            | BSQAssembly::BinaryNumericExpression => { return MayErrorAnalysis::processBinaryNumericExpression[recursive]($e); }
             | BSQAssembly::BinLogicExpression => { abort; }
             | BSQAssembly::MapEntryConstructorExpression => { abort; }
             | BSQAssembly::IfExpression => { abort; }

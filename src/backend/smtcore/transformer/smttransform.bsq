@@ -331,6 +331,34 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformBinaryNumericCompareExpression(exp: BSQAssembly::BinaryNumericExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
+
+        var opexp: SMTAssembly::SafeExpression;
+        match(exp)@ {
+            BSQAssembly::NumericEqExpression => { 
+                opexp = SMTAssembly::NumericEqExpression{lexp, rexp}; 
+            }
+            | BSQAssembly::NumericNeqExpression => { 
+                opexp = SMTAssembly::NumericNeqExpression{lexp, rexp}; 
+            }
+            | BSQAssembly::NumericLessExpression => { 
+                opexp = SMTAssembly::NumericLessExpression{lexp, rexp}; 
+            }
+            | BSQAssembly::NumericLessEqExpression => { 
+                opexp = SMTAssembly::NumericLessEqExpression{lexp, rexp}; 
+            }
+            | BSQAssembly::NumericGreaterExpression => { 
+                opexp = SMTAssembly::NumericGreaterExpression{lexp, rexp}; 
+            }
+            | BSQAssembly::NumericGreaterEqExpression => { 
+                opexp = SMTAssembly::NumericGreaterEqExpression{lexp, rexp}; 
+            }
+        }
+
+        return nctx, this.wrapOperationResult(exp.etype, opexp, obinds);
+    }
+
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -353,6 +381,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::BinaryKeyEqExpression => { 
                 return this.transformBinaryKeyEqExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::BinaryNumericExpression => { 
+                return this.transformBinaryNumericCompareExpression[recursive]($exp, ctx);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED

@@ -187,6 +187,14 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processBinaryNumericExpression(e: BinaryNumericExpression): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        %%TODO: here is where we would like to do some algebraic simplification
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -223,7 +231,7 @@ entity ConstantSimplification {
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
-            | BinaryNumericExpression => { abort; }
+            | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
             | IfExpression => { abort; }
