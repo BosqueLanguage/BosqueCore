@@ -92,7 +92,7 @@ entity SMTTransformer {
         }
     }
 
-    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)> {
+    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
         if(subexp)@<SafeResult> {
             return $subexp.exp, ctx, none;
         }
@@ -101,7 +101,7 @@ entity SMTTransformer {
             let vname = SMTAssembly::VarIdentifier::from(CString::concat('@tmp-', mtag));
             let rexp = SMTAssembly::UnwrapFromResultExpression{$subexp.oftype, vname};
 
-            return rexp, ctx[tempCtr = $tempCtr + 1n], some((|$subexp.exp, vname|));
+            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>{(|$subexp.exp, vname|)});
         }
     }
 
@@ -197,10 +197,10 @@ entity SMTTransformer {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
 
-    recursive method transformPostfixAccessFromName(exp: BSQAssembly::PostfixAccessFromName, bexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTExpTransformResult, SMTTransformerCtx {
+    recursive method transformPostfixAccessFromName(exp: BSQAssembly::PostfixAccessFromName, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         if(this.assembly.isNominalTypeConcrete(exp.baseType.tkeystr)) {
             let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-            let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(exp.declaredInType.tkey), exp.name.value, onarg};
+            let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(exp.declaredInType.tkeystr), exp.name.value, onarg};
 
             return nctx, this.wrapOperationResult(exp.ftype, accessop, obinds);
         }
@@ -211,11 +211,11 @@ entity SMTTransformer {
 
     recursive method transformPostfixOp(exp: BSQAssembly::PostfixOp, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let ebase, nctx, obinds = this.processUnaryArg[recursive](exp.rootExp, ctx);
-        let eexp = if(ebase)@<SMTAssembly::SafeExpression> then this.wrapOperationResult(exp.rootExp.etype, $ebase, obinds) else this.wrapOperationResultWErr(exp.rootExp.etype, $ebase, obinds);
+        let eexp = this.wrapOperationResult(exp.rootExp.etype, ebase, obinds);
 
-        let rres = exp.ops.reduce[recursive]<(|SMTExpTransformResult, SMTTransformerCtx|)>((|ebase, nctx|), recursive fn(pstate, op) => {
+        let rres = exp.ops.reduce[recursive]<(|SMTTransformerCtx, SMTExpTransformResult|)>((|nctx, eexp|), recursive fn(pstate, op) => {
             match(op)@ {
-                BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName[recursive]($op); }
+                BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName[recursive]($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
                 | BSQAssembly::PostfixAccessFromIndex => { abort; }
                 | BSQAssembly::PostfixIsTest => { abort; }

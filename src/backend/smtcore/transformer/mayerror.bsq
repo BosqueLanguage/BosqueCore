@@ -16,8 +16,8 @@ entity MayErrorAnalysis {
         return \/(MayErrorAnalysis::processExpression(lhs), MayErrorAnalysis::processExpression(rhs));
     }
 
-    recursive method processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
-        let baseerr = this.processUnaryArg[recursive](e.rootExp);
+    recursive function processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
+        let baseerr = MayErrorAnalysis::processUnaryArg[recursive](e.rootExp);
         if(baseerr) {
             return true;
         }

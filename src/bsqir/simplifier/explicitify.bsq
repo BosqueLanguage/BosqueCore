@@ -91,7 +91,7 @@ entity ExplicitifyTransform {
             }
         });
 
-        return PostfixOp{ ebase, ops };
+        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
     recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
@@ -378,7 +378,29 @@ entity ExplicitifyTransform {
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
-        abort;
+        return EntityTypeDecl{
+            file=etype.file,
+            sinfo=etype.sinfo,
+            declaredInNS=etype.declaredInNS,
+            
+            tkey=etype.tkey,
+
+            invariants: List<InvariantDecl>;
+            validates: List<ValidateDecl>;
+
+            absmethods=etype.absmethods,
+            virtmethods=etype.virtmethods,
+            overmethods=etype.overmethods,
+            staticmethods=etype.staticmethods,
+
+            saturatedProvides=etype.saturatedProvides,
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+
+    field allInvariants: List<SaturatedInvariantInfo>;
+    field allValidates: List<SaturatedInvariantInfo>;
+
+    field fields: List<MemberFieldDecl>;
+        };
     }
 
     method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {

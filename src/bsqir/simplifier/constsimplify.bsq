@@ -100,7 +100,7 @@ entity ConstantSimplification {
             }
         });
 
-        return PostfixOp{ ebase, ops };
+        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
     recursive method processBinaryArithExpression(e: BinaryArithExpression): Expression {
