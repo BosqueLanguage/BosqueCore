@@ -397,11 +397,11 @@ entity SMTTransformer {
     }
 
     method transformAssertStatement(stmt: BSQAssembly::AssertStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
-        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.cond, ctx);
         
         if(smtexp)@<SafeResult> {
             let aop = SMTAssembly::AssertOperation{$smtexp.exp, ctx.errCtr, tail};
-            return ctx.addError($tailop.sinfo), aop;
+            return ctx.addError(stmt.sinfo), aop;
         }
         else {
             abort;

@@ -330,7 +330,7 @@ entity Assembly {
     }
 
     method isBoolType(t: TypeSignature): Bool {
-        return t.tkeystr === "Bool";
+        return t.tkeystr === 'Bool'<TypeKey>;
     }
 
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {

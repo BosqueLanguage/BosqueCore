@@ -9,6 +9,10 @@ entity ConstantSimplification {
     const trueExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'true' };
     const falseExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'false' };
 
+    function isTerminalStatement(stmt: Statement): Bool {
+        return \/(stmt?<ReturnVoidStatement>, stmt?<ReturnSingleStatement>, stmt?<ReturnMultiStatement>, stmt?<AbortStatement>);
+    }
+
     recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
         match(exp)@ {
             AccessNamespaceConstantExpression => {
@@ -230,10 +234,10 @@ entity ConstantSimplification {
         let ncond = this.processExpression(s.cond);
         
         if(ncond)@!<LiteralSimpleExpression> {
-            return s[cond = ncond];
+            return s[cond = $ncond];
         }
         else {
-            if(ncond.value === 'true') {
+            if($ncond.value === 'true') {
                 return EmptyStatement{ s.sinfo };
             }
             else{
@@ -304,10 +308,19 @@ entity ConstantSimplification {
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
-        const stmts = stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+        let _, nstmts = stmts.reduce[recursive]<(|Bool, List<Statement>|)>((|false, List<Statement>{}|), recursive fn(rvi, stmt) => {
+            if(rvi.0) {
+                return rvi;
+            }
+            else {
+                let pcc = this.processStatement[recursive](stmt);
+                let done = ConstantSimplification::isTerminalStatement(pcc);
 
-        %%check to see if we had a dead code collapse -- find for terminal ops -- returns & abort drop all code that follows
-        xxxx;
+                return (|done, rvi.1.pushBack(pcc)|);
+            }
+        });
+
+        return nstmts;
     }
 
     method processBodyImpl(body: BodyImplementation): BodyImplementation {
