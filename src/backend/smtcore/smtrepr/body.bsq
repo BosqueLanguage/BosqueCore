@@ -3,7 +3,13 @@ namespace SMTAssembly;
 const varidentifierRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
 type VarIdentifier = CString of SMTAssembly::varidentifierRE;
 
+concept Expression {
+}
+
 concept CallArgExpression {
+}
+
+concept SafeExpression provides Expression, CallArgExpression {
 }
 
 entity LambdaConstructor provides CallArgExpression {
@@ -13,10 +19,7 @@ entity LambdaConstructor provides CallArgExpression {
     field body: Body;
 }
 
-concept Expression provides CallArgExpression {
-}
-
-datatype ConstantExpression provides Expression
+datatype ConstantExpression provides SafeExpression
 of
 LiteralNoneExpression { }
 | LiteralSimpleExpression {
@@ -37,170 +40,175 @@ LiteralNoneExpression { }
 }
 ;
 
-entity AccessNamespaceConstantExpression provides Expression {
+entity AccessNamespaceConstantExpression provides SafeExpression {
     field ns: NamespaceKey;
     field name: CString;
 }
 
-entity AccessStaticFieldExpression provides Expression {
+entity AccessStaticFieldExpression provides SafeExpression {
     field tresolved: TypeKey;
     field name: CString;
 }
 
-entity AccessEnumExpression provides Expression {
+entity AccessEnumExpression provides SafeExpression {
     field enumtype: TypeKey;
     field name: CString;
 }
 
-entity AccessVariableExpression provides Expression {
+entity AccessVariableExpression provides SafeExpression {
     field vname: VarIdentifier;
 }
 
-entity TermifyExpression provides Expression {
+entity TermifyExpression provides SafeExpression {
     field value: Expression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
 
-entity UntermifyExpression provides Expression {
+entity UntermifyExpression provides SafeExpression {
     field value: Expression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
 
-entity LiteralTypeDeclExpression provides Expression {
+entity LiteralTypeDeclExpression provides SafeExpression {
     field value: ConstantExpression;
     field constype: TypeKey;
 }
 
 %% Assume that checks are always inlined explicitly 
-datatype ConstructorPrimaryExpression provides Expression using {
+datatype ConstructorPrimaryExpression provides SafeExpression using {
     field constype: TypeKey;
 }
 of 
 ConstructorListSingletonsExpression { 
     field oftype: TypeKey;
-    field args: List<Expression>;
+    field args: List<SafeExpression>;
 }
 | ConstructorMapSingletonsExpression { 
     field oftype: TypeKey;
-    field args: List<Expression>;
+    field args: List<SafeExpression>;
 }
 | ConstructorPrimarySpecialConstructableExpression { 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 | ConstructorTypeDeclExpression { 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 | ConstructorStdExpression { 
-    field args: List<Expression>;
+    field args: List<SafeExpression>;
 }
 ;
 
-entity ConstructorEListExpression provides Expression {
+entity ConstructorEListExpression provides SafeExpression {
     field constype: TypeKey;
-    field args: List<Expression>;
+    field args: List<SafeExpression>;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field name: CString;
 
-    field args: List<Expression>;
+    field args: List<CallArgExpression>;
+}
+
+entity CallLambdaFunctionExpression provides Expression {
+    field lambda: VarIdentifier;
+    field args: List<CallArgExpression>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
     field resolvedType: TypeKey;
     field name: CString;
     
-    field args: List<Expression>;
+    field args: List<CallArgExpression>;
 }
 
-entity LogicActionAndExpression provides Expression {
-    field args: List<Expression>;
+entity LogicActionAndExpression provides SafeExpression {
+    field args: List<SafeExpression>;
 
     invariant $args.size() >= 2n;
 }
 
-entity LogicActionOrExpression provides Expression {
-    field args: List<Expression>;
+entity LogicActionOrExpression provides SafeExpression {
+    field args: List<SafeExpression>;
 
     invariant $args.size() >= 2n;
 }
 
-entity LogicActionImpliesExpression provides Expression {
-    field argl: Expression;
-    field argr: Expression;
+entity LogicActionImpliesExpression provides SafeExpression {
+    field argl: SafeExpression;
+    field argr: SafeExpression;
 }
 
-entity UnwrapTypeDeclToPrimitiveExpression provides Expression {
+entity UnwrapTypeDeclToPrimitiveExpression provides SafeExpression {
     field decltype: TypeKey;
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity AccessFromNameResolvedExpression provides Expression {
+entity AccessFromNameResolvedExpression provides SafeExpression {
     field ontype: TypeKey;
     field name: CString;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity AccessFromIndexExpression provides Expression {
+entity AccessFromIndexExpression provides SafeExpression {
     field elisttype: TypeKey;
     field idx: CString;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity IsNoneTestExpression provides Expression {
-    field arg: Expression;
+entity IsNoneTestExpression provides SafeExpression {
+    field arg: SafeExpression;
 }
 
-entity IsSomeTestExpression provides Expression {
-    field arg: Expression;
+entity IsSomeTestExpression provides SafeExpression {
+    field arg: SafeExpression;
 }
 
-entity IsTypeTestExpression provides Expression {
+entity IsTypeTestExpression provides SafeExpression {
     field istype: TypeKey;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity IsSubtypeTestExpression provides Expression {
+entity IsSubtypeTestExpression provides SafeExpression {
     field oftype: TypeKey;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity ConvertOptionToSomeTExpression provides Expression {
+entity ConvertOptionToSomeTExpression provides SafeExpression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity ConvertResultToOkTExpression provides Expression {
+entity ConvertResultToOkTExpression provides SafeExpression {
     field resulttype: TypeKey;
     field oktype: TypeKey;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
-entity ConvertResultToFailEExpression provides Expression {
+entity ConvertResultToFailEExpression provides SafeExpression {
     field resulttype: TypeKey;
     field failtype: TypeKey;
 
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
 entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: TypeKey;
     field name: CString;
-    field rootExp: Expression;
-    field args: List<Expression>;
+    field rootExp: SafeExpression;
+    field args: List<CallArgExpression>;
 }
 
-datatype UnaryExpression provides Expression using {
+datatype UnaryExpression provides SafeExpression using {
     field exp: Expression;
 }
 of
@@ -209,7 +217,7 @@ PrefixNotOpExpression { }
 | PrefixPlusOpExpression { }
 ;
 
-datatype BinaryArithExpression provides Expression using {
+datatype BinaryArithExpression provides SafeExpression using {
     field lhs: Expression;
     field rhs: Expression;
 }
@@ -220,35 +228,35 @@ BinAddExpression { }
 | BinDivExpression {field useUninterpreted: Bool; }
 ;
 
-datatype BinaryKeyEqExpression provides Expression 
+datatype BinaryKeyEqExpression provides SafeExpression 
 of
 BinKeyEqNoneExpression { 
-    field exp: Expression;
+    field exp: SafeExpression;
 }
 | BinKeyNotEqNoneExpression { 
-    field exp: Expression;
+    field exp: SafeExpression;
 }
 | BinKeySomeEqExpression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
 
-    field eoption: Expression;
-    field val: Expression;
+    field eoption: SafeExpression;
+    field val: SafeExpression;
 }
 | BinKeyNotSomeEqExpression {
     field optiontype: TypeKey;
     field sometype: TypeKey;
     
-    field eoption: Expression;
-    field val: Expression;
+    field eoption: SafeExpression;
+    field val: SafeExpression;
 }
 | BinKeyEqExpression{
-    field lhs: Expression;
-    field rhs: Expression;
+    field lhs: SafeExpression;
+    field rhs: SafeExpression;
 }
 | BinKeyNotEqExpression {
-    field lhs: Expression;
-    field rhs: Expression;
+    field lhs: SafeExpression;
+    field rhs: SafeExpression;
 }
 ;
 
@@ -261,16 +269,16 @@ enum KeyLessKind {
     KeyDataInfo
 }
 
-entity KeyLessExpression provides Expression {
+entity KeyLessExpression provides SafeExpression {
     field kind: KeyLessKind;
 
-    field lhs: Expression;
-    field rhs: Expression;
+    field lhs: SafeExpression;
+    field rhs: SafeExpression;
 }
 
-datatype BinaryNumericCompareExpression provides Expression using {
-    field lhs: Expression;
-    field rhs: Expression;
+datatype BinaryNumericCompareExpression provides SafeExpression using {
+    field lhs: SafeExpression;
+    field rhs: SafeExpression;
 }
 of
 NumericEqExpression { }
@@ -281,23 +289,23 @@ NumericEqExpression { }
 | NumericGreaterEqExpression { }
 ;
 
-entity MapEntryConstructorExpression provides Expression {
+entity MapEntryConstructorExpression provides SafeExpression {
     field constype: TypeKey;
 
-    field kexp: Expression;
-    field vexp: Expression;
+    field kexp: SafeExpression;
+    field vexp: SafeExpression;
 }
 
-entity LetExpression provides Expression {
+entity LetExpression provides SafeExpression {
     field vbind: VarIdentifier;
-    field value: Expression;
-    field body: Expression;
+    field value: SafeExpression;
+    field inexp: SafeExpression;
 }
 
-entity IfThenElseExpression provides Expression {
-    field iftest: Expression;
-    field trueexp: Expression;
-    field falseexp: Expression;
+entity IfThenElseSafeExpression provides SafeExpression {
+    field iftest: SafeExpression;
+    field trueexp: SafeExpression;
+    field falseexp: SafeExpression;
 }
 
 entity AbortExpression provides Expression {
@@ -305,20 +313,26 @@ entity AbortExpression provides Expression {
     field label: Nat;
 }
 
-entity UnwrapFromResultExpression provides Expression {
+entity UnwrapFromResultExpression provides SafeExpression {
     field etype: TypeKey;
-    field arg: Expression;
+    field varg: VarIdentifier;
 }
 
-entity WrapIntoResultExpression provides Expression {
+entity WrapIntoResultExpression provides SafeExpression {
     field etype: TypeKey;
-    field arg: Expression;
+    field arg: SafeExpression;
 }
 
 entity ConvertResultExpression provides Expression {
     field etype: TypeKey;
     field intotype: TypeKey;
     field arg: Expression;
+}
+
+entity IfThenElseExpression provides Expression {
+    field iftest: SafeExpression;
+    field trueexp: Expression;
+    field falseexp: Expression;
 }
 
 entity LetWErrorsExpression provides Expression {
@@ -340,21 +354,22 @@ entity AbortOperation provides Operation {
 }
 
 entity AssertOperation provides Operation {
-    field cond: Expression;
+    field cond: SafeExpression;
     field label: Nat;
 
     field inop: Operation;
 }
 
 entity AssumeOperation provides Operation {
-    field cond: Expression;
+    field cond: SafeExpression;
 
     field inop: Operation;
 }
 
 entity LetOperation provides Operation {
     field vbind: VarIdentifier;
-    field value: Expression;
+    field vtype: TypeKey;
+    field value: SafeExpression;
 
     field inop: Operation;
 }
@@ -362,13 +377,14 @@ entity LetOperation provides Operation {
 entity LetOperationWError provides Operation {
     field vebind: VarIdentifier;
     field vbind: VarIdentifier;
+    field vtype: TypeKey;
     field value: Expression;
 
     field inop: Operation;
 }
 
 entity IfThenElseOperation provides Operation {
-    field iftest: Expression;
+    field iftest: SafeExpression;
     field trueop: Operation;
     field falseop: Operation;
 }

@@ -9,6 +9,10 @@ entity ConstantSimplification {
     const trueExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'true' };
     const falseExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'false' };
 
+    function isTerminalStatement(stmt: Statement): Bool {
+        return \/(stmt?<ReturnVoidStatement>, stmt?<ReturnSingleStatement>, stmt?<ReturnMultiStatement>, stmt?<AbortStatement>);
+    }
+
     recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
         match(exp)@ {
             AccessNamespaceConstantExpression => {
@@ -78,6 +82,25 @@ entity ConstantSimplification {
         else {
             return $sexp;
         }
+    }
+
+    recursive method processPostfixOp(e: PostfixOp): Expression {
+        let ebase = this.processUnaryArg[recursive](e.rootExp);
+        let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
+            match(op)@ {
+                PostfixAccessFromName => { return $op; }
+                | PostfixProjectFromNames => { abort; }
+                | PostfixAccessFromIndex => { abort; }
+                | PostfixIsTest => { abort; }
+                | PostfixAsConvert => { abort; }
+                | PostfixAssignFields => { abort; }
+                | PostfixInvokeStatic => { abort; }
+                | PostfixInvokeVirtual => { abort; }
+                | PostfixLiteralKeyAccess => { abort; }
+            }
+        });
+
+        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
     recursive method processBinaryArithExpression(e: BinaryArithExpression): Expression {
@@ -183,6 +206,14 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processBinaryNumericExpression(e: BinaryNumericExpression): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        %%TODO: here is where we would like to do some algebraic simplification
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -213,22 +244,62 @@ entity ConstantSimplification {
             | CoerceWidenTypeExpression => { abort; }
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
-            | PostfixOp => { abort; }
+            | PostfixOp => { return this.processPostfixOp[recursive]($e); }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
-            | BinaryNumericExpression => { abort; }
+            | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
             | IfExpression => { abort; }
         }
     }
 
+    method processAssertStatement(s: AssertStatement): Statement {
+        let ncond = this.processExpression(s.cond);
+        
+        if(ncond)@!<LiteralSimpleExpression> {
+            return s[cond = $ncond];
+        }
+        else {
+            if($ncond.value === 'true') {
+                return EmptyStatement{ s.sinfo };
+            }
+            else{
+                return AbortStatement{ s.sinfo };
+            }
+        }
+    }
+
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
-            ReturnVoidStatement => {
+            VariableDeclarationStatement => {
+                return s;
+            }
+            | VariableMultiDeclarationStatement => {
+                return s;
+            }
+            | VariableInitializationStatement => {
+                return $s[exp = this.processExpression($exp)];
+            }
+            | VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableAssignmentStatement => {
+                return $s[exp = this.processExpression($exp)];
+            }
+            | VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | ReturnVoidStatement => {
                 return s;
             }
             | ReturnSingleStatement => {
@@ -236,6 +307,12 @@ entity ConstantSimplification {
             }
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
+            }
+            | AbortStatement => {
+                return s;
+            }
+            | AssertStatement => {
+                return this.processAssertStatement($s);
             }
         }
     }
@@ -249,16 +326,40 @@ entity ConstantSimplification {
         }
     }
 
+    method processInvariant(iiv: InvariantDecl): InvariantDecl {
+        let ee = this.processExpression(iiv.exp);
+        return iiv[exp=ee];
+    }
+
+    method processValidate(vv: ValidateDecl): ValidateDecl {
+        let ee = this.processExpression(vv.exp);
+        return vv[exp=ee];
+    }
+
     method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
-        abort;
+        let ee = this.processExpression(precond.exp);
+        return precond[exp=ee];
     }
 
     method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
-        abort;
+        let ee = this.processExpression(postcond.exp);
+        return postcond[exp=ee];
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
-        return stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+        let _, nstmts = stmts.reduce[recursive]<(|Bool, List<Statement>|)>((|false, List<Statement>{}|), recursive fn(rvi, stmt) => {
+            if(rvi.0) {
+                return rvi;
+            }
+            else {
+                let pcc = this.processStatement[recursive](stmt);
+                let done = ConstantSimplification::isTerminalStatement(pcc);
+
+                return (|done, rvi.1.pushBack(pcc)|);
+            }
+        });
+
+        return nstmts;
     }
 
     method processBodyImpl(body: BodyImplementation): BodyImplementation {
@@ -277,6 +378,16 @@ entity ConstantSimplification {
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
         let evalue = this.processExpression(typeconst.value);
         return typeconst[value=evalue];
+    }
+
+    method processMemberFieldDecl(fd: MemberFieldDecl): MemberFieldDecl {
+        if($dv=fd.defaultValue)@none {
+            return fd;
+        }
+        else {
+            let dvalue = this.processExpression($dv);
+            return fd[defaultValue=some(dvalue)];
+        }
     }
 
     method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
@@ -342,7 +453,29 @@ entity ConstantSimplification {
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
-        abort;
+        return EntityTypeDecl{
+            file=etype.file,
+            sinfo=etype.sinfo,
+            declaredInNS=etype.declaredInNS,
+            
+            tkey=etype.tkey,
+
+            invariants=etype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=etype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=etype.absmethods,
+            virtmethods=etype.virtmethods,
+            overmethods=etype.overmethods,
+            staticmethods=etype.staticmethods,
+
+            saturatedProvides=etype.saturatedProvides,
+            saturatedBFieldInfo=etype.saturatedBFieldInfo,
+
+            allInvariants=etype.allInvariants,
+            allValidates=etype.allValidates,
+
+            fields=etype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd))
+        };
     }
 
     method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {

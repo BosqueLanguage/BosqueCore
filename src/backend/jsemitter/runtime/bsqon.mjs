@@ -1519,25 +1519,37 @@ BSQONParser.prototype.checkConsType = function(tkey) {
     }
 }
 /**
+ * @param {string} fname
  * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parseSingleArg = function(tkey) {
+BSQONParser.prototype.parseSingleArg = function(fname, tkey) {
     this.consumeExpected(SYM_lbrace);
+
+    if(this.testTokens(TokenStrings.IdentifierName, SYM_eq)) {
+        const nval = this.consumeAndGetData();
+        this.consume();
+
+        if(nval !== fname) {
+            throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
+        }
+    }
+
     const res = this.parseValue(tkey);
     this.consumeExpected(SYM_rbrace);
 
     return res;
 }
 /**
+ * @param {string} fname
  * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
  */
 BSQONParser.prototype.parseSingleOrDefaultArg = function(tkey) {
     this.consumeExpected(SYM_lbrace);
-    const res = !this.test(SYM_rbrace) ? this.parseValue(tkey) : undefined;
+    const res = !this.test(SYM_rbrace) ? this.parseSingleArg(fname, tkey) : undefined;
     this.consumeExpected(SYM_rbrace);
 
     return res;

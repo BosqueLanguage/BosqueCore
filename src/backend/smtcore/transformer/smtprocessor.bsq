@@ -7,6 +7,8 @@ declare namespace SMTEmitter {
     using SMTAssembly;
 }
 
+const s_ignoreErrTrgt: Nat = 0n;
+
 entity Transformer {
     function transformAssembly(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
         let explicitAssembly = BSQAssembly::ExplicitifyTransform::process(assembly);

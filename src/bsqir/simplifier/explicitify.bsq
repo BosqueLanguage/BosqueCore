@@ -54,6 +54,15 @@ entity ExplicitifyTransform {
         }
     }
 
+    method processExplicitBoolConvertAsNeeded(e: Expression): Expression {
+        if(this.assembly.isBoolType(e.etype)) {
+            return e;
+        }
+        else {
+            abort;
+        }
+    }
+
     recursive method processArgs(args: List<Expression>, vmap: VarMapping): List<Expression> {
         return args.map<Expression>(recursive fn(arg) => this.processExpression[recursive](arg, vmap));
     }
@@ -66,7 +75,26 @@ entity ExplicitifyTransform {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
-    method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
+    recursive method processPostfixOp(e: PostfixOp, vmap: VarMapping): Expression {
+        let ebase = this.processUnaryArg[recursive](e.rootExp, vmap);
+        let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
+            match(op)@ {
+                PostfixAccessFromName => { return $op; }
+                | PostfixProjectFromNames => { abort; }
+                | PostfixAccessFromIndex => { abort; }
+                | PostfixIsTest => { abort; }
+                | PostfixAsConvert => { abort; }
+                | PostfixAssignFields => { abort; }
+                | PostfixInvokeStatic => { abort; }
+                | PostfixInvokeVirtual => { abort; }
+                | PostfixLiteralKeyAccess => { abort; }
+            }
+        });
+
+        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
+    }
+
+    recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
         var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
         let lhstype = this.assembly.lookupNominalTypeDeclaration(nlhs.etype.tkeystr);
@@ -132,6 +160,22 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processBinaryNumericExpression(e: BinaryNumericExpression, vmap: VarMapping): Expression {
+        var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(nlhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            nlhs = TypeDeclPrimitiveFieldAccessExpression{ nlhs.sinfo, $lhstype.valuetype, nlhs };
+        }
+
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(nrhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            nrhs = TypeDeclPrimitiveFieldAccessExpression{ nrhs.sinfo, $rhstype.valuetype, nrhs };
+        }
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -162,13 +206,13 @@ entity ExplicitifyTransform {
             | CoerceWidenTypeExpression => { abort; }
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
-            | PostfixOp => { abort; }
+            | PostfixOp => { return this.processPostfixOp[recursive]($e, vmap); }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
-            | BinaryNumericExpression => { abort; }
+            | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
             | IfExpression => { abort; }
@@ -177,7 +221,40 @@ entity ExplicitifyTransform {
 
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
-            ReturnVoidStatement => {
+            EmptyStatement => {
+                return s;
+            }
+            | VariableDeclarationStatement => {
+                return s;
+            }
+            | VariableMultiDeclarationStatement => {
+                return s;
+            }
+            | VariableInitializationStatement => {
+                let nr = this.processExpression($s.exp, vmap);
+                let nc = this.processCoerceTypeAsNeeded(nr, $s.vtype);
+                
+                return VariableInitializationStatement{ $s.sinfo, $s.name, $s.vtype, nc };
+            }
+            | VariableMultiInitializationExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiInitializationImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableAssignmentStatement => {
+                let nr = this.processExpression($s.exp, vmap);
+                let nc = this.processCoerceTypeAsNeeded(nr, $s.vtype);
+
+                return VariableAssignmentStatement{ $s.sinfo, $s.name, $s.vtype, nc };
+            }
+            | VariableMultiAssignmentExplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | VariableMultiAssignmentImplicitStatement => {
+                abort; %% NOT IMPLEMENTED
+            }
+            | ReturnVoidStatement => {
                 return s;
             }
             | ReturnSingleStatement => {
@@ -187,6 +264,14 @@ entity ExplicitifyTransform {
             }
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
+            }
+            | AbortStatement => {
+                return s;
+            }
+            | AssertStatement => {
+                let nr = this.processExpression($s.cond, vmap);
+                let nc = this.processExplicitBoolConvertAsNeeded(nr);
+                return $s[cond = nc];
             }
         }
     }
@@ -200,12 +285,24 @@ entity ExplicitifyTransform {
         }
     }
 
+    method processInvariant(iiv: InvariantDecl): InvariantDecl {
+        let ee = this.processExpression(iiv.exp, VarMapping::createEmpty());
+        return iiv[exp=ee];
+    }
+
+    method processValidate(vv: ValidateDecl): ValidateDecl {
+        let ee = this.processExpression(vv.exp, VarMapping::createEmpty());
+        return vv[exp=ee];
+    }
+
     method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
-        abort;
+        let ee = this.processExpression(precond.exp, VarMapping::createEmpty());
+        return precond[exp=ee];
     }
 
     method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
-        abort;
+        let ee = this.processExpression(postcond.exp, VarMapping::createEmpty());
+        return postcond[exp=ee];
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement> {
@@ -228,6 +325,16 @@ entity ExplicitifyTransform {
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
         let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty());
         return typeconst[value=evalue];
+    }
+
+    method processMemberFieldDecl(fd: MemberFieldDecl): MemberFieldDecl {
+        if($dv=fd.defaultValue)@none {
+            return fd;
+        }
+        else {
+            let dvalue = this.processExpression($dv, VarMapping::createEmpty());
+            return fd[defaultValue=some(dvalue)];
+        }
     }
 
     method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
@@ -293,7 +400,29 @@ entity ExplicitifyTransform {
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
-        abort;
+        return EntityTypeDecl{
+            file=etype.file,
+            sinfo=etype.sinfo,
+            declaredInNS=etype.declaredInNS,
+            
+            tkey=etype.tkey,
+
+            invariants=etype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=etype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=etype.absmethods,
+            virtmethods=etype.virtmethods,
+            overmethods=etype.overmethods,
+            staticmethods=etype.staticmethods,
+
+            saturatedProvides=etype.saturatedProvides,
+            saturatedBFieldInfo=etype.saturatedBFieldInfo,
+
+            allInvariants=etype.allInvariants,
+            allValidates=etype.allValidates,
+
+            fields=etype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd))
+        };
     }
 
     method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {

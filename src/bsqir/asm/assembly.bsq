@@ -329,6 +329,10 @@ entity Assembly {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractConceptTypeDecl>;
     }
 
+    method isBoolType(t: TypeSignature): Bool {
+        return t.tkeystr === 'Bool'<TypeKey>;
+    }
+
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
         return t1.tkeystr === t2.tkeystr;
     }

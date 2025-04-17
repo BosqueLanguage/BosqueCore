@@ -32,8 +32,8 @@ datatype ResultType using {
     field rtype: TypeKey;
 }
 of
-DirectResult { }
-| PossibleErrorResult { }
+SafeResult { }
+| ErrorResult { }
 %% TODO -- later add inf on ref (etc.) stuff
 ;
 
@@ -219,7 +219,6 @@ entity Assembly {
     
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
-    field allfuncs: List<InvokeKey>;
     
     field enums: List<EnumTypeDecl>;
     field typedecls: List<TypedeclTypeDecl>;
@@ -234,5 +233,7 @@ entity Assembly {
 
     field datatypes: List<DatatypeTypeDecl>;
 
+    field allfuncs: List<InvokeKey>;
+    
     validate $allfuncs.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }

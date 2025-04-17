@@ -150,7 +150,7 @@ function generatePropertiesObject(smtcomponents: string, properties: {pkey: stri
     });
 }
 
-function execishMainCodeWUnsat(code: string, smtop: string) {
+function execishMainCode(code: string, smtop: string) {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-smttest-"));
 
     let result = "";
@@ -220,9 +220,15 @@ function checkAllProperties(code: string, properties: {pkey: string, expected: s
 }
 
 function runishMainCodeUnsat(code: string, smtop: string) {
-    const result = execishMainCodeWUnsat(code, smtop);
+    const result = execishMainCode(code, smtop);
 
     assert.equal(wsnorm(result), "unsat");
+}
+
+function runishMainCodeSat(code: string, smtop: string) {
+    const result = execishMainCode(code, smtop);
+
+    assert.equal(wsnorm(result), "sat");
 }
 
 function checkProperties(code: string, eproperties: {pkey: string, expected: string}[]) {
@@ -232,5 +238,5 @@ function checkProperties(code: string, eproperties: {pkey: string, expected: str
 }
 
 export {
-    runishMainCodeUnsat, checkProperties
+    runishMainCodeUnsat, runishMainCodeSat, checkProperties
 };
