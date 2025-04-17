@@ -75,7 +75,7 @@ entity SMTTransformer {
         }
         else {
             if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
-                return SMTAssembly::TypeKey::from($tsig.tkeystr);
+                return TransformNameManager::convertTypeKey($tsig.tkeystr);
             }
             else {
                 return SMTAssembly::TypeKey::from('@BTerm');
@@ -654,6 +654,18 @@ entity SMTTransformer {
         return SMTAssembly::ConstMemberDecl{ tkey, decl.name.value, vtype, body };
     }
 
+    method transformFieldInfoToSMT(finfo: BSQAssembly::SaturatedFieldInfo): SMTAssembly::FieldInfo {
+        return SMTAssembly::FieldInfo{finfo.fname.value, this.transformStdTypeToSMT(finfo.ftype)};
+    }
+
+    method transformEntityDeclToSMT(decl: BSQAssembly::EntityTypeDecl): SMTAssembly::EntityTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+        let termable = !decl.saturatedProvides.empty();
+        let finfo = decl.saturatedBFieldInfo.map<SMTAssembly::FieldInfo>(fn(f) => this.transformFieldInfoToSMT(f));
+
+        return SMTAssembly::EntityTypeDecl{ tkey, termable, finfo };
+    }
+
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly};
 
@@ -666,6 +678,10 @@ entity SMTTransformer {
                     return acc.insert(smtdecl.invokeKey, smtdecl);
                 });
 
+        let tentities = assembly.allconcretetypes
+            .filter(pred(tkey) => assembly.entities.has(tkey))
+            .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(assembly.entities.get(tkey)));
+
         let tallfuncs = assembly.allfuncs.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
 
         return SMTAssembly::Assembly {
@@ -677,20 +693,21 @@ entity SMTTransformer {
     
             nsfuncs = tnsfuncs,
             typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{},
-            allfuncs = tallfuncs,
     
             enums = List<SMTAssembly::EnumTypeDecl>{},
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},
             constructables = List<SMTAssembly::ConstructableTypeDecl>{},
             collections = List<SMTAssembly::CollectionTypeDecl>{},
 
-            entities = List<SMTAssembly::EntityTypeDecl>{},
+            entities = tentities,
             datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{},
 
             pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{},
             concepts = List<SMTAssembly::ConceptTypeDecl>{},
 
-            datatypes = List<SMTAssembly::DatatypeTypeDecl>{}
+            datatypes = List<SMTAssembly::DatatypeTypeDecl>{},
+
+            allfuncs = tallfuncs
         };
     }
 }

@@ -285,12 +285,24 @@ entity ExplicitifyTransform {
         }
     }
 
+    method processInvariant(iiv: InvariantDecl): InvariantDecl {
+        let ee = this.processExpression(iiv.exp, VarMapping::createEmpty());
+        return iiv[exp=ee];
+    }
+
+    method processValidate(vv: ValidateDecl): ValidateDecl {
+        let ee = this.processExpression(vv.exp, VarMapping::createEmpty());
+        return vv[exp=ee];
+    }
+
     method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
-        abort;
+        let ee = this.processExpression(precond.exp, VarMapping::createEmpty());
+        return precond[exp=ee];
     }
 
     method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
-        abort;
+        let ee = this.processExpression(postcond.exp, VarMapping::createEmpty());
+        return postcond[exp=ee];
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>, vmap: VarMapping): List<Statement> {
@@ -313,6 +325,16 @@ entity ExplicitifyTransform {
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
         let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty());
         return typeconst[value=evalue];
+    }
+
+    method processMemberFieldDecl(fd: MemberFieldDecl): MemberFieldDecl {
+        if($dv=fd.defaultValue)@none {
+            return fd;
+        }
+        else {
+            let dvalue = this.processExpression($dv, VarMapping::createEmpty());
+            return fd[defaultValue=some(dvalue)];
+        }
     }
 
     method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
@@ -385,8 +407,8 @@ entity ExplicitifyTransform {
             
             tkey=etype.tkey,
 
-            invariants: List<InvariantDecl>;
-            validates: List<ValidateDecl>;
+            invariants=etype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=etype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
 
             absmethods=etype.absmethods,
             virtmethods=etype.virtmethods,
@@ -394,12 +416,12 @@ entity ExplicitifyTransform {
             staticmethods=etype.staticmethods,
 
             saturatedProvides=etype.saturatedProvides,
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+            saturatedBFieldInfo=etype.saturatedBFieldInfo,
 
-    field allInvariants: List<SaturatedInvariantInfo>;
-    field allValidates: List<SaturatedInvariantInfo>;
+            allInvariants=etype.allInvariants,
+            allValidates=etype.allValidates,
 
-    field fields: List<MemberFieldDecl>;
+            fields=etype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd))
         };
     }
 

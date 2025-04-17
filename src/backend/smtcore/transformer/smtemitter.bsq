@@ -1150,7 +1150,7 @@ function emitEntityTypeDeclConstructor(ttype: SMTAssembly::EntityTypeDecl): CStr
     }
     else {
         let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
-        return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
+        return CString::concat('        ((', consname, ' ', CString::joinAll(' ', consfields), '))');
     }
 }
 
@@ -1181,7 +1181,7 @@ function emitDatatypeMemberEntityTypeDeclConstructor(ttype: SMTAssembly::Datatyp
     }
     else {
         let consfields = ttype.allfields.map<CString>(fn(f) => CString::concat('(', SMTNameManager::generateStructFieldName(ttype.tkey, f.fname), ' ', f.ftype.value, ')'));
-        return CString::concat('        (', consname, ' ', CString::joinAll(' ', consfields), ')');
+        return CString::concat('        ((', consname, ' ', CString::joinAll(' ', consfields), '))');
     }
 }
 

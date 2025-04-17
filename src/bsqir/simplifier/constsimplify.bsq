@@ -326,12 +326,24 @@ entity ConstantSimplification {
         }
     }
 
+    method processInvariant(iiv: InvariantDecl): InvariantDecl {
+        let ee = this.processExpression(iiv.exp);
+        return iiv[exp=ee];
+    }
+
+    method processValidate(vv: ValidateDecl): ValidateDecl {
+        let ee = this.processExpression(vv.exp);
+        return vv[exp=ee];
+    }
+
     method processPrecondition(precond: PreConditionDecl): PreConditionDecl {
-        abort;
+        let ee = this.processExpression(precond.exp);
+        return precond[exp=ee];
     }
 
     method processPostcondition(postcond: PostConditionDecl): PostConditionDecl {
-        abort;
+        let ee = this.processExpression(postcond.exp);
+        return postcond[exp=ee];
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
@@ -366,6 +378,16 @@ entity ConstantSimplification {
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
         let evalue = this.processExpression(typeconst.value);
         return typeconst[value=evalue];
+    }
+
+    method processMemberFieldDecl(fd: MemberFieldDecl): MemberFieldDecl {
+        if($dv=fd.defaultValue)@none {
+            return fd;
+        }
+        else {
+            let dvalue = this.processExpression($dv);
+            return fd[defaultValue=some(dvalue)];
+        }
     }
 
     method processNamespaceFunctionDecl(nsfunc: NamespaceFunctionDecl): NamespaceFunctionDecl {
@@ -431,7 +453,29 @@ entity ConstantSimplification {
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
-        abort;
+        return EntityTypeDecl{
+            file=etype.file,
+            sinfo=etype.sinfo,
+            declaredInNS=etype.declaredInNS,
+            
+            tkey=etype.tkey,
+
+            invariants=etype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=etype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=etype.absmethods,
+            virtmethods=etype.virtmethods,
+            overmethods=etype.overmethods,
+            staticmethods=etype.staticmethods,
+
+            saturatedProvides=etype.saturatedProvides,
+            saturatedBFieldInfo=etype.saturatedBFieldInfo,
+
+            allInvariants=etype.allInvariants,
+            allValidates=etype.allValidates,
+
+            fields=etype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd))
+        };
     }
 
     method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
