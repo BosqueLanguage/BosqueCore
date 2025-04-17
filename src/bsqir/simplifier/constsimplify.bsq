@@ -84,6 +84,25 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processPostfixOp(e: PostfixOp): Expression {
+        let ebase = this.processUnaryArg[recursive](e.rootExp);
+        let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
+            match(op)@ {
+                PostfixAccessFromName => { return $op; }
+                | PostfixProjectFromNames => { abort; }
+                | PostfixAccessFromIndex => { abort; }
+                | PostfixIsTest => { abort; }
+                | PostfixAsConvert => { abort; }
+                | PostfixAssignFields => { abort; }
+                | PostfixInvokeStatic => { abort; }
+                | PostfixInvokeVirtual => { abort; }
+                | PostfixLiteralKeyAccess => { abort; }
+            }
+        });
+
+        return PostfixOp{ ebase, ops };
+    }
+
     recursive method processBinaryArithExpression(e: BinaryArithExpression): Expression {
         let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
 
@@ -225,7 +244,7 @@ entity ConstantSimplification {
             | CoerceWidenTypeExpression => { abort; }
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
-            | PostfixOp => { abort; }
+            | PostfixOp => { return this.processPostfixOp[recursive]($e); }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }

@@ -92,6 +92,19 @@ entity SMTTransformer {
         }
     }
 
+    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)> {
+        if(subexp)@<SafeResult> {
+            return $subexp.exp, ctx, none;
+        }
+        else {
+            let mtag = ctx.tempCtr.toCString();
+            let vname = SMTAssembly::VarIdentifier::from(CString::concat('@tmp-', mtag));
+            let rexp = SMTAssembly::UnwrapFromResultExpression{$subexp.oftype, vname};
+
+            return rexp, ctx[tempCtr = $tempCtr + 1n], some((|$subexp.exp, vname|));
+        }
+    }
+
     method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
         if(subexps.allOf(pred(etr) => etr?<SafeResult>)) {
             return subexps.map<SMTAssembly::SafeExpression>(fn(etr) => etr@<SafeResult>.exp), ctx, none;
@@ -182,6 +195,39 @@ entity SMTTransformer {
 
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(exp.vname.value))};
+    }
+
+    recursive method transformPostfixAccessFromName(exp: BSQAssembly::PostfixAccessFromName, bexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTExpTransformResult, SMTTransformerCtx {
+        if(this.assembly.isNominalTypeConcrete(exp.baseType.tkeystr)) {
+            let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+            let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(exp.declaredInType.tkey), exp.name.value, onarg};
+
+            return nctx, this.wrapOperationResult(exp.ftype, accessop, obinds);
+        }
+        else {
+            abort; %% NOT IMPLEMENTED
+        }
+    }
+
+    recursive method transformPostfixOp(exp: BSQAssembly::PostfixOp, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let ebase, nctx, obinds = this.processUnaryArg[recursive](exp.rootExp, ctx);
+        let eexp = if(ebase)@<SMTAssembly::SafeExpression> then this.wrapOperationResult(exp.rootExp.etype, $ebase, obinds) else this.wrapOperationResultWErr(exp.rootExp.etype, $ebase, obinds);
+
+        let rres = exp.ops.reduce[recursive]<(|SMTExpTransformResult, SMTTransformerCtx|)>((|ebase, nctx|), recursive fn(pstate, op) => {
+            match(op)@ {
+                BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName[recursive]($op); }
+                | BSQAssembly::PostfixProjectFromNames => { abort; }
+                | BSQAssembly::PostfixAccessFromIndex => { abort; }
+                | BSQAssembly::PostfixIsTest => { abort; }
+                | BSQAssembly::PostfixAsConvert => { abort; }
+                | BSQAssembly::PostfixAssignFields => { abort; }
+                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeVirtual => { abort; }
+                | BSQAssembly::PostfixLiteralKeyAccess => { abort; }
+            }
+        });
+
+        return rres;
     }
 
     recursive method transformBinAddExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -375,6 +421,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 
+            }
+            | BSQAssembly::PostfixOp => { 
+                return this.transformPostfixOp[recursive]($exp, ctx);
             }
             | BSQAssembly::BinaryArithExpression => { 
                 return this.transformBinaryArithExpression[recursive]($exp, ctx);

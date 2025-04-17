@@ -75,6 +75,25 @@ entity ExplicitifyTransform {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
+    recursive method processPostfixOp(e: PostfixOp, vmap: VarMapping): Expression {
+        let ebase = this.processUnaryArg[recursive](e.rootExp, vmap);
+        let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
+            match(op)@ {
+                PostfixAccessFromName => { return $op; }
+                | PostfixProjectFromNames => { abort; }
+                | PostfixAccessFromIndex => { abort; }
+                | PostfixIsTest => { abort; }
+                | PostfixAsConvert => { abort; }
+                | PostfixAssignFields => { abort; }
+                | PostfixInvokeStatic => { abort; }
+                | PostfixInvokeVirtual => { abort; }
+                | PostfixLiteralKeyAccess => { abort; }
+            }
+        });
+
+        return PostfixOp{ ebase, ops };
+    }
+
     recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
         var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
@@ -187,7 +206,7 @@ entity ExplicitifyTransform {
             | CoerceWidenTypeExpression => { abort; }
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
-            | PostfixOp => { abort; }
+            | PostfixOp => { return this.processPostfixOp[recursive]($e, vmap); }
             | UnaryExpression => { abort; }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }

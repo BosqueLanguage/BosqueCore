@@ -16,6 +16,28 @@ entity MayErrorAnalysis {
         return \/(MayErrorAnalysis::processExpression(lhs), MayErrorAnalysis::processExpression(rhs));
     }
 
+    recursive method processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
+        let baseerr = this.processUnaryArg[recursive](e.rootExp);
+        if(baseerr) {
+            return true;
+        }
+        else {
+            return e.ops.someOf[recursive](recursive pred(op) => {
+                match(op)@ {
+                    BSQAssembly::PostfixAccessFromName => { return false; }
+                    | BSQAssembly::PostfixProjectFromNames => { return false; }
+                    | BSQAssembly::PostfixAccessFromIndex => { return false; }
+                    | BSQAssembly::PostfixIsTest => { return false; }
+                    | BSQAssembly::PostfixAsConvert => { return true; }
+                    | BSQAssembly::PostfixAssignFields => { abort; }
+                    | BSQAssembly::PostfixInvokeStatic => { abort; }
+                    | BSQAssembly::PostfixInvokeVirtual => { abort; }
+                    | BSQAssembly::PostfixLiteralKeyAccess => { return false; }
+                }
+            });
+        }
+    }
+
     function maySubtractionUnderflow(e: BSQAssembly::BinaryArithExpression): Bool {
         if(e)!<BSQAssembly::BinSubExpression> {
             return false;
@@ -82,7 +104,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::CoerceWidenTypeExpression => { abort; }
             | BSQAssembly::SafeConvertExpression => { abort; }
             | BSQAssembly::CreateDirectExpression => { abort; }
-            | BSQAssembly::PostfixOp => { abort; }
+            | BSQAssembly::PostfixOp => { return MayErrorAnalysis::processPostfixOp[recursive]($e); }
             | BSQAssembly::UnaryExpression => { abort; }
             | BSQAssembly::BinaryArithExpression => { return MayErrorAnalysis::processBinaryArithExpression[recursive]($e); }
             | BSQAssembly::BinaryKeyEqExpression => { return MayErrorAnalysis::processBinaryKeyEqExpression[recursive]($e); }
