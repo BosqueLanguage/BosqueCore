@@ -566,15 +566,15 @@ class Lexer {
 
         return false;
     }
-    
+
     private tryLexUnicodeChar(): boolean {
         let ncpos = this.jsStrPos;
-        if(!this.input.startsWith("u'", this.jsStrPos)) {
+        if(!this.input.startsWith('c"', this.jsStrPos)) {
             return false;
         }
         ncpos += 2;
 
-        let jepos = this.input.indexOf("'", ncpos);
+        let jepos = this.input.indexOf('"', ncpos);
         if(jepos === -1) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated UnicodeChar literal");
             this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
@@ -582,16 +582,10 @@ class Lexer {
             return true;
         }
         else {
-            // TODO: Larger valid unicode chars (emojis) fail as they are mulitple chars, not confident on using external methods to parse these (large overhead?)
-            if((jepos - ncpos) > 1) {
-                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "More than one character detected in UnicodeChar literal");
-                this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
-    
-                return true;
-            }
+            // Defer checking for single character to type checker
             jepos++;
             let strval = this.input.slice(this.jsStrPos, jepos);
-
+            
             this.updatePositionInfo(this.jsStrPos, jepos);
             this.recordLexTokenWData(jepos, TokenStrings.UnicodeChar, strval);
             return true;
@@ -633,12 +627,12 @@ class Lexer {
     static _s_validCStringChars = /^[ -~\t\n]*$/;
     private tryLexCChar(): boolean {
         let ncpos = this.jsStrPos;
-        if(!this.input.startsWith("b'", this.jsStrPos)) { // Byte char
+        if(!this.input.startsWith('c\'', this.jsStrPos)) { // Byte char
             return false;
         }
         ncpos += 2;
 
-        let jepos = this.input.indexOf("'", ncpos);
+        let jepos = this.input.indexOf('\'', ncpos);
         if(jepos === -1) {
             this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated CChar literal");
             this.recordLexToken(this.jsStrEnd, TokenStrings.Error);

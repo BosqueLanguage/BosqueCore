@@ -123,7 +123,7 @@ __internal __typedeclable __numeric entity Complex {
 __internal __typedeclable __keycomparable entity CChar {
 }
 
-%** Unicode code point. **%
+%** 32-bit unicode character. **%
 __internal __typedeclable __keycomparable entity UnicodeChar { 
 }
 

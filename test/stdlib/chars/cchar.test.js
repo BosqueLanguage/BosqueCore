@@ -5,20 +5,26 @@ import { describe, it } from "node:test";
 
 describe ("test char creation", () => {
     it("cchar create", function () {
-        runMainCode("public function main(): CChar { return b''; }", "''"); 
-        runMainCode("public function main(): CChar { return b'z'; }", "'z'");
+        runMainCode("public function main(): CChar { return c''; }", "''"); 
+        runMainCode("public function main(): CChar { return c'z'; }", "'z'");
+    });
+    it("cchar fail multiple", function () { // Caught by type checker
+        runMainCodeError("public function main(): CChar { return c'aa'; }", "[FAILED TO BUILD ASSEMBLY] public function main(): CChar { return c'aa'; }");
     });
     it("cchar equality", function () {
-        runMainCode("public function main(): Bool { return b'a' === b'a'; }", "true"); 
-        runMainCode("public function main(): Bool { return b'a' !== b'a'; }", "false");
+        runMainCode("public function main(): Bool { return c'a' === c'a'; }", "true"); 
+        runMainCode("public function main(): Bool { return c'a' !== c'a'; }", "false");
     });
     it("unicodechar create", function () {
-        runMainCode("public function main(): UnicodeChar { return u'a'; }", "'a'");
-        runMainCode("public function main(): UnicodeChar { return u''; }", "''"); 
-        runMainCode("public function main(): UnicodeChar { return u'星'; }", "'星'");
+        runMainCode("public function main(): UnicodeChar { return c\"a\"; }", "\"a\"");
+        runMainCode("public function main(): UnicodeChar { return c\"\"; }", "\"\""); 
+        runMainCode("public function main(): UnicodeChar { return c\"星\"; }", "\"星\"");
+    });
+    it("unicodechar fail multiple", function () {
+        runMainCodeError("public function main(): UnicodeChar { return c\"a星\"; }", "[FAILED TO BUILD ASSEMBLY] public function main(): UnicodeChar { return c\"a星\"; }");
     });
     it("unicodechar equality", function () {
-        runMainCode("public function main(): Bool { return u'a' === u'a'; }", "true");
-        runMainCode("public function main(): Bool { return u'星' !== u'星'; }", "false"); 
+        runMainCode("public function main(): Bool { return c\"a\" === c\"a\"; }", "true");
+        runMainCode("public function main(): Bool { return c\"星\" !== c\"星\"; }", "false"); 
     });
 });

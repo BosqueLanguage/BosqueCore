@@ -457,7 +457,7 @@ class JSEmitter {
     }
         
     private emitLiteralUnicodeCharExpression(exp: LiteralSimpleExpression): string {
-        return `'${exp.resolvedValue}'`;
+        return `"${exp.resolvedValue}"`;
     }
 
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {

@@ -261,6 +261,14 @@ class BSQIREmitter {
         assert(false, "Not implemented -- LiteralCRegex");
     }
     
+    private emitLiteralCCharExpression(exp: LiteralSimpleExpression): string {
+        return `BSQAssembly::LiteralCCharExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`
+    }
+
+    private emitLiteralUnicodeCharExpression(exp: LiteralSimpleExpression): string {
+        return `BSQAssembly::LiteralUnicodeCharExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`
+    }
+
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
         return `BSQAssembly::LiteralCStringExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`;
     }
@@ -806,6 +814,12 @@ class BSQIREmitter {
             }
             case ExpressionTag.LiteralCRegexExpression: {
                 return this.emitLiteralCRegexExpression(exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralCCharExpression: {
+                return this.emitLiteralCCharExpression(exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUnicodeCharExpression: {
+                return this.emitLiteralUnicodeCharExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);

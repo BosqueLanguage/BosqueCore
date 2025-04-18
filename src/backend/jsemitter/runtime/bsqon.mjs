@@ -554,13 +554,13 @@ BSQONLexer.prototype.tryLexHashCode = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexCChar = function() {
-    if(!this.input.startsWith('b\'', this.jsStrPos)) {
+    if(!this.input.startsWith('c\'', this.jsStrPos)) {
         return false;
     }
 
     let ncpos = this.jsStrPos + 2;
         
-    let jepos = this.input.indexOf("'", ncpos);
+    let jepos = this.input.indexOf('\'', ncpos);
     if(jepos === -1) {
         this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated CChar literal");
     }
@@ -586,24 +586,14 @@ BSQONLexer.prototype.tryLexCChar = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexUnicodeChar = function() {
-    if(!this.input.startsWith('u\'', this.jsStrPos)) {
+    if(!this.input.startsWith('c\"', this.jsStrPos)) {
         return false;
     }
-
     let ncpos = this.jsStrPos + 2;
         
-    let jepos = this.input.indexOf("'", ncpos);
+    let jepos = this.input.indexOf('\"', ncpos);
     if(jepos === -1) {
         this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated UnicodeChar literal");
-    }
-    
-    const mstr = this.input.slice(ncpos, jepos);
-    if(!_s_validCStringChars.test(mstr)) {
-        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in UnicodeChar literal");
-    }
-
-    if((jepos - ncpos) > 1) {
-        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "More than one character detected in UnicodeChar literal");
     }
 
     jepos++;
@@ -641,7 +631,7 @@ BSQONLexer.prototype.tryLexUnicodeString = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexCString = function() {
-    if(!this.input.startsWith('\'', this.jsStrPos)) {
+    if(!this.input.startsWith("'", this.jsStrPos)) {
         return false;
     }
 
@@ -1895,7 +1885,7 @@ BSQONEmitter.prototype.emitCChar = function(v) {
  * @returns {string}
  */
 BSQONEmitter.prototype.emitUnicodeChar = function(v) {
-    return `'${v.toString()}'`;
+    return `"${v.toString()}"`;
 }
 /**
  * @param {any} v
