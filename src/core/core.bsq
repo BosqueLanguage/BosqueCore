@@ -119,6 +119,14 @@ __internal __typedeclable entity LatLongCoordinate {
 __internal __typedeclable __numeric entity Complex {
 }
 
+%** C-Style 8-bit ascii char. **%
+__internal __typedeclable __keycomparable entity CChar {
+}
+
+%** 32-bit unicode character. **%
+__internal __typedeclable __keycomparable entity UnicodeChar { 
+}
+
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {
     #if STRIPPED_CORE

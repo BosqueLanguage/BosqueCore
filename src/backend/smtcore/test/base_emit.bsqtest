@@ -39,4 +39,3 @@ chktest test_emitLiteralStringValue_ok(): Bool {
     let op = LiteralStringValue{'hello world'};
     return emitConstantValue(op) === '"hello world"';
 }
-

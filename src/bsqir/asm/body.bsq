@@ -53,6 +53,14 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
+entity LiteralCCharExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralUnicodeCharExpression provides Expression {
+    field value: String;
+}
+
 entity LiteralCStringExpression provides Expression {
     field value: CString;
 }

@@ -42,6 +42,9 @@ const TokenStrings = {
     UUIDValue: "[LITERAL_UUID]",
     ShaHashcode: "[LITERAL_SHA]",
 
+    CChar: "[LITERAL_CCHAR]",
+    UnicodeChar: "[LITERAL_UNICODECHAR]",
+
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
@@ -81,6 +84,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
+    "CChar", "UnicodeChar",
     "String", "CString", 
     "Regex", "CRegex", "PathRegex",
     "Path", "PathItem", "Glob"
@@ -563,6 +567,31 @@ class Lexer {
         return false;
     }
 
+    private tryLexUnicodeChar(): boolean {
+        let ncpos = this.jsStrPos;
+        if(!this.input.startsWith('c"', this.jsStrPos)) {
+            return false;
+        }
+        ncpos += 2;
+
+        let jepos = this.input.indexOf('"', ncpos);
+        if(jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated UnicodeChar literal");
+            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            // Defer checking for single character to type checker
+            jepos++;
+            let strval = this.input.slice(this.jsStrPos, jepos);
+            
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.UnicodeChar, strval);
+            return true;
+        }
+    }
+    
     private tryLexUnicodeString(): boolean {
         let ncpos = this.jsStrPos;
         let istemplate = false;
@@ -596,6 +625,45 @@ class Lexer {
     }
 
     static _s_validCStringChars = /^[ -~\t\n]*$/;
+    private tryLexCChar(): boolean {
+        let ncpos = this.jsStrPos;
+        if(!this.input.startsWith('c\'', this.jsStrPos)) { // Byte char
+            return false;
+        }
+        ncpos += 2;
+
+        let jepos = this.input.indexOf('\'', ncpos);
+        if(jepos === -1) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated CChar literal");
+            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            const mstr = this.input.slice(ncpos, jepos);
+            if(!Lexer._s_validCStringChars.test(mstr)) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in CChar literal");
+                this.recordLexToken(jepos, TokenStrings.Error);
+
+                return true;
+            }
+
+            if((jepos - ncpos) > 1) {
+                this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "More than one character in CChar literal");
+                this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
+    
+                return true;
+            }
+
+            jepos++;
+            let strval = this.input.slice(this.jsStrPos, jepos);
+
+            this.updatePositionInfo(this.jsStrPos, jepos);
+            this.recordLexTokenWData(jepos, TokenStrings.CChar, strval);
+            return true;
+        }
+    }
+
     private tryLexCString(): boolean {
         let ncpos = this.jsStrPos;
         let istemplate = false;
@@ -662,6 +730,19 @@ class Lexer {
 
             return true;
         }
+    }
+
+    private tryLexCharLike() {
+        const cc = this.tryLexCChar();
+        if(cc) {
+            return true;
+        }
+
+        const uc = this.tryLexUnicodeChar();
+        if(uc) {
+            return true;
+        }
+        return false;
     }
 
     private tryLexStringLike() {
@@ -998,6 +1079,9 @@ class Lexer {
                     //continue
                 }
                 else if(this.tryLexDateLike()) {
+                    //continue
+                }
+                else if(this.tryLexCharLike()) {
                     //continue
                 }
                 else if(this.tryLexStringLike()) {
@@ -3301,6 +3385,14 @@ class Parser {
         else if(tk === TokenStrings.Regex) {
             const rstr = this.consumeTokenAndGetValue();
             return new LiteralRegexExpression(rstr.endsWith("/") ? ExpressionTag.LiteralUnicodeRegexExpression : ExpressionTag.LiteralCRegexExpression, sinfo, rstr);
+        }
+        else if(tk === TokenStrings.CChar) {
+            const cstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralCCharExpression, cstr);
+        }
+        else if(tk === TokenStrings.UnicodeChar) {
+            const cstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralUnicodeCharExpression, cstr);
         }
         else if(tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue();

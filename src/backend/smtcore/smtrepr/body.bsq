@@ -26,6 +26,12 @@ LiteralNoneExpression { }
     field vtype: TypeKey;
     field value: CString;
 }
+| LiteralCCharExpression {
+    field value: CString;
+}
+| LiteralUnicodeCharExpression {
+    field value: CString;
+}
 | LiteralCStringExpression {
     field value: CString;
 }

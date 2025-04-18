@@ -182,7 +182,9 @@ const _$fkeq = {
     "BigInt": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "BigNat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "String": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
-    "CString": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); }
+    "CString": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "CChar": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
+    "UnicodeChar": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); }
 };
 
 const _$fkeqopt = {
@@ -193,7 +195,9 @@ const _$fkeqopt = {
     "BigInt": function(v1, v2) { return v1._$isSome() && _$fkeq.BigInt(v1.value, v2); },
     "BigNat": function(v1, v2) { return v1._$isSome() && _$fkeq.BigNat(v1.value, v2); },
     "String": function(v1, v2) { return v1._$isSome() && _$fkeq.String(v1.value, v2); },
-    "CString": function(v1, v2) { return v1._$isSome() && _$fkeq.CString(v1.value, v2); }
+    "CString": function(v1, v2) { return v1._$isSome() && _$fkeq.CString(v1.value, v2); },
+    "CChar": function(v1, v2) { return v1._$isSome() && _$fkeq.CChar(v1.value, v2); },
+    "UnicodeChar": function(v1, v2) { return v1._$isSome() && _$fkeq.UnicodeChar(v1.value, v2); }
 };
 
 const _$fkneq = {
@@ -204,7 +208,9 @@ const _$fkneq = {
     "BigInt": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "BigNat": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
     "String": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
-    "CString": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); }
+    "CString": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "CChar": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); },
+    "UnicodeChar": function(v1, v2) { return _$opubx(v1) !== _$opubx(v2); }
 };
 
 const _$fkneqopt = {
@@ -215,7 +221,9 @@ const _$fkneqopt = {
     "BigInt": function(v1, v2) { return v1._$isNone() || _$fkneq.BigInt(v1.value, v2); },
     "BigNat": function(v1, v2) { return v1._$isNone() || _$fkneq.BigNat(v1.value, v2); },
     "String": function(v1, v2) { return v1._$isNone() || _$fkneq.String(v1.value, v2); },
-    "CString": function(v1, v2) { return v1._$isNone() || _$fkneq.CString(v1.value, v2); }
+    "CString": function(v1, v2) { return v1._$isNone() || _$fkneq.CString(v1.value, v2); },
+    "CChar": function(v1, v2) { return v1._$isNone() || _$fkneq.CChar(v1.value, v2); },
+    "UnicodeChar": function(v1, v2) { return v1._$isNone() || _$fkneq.UnicodeChar(v1.value, v2); }
 };
 
 const _$fkless = {
@@ -226,7 +234,9 @@ const _$fkless = {
     "BigInt": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
     "BigNat": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
     "String": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
-    "CString": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
+    "CString": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "CChar": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); },
+    "UnicodeChar": function(v1, v2) { return _$opubx(v1) < _$opubx(v2); }
 };
 
 const _$fnumeq = {

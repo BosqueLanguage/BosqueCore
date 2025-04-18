@@ -115,6 +115,14 @@ function emitLiteralSimpleExpression(e: SMTAssembly::LiteralSimpleExpression): C
     }
 }
 
+function emitLiteralCCharExpression(e: SMTAssembly::LiteralCCharExpression): CString {
+    return CString::concat('"', e.value, '"');
+}
+
+function emitLiteralUnicodeCharExpression(e: SMTAssembly::LiteralUnicodeCharExpression): CString {
+    return CString::concat('"', e.value, '"');
+}
+
 function emitLiteralCStringExpression(e: SMTAssembly::LiteralCStringExpression): CString {
     return CString::concat('"', e.value, '"');
 }
@@ -137,6 +145,8 @@ function emitConstantExpression(e: SMTAssembly::ConstantExpression): CString {
     match(e)@ {
         SMTAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression(); }
         | SMTAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
+        | SMTAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
+        | SMTAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
         | SMTAssembly::LiteralCStringExpression => { return emitLiteralCStringExpression($e); }
         | SMTAssembly::LiteralStringExpression => { return emitLiteralStringExpression($e); }
         | SMTAssembly::LiteralCRegexExpression => { return emitLiteralCRegexExpression($e); }

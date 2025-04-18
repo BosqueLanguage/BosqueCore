@@ -46,6 +46,8 @@ const s_coreTypes = {
     "DeltaISOTimestamp": true,
     "String": true, 
     "CString": true, 
+    "CChar": true,
+    "UnicodeChar": true,
     "Regex": true, 
     "CRegex": true, 
     "PathRegex": true,
@@ -96,6 +98,9 @@ const TokenStrings = {
     ByteBuffer: "[LITERAL_BYTEBUFFER]",
     UUIDValue: "[LITERAL_UUID]",
     ShaHashcode: "[LITERAL_SHA]",
+
+    CChar: "[LITERAL_CCHAR]",
+    UnicodeChar: "[LITERAL_UNICODECHAR]",
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
@@ -548,6 +553,60 @@ BSQONLexer.prototype.tryLexHashCode = function() {
  * @returns {boolean}
  * @throws {ParserError}
  */
+BSQONLexer.prototype.tryLexCChar = function() {
+    if(!this.input.startsWith('c\'', this.jsStrPos)) {
+        return false;
+    }
+
+    let ncpos = this.jsStrPos + 2;
+        
+    let jepos = this.input.indexOf('\'', ncpos);
+    if(jepos === -1) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated CChar literal");
+    }
+    
+    const mstr = this.input.slice(ncpos, jepos);
+    if(!_s_validCStringChars.test(mstr)) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "Invalid chacaters in CChar literal");
+    }
+
+    if((jepos - ncpos) > 1) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, jepos - this.jsStrPos), "More than one character detected in CChar literal");
+    }
+
+    jepos++;
+    let strval = this.input.slice(this.jsStrPos, jepos);
+
+    this.updatePositionInfo(this.jsStrPos, jepos);
+    this.recordLexTokenWData(jepos, TokenStrings.CChar, strval);
+    return true;
+}
+/**
+ * @returns {boolean}
+ * @throws {ParserError}
+ */
+BSQONLexer.prototype.tryLexUnicodeChar = function() {
+    if(!this.input.startsWith('c\"', this.jsStrPos)) {
+        return false;
+    }
+    let ncpos = this.jsStrPos + 2;
+        
+    let jepos = this.input.indexOf('\"', ncpos);
+    if(jepos === -1) {
+        this.raiseError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.input.length - this.jsStrPos), "Unterminated UnicodeChar literal");
+    }
+
+    jepos++;
+    let strval = this.input.slice(this.jsStrPos, jepos);
+
+    this.updatePositionInfo(this.jsStrPos, jepos);
+    this.recordLexTokenWData(jepos, TokenStrings.UnicodeChar, strval);
+    return true;
+}
+/**
+ * @returns {boolean}
+ * @throws {ParserError}
+ */
 BSQONLexer.prototype.tryLexUnicodeString = function() {
     if(!this.input.startsWith('"', this.jsStrPos)) {
         return false;
@@ -572,7 +631,7 @@ BSQONLexer.prototype.tryLexUnicodeString = function() {
  * @throws {ParserError}
  */
 BSQONLexer.prototype.tryLexCString = function() {
-    if(!this.input.startsWith('\'', this.jsStrPos)) {
+    if(!this.input.startsWith("'", this.jsStrPos)) {
         return false;
     }
 
@@ -594,6 +653,23 @@ BSQONLexer.prototype.tryLexCString = function() {
     this.updatePositionInfo(this.jsStrPos, jepos);
     this.recordLexTokenWData(jepos, TokenStrings.CString, strval);
     return true;
+}
+/**
+ * @returns {boolean}
+ * @throws {ParserError}
+ */
+BSQONLexer.prototype.tryLexCharLike = function() {
+    const cc = this.tryLexCChar();
+    if(cc) {
+        return true;
+    }
+
+    const uc = this.tryLexUnicodeChar();
+    if(uc) {
+        return true;
+    }
+
+    return false;
 }
 /**
  * @returns {boolean}
@@ -744,6 +820,9 @@ BSQONLexer.prototype.lex = function() {
             //continue
         }
         else if(this.tryLexDateLike()) {
+            //continue
+        }
+        else if(this.tryLexCharLike()) {
             //continue
         }
         else if(this.tryLexStringLike()) {
@@ -1016,6 +1095,32 @@ BSQONParser.prototype.parseComplex = function() {
  * @returns {any}
  * @throws {ParserError}
  */
+BSQONParser.prototype.parseCChar = function() {
+    const ss = this.consumeExpectedAndGetData(TokenStrings.CChar);
+    try {
+        return ss.slice(2, -1);
+    }
+    catch(e) {
+        throw new ParserError(this.peek().sinfo, "Invalid CChar literal");
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseUnicodeChar = function() {
+    const ss = this.consumeExpectedAndGetData(TokenStrings.UnicodeChar);
+    try {
+        return ss.slice(2, -1);
+    }
+    catch(e) {
+        throw new ParserError(this.peek().sinfo, "Invalid UnicodeChar literal");
+    }
+}
+/**
+ * @returns {any}
+ * @throws {ParserError}
+ */
 BSQONParser.prototype.parseString = function() {
     const ss = this.consumeExpectedAndGetData(TokenStrings.String);
     try {
@@ -1221,6 +1326,12 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
     }
     else if(tkey === "Complex") {
         return this.parseComplex();
+    }
+    else if(tkey === "CChar") {
+        return this.parseCChar();
+    }
+    else if(tkey === "UnicodeChar") {
+        return this.parseUnicodeChar();
     }
     else if(tkey === "String") {
         return this.parseString();
@@ -1778,6 +1889,20 @@ BSQONEmitter.prototype.emitComplex = function(v) {
  * @param {any} v
  * @returns {string}
  */
+BSQONEmitter.prototype.emitCChar = function(v) {
+    return `'${v.toString()}'`;
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitUnicodeChar = function(v) {
+    return `"${v.toString()}"`;
+}
+/**
+ * @param {any} v
+ * @returns {string}
+ */
 BSQONEmitter.prototype.emitString = function(v) {
     return `"${escapeStringLiteral(v)}"`;
 }
@@ -1971,6 +2096,12 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
     }
     else if(tkey === "Complex") {
         return this.emitComplex(v);
+    }
+    else if(tkey === "CChar") {
+        return this.emitCChar(v);
+    }
+    else if(tkey === "UnicodeChar") {
+        return this.emitUnicodeChar(v);
     }
     else if(tkey === "String") {
         return this.emitString(v);
