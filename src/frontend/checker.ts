@@ -1073,8 +1073,11 @@ class TypeChecker {
 
     private checkLiteralCCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
-            const vc = exp.value.slice(2, -1);
-            exp.resolvedValue = vc;
+            const vcc = validateCStringLiteral(exp.value.slice(2, exp.value.length - 1));
+            if(vcc === null) {
+                throw new Error(`Invalid CChar literal`);
+            }
+            exp.resolvedValue = vcc;
         } catch(err) {
             this.reportError(exp.sinfo, (err as Error).message);
         }
@@ -1085,8 +1088,11 @@ class TypeChecker {
     private checkLiteralUnicodeCharExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         try {
             const vuc = validateStringLiteral(exp.value.slice(2, exp.value.length - 1));
+            if(vuc === null) {
+                throw new Error(`Invalid UnicodeChar literal`)
+            }
             if(vuc.length > 1) {
-                throw new Error(`Expected zero or one Unicode character, but found ${vuc.length} characters`);
+                throw new Error(`Expected zero or one UnicodeChar, but found ${vuc.length} characters`);
             }
             exp.resolvedValue = vuc;
         } catch(err) {

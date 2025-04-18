@@ -453,11 +453,21 @@ class JSEmitter {
     }
     
     private emitLiteralCCharExpression(exp: LiteralSimpleExpression): string {
-        return `'${exp.resolvedValue}'`;
+        if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
+            return `"${exp.resolvedValue}"`;
+        }
+        else {
+            return `decodeURI(${JSCodeFormatter.emitEscapedString(exp.resolvedValue)})`;
+        }    
     }
         
     private emitLiteralUnicodeCharExpression(exp: LiteralSimpleExpression): string {
-        return `"${exp.resolvedValue}"`;
+        if(JSCodeFormatter.isEscapeFreeString(exp.resolvedValue)) {
+            return `"${exp.resolvedValue}"`;
+        }
+        else {
+            return `decodeURI(${JSCodeFormatter.emitEscapedString(exp.resolvedValue)})`;
+        }
     }
 
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
