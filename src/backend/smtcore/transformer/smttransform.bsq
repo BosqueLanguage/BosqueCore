@@ -232,7 +232,13 @@ entity SMTTransformer {
 
     recursive method transformUnaryExpression(exp: BSQAssembly::UnaryExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let nexp, nctx, obinds = this.processUnaryArg[recursive](exp.exp, ctx);
-        let unaryop = SMTAssembly::UnaryExpression{nexp};
+
+        var unaryop: SMTAssembly::UnaryExpression;
+        match(exp)@ {
+            BSQAssembly::PrefixNotOpExpression => { unaryop = SMTAssembly::PrefixNotOpExpression{nexp}; }
+            | BSQAssembly::PrefixNegateOpExpression => { unaryop = SMTAssembly::PrefixNegateOpExpression{nexp}; }
+            | BSQAssembly::PrefixPlusOpExpression => { unaryop = SMTAssembly::PrefixPlusOpExpression{nexp}; }
+        }
 
         return nctx, this.wrapOperationResult(exp.etype, unaryop, obinds);
     }

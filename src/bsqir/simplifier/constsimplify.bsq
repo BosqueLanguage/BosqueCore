@@ -103,19 +103,50 @@ entity ConstantSimplification {
         return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
-    recursive method processUnaryExpression(e: UnaryExpression, vmap: VarMapping): Expression {
+    function negateLiteralBoolean(v: CString, sinfo: SourceInfo, btype: TypeSignature): Expression {
+        var val: CString;
+
+        if(v === 'true') {
+            val = 'false';
+        }
+        else {
+            val = 'true';
+        }
+
+        return LiteralSimpleExpression{ sinfo, btype, val };
+    }
+
+    function negateLiteralNumber(v: CString, sinfo: SourceInfo, ntype: TypeSignature): Expression {
+        var val: CString;
+
+        if(v === '0') {
+            val = '0';
+        }
+        else {
+            if(v.startsWithString('-')) {
+                val = v.removePrefixString('-');
+            }
+            else {
+                val = v.prepend('-');
+            }
+        }
+
+        return LiteralSimpleExpression{ sinfo, ntype, val };
+    }
+
+    recursive method processUnaryExpression(e: UnaryExpression): Expression {
         let ee = this.processUnaryArg(e.exp);
 
         if(ee)@!<LiteralSimpleExpression> {
             return e[exp=ee];
         }
         else {
-            let v = ee.value;
+            let v = $ee.value;
             
             match(e)@ {
-                PrefixNotOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v === 'true' ? 'false' : 'true' }; }
-                | PrefixNegateOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v === '0' ? '0' : '-' + v }; }
-                | PrefixPlusOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v }; }
+                PrefixNotOpExpression => { return ConstantSimplification::negateLiteralBoolean(v, e.sinfo, e.opertype); }
+                | PrefixNegateOpExpression => { return ConstantSimplification::negateLiteralNumber(v, e.sinfo, e.opertype); }
+                | PrefixPlusOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.opertype, v }; }
             }    
         }
     }

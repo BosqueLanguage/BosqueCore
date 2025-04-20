@@ -95,7 +95,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processUnaryExpression(e: UnaryExpression, vmap: VarMapping): Expression {
-        let nexp = this.processUnaryArg[recursive](e.exp, vmap);
+        var nexp = this.processUnaryArg[recursive](e.exp, vmap);
 
         let ntype = this.assembly.lookupNominalTypeDeclaration(nexp.etype.tkeystr);
         if(ntype)@<TypedeclTypeDecl> {

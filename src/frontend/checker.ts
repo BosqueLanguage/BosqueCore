@@ -2028,7 +2028,7 @@ class TypeChecker {
 
         this.checkError(exp.sinfo, !this.relations.isBooleanType(etype), "Prefix Not operator requires a Bool based type");
         
-        exp.opertype = etype;
+        exp.opertype = this.resolveUnderlyingType(etype);
         return exp.setType(etype);
     }
 
