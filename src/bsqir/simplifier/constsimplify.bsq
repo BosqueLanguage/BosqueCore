@@ -103,6 +103,23 @@ entity ConstantSimplification {
         return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
+    recursive method processUnaryExpression(e: UnaryExpression, vmap: VarMapping): Expression {
+        let ee = this.processUnaryArg(e.exp);
+
+        if(ee)@!<LiteralSimpleExpression> {
+            return e[exp=ee];
+        }
+        else {
+            let v = ee.value;
+            
+            match(e)@ {
+                PrefixNotOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v === 'true' ? 'false' : 'true' }; }
+                | PrefixNegateOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v === '0' ? '0' : '-' + v }; }
+                | PrefixPlusOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.operType, v }; }
+            }    
+        }
+    }
+
     recursive method processBinaryArithExpression(e: BinaryArithExpression): Expression {
         let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
 
@@ -245,7 +262,7 @@ entity ConstantSimplification {
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
             | PostfixOp => { return this.processPostfixOp[recursive]($e); }
-            | UnaryExpression => { abort; }
+            | UnaryExpression => { return this.processUnaryExpression[recursive]($e); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }
             | KeyCmpEqualExpression => { abort; }
