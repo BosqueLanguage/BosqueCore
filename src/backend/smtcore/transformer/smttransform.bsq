@@ -230,6 +230,19 @@ entity SMTTransformer {
         return rres;
     }
 
+    recursive method transformUnaryExpression(exp: BSQAssembly::UnaryExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let nexp, nctx, obinds = this.processUnaryArg[recursive](exp.exp, ctx);
+
+        var unaryop: SMTAssembly::UnaryExpression;
+        match(exp)@ {
+            BSQAssembly::PrefixNotOpExpression => { unaryop = SMTAssembly::PrefixNotOpExpression{nexp}; }
+            | BSQAssembly::PrefixNegateOpExpression => { unaryop = SMTAssembly::PrefixNegateOpExpression{nexp}; }
+            | BSQAssembly::PrefixPlusOpExpression => { unaryop = SMTAssembly::PrefixPlusOpExpression{nexp}; }
+        }
+
+        return nctx, this.wrapOperationResult(exp.etype, unaryop, obinds);
+    }
+
     recursive method transformBinAddExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
         let addop = SMTAssembly::BinAddExpression{lexp, rexp};
@@ -424,6 +437,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::PostfixOp => { 
                 return this.transformPostfixOp[recursive]($exp, ctx);
+            }
+            | BSQAssembly::UnaryExpression => { 
+                return this.transformUnaryExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::BinaryArithExpression => { 
                 return this.transformBinaryArithExpression[recursive]($exp, ctx);

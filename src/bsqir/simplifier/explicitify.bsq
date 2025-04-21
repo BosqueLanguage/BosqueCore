@@ -94,6 +94,17 @@ entity ExplicitifyTransform {
         return PostfixOp{ e.sinfo, e.etype, ebase, ops };
     }
 
+    recursive method processUnaryExpression(e: UnaryExpression, vmap: VarMapping): Expression {
+        var nexp = this.processUnaryArg[recursive](e.exp, vmap);
+
+        let ntype = this.assembly.lookupNominalTypeDeclaration(nexp.etype.tkeystr);
+        if(ntype)@<TypedeclTypeDecl> {
+            nexp = TypeDeclPrimitiveFieldAccessExpression{ nexp.sinfo, $ntype.valuetype, nexp };
+        }
+
+        return e[exp=nexp];
+    }
+
     recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
         var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
@@ -207,7 +218,7 @@ entity ExplicitifyTransform {
             | SafeConvertExpression => { abort; }
             | CreateDirectExpression => { abort; }
             | PostfixOp => { return this.processPostfixOp[recursive]($e, vmap); }
-            | UnaryExpression => { abort; }
+            | UnaryExpression => { return this.processUnaryExpression[recursive]($e, vmap); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }
             | KeyCmpEqualExpression => { abort; }
