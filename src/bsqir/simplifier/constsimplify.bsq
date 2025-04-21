@@ -134,20 +134,45 @@ entity ConstantSimplification {
         return LiteralSimpleExpression{ sinfo, ntype, val };
     }
 
+    function processPrefixNotOpExpression(e: PrefixNotOpExpression, ee: Expression): Expression {
+        match(ee)@ {
+            LiteralSimpleExpression => {
+                return ConstantSimplification::negateLiteralBoolean($ee.value, e.sinfo, e.opertype);
+            }
+            | PrefixNotOpExpression => {
+                return $ee.exp;
+            }
+            | _ => {
+                return e[exp=ee];
+            }
+        }
+    }
+
+    function processPrefixNegateOpExpression(e: PrefixNegateOpExpression, ee: Expression): Expression {
+        match(ee)@ {
+            LiteralSimpleExpression => {
+                return ConstantSimplification::negateLiteralNumber($ee.value, e.sinfo, e.opertype);
+            }
+            | PrefixNegateOpExpression => {
+                return $ee.exp;
+            }
+            | _ => {
+                return e[exp=ee];
+            }
+        }
+    }
+
+    function processPrefixPlusOpExpression(e: PrefixPlusOpExpression, ee: Expression): Expression {
+        return ee;
+    }
+
     recursive method processUnaryExpression(e: UnaryExpression): Expression {
         let ee = this.processUnaryArg(e.exp);
 
-        if(ee)@!<LiteralSimpleExpression> {
-            return e[exp=ee];
-        }
-        else {
-            let v = $ee.value;
-            
-            match(e)@ {
-                PrefixNotOpExpression => { return ConstantSimplification::negateLiteralBoolean(v, e.sinfo, e.opertype); }
-                | PrefixNegateOpExpression => { return ConstantSimplification::negateLiteralNumber(v, e.sinfo, e.opertype); }
-                | PrefixPlusOpExpression => { return LiteralSimpleExpression{ e.sinfo, e.opertype, v }; }
-            }    
+        match(e)@ {
+            PrefixNotOpExpression => { return ConstantSimplification::processPrefixNotOpExpression($e, ee); }
+            | PrefixNegateOpExpression => { return ConstantSimplification::processPrefixNegateOpExpression($e, ee); }
+            | PrefixPlusOpExpression => { return ConstantSimplification::processPrefixPlusOpExpression($e, ee); }
         }
     }
 
