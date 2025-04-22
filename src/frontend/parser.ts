@@ -1385,9 +1385,15 @@ class Parser {
                 return;
             }
 
-            if(usesemi && pscount === 0 && tok.kind === SYM_semicolon) {
-                this.consumeToken();
-                return;
+            if(usesemi && pscount === 0) {
+                //check for the end of a builtin method "= ID;"
+                if(this.peekTokenKind() === SYM_eq && this.peekTokenKind(1) === TokenStrings.IdentifierName && this.peekTokenKind(2) === SYM_semicolon) {
+                    this.consumeToken();
+                    this.consumeToken();
+                    this.consumeToken();
+
+                    return;
+                }
             }
 
             if (tok.kind === SYM_lbrace) {
@@ -5033,7 +5039,8 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(fname);
             this.env.currentNamespace.declaredFunctionNames.add(fname);
 
-            this.scanOverBraceDelimitedDeclaration(true);
+            const allowcorebi = this.env.currentNamespace.topnamespace === "Core";
+            this.scanOverBraceDelimitedDeclaration(allowcorebi);
         }
         else {
             let fkind: "namespace" | "predicate" | "chktest" | "errtest" | "example" = "namespace";
