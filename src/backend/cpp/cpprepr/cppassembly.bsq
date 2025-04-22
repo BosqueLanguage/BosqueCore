@@ -1,0 +1,11 @@
+declare namespace CPPAssembly;
+
+%% We can iteratively build up an outputted assembly, similar to how this is done with smt
+%% It will represent the structure of a cpp file which we use to spit out our end file 
+%% All build up using CStrings
+
+%% For now this doesnt properly organize code, just serves as a structure to build from
+entity CPPAssembly {
+    field includes: CString;
+    field body: CString;
+}

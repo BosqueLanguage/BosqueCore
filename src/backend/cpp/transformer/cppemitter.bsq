@@ -1,0 +1,11 @@
+namespace CPPEmitter;
+
+%%
+%% Now lets build up the asm entity we weould like to use to emit from at the end of this process
+%% For now we can just have methods that will directly concat into our assembly entity the necessary
+%% cpp function call we would expect to need during emission.
+%%
+
+function emitAssembly(asm: CPPAssembly): CString {
+    return CString::concat(asm.includes, asm.body);
+}
