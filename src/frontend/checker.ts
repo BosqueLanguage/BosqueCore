@@ -3865,10 +3865,10 @@ class TypeChecker {
         }
     }
 
-    private checkEnsures(env: TypeEnvironment, refvars: string[], eventtype: TypeSignature | undefined, ensures: PostConditionDecl[]) {
+    private checkEnsures(env: TypeEnvironment, returntype: TypeSignature, refvars: string[], eventtype: TypeSignature | undefined, ensures: PostConditionDecl[]) {
         let eev = env.pushNewLocalScope();
         
-        eev = eev.addLocalVar(WELL_KNOWN_RETURN_VAR_NAME, env.declReturnType, true, true);
+        eev = eev.addLocalVar(WELL_KNOWN_RETURN_VAR_NAME, returntype, true, true);
         if(eventtype !== undefined) {
             const eldecl = this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "EventList") as EventListTypeDecl;
             const eventlisttype = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), undefined, eldecl, [eventtype]);
@@ -3962,7 +3962,7 @@ class TypeChecker {
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
         this.checkRequires(ienv, idecl.preconditions);
-        this.checkEnsures(ienv, fullrefvars, eventtype, idecl.postconditions);
+        this.checkEnsures(ienv, idecl.resultType, fullrefvars, eventtype, idecl.postconditions);
     }
 
     private checkNamespaceFunctionDecls(fdecls: NamespaceFunctionDecl[]) {
