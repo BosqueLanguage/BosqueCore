@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
-import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, CCharBufferTypeDecl, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, NamespaceDeclaration, EnumTypeDecl } from "./assembly.js";
+import { AbstractConceptTypeDecl, AdditionalTypeDeclTag, Assembly, CCharBufferTypeDecl, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, FailTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, ResultTypeDecl, SomeTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl, MapEntryTypeDecl, AbstractEntityTypeDecl, ValidateDecl, InvariantDecl, AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl, NamespaceDeclaration, EnumTypeDecl, UnicodeCharBufferTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -731,7 +731,7 @@ class TypeCheckerRelations {
         else if(decl instanceof SetTypeDecl) {
             return t.alltermargs[0];
         }
-        else if(decl instanceof CCharBufferTypeDecl) { // We need somehow to have a CChar type stored in alltermargs[0]
+        else if(decl instanceof CCharBufferTypeDecl || decl instanceof UnicodeCharBufferTypeDecl) { // Only possible type is CChar or UnicodeChar
             return t;
         }
         else {

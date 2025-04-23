@@ -882,6 +882,12 @@ class CCharBufferTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
+class UnicodeCharBufferTypeDecl extends AbstractCollectionTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    } 
+}
+
 class EventListTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1662,7 +1668,7 @@ export {
     ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
-    CCharBufferTypeDecl,
+    CCharBufferTypeDecl, UnicodeCharBufferTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, 
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
