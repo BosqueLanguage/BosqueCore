@@ -6,6 +6,28 @@ namespace CPPEmitter;
 %% cpp function call we would expect to need during emission.
 %%
 
+function emitIncludes(): CString {
+    return '#include "cppruntime.hpp"\\n';
+}
+
+namespace PathStack {
+    function emitPathStackCreate(): CString {
+        return 'PathStack ps = {0, 0};';
+    }
+
+    function emitPathStackLeft(): CString {
+        return 'ps.left();\\n';
+    }
+
+    function emitPathStackRight(): CString {
+        return 'ps.right();\\n';
+    }
+
+    function emitPathStackUp(): CString {
+        return 'ps.up();\\n';
+    }
+}
+
 function emitAssembly(asm: CPPAssembly): CString {
     return CString::concat(asm.includes, asm.body);
 }

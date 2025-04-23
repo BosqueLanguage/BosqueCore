@@ -254,6 +254,10 @@ __internal __typedeclable __keycomparable entity String {
 #endif %% STRIPPED_CORE
 }
 
+%% Would just be in CString exec, but in core while
+__internal entity CCharBuffer {
+}
+
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity CString {
 #if STRIPPED_CORE
