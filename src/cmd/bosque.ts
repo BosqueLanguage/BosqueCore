@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { JSEmitter } from "../backend/jsemitter/jsemitter.js";
-import { Assembly } from "../frontend/assembly.js";
+import { Assembly, NamespaceDeclaration, NamespaceFunctionDecl } from "../frontend/assembly.js";
 import { BuildLevel, PackageConfig } from "../frontend/build_decls.js";
 import { InstantiationPropagator } from "../frontend/closed_terms.js";
 import { Status } from "./status_output.js";
@@ -41,6 +41,14 @@ let outdiridx = fullargs.findIndex((v) => v === "--output");
 if(outdiridx !== -1) {
     outdir = fullargs[outdiridx + 1];
     fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
+}
+
+let functionname: string | undefined = undefined;
+let functionIdx = fullargs.findIndex(v => v === "--function");
+
+if (functionIdx !== -1) {
+    functionname = fullargs[functionIdx + 1];
+    fullargs = fullargs.slice(0, functionIdx).concat(fullargs.slice(functionIdx + 2));
 }
 
 function getSimpleFilename(fn: string): string {
@@ -116,6 +124,23 @@ function buildExeCodeTest(assembly: Assembly, outname: string) {
     Status.output(`    Code generation successful -- JS emitted to ${nndir}\n\n`);
 }
 
+function findFunctionsByName(
+    ns: NamespaceDeclaration,
+    fname: string,
+    matches: { fqn: string, decl: NamespaceFunctionDecl }[] = []
+): {fqn: string, decl: NamespaceFunctionDecl} [] {
+    for (const fn of ns.functions) {
+        if (fn.name === fname) {
+            const fqn = `${ns.fullnamespace.emit()}::${fn.name}`;
+            matches.push({fqn, decl: fn});
+        }
+    }
+    for (const sub of ns.subns) {
+        findFunctionsByName(sub, fname, matches);
+    }
+    return matches;
+}
+
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
     Status.enable();
 
@@ -171,5 +196,28 @@ if(testgen) {
 else {
     buildTypeInfo(asm, mainns, outdir);
     buildExeCode(asm, "debug", "debug", mainns, outdir);
+    if (functionname !== undefined) {
+        let allmatches: {fqn: string, decl: NamespaceFunctionDecl}[] = [];
+        for (const ns of asm.toplevelNamespaces) {
+            allmatches.push(...findFunctionsByName(ns, functionname))
+        }
+
+        if (allmatches.length === 0) {
+            console.error(`Function ${functionname}`)
+            process.exit(1);
+        }
+        const target = allmatches[0];
+        const bond = {
+            fname: target.fqn,
+            args: target.decl.params.map(p => ({
+                name: p.name,
+                type: p.type.emit()
+            })),
+            precondition: target.decl.preconditions,
+            postcondition: target.decl.postconditions
+        }
+        const bondPath = path.join(outdir, "bond.json");
+        fs.writeFileSync(bondPath, JSON.stringify(bond, null, 4));
+    }
 }
 
