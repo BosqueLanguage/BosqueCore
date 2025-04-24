@@ -1,18 +1,12 @@
 namespace CPPEmitter;
 
-%%
-%% Now lets build up the asm entity we weould like to use to emit from at the end of this process
-%% For now we can just have methods that will directly concat into our assembly entity the necessary
-%% cpp function call we would expect to need during emission.
-%%
-
 function emitIncludes(): CString {
-    return '#include "cppruntime.hpp"\\n';
+    return '#include "cppruntime.hpp"';
 }
 
 namespace PathStack {
     function emitPathStackCreate(): CString {
-        return 'PathStack ps = {0, 0};';
+        return 'PathStack ps = PathStack::create();';
     }
 
     function emitPathStackLeft(): CString {
@@ -26,6 +20,14 @@ namespace PathStack {
     function emitPathStackUp(): CString {
         return 'ps.up();\\n';
     }
+}
+
+namespace CCharBuffer {
+    %% Emit c++ for buffer creation here
+}
+
+namespace UnicodeCharBuffer {
+    %% Emit c++ for buffer creation here
 }
 
 function emitAssembly(asm: CPPAssembly): CString {

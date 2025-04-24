@@ -5,33 +5,34 @@ namespace Core;
 #if EXEC_LIBS
 %% Eventually we will need to add functions here for manipulating our ropes
 namespace UnicodeCharBufferOps {
-        %% Our creation methods call c++ code for handling bit ops
-    function s_unicodecharbuffer_create_empty(): UnicodeCharBuffer {
-
+    %% Our creation methods call cpp code for handling bit ops
+    %% Once a nice interface with the cpp emitter exists these creation functions would return UnicodeCharBuffer
+    function s_unicodecharbuffer_create_empty() {        
+        ;
     }
-    function s_unicodecharbuffer_create_1(c1: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_1(c1: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_2(c1: UnicodeChar, c2: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_2(c1: UnicodeChar, c2: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_3(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_3(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_4(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_4(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_5(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_5(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_6(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_6(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_7(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_7(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar) {
+        ;
     }
-    function s_unicodecharbuffer_create_8(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar, c8: UnicodeChar): UnicodeCharBuffer {
-
+    function s_unicodecharbuffer_create_8(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar, c8: UnicodeChar) {
+        ;
     }
 }
 
@@ -57,6 +58,8 @@ namespace StringOps {
 
 %% Note: UnicodeCharBuffer does not emit any js currently
 __internal entity UnicodeCharBuffer {
+    %% Actual buffer is represented in cpp
+    %% Will probably need to store size field
 }
 #else
 #endif %% EXEC_LIBS
