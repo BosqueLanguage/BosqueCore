@@ -4,13 +4,13 @@ PathStack PathStack::create() {
     return {0, 0};
 }
 PathStack PathStack::left() const {
-    return { bits << 1 };
+    return { bits << 1, depth + 1 };
 }
 PathStack PathStack::right() const {
-    return { bits << 1 | 1 };
+    return { bits << 1 | 1, depth + 1 };
 }
 PathStack PathStack::up() const {
-    return { bits >> 1 };
+    return { bits >> 1, depth - 1 };
 }
 
 CCharBuffer CCharBuffer::create_empty() {

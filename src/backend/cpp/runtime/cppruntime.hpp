@@ -5,7 +5,7 @@
 // Useful for keeping track of path in tree iteration
 struct PathStack {
     uint64_t bits;
-    int index;
+    int depth;
 
     static PathStack create();
     PathStack left() const;

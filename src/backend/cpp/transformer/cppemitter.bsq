@@ -10,15 +10,15 @@ namespace PathStack {
     }
 
     function emitPathStackLeft(): CString {
-        return 'ps.left();\\n';
+        return 'ps.left();';
     }
 
     function emitPathStackRight(): CString {
-        return 'ps.right();\\n';
+        return 'ps.right();';
     }
 
     function emitPathStackUp(): CString {
-        return 'ps.up();\\n';
+        return 'ps.up();';
     }
 }
 
