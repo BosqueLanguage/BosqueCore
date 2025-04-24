@@ -3,6 +3,38 @@ namespace Core;
 #if STRIPPED_CORE
 #else
 #if EXEC_LIBS
+%% Eventually we will need to add functions here for manipulating our ropes
+namespace UnicodeCharBufferOps {
+        %% Our creation methods call c++ code for handling bit ops
+    function s_unicodecharbuffer_create_empty(): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_1(c1: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_2(c1: UnicodeChar, c2: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_3(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_4(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_5(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_6(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_7(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar): UnicodeCharBuffer {
+
+    }
+    function s_unicodecharbuffer_create_8(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar, c8: UnicodeChar): UnicodeCharBuffer {
+
+    }
+}
+
 namespace StringOps {
     function s_fromCString(s: CString): String = string_from_cstring;
 
@@ -21,6 +53,10 @@ namespace StringOps {
 
     function s_replaceUniqueStringOccurrence(s: String, target: String, replacement: String): String = string_replace_unique_string_occurrence;
     function s_replaceAllStringOccurrences(s: String, target: String, replacement: String): String = string_replace_all_string_occurrences;
+}
+
+%% Note: UnicodeCharBuffer does not emit any js currently
+__internal entity UnicodeCharBuffer {
 }
 #else
 #endif %% EXEC_LIBS

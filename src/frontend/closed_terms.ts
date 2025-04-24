@@ -429,10 +429,46 @@ class InstantiationPropagator {
             }
         }
         else if(decl instanceof CCharBufferTypeDecl) {
-            assert(false, "Not Implemented");
+            const ccbops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CCharBufferOps");
+            if(ccbops !== undefined) {
+                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                    if(args.length === 0) {
+                        const ff = ccbops.functions.find((f) => f.name === `s_ccharbuffer_create_empty`) as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(ccbops, ff, [], this.currentMapping);
+                    }
+                    else if(args.length <= 8) {
+                        const ff = ccbops.functions.find((f) => f.name === `s_ccharbuffer_create_${args.length}`) as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(ccbops, ff, [], this.currentMapping);
+                    }
+                    else {
+                        assert(false, "More than 8 elements detected in CCharBuffer");
+                    }
+                }
+                else {
+                    assert(false, "Invaid CCharBuffer format")
+                }
+            }
         }
         else if(decl instanceof UnicodeCharBufferTypeDecl) {
-            assert(false, "Not Implemented");
+            const ucbops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeCharBufferOps");
+            if(ucbops !== undefined) {
+                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
+                    if(args.length === 0) {
+                        const ff = ucbops.functions.find((f) => f.name === `s_unicodecharbuffer_create_empty`) as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(ucbops, ff, [], this.currentMapping);
+                    }
+                    else if(args.length <= 8) {
+                        const ff = ucbops.functions.find((f) => f.name === `s_unicodecharbuffer_create_${args.length}`) as NamespaceFunctionDecl;
+                        this.instantiateNamespaceFunction(ucbops, ff, [], this.currentMapping);
+                    }
+                    else {
+                        assert(false, "More than 8 elements detected in UnicodeCharBuffer");
+                    }
+                }
+                else {
+                    assert(false, "Invaid UnicodeCharBuffer format")
+                }
+            }
         }
         else if(decl instanceof StackTypeDecl) {
             assert(false, "Not Implemented");
@@ -1804,6 +1840,14 @@ class InstantiationPropagator {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["K", "V"],  metype);
     }
 
+    private instantiateCCharBufferTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
+    }
+
+    private instantiateUnicodeCharBufferTypeDecl(pdecl: PendingNominalTypeDecl) {
+        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
+    }
+
     private instantiateEventListTypeDecl(pdecl: PendingNominalTypeDecl) {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
@@ -1988,6 +2032,12 @@ class InstantiationPropagator {
         }
         else if(tt instanceof MapTypeDecl) {
             this.instantiateMapTypeDecl(tt, pdecl);
+        }
+        else if(tt instanceof CCharBufferTypeDecl) {
+            this.instantiateCCharBufferTypeDecl(pdecl)
+        }
+        else if(tt instanceof UnicodeCharBufferTypeDecl) {
+            this.instantiateUnicodeCharBufferTypeDecl(pdecl)
         }
         else if(tt instanceof EventListTypeDecl) {
             this.instantiateEventListTypeDecl(pdecl);
