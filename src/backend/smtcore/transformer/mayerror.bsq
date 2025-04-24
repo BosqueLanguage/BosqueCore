@@ -16,6 +16,23 @@ entity MayErrorAnalysis {
         return \/(MayErrorAnalysis::processExpression(lhs), MayErrorAnalysis::processExpression(rhs));
     }
 
+    recursive function processArgumentList(argl: BSQAssembly::ArgumentList): Bool {
+        return argl.args.someOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg.exp));
+    }
+
+    recursive function processConstructorExpression(e: BSQAssembly::ConstructorExpression): Bool {
+        var chks: Bool;
+        match(e)@ {
+            BSQAssembly::ConstructorPrimaryMapExpression => { chks = true; } %% map constructor may always fail
+            | BSQAssembly::ConstructorTypeDeclExpression => { chks = $e.invchecks; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { chks = \/($e.invchecks, $e.ofcheck?some); }
+            | BSQAssembly::ConstructorStdExpression => { chks = \/($e.invchecks, $e.shuffleinfo.someOf(pred(ii) => ii.0 == -1i)); } %% if it uses default values assume may be an error
+            | _ => { chks = false; }
+        }
+        
+        return chks || MayErrorAnalysis::processArgumentList(e.args);
+    }
+
     recursive function processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
         let baseerr = MayErrorAnalysis::processUnaryArg[recursive](e.rootExp);
         if(baseerr) {

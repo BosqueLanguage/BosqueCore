@@ -64,7 +64,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processArgs(args: List<Expression>, vmap: VarMapping): List<Expression> {
-        return args.map<Expression>(recursive fn(arg) => this.processExpression[recursive](arg, vmap));
+        return args.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg, vmap));
     }
 
     recursive method processUnaryArg(arg: Expression, vmap: VarMapping): Expression {
@@ -73,6 +73,53 @@ entity ExplicitifyTransform {
 
     recursive method processBinaryArgs(lhs: Expression, rhs: Expression, vmap: VarMapping): Expression, Expression {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
+    }
+
+    recursive method processArgumentListStd(argl: ArgumentList, expected: List<TypeSignature>, vmap: VarMapping): ArgumentList 
+        requires argl.args.size() == expected.size();
+    {
+        let nargs = argl.args.mapIdx[recursive]<ArgumentValue>(recursive fn(arg, i) => {
+            let nexp = this.processExpression[recursive](arg.exp, vmap);
+            let pexp = this.processCoerceTypeAsNeeded(nexp, expected.get(i));
+
+            return arg[exp=nexp];
+        });
+
+        return ArgumentList{ nargs };
+    }
+
+    method processAccessVariableExpression(e: AccessVariableExpression, vmap: VarMapping): Expression {
+        let nname = vmap.resolveVariableAsNeeded(e.vname);
+        let access = AccessVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
+
+        return this.processCoerceTypeAsNeeded(access, e.etype);
+    }
+
+    recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
+        let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2);
+        let nargs = this.processArgumentListStd(e.args, types, vmap);
+
+        return e[args=nargs];
+    }
+
+    recursive method processConstructorEListExpression(e: ConstructorEListExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListStd(e.args, e.etype@<EListTypeSignature>.entries, vmap);
+
+        return e[args=nargs];
+    }
+
+    recursive method processConstructorExpression(e: ConstructorExpression, vmap: VarMapping): Expression {
+        match(e)@ {
+            ConstructorPrimaryListExpression => { abort; }
+            | ConstructorPrimaryMapExpression => { abort; }
+            | ConstructorPrimarySpecialSomeExpression => { abort; }
+            | ConstructorPrimarySpecialOkExpression => { abort; }
+            | ConstructorPrimarySpecialFailExpression => { abort; }
+            | ConstructorTypeDeclExpression => { abort; }
+            | ConstructorTypeDeclStringExpression => { abort; }
+            | ConstructorStdExpression => { return this.processConstructorStdExpression($e, vmap); }
+            | ConstructorEListExpression => { return this.processConstructorEListExpression($e, vmap); }
+        }
     }
 
     recursive method processPostfixOp(e: PostfixOp, vmap: VarMapping): Expression {
@@ -199,7 +246,7 @@ entity ExplicitifyTransform {
             | AccessNamespaceConstantExpression => { return e; }
             | AccessStaticFieldExpression => { return e; }
             | AccessEnumExpression => { return e; }
-            | AccessVariableExpression => { return $e[vname = vmap.resolveVariableAsNeeded($vname)]; }
+            | AccessVariableExpression => { return this.processAccessVariableExpression($e, vmap); }
             | AccessCapturedVariableExpressionSpecial => { abort; }
             | ConstructorExpression => { abort; }
             | ConstructorLambdaExpression => { abort; }
