@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, CCharBufferTypeDecl, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl, AbstractCollectionTypeDecl, UnicodeCharBufferTypeDecl } from "./assembly.js";
+import { AbstractNominalTypeDecl, APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, FailTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, InvariantDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypedeclTypeDecl, TypeFunctionDecl, ValidateDecl, MethodDecl, AbstractCollectionTypeDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { AutoTypeSignature, EListTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, TemplateNameMapper, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessEnvValueExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefInvokeExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpecialConverterExpression, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, UpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
@@ -425,48 +425,6 @@ class InstantiationPropagator {
                 }
                 else {
                     assert(false, "Not Implemented -- list spread constructors");
-                }
-            }
-        }
-        else if(decl instanceof CCharBufferTypeDecl) {
-            const ccbops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CCharBufferOps");
-            if(ccbops !== undefined) {
-                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
-                    if(args.length === 0) {
-                        const ff = ccbops.functions.find((f) => f.name === `s_ccharbuffer_create_empty`) as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(ccbops, ff, [], this.currentMapping);
-                    }
-                    else if(args.length <= 8) {
-                        const ff = ccbops.functions.find((f) => f.name === `s_ccharbuffer_create_${args.length}`) as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(ccbops, ff, [], this.currentMapping);
-                    }
-                    else {
-                        assert(false, "More than 8 elements detected in CCharBuffer");
-                    }
-                }
-                else {
-                    assert(false, "Invaid CCharBuffer format")
-                }
-            }
-        }
-        else if(decl instanceof UnicodeCharBufferTypeDecl) {
-            const ucbops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeCharBufferOps");
-            if(ucbops !== undefined) {
-                if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
-                    if(args.length === 0) {
-                        const ff = ucbops.functions.find((f) => f.name === `s_unicodecharbuffer_create_empty`) as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(ucbops, ff, [], this.currentMapping);
-                    }
-                    else if(args.length <= 8) {
-                        const ff = ucbops.functions.find((f) => f.name === `s_unicodecharbuffer_create_${args.length}`) as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(ucbops, ff, [], this.currentMapping);
-                    }
-                    else {
-                        assert(false, "More than 8 elements detected in UnicodeCharBuffer");
-                    }
-                }
-                else {
-                    assert(false, "Invaid UnicodeCharBuffer format")
                 }
             }
         }
@@ -1840,14 +1798,6 @@ class InstantiationPropagator {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["K", "V"],  metype);
     }
 
-    private instantiateCCharBufferTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
-    }
-
-    private instantiateUnicodeCharBufferTypeDecl(pdecl: PendingNominalTypeDecl) {
-        this.instantiateInteralSimpleTypeDeclHelper(pdecl, [], undefined);
-    }
-
     private instantiateEventListTypeDecl(pdecl: PendingNominalTypeDecl) {
         this.instantiateInteralSimpleTypeDeclHelper(pdecl, ["T"], undefined);
     }
@@ -2032,12 +1982,6 @@ class InstantiationPropagator {
         }
         else if(tt instanceof MapTypeDecl) {
             this.instantiateMapTypeDecl(tt, pdecl);
-        }
-        else if(tt instanceof CCharBufferTypeDecl) {
-            this.instantiateCCharBufferTypeDecl(pdecl)
-        }
-        else if(tt instanceof UnicodeCharBufferTypeDecl) {
-            this.instantiateUnicodeCharBufferTypeDecl(pdecl)
         }
         else if(tt instanceof EventListTypeDecl) {
             this.instantiateEventListTypeDecl(pdecl);

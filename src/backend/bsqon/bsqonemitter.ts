@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, CCharBufferTypeDecl, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl, UnicodeCharBufferTypeDecl } from "../../frontend/assembly.js";
+import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
 import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../../frontend/body.js";
@@ -383,12 +383,6 @@ class BSQONTypeInfoEmitter {
         }
         else if(tt instanceof MapTypeDecl) {
             alldecls.push(this.emitMapTypeDecl(tt, instantiation));
-        }
-        else if(tt instanceof CCharBufferTypeDecl) {
-            ; // May need to emit
-        }
-        else if(tt instanceof UnicodeCharBufferTypeDecl) {
-            ; // May need to emit
         }
         else if(tt instanceof EventListTypeDecl) {
             ; //no-op for parsing as we don't emit these

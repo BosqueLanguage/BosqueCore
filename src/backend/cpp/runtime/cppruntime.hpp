@@ -2,10 +2,12 @@
 
 #include <stdint.h>
 
+namespace __CoreCpp {
+
 // Useful for keeping track of path in tree iteration
 struct PathStack {
     uint64_t bits;
-    int depth;
+    int index;
 
     static PathStack create();
     PathStack left() const;
@@ -43,3 +45,5 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_7(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7);
     static UnicodeCharBuffer create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8);
 };
+
+} // namespace __CoreCpp

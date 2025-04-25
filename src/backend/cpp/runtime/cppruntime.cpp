@@ -1,16 +1,18 @@
 #include "cppruntime.hpp"
 
+namespace __CoreCpp {
+
 PathStack PathStack::create() {
     return {0, 0};
 }
 PathStack PathStack::left() const {
-    return { bits << 1, depth + 1 };
+    return { bits << 1, index + 1 };
 }
 PathStack PathStack::right() const {
-    return { bits << 1 | 1, depth + 1 };
+    return { bits << 1 | 1, index + 1 };
 }
 PathStack PathStack::up() const {
-    return { bits >> 1, depth - 1 };
+    return { bits >> 1, index - 1 };
 }
 
 CCharBuffer CCharBuffer::create_empty() {
@@ -68,3 +70,5 @@ UnicodeCharBuffer UnicodeCharBuffer::create_7(uint32_t c1, uint32_t c2, uint32_t
 UnicodeCharBuffer UnicodeCharBuffer::create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8) {
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8};
 }
+
+} // namespace __CoreCpp
