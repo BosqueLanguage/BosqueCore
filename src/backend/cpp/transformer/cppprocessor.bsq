@@ -1,0 +1,10 @@
+declare namespace CPPEmitter {
+    using CPPAssembly;
+}
+
+%% TODO: actually glue or properly transformed cpp together
+
+%% Our API for emitting cpp
+public function main(asm: CPPAssembly): CString {
+    return CPPEmitter::emitAssembly(asm);
+}
