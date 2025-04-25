@@ -111,12 +111,16 @@ entity ConstructorEListExpression provides SafeExpression {
     field args: List<SafeExpression>;
 }
 
-entity CallNamespaceFunctionExpression provides Expression {
+datatype CallNamespaceFunctionConcept using {
     field ns: NamespaceKey;
     field name: CString;
 
     field args: List<CallArgExpression>;
 }
+of
+CallNamespaceFunctionSafeExpression { } 
+| CallNamespaceFunctionExpression { }
+;
 
 entity CallLambdaFunctionExpression provides Expression {
     field lambda: VarIdentifier;
@@ -319,6 +323,15 @@ entity AbortExpression provides Expression {
     field label: Nat;
 }
 
+entity AssertSetExpression provides Expression {
+    field etype: TypeKey;
+    field aset: List<(|Expression, Nat|)>; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    
+    field inexp: Expression;
+
+    invariant !$aset.empty();
+}
+
 entity UnwrapFromResultExpression provides SafeExpression {
     field etype: TypeKey;
     field varg: VarIdentifier;
@@ -348,6 +361,8 @@ entity LetWErrorsExpression provides Expression {
     invariant !$vvbind.empty();
 }
 
+entity CheckAssertions
+
 concept Operation {
 }
 
@@ -360,7 +375,7 @@ entity AbortOperation provides Operation {
 }
 
 entity AssertOperation provides Operation {
-    field cond: SafeExpression;
+    field cond: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
     field label: Nat;
 
     field inop: Operation;

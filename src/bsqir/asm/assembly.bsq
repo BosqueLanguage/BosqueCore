@@ -9,6 +9,7 @@ concept AbstractDecl {
 
 datatype ConditionDecl provides AbstractDecl using {
     field diagnosticTag: Option<CString>;
+    field ikey: InvokeKey;
     field exp: Expression;
 }
 of

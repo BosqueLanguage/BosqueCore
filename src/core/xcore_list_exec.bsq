@@ -207,6 +207,10 @@ namespace ListOps {
         return Tree<T>::reduce[recursive?]<U>(l.value, init, f);
     }
 
+    recursive? function s_list_lreduce<T, U>(l: List<T>, init: U, f: recursive? fn(U, T) -> U): U {
+        return Tree<T>::lreduce[recursive?]<U>(l.value, init, f);
+    }
+
     recursive? function s_list_transduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
         let tt = Tree<T>::transduce[recursive?]<E, U>(l.value, environment, f);
         return tt.0, XCore::s_createDirect<Tree<U>, List<U>>(tt.1);
@@ -935,6 +939,17 @@ namespace ListOps {
                 }
                 | Node<T> => {
                     return Tree<T>::reduce[recursive]<U>($t.r, Tree<T>::reduce[recursive]<U>($t.l, acc, f), f);
+                }
+            }
+        }
+
+        recursive function lreduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
+            match(t)@ {
+                Leaf<T> => { 
+                    return f[recursive?](acc, $t.v);
+                }
+                | Node<T> => {
+                    return Tree<T>::lreduce[recursive]<U>($t.l, Tree<T>::lreduce[recursive]<U>($t.r, acc, f), f);
                 }
             }
         }

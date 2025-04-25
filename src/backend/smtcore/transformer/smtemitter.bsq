@@ -100,6 +100,8 @@ function emitTaggedNumericType(nstr: CString, tag: CString): CString {
     return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
 }
 
+const resultTrueValue: CString = '(@Result-ok true)';
+
 function emitLiteralNoneExpression(): CString {
     return 'none';
 }
@@ -268,7 +270,7 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
     }
 }
 
-recursive function emitCallNamespaceFunctionExpression(v: SMTAssembly::CallNamespaceFunctionExpression): CString {
+recursive function emitCallNamespaceFunctionConcept(v: SMTAssembly::CallNamespaceFunctionConcept): CString {
     let fname = SMTNameManager::generateNamespaceFunctionName(v.ns, v.name);
     if(v.args.empty()) {
         return fname;
@@ -580,6 +582,30 @@ function emitAbortExpression(e: SMTAssembly::AbortExpression, eev: SMTEmitterEnv
     }
 }
 
+function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEmitterEnv): CString {
+    let exp = emitExpression[recursive](e.inexp, eev);
+    return e.aset.lreduce(exp, fn(expcc, chk) => {
+        var tt: CString;
+        if($cexp = chk.0)@<SMTAssembly::SafeExpression> {
+            tt = emitSafeExpression[recursive]($cexp);
+        }
+        else {
+            let expcc = emitExpression[recursive]($cexp, eev);
+            tt = CString::concat('(= ', expcc, ' ', SMTEmitter::resultTrueValue, ')');
+        }
+
+        var err: CString;
+        if(chk.1 == eev.errtrgt) {
+            err = emitResultErrTrgtAs(e.etype);
+        }
+        else {
+            err = emitResultErrOtherAs(e.etype);
+        }
+
+        return CString::concat('(ite ', tt, ' ', err, ' ', expcc, ')');
+    });
+}
+
 recursive function emitUnwrapFromResultExpression(e: SMTAssembly::UnwrapFromResultExpression): CString {
     return CString::concat('(@Result-value ', e.varg.value, ')');
 }
@@ -649,11 +675,12 @@ recursive function emitSafeExpression(e: SMTAssembly::Expression): CString {
 recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv): CString {
     match(e)@ {
         SMTAssembly::AbortExpression => { return emitAbortExpression($e, eev); }
+        | SMTAssembly::AssertSetExpression => { return emitAssertSetExpression($e, eev); }
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }
         | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, eev); }
         %*
-        | SMTAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($v); }
+        | SMTAssembly::CallNamespaceFunctionConcept => { return emitCallNamespaceFunctionConcept[recursive]($v); }
         | SMTAssembly::CallLambdaFunctionExpression => { return emitCallLambdaFunctionExpression[recursive]($v); }
         | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($v); }
         | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($v); }

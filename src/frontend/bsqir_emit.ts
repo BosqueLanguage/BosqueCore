@@ -1348,31 +1348,31 @@ class BSQIREmitter {
         return `file="${decl.file}", sinfo=${this.emitSourceInfo(decl.sinfo)}, declaredInNS='${nskey}'<BSQAssembly::NamespaceKey>`;
     }
 
-    private emitConditionDeclBase(decl: ConditionDecl, nskey: string, exp: Expression): string {
+    private emitConditionDeclBase(decl: ConditionDecl, nskey: string, label: string, exp: Expression): string {
         const dbase = this.emitAbstractDeclBase(decl, nskey);
         const dtag = decl.diagnosticTag !== undefined ? `some('${decl.diagnosticTag}')` : "none";
 
-        return `${dbase}, diagnosticTag=${dtag}, exp=${this.emitExpression(exp)}`;
+        return `${dbase}, diagnosticTag=${dtag}, ikey=${label}<BSQAssembly::InvokeKey>, exp=${this.emitExpression(exp)}`;
     }
 
 
-    private emitPreConditionDecl(decl: PreConditionDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+    private emitPreConditionDecl(decl: PreConditionDecl, nskey: string, ikey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, ikey + "_$_precond" + ii.toString(), decl.exp);
         return `BSQAssembly::PreConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
     }
 
-    private emitPostConditionDecl(decl: PostConditionDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+    private emitPostConditionDecl(decl: PostConditionDecl, nskey: string, ikey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, ikey + "_$_postcond" + ii.toString(), decl.exp);
         return `BSQAssembly::PostConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
     }
 
-    private emitInvariantDecl(decl: InvariantDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+    private emitInvariantDecl(decl: InvariantDecl, nskey: string, tkey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, tkey + "_$_invariant" + ii.toString(), decl.exp.exp);
         return `BSQAssembly::InvariantDecl{ ${cbase} }`;
     }
 
-    private emitValidateDecl(decl: ValidateDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+    private emitValidateDecl(decl: ValidateDecl, nskey: string, tkey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, tkey + "_$_validate" + ii.toString(), decl.exp.exp);
         return `BSQAssembly::ValidateDecl{ ${cbase} }`;
     }
 
@@ -1415,8 +1415,8 @@ class BSQIREmitter {
     private emitExplicitInvokeDecl(decl: ExplicitInvokeDecl, nskey: string, ikey: string, fmt: BsqonCodeFormatter): string {
         const ibase = this.emitAbstractInvokeDecl(decl, nskey, ikey, fmt);
 
-        const preconds = decl.preconditions.map((p) => this.emitPreConditionDecl(p, nskey)).join(", ");
-        const postconds = decl.postconditions.map((p) => this.emitPostConditionDecl(p, nskey)).join(", ");
+        const preconds = decl.preconditions.map((p, ii) => this.emitPreConditionDecl(p, nskey, ikey, ii)).join(", ");
+        const postconds = decl.postconditions.map((p, ii) => this.emitPostConditionDecl(p, nskey, ikey, ii)).join(", ");
 
         const conds = `preconditions=List<BSQAssembly::PreConditionDecl>{ ${preconds} }, postconditions=List<BSQAssembly::PostConditionDecl>{ ${postconds} }`;
         return `${ibase},${fmt.nl() + fmt.indent(conds)}`;
@@ -1578,8 +1578,8 @@ class BSQIREmitter {
 
         const tkey = EmitNameManager.generateTypeKey(tsig);
 
-        const invariants = tdecl.invariants.map((inv) => this.emitInvariantDecl(inv, EmitNameManager.generateNamespaceKey(ns))).join(", ");
-        const validates = tdecl.validates.map((val) => this.emitValidateDecl(val, EmitNameManager.generateNamespaceKey(ns))).join(", ");
+        const invariants = tdecl.invariants.map((inv, ii) => this.emitInvariantDecl(inv, EmitNameManager.generateNamespaceKey(ns), tkey, ii)).join(", ");
+        const validates = tdecl.validates.map((val, ii) => this.emitValidateDecl(val, EmitNameManager.generateNamespaceKey(ns), tkey, ii)).join(", ");
 
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 

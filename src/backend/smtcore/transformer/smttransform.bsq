@@ -33,6 +33,14 @@ namespace TransformNameManager {
     function convertInvokeKey(ikey: BSQAssembly::InvokeKey): SMTAssembly::InvokeKey {
         return SMTAssembly::InvokeKey::from(resymbolCStringForSMT(ikey.value));
     }
+
+    function generateNameForFieldDefaultFunction(tkey: BSQAssembly::TypeKey, fname: CString): CString {
+        return CString::join('-', @FieldDefault', TransformNameManager::resymbolCStringForSMT(tkey.value), fname);
+    }
+
+    function generateNameForInvariantFunction(tkey: BSQAssembly::TypeKey, iid: CString): CString {
+        return CString::join('-', @Invariant', TransformNameManager::resymbolCStringForSMT(tkey.value), iid);
+    }
 }
 
 datatype SMTExpTransformResult using {
@@ -198,11 +206,39 @@ entity SMTTransformer {
     }
 
     recursive method transformConstructorStdExpression(e: ConstructorStdExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        xxxx;
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => aeg.exp), ctx);
+
+        let needsdefault = e.args.args.anyOf(pred(arg) => arg.2 != -1i);
+        if(!e.invchecks && !needsdefault) {
+            let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.2));
+            let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
+
+            return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
+        }
+        else {
+            let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
+            var orderargs: List<SMTAssembly::SafeExpression>;
+            if(!needsdefault) {
+                orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.2));
+            }
+            else {
+                abort;
+            }
+
+            let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
+
+            let iichecks = tdecl.allInvariants.reduce<(|SMTAssembly|)>(pred(ii) => {
+                let invdecl = this.assembly.lookupInvariantDeclaration(ii.declaredInType.tkeystr);
+                let iexp = invdecl.invariants.find(())
+            });
+
+            xxxx;
+        }
     }
 
     recursive method transformConstructorEListExpression(e: ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        xxxx;
+        abort;
     }
 
     recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {

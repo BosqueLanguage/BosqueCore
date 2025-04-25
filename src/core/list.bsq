@@ -253,6 +253,15 @@ __internal entity List<T> {
         }
     }
 
+    recursive? method lreduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_lreduce[recursive?]<T, U>(this, init, f);
+        }
+    }
+
     recursive? method transduce<E, U>(environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return environment, List<U>{};
