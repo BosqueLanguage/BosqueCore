@@ -1281,6 +1281,54 @@ class TypeChecker {
         return exp.setType(exp.ctype);
     }
 
+    private checkPrimitiveConstructor(env: TypeEnvironment, cdecl: PrimitiveEntityTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
+        const ctype = exp.ctype as NominalTypeSignature;
+
+        if(exp.args.args.some((arg) => !(arg instanceof PositionalArgumentValue))) {
+            this.reportError(exp.sinfo, `Primitive entity constructor expects only positional arguments`);
+            return exp.setType(ctype);
+        }
+
+        // Note: For now we limit the buffers size to 8
+        if(ctype.tkeystr === "CCharBuffer") {
+            if(exp.args.args.length > 8) {
+                this.reportError(exp.sinfo, `CCharBuffer constructor expects no more than 8 arguments`);
+            }
+            else {
+                for(let i = 0; i < exp.args.args.length; ++i) {
+                    let arg = exp.args.args[i];
+                    if(arg instanceof PositionalArgumentValue) {
+                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
+                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "CChar", `Argument ${i} expected type CChar`);
+                    } 
+                    else {
+                        this.reportError(exp.sinfo, `CCharBuffer expects positional arguments`);
+                    }
+                }
+            }
+        }
+
+        if(ctype.tkeystr === "UnicodeCharBuffer") {
+            if(exp.args.args.length > 8) {
+                this.reportError(exp.sinfo, `UnicodeCharBuffer constructor expects no more than 8 arguments`);
+            }
+            else {
+                for(let i = 0; i < exp.args.args.length; ++i) {
+                    let arg = exp.args.args[i];
+                    if(arg instanceof PositionalArgumentValue) {
+                        let argtype = this.checkExpression(env, arg.exp, new SimpleTypeInferContext(ctype));
+                        this.checkError(arg.exp.sinfo, (argtype instanceof ErrorTypeSignature) || argtype.tkeystr !== "UnicodeChar", `Argument ${i} expected type UnicodeChar`);
+                    } 
+                    else {
+                        this.reportError(exp.sinfo, `UnicodeCharBuffer expects positional arguments`);
+                    }
+                }
+            }
+        }
+        
+        return exp.setType(ctype);
+    }
+
     private checkSpecialConstructableConstructor(env: TypeEnvironment, cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): TypeSignature {
         const ctype = exp.ctype as NominalTypeSignature;
 
@@ -1409,6 +1457,9 @@ class TypeChecker {
         }
         else if(decl instanceof ConstructableTypeDecl) {
             return this.checkSpecialConstructableConstructor(env, decl, exp);
+        }
+        else if(decl instanceof PrimitiveEntityTypeDecl) {
+            return this.checkPrimitiveConstructor(env, decl, exp);
         }
         else if(decl instanceof TypedeclTypeDecl) {
             return this.checkSpecialTypeDeclConstructor(env, decl, exp);

@@ -1,0 +1,35 @@
+namespace CPPEmitter;
+
+function emitIncludes(): CString {
+    return '#include "cppruntime.hpp"';
+}
+
+namespace PathStack {
+    function emitPathStackCreate(): CString {
+        return 'PathStack ps = PathStack::create();';
+    }
+
+    function emitPathStackLeft(): CString {
+        return 'ps.left();';
+    }
+
+    function emitPathStackRight(): CString {
+        return 'ps.right();';
+    }
+
+    function emitPathStackUp(): CString {
+        return 'ps.up();';
+    }
+}
+
+namespace CCharBuffer {
+    %% Emit c++ for buffer creation here
+}
+
+namespace UnicodeCharBuffer {
+    %% Emit c++ for buffer creation here
+}
+
+function emitAssembly(asm: CPPAssembly): CString {
+    return CString::concat(asm.includes, asm.body);
+}

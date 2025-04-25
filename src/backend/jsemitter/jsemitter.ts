@@ -619,6 +619,11 @@ class JSEmitter {
         }
     }
 
+    //
+    // We will need to add processEmitUnicodeCharBufferConstructor and processEmitCCharBufferConstructor as well
+    // I can't think of any other way to handle this - even though they should only need to operate with c++ bit ops
+    //
+
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
         const ctype = this.tproc(exp.ctype) as NominalTypeSignature;
 
