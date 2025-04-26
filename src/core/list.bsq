@@ -162,7 +162,7 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            %%TODO: we should specialize this -- using reduce means we visit the full list even if we just take 2 elements
+            %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
             return this.reduce<List<T>>(List<T>{}, fn(acc, v) => {
                 if(acc.size() >= n) {
                     return acc;
@@ -181,7 +181,7 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            %%TODO: we should specialize this -- using reduce means we visit the full list even if we just take 2 elements
+            %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
             return this.lreduce<List<T>>(List<T>{}, fn(acc, v) => {
                 if(acc.size() >= n) {
                     return acc;
@@ -291,7 +291,7 @@ __internal entity List<T> {
         }
     }
 
-    %% we need to some more flavors here like refduce, reduceIdx, and reduceStop .... ugh lots of bits but makes it all very nice to use 
+    %% we need to some more flavors here like refduce and reduceIdx
 
     recursive? method reduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
         if(ListOps::s_list_empty<T>(this)) {

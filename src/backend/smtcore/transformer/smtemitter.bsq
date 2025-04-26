@@ -233,7 +233,7 @@ recursive function emitConstructorStdExpression(v: SMTAssembly::ConstructorStdEx
         return consname;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitSafeExpression[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', consname, ' ', argsl, ')');
@@ -256,19 +256,32 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
         return consname;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(x) => emitSafeExpression[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', consname, ' ', argsl, ')');
     }
 }
 
-recursive function emitCallFunctionConcept(v: SMTAssembly::CallFunctionConcept): CString {
+recursive function emitCallFunctionConcept(v: SMTAssembly::CallFunctionConcept, eev: SMTEmitterEnv): CString {
     if(v.args.empty()) {
         return v.invokeKey.value;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
+        let cvals = v.args.map[recursive]<CString>(fn(arg) => emitCallArgExpression[recursive](arg, eev));
+        let argsl = CString::joinAll(' ', cvals);
+
+        return CString::concat('(', v.invokeKey.value, ' ', argsl, ')');
+    }
+}
+
+
+recursive function emitCallSafeFunctionConcept(v: SMTAssembly::CallFunctionSafeExpression): CString {
+    if(v.args.empty()) {
+        return v.invokeKey.value;
+    }
+    else {
+        let cvals = v.args.map[recursive]<CString>(fn(arg) => emitSafeExpression[recursive](arg));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', v.invokeKey.value, ' ', argsl, ')');
