@@ -29,6 +29,8 @@ namespace ListOps {
 
     function s_concat2<T>(l1: List<T>, l2: List<T>): List<T> = s_list_concat2;
 
+    function s_list_reverse<T>(l: List<T>): List<T> = s_list_reverse;
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_allof;
     recursive? function s_list_noneof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_noneof;
     recursive? function s_list_someof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_someof;
@@ -47,6 +49,7 @@ namespace ListOps {
     recursive? function s_list_reduce<T, U>(l: List<T>, init: U, f: recursive? fn(U, T) -> U): U = s_list_reduce;
     recursive? function s_list_lreduce<T, U>(l: List<T>, init: U, f: recursive? fn(U, T) -> U): U = s_list_lreduce;
     recursive? function s_list_transduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> = s_list_transduce;
+    recursive? function s_list_ltransduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> = s_list_ltransduce;
 
     function s_list_sum<T: numeric>(l: List<T>, zero: T): T = s_list_sum;
 }

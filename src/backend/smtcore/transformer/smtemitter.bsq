@@ -21,16 +21,8 @@ namespace SMTNameManager {
         return CString::concat(ns.value, '@', cname);
     }
 
-    function generateNamespaceFunctionName(ns: SMTAssembly::NamespaceKey, name: CString): CString {
-        return CString::concat(ns.value, '@', name);
-    }
-
     function generateTypeConstName(tkey: SMTAssembly::TypeKey, cname: CString): CString {
         return CString::concat(tkey.value, '@', cname);
-    }
-
-    function generateTypeFunctionName(tkey: SMTAssembly::TypeKey, name: CString): CString {
-        return CString::concat(tkey.value, '@', name);
     }
 
     function generateTermSubtypeFunctionName(tkey: SMTAssembly::TypeKey): CString {
@@ -233,6 +225,7 @@ recursive function emitConstructorTypeDeclExpression(v: SMTAssembly::Constructor
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
+*%
 
 recursive function emitConstructorStdExpression(v: SMTAssembly::ConstructorStdExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
@@ -249,10 +242,10 @@ recursive function emitConstructorStdExpression(v: SMTAssembly::ConstructorStdEx
 
 recursive function emitConstructorPrimaryExpression(v: SMTAssembly::ConstructorPrimaryExpression): CString {
     match(v)@ {
-        SMTAssembly::ConstructorListSingletonsExpression => { return emitConstructorListSingletonsExpression[recursive]($v); }
-        | SMTAssembly::ConstructorMapSingletonsExpression => { return emitConstructorMapSingletonsExpression[recursive]($v); }
-        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression[recursive]($v); }
-        | SMTAssembly::ConstructorTypeDeclExpression => { return emitConstructorTypeDeclExpression[recursive]($v); }
+        SMTAssembly::ConstructorListSingletonsExpression => {abort; }
+        | SMTAssembly::ConstructorMapSingletonsExpression => { abort; }
+        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { abort; }
+        | SMTAssembly::ConstructorTypeDeclExpression => { abort; }
         | SMTAssembly::ConstructorStdExpression => { return emitConstructorStdExpression[recursive]($v); }
     }
 }
@@ -270,32 +263,19 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
     }
 }
 
-recursive function emitCallNamespaceFunctionConcept(v: SMTAssembly::CallNamespaceFunctionConcept): CString {
-    let fname = SMTNameManager::generateNamespaceFunctionName(v.ns, v.name);
+recursive function emitCallFunctionConcept(v: SMTAssembly::CallFunctionConcept): CString {
     if(v.args.empty()) {
-        return fname;
+        return v.invokeKey.value;
     }
     else {
         let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
         let argsl = CString::joinAll(' ', cvals);
 
-        return CString::concat('(', fname, ' ', argsl, ')');
+        return CString::concat('(', v.invokeKey.value, ' ', argsl, ')');
     }
 }
 
-recursive function emitCallTypeFunctionExpression(v: SMTAssembly::CallTypeFunctionExpression): CString {
-    let fname = SMTNameManager::generateTypeFunctionName(v.resolvedType, v.name);
-    if(v.args.empty()) {
-        return fname;
-    }
-    else {
-        let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
-        let argsl = CString::joinAll(' ', cvals);
-
-        return CString::concat('(', fname, ' ', argsl, ')');
-    }
-}
-
+%*
 recursive function emitLogicActionAndExpression(v: SMTAssembly::LogicActionAndExpression): CString {
     let cvals = v.args.map[recursive]<CString>(fn(x) => emitExpression[recursive](x));
     let argsl = CString::joinAll(' ', cvals);
@@ -643,8 +623,12 @@ recursive function emitSafeExpression(e: SMTAssembly::Expression): CString {
         | SMTAssembly::UntermifyExpression => { return emitUntermifyExpression[recursive]($e); }
         %*
         | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($v); }
+        *%
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($v); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($v); }
+        | SMTAssembly::CallNamespaceFunctionSafeExpression => { return emitCallNamespaceFunctionConcept[recursive]($v); }
+        | SMTAssembly::CallTypeFunctionSafeExpression => { return emitCallTypeFunctionExpression[recursive]($v); }
+        %*
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($v); }
         | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($v); }
         | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($v); }
@@ -679,10 +663,10 @@ recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }
         | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, eev); }
+        | SMTAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionConcept[recursive]($v); }
+        | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionConcept[recursive]($v); }
         %*
-        | SMTAssembly::CallNamespaceFunctionConcept => { return emitCallNamespaceFunctionConcept[recursive]($v); }
         | SMTAssembly::CallLambdaFunctionExpression => { return emitCallLambdaFunctionExpression[recursive]($v); }
-        | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($v); }
         | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($v); }
         *%
         | SMTAssembly::SafeExpression => { return emitSafeExpression[recursive]($e); }
@@ -718,32 +702,6 @@ recursive function emitLambdaInvokeExpression(e: SMTAssembly::LambdaInvokeExpres
     }
 }
 
-recursive function emitCallNamespaceFunctionExpression(e: SMTAssembly::CallNamespaceFunctionExpression, evv: SMTEmitterEnv): CString {
-    let fname = SMTNameManager::generateNamespaceFunctionName(e.ns, e.name);
-    if(e.args.empty()) {
-        return fname;
-    }
-    else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
-        let argsl = CString::joinAll(' ', cvals);
-
-        return CString::concat('(', fname, ' ', argsl, ')');
-    }
-}
-
-recursive function emitCallTypeFunctionExpression(e: SMTAssembly::CallTypeFunctionExpression, evv: SMTEmitterEnv): CString {
-    let fname = SMTNameManager::generateTypeFunctionName(e.resolvedType, e.name);
-    if(e.args.empty()) {
-        return fname;
-    }
-    else {
-        let cvals = e.args.map[recursive]<CString>(fn(x) => emitCallArgExpression[recursive](x, evv));
-        let argsl = CString::joinAll(' ', cvals);
-
-        return CString::concat('(', fname, ' ', argsl, ')');
-    }
-}
-
 recursive function emitMethodInvokeStaticExpression(e: SMTAssembly::MethodInvokeStaticExpression, evv: SMTEmitterEnv): CString {
     let fname = SMTNameManager::generateTypeFunctionName(e.resolvedTrgt, e.name);
     let rootv = emitExpression(e.rootExp);
@@ -757,15 +715,6 @@ recursive function emitMethodInvokeStaticExpression(e: SMTAssembly::MethodInvoke
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', rpfx, ' ', argsl, ')');
-    }
-}
-
-recursive function emitInvokeExpression(e: SMTAssembly::InvokeExpression, evv: SMTEmitterEnv): CString {
-    match(e)@ {
-        SMTAssembly::LambdaInvokeExpression => { return emitLambdaInvokeExpression[recursive]($e, evv); }
-        | SMTAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression[recursive]($e, evv); }
-        | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression[recursive]($e, evv); }
-        | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($e, evv); }
     }
 }
 *%
@@ -1016,20 +965,18 @@ function emitConstInfo(nsconsts: List<SMTAssembly::NamespaceConstDecl>, typecons
     return tidyNewlineJoin(nsconstdecls_str, tconstdecls_str), tidyNewlineJoin(nsconstinits_str, tconstinits_str);
 }
 
-function emitNamespacePredicateFunctionDecl(f: SMTAssembly::NamespacePredicateFunctionDecl): CString {
-    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    return CString::concat('(declare-fun ', fname, ' ', pll, ' Bool)');
+    return CString::concat('(declare-fun ', f.invokeKey, ' ', pll, ' Bool)');
 }
 
-function emitNamespaceBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFunctionDecl, trgterr: Nat): CString {
-    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+function emitBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFunctionDecl, trgterr: Nat): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
+    let psig = CString::concat('define-fun ', f.invokeKey, ' ', pll, ' ');
     var body: CString;
     if(f.specialname === 'cstring_empty') {
         body = '(= s "")';
@@ -1041,23 +988,11 @@ function emitNamespaceBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFuncti
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitNamespaceFunctionDecl(f: SMTAssembly::NamespaceFunctionDecl, trgterr: Nat): CString {
-    let fname = SMTNameManager::generateNamespaceFunctionName(f.ns, f.name);
+function emitFunctionDecl(f: SMTAssembly::NamespaceFunctionDecl, trgterr: Nat): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
-    let body = CString::concat('%n;', emitBody(f.body, SMTEmitterEnv{trgterr, f.resultType.rtype}, some('    ')));
-
-    return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
-}
-
-function emitTypeFunctionDecl(f: SMTAssembly::TypeFunctionDecl, trgterr: Nat): CString {
-    let fname = SMTNameManager::generateTypeFunctionName(f.tkey, f.name);
-    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
-    let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
-
-    let psig = CString::concat('define-fun ', fname, ' ', pll, ' ');
+    let psig = CString::concat('define-fun ', f.invokeKey, ' ', pll, ' ');
     let body = CString::concat('%n;', emitBody(f.body, SMTEmitterEnv{trgterr, f.resultType.rtype}, some('    ')));
 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
@@ -1318,14 +1253,7 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
         '#END ;;--PRE_FUNCS--;;'
     );
 
-    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => {
-        if(asm.nsfuncs.has(t)) {
-            return emitNamespaceFunctionDecl(asm.nsfuncs.get(t), trgterr);
-        }
-        else {
-            return emitTypeFunctionDecl(asm.typefuncs.get(t), trgterr);
-        }
-    });
+    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => emitNamespaceFunctionDecl(asm.nsfuncs.get(t), trgterr));
     let efuncs = CString::concat(
         '#BEGIN ;;--FUNCTION_DECLS--;;',
         CString::joinAll('%n;%n;', efuncs_list),

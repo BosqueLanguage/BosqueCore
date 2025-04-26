@@ -163,6 +163,10 @@ namespace ListOps {
         }
     }
 
+    function s_list_reverse<T>(l: List<T>): List<T> {
+        return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::reverse(l.value));
+    }
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
         return Tree<T>::allof[recursive?](l.value, p);
     }
@@ -213,6 +217,11 @@ namespace ListOps {
 
     recursive? function s_list_transduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
         let tt = Tree<T>::transduce[recursive?]<E, U>(l.value, environment, f);
+        return tt.0, XCore::s_createDirect<Tree<U>, List<U>>(tt.1);
+    }
+
+    recursive? function s_list_ltransduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
+        let tt = Tree<T>::ltransduce[recursive?]<E, U>(l.value, environment, f);
         return tt.0, XCore::s_createDirect<Tree<U>, List<U>>(tt.1);
     }
 
@@ -771,6 +780,17 @@ namespace ListOps {
             return Node<T>{c, size<T>(l) + size<T>(r), l, r};
         }
 
+        recursive function reverse(t: Tree<T>): Tree<T> {
+            match(t)@ {
+                Leaf<T> => { return t; }
+                | Node<T> => { 
+                    let nl = Tree<T>::reverse[recursive]($t.r);
+                    let nr = Tree<T>::reverse[recursive]($t.l);
+                    return Node<T>{$t.c, $t.count, nl, nr};
+                }
+            }
+        }
+
         recursive function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
                 Leaf<T> => { return p[recursive?]($t.v); }
@@ -964,6 +984,20 @@ namespace ListOps {
                     let lres = Tree<T>::transduce[recursive]<E, U>($t.l, environment, f);
                     let rres = Tree<T>::transduce[recursive]<E, U>($t.r, lres.0, f);
                     return (|rres.0, Tree<U>::createNode($t.c, lres.1, rres.1)|);
+                }
+            }
+        }
+
+        recursive function ltransduce<E, U>(t: Tree<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, Tree<U> {
+            match(t)@ {
+                Leaf<T> => { 
+                    let res = f[recursive?](environment, $t.v);
+                    return (|res.0, Tree<U>::createLeaf(res.1)|);
+                }
+                | Node<T> => {
+                    let rres = Tree<T>::ltransduce[recursive]<E, U>($t.r, environment, f);
+                    let lres = Tree<T>::ltransduce[recursive]<E, U>($t.l, rres.0, f);
+                    return (|lres.0, Tree<U>::createNode($t.c, lres.1, rres.1)|);
                 }
             }
         }

@@ -111,26 +111,17 @@ entity ConstructorEListExpression provides SafeExpression {
     field args: List<SafeExpression>;
 }
 
-datatype CallNamespaceFunctionConcept using {
-    field ns: NamespaceKey;
-    field name: CString;
-
+datatype CallFunctionConcept using {
+    field invokeKey: InvokeKey;
     field args: List<CallArgExpression>;
 }
 of
-CallNamespaceFunctionSafeExpression { } 
-| CallNamespaceFunctionExpression { }
+CallFunctionSafeExpression { } 
+| CallFunctionExpression { }
 ;
 
 entity CallLambdaFunctionExpression provides Expression {
     field lambda: VarIdentifier;
-    field args: List<CallArgExpression>;
-}
-
-entity CallTypeFunctionExpression provides Expression {
-    field resolvedType: TypeKey;
-    field name: CString;
-    
     field args: List<CallArgExpression>;
 }
 
@@ -212,7 +203,7 @@ entity ConvertResultToFailEExpression provides SafeExpression {
 }
 
 entity MethodInvokeStaticExpression provides Expression {
-    field resolvedTrgt: TypeKey;
+    field resolvedTrgt: InvokeKey;
     field name: CString;
     field rootExp: SafeExpression;
     field args: List<CallArgExpression>;

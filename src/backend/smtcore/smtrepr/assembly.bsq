@@ -49,18 +49,14 @@ entity InvokeParameterDecl {
     field ptype: ParamTypeKey;
 }
 
-entity NamespacePredicateFunctionDecl {
-    field ns: NamespaceKey;
-    field name: CString;
+entity PredicateFunctionDecl {
     field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
     %%Always Bool
 }
 
-entity NamespaceBuiltinFunctionDecl {
-    field ns: NamespaceKey;
-    field name: CString;
+entity BuiltinFunctionDecl {
     field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
@@ -69,20 +65,7 @@ entity NamespaceBuiltinFunctionDecl {
     field specialname: CString;
 }
 
-entity NamespaceFunctionDecl {
-    field ns: NamespaceKey;
-    field name: CString;
-    field invokeKey: InvokeKey;
-
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: Body;
-}
-
-entity TypeFunctionDecl {
-    field tkey: TypeKey;
-    field name: CString;
+entity FunctionDecl {
     field invokeKey: InvokeKey;
 
     field params: List<InvokeParameterDecl>;
@@ -214,11 +197,10 @@ entity Assembly {
     field nsconsts: List<NamespaceConstDecl>;
     field typeconsts: List<ConstMemberDecl>;
 
-    field nspreds: List<NamespacePredicateFunctionDecl>;
-    field nsbuiltins: List<NamespaceBuiltinFunctionDecl>;
+    field nspreds: List<PredicateFunctionDecl>;
+    field nsbuiltins: List<BuiltinFunctionDecl>;
     
-    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
+    field funcs: Map<InvokeKey, FunctionDecl>;
     
     field enums: List<EnumTypeDecl>;
     field typedecls: List<TypedeclTypeDecl>;
@@ -234,6 +216,4 @@ entity Assembly {
     field datatypes: List<DatatypeTypeDecl>;
 
     field allfuncs: List<InvokeKey>;
-    
-    validate $allfuncs.allOf(pred(tk) => $nsfuncs.has(tk) || $typefuncs.has(tk));
 }
