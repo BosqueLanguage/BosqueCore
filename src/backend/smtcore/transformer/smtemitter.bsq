@@ -263,7 +263,7 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
     }
 }
 
-recursive function emitCallFunctionConcept(v: SMTAssembly::CallFunctionConcept, eev: SMTEmitterEnv): CString {
+recursive function emitCallFunctionExpression(v: SMTAssembly::CallFunctionExpression, eev: SMTEmitterEnv): CString {
     if(v.args.empty()) {
         return v.invokeKey.value;
     }
@@ -276,12 +276,12 @@ recursive function emitCallFunctionConcept(v: SMTAssembly::CallFunctionConcept, 
 }
 
 
-recursive function emitCallSafeFunctionConcept(v: SMTAssembly::CallFunctionSafeExpression): CString {
+recursive function emitCallFunctionSafeExpression(v: SMTAssembly::CallFunctionSafeExpression): CString {
     if(v.args.empty()) {
         return v.invokeKey.value;
     }
     else {
-        let cvals = v.args.map[recursive]<CString>(fn(arg) => emitSafeExpression[recursive](arg));
+        let cvals = v.args.map[recursive]<CString>(fn(arg) => emitCallArgSafeExpression[recursive](arg));
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', v.invokeKey.value, ' ', argsl, ')');
@@ -577,7 +577,7 @@ function emitAbortExpression(e: SMTAssembly::AbortExpression, eev: SMTEmitterEnv
 
 function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEmitterEnv): CString {
     let exp = emitExpression[recursive](e.inexp, eev);
-    return e.aset.lreduce(exp, fn(expcc, chk) => {
+    return e.aset.lreduce<CString>(exp, fn(expcc, chk) => {
         var tt: CString;
         if($cexp = chk.0)@<SMTAssembly::SafeExpression> {
             tt = emitSafeExpression[recursive]($cexp);
@@ -637,9 +637,9 @@ recursive function emitSafeExpression(e: SMTAssembly::Expression): CString {
         %*
         | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($v); }
         *%
-        | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($v); }
-        | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($v); }
-        | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionConcept[recursive]($v); }
+        | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e); }
+        | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e); }
+        | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionSafeExpression[recursive]($e); }
         %*
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($v); }
         | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($v); }
@@ -675,7 +675,7 @@ recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }
         | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, eev); }
-        | SMTAssembly::CallFunctionExpression => { return emitCallFunctionConcept[recursive]($v); }
+        | SMTAssembly::CallFunctionExpression => { return emitCallFunctionExpression[recursive]($e, eev); }
         %*
         | SMTAssembly::CallLambdaFunctionExpression => { return emitCallLambdaFunctionExpression[recursive]($v); }
         | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($v); }
@@ -683,6 +683,21 @@ recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv
         | SMTAssembly::SafeExpression => { return emitSafeExpression[recursive]($e); }
     }
 }
+
+recursive function emitCallArgExpression(v: SMTAssembly::CallArgExpression, evv: SMTEmitterEnv): CString {
+    match(v)@ {
+        SMTAssembly::LambdaConstructor => { abort; }
+        | SMTAssembly::Expression => { return emitExpression($v, evv); }
+    }
+}
+
+recursive function emitCallArgSafeExpression(v: SMTAssembly::CallArgExpression): CString {
+    match(v)@ {
+        SMTAssembly::LambdaConstructor => { abort; }
+        | SMTAssembly::SafeExpression => { return emitSafeExpression($v); }
+    }
+}
+
 %*
 recursive function emitLambdaConstructor(v: SMTAssembly::LambdaConstructor, evv: SMTEmitterEnv): CString {
     let plist = v.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
@@ -980,14 +995,14 @@ function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CStri
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    return CString::concat('(declare-fun ', f.invokeKey, ' ', pll, ' Bool)');
+    return CString::concat('(declare-fun ', f.invokeKey.value, ' ', pll, ' Bool)');
 }
 
 function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: Nat): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
-    let psig = CString::concat('define-fun ', f.invokeKey, ' ', pll, ' ');
+    let psig = CString::concat('define-fun ', f.invokeKey.value, ' ', pll, ' ');
     var body: CString;
     if(f.specialname === 'cstring_empty') {
         body = '(= s "")';
