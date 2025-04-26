@@ -35,11 +35,11 @@ namespace TransformNameManager {
     }
 
     function generateNameForFieldDefaultFunction(tkey: BSQAssembly::TypeKey, fname: CString): CString {
-        return CString::join('-', @FieldDefault', TransformNameManager::resymbolCStringForSMT(tkey.value), fname);
+        return CString::join('-', '@FieldDefault', TransformNameManager::resymbolCStringForSMT(tkey.value), fname);
     }
 
     function generateNameForInvariantFunction(tkey: BSQAssembly::TypeKey, iid: CString): CString {
-        return CString::join('-', @Invariant', TransformNameManager::resymbolCStringForSMT(tkey.value), iid);
+        return CString::join('-', '@Invariant', TransformNameManager::resymbolCStringForSMT(tkey.value), iid);
     }
 }
 
@@ -229,7 +229,7 @@ entity SMTTransformer {
 
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
-            let iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|Expression, Nat|)>(fn(cctx, iiv) => {
+            let nctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|Expression, Nat|)>(fn(cctx, iiv) => {
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
 
                 let aargs = orderargs.firstK(iiv.args.length);
@@ -243,7 +243,8 @@ entity SMTTransformer {
                     chkcall = SMTAssembly::CallTypeFunctionExpression{iitypekey, aargs};
                 }
 
-                return nctx.addError(e.sinfo), (|chkcall, cctx.errCtr|);
+                let eeid = cctx.errCtr;
+                return cctx.addError(e.sinfo), (|chkcall, eeid|);
             });
 
             let createexp = SMTAssembly::AssertSetExpression{e.ctype, iichecks, createop};

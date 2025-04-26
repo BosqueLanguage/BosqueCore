@@ -570,8 +570,8 @@ function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEm
             tt = emitSafeExpression[recursive]($cexp);
         }
         else {
-            let expcc = emitExpression[recursive]($cexp, eev);
-            tt = CString::concat('(= ', expcc, ' ', SMTEmitter::resultTrueValue, ')');
+            let ecc = emitExpression[recursive]($cexp, eev);
+            tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
         }
 
         var err: CString;
@@ -626,8 +626,7 @@ recursive function emitSafeExpression(e: SMTAssembly::Expression): CString {
         *%
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($v); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($v); }
-        | SMTAssembly::CallNamespaceFunctionSafeExpression => { return emitCallNamespaceFunctionConcept[recursive]($v); }
-        | SMTAssembly::CallTypeFunctionSafeExpression => { return emitCallTypeFunctionExpression[recursive]($v); }
+        | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionConcept[recursive]($v); }
         %*
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($v); }
         | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($v); }
@@ -663,8 +662,7 @@ recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }
         | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, eev); }
-        | SMTAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionConcept[recursive]($v); }
-        | SMTAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionConcept[recursive]($v); }
+        | SMTAssembly::CallFunctionExpression => { return emitCallFunctionConcept[recursive]($v); }
         %*
         | SMTAssembly::CallLambdaFunctionExpression => { return emitCallLambdaFunctionExpression[recursive]($v); }
         | SMTAssembly::MethodInvokeStaticExpression => { return emitMethodInvokeStaticExpression[recursive]($v); }
@@ -972,7 +970,7 @@ function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CStri
     return CString::concat('(declare-fun ', f.invokeKey, ' ', pll, ' Bool)');
 }
 
-function emitBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFunctionDecl, trgterr: Nat): CString {
+function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: Nat): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -988,7 +986,7 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::NamespaceBuiltinFunctionDecl, t
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitFunctionDecl(f: SMTAssembly::NamespaceFunctionDecl, trgterr: Nat): CString {
+function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: Nat): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -1244,8 +1242,8 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
         '#END ;;--GLOBAL_IMPLS--;;'
     );
 
-    let nspreds = CString::joinAll('%n;', asm.nspreds.map<CString>(fn(f) => emitNamespacePredicateFunctionDecl(f)));
-    let nsbuiltins = CString::joinAll('%n;', asm.nsbuiltins.map<CString>(fn(f) => emitNamespaceBuiltinFunctionDecl(f, trgterr)));
+    let nspreds = CString::joinAll('%n;', asm.nspreds.map<CString>(fn(f) => emitPredicateFunctionDecl(f)));
+    let nsbuiltins = CString::joinAll('%n;', asm.nsbuiltins.map<CString>(fn(f) => emitBuiltinFunctionDecl(f, trgterr)));
     let prestr = CString::join('%n;',
         '#BEGIN ;;--PRE_FUNCS--;;',
         nspreds,
@@ -1253,7 +1251,7 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
         '#END ;;--PRE_FUNCS--;;'
     );
 
-    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => emitNamespaceFunctionDecl(asm.nsfuncs.get(t), trgterr));
+    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => emitFunctionDecl(asm.nsfuncs.get(t), trgterr));
     let efuncs = CString::concat(
         '#BEGIN ;;--FUNCTION_DECLS--;;',
         CString::joinAll('%n;%n;', efuncs_list),

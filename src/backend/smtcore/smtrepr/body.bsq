@@ -352,8 +352,6 @@ entity LetWErrorsExpression provides Expression {
     invariant !$vvbind.empty();
 }
 
-entity CheckAssertions
-
 concept Operation {
 }
 
