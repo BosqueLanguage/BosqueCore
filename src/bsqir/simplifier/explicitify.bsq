@@ -173,7 +173,7 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, $restype.hasInvariants() };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.hasInvariants() };
         }
     }
 

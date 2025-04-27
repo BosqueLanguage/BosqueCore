@@ -230,11 +230,18 @@ class BSQIREmitter {
     }
 
     private emitInvokeArgumentInfo(name: string, rec: RecursiveAnnotation, args: ArgumentList, shuffleinfo: [number, TypeSignature][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined) {
-        const sinfocc = shuffleinfo.map((si) => `(|${si[0]}i, ${this.emitTypeSignature(si[1])}|)`).join(", ");
-        const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
-        const restinfocc = (restinfo || []).map((ri) => `(|${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`).join(", ");
+        const sinfocc = shuffleinfo.map((si) => {
+            const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
+            return `(|${iidx}, ${this.emitTypeSignature(si[1])}|)`
+        }).join(", ");
 
-        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Int, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Int, Bool, TypeSignature|)>{${restinfocc}} }`;
+        const restinfocc = (restinfo || []).map((ri) => {
+            return `(|${ri[0]}n, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`
+        }).join(", ");
+
+        const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
+        
+        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, TypeSignature|)>{${restinfocc}} }`;
     }
 
     private emitITest(itest: ITest): string {
@@ -355,10 +362,11 @@ class BSQIREmitter {
         const invchecks = cdecl.allInvariants.length !== 0;
 
         const shuffleinfo = exp.shuffleinfo.map((si) => {
-            return `(${si[0]}i, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])})`;
+            const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
+            return `(${iidx}, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])})`;
         });
         
-        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Int, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
+        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {

@@ -210,9 +210,9 @@ entity SMTTransformer {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
 
-        let needsdefault = e.args.args.anyOf(pred(arg) => arg.2 != -1i);
+        let needsdefault = e.shuffleinfo.allOf(pred(arg) => arg.0?some);
         if(!e.invchecks && !needsdefault) {
-            let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.2));
+            let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
             return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
@@ -222,7 +222,7 @@ entity SMTTransformer {
 
             var orderargs: List<SMTAssembly::SafeExpression>;
             if(!needsdefault) {
-                orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.2));
+                orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
             }
             else {
                 abort;
@@ -230,7 +230,7 @@ entity SMTTransformer {
 
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
-            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
 
                 let aargs = orderargs.firstK(iiv.args.length);

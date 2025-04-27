@@ -66,13 +66,13 @@ entity AccessVariableExpression provides SafeExpression {
 }
 
 entity TermifyExpression provides SafeExpression {
-    field value: Expression;
+    field value: SafeExpression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
 
 entity UntermifyExpression provides SafeExpression {
-    field value: Expression;
+    field value: SafeExpression;
     field fromtype: TypeKey;
     field intotype: TypeKey;
 }
@@ -210,7 +210,7 @@ entity MethodInvokeStaticExpression provides Expression {
 }
 
 datatype UnaryExpression provides SafeExpression using {
-    field exp: Expression;
+    field exp: SafeExpression;
 }
 of
 PrefixNotOpExpression { }
@@ -219,8 +219,8 @@ PrefixNotOpExpression { }
 ;
 
 datatype BinaryArithExpression provides SafeExpression using {
-    field lhs: Expression;
-    field rhs: Expression;
+    field lhs: SafeExpression;
+    field rhs: SafeExpression;
 }
 of
 BinAddExpression { }
