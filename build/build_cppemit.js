@@ -14,9 +14,10 @@ const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 const binoutdir = path.join(bsqdir, "bin/cpp");
 
 const allsrcdirs = [
+    path.join(bsqdir, "src/bsqir/asm"),
     path.join(bsqdir, "src/backend/cpp/transformer/"),
     path.join(bsqdir, "src/backend/cpp/cpprepr/"),
-    path.join(bsqdir, "src/backend/cpp/test/"),
+    path.join(bsqdir, "src/backend/cpp/test/")
 ];
 
 let allsources = [];

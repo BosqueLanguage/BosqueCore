@@ -1,7 +1,7 @@
 declare namespace CPPAssembly;
 
 %% For now this doesnt properly organize code, just serves as a structure to build from
-entity CPPAssembly {
+entity Assembly {
     field includes: CString;
     field body: CString;
 }

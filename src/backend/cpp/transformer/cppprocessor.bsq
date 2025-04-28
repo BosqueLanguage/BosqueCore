@@ -1,4 +1,5 @@
 declare namespace CPPEmitter {
+    using BSQAssembly;
     using CPPAssembly;
 }
 

@@ -1,0 +1,17 @@
+namespace CPPEmitter;
+
+entity CPPTransformer {
+    field bsqasm: BSQAssembly::Assembly;
+
+    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
+        let transformer = CPPTransformer{bsqasm};
+
+        %% Reference SMT Assembly approach
+
+        %% Simply testing to see if I can get a cpp file to be spat out with my includes
+        return CPPAssembly::Assembly {
+            emitIncludes(),
+            ''
+        };
+    }
+}

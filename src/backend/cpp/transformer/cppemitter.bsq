@@ -30,6 +30,6 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
-function emitAssembly(asm: CPPAssembly): CString {
+function emitAssembly(asm: CPPAssembly::Assembly): CString {
     return CString::concat(asm.includes, asm.body);
 }
