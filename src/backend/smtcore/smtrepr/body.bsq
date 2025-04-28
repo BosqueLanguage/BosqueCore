@@ -3,16 +3,19 @@ namespace SMTAssembly;
 const varidentifierRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
 type VarIdentifier = CString of SMTAssembly::varidentifierRE;
 
-concept Expression {
-}
-
 concept CallArgExpression {
 }
 
-concept SafeExpression provides Expression, CallArgExpression {
+concept CallArgSafeExpression {
 }
 
-entity LambdaConstructor provides CallArgExpression {
+concept Expression provides CallArgExpression {
+}
+
+concept SafeExpression provides CallArgSafeExpression, Expression {
+}
+
+entity LambdaConstructor provides CallArgExpression, CallArgSafeExpression {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
@@ -111,14 +114,17 @@ entity ConstructorEListExpression provides SafeExpression {
     field args: List<SafeExpression>;
 }
 
-datatype CallFunctionConcept using {
+concept CallFunctionConcept {
     field invokeKey: InvokeKey;
+}
+
+entity CallFunctionSafeExpression provides CallFunctionConcept, SafeExpression { 
+    field args: List<CallArgSafeExpression>;
+} 
+
+entity CallFunctionExpression provides CallFunctionConcept, Expression { 
     field args: List<CallArgExpression>;
 }
-of
-CallFunctionSafeExpression { } 
-| CallFunctionExpression { }
-;
 
 entity CallLambdaFunctionExpression provides Expression {
     field lambda: VarIdentifier;

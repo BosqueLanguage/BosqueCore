@@ -1577,8 +1577,9 @@ class BSQIREmitter {
         return `BSQAssembly::SaturatedFieldInfo{ containingtype=${this.emitTypeSignature(sfield.containingtype)}, fname='${sfield.name}'<Identifier>, ftype=${this.emitTypeSignature(sfield.type)}, hasdefault=${sfield.hasdefault} }`;
     }
     
-    private emitSaturatedInvariantInfo(invariants: {containingtype: NominalTypeSignature, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
-        return `BSQAssembly::SaturatedInvariantInfo{ containingtype=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
+    private emitSaturatedInvariantInfo(invariants: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
+        const ikey = EmitNameManager.generateTypeKey(invariants.containingtype) + "_$_invariant" + invariants.ii.toString()
+        return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, containingtype=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
     }
 
     private emitAbstractNominalTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {

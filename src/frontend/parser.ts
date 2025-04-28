@@ -5273,7 +5273,7 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
                 }
                 else {
-                    vdates.push(new ValidateDecl(this.env.currentFile, sinfo, tag, exp));
+                    vdates.push(new ValidateDecl(this.env.currentFile, sinfo, vdates.length, tag, exp));
                 }
             }
             else {
@@ -5284,7 +5284,7 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
                 }
                 else {
-                    invs.push(new InvariantDecl(this.env.currentFile, sinfo, tag, level, exp));
+                    invs.push(new InvariantDecl(this.env.currentFile, sinfo, invs.length, tag, level, exp));
                 }
             }
 

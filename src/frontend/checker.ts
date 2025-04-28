@@ -4176,10 +4176,10 @@ class TypeChecker {
         
         const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
         tdecl.allInvariants = invariants.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
         tdecl.allValidates = validators.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
@@ -4292,10 +4292,10 @@ class TypeChecker {
         
         const {invariants, validators} = this.relations.resolveAllTypeDeclaredValidatorDecls(rcvr, this.constraints);
         tdecl.allInvariants = invariants.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
         tdecl.allValidates = validators.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);
@@ -4509,10 +4509,10 @@ class TypeChecker {
         
         const {invariants, validators} = this.relations.resolveAllInheritedValidatorDecls(rcvr, this.constraints);
         tdecl.allInvariants = invariants.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
         tdecl.allValidates = validators.map((inv) => {
-            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
+            return { containingtype: inv.typeinfo.tsig.remapTemplateBindings(inv.typeinfo.mapping) as NominalTypeSignature, ii: inv.member.ii, file: inv.member.file, sinfo: inv.member.sinfo, tag: inv.member.diagnosticTag };
         });
 
         this.checkConstMemberDecls(tdecl, tdecl.consts);

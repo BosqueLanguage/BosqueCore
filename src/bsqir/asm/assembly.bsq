@@ -117,6 +117,7 @@ entity SaturatedFieldInfo {
 }
 
 entity SaturatedInvariantInfo {
+    field ikey: InvokeKey;
     field declaredInType: NominalTypeSignature;
     field file: String;
     field sinfo: SourceInfo;

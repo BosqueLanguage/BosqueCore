@@ -231,24 +231,23 @@ entity SMTTransformer {
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
-                let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
-
-                let aargs = orderargs.firstK(iiv.args.length);
                 let iitypekey = this.transformStdTypeToSMT(iiv.declaredInType);
-
-                var chkcall: SMTAssembly::CallFunctionConcept;
-                if(!this.errinvokes.get(iiv.invokeKey)) {
-                    chkcall = SMTAssembly::CallFunctionSafeExpression{iitypekey, aargs};
-                }
-                else {
-                    chkcall = SMTAssembly::CallFunctionExpression{iitypekey, aargs};
-                }
+                let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
+                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey);
+                
 
                 let eeid = cctx.errCtr;
-                return cctx.addError(e.sinfo), (|chkcall, eeid|);
+                if(!this.errinvokes.get(iiv.ikey)) {
+                    let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size()).map<SMTAssembly::CallArgSafeExpression>(fn(arg) => arg);
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, aargs}, eeid|);
+                }
+                else {
+                    let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size()).map<SMTAssembly::CallArgExpression>(fn(arg) => arg);
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, aargs}, eeid|);
+                }
             });
 
-            let createexp = SMTAssembly::AssertSetExpression{e.ctype, iichecks, createop};
+            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
             return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
         }
     }
@@ -266,8 +265,8 @@ entity SMTTransformer {
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
-            | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression($e, ctx); }
-            | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression($e, ctx); }
+            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($e, ctx); }
+            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($e, ctx); }
         }
     }
 
