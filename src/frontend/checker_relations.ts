@@ -1083,7 +1083,7 @@ class TypeCheckerRelations {
         return rchks || ichecks.invariants.length !== 0;
     }
 
-    convertTypeSignatureToTypeInferCtx(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeInferContext {
+    convertTypeSignatureToTypeInferCtx(tsig: TypeSignature): TypeInferContext {
         if(!(tsig instanceof EListTypeSignature)) {
             return new SimpleTypeInferContext(tsig);
         }

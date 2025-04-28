@@ -1577,7 +1577,7 @@ class TypeChecker {
         else {
             const ltype = new LambdaTypeSignature(exp.sinfo, exp.invoke.recursive, exp.invoke.name as "fn" | "pred", params, rtype);
 
-            const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype, this.constraints);
+            const ireturn = this.relations.convertTypeSignatureToTypeInferCtx(rtype);
             const lenv = TypeEnvironment.createInitialLambdaEnv(args, rtype, ireturn, env);
             this.checkBodyImplementation(lenv, exp.invoke.body);
             
@@ -3154,8 +3154,9 @@ class TypeChecker {
         this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
 
         for(let i = 0; i < stmt.value.length; ++i) {
-            const rtype = i < rtypes.length ? rtypes[i] : undefined;
-            const etype = this.checkExpression(env, stmt.value[i], rtype);
+            const rtype = rtypes[i] !== undefined ? rtypes[i] : undefined;
+            const infertype = rtype !== undefined ? this.relations.convertTypeSignatureToTypeInferCtx(rtype) : undefined;
+            const etype = this.checkExpression(env, stmt.value[i], infertype);
 
             const rtname = rtype !== undefined ? rtype.emit() : "skip";
             this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit()}`);
@@ -3198,16 +3199,16 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(stmt.cond.exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.cond.exp.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             return TypeEnvironment.mergeEnvironmentsSimple(env, env, ttrue);
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
             if(stmt.binder === undefined) {
                 const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -3245,8 +3246,8 @@ class TypeChecker {
                 eetype = this.getWellKnownType("Bool");
             }
 
-            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
-            this.checkError(stmt.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(stmt.cond.exp.sinfo, !this.relations.isBooleanType(eetype), "If test requires a Bool type");
+            this.checkError(stmt.cond.exp.sinfo, stmt.binder !== undefined, "Binder is not valid here -- requires use of an ITest");
 
             const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             const tfalse = this.checkBlockStatement(env, stmt.falseBlock);
@@ -3254,8 +3255,8 @@ class TypeChecker {
         }
         else {
             const splits = this.processITestAsConvert(stmt.sinfo, env, eetype, stmt.cond.itestopt);
-            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
-            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+            this.checkError(stmt.cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
 
             if(stmt.binder === undefined) {
                 const ttrue = this.checkBlockStatement(env, stmt.trueBlock);
@@ -3373,7 +3374,7 @@ class TypeChecker {
         for (let i = 0; i < stmt.matchflow.length && !exhaustive; ++i) {
             //it is a wildcard match
             if(stmt.matchflow[i].mtype === undefined) {
-                this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+                this.checkError(stmt.matchflow[i].value.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
                 exhaustive = true;
 
                 const lubattempt = this.relations.flowTypeLUB(stmt.matchflow[i].value.sinfo, eetype, ctype, this.constraints);
@@ -3398,14 +3399,14 @@ class TypeChecker {
 
                 const splits = this.relations.refineMatchType(ctype, mtype, this.constraints);
                 if(splits === undefined) {
-                    this.reportError(stmt.sinfo, `Match statement requires a type that is a subtype of the decomposed type but got ${mtype.emit()}`);
+                    this.reportError(stmt.matchflow[i].value.sinfo, `Match statement requires a type that is a subtype of the decomposed type but got ${mtype.emit()}`);
                     return env;
                 }
                 else {
-                    this.checkError(stmt.sinfo, splits.overlap.length === 0, "Test is never true -- true branch of if is unreachable");
+                    this.checkError(stmt.matchflow[i].value.sinfo, splits.overlap.length === 0, "Test is never true -- true branch of match is unreachable");
 
                     exhaustive = splits.remain.length === 0;
-                    this.checkError(stmt.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+                    this.checkError(stmt.matchflow[i].value.sinfo, exhaustive && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
 
                     let cenv = env;
                     if(stmt.sval[1] !== undefined) {
@@ -4030,7 +4031,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclSignature(fdecl, []);
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
-            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType);
             const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
@@ -4055,7 +4056,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclSignature(fdecl, []);
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
-            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType);
             const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
@@ -4080,7 +4081,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclSignature(mdecl, [thisvinfo]);
             this.checkExplicitInvokeDeclMetaData(mdecl, [thisvinfo], mdecl.isThisRef ? ["this"] : [], undefined);
 
-            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType, this.constraints);
+            const infertype = this.relations.convertTypeSignatureToTypeInferCtx(mdecl.resultType);
             const env = TypeEnvironment.createInitialStdEnv([thisvinfo, ...mdecl.params.map((p) => new VarInfo(p.name, p.type, [], true, true, p.isRefParam))], mdecl.resultType, infertype);
             this.checkBodyImplementation(env, mdecl.body);
 
@@ -4107,7 +4108,7 @@ class TypeChecker {
             const m = mdecls[i];
 
             if(this.checkTypeSignature(m.declaredType)) {
-                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
+                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType);
                 const env = TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype);
 
                 const decltype = this.checkExpression(env, m.value.exp, new SimpleTypeInferContext(m.declaredType));
@@ -4122,7 +4123,7 @@ class TypeChecker {
             
             if(this.checkTypeSignature(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
-                    const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
+                    const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType);
                     const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, [], true, true, false)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
@@ -4551,7 +4552,7 @@ class TypeChecker {
 
             this.file = m.file;
             if(this.checkTypeSignature(m.declaredType)) {
-                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
+                const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType);
                 const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
 
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit()} but got ${decltype.emit()}`);
