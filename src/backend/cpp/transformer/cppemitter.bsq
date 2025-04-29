@@ -30,6 +30,15 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
+function emitFunction(ik: CPPAssembly::InvokeKey): CString {
+    return ik.value;
+}
+
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    return CString::concat(asm.includes, asm.body);
+    %% For now we just grab every function
+    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => {
+        return emitFunction(t);
+    });
+
+    return CString::joinAll('%n;%n;', efuncs_list);
 }

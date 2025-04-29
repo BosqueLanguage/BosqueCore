@@ -1,17 +1,22 @@
 namespace CPPEmitter;
 
+%% Transform Bosque names into cpp representation
+namespace CPPTransformNameManager {
+    function convertInvokeKey(ikey: BSQAssembly::InvokeKey): CPPAssembly::InvokeKey {
+        return CPPAssembly::InvokeKey::from(ikey.value);
+    }
+}
+
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{bsqasm};
 
-        %% Reference SMT Assembly approach
+        let allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
 
-        %% Simply testing to see if I can get a cpp file to be spat out with my includes
         return CPPAssembly::Assembly {
-            emitIncludes(),
-            ''
+            allfuncs
         };
     }
 }

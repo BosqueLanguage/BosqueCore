@@ -6,6 +6,7 @@ declare namespace CPPEmitter {
 %% TODO: actually glue or properly transformed cpp together
 
 %% Our API for emitting cpp
-public function main(asm: CPPAssembly): CString {
-    return CPPEmitter::emitAssembly(asm);
+public function main(asm: BSQAssembly::Assembly): CString {
+    let tasm = CPPEmitter::CPPTransformer::convertBsqAsmToCpp(asm);
+    return CPPEmitter::emitAssembly(tasm);
 }

@@ -1,7 +1,18 @@
 declare namespace CPPAssembly;
 
-%% For now this doesnt properly organize code, just serves as a structure to build from
+%% Most map well from Bosque
+const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
+const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPPAssembly::namespaceComponentRE}/c;
+type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
+type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit here
+
+const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c;
+const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
+
+const invokeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}|${BSQAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]+/c;
+type InvokeKey = CString of CPPAssembly::invokeKeyRE;
+
+%% Will need expanding
 entity Assembly {
-    field includes: CString;
-    field body: CString;
+    field allfuncs: List<InvokeKey>;
 }
