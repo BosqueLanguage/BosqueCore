@@ -207,17 +207,17 @@ else {
             process.exit(1);
         }
         const target = allmatches[0];
-        const bond = {
+        const targettype = {
             fname: target.fqn,
             args: target.decl.params.map(p => ({
                 name: p.name,
-                type: p.type.emit()
+                type: p.type.tkeystr
             })),
             precondition: target.decl.preconditions,
-            postcondition: target.decl.postconditions
+            postcondition: target.decl.postconditions,
+            return: target.decl.resultType.tkeystr
         }
-        const bondPath = path.join(outdir, "bond.json");
-        fs.writeFileSync(bondPath, JSON.stringify(bond, null, 4));
+        const targetPath = path.join(outdir, "targettype.json");
+        fs.writeFileSync(targetPath, JSON.stringify(targettype, null, 4));
     }
 }
-
