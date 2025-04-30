@@ -104,6 +104,11 @@ function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserE
     return generateASMGeneral(usercode, ["SMT_LIBS"]);
 }
 
+// We MAY want to create separate core files for cpp explicitly to easily make stuff built in, ok for now
+function generateASMCPP(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+    return generateASMGeneral(usercode, ["EXEC_LIBS"])
+}
+
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, generateASMSMT
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM, generateASMSMT, generateASMCPP
 };
