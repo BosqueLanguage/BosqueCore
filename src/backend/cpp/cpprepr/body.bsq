@@ -1,0 +1,28 @@
+namespace CPPAssembly;
+
+entity Body {
+    field op: Operation;
+}
+
+concept Expression {
+}
+
+concept Operation {
+}
+
+entity LiteralSimpleExpression provides Expression {
+    field vtype: TypeKey;
+    field value: CString;
+}
+
+entity BodyImpl provides Operation {
+    field value: Expression;
+}
+
+datatype BinaryArithExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+of
+BinAddExpression { }
+| BinSubExpression { };

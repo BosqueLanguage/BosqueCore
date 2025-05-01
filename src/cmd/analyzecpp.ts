@@ -68,9 +68,20 @@ function generateCPPFile(cpp: string, outdir: string) {
 }
 
 //
+// NOTE (again): I will almost 100% need to emit the correct builtin mapping for 
+// our char buffers creation. Likely in JSEmitter.
+//
+
+//
+// NOTE (again again): May want to include the runtime headers from this file, not emitter
+//
+
+//
 // NOTE: Something quite funky is going on when I attempt to run bsqir.bsqon and output bsqon.
 // It spits out the error "ParseError -- Expected scoped type" which I have not been able to 
 // find a solution for yet...
+//
+// Turns out the issue was related to using lists in our cpp emission! for now just deal with basic arithmetic
 //
 function runCPPEmit(outname: string): string {
     Status.output("Processing IR into CPP Code...\n");

@@ -4,6 +4,62 @@ function emitIncludes(): CString {
     return '#include "cppruntime.hpp"';
 }
 
+function emitFunction(ik: CPPAssembly::InvokeKey): CString {
+    return ik.value;
+}
+
+recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CString {
+    let lhs = emitExpression[recursive](add.lhs);
+    let rhs = emitExpression[recursive](add.rhs);
+
+    return CString::concat('(', lhs, ' + ', rhs, ')');
+}
+
+recursive function emitBinSubExpression(add: CPPAssembly::BinSubExpression): CString {
+    abort;
+}
+
+%%
+%% Not very confident on these commented functions, needs some thought
+%%
+
+%* 
+function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression): CString {
+    match(e)@ {
+        CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e); }
+        | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
+    }
+}
+
+function emitExpression(e: CPPAssembly::Expression): CString {
+    match(e)@ {
+        CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e); }
+        | _ => { abort; }
+    }
+}
+
+function emitSimpleLiteralExpression(sle: CPPAssembly::LiteralSimpleExpression) {
+
+}
+
+function emitOperation(op: CPPAssembly::Operation) {
+    match(op)@ {
+        CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($op); }
+        | _ => { abort; }
+    }
+}
+
+function emitBody(body: CPPAssembly::Body): CString{
+    return emitOperation(body.op);
+}
+*%
+
+function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CString {
+    %% Needs to properly setup function name, args, etc
+    return emitBody(f.body);
+}
+
+%% CPP Pre-defined backend
 namespace PathStack {
     function emitPathStackCreate(): CString {
         return 'PathStack ps = PathStack::create();';
@@ -30,13 +86,19 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
-function emitFunction(ik: CPPAssembly::InvokeKey): CString {
-    return ik.value;
-}
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
     %% For now we just grab every function
-    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => { return emitFunction(t); });
+    let includes = emitIncludes();
 
-    return CString::joinAll('%n;%n;', efuncs_list);
+    let efuncs_list = asm.nsfuncs.map<CString>(fn(t) => { 
+        if(asm.nsfuncs.has(t)) {
+            return emitNamespaceFunctionDecl(t);
+        }
+     });
+    let efuncs = CString::joinAll('%n;%n;', efuncs_list);
+
+    %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
+
+    return CString::join('%n;', includes, efuncs);
 }

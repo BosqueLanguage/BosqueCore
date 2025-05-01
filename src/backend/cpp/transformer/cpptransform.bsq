@@ -5,19 +5,73 @@ namespace CPPTransformNameManager {
     function convertInvokeKey(ikey: BSQAssembly::InvokeKey): CPPAssembly::InvokeKey {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
+
+    function convertTypeKey(tkey: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
+        return CPPAssembly::TypeKey::from(tkey.value);
+    }
 }
 
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
-    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
-        let transformer = CPPTransformer{bsqasm};
+    %% Will need more concrete method for converting to LiteralSimpleExpression from bsq. Should call transformExprCpp...
+    recursive method transformBinAddExpression(exp: BSQAssembly::BinAddExpression): CPPAssembly::TypeKey {
+        let cpptype: CPPAssembly::TypeKey = this.transformStdTypeToCpp(exp.etype);
+        let nlhs: CPPAssembly::LiteralSimpleExpression = CPPAssembly::LiteralSimpleExpression{ cpptype, exp.value };
+        let nrhs: CPPAssembly::LiteralSimpleExpression = CPPAssembly::LiteralSimpleExpression{ cpptype, exp.value };
 
-        %% let allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
-        let allfuncs = List<CPPAssembly::InvokeKey>{};
+        return CPPAssembly::BinAddExpression{nlhs, nrhs};
+    }
+
+    %% Likely needs more, just simple structure now
+    method transformStdTypeToCpp(vtype: BSQAssembly::TypeSignature): CPPAssembly::TypeKey {
+        return CPPTransformNameManager::convertTypeKey(vtype);
+    }
+
+    recursive method transformBinaryArithExpression(exp: BSQAssembly::BinaryArithExpression): CPPAssembly::TypeKey {
+        match(exp)@ {
+            BSQAssembly::BinAddExpression => { 
+                return this.transformBinAddExpression[recursive]($exp); 
+            }
+            | _ => { abort; }
+        }
+    }
+
+    recursive function transformExpressionToCPP(exp: BSQAssembly::Expression): CPPAssembly::TypeKey {
+        match(exp)@ {
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression($exp); }
+            | _ => { abort; }
+        }
+    }
+
+    method transformBodyToCPP(impl: BSQAssembly::BodyImplementation): CPPAssembly::Body {
+        match(impl)@ {
+            BSQAssembly::ExpressionBodyImplementation => {
+                let cppexp = this.transformExpressionToCPP($impl.exp);
+
+                return CPPAssembly::Body{ %* Stuff *% };
+            }
+        }
+    }
+
+    method transformNamespaceFunctionDeclToCPP(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
+        let body = this.transformBodyToCPP(decl.body);
+    }   
+
+    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
+        let transformer = CPPTransformer{ bsqasm };
+
+        let transformer_nsfuncs = bsqasm.allfuncs
+            .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
+            .reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>(Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{},
+                fn(acc, ikey) => {
+                    let bsqdecl = bsqasm.nsfuncs.get(ikey);
+                    let cppdecl = transformer.transformNamespaceFunctionDeclToCPP(bsqdecl);
+                    return acc.insert(cppdecl.invokeKey, cppdecl);
+                });
 
         return CPPAssembly::Assembly {
-            allfuncs
+            nsfuncs = transformer_nsfuncs
         };
     }
 }
