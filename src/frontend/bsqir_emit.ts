@@ -363,7 +363,7 @@ class BSQIREmitter {
 
         const shuffleinfo = exp.shuffleinfo.map((si) => {
             const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
-            return `(${iidx}, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])})`;
+            return `(|${iidx}, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])}|)`;
         });
         
         return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;

@@ -1776,6 +1776,26 @@ BSQONParser.prototype.parseEnumNameComponent = function() {
     this.consumeExpected(SYM_hash); 
     return this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
 }
+/**
+ * @returns {any[]}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseEListArgs = function(...types) {
+    this.consumeExpected(SYM_lparenbar);
+
+    const res = [];
+    for(let i = 0; i < types.length; ++i) {
+        if(i !== 0) {
+            this.consumeExpected(SYM_coma);
+        }
+
+        res.push(this.parseValue(types[i]));
+    }
+
+    this.consumeExpected(SYM_rparenbar);
+
+    return res;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //BSQON Emitter
