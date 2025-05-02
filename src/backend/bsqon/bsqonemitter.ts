@@ -486,6 +486,7 @@ class BSQONTypeInfoEmitter {
                 decl.namespaces.push(nsemit.ns);
                 decl.typerefs.push(...nsemit.types);
                 if(nsii.elists.size !== 0) {
+                    //TODO: asminsantiation has the elist that are instantiated!!!!
                     decl.typerefs.push(...emitter.emitElistInfo());
                 }
 

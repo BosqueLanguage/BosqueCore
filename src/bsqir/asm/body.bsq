@@ -36,9 +36,9 @@ entity InvokeArgumentInfo {
     field rec: RecursiveAnnotation;
     field args: ArgumentList;
 
-    field shuffleinfo: List<(|Int, TypeSignature|)>;
+    field shuffleinfo: List<(|Option<Nat>, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
-    field restinfo: List<(|Int, Bool, TypeSignature|)>;
+    field restinfo: List<(|Nat, Bool, TypeSignature|)>;
 }
 
 concept Expression {
@@ -119,7 +119,7 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
     field ctype: NominalTypeSignature;
 }
 
-datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorExpression using {
+datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
     field elemtype: TypeSignature;
 }
 of
@@ -130,7 +130,7 @@ ConstructorPrimaryListExpression { }
 %%TODO: 1) constructor collection expression that are all union/append operations
 %%      2) constructor collection expression that are mixed single and union/append operations
 
-datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorExpression 
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
 of
 ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
@@ -145,17 +145,17 @@ ConstructorPrimarySpecialSomeExpression {
 }
 ;
 
-entity ConstructorTypeDeclExpression provides ConstructorExpression {
+entity ConstructorTypeDeclExpression provides ConstructorPrimaryExpression {
     field invchecks: Bool;
 }
 
-entity ConstructorTypeDeclStringExpression provides ConstructorExpression {
+entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression {
     field invchecks: Bool;
     field ofcheck: Option<Expression>;
 }
 
-entity ConstructorStdExpression provides ConstructorExpression { 
-    field shuffleinfo: List<(|Int, Identifier, TypeSignature|)>;
+entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
+    field shuffleinfo: List<(|Option<Nat>, Identifier, TypeSignature|)>;
     field invchecks: Bool;
 }
 

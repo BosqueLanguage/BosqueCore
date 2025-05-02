@@ -159,12 +159,14 @@ class PostConditionDecl extends ConditionDecl {
 }
 
 class InvariantDecl extends ConditionDecl {
+    readonly ii: number;
     readonly level: BuildLevel;
     readonly exp: ConstantExpressionValue;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, level: BuildLevel, exp: ConstantExpressionValue) {
         super(file, sinfo, tag);
 
+        this.ii = ii;
         this.level = level;
         this.exp = exp;
     }
@@ -175,11 +177,13 @@ class InvariantDecl extends ConditionDecl {
 }
 
 class ValidateDecl extends ConditionDecl {
+    readonly ii: number;
     readonly exp: ConstantExpressionValue;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, exp: ConstantExpressionValue) {
         super(file, sinfo, tag);
 
+        this.ii = ii;
         this.exp = exp;
     }
 
@@ -545,8 +549,8 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     saturatedProvides: TypeSignature[] = [];
     saturatedBFieldInfo: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[] = [];
 
-    allInvariants: {containingtype: NominalTypeSignature, file: string, sinfo: SourceInfo, tag: string | undefined}[] = [];
-    allValidates: {containingtype: NominalTypeSignature, file: string, sinfo: SourceInfo, tag: string | undefined}[] = [];
+    allInvariants: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}[] = [];
+    allValidates: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}[] = [];
 
     hasDynamicInvokes: boolean = false;
 

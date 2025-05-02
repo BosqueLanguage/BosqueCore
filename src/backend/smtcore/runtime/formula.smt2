@@ -8,6 +8,17 @@
     (@Result-ok (@Result-value T))
 )))
 
+(declare-datatypes (
+    (@EList-2 2)
+    (@EList-3 3)
+    (@EList-4 4)
+    ) (
+        (par (T1 T2) ((@EList-2-mk (_1 T1) (_2 T2))) )
+        (par (T1 T2 T3) ((@EList-3-mk (_1 T1) (_2 T2) (_3 T3))) )
+        (par (T1 T2 T3 T4) ((@EList-4-mk (_1 T1) (_2 T2) (_3 T3) (_4 T4))) )
+    )
+)
+
 ;;
 ;; Primitive datatypes 
 ;;

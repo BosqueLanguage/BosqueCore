@@ -1630,13 +1630,17 @@ BSQONParser.prototype.checkConsType = function(tkey) {
     }
 }
 /**
+ * @param {boolean} special
  * @param {string} fname
  * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parseSingleArg = function(fname, tkey) {
-    this.consumeExpected(SYM_lbrace);
+BSQONParser.prototype.parseSingleArg = function(special, fname, tkey) {
+    const lb = special ? SYM_lparen : SYM_lbrace;
+    const rb = special ? SYM_rparen : SYM_rbrace;
+
+    this.consumeExpected(lb);
 
     if(this.testTokens(TokenStrings.IdentifierName, SYM_eq)) {
         const nval = this.consumeAndGetData();
@@ -1648,20 +1652,24 @@ BSQONParser.prototype.parseSingleArg = function(fname, tkey) {
     }
 
     const res = this.parseValue(tkey);
-    this.consumeExpected(SYM_rbrace);
+    this.consumeExpected(rb);
 
     return res;
 }
 /**
+ * @param {boolean} special
  * @param {string} fname
  * @param {string} tkey
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parseSingleOrDefaultArg = function(tkey) {
-    this.consumeExpected(SYM_lbrace);
-    const res = !this.test(SYM_rbrace) ? this.parseSingleArg(fname, tkey) : undefined;
-    this.consumeExpected(SYM_rbrace);
+BSQONParser.prototype.parseSingleOrDefaultArg = function(special, fname, tkey) {
+    const lb = special ? SYM_lparen : SYM_lbrace;
+    const rb = special ? SYM_rparen : SYM_rbrace;
+
+    this.consumeExpected(lb);
+    const res = !this.test(rb) ? this.parseSingleArg(fname, tkey) : undefined;
+    this.consumeExpected(rb);
 
     return res;
 }
@@ -1775,6 +1783,26 @@ BSQONParser.prototype.parseCollectionConsArgs = function(etype) {
 BSQONParser.prototype.parseEnumNameComponent = function() {
     this.consumeExpected(SYM_hash); 
     return this.consumeExpectedAndGetData(TokenStrings.IdentifierName);
+}
+/**
+ * @returns {any[]}
+ * @throws {ParserError}
+ */
+BSQONParser.prototype.parseEListArgs = function(...types) {
+    this.consumeExpected(SYM_lparenbar);
+
+    const res = [];
+    for(let i = 0; i < types.length; ++i) {
+        if(i !== 0) {
+            this.consumeExpected(SYM_coma);
+        }
+
+        res.push(this.parseValue(types[i]));
+    }
+
+    this.consumeExpected(SYM_rparenbar);
+
+    return res;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

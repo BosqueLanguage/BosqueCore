@@ -230,11 +230,18 @@ class BSQIREmitter {
     }
 
     private emitInvokeArgumentInfo(name: string, rec: RecursiveAnnotation, args: ArgumentList, shuffleinfo: [number, TypeSignature][], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined) {
-        const sinfocc = shuffleinfo.map((si) => `(|${si[0]}i, ${this.emitTypeSignature(si[1])}|)`).join(", ");
-        const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
-        const restinfocc = (restinfo || []).map((ri) => `(|${ri[0]}i, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`).join(", ");
+        const sinfocc = shuffleinfo.map((si) => {
+            const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
+            return `(|${iidx}, ${this.emitTypeSignature(si[1])}|)`
+        }).join(", ");
 
-        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Int, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Int, Bool, TypeSignature|)>{${restinfocc}} }`;
+        const restinfocc = (restinfo || []).map((ri) => {
+            return `(|${ri[0]}n, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`
+        }).join(", ");
+
+        const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
+        
+        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, TypeSignature|)>{${restinfocc}} }`;
     }
 
     private emitITest(itest: ITest): string {
@@ -318,7 +325,8 @@ class BSQIREmitter {
     }
 
     private emitConstructorExpressionBase(exp: ConstructorExpression): string {
-        return `args=${this.emitArgumentList(exp.args)}`;
+        const ebase = this.emitExpressionBase(exp);
+        return `${ebase}, args=${this.emitArgumentList(exp.args)}`;
     }
 
     private emitConstructorPrimaryExpressionBase(exp: ConstructorPrimaryExpression): string {
@@ -355,10 +363,11 @@ class BSQIREmitter {
         const invchecks = cdecl.allInvariants.length !== 0;
 
         const shuffleinfo = exp.shuffleinfo.map((si) => {
-            return `(${si[0]}i, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])})`;
+            const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
+            return `(|${iidx}, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])}|)`;
         });
         
-        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Int, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
+        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
@@ -1348,31 +1357,31 @@ class BSQIREmitter {
         return `file="${decl.file}", sinfo=${this.emitSourceInfo(decl.sinfo)}, declaredInNS='${nskey}'<BSQAssembly::NamespaceKey>`;
     }
 
-    private emitConditionDeclBase(decl: ConditionDecl, nskey: string, exp: Expression): string {
+    private emitConditionDeclBase(decl: ConditionDecl, nskey: string, label: string, exp: Expression): string {
         const dbase = this.emitAbstractDeclBase(decl, nskey);
         const dtag = decl.diagnosticTag !== undefined ? `some('${decl.diagnosticTag}')` : "none";
 
-        return `${dbase}, diagnosticTag=${dtag}, exp=${this.emitExpression(exp)}`;
+        return `${dbase}, diagnosticTag=${dtag}, ikey=${label}<BSQAssembly::InvokeKey>, exp=${this.emitExpression(exp)}`;
     }
 
 
-    private emitPreConditionDecl(decl: PreConditionDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+    private emitPreConditionDecl(decl: PreConditionDecl, nskey: string, ikey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, ikey + "_$_precond" + ii.toString(), decl.exp);
         return `BSQAssembly::PreConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
     }
 
-    private emitPostConditionDecl(decl: PostConditionDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp);
+    private emitPostConditionDecl(decl: PostConditionDecl, nskey: string, ikey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, ikey + "_$_postcond" + ii.toString(), decl.exp);
         return `BSQAssembly::PostConditionDecl{ ${cbase}, issoft=${decl.issoft} }`;
     }
 
-    private emitInvariantDecl(decl: InvariantDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+    private emitInvariantDecl(decl: InvariantDecl, nskey: string, tkey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, tkey + "_$_invariant" + ii.toString(), decl.exp.exp);
         return `BSQAssembly::InvariantDecl{ ${cbase} }`;
     }
 
-    private emitValidateDecl(decl: ValidateDecl, nskey: string): string {
-        const cbase = this.emitConditionDeclBase(decl, nskey, decl.exp.exp);
+    private emitValidateDecl(decl: ValidateDecl, nskey: string, tkey: string, ii: number): string {
+        const cbase = this.emitConditionDeclBase(decl, nskey, tkey + "_$_validate" + ii.toString(), decl.exp.exp);
         return `BSQAssembly::ValidateDecl{ ${cbase} }`;
     }
 
@@ -1415,8 +1424,8 @@ class BSQIREmitter {
     private emitExplicitInvokeDecl(decl: ExplicitInvokeDecl, nskey: string, ikey: string, fmt: BsqonCodeFormatter): string {
         const ibase = this.emitAbstractInvokeDecl(decl, nskey, ikey, fmt);
 
-        const preconds = decl.preconditions.map((p) => this.emitPreConditionDecl(p, nskey)).join(", ");
-        const postconds = decl.postconditions.map((p) => this.emitPostConditionDecl(p, nskey)).join(", ");
+        const preconds = decl.preconditions.map((p, ii) => this.emitPreConditionDecl(p, nskey, ikey, ii)).join(", ");
+        const postconds = decl.postconditions.map((p, ii) => this.emitPostConditionDecl(p, nskey, ikey, ii)).join(", ");
 
         const conds = `preconditions=List<BSQAssembly::PreConditionDecl>{ ${preconds} }, postconditions=List<BSQAssembly::PostConditionDecl>{ ${postconds} }`;
         return `${ibase},${fmt.nl() + fmt.indent(conds)}`;
@@ -1569,8 +1578,9 @@ class BSQIREmitter {
         return `BSQAssembly::SaturatedFieldInfo{ containingtype=${this.emitTypeSignature(sfield.containingtype)}, fname='${sfield.name}'<Identifier>, ftype=${this.emitTypeSignature(sfield.type)}, hasdefault=${sfield.hasdefault} }`;
     }
     
-    private emitSaturatedInvariantInfo(invariants: {containingtype: NominalTypeSignature, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
-        return `BSQAssembly::SaturatedInvariantInfo{ containingtype=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
+    private emitSaturatedInvariantInfo(invariants: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
+        const ikey = EmitNameManager.generateTypeKey(invariants.containingtype) + "_$_invariant" + invariants.ii.toString()
+        return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, containingtype=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
     }
 
     private emitAbstractNominalTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
@@ -1578,8 +1588,8 @@ class BSQIREmitter {
 
         const tkey = EmitNameManager.generateTypeKey(tsig);
 
-        const invariants = tdecl.invariants.map((inv) => this.emitInvariantDecl(inv, EmitNameManager.generateNamespaceKey(ns))).join(", ");
-        const validates = tdecl.validates.map((val) => this.emitValidateDecl(val, EmitNameManager.generateNamespaceKey(ns))).join(", ");
+        const invariants = tdecl.invariants.map((inv, ii) => this.emitInvariantDecl(inv, EmitNameManager.generateNamespaceKey(ns), tkey, ii)).join(", ");
+        const validates = tdecl.validates.map((val, ii) => this.emitValidateDecl(val, EmitNameManager.generateNamespaceKey(ns), tkey, ii)).join(", ");
 
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 

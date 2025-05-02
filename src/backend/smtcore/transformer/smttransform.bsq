@@ -33,6 +33,14 @@ namespace TransformNameManager {
     function convertInvokeKey(ikey: BSQAssembly::InvokeKey): SMTAssembly::InvokeKey {
         return SMTAssembly::InvokeKey::from(resymbolCStringForSMT(ikey.value));
     }
+
+    function generateNameForFieldDefaultFunction(tkey: BSQAssembly::TypeKey, fname: CString): CString {
+        return CString::join('-', '@FieldDefault', TransformNameManager::resymbolCStringForSMT(tkey.value), fname);
+    }
+
+    function generateNameForInvariantFunction(tkey: BSQAssembly::TypeKey, iid: CString): CString {
+        return CString::join('-', '@Invariant', TransformNameManager::resymbolCStringForSMT(tkey.value), iid);
+    }
 }
 
 datatype SMTExpTransformResult using {
@@ -64,6 +72,7 @@ entity SMTTransformerCtx {
 
 entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
+    field errinvokes: Map<BSQAssembly::InvokeKey, Bool>;
 
     function isTermSMTTypeKey(tkey: SMTAssembly::TypeKey): Bool {
         return tkey === '@Term'<SMTAssembly::TypeKey>;
@@ -195,6 +204,70 @@ entity SMTTransformer {
 
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(exp.vname.value))};
+    }
+
+    recursive method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let smttype = this.transformStdTypeToSMT(e.ctype);
+
+        let needsdefault = !e.shuffleinfo.allOf(pred(arg) => arg.0?some);
+        if(!e.invchecks && !needsdefault) {
+            let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
+            let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
+
+            return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
+        }
+        else {
+            let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
+            var orderargs: List<SMTAssembly::SafeExpression>;
+            if(!needsdefault) {
+                orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
+            }
+            else {
+                abort;
+            }
+
+            let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
+
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
+                let iitypekey = this.transformStdTypeToSMT(iiv.declaredInType);
+                let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
+                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey);
+                
+
+                let eeid = cctx.errCtr;
+                if(!this.errinvokes.get(iiv.ikey)) {
+                    let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size()).map<SMTAssembly::CallArgSafeExpression>(fn(arg) => arg);
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, aargs}, eeid|);
+                }
+                else {
+                    let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size()).map<SMTAssembly::CallArgExpression>(fn(arg) => arg);
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, aargs}, eeid|);
+                }
+            });
+
+            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
+            return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+        }
+    }
+
+    recursive method transformConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        abort;
+    }
+
+    recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        match(e)@ {
+            BSQAssembly::ConstructorPrimaryListExpression => { abort; }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($e, ctx); }
+            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($e, ctx); }
+        }
     }
 
     recursive method transformPostfixAccessFromName(exp: BSQAssembly::PostfixAccessFromName, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
@@ -435,6 +508,9 @@ entity SMTTransformer {
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 
             }
+            | BSQAssembly::ConstructorExpression => { 
+                return this.transformConstructorExpression[recursive]($exp, ctx);
+            }
             | BSQAssembly::PostfixOp => { 
                 return this.transformPostfixOp[recursive]($exp, ctx);
             }
@@ -629,16 +705,16 @@ entity SMTTransformer {
         }
     }
 
-    method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::NamespaceFunctionDecl {
+    method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl): SMTAssembly::FunctionDecl {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
 
         let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{p.pname.value, this.transformCallTypeToSMT(p.ptype)});
         let rtype = this.transformStdTypeToSMT(decl.resultType);
-        let artype = if(errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+        let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-        let body = this.transformBodyToSMT(decl.body, decl.file, some(decl.ikey), errinvokes.get(decl.ikey), decl.resultType);
-        return SMTAssembly::NamespaceFunctionDecl{ nskey, decl.name.value, ikey, params, artype, body };
+        let body = this.transformBodyToSMT(decl.body, decl.file, some(decl.ikey), this.errinvokes.get(decl.ikey), decl.resultType);
+        return SMTAssembly::FunctionDecl{ ikey, params, artype, body };
     }
 
     method processConstExpression(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::Body {
@@ -683,14 +759,13 @@ entity SMTTransformer {
     }
 
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
-        let transformer = SMTTransformer{assembly};
+        let transformer = SMTTransformer{assembly, errinvokes};
 
         let tnsfuncs = assembly.allfuncs
-            .filter(pred(ikey) => assembly.nsfuncs.has(ikey))
-            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::NamespaceFunctionDecl>{}, 
+            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
                 fn(acc, ikey) => {
                     let bsqdecl = assembly.nsfuncs.get(ikey);
-                    let smtdecl = transformer.transformNamespaceFunctionDeclToSMT(bsqdecl, errinvokes);
+                    let smtdecl = transformer.transformNamespaceFunctionDeclToSMT(bsqdecl);
                     return acc.insert(smtdecl.invokeKey, smtdecl);
                 });
 
@@ -704,11 +779,10 @@ entity SMTTransformer {
             nsconsts = assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc)),
             typeconsts = assembly.typeconsts.map<SMTAssembly::ConstMemberDecl>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc)),
 
-            nspreds = List<SMTAssembly::NamespacePredicateFunctionDecl>{},
-            nsbuiltins = List<SMTAssembly::NamespaceBuiltinFunctionDecl>{},
+            nspreds = List<SMTAssembly::PredicateFunctionDecl>{},
+            nsbuiltins = List<SMTAssembly::BuiltinFunctionDecl>{},
     
-            nsfuncs = tnsfuncs,
-            typefuncs = Map<SMTAssembly::InvokeKey, SMTAssembly::TypeFunctionDecl>{},
+            funcs = tnsfuncs,
     
             enums = List<SMTAssembly::EnumTypeDecl>{},
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},

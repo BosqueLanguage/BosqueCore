@@ -3108,7 +3108,7 @@ class JSEmitter {
         }
         else if(dfields.length === 1) {
             const sdf = dfields[0];
-            const fi = `"${sdf.name}", "${sdf.type.tkeystr}"`;
+            const fi = `${specialop !== undefined}, "${sdf.name}", "${sdf.type.tkeystr}"`;
 
             let chekcall: string;
             if(specialop !== undefined) {
@@ -3139,7 +3139,7 @@ class JSEmitter {
         
         let body: string;
         if(dfields.length === 0) {
-            body = `{ return "${rcvr}{}"; }`;
+            body = `{ return "${rcvr.tkeystr}{}"; }`;
         }
         else if(dfields.length === 1) {
             const sdf = dfields[0];
@@ -3252,11 +3252,12 @@ class JSEmitter {
         decls.push(this.emitTypeSymbol(rcvr));
 
         if(ifields !== undefined) {
-            decls.push(this.emitCreate(tdecl, ifields.map((ff) => { return {name: ff.fname, type: ff.ftype, hasdefault: false, containingtype: rcvr}; }), rcvr, fmt));
+            const iffi = ifields.map((ff) => { return {name: ff.fname, type: ff.ftype, hasdefault: false, containingtype: rcvr}; });
+            decls.push(this.emitCreate(tdecl, iffi, rcvr, fmt));
 
             if(defaultpe) {
-                decls.push(this.emitBSQONParseAPI(tdecl, false, undefined, rcvr, specialop, fmt));
-                decls.push(this.emitBSQONEmitAPI(tdecl, undefined, rcvr, fmt));
+                decls.push(this.emitBSQONParseAPI(tdecl, false, iffi, rcvr, specialop, fmt));
+                decls.push(this.emitBSQONEmitAPI(tdecl, iffi, rcvr, fmt));
             }
         }
 
@@ -3894,6 +3895,14 @@ class JSEmitter {
             }
         }
 
+        asminstantiation.elists.forEach((edef, elk) => {
+            const elistargs = edef.entries.map((tt) => '"' + tt.tkeystr + '"');
+            const eemit = elistargs.map((ttk, i) => `emitter.emitValue(${ttk}, value[${i}])`);
+            
+            allparsedecls.push(`_$parsemap["${elk}"] = (parser) => parser.parseEListArgs(${elistargs.join(", ")});`);
+            allemitdecls.push(`_$emitmap["${elk}"] = (emitter, value) => "(|" + ${eemit.join(" + ")} + "|)";`);
+        });
+    
         return {decls: alldecls, supers: allsupertypes, parses: allparsedecls, emits: allemitdecls};
     }
 
