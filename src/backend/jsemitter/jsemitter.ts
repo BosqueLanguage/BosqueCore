@@ -3108,7 +3108,7 @@ class JSEmitter {
         }
         else if(dfields.length === 1) {
             const sdf = dfields[0];
-            const fi = `"${sdf.name}", "${sdf.type.tkeystr}"`;
+            const fi = `${specialop !== undefined}, "${sdf.name}", "${sdf.type.tkeystr}"`;
 
             let chekcall: string;
             if(specialop !== undefined) {
