@@ -117,8 +117,8 @@ entity ExplicitifyTransform {
             | ConstructorPrimarySpecialFailExpression => { abort; }
             | ConstructorTypeDeclExpression => { abort; }
             | ConstructorTypeDeclStringExpression => { abort; }
-            | ConstructorStdExpression => { return this.processConstructorStdExpression($e, vmap); }
-            | ConstructorEListExpression => { return this.processConstructorEListExpression($e, vmap); }
+            | ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e, vmap); }
+            | ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, vmap); }
         }
     }
 
@@ -248,7 +248,7 @@ entity ExplicitifyTransform {
             | AccessEnumExpression => { return e; }
             | AccessVariableExpression => { return this.processAccessVariableExpression($e, vmap); }
             | AccessCapturedVariableExpressionSpecial => { abort; }
-            | ConstructorExpression => { abort; }
+            | ConstructorExpression => { return this.processConstructorExpression[recursive]($e, vmap); }
             | ConstructorLambdaExpression => { abort; }
             | LetExpression => { abort; }
             | LambdaInvokeExpression => { abort; }

@@ -30,7 +30,7 @@ entity MayErrorAnalysis {
             | _ => { chks = false; }
         }
         
-        return chks || MayErrorAnalysis::processArgumentList(e.args);
+        return chks || MayErrorAnalysis::processArgumentList[recursive](e.args);
     }
 
     recursive function processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
@@ -76,23 +76,23 @@ entity MayErrorAnalysis {
             return true;
         }
         else {
-            return MayErrorAnalysis::processBinaryArgs(e.lhs, e.rhs);
+            return MayErrorAnalysis::processBinaryArgs[recursive](e.lhs, e.rhs);
         }
     }
 
     recursive function processBinaryKeyEqExpression(e: BSQAssembly::BinaryKeyEqExpression): Bool {
         match(e)@ {
-            BSQAssembly::BinKeyEqNoneExpression => { return MayErrorAnalysis::processUnaryArg($e.exp); }
-            | BSQAssembly::BinKeyNotEqNoneExpression => { return MayErrorAnalysis::processUnaryArg($e.exp); }
-            | BSQAssembly::BinKeySomeEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.eqoption, $e.eqval); }
-            | BSQAssembly::BinKeyNotSomeEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.neoption, $e.neval); }
-            | BSQAssembly::BinKeyEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.lhs, $e.rhs); }
-            | BSQAssembly::BinKeyNotEqExpression => { return MayErrorAnalysis::processBinaryArgs($e.lhs, $e.rhs); }
+            BSQAssembly::BinKeyEqNoneExpression => { return MayErrorAnalysis::processUnaryArg[recursive]($e.exp); }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { return MayErrorAnalysis::processUnaryArg[recursive]($e.exp); }
+            | BSQAssembly::BinKeySomeEqExpression => { return MayErrorAnalysis::processBinaryArgs[recursive]($e.eqoption, $e.eqval); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return MayErrorAnalysis::processBinaryArgs[recursive]($e.neoption, $e.neval); }
+            | BSQAssembly::BinKeyEqExpression => { return MayErrorAnalysis::processBinaryArgs[recursive]($e.lhs, $e.rhs); }
+            | BSQAssembly::BinKeyNotEqExpression => { return MayErrorAnalysis::processBinaryArgs[recursive]($e.lhs, $e.rhs); }
         }
     }
 
     recursive function processBinaryNumericExpression(e: BSQAssembly::BinaryNumericExpression): Bool {
-        return MayErrorAnalysis::processBinaryArgs(e.lhs, e.rhs);
+        return MayErrorAnalysis::processBinaryArgs[recursive](e.lhs, e.rhs);
     }
 
     recursive function processExpression(e: BSQAssembly::Expression): Bool {
@@ -109,7 +109,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::AccessEnumExpression => { return false; }
             | BSQAssembly::AccessVariableExpression => { return false; }
             | BSQAssembly::AccessCapturedVariableExpressionSpecial => { return false; }
-            | BSQAssembly::ConstructorExpression => { abort; }
+            | BSQAssembly::ConstructorExpression => { return MayErrorAnalysis::processConstructorExpression[recursive]($e); }
             | BSQAssembly::ConstructorLambdaExpression => { return false; }
             | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { abort; }

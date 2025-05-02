@@ -325,7 +325,8 @@ class BSQIREmitter {
     }
 
     private emitConstructorExpressionBase(exp: ConstructorExpression): string {
-        return `args=${this.emitArgumentList(exp.args)}`;
+        const ebase = this.emitExpressionBase(exp);
+        return `${ebase}, args=${this.emitArgumentList(exp.args)}`;
     }
 
     private emitConstructorPrimaryExpressionBase(exp: ConstructorPrimaryExpression): string {
