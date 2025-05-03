@@ -110,7 +110,7 @@ entity MemberFieldDecl provides AbstractCoreDecl {
 }
 
 entity SaturatedFieldInfo {
-    field containingtype: NominalTypeSignature;
+    field declaredInType: NominalTypeSignature;
     field fname: Identifier;
     field ftype: TypeSignature;
     field hasdefault: Bool;
