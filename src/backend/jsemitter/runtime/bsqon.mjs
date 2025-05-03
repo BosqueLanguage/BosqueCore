@@ -1013,7 +1013,8 @@ BSQONParser.prototype.parseBool = function() {
         throw new ParserError(this.peek().sinfo, "Expected boolean literal");
     }
     else {
-        this.consumeAndGetData() === KW_true ? true : false;
+        const bv = this.consumeAndGetData();
+        return bv === KW_true;
     }
 }
 /**
