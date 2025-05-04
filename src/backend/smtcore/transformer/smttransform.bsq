@@ -758,10 +758,10 @@ entity SMTTransformer {
         return SMTAssembly::EntityTypeDecl{ tkey, termable, finfo };
     }
 
-    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: BSQAssembly::CallGraph): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, errinvokes};
 
-        let tnsfuncs = assembly.allfuncs
+        let tnsfuncs = callg.topoorder
             .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
                 fn(acc, ikey) => {
                     let bsqdecl = assembly.nsfuncs.get(ikey);
@@ -773,7 +773,7 @@ entity SMTTransformer {
             .filter(pred(tkey) => assembly.entities.has(tkey))
             .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(assembly.entities.get(tkey)));
 
-        let tallfuncs = assembly.allfuncs.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
+        let tallfuncs = callg.topoorder.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
 
         return SMTAssembly::Assembly {
             nsconsts = assembly.nsconsts.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc)),

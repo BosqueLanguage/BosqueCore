@@ -14,21 +14,31 @@ entity CallGraphBuilder {
 
     %%TODO: implement the walk of the body to find all the calls
 
+    %%TODO: need to have flag that indicates what to do with consts -- eager? lazy? ignored?
+
+    function gatherInvariantFunctions(assembly: Assembly): List<InvokeKey> {
+        abort;
+    }
+
+    %%TODO gather functions for default fields & default param values
+
     function buildCallGraph(assembly: Assembly): CallGraph {
         let cgnsfuncs = assembly.nsfuncs.map<List<InvokeKey>>(fn(ikey, nsfunc) => List<InvokeKey>{});
         let cgtypefuncs = assembly.typefuncs.map<List<InvokeKey>>(fn(ikey, typefunc) => List<InvokeKey>{});
-        let cgabsmethods = assembly.absmethods.map<List<InvokeKey>>(fn(ikey, absmethod) => List<InvokeKey>{});
+
+        let cinvfuncs = CallGraphBuilder::gatherInvariantFunctions(assembly);
 
         %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
         assert assembly.absmethods.empty();
         assert assembly.virtmethods.empty();
         assert assembly.overmethods.empty();
+        assert assembly.staticmethods.empty();
 
-        let callgraph = Map<InvokeKey, List<InvokeKey>>::union(cgnsfuncs, cgtypefuncs, cgabsmethods);
+        let callgraph = Map<InvokeKey, List<InvokeKey>>::union(cgnsfuncs, cgtypefuncs);
         let sccs = List<List<InvokeKey>>{};
 
         %%TODO: implement the SCC and topoorder computation -- right now just put all the keys in the topoorder
-        let topoorder = assembly.allfuncs;
+        let topoorder = cinvfuncs.append(assembly.allfuncs);
 
         return CallGraph{ callgraph, sccs, topoorder };
     }
