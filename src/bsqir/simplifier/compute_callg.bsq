@@ -17,7 +17,27 @@ entity CallGraphBuilder {
     %%TODO: need to have flag that indicates what to do with consts -- eager? lazy? ignored?
 
     function gatherInvariantFunctions(assembly: Assembly): List<InvokeKey> {
-        abort;
+        let cinvs = assembly.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+            
+        let cvalidates = assembly.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let ainvs = assembly.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let avalidates = assembly.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        return List<InvokeKey>::concat(List<InvokeKey>::concatAll(cinvs), List<InvokeKey>::concatAll(cvalidates), List<InvokeKey>::concatAll(ainvs), List<InvokeKey>::concatAll(avalidates));
     }
 
     %%TODO gather functions for default fields & default param values
@@ -27,6 +47,7 @@ entity CallGraphBuilder {
         let cgtypefuncs = assembly.typefuncs.map<List<InvokeKey>>(fn(ikey, typefunc) => List<InvokeKey>{});
 
         let cinvfuncs = CallGraphBuilder::gatherInvariantFunctions(assembly);
+        let cinvmap = cinvfuncs.map<Map<InvokeKey, List<InvokeKey>>>(fn(ikey) => Map<InvokeKey, List<InvokeKey>>{ ikey => List<InvokeKey>{} });
 
         %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
         assert assembly.absmethods.empty();
@@ -34,7 +55,7 @@ entity CallGraphBuilder {
         assert assembly.overmethods.empty();
         assert assembly.staticmethods.empty();
 
-        let callgraph = Map<InvokeKey, List<InvokeKey>>::union(cgnsfuncs, cgtypefuncs);
+        let callgraph = Map<InvokeKey, List<InvokeKey>>::union(cgnsfuncs, cgtypefuncs, cinvmap);
         let sccs = List<List<InvokeKey>>{};
 
         %%TODO: implement the SCC and topoorder computation -- right now just put all the keys in the topoorder

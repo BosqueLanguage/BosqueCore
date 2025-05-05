@@ -217,6 +217,37 @@ entity MayErrorAnalysis {
         abort;
     }
 
+    function setDirectMayErrorInfoInvariantFunctions(assembly: BSQAssembly::Assembly): Map<BSQAssembly::InvokeKey, Bool> {
+        xxxx;
+        
+        let cinvs = assembly.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+            
+        let cvalidates = assembly.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let ainvs = assembly.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let avalidates = assembly.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        return Map<BSQAssembly::InvokeKey, Bool>::union(
+            Map<BSQAssembly::InvokeKey, Bool>::unionAll(cinvfuncs), 
+            Map<BSQAssembly::InvokeKey, Bool>::unionAll(cvalidates), 
+            Map<BSQAssembly::InvokeKey, Bool>::unionAll(ainvs), 
+            Map<BSQAssembly::InvokeKey, Bool>::unionAll(avalidates)
+            );
+    }
+
     function setDirectMayErrorInfo(assembly: BSQAssembly::Assembly): Map<BSQAssembly::InvokeKey, Bool> {
         let nsferrinvokes = assembly.nsfuncs.map<Bool>(fn(ikey, nsfunc) => MayErrorAnalysis::processNamespaceFunctionDecl(nsfunc));
         let tferrinvokes = assembly.typefuncs.map<Bool>(fn(ikey, typefunc) => MayErrorAnalysis::processTypeFunctionDecl(typefunc));
