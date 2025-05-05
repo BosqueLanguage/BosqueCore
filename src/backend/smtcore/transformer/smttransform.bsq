@@ -101,31 +101,31 @@ entity SMTTransformer {
         }
     }
 
-    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
+    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
         if(subexp)@<SafeResult> {
             return $subexp.exp, ctx, none;
         }
         else {
             let mtag = ctx.tempCtr.toCString();
-            let vname = SMTAssembly::VarIdentifier::from(CString::concat('@tmp-', mtag));
+            let vname = SMTAssembly::Identifier::from(CString::concat('@tmp-', mtag));
             let rexp = SMTAssembly::UnwrapFromResultExpression{$subexp.oftype, vname};
 
-            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>{(|$subexp.exp, vname|)});
+            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>{(|$subexp.exp, vname|)});
         }
     }
 
-    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
+    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
         if(subexps.allOf(pred(etr) => etr?<SafeResult>)) {
             return subexps.map<SMTAssembly::SafeExpression>(fn(etr) => etr@<SafeResult>.exp), ctx, none;
         }
         else {
             let mtag = ctx.tempCtr.toCString();
-            let eexps = subexps.mapIdx<(|SMTExpTransformResult, Option<SMTAssembly::VarIdentifier>|)>(fn(etr, idx) => {
+            let eexps = subexps.mapIdx<(|SMTExpTransformResult, Option<SMTAssembly::Identifier>|)>(fn(etr, idx) => {
                 if(etr)<SafeResult> {
                     return (|etr, none|);
                 }
                 else {
-                    let vname = SMTAssembly::VarIdentifier::from(CString::concat('@tmp-', mtag, '-', idx.toCString()));
+                    let vname = SMTAssembly::Identifier::from(CString::concat('@tmp-', mtag, '-', idx.toCString()));
                     return (|etr, some(vname)|);
                 }
             });
@@ -139,29 +139,29 @@ entity SMTTransformer {
                 }
             });
 
-            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.1@some|));
+            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.1@some|));
 
             return exps, ctx[tempCtr = $tempCtr + 1n], some(binds);
         }
     }
 
-    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
+    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
         let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
 
         return this.unpackExpressionErrors(subexps, nctx);
     }
 
-    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
+    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
         let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{arg}, ctx);
         return rexps.get(0n), nctx, obinds;
     }
 
-    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>> {
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
         let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{lhs, rhs}, ctx);
         return rexps.get(0n), rexps.get(1n), nctx, obinds;
     }
 
-    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>>): SMTExpTransformResult {
+    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {
@@ -175,7 +175,7 @@ entity SMTTransformer {
         }
     }
 
-    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::VarIdentifier|)>>): SMTExpTransformResult {
+    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {
@@ -203,7 +203,7 @@ entity SMTTransformer {
     }
 
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::SafeExpression {
-        return SMTAssembly::AccessVariableExpression{SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(exp.vname.value))};
+        return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
 
     recursive method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -536,14 +536,14 @@ entity SMTTransformer {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
         
         if(smtexp)@<SafeResult> {
-            let vname = SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(stmt.name.value));
+            let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.name.value));
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
             return rctx, SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail};
         }
         else {
             let tname = TransformNameManager::safeifyName(stmt.name.value);
-            let vebind = SMTAssembly::VarIdentifier::from(CString::concat('@tmpe-', tname));
-            let vbind = SMTAssembly::VarIdentifier::from(tname);
+            let vebind = SMTAssembly::Identifier::from(CString::concat('@tmpe-', tname));
+            let vbind = SMTAssembly::Identifier::from(tname);
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
 
             return rctx, SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail};
@@ -554,14 +554,14 @@ entity SMTTransformer {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
         
         if(smtexp)@<SafeResult> {
-            let vname = SMTAssembly::VarIdentifier::from(TransformNameManager::safeifyName(stmt.name.value));
+            let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.name.value));
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
             return rctx, SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail};
         }
         else {
             let tname = TransformNameManager::safeifyName(stmt.name.value);
-            let vebind = SMTAssembly::VarIdentifier::from(CString::concat('@tmpe-', tname));
-            let vbind = SMTAssembly::VarIdentifier::from(tname);
+            let vebind = SMTAssembly::Identifier::from(CString::concat('@tmpe-', tname));
+            let vbind = SMTAssembly::Identifier::from(tname);
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
 
             return rctx, SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail};
@@ -708,7 +708,7 @@ entity SMTTransformer {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
 
-        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{p.pname.value, this.transformCallTypeToSMT(p.ptype)});
+        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformCallTypeToSMT(p.ptype)});
         let rtype = this.transformStdTypeToSMT(decl.resultType);
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -720,7 +720,7 @@ entity SMTTransformer {
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
 
         let params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
-                let pname = CString::concat('$', TransformNameManager::safeifyName(f.fname.value));
+                let pname = SMTAssembly::Identifier::from(CString::concat('$', TransformNameManager::safeifyName(f.fname.value)));
                 return SMTAssembly::InvokeParameterDecl{pname, this.transformCallTypeToSMT(f.ftype)};
             });
 

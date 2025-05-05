@@ -323,6 +323,46 @@ entity Assembly {
         }
     }
 
+    method tryGetImplicitInvariantInfo(ikey: InvokeKey): Option<(|ConditionDecl, AbstractNominalTypeDecl|)> {
+        %%TODO: we may want to move this into a setup where we have a map of ikey to invariant 
+
+        let cc = this.allconcretetypes.tryFind(pred(tkey) => {
+            let tt = this.lookupNominalTypeDeclaration(tkey);
+            return tt.invariants.someOf(pred(ii) => ii.ikey === ikey) || tt.validates.someOf(pred(ii) => ii.ikey === ikey);
+        });
+
+        if(cc)@some {
+            let tt = this.lookupNominalTypeDeclaration($cc);
+
+            let ii = tt.invariants.tryFind(pred(ii) => ii.ikey === ikey);
+            if(ii)@some {
+                return some((|$ii, tt|));
+            }
+            else {
+                return some((|tt.validates.find(pred(ii) => ii.ikey === ikey), tt|));
+            }
+        }
+
+        let ac = this.allconcretetypes.tryFind(pred(tkey) => {
+            let tt = this.lookupNominalTypeDeclaration(tkey);
+            return tt.invariants.someOf(pred(ii) => ii.ikey === ikey) || tt.validates.someOf(pred(ii) => ii.ikey === ikey);
+        });
+
+        if(ac)@some {
+            let tt = this.lookupNominalTypeDeclaration(ac@some);
+
+            let ii = tt.invariants.tryFind(pred(ii) => ii.ikey === ikey);
+            if(ii)@some {
+                return some((|$ii, tt|));
+            }
+            else {
+                return some((|tt.validates.find(pred(ii) => ii.ikey === ikey), tt|));
+            }
+        }
+
+        return none;
+    }
+
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }

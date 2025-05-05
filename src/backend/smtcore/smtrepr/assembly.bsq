@@ -28,6 +28,9 @@ type ReturnTypeKey = CString of SMTAssembly::resultTypeKeyRE;
 const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+/c;
 type InvokeKey = CString of SMTAssembly::invokeKeyRE;
 
+const identifierRE: CRegex = /[@a-zA-Z0-9_$-]*/c;
+type Identifier = CString of SMTAssembly::identifierRE;
+
 datatype ResultType using {
     field rtype: TypeKey;
 }
@@ -45,7 +48,7 @@ entity ErrorInfo {
 }
 
 entity InvokeParameterDecl {
-    field pname: CString;
+    field pname: Identifier;
     field ptype: ParamTypeKey;
 }
 

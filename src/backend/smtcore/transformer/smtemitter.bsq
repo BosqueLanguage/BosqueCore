@@ -1002,14 +1002,14 @@ function emitConstInfo(nsconsts: List<SMTAssembly::NamespaceConstDecl>, typecons
 }
 
 function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CString {
-    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     return CString::concat('(declare-fun ', f.invokeKey.value, ' ', pll, ' Bool)');
 }
 
 function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: Nat): CString {
-    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     let psig = CString::concat('define-fun ', f.invokeKey.value, ' ', pll, ' ');
@@ -1025,7 +1025,7 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
 }
 
 function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: Nat): CString {
-    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname, ' ', p.ptype.value, ')'));
+    let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     let psig = CString::concat('define-fun ', f.invokeKey.value, ' ', pll, ' ');
