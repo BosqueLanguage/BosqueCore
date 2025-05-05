@@ -47,7 +47,7 @@ entity CallGraphBuilder {
         let cgtypefuncs = assembly.typefuncs.map<List<InvokeKey>>(fn(ikey, typefunc) => List<InvokeKey>{});
 
         let cinvfuncs = CallGraphBuilder::gatherInvariantFunctions(assembly);
-        let cinvmap = cinvfuncs.map<Map<InvokeKey, List<InvokeKey>>>(fn(ikey) => Map<InvokeKey, List<InvokeKey>>{ ikey => List<InvokeKey>{} });
+        let cinvmap = Map<InvokeKey, List<InvokeKey>>::unionAll(cinvfuncs.map<Map<InvokeKey, List<InvokeKey>>>(fn(ikey) => Map<InvokeKey, List<InvokeKey>>{ikey => List<InvokeKey>{}}));
 
         %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
         assert assembly.absmethods.empty();

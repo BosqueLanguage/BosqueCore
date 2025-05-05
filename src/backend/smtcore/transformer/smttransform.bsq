@@ -672,9 +672,8 @@ entity SMTTransformer {
         }
     }
 
-    method transformBodyToSMT(impl: BSQAssembly::BodyImplementation, currentFile: String, ikey: Option<BSQAssembly::InvokeKey>, mayerror: Bool, ttype: BSQAssembly::TypeSignature): SMTAssembly::Body {
-        let smtkey = if(ikey)@some then some(TransformNameManager::convertInvokeKey($ikey)) else none;
-        let ctx = SMTTransformerCtx{mayerror, currentFile, smtkey, 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+    method transformBodyToSMT(impl: BSQAssembly::BodyImplementation, currentFile: String, ikey: BSQAssembly::InvokeKey, mayerror: Bool, ttype: BSQAssembly::TypeSignature): SMTAssembly::Body {
+        let ctx = SMTTransformerCtx{mayerror, currentFile, some(TransformNameManager::convertInvokeKey(ikey)), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
 
         match(impl)@ {
             BSQAssembly::BuiltinBodyImplementation => {
@@ -713,7 +712,32 @@ entity SMTTransformer {
         let rtype = this.transformStdTypeToSMT(decl.resultType);
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-        let body = this.transformBodyToSMT(decl.body, decl.file, some(decl.ikey), this.errinvokes.get(decl.ikey), decl.resultType);
+        let body = this.transformBodyToSMT(decl.body, decl.file, decl.ikey, this.errinvokes.get(decl.ikey), decl.resultType);
+        return SMTAssembly::FunctionDecl{ ikey, params, artype, body };
+    }
+
+    method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl {
+        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
+
+        let params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
+                let pname = CString::concat('$', TransformNameManager::safeifyName(f.fname.value));
+                return SMTAssembly::InvokeParameterDecl{pname, this.transformCallTypeToSMT(f.ftype)};
+            });
+
+        let rtype = 'Bool'<SMTAssembly::TypeKey>;
+        let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(TransformNameManager::convertInvokeKey(decl.ikey)), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let rctx, smtexp = this.transformExpressionToSMT(decl.exp, ctx);
+
+        var body: SMTAssembly::Body;
+        if(smtexp)@<ErrorResult> {
+            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
+        }
+        else {
+            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{'Bool'<SMTAssembly::TypeKey>, $smtexp.exp}}, rctx.errors};
+        }
+
         return SMTAssembly::FunctionDecl{ ikey, params, artype, body };
     }
 
@@ -758,15 +782,34 @@ entity SMTTransformer {
         return SMTAssembly::EntityTypeDecl{ tkey, termable, finfo };
     }
 
+    method transformInvokeToSMTFunction(ikey: BSQAssembly::InvokeKey): Option<SMTAssembly::FunctionDecl> {
+        let bsqnsdecl = this.assembly.nsfuncs.tryGet(ikey);
+        if(bsqnsdecl)@some {
+            return some(this.transformNamespaceFunctionDeclToSMT($bsqnsdecl));
+        }
+
+        let implicitinv = this.assembly.tryGetImplicitInvariantInfo(ikey);
+        if(implicitinv)@some {
+            return some(this.transformImplicitInvariantOrValidateFunctionDeclToSMT($implicitinv.0, $implicitinv.1));
+        }
+
+        return none;
+    }
+
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: BSQAssembly::CallGraph): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, errinvokes};
 
         let tnsfuncs = callg.topoorder
             .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
                 fn(acc, ikey) => {
-                    let bsqdecl = assembly.nsfuncs.get(ikey);
-                    let smtdecl = transformer.transformNamespaceFunctionDeclToSMT(bsqdecl);
-                    return acc.insert(smtdecl.invokeKey, smtdecl);
+                    let fd = transformer.transformInvokeToSMTFunction(ikey);
+
+                    if(fd)@some {
+                        return acc.insert($fd.invokeKey, $fd);
+                    }
+                    else {
+                        return acc;
+                    }
                 });
 
         let tentities = assembly.allconcretetypes

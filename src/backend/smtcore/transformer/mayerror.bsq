@@ -218,30 +218,28 @@ entity MayErrorAnalysis {
     }
 
     function setDirectMayErrorInfoInvariantFunctions(assembly: BSQAssembly::Assembly): Map<BSQAssembly::InvokeKey, Bool> {
-        xxxx;
-        
         let cinvs = assembly.allconcretetypes
-            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.invariants.empty())
-            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => Map<BSQAssembly::InvokeKey, Bool>::unionAll(tdecl.invariants.map<Map<BSQAssembly::InvokeKey, Bool>>(fn(idecl) => Map<BSQAssembly::InvokeKey, Bool>{idecl.ikey => MayErrorAnalysis::processExpression(idecl.exp)})));
             
         let cvalidates = assembly.allconcretetypes
-            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.validates.empty())
-            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
-
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => Map<BSQAssembly::InvokeKey, Bool>::unionAll(tdecl.validates.map<Map<BSQAssembly::InvokeKey, Bool>>(fn(idecl) => Map<BSQAssembly::InvokeKey, Bool>{idecl.ikey => MayErrorAnalysis::processExpression(idecl.exp)})));
+            
         let ainvs = assembly.allabstracttypes
-            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.invariants.empty())
-            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
-
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => Map<BSQAssembly::InvokeKey, Bool>::unionAll(tdecl.invariants.map<Map<BSQAssembly::InvokeKey, Bool>>(fn(idecl) => Map<BSQAssembly::InvokeKey, Bool>{idecl.ikey => MayErrorAnalysis::processExpression(idecl.exp)})));
+            
         let avalidates = assembly.allabstracttypes
-            .map<AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.validates.empty())
-            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
-
+            .map<Map<BSQAssembly::InvokeKey, Bool>>(fn(tdecl) => Map<BSQAssembly::InvokeKey, Bool>::unionAll(tdecl.validates.map<Map<BSQAssembly::InvokeKey, Bool>>(fn(idecl) => Map<BSQAssembly::InvokeKey, Bool>{idecl.ikey => MayErrorAnalysis::processExpression(idecl.exp)})));
+            
         return Map<BSQAssembly::InvokeKey, Bool>::union(
-            Map<BSQAssembly::InvokeKey, Bool>::unionAll(cinvfuncs), 
+            Map<BSQAssembly::InvokeKey, Bool>::unionAll(cinvs), 
             Map<BSQAssembly::InvokeKey, Bool>::unionAll(cvalidates), 
             Map<BSQAssembly::InvokeKey, Bool>::unionAll(ainvs), 
             Map<BSQAssembly::InvokeKey, Bool>::unionAll(avalidates)
@@ -253,12 +251,14 @@ entity MayErrorAnalysis {
         let tferrinvokes = assembly.typefuncs.map<Bool>(fn(ikey, typefunc) => MayErrorAnalysis::processTypeFunctionDecl(typefunc));
         let smethoderrinvokes = assembly.staticmethods.map<Bool>(fn(ikey, staticmethod) => MayErrorAnalysis::processMethodDeclStatic(staticmethod));
 
+        let implicitinvokes = MayErrorAnalysis::setDirectMayErrorInfoInvariantFunctions(assembly);
+
         %%TODO: this is not implemented yet -- need to implement the virtual and override method processing
         assert assembly.absmethods.empty();
         assert assembly.virtmethods.empty();
         assert assembly.overmethods.empty();
 
-        return Map<BSQAssembly::InvokeKey, Bool>::union(nsferrinvokes, tferrinvokes, smethoderrinvokes);
+        return Map<BSQAssembly::InvokeKey, Bool>::union(nsferrinvokes, tferrinvokes, smethoderrinvokes, implicitinvokes);
     }
 
     function generate(assembly: BSQAssembly::Assembly, callg: BSQAssembly::CallGraph): Map<BSQAssembly::InvokeKey, Bool> {
