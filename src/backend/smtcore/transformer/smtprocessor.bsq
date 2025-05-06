@@ -19,7 +19,7 @@ entity Transformer {
         let callg = BSQAssembly::CallGraphBuilder::buildCallGraph(treeAssembly);
         let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generate(treeAssembly, callg);
 
-        return SMTTransformer::transformAssemblyToSMT(treeAssembly, errinvokes);
+        return SMTTransformer::transformAssemblyToSMT(treeAssembly, errinvokes, callg);
     }
 }
 

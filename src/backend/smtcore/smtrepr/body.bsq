@@ -1,8 +1,5 @@
 namespace SMTAssembly;
 
-const varidentifierRE: CRegex = /'$'?[_a-z][a-zA-Z0-9_$-]*/c;
-type VarIdentifier = CString of SMTAssembly::varidentifierRE;
-
 concept CallArgExpression {
 }
 
@@ -65,7 +62,7 @@ entity AccessEnumExpression provides SafeExpression {
 }
 
 entity AccessVariableExpression provides SafeExpression {
-    field vname: VarIdentifier;
+    field vname: Identifier;
 }
 
 entity TermifyExpression provides SafeExpression {
@@ -127,7 +124,7 @@ entity CallFunctionExpression provides CallFunctionConcept, Expression {
 }
 
 entity CallLambdaFunctionExpression provides Expression {
-    field lambda: VarIdentifier;
+    field lambda: Identifier;
     field args: List<CallArgExpression>;
 }
 
@@ -304,7 +301,7 @@ entity MapEntryConstructorExpression provides SafeExpression {
 }
 
 entity LetExpression provides SafeExpression {
-    field vbind: VarIdentifier;
+    field vbind: Identifier;
     field value: SafeExpression;
     field inexp: SafeExpression;
 }
@@ -331,7 +328,7 @@ entity AssertSetExpression provides Expression {
 
 entity UnwrapFromResultExpression provides SafeExpression {
     field etype: TypeKey;
-    field varg: VarIdentifier;
+    field varg: Identifier;
 }
 
 entity WrapIntoResultExpression provides SafeExpression {
@@ -352,7 +349,7 @@ entity IfThenElseExpression provides Expression {
 }
 
 entity LetWErrorsExpression provides Expression {
-    field vvbind: List<(|Expression, VarIdentifier|)>;
+    field vvbind: List<(|Expression, Identifier|)>;
     field inexp: Expression;
 
     invariant !$vvbind.empty();
@@ -383,7 +380,7 @@ entity AssumeOperation provides Operation {
 }
 
 entity LetOperation provides Operation {
-    field vbind: VarIdentifier;
+    field vbind: Identifier;
     field vtype: TypeKey;
     field value: SafeExpression;
 
@@ -391,8 +388,8 @@ entity LetOperation provides Operation {
 }
 
 entity LetOperationWError provides Operation {
-    field vebind: VarIdentifier;
-    field vbind: VarIdentifier;
+    field vebind: Identifier;
+    field vbind: Identifier;
     field vtype: TypeKey;
     field value: Expression;
 

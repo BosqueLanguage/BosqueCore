@@ -1361,7 +1361,7 @@ class BSQIREmitter {
         const dbase = this.emitAbstractDeclBase(decl, nskey);
         const dtag = decl.diagnosticTag !== undefined ? `some('${decl.diagnosticTag}')` : "none";
 
-        return `${dbase}, diagnosticTag=${dtag}, ikey=${label}<BSQAssembly::InvokeKey>, exp=${this.emitExpression(exp)}`;
+        return `${dbase}, diagnosticTag=${dtag}, ikey='${label}'<BSQAssembly::InvokeKey>, exp=${this.emitExpression(exp)}`;
     }
 
 
@@ -1575,12 +1575,12 @@ class BSQIREmitter {
     }
 
     private emitSaturatedFieldInfo(sfield: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}): string {
-        return `BSQAssembly::SaturatedFieldInfo{ containingtype=${this.emitTypeSignature(sfield.containingtype)}, fname='${sfield.name}'<Identifier>, ftype=${this.emitTypeSignature(sfield.type)}, hasdefault=${sfield.hasdefault} }`;
+        return `BSQAssembly::SaturatedFieldInfo{ declaredInType=${this.emitTypeSignature(sfield.containingtype)}, fname='${sfield.name}'<Identifier>, ftype=${this.emitTypeSignature(sfield.type)}, hasdefault=${sfield.hasdefault} }`;
     }
     
     private emitSaturatedInvariantInfo(invariants: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
         const ikey = EmitNameManager.generateTypeKey(invariants.containingtype) + "_$_invariant" + invariants.ii.toString()
-        return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, containingtype=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
+        return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, declaredInType=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
     }
 
     private emitAbstractNominalTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
