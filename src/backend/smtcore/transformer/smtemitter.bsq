@@ -73,11 +73,11 @@ function tryGetConstOperation(op: SMTAssembly::Operation): Option<SMTAssembly::C
 }
 
 function emitResultErrTrgtTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
-    return CString::concat('(=', testval, ' (as @Result-errtrgt (@Result ', tkey.value, ')))');
+    return CString::concat('(= ', testval, ' (as @Result-err-trgt (@Result ', tkey.value, ')))');
 }
 
 function emitResultErrOtherTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
-    return CString::concat('(', testval, ' (as @Result-errother (@Result ', tkey.value, ')))');
+    return CString::concat('(', testval, ' (as @Result-err-other (@Result ', tkey.value, ')))');
 }
 
 function emitResultErrTrgtAs(astype: SMTAssembly::TypeKey): CString {
@@ -595,7 +595,7 @@ function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEm
             err = emitResultErrOtherAs(e.etype);
         }
 
-        let bb = CString::concat(tt, ' ', err, ' ', expcc);
+        let bb = CString::concat('(not ', tt, ') ', err, ' ', expcc);
         return CString::concat('(ite ', bb, ')');
     });
 }
@@ -872,7 +872,7 @@ recursive function emitLetOperationWError(e: SMTAssembly::LetOperationWError, ee
     let vval = emitExpression[recursive](e.value, eev);
 
     let bbind = CString::concat('((', e.vebind.value, ' ', vval, '))');
-    let chk = CString::concat('(not ((_ is (@Result-ok ', e.vtype.value, ')) ', e.vebind.value, ')) ');
+    let chk = CString::concat('(not (is-@Result-ok ', e.vebind.value, ')) ');
     let errop = emitResultErrTypeConvertAsNeeded(e.vebind.value, e.vtype, eev);
 
     let okbind = CString::concat('((', e.vbind.value, ' (@Result-value ', e.vebind.value, ')))');
@@ -961,7 +961,7 @@ function emitConstInitializerHelper(cname: CString, vtype: SMTAssembly::ResultTy
     else {
         let tname = CString::concat(cname, '-cc-temp');
         let tval = CString::concat('(assert (= ', tname, ' ', cval, '))');
-        let chk = CString::concat('(assert ((_ is @Result-ok) ', tname, '))');
+        let chk = CString::concat('(assert (is-@Result-ok ', tname, '))');
         let asgn = CString::concat('(assert (= ', cname, ' (@Result-value ', tname, ')))');
 
         return CString::join('%n;', tval, chk, asgn);
@@ -1215,10 +1215,10 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
     }
     elif(subtypes.isSingleElement()) {
-        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool ((_ is ', subtypes.single().value, ') tt))');
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-', subtypes.single().value, ' tt))');
     }
     else {
-        let tlist = subtypes.map<CString>(fn(t) => CString::concat('((_ is ', t.value, ') tt)'));
+        let tlist = subtypes.map<CString>(fn(t) => CString::concat('(is-', t.value, ' tt)'));
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
     }
 }
@@ -1226,7 +1226,7 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
 function emitSpecialOptionSubtypePredicate(otype: SMTAssembly::OptionTypeDecl): CString {
     let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
     let tlist = List<CString>{
-        CString::concat('((_ is ', otype.someType.value, ') tt)'),
+        CString::concat('(is-', otype.someType.value, ' tt)'),
         CString::concat('(= tt @Term-mk-None)'),
     };
 

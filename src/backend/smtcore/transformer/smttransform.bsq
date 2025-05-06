@@ -228,7 +228,7 @@ entity SMTTransformer {
                 abort;
             }
 
-            let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
+            let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::ConstructorStdExpression{smttype, orderargs}};
 
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
                 let iitypekey = this.transformStdTypeToSMT(iiv.declaredInType);
@@ -735,7 +735,7 @@ entity SMTTransformer {
             body = SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
         }
         else {
-            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{'Bool'<SMTAssembly::TypeKey>, $smtexp.exp}}, rctx.errors};
+            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
         }
 
         return SMTAssembly::FunctionDecl{ ikey, params, artype, body };
