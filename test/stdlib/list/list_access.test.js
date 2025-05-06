@@ -39,4 +39,25 @@ describe ("List -- access", () => {
     it("should fail get out-of-bounds", function () {
         runMainCodeError('public function main(): Int { return List<Int>{1i, 2i}.get(3n); }', "Error -- i < this.size() @ list.bsq");
     });
+
+    it("should firstK/lastK", function () {
+        runMainCode('public function main(): Nat { return List<Int>{1i ,2i}.firstK(1n).size(); }', "1n"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.firstK(1n).front(); }', "1i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.firstK(2n).back(); }', "2i"); 
+
+        runMainCode('public function main(): Nat { return List<Int>{1i ,2i}.lastK(2n).size(); }', "2n"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.lastK(1n).front(); }', "2i"); 
+        runMainCode('public function main(): Int { return List<Int>{1i, 2i}.lastK(1n).back(); }', "2i");
+
+        runMainCode('public function main(): Nat { return List<Int>{1i ,2i}.firstK(0n).size(); }', "0n");
+        runMainCode('public function main(): Nat { return List<Int>{}.firstK(0n).size(); }', "0n"); 
+    });
+
+    it("should fail firstK/lastK", function () {
+        runMainCodeError('public function main(): Nat { return List<Int>{}.firstK(1n).size(); }', "Error -- n <= this.size() @ list.bsq"); 
+        runMainCodeError('public function main(): Nat { return List<Int>{1i}.firstK(3n).size(); }', "Error -- n <= this.size() @ list.bsq"); 
+
+        runMainCodeError('public function main(): Nat { return List<Int>{}.lastK(1n).size(); }', "Error -- n <= this.size() @ list.bsq"); 
+        runMainCodeError('public function main(): Nat { return List<Int>{1i, 2i}.lastK(3n).size(); }', "Error -- n <= this.size() @ list.bsq"); 
+    });
 });
