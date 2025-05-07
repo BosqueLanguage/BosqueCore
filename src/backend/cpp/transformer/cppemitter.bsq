@@ -1,5 +1,10 @@
 namespace CPPEmitter;
 
+%%
+%% I suspect either somewhere in this file or in the transform we hit an abort and never actually emit any cpp
+%% Not sure exactly where thought...
+%%
+
 function emitIncludes(): CString {
     return '#include "cppruntime.hpp"';
 }
@@ -12,6 +17,11 @@ recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CSt
     let lhs = emitExpression[recursive](add.lhs);
     let rhs = emitExpression[recursive](add.rhs);
 
+    %% In my cppruntime header I need to for each primitive write out a struct
+    %% with correct operator overloading to correctly map Int -> int64_t and stuff
+    %% Here we also need to something like Struct Int_TypeInfo IN THE HEADER ITSELF.
+    %% We also want to do overflow safe like __safe_add__ . We overload plus with these values
+
     return CString::concat('(', lhs, ' + ', rhs, ')');
 }
 
@@ -19,15 +29,11 @@ recursive function emitBinSubExpression(add: CPPAssembly::BinSubExpression): CSt
     abort;
 }
 
-%%
-%% Not very confident on these commented functions, needs some thought
-%%
-
-%* 
 function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression): CString {
     match(e)@ {
         CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e); }
-        | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
+        %% | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
+        | _ => { abort; }
     }
 }
 
@@ -38,25 +44,44 @@ function emitExpression(e: CPPAssembly::Expression): CString {
     }
 }
 
-function emitSimpleLiteralExpression(sle: CPPAssembly::LiteralSimpleExpression) {
+function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement): CString {
+    let name: CString = 'hi'; %% need to convert stmt.name
+    let stype: CString = 'int'; %% Needs some real magic
+    let exp: CString = emitExpression(stmt.exp);
 
+    return CString::concat(stype, ' ', stype, ' = ', exp);
 }
 
-function emitOperation(op: CPPAssembly::Operation) {
-    match(op)@ {
-        CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($op); }
+function emitStatement(stmt: CPPAssembly::Statement): CString {
+    match(stmt)@ {
+        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt); }
+        | CPPAssembly::ReturnSingleStatement => { return ''; } %% TODO
         | _ => { abort; }
     }
 }
 
-function emitBody(body: CPPAssembly::Body): CString{
-    return emitOperation(body.op);
+function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation): CString {
+    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt)));
 }
-*%
+
+function emitBodyImplementation(body: CPPAssembly::BodyImplementation): CString {
+    match(body)@ {
+        %% CPPAssembly::AbstractBodyImplementation => { abort; }
+        %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
+        %% | CPPAssembly::BuiltinBodyImplementation => { abort; }
+        %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
+        %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
+        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body); }
+        | _ => { abort; }
+    }
+}
+
 
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CString {
-    %% Needs to properly setup function name, args, etc
-    return emitBody(f.body);
+    %% Function name
+    %% Params
+    %% Return?
+    return emitBodyImplementation(func.body);
 }
 
 %% CPP Pre-defined backend
@@ -91,14 +116,16 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
     %% For now we just grab every function
     let includes = emitIncludes();
 
-    let efuncs_list = asm.nsfuncs.map<CString>(fn(t) => { 
+    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => { 
         if(asm.nsfuncs.has(t)) {
-            return emitNamespaceFunctionDecl(t);
+            return emitNamespaceFunctionDecl(asm.nsfuncs.get(t));
         }
+        return 'NOT IMPLEMENTED!';
      });
     let efuncs = CString::joinAll('%n;%n;', efuncs_list);
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
+    %% We dont even emit the headers, so something must be causing aborting
     return CString::join('%n;', includes, efuncs);
 }

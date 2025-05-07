@@ -1,8 +1,14 @@
 namespace CPPAssembly;
 
-entity Body {
-    field op: Operation;
+%% Bosque TypeSignatures are void, nominal, elist, and lamda (current is fine for tdd)
+datatype TypeSignature using {
+    %% Source info would be good
+    field tkeystr: TypeKey;
 }
+of
+VoidTypeSignature { }
+| NominalTypeSignature { }
+;
 
 concept Expression {
 }
@@ -10,13 +16,22 @@ concept Expression {
 concept Operation {
 }
 
-entity LiteralSimpleExpression provides Expression {
-    field vtype: TypeKey;
-    field value: CString;
+concept Statement {
 }
 
-entity BodyImpl provides Operation {
+entity VariableInitializationStatement provides Statement {
+    field name: Identifier; 
+    field vtype: TypeSignature;
+    field exp: Expression;
+}
+
+entity ReturnSingleStatement provides Statement {
+    field rtype: TypeSignature;
     field value: Expression;
+}
+
+entity LiteralSimpleExpression provides Expression {
+    field value: CString;
 }
 
 datatype BinaryArithExpression provides Expression using {
@@ -25,4 +40,15 @@ datatype BinaryArithExpression provides Expression using {
 }
 of
 BinAddExpression { }
-| BinSubExpression { };
+| BinSubExpression { }
+;
+
+datatype BodyImplementation 
+of
+AbstractBodyImplementation { } %% N/A
+| PredicateUFBodyImplementation { } %% N/A
+| BuiltinBodyImplementation { field builtin: CString; } %% N/A
+| SynthesisBodyImplementation { } %% N/A
+| ExpressionBodyImplementation { field exp: Expression; } %% N/A
+| StandardBodyImplementation { field statements: List<Statement>; } %% Is Available :)
+;
