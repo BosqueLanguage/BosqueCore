@@ -129,12 +129,14 @@ entity ExplicitifyTransform {
                 PostfixAccessFromName => { return $op; }
                 | PostfixProjectFromNames => { abort; }
                 | PostfixAccessFromIndex => { abort; }
-                | PostfixIsTest => { abort; }
-                | PostfixAsConvert => { abort; }
+                | PostfixIsTest => { return $op; }
+                | PostfixAsConvert => { return $op; }
                 | PostfixAssignFields => { abort; }
                 | PostfixInvokeStatic => { abort; }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
+                | PostfixNop => { return $op; }
+                | PostfixAbort => { return $op; }
             }
         });
 

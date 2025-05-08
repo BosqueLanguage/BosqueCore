@@ -50,6 +50,8 @@ entity MayErrorAnalysis {
                     | BSQAssembly::PostfixInvokeStatic => { abort; }
                     | BSQAssembly::PostfixInvokeVirtual => { abort; }
                     | BSQAssembly::PostfixLiteralKeyAccess => { return false; }
+                    | BSQAssembly::PostfixNop => { return false; }
+                    | BSQAssembly::PostfixAbort => { return true; }
                 }
             });
         }

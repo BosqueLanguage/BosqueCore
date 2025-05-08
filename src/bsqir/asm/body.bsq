@@ -306,6 +306,10 @@ PostfixAccessFromName {
 | PostfixLiteralKeyAccess {
     field kexp: Expression;
 }
+| PostfixNop {
+}
+| PostfixAbort {
+}
 ;
 
 entity PostfixOp provides Expression {
