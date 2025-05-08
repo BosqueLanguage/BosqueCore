@@ -14,6 +14,7 @@ import { validateCStringLiteral } from "@bosque/jsbrex";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
+const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
 const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
@@ -64,30 +65,14 @@ function generateCPPFile(cpp: string, outdir: string) {
     catch(e) {
         Status.error("Failed to write to emit.cpp!\n");
     }
-    Status.output(`    CPP emission successfun -- emitted to ${dir}\n\n`);
+    Status.output(`    CPP emission successful -- emitted to ${dir}\n\n`);
 }
 
-//
-// NOTE (again): I will almost 100% need to emit the correct builtin mapping for 
-// our char buffers creation. Likely in JSEmitter.
-//
-
-//
-// NOTE (again again): May want to include the runtime headers from this file, not emitter
-//
-
-//
-// NOTE: Something quite funky is going on when I attempt to run bsqir.bsqon and output bsqon.
-// It spits out the error "ParseError -- Expected scoped type" which I have not been able to 
-// find a solution for yet...
-//
-// Turns out the issue was related to using lists in our cpp emission! for now just deal with basic arithmetic
-//
 function runCPPEmit(outname: string): string {
     Status.output("Processing IR into CPP Code...\n");
    
     const nndir = path.normalize(outname);
-    let res = "";
+    let res = ``;
     try {
         const fname = path.join(nndir, "bsqir.bsqon");
         res = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
@@ -96,7 +81,7 @@ function runCPPEmit(outname: string): string {
         Status.error("Failed to write bsqir info file!\n");
     }
 
-    return validateCStringLiteral(res.slice(1, -1));
+    return `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n` + validateCStringLiteral(res.slice(1, -2));
 }
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {

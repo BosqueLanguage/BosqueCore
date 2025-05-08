@@ -25,6 +25,11 @@ entity VariableInitializationStatement provides Statement {
     field exp: Expression;
 }
 
+entity AccessVariableExpression provides Expression {
+    field vname: VarIdentifier;
+    field layouttype: TypeSignature;
+}
+
 entity ReturnSingleStatement provides Statement {
     field rtype: TypeSignature;
     field value: Expression;

@@ -12,19 +12,47 @@ namespace CPPTransformNameManager {
 
     function convertTypeSignature(tkey: BSQAssembly::TypeKey): CPPAssembly::TypeSignature {
         let tk = CPPAssembly::TypeKey::from(tkey.value);
-        return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to ne nominal always
+
+        if(tk.value === 'Int') {
+            %% We will need call our overloaded int type
+            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('int64_t') };
+        }
+
+        return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to be nominal always (look at smttransfrom)
     }
 
-    function convertIdentifier(nkey: BSQAssembly::Identifier): CPPAssembly::Identifier {
-        return CPPAssembly::Identifier::from(nkey.value);
+    function convertIdentifier(ident: BSQAssembly::Identifier): CPPAssembly::Identifier {
+        return CPPAssembly::Identifier::from(ident.value);
+    }
+
+    function convertVarIdentifier(vident: BSQAssembly::VarIdentifier): CPPAssembly::VarIdentifier {
+        return CPPAssembly::VarIdentifier::from(vident.value);
     }
 }
 
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
+
     method transformBinAddExpressionToCpp(binadd: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
         abort;
+    }
+
+    %% Given how simple (lol) this expression is, may not need a separate method for this transform
+    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
+        let val = exp.value;
+        if(CPPAssembly::BsqInt::from(val).value !== '') {
+            return CPPAssembly::LiteralSimpleExpression{ val.removeSuffixString('i') };
+        }
+
+        return CPPAssembly::LiteralSimpleExpression{ val };
+    }
+
+    method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
+        let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
+        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype.tkeystr);
+
+        return CPPAssembly::AccessVariableExpression { vname, layouttype };
     }
 
     method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
@@ -38,6 +66,8 @@ entity CPPTransformer {
     method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp($expr); }
+            | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
+            | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
         }
     }

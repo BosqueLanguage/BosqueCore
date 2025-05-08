@@ -12,8 +12,12 @@ const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPP
 type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
 type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit here
 
-const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c;
+const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9]+('<'.+'>')?/c;
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
+
+%% For converting bsq value representation to cpp
+const bsqIntValue: CRegex = /[0-9]+'i'/c;
+type BsqInt = CString of CPPAssembly::bsqIntValue;
 
 const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
