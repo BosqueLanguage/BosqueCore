@@ -11,12 +11,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bsqdir = path.dirname(__dirname);
 const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 
-const binoutdir = path.join(bsqdir, "bin/cpp");
+const binoutdir = path.join(bsqdir, "bin/cppemit");
 
 const allsrcdirs = [
+    path.join(bsqdir, "src/bsqir/asm"),
+    path.join(bsqdir, "src/bsqir/simplifier"),
     path.join(bsqdir, "src/backend/cpp/transformer/"),
-    path.join(bsqdir, "src/backend/cpp/cpprepr/"),
-    path.join(bsqdir, "src/backend/cpp/test/"),
+    path.join(bsqdir, "src/backend/cpp/cpprepr/")
 ];
 
 let allsources = [];
@@ -31,7 +32,7 @@ for(let i = 0; i < allsrcdirs.length; ++i) {
     }
 }
 
-exec(`node ${cmdpath} --testgen --namespace CPPEmitter --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
+exec(`node ${cmdpath} --namespace CPPEmitter --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
     if(err !== null) {
         console.log(err);
         console.log(stderr);

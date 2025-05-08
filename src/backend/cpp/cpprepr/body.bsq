@@ -1,0 +1,59 @@
+namespace CPPAssembly;
+
+%% Bosque TypeSignatures are void, nominal, elist, and lamda (current is fine for tdd)
+datatype TypeSignature using {
+    %% Source info would be good
+    field tkeystr: TypeKey;
+}
+of
+VoidTypeSignature { }
+| NominalTypeSignature { }
+;
+
+concept Expression {
+}
+
+concept Operation {
+}
+
+concept Statement {
+}
+
+entity VariableInitializationStatement provides Statement {
+    field name: Identifier; 
+    field vtype: TypeSignature;
+    field exp: Expression;
+}
+
+entity AccessVariableExpression provides Expression {
+    field vname: VarIdentifier;
+    field layouttype: TypeSignature;
+}
+
+entity ReturnSingleStatement provides Statement {
+    field rtype: TypeSignature;
+    field value: Expression;
+}
+
+entity LiteralSimpleExpression provides Expression {
+    field value: CString;
+}
+
+datatype BinaryArithExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+of
+BinAddExpression { }
+| BinSubExpression { }
+;
+
+datatype BodyImplementation 
+of
+AbstractBodyImplementation { } %% N/A
+| PredicateUFBodyImplementation { } %% N/A
+| BuiltinBodyImplementation { field builtin: CString; } %% N/A
+| SynthesisBodyImplementation { } %% N/A
+| ExpressionBodyImplementation { field exp: Expression; } %% N/A
+| StandardBodyImplementation { field statements: List<Statement>; } %% Is Available :)
+;
