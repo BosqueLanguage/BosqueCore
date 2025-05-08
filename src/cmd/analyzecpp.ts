@@ -42,7 +42,6 @@ function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
-// Likely more work to do, for now just spits out cpp directly
 function generateCPPFile(cpp: string, outdir: string) {
     Status.output("Processing existing contents of emit.cpp...\n");
     const dir = path.normalize(outdir);
