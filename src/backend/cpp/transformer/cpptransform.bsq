@@ -1,0 +1,146 @@
+namespace CPPEmitter;
+
+%% Transform Bosque names into cpp representation
+namespace CPPTransformNameManager {
+    function convertNamespaceKey(nskey: BSQAssembly::NamespaceKey): CPPAssembly::NamespaceKey {
+        return CPPAssembly::NamespaceKey::from(nskey.value);
+    }
+
+    function convertInvokeKey(ikey: BSQAssembly::InvokeKey): CPPAssembly::InvokeKey {
+        return CPPAssembly::InvokeKey::from(ikey.value);
+    }
+
+    function convertTypeSignature(tkey: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
+        let tk = CPPAssembly::TypeKey::from(tkey.tkeystr.value);
+
+        if(tk.value === 'Int') {
+            %% We will need call our overloaded int type
+            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('int64_t') };
+        }
+
+        return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to be nominal always (look at smttransfrom)
+    }
+
+    function convertIdentifier(ident: BSQAssembly::Identifier): CPPAssembly::Identifier {
+        return CPPAssembly::Identifier::from(ident.value);
+    }
+
+    function convertVarIdentifier(vident: BSQAssembly::VarIdentifier): CPPAssembly::VarIdentifier {
+        return CPPAssembly::VarIdentifier::from(vident.value);
+    }
+}
+
+entity CPPTransformer {
+    field bsqasm: BSQAssembly::Assembly;
+
+    method transformBinAddExpressionToCpp(binadd: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
+        abort;
+    }
+
+    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
+        let val = exp.value;
+        
+        %% May be cleaner to handle in cppemit
+        if(CPPAssembly::BsqInt::from(val).value !== '') {
+            return CPPAssembly::LiteralSimpleExpression{ val.removeSuffixString('i') };
+        }
+
+        return CPPAssembly::LiteralSimpleExpression{ val };
+    }
+
+    method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
+        let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
+        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype);
+
+        return CPPAssembly::AccessVariableExpression { vname, layouttype };
+    }
+
+    method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
+        match(binarith)@ {
+            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp($binarith); }
+            | BSQAssembly::BinSubExpression => { abort; } %% Eventually...
+            | _ => { abort; }
+        }
+    }
+
+    method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
+        match(expr)@ {
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp($expr); }
+            | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
+            | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
+            | _ => { abort; }
+        }
+    }
+
+    method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
+        let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype);
+        let rexp = this.transformExpressionToCpp(ret.value);
+
+        return CPPAssembly::ReturnSingleStatement{rtype, rexp};
+    }
+
+    method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
+        let name = CPPTransformNameManager::convertIdentifier(stmt.name);
+        let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
+        let cppexpr = this.transformExpressionToCpp(stmt.exp);
+
+        return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
+    }
+
+    method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
+        match(stmt)@ {
+            BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
+            | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp($stmt); }
+            | _ => { abort; }
+        }
+    }
+
+    method transformStatementListToCpp(stmts: List<BSQAssembly::Statement>): List<CPPAssembly::Statement> {
+        let tailop = stmts.back();
+
+        %% Need to match tailop to get return, not implemented for now
+
+        return stmts.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
+    }
+
+    method transformBodyToCpp(body: BSQAssembly::BodyImplementation): CPPAssembly::BodyImplementation {
+        match(body)@ {
+            BSQAssembly::StandardBodyImplementation => { 
+                let cppstmts = this.transformStatementListToCpp($body.statements);
+                return CPPAssembly::StandardBodyImplementation{ cppstmts };
+            }
+            | _ => { abort; }
+        }
+    }
+
+    method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
+        let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
+        %% Parameters
+        let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
+
+        let body = this.transformBodyToCpp(decl.body);
+
+        return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
+    }   
+
+    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
+            let transformer = CPPTransformer{ bsqasm };
+
+        let transformer_nsfuncs = bsqasm.allfuncs
+            .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
+            .reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>(Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{},
+                fn(acc, ikey) => {
+                    let bsqdecl = bsqasm.nsfuncs.get(ikey);
+                    let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
+                    return acc.insert(cppdecl.invokeKey, cppdecl);
+                });
+
+        let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
+
+        return CPPAssembly::Assembly {
+            nsfuncs = transformer_nsfuncs,
+            allfuncs = transformer_allfuncs
+        };
+    }
+}

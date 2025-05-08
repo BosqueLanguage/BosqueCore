@@ -1,9 +1,12 @@
 namespace CPPEmitter;
 
-function emitIncludes(): CString {
-    return '#include "cppruntime.hpp"';
-}
+%%
+%% TODO: We will need to properly overload our conversion from bosque types to cpp types to ensure
+%% everything stays safe (such as Nat in bosque only being 63 bits not 64) and all operations on 
+%% these values need to be provided via overloading and using compiler builtins (like __builtin_add_overflow__)
+%%
 
+%% CPP Pre-defined backend
 namespace PathStack {
     function emitPathStackCreate(): CString {
         return 'PathStack ps = PathStack::create();';
@@ -30,6 +33,128 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
-function emitAssembly(asm: CPPAssembly): CString {
-    return CString::concat(asm.includes, asm.body);
+function emitTypeSignature(ts: CPPAssembly::TypeSignature): CString {
+    return ts.tkeystr.value;
+}
+
+function emitIdentifier(ident: CPPAssembly::Identifier): CString {
+    return ident.value;
+}
+
+function emitVarIdentifier(vident: CPPAssembly::VarIdentifier): CString {
+    return vident.value;
+}
+
+function emitFunction(ik: CPPAssembly::InvokeKey): CString {
+    return ik.value;
+}
+
+function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): CString {
+    return exp.value;
+}
+
+function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression): CString {
+    %% May need some work with type
+    return emitVarIdentifier(exp.vname);
+}
+
+function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement): CString {
+    %% let rtype = emitTypeSignature(ret.rtype);
+    let exp = emitExpression(ret.value);
+
+    return CString::concat('return ', exp, ';%n;');
+}
+
+recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CString {
+    let lhs = emitExpression[recursive](add.lhs);
+    let rhs = emitExpression[recursive](add.rhs);
+
+    %% TODO: Overload '+'
+    return CString::concat('(', lhs, ' + ', rhs, ')');
+}
+
+recursive function emitBinSubExpression(add: CPPAssembly::BinSubExpression): CString {
+    abort; %% TODO
+}
+
+function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression): CString {
+    match(e)@ {
+        CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e); }
+        %% | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
+        | _ => { abort; }
+    }
+}
+
+function emitExpression(e: CPPAssembly::Expression): CString {
+    match(e)@ {
+        CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e); }
+        | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
+        | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
+        | _ => { abort; }
+    }
+}
+
+function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement): CString {
+    let name = emitIdentifier(stmt.name);
+    let stype = emitTypeSignature(stmt.vtype);
+    let exp = emitExpression(stmt.exp);
+
+    return CString::concat(stype, ' ', name, ' = ', exp, ';');
+}
+
+function emitStatement(stmt: CPPAssembly::Statement): CString {
+    match(stmt)@ {
+        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt); }
+        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt); }
+        | _ => { abort; }
+    }
+}
+
+function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation): CString {
+    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt)));
+}
+
+function emitBodyImplementation(body: CPPAssembly::BodyImplementation): CString {
+    match(body)@ {
+        %% CPPAssembly::AbstractBodyImplementation => { abort; }
+        %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
+        %% | CPPAssembly::BuiltinBodyImplementation => { abort; }
+        %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
+        %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
+        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body); }
+        | _ => { abort; }
+    }
+}
+
+%% Will need to specific namespace of function
+function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CString {
+    let name = func.name;
+    let params = ''; %% TODO: Parameters not implemented
+
+    %%
+    %% g++ forces 'main' return type to be int. Once we overload types, this interaction may
+    %% become somewhat funny, so need to be careful. This will also be akward with main in bosque
+    %% since its happy to return types other than int. Perhaps make a psuedo main function
+    %% that we always just call from real 'int main() ... ' that contains whatever bosque code main does
+    %% and the real 'int main() ... ' just returns 0
+    %%
+    let rtype = if(name === 'main') then 'int' else emitTypeSignature(func.resultType); 
+
+    let decl: CString = CString::concat(rtype, ' ', name, '(', params, ')');
+
+    return CString::concat(decl, ' {%n;', emitBodyImplementation(func.body), '}%n;');
+}
+
+function emitAssembly(asm: CPPAssembly::Assembly): CString {
+    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => { 
+        if(asm.nsfuncs.has(t)) {
+            return emitNamespaceFunctionDecl(asm.nsfuncs.get(t));
+        }
+        return 'NOT IMPLEMENTED!';
+    });
+    let efuncs = CString::joinAll('%n;', efuncs_list);
+
+    %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
+
+    return CString::join('%n;', efuncs);
 }
