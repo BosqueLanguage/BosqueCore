@@ -2,7 +2,8 @@ namespace CPPEmitter;
 
 %%
 %% TODO: We will need to properly overload our conversion from bosque types to cpp types to ensure
-%% everything stays safe (such as Nat in bosque only being 63 bits not 64)
+%% everything stays safe (such as Nat in bosque only being 63 bits not 64) and all operations on 
+%% these values need to be provided via overloading and using compiler builtins (like __builtin_add_overflow__)
 %%
 
 %% CPP Pre-defined backend
@@ -57,15 +58,18 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
     return emitVarIdentifier(exp.vname);
 }
 
+function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement): CString {
+    %% let rtype = emitTypeSignature(ret.rtype);
+    let exp = emitExpression(ret.value);
+
+    return CString::concat('return ', exp, ';%n;');
+}
+
 recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CString {
     let lhs = emitExpression[recursive](add.lhs);
     let rhs = emitExpression[recursive](add.rhs);
 
-    %% In my cppruntime header I need to for each primitive write out a struct
-    %% with correct operator overloading to correctly map Int -> int64_t and stuff
-    %% Here we also need to something like Struct Int_TypeInfo IN THE HEADER ITSELF.
-    %% We also want to do overflow safe like __safe_add__ . We overload plus with these values
-
+    %% TODO: Overload '+'
     return CString::concat('(', lhs, ' + ', rhs, ')');
 }
 
@@ -101,7 +105,7 @@ function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitiali
 function emitStatement(stmt: CPPAssembly::Statement): CString {
     match(stmt)@ {
         CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt); }
-        | CPPAssembly::ReturnSingleStatement => { return ''; } %% TODO
+        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt); }
         | _ => { abort; }
     }
 }
@@ -122,16 +126,26 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation): CString 
     }
 }
 
-
+%% Will need to specific namespace of function
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CString {
-    %% Function name
-    %% Params
-    %% Return?
-    return emitBodyImplementation(func.body);
+    let name = func.name;
+    let params = ''; %% TODO: Parameters not implemented
+
+    %%
+    %% g++ forces 'main' return type to be int. Once we overload types, this interaction may
+    %% become somewhat funny, so need to be careful. This will also be akward with main in bosque
+    %% since its happy to return types other than int. Perhaps make a psuedo main function
+    %% that we always just call from real 'int main() ... ' that contains whatever bosque code main does
+    %% and the real 'int main() ... ' just returns 0
+    %%
+    let rtype = if(name === 'main') then 'int' else emitTypeSignature(func.resultType); 
+
+    let decl: CString = CString::concat(rtype, ' ', name, '(', params, ')');
+
+    return CString::concat(decl, ' {%n;', emitBodyImplementation(func.body), '}%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% For now we just grab every function
     let efuncs_list = asm.allfuncs.map<CString>(fn(t) => { 
         if(asm.nsfuncs.has(t)) {
             return emitNamespaceFunctionDecl(asm.nsfuncs.get(t));
@@ -142,6 +156,5 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    %% We dont even emit the headers, so something must be causing aborting
     return CString::join('%n;', efuncs);
 }

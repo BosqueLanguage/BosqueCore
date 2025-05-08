@@ -10,8 +10,8 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
-    function convertTypeSignature(tkey: BSQAssembly::TypeKey): CPPAssembly::TypeSignature {
-        let tk = CPPAssembly::TypeKey::from(tkey.value);
+    function convertTypeSignature(tkey: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
+        let tk = CPPAssembly::TypeKey::from(tkey.tkeystr.value);
 
         if(tk.value === 'Int') {
             %% We will need call our overloaded int type
@@ -33,14 +33,14 @@ namespace CPPTransformNameManager {
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
-
     method transformBinAddExpressionToCpp(binadd: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
         abort;
     }
 
-    %% Given how simple (lol) this expression is, may not need a separate method for this transform
     method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
         let val = exp.value;
+        
+        %% May be cleaner to handle in cppemit
         if(CPPAssembly::BsqInt::from(val).value !== '') {
             return CPPAssembly::LiteralSimpleExpression{ val.removeSuffixString('i') };
         }
@@ -50,7 +50,7 @@ entity CPPTransformer {
 
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
         let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
-        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype.tkeystr);
+        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype);
 
         return CPPAssembly::AccessVariableExpression { vname, layouttype };
     }
@@ -73,7 +73,7 @@ entity CPPTransformer {
     }
 
     method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
-        let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype.tkeystr);
+        let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype);
         let rexp = this.transformExpressionToCpp(ret.value);
 
         return CPPAssembly::ReturnSingleStatement{rtype, rexp};
@@ -81,7 +81,7 @@ entity CPPTransformer {
 
     method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
         let name = CPPTransformNameManager::convertIdentifier(stmt.name);
-        let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype.tkeystr);
+        let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
         let cppexpr = this.transformExpressionToCpp(stmt.exp);
 
         return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
@@ -117,11 +117,11 @@ entity CPPTransformer {
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
         %% Parameters
-        %% Return type
+        let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
 
         let body = this.transformBodyToCpp(decl.body);
 
-        return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, none, body};
+        return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
     }   
 
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {

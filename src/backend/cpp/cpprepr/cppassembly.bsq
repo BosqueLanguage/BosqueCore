@@ -37,17 +37,15 @@ entity NamespaceFunctionDecl {
     field invokeKey: InvokeKey;
 
     %% Will be List<InvokeParameterDecl> or something
-    field params: None;
+    field params: None; %% TODO: Parameters not implemented
 
-    %% Will be ResultType
-    field resultType: None;
+    field resultType: TypeSignature;
 
     field body: BodyImplementation;
 }
 
 %% Will need expanding
 entity Assembly {
-    %% Is this best way to store nsfuncs? (maps nice to bsqasm)
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
     field allfuncs: List<InvokeKey>;
 }
