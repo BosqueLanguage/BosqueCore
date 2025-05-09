@@ -59,18 +59,18 @@ entity ConstantSimplification {
     method processITestNoneAsTest(srctype: TypeSignature, itest: ITestNone): PostfixOperation {
         if(srctype.tkeystr === 'None'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixAbort{ itest.sinfo, srctype };
+                return PostfixBoolConstant{ itest.sinfo, srctype, false };
             }
             else {
-                return PostfixNop{ itest.sinfo, srctype };
+                return PostfixBoolConstant{ itest.sinfo, srctype, true };
             }
         }
         elif(srctype.tkeystr === 'Some'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixNop{ itest.sinfo, srctype };
+                return PostfixBoolConstant{ itest.sinfo, srctype, true };
             }
             else {
-                return PostfixAbort{ itest.sinfo, srctype };
+                return PostfixBoolConstant{ itest.sinfo, srctype, false };
             }
         }
         else {
@@ -81,18 +81,18 @@ entity ConstantSimplification {
     method processITestSomeAsTest(srctype: TypeSignature, itest: ITestSome): PostfixOperation {
         if(srctype.tkeystr === 'None'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixNop{ itest.sinfo };
+                return PostfixBoolConstant{ itest.sinfo, srctype, true };
             }
             else {
-                return PostfixAbort{ itest.sinfo };
+                return PostfixBoolConstant{ itest.sinfo, srctype, false };
             }
         }
         elif(srctype.tkeystr === 'Some'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixAbort{ itest.sinfo };
+                return PostfixBoolConstant{ itest.sinfo, srctype, false };
             }
             else {
-                return PostfixNop{ itest.sinfo };
+                return PostfixBoolConstant{ itest.sinfo, srctype, true };
             }
         }
         else {
@@ -118,8 +118,70 @@ entity ConstantSimplification {
         }
     }
 
-    method processITestAsConvert(srctype: TypeSignature, itest: ITest): PostfixOperation {
+    method processITestTypeAsConvert(srctype: TypeSignature, itest: ITestType): PostfixOperation {
         abort; %% Not implemented
+    }
+
+    method processITestNoneAsConvert(srctype: TypeSignature, itest: ITestNone): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixAbort{ itest.sinfo, srctype };
+            }
+            else {
+                return PostfixNop{ itest.sinfo, srctype };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixNop{ itest.sinfo, srctype };
+            }
+            else {
+                return PostfixAbort{ itest.sinfo, srctype };
+            }
+        }
+        else {
+            return PostfixAsConvert { itest.sinfo, srctype, itest };
+        }
+    }
+
+    method processITestSomeAsConvert(srctype: TypeSignature, itest: ITestSome): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixNop{ itest.sinfo };
+            }
+            else {
+                return PostfixAbort{ itest.sinfo };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixAbort{ itest.sinfo };
+            }
+            else {
+                return PostfixNop{ itest.sinfo };
+            }
+        }
+        else {
+            return PostfixAsConvert { itest.sinfo, srctype, itest };
+        }
+    }
+
+    method processITestOkAsConvert(srctype: TypeSignature, itest: ITestOk): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestFailAsConvert(srctype: TypeSignature, itest: ITestFail): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestAsConvert(srctype: TypeSignature, itest: ITest): PostfixOperation {
+        match(itest)@ {
+            ITestType => { return this.processITestTypeAsConvert(srctype, $itest); }
+            | ITestNone => { return this.processITestNoneAsConvert(srctype, $itest); }
+            | ITestSome => { return this.processITestSomeAsConvert(srctype, $itest); }
+            | ITestOk => { return this.processITestOkAsConvert(srctype, $itest); }
+            | ITestFail => { return this.processITestFailAsConvert(srctype, $itest); }
+        }
     }
 
     recursive method processArgs(args: List<Expression>): List<Expression> {
@@ -181,14 +243,22 @@ entity ConstantSimplification {
                 | PostfixInvokeStatic => { abort; }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
+                | PostfixBoolConstant => { return $op; }
                 | PostfixNop => { return $op; }
                 | PostfixAbort => { return $op; }
+                | PostfixWidenConvert => { return $op; }
+                | PostfixAccessSomeValue => { return $op; }
+                | PostfixLiteralNoneValue => { return $op; } 
             }
         });
 
-        abort; %%TODO: filter nops and slice on fail
+        var sops = ops.filter(pred(op) => op?!<PostfixNop>);
+        let hasabort = sops.someOf(pred(op) => op?<PostfixAbort>);
+        if(hasabort) {
+            abort; %%TODO: we should trim the list if we have a PostfixAbort
+        }
 
-        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
+        return PostfixOp{ e.sinfo, e.etype, ebase, sops };
     }
 
     function negateLiteralBoolean(v: CString, sinfo: SourceInfo, btype: TypeSignature): Expression {

@@ -306,9 +306,19 @@ PostfixAccessFromName {
 | PostfixLiteralKeyAccess {
     field kexp: Expression;
 }
+| PostfixBoolConstant {
+    field value: Bool;
+}
 | PostfixNop {
 }
 | PostfixAbort {
+}
+| PostfixWidenConvert {
+    field trgttype: NominalTypeSignature;
+}
+| PostfixAccessSomeValue {
+}
+| PostfixLiteralNoneValue {
 }
 ;
 

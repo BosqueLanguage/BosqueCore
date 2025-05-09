@@ -135,8 +135,12 @@ entity ExplicitifyTransform {
                 | PostfixInvokeStatic => { abort; }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
+                | PostfixBoolConstant => { return $op; }
                 | PostfixNop => { return $op; }
                 | PostfixAbort => { return $op; }
+                | PostfixWidenConvert => { return $op; }
+                | PostfixAccessSomeValue => { return $op; }
+                | PostfixLiteralNoneValue => { return $op; }       
             }
         });
 
