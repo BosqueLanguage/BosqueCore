@@ -312,6 +312,7 @@ PostfixAccessFromName {
 | PostfixNop {
 }
 | PostfixAbort {
+    field finaltype: Option<TypeSignature>;
 }
 | PostfixWidenConvert {
     field trgttype: NominalTypeSignature;

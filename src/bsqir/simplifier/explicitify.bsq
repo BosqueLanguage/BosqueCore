@@ -140,7 +140,7 @@ entity ExplicitifyTransform {
                 | PostfixAbort => { return $op; }
                 | PostfixWidenConvert => { return $op; }
                 | PostfixAccessSomeValue => { return $op; }
-                | PostfixLiteralNoneValue => { return $op; }       
+                | PostfixLiteralNoneValue => { return $op; } 
             }
         });
 

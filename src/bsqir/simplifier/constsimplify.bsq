@@ -125,7 +125,7 @@ entity ConstantSimplification {
     method processITestNoneAsConvert(srctype: TypeSignature, itest: ITestNone): PostfixOperation {
         if(srctype.tkeystr === 'None'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixAbort{ itest.sinfo, srctype };
+                return PostfixAbort{ itest.sinfo, srctype, none };
             }
             else {
                 return PostfixNop{ itest.sinfo, srctype };
@@ -133,10 +133,10 @@ entity ConstantSimplification {
         }
         elif(srctype.tkeystr === 'Some'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixNop{ itest.sinfo, srctype };
+                return PostfixAccessSomeValue{ itest.sinfo, srctype };
             }
             else {
-                return PostfixAbort{ itest.sinfo, srctype };
+                return PostfixAbort{ itest.sinfo, srctype, none };
             }
         }
         else {
@@ -147,18 +147,18 @@ entity ConstantSimplification {
     method processITestSomeAsConvert(srctype: TypeSignature, itest: ITestSome): PostfixOperation {
         if(srctype.tkeystr === 'None'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixNop{ itest.sinfo };
+                return PostfixNop{ itest.sinfo srctype};
             }
             else {
-                return PostfixAbort{ itest.sinfo };
+                return PostfixAbort{ itest.sinfo, srctype, none };
             }
         }
         elif(srctype.tkeystr === 'Some'<TypeKey>) {
             if(itest.isnot) {
-                return PostfixAbort{ itest.sinfo };
+                return PostfixAbort{ itest.sinfo, srctype none };
             }
             else {
-                return PostfixNop{ itest.sinfo };
+                return PostfixAccessSomeValue{ itest.sinfo, srctype };
             }
         }
         else {
@@ -255,7 +255,7 @@ entity ConstantSimplification {
         var sops = ops.filter(pred(op) => op?!<PostfixNop>);
         let hasabort = sops.someOf(pred(op) => op?<PostfixAbort>);
         if(hasabort) {
-            abort; %%TODO: we should trim the list if we have a PostfixAbort
+            abort; %%TODO: we should trim the list if we have a PostfixAbort -- also set the type of the abort to be the final e.type
         }
 
         return PostfixOp{ e.sinfo, e.etype, ebase, sops };
