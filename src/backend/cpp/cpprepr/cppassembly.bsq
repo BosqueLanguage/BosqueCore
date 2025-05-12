@@ -30,6 +30,13 @@ const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside t
 type Identifier = CString of CPPAssembly::identifierRE;
 type VarIdentifier = CString of CPPAssembly::videntifierRE;
 
+%* 
+entity NamespaceConstDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+*%
+
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl {
     field ns: NamespaceKey;
@@ -46,6 +53,6 @@ entity NamespaceFunctionDecl {
 
 %% Will need expanding
 entity Assembly {
-    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
     field allfuncs: List<InvokeKey>;
 }

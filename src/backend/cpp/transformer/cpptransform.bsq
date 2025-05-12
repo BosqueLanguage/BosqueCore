@@ -124,16 +124,25 @@ entity CPPTransformer {
         return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
     }   
 
-    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
-            let transformer = CPPTransformer{ bsqasm };
+    %*
+    method transformNamespaceConstDecl(decl: BSQAssembly::NamespaceConstDecl): CPPAssembly::NamespaceConstDecl {
+        abort;
+    }
+    *%
 
+    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
+        let transformer = CPPTransformer{ bsqasm };
+
+        %% Maps each namespace key to a map for each function in the namespace 
         let transformer_nsfuncs = bsqasm.allfuncs
             .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
-            .reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>(Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{},
+            .reduce<Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>>(
+                Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>{},
                 fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    return acc.insert(cppdecl.invokeKey, cppdecl);
+                    let map = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{cppdecl.invokeKey => cppdecl};
+                    return acc.insert(cppdecl.ns, map);
                 });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));

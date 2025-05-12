@@ -49,12 +49,13 @@ function generateCPPFile(cpp: string, outdir: string) {
     Status.output("    Reading Contents of Base emit.cpp File...\n");
     let contents: string = "";
     try {
-        contents = fs.readFileSync(cpp_runtime_code_path).toString();
+        contents = fs.readFileSync(cpp_runtime_code_path).toString() + `\n\n`;
     }
     catch(e) {
         Status.error("Failed to read base emit.cpp file!\n");
     }
-    const new_contents = contents.concat(cpp);
+    const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
+    const new_contents: string = runtime_header.concat( contents, cpp);   
 
     Status.output("    Writing to emit.cpp...\n");
     try {
@@ -80,7 +81,7 @@ function runCPPEmit(outname: string): string {
         Status.error("Failed to write bsqir info file!\n");
     }
 
-    return `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n` + validateCStringLiteral(res.slice(1, -2));
+    return validateCStringLiteral(res.slice(1, -2));
 }
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
