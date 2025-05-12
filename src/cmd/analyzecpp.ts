@@ -55,7 +55,7 @@ function generateCPPFile(cpp: string, outdir: string) {
         Status.error("Failed to read base emit.cpp file!\n");
     }
     const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
-    const new_contents: string = runtime_header.concat( contents, cpp);   
+    const new_contents: string = runtime_header.concat( cpp, contents );   
 
     Status.output("    Writing to emit.cpp...\n");
     try {

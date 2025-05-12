@@ -62,11 +62,12 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
     return emitVarIdentifier(exp.vname);
 }
 
-function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement): CString {
+function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement, indent: CString): CString {
     %% let rtype = emitTypeSignature(ret.rtype);
     let exp = emitExpression(ret.value);
 
-    return CString::concat('return ', exp, ';%n;');
+    let full_indent: CString = CString::concat(indent, '    ');
+    return CString::concat(full_indent, 'return ', exp, ';%n;');
 }
 
 recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CString {
@@ -98,40 +99,41 @@ function emitExpression(e: CPPAssembly::Expression): CString {
     }
 }
 
-function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement): CString {
+function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, indent: CString): CString {
     let name = emitIdentifier(stmt.name);
     let stype = emitTypeSignature(stmt.vtype);
     let exp = emitExpression(stmt.exp);
 
-    return CString::concat(stype, ' ', name, ' = ', exp, ';');
+    let full_indent: CString = CString::concat(indent, '    ', stype); %% List constructor size max 6
+    return CString::concat(full_indent, ' ', name, ' = ', exp, ';');
 }
 
-function emitStatement(stmt: CPPAssembly::Statement): CString {
+function emitStatement(stmt: CPPAssembly::Statement, indent: CString): CString {
     match(stmt)@ {
-        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt); }
-        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt); }
+        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, indent); }
+        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, indent); }
         | _ => { abort; }
     }
 }
 
-function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation): CString {
-    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt)));
+function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation, indent: CString): CString {
+    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt, indent)));
 }
 
-function emitBodyImplementation(body: CPPAssembly::BodyImplementation): CString {
+function emitBodyImplementation(body: CPPAssembly::BodyImplementation, indent: CString): CString {
     match(body)@ {
         %% CPPAssembly::AbstractBodyImplementation => { abort; }
         %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
         %% | CPPAssembly::BuiltinBodyImplementation => { abort; }
         %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
         %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
-        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body); }
+        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, indent); }
         | _ => { abort; }
     }
 }
 
 %% Will need to specific namespace of function
-function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CString {
+function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, indent: CString): CString {
     let name = func.name;
     let nskey = emitNamespaceKey(func.ns);
     let params = ''; %% TODO: Parameters not implemented
@@ -140,19 +142,20 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl): CS
     let pre: CString = CString::concat(rtype, ' ', name );
     let params_impl: CString = CString::concat('(', params, ')');
 
-    return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body), '}%n;');
+    return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, indent), indent, '}%n;');
 }
 
 %% Emits all funcions inside a given namespace
 function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceKey, funcs: CString): CString {
-    return CString::concat('namespace ', nsdecl.value, ' {%n;', funcs, '%n;}%n;');
+    return CString::concat('namespace ', nsdecl.value, ' {%n;', funcs, '}%n;%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
     %% First emit all namespace blocks with their functions
     let nsblocks = asm.nsfuncs.reduce<CString>('', fn(acc, nskey, funcs) => {
         let emission = funcs.reduce<CString>('', fn(funcacc, ikey, func) => {
-            return CString::concat(funcacc, emitNamespaceFunctionDecl(func));
+            let indent: CString = '    ';
+            return CString::concat(indent, funcacc, emitNamespaceFunctionDecl(func, indent));
         });
         
         return emitNamespaceDecl(nskey, emission);
