@@ -15,7 +15,7 @@ namespace CPPTransformNameManager {
 
         if(tk.value === 'Int') {
             %% We will need call our overloaded int type
-            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('int64_t') };
+            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int63') };
         }
 
         return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to be nominal always (look at smttransfrom)

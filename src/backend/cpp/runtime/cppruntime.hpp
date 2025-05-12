@@ -3,7 +3,24 @@
 #include <stdint.h>
 #include <iostream>
 
+#define BIT_MASK (0x7FFFFFFFFFFFFFF)
+
 namespace __CoreCpp {
+
+class Int63 {
+    int64_t value;
+    constexpr explicit Int63(int64_t val) : value(val & BIT_MASK) {}; 
+public:
+    constexpr Int63() noexcept : value(0) {};
+    constexpr int64_t get() const noexcept { return value; }
+
+    // We overload literal "_i" to easily match our types
+    static constexpr Int63 from_literal(int64_t v) { return Int63(v); }
+
+    // TODO: Overload any operators in Int63
+};
+
+constexpr Int63 operator"" _i(unsigned long long v);
 
 // Useful for keeping track of path in tree iteration
 struct PathStack {
@@ -48,3 +65,6 @@ struct UnicodeCharBuffer {
 };
 
 } // namespace __CoreCpp
+
+// Overloading of numeric tags at global scope
+constexpr __CoreCpp::Int63 operator"" _i(unsigned long long v) { return __CoreCpp::Int63::from_literal(static_cast<int64_t>(v)); }
