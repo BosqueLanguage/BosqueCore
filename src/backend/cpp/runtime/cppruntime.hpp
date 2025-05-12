@@ -7,20 +7,39 @@
 
 namespace __CoreCpp {
 
-class Int63 {
+// Signed 63 bit value
+class Int {
     int64_t value;
-    constexpr explicit Int63(int64_t val) : value(val & BIT_MASK) {}; 
+    constexpr explicit Int(int64_t val) : value(val & BIT_MASK) {}; 
 public:
-    constexpr Int63() noexcept : value(0) {};
+    constexpr Int() noexcept : value(0) {};
     constexpr int64_t get() const noexcept { return value; }
 
     // We overload literal "_i" to easily match our types
-    static constexpr Int63 from_literal(int64_t v) { return Int63(v); }
+    static constexpr Int from_literal(int64_t v) { return Int(v); }
 
-    // TODO: Overload any operators in Int63
+    // TODO: Overload any operators in Int
 };
+constexpr Int operator"" _i(unsigned long long v);
 
-constexpr Int63 operator"" _i(unsigned long long v);
+// Unsigned 63 bit value
+class Nat {
+    uint64_t value;
+    constexpr explicit Nat(uint64_t val) : value(val & BIT_MASK) {}; 
+public:
+    constexpr Nat() noexcept : value(0) {};
+    constexpr int64_t get() const noexcept { return value; }
+
+    // We overload literal "_i" to easily match our types
+    static constexpr Nat from_literal(int64_t v) { return Nat(v); }
+
+    // TODO: Overload any operators in Nat 
+};
+constexpr Nat operator"" _n(unsigned long long v);
+
+//
+// TODO: Figure out representation for BigNat, BigInt, Float
+//
 
 // Useful for keeping track of path in tree iteration
 struct PathStack {
@@ -66,5 +85,7 @@ struct UnicodeCharBuffer {
 
 } // namespace __CoreCpp
 
+// We MAY want to define these in cppruntime.cpp, leaving here for now
 // Overloading of numeric tags at global scope
-constexpr __CoreCpp::Int63 operator"" _i(unsigned long long v) { return __CoreCpp::Int63::from_literal(static_cast<int64_t>(v)); }
+constexpr __CoreCpp::Int operator"" _i(unsigned long long v) { return __CoreCpp::Int::from_literal(static_cast<int64_t>(v)); }
+constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<int64_t>(v)); }

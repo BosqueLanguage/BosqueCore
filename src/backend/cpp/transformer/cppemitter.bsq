@@ -54,12 +54,12 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): CString {
 }
 
 function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): CString {
-    %% May want to store type in our literals to make matching nicer...
-    if(exp.value === '__CoreCpp::Int63') {
-        return CString::concat(exp.value, '_i');
+    %% We may want to make this matching a tad nicer, although not too bad as is 
+    switch(exp.etype.tkeystr.value) {
+        '__CoreCpp::Int' => { return CString::concat(exp.value, '_i'); }
+        | '__CoreCpp::Nat' => { return CString::concat(exp.value, '_n'); }
+        | _ => { abort; }
     }
-         return CString::concat(exp.value, '_i');
-
 }
 
 function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression): CString {

@@ -10,15 +10,15 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
-    function convertTypeSignature(tkey: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
-        let tk = CPPAssembly::TypeKey::from(tkey.tkeystr.value);
+    function convertTypeSignature(tsig: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
+        let tk = CPPAssembly::TypeKey::from(tsig.tkeystr.value);
 
-        if(tk.value === 'Int') {
-            %% We will need call our overloaded int type
-            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int63') };
+        %% We will want to eventually not use nominal type signature always, i think itll be obvious when to not use
+        switch(tk.value) {
+            'Int' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int') }; }
+            | 'Nat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Nat') }; }
+            | _ => { abort; }
         }
-
-        return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to be nominal always (look at smttransfrom)
     }
 
     function convertIdentifier(ident: BSQAssembly::Identifier): CPPAssembly::Identifier {
@@ -37,22 +37,29 @@ entity CPPTransformer {
         abort;
     }
 
-    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
-        let val = exp.value;
-        
-        %% May be cleaner to handle in cppemit
-        if(CPPAssembly::BsqInt::from(val).value !== '') {
-            return CPPAssembly::LiteralSimpleExpression{ val.removeSuffixString('i') };
-        }
+    method transformLiteralSimpleExpression(expr: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
+        let val = expr.value;
+        let exprtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
 
-        return CPPAssembly::LiteralSimpleExpression{ val };
+        %% May be cleaner to handle in cppemit
+        if(val.endsWithString('i')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('i') };
+        }
+        elif(val.endsWithString('n')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('n') };
+        }
+        else {
+            %% Fall through
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val };
+        }
     }
 
-    method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
-        let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
-        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype);
+    method transformAccessVariableExpression(expr: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
+        let vname = CPPTransformNameManager::convertVarIdentifier(expr.vname);
+        let vtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let layouttype = CPPTransformNameManager::convertTypeSignature(expr.layouttype);
 
-        return CPPAssembly::AccessVariableExpression { vname, layouttype };
+        return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
     method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
