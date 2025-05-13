@@ -346,15 +346,17 @@ recursive function emitIsSubtypeTestExpression(v: SMTAssembly::IsSubtypeTestExpr
     %%v is always in term repr to test against term constructor
     return CString::concat('(', subchk, ' ', vv, ')');
 }
+*%
 
 recursive function emitConvertOptionToSomeTExpression(v: SMTAssembly::ConvertOptionToSomeTExpression): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
     let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
 
-    let ubxop = CString::concat('(', ubx, ' ', emitExpression[recursive](v.arg), ')');
+    let ubxop = CString::concat('(', ubx, ' ', emitSafeExpression[recursive](v.arg), ')');
     return CString::concat('(', extract, ' ', ubxop, ')');
 }
 
+%*
 recursive function emitConvertResultToOkTExpression(v: SMTAssembly::ConvertResultToOkTExpression): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.resulttype);
     let extract = SMTNameManager::generateStructFieldName(v.oktype, 'value');
@@ -575,6 +577,30 @@ function emitAbortExpression(e: SMTAssembly::AbortExpression, eev: SMTEmitterEnv
     }
 }
 
+function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterEnv): CString {
+    let exp = emitExpression[recursive](e.inexp, eev);
+    
+    var tt: CString;
+    if($cexp = e.aexp)@<SMTAssembly::SafeExpression> {
+        tt = emitSafeExpression[recursive]($cexp);
+    }
+    else {
+        let ecc = emitExpression[recursive]($cexp, eev);
+        tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
+    }
+
+    var err: CString;
+    if(e.label == eev.errtrgt) {
+        err = emitResultErrTrgtAs(e.etype);
+    }
+    else {
+        err = emitResultErrOtherAs(e.etype);
+    }
+
+    let bb = CString::concat('(not ', tt, ') ', err, ' ', exp);
+    return CString::concat('(ite ', bb, ')');
+}
+
 function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEmitterEnv): CString {
     let exp = emitExpression[recursive](e.inexp, eev);
     return e.aset.lreduce<CString>(exp, fn(expcc, chk) => {
@@ -653,7 +679,9 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression): CString {
         | SMTAssembly::IsSomeTestExpression => { return emitIsSomeTestExpression[recursive]($v); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($v); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($v); }
-        | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($v); }
+        *%
+        | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($e); }
+        %*
         | SMTAssembly::ConvertResultToOkTExpression => { return emitConvertResultToOkTExpression[recursive]($v); }
         | SMTAssembly::ConvertResultToFailEExpression => { return emitConvertResultToFailEExpression[recursive]($v); }
         *%
@@ -672,6 +700,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression): CString {
 recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv): CString {
     match(e)@ {
         SMTAssembly::AbortExpression => { return emitAbortExpression($e, eev); }
+        | SMTAssembly::AssertExpression => { return emitAssertExpression($e, eev); }
         | SMTAssembly::AssertSetExpression => { return emitAssertSetExpression($e, eev); }
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }

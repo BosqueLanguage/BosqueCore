@@ -209,7 +209,6 @@ datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl
 of
 OptionTypeDecl { 
     field oftype: TypeSignature; 
-
     field someType: SomeTypeDecl;
 }
 | ResultTypeDecl {

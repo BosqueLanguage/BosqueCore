@@ -74,6 +74,9 @@ entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
     field errinvokes: Map<BSQAssembly::InvokeKey, Bool>;
 
+    const nonetype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'None'<BSQAssembly::TypeKey> };
+    const booltype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<BSQAssembly::TypeKey> };
+
     function isTermSMTTypeKey(tkey: SMTAssembly::TypeKey): Bool {
         return tkey === '@Term'<SMTAssembly::TypeKey>;
     }
@@ -270,77 +273,113 @@ entity SMTTransformer {
         }
     }
 
-    method transformITestTypeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestTypeAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
-    method transformITestNoneAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestNoneAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
         let ncop = if(itest.isnot) then SMTAssembly::BinKeyNotEqNoneExpression{onarg} else SMTAssembly::BinKeyEqNoneExpression{onarg};
 
-        return nctx, this.wrapOperationResult('Bool'<BSQAssembly::TypeKey>, ncop, obinds);
+        return nctx, this.wrapOperationResult(SMTTransformer::booltype, ncop, obinds);
     }
 
-    method transformITestSomeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestSomeAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
         let ncop = if(itest.isnot) then SMTAssembly::BinKeyEqNoneExpression{onarg} else SMTAssembly::BinKeyNotEqNoneExpression{onarg};
 
-        return nctx, this.wrapOperationResult('Bool'<BSQAssembly::TypeKey>, ncop, obinds);
+        return nctx, this.wrapOperationResult(SMTTransformer::booltype, ncop, obinds);
     }
 
-    method transformITestOkAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestOkAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
-    method transformITestFailAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestFailAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
     method transformITestAsTest(op: BSQAssembly::PostfixIsTest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        match($itest = op.itest)@ {
-            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(op.baseType, $itest, ctx, bexp); }
+        let sinfo = op.sinfo;
+
+        match($itest = op.ttest)@ {
+            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
         }
     }
 
-
-    method transformITestTypeAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestTypeAsConvert(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
-    method transformITestNoneAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        xxxx;
+    method transformITestNoneAsConvert(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        
+        if(itest.isnot) {
+            let chkexp = SMTAssembly::BinKeyNotEqNoneExpression{onarg};
+            let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{this.transformStdTypeToSMT(srctype), TransformNameManager::convertTypeKey(optdecl.someType.tkey), onarg};
+
+            let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(optdecl.oftype), chkexp, nctx.errCtr, accessop};
+            return nctx.addError(sinfo), this.wrapOperationResultWErr(optdecl.oftype, chkedop, obinds);
+
+        }
+        else {
+            let chkexp = SMTAssembly::BinKeyEqNoneExpression{onarg};
+            let accessop = SMTAssembly::LiteralNoneExpression{};
+
+            let chkedop = SMTAssembly::AssertExpression{'None'<SMTAssembly::TypeKey>, chkexp, nctx.errCtr, accessop};
+            return nctx.addError(sinfo), this.wrapOperationResultWErr(SMTTransformer::nonetype, chkedop, obinds);
+        }
     }
 
-    method transformITestSomeAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        xxxx;
+    method transformITestSomeAsConvert(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        
+        if(itest.isnot) {
+            let chkexp = SMTAssembly::BinKeyEqNoneExpression{onarg};
+            let accessop = SMTAssembly::LiteralNoneExpression{};
+
+            let chkedop = SMTAssembly::AssertExpression{'None'<SMTAssembly::TypeKey>, chkexp, nctx.errCtr, accessop};
+            return nctx.addError(sinfo), this.wrapOperationResultWErr(SMTTransformer::nonetype, chkedop, obinds);
+        }
+        else {
+            let chkexp = SMTAssembly::BinKeyNotEqNoneExpression{onarg};
+            let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{this.transformStdTypeToSMT(srctype), TransformNameManager::convertTypeKey(optdecl.someType.tkey), onarg};
+
+            let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(optdecl.oftype), chkexp, nctx.errCtr, accessop};
+            return nctx.addError(sinfo), this.wrapOperationResultWErr(optdecl.oftype, chkedop, obinds);
+        }
     }
 
-    method transformITestOkAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestOkAsConvert(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
-    method transformITestFailAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestFailAsConvert(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         abort; %% Not implemented
     }
 
-    method processITestAsConvert(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        match($itest = op.itest)@ {
-            BSQAssembly::ITestType => { return this.transformITestTypeAsConvert(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestNone => { return this.transformITestNoneAsConvert(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestSome => { return this.transformITestSomeAsConvert(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestOk => { return this.transformITestOkAsConvert(op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestFail => { return this.transformITestFailAsConvert(op.baseType, $itest, ctx, bexp); }
+    method processITestAsConvert(op: BSQAssembly::PostfixAsConvert, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let sinfo = op.sinfo;
+
+        match($itest = op.ttest)@ {
+            BSQAssembly::ITestType => { return this.transformITestTypeAsConvert(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestNone => { return this.transformITestNoneAsConvert(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestSome => { return this.transformITestSomeAsConvert(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestOk => { return this.transformITestOkAsConvert(sinfo, op.baseType, $itest, ctx, bexp); }
+            | BSQAssembly::ITestFail => { return this.transformITestFailAsConvert(sinfo, op.baseType, $itest, ctx, bexp); }
         }
     }
 
     method transformPostfixAccessFromName(op: BSQAssembly::PostfixAccessFromName, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         if(this.assembly.isNominalTypeConcrete(op.baseType.tkeystr)) {
             let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-            let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(op.declaredInType.tkeystr), exp.name.value, onarg};
+            let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(op.declaredInType.tkeystr), op.name.value, onarg};
 
             return nctx, this.wrapOperationResult(op.ftype, accessop, obinds);
         }
@@ -353,7 +392,7 @@ entity SMTTransformer {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
         let constop = SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, if(op.value) then 'true' else 'false'};
 
-        return nctx, this.wrapOperationResult('Bool'<BSQAssembly::TypeKey>, constop, obinds);
+        return nctx, this.wrapOperationResult(SMTTransformer::booltype, constop, obinds);
     }
 
     method transformPostfixNop(op: BSQAssembly::PostfixNop, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
@@ -364,9 +403,30 @@ entity SMTTransformer {
 
     method transformPostfixAbort(op: BSQAssembly::PostfixAbort, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let abtop = SMTAssembly::AbortExpression{this.transformStdTypeToSMT(op.etype), nctx.errCtr};
+        let abtop = SMTAssembly::AbortExpression{this.transformStdTypeToSMT(op.finaltype@some), nctx.errCtr};
         
         return nctx.addError(op.sinfo), this.wrapOperationResultWErr(op.finaltype@some, abtop, obinds);
+    }
+
+    method transformPostfixWidenConvert(op: BSQAssembly::PostfixWidenConvert, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let widenop = SMTAssembly::TermifyExpression{onarg, this.transformStdTypeToSMT(op.baseType), this.transformStdTypeToSMT(op.trgttype)};
+
+        return nctx, this.wrapOperationResult(op.baseType, widenop, obinds);
+    }
+
+    method transformPostfixAccessSomeValue(op: BSQAssembly::PostfixAccessSomeValue, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let accessop = SMTAssembly::AccessFromNameResolvedExpression{this.transformStdTypeToSMT(op.baseType), 'value', onarg};
+
+        return nctx, this.wrapOperationResult(op.baseType, accessop, obinds);
+    }
+
+    method transformPostfixLiteralNoneValue(op: BSQAssembly::PostfixLiteralNoneValue, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let _, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let accessop = SMTAssembly::LiteralNoneExpression{};
+
+        return nctx, this.wrapOperationResult(SMTTransformer::nonetype, accessop, obinds);
     }
 
     recursive method transformPostfixOp(exp: BSQAssembly::PostfixOp, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -387,9 +447,9 @@ entity SMTTransformer {
                 | BSQAssembly::PostfixBoolConstant => { return this.transformPostfixBoolConstant($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixNop => { return this.transformPostfixNop($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAbort => { return this.transformPostfixAbort($op, pstate.0, pstate.1); }
-                | BSQAssembly::PostfixWidenConvert => { abort; }
-                | BSQAssembly::PostfixAccessSomeValue => { abort; }
-                | BSQAssembly::PostfixLiteralNoneValue => { abort; }
+                | BSQAssembly::PostfixWidenConvert => { return this.transformPostfixWidenConvert($op, pstate.0, pstate.1); }
+                | BSQAssembly::PostfixAccessSomeValue => { return this.transformPostfixAccessSomeValue($op, pstate.0, pstate.1); }
+                | BSQAssembly::PostfixLiteralNoneValue => { return this.transformPostfixLiteralNoneValue($op, pstate.0, pstate.1); }
             }
         });
 
