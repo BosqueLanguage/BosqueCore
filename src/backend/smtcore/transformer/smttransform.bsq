@@ -927,12 +927,63 @@ entity SMTTransformer {
         return SMTAssembly::FieldInfo{finfo.fname.value, this.transformStdTypeToSMT(finfo.ftype)};
     }
 
+    method transformConstructableDeclToSMT(decl: BSQAssembly::ConstructableTypeDecl): SMTAssembly::ConstructableTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+
+        match(decl)@ {
+            BSQAssembly::OkTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::FailTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::APIRejectedTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::APIFailedTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APIErrorTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APISuccessTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::SomeTypeDecl => { 
+                let vtype = this.transformStdTypeToSMT($decl.oftype);
+                return SMTAssembly::SomeTypeDecl{ tkey, vtype };
+            }
+            | BSQAssembly::MapEntryTypeDecl => { 
+                let ktype = this.transformStdTypeToSMT($decl.ktype);
+                let vtype = this.transformStdTypeToSMT($decl.vtype);
+                return SMTAssembly::MapEntryTypeDecl{ tkey, ktype, vtype };
+            }
+        }
+    }
+
     method transformEntityDeclToSMT(decl: BSQAssembly::EntityTypeDecl): SMTAssembly::EntityTypeDecl {
         let tkey = TransformNameManager::convertTypeKey(decl.tkey);
         let termable = !decl.saturatedProvides.empty();
         let finfo = decl.saturatedBFieldInfo.map<SMTAssembly::FieldInfo>(fn(f) => this.transformFieldInfoToSMT(f));
 
         return SMTAssembly::EntityTypeDecl{ tkey, termable, finfo };
+    }
+
+    method transformPrimitiveConceptDeclToSMT(decl: BSQAssembly::PrimitiveConceptTypeDecl): SMTAssembly::PrimitiveConceptTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+
+        match(decl)@ {
+            BSQAssembly::OptionTypeDecl => { 
+                let stype = TransformNameManager::convertTypeKey($decl.someType.tkey);
+                return SMTAssembly::OptionTypeDecl{ tkey, stype };
+            }
+            | BSQAssembly::ResultTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::APIResultTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+        }
     }
 
     method transformInvokeToSMTFunction(ikey: BSQAssembly::InvokeKey): Option<SMTAssembly::FunctionDecl> {
@@ -969,6 +1020,15 @@ entity SMTTransformer {
             .filter(pred(tkey) => assembly.entities.has(tkey))
             .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(assembly.entities.get(tkey)));
 
+        let tconstructables = assembly.allconcretetypes
+            .filter(pred(tkey) => assembly.constructables.has(tkey))
+            .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => transformer.transformConstructableDeclToSMT(assembly.constructables.get(tkey)));
+
+
+        let tpconcepts = assembly.allabstracttypes
+            .filter(pred(tkey) => assembly.pconcepts.has(tkey))
+            .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(assembly.pconcepts.get(tkey)));
+
         let tallfuncs = callg.topoorder.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
 
         return SMTAssembly::Assembly {
@@ -982,13 +1042,13 @@ entity SMTTransformer {
     
             enums = List<SMTAssembly::EnumTypeDecl>{},
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},
-            constructables = List<SMTAssembly::ConstructableTypeDecl>{},
+            constructables = tconstructables,
             collections = List<SMTAssembly::CollectionTypeDecl>{},
 
             entities = tentities,
             datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{},
 
-            pconcepts = List<SMTAssembly::PrimitiveConceptTypeDecl>{},
+            pconcepts = tpconcepts,
             concepts = List<SMTAssembly::ConceptTypeDecl>{},
 
             datatypes = List<SMTAssembly::DatatypeTypeDecl>{},
