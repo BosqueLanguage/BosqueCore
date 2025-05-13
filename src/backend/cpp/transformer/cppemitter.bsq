@@ -57,7 +57,10 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
     %% We may want to make this matching a tad nicer, although not too bad as is 
     switch(exp.etype.tkeystr.value) {
         '__CoreCpp::Int' => { return CString::concat(exp.value, '_i'); }
+        | '__CoreCpp::BigInt' => { return CString::concat(exp.value, '_I'); } 
         | '__CoreCpp::Nat' => { return CString::concat(exp.value, '_n'); }
+        | '__CoreCpp::BigNat' => { return CString::concat(exp.value, '_N'); }
+        | '__CoreCpp::Float' => { return CString::concat(exp.value, '_f'); }
         | 'bool' => { return exp.value; }
         | _ => { abort; }
     }

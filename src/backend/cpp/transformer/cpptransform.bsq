@@ -16,7 +16,10 @@ namespace CPPTransformNameManager {
         %% We will want to eventually not use nominal type signature always, i think itll be obvious when to not use
         switch(tk.value) {
             'Int' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int') }; }
+            | 'BigInt' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigInt') }; }
             | 'Nat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Nat') }; }
+            | 'BigNat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigNat') }; }
+            | 'Float' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Float') }; }
             | 'Bool' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('bool') }; }
             | _ => { abort; }
         }
@@ -77,8 +80,17 @@ entity CPPTransformer {
         if(val.endsWithString('i')) {
             return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('i') };
         }
+        elif(val.endsWithString('I')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('I') };
+        }
         elif(val.endsWithString('n')) {
             return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('n') };
+        }
+        elif(val.endsWithString('N')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('N') };
+        }
+        elif(val.endsWithString('f')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('f') };
         }
         else {
             %% Fall through
