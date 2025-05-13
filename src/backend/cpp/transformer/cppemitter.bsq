@@ -79,19 +79,36 @@ recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CSt
     let lhs = emitExpression[recursive](add.lhs);
     let rhs = emitExpression[recursive](add.rhs);
 
-    %% TODO: Overload '+'
     return CString::concat('(', lhs, ' + ', rhs, ')');
 }
 
-recursive function emitBinSubExpression(add: CPPAssembly::BinSubExpression): CString {
-    abort; %% TODO
+recursive function emitBinSubExpression(sub: CPPAssembly::BinSubExpression): CString {
+    let lhs = emitExpression[recursive](sub.lhs);
+    let rhs = emitExpression[recursive](sub.rhs);
+
+    return CString::concat('(', lhs, ' - ', rhs, ')');
+}
+
+recursive function emitBinDivExpression(div: CPPAssembly::BinDivExpression): CString {
+    let lhs = emitExpression[recursive](div.lhs);
+    let rhs = emitExpression[recursive](div.rhs);
+
+    return CString::concat('(', lhs, ' / ', rhs, ')');
+}
+
+recursive function emitBinMultExpression(mult: CPPAssembly::BinMultExpression): CString {
+    let lhs = emitExpression[recursive](mult.lhs);
+    let rhs = emitExpression[recursive](mult.rhs);
+
+    return CString::concat('(', lhs, ' * ', rhs, ')');
 }
 
 function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression): CString {
     match(e)@ {
         CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e); }
-        %% | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
-        | _ => { abort; }
+        | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
+        | CPPAssembly::BinDivExpression => { return emitBinDivExpression[recursive]($e); }
+        | CPPAssembly::BinMultExpression => { return emitBinMultExpression[recursive]($e); }
     }
 }
 

@@ -47,6 +47,8 @@ datatype BinaryArithExpression provides Expression using {
 of
 BinAddExpression { }
 | BinSubExpression { }
+| BinDivExpression { }
+| BinMultExpression { }
 ;
 
 datatype BodyImplementation 

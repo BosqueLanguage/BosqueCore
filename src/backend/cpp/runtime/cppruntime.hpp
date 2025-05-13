@@ -18,9 +18,12 @@ public:
     // We overload literal "_i" to easily match our types
     static constexpr Int from_literal(int64_t v) { return Int(v); }
 
-    // TODO: Overload any operators in Int
+    // Overloaded operations on Int
+    constexpr Int operator+(Int const& i1) { return Int(value + i1.value); }
+    constexpr Int operator-(Int const& i1) { return Int(value - i1.value); }
+    constexpr Int operator/(Int const& i1) { return Int(value / i1.value); }
+    constexpr Int operator*(Int const& i1) { return Int(value * i1.value); }
 };
-constexpr Int operator"" _i(unsigned long long v);
 
 // Unsigned 63 bit value
 class Nat {
@@ -33,9 +36,12 @@ public:
     // We overload literal "_i" to easily match our types
     static constexpr Nat from_literal(int64_t v) { return Nat(v); }
 
-    // TODO: Overload any operators in Nat 
+    // Overloaded operators on Nat
+    constexpr Nat operator+(Nat const& i1) { return Nat(value + i1.value); }
+    constexpr Nat operator-(Nat const& i1) { return Nat(value - i1.value); }
+    constexpr Nat operator/(Nat const& i1) { return Nat(value / i1.value); }
+    constexpr Nat operator*(Nat const& i1) { return Nat(value * i1.value); }
 };
-constexpr Nat operator"" _n(unsigned long long v);
 
 //
 // TODO: Figure out representation for BigNat, BigInt, Float
@@ -85,7 +91,5 @@ struct UnicodeCharBuffer {
 
 } // namespace __CoreCpp
 
-// We MAY want to define these in cppruntime.cpp, leaving here for now
-// Overloading of numeric tags at global scope
-constexpr __CoreCpp::Int operator"" _i(unsigned long long v) { return __CoreCpp::Int::from_literal(static_cast<int64_t>(v)); }
-constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<int64_t>(v)); }
+constexpr __CoreCpp::Int operator"" _i(unsigned long long v) { return __CoreCpp::Int::from_literal(static_cast<int64_t>(v)); }; 
+constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<int64_t>(v)); };

@@ -33,8 +33,39 @@ namespace CPPTransformNameManager {
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
-    method transformBinAddExpressionToCpp(binadd: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
-        abort;
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression): CPPAssembly::Expression, CPPAssembly::Expression {
+        let cpplhs = this.transformExpressionToCpp[recursive](lhs);
+        let cpprhs = this.transformExpressionToCpp[recursive](rhs);
+
+        return cpplhs, cpprhs;
+    }
+
+    recursive method transformBinAddExpressionToCpp(expr: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinAddExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinSubExpressionToCpp(expr: BSQAssembly::BinSubExpression): CPPAssembly::BinSubExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinSubExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinDivExpressionToCpp(expr: BSQAssembly::BinDivExpression): CPPAssembly::BinDivExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinDivExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinMultExpressionToCpp(expr: BSQAssembly::BinMultExpression): CPPAssembly::BinMultExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinMultExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     method transformLiteralSimpleExpression(expr: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
@@ -62,17 +93,18 @@ entity CPPTransformer {
         return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
-    method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
+    recursive method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
-            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp($binarith); }
-            | BSQAssembly::BinSubExpression => { abort; } %% Eventually...
-            | _ => { abort; }
+            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
+            | BSQAssembly::BinSubExpression => { return this.transformBinSubExpressionToCpp[recursive]($binarith); }           
+            | BSQAssembly::BinDivExpression => { return this.transformBinDivExpressionToCpp[recursive]($binarith); }
+            | BSQAssembly::BinMultExpression => { return this.transformBinMultExpressionToCpp[recursive]($binarith); }
         }
     }
 
-    method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
+    recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
-            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp($expr); }
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
