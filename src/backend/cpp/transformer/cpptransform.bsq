@@ -17,6 +17,7 @@ namespace CPPTransformNameManager {
         switch(tk.value) {
             'Int' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int') }; }
             | 'Nat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Nat') }; }
+            | 'Bool' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('bool') }; }
             | _ => { abort; }
         }
     }
@@ -93,6 +94,7 @@ entity CPPTransformer {
         return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
+    %% I think we can simplify this and remove the transform functions, just match our bsqasm type then return transform type
     recursive method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
             BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
@@ -102,9 +104,24 @@ entity CPPTransformer {
         }
     }
 
+    recursive method transformBinaryNumericCompareExpression(expr: BSQAssembly::BinaryNumericExpression): CPPAssembly::BinaryNumericExpression {
+        let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        let etype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        match(expr)@ {
+            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ etype, cpplhs, cpprhs}; }
+            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ etype, cpplhs, cpprhs }; }
+        }
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp[recursive]($expr); }
+            | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }

@@ -23,6 +23,12 @@ public:
     constexpr Int operator-(Int const& i1) { return Int(value - i1.value); }
     constexpr Int operator/(Int const& i1) { return Int(value / i1.value); }
     constexpr Int operator*(Int const& i1) { return Int(value * i1.value); }
+    constexpr bool operator==(Int const& i1) const { return value == i1.value; }
+    constexpr bool operator!=(Int const& i1) const { return value != i1.value; }
+    constexpr bool operator<(Int const& i1) const { return value < i1.value; }
+    constexpr bool operator<=(Int const& i1) const { return value <= i1.value; }
+    constexpr bool operator>(Int const& i1) const { return value > i1.value; }
+    constexpr bool operator>=(Int const& i1) const { return value >= i1.value; }
 };
 
 // Unsigned 63 bit value
@@ -41,6 +47,12 @@ public:
     constexpr Nat operator-(Nat const& i1) { return Nat(value - i1.value); }
     constexpr Nat operator/(Nat const& i1) { return Nat(value / i1.value); }
     constexpr Nat operator*(Nat const& i1) { return Nat(value * i1.value); }
+    constexpr bool operator==(Nat const& i1) const { return value == i1.value; }
+    constexpr bool operator!=(Nat const& i1) const { return value != i1.value; }
+    constexpr bool operator<(Nat const& i1) const { return value < i1.value; }
+    constexpr bool operator<=(Nat const& i1) const { return value <= i1.value; }
+    constexpr bool operator>(Nat const& i1) const { return value > i1.value; }
+    constexpr bool operator>=(Nat const& i1) const { return value >= i1.value; }
 };
 
 //
