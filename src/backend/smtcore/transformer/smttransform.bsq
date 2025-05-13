@@ -90,7 +90,7 @@ entity SMTTransformer {
                 return TransformNameManager::convertTypeKey($tsig.tkeystr);
             }
             else {
-                return SMTAssembly::TypeKey::from('@BTerm');
+                return SMTAssembly::TypeKey::from('@Term');
             }
         }
     }
@@ -209,6 +209,15 @@ entity SMTTransformer {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
 
+    recursive method transformConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let uarg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx);
+        let smttype = this.transformStdTypeToSMT(e.ctype);
+
+        let createop = SMTAssembly::ConstructorPrimarySpecialConstructableExpression{smttype, uarg};
+
+        return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
+    }
+
     recursive method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
@@ -263,7 +272,7 @@ entity SMTTransformer {
         match(e)@ {
             BSQAssembly::ConstructorPrimaryListExpression => { abort; }
             | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
-            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($e, ctx); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
@@ -321,7 +330,7 @@ entity SMTTransformer {
         if(itest.isnot) {
             let chkexp = SMTAssembly::BinKeyNotEqNoneExpression{onarg};
             let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
-            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{this.transformStdTypeToSMT(srctype), TransformNameManager::convertTypeKey(optdecl.someType.tkey), onarg};
+            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{TransformNameManager::convertTypeKey(srctype.tkeystr), TransformNameManager::convertTypeKey(optdecl.someType.tkeystr), onarg};
 
             let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(optdecl.oftype), chkexp, nctx.errCtr, accessop};
             return nctx.addError(sinfo), this.wrapOperationResultWErr(optdecl.oftype, chkedop, obinds);
@@ -349,7 +358,7 @@ entity SMTTransformer {
         else {
             let chkexp = SMTAssembly::BinKeyNotEqNoneExpression{onarg};
             let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
-            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{this.transformStdTypeToSMT(srctype), TransformNameManager::convertTypeKey(optdecl.someType.tkey), onarg};
+            let accessop = SMTAssembly::ConvertOptionToSomeTExpression{TransformNameManager::convertTypeKey(srctype.tkeystr), TransformNameManager::convertTypeKey(optdecl.someType.tkeystr), onarg};
 
             let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(optdecl.oftype), chkexp, nctx.errCtr, accessop};
             return nctx.addError(sinfo), this.wrapOperationResultWErr(optdecl.oftype, chkedop, obinds);
@@ -557,7 +566,7 @@ entity SMTTransformer {
 
         let someop = SMTAssembly::BinKeySomeEqExpression{ 
             TransformNameManager::convertTypeKey(optiondecl.tkey),
-            TransformNameManager::convertTypeKey(optiondecl.someType.tkey),
+            this.transformStdTypeToSMT(optiondecl.someType),
             neqoption,
             neqval
         };
@@ -571,7 +580,7 @@ entity SMTTransformer {
 
         let someop = SMTAssembly::BinKeyNotSomeEqExpression{ 
             TransformNameManager::convertTypeKey(optiondecl.tkey),
-            TransformNameManager::convertTypeKey(optiondecl.someType.tkey),
+            this.transformStdTypeToSMT(optiondecl.someType),
             neqoption,
             neqval
         };
@@ -974,7 +983,7 @@ entity SMTTransformer {
 
         match(decl)@ {
             BSQAssembly::OptionTypeDecl => { 
-                let stype = TransformNameManager::convertTypeKey($decl.someType.tkey);
+                let stype = TransformNameManager::convertTypeKey($decl.someType.tkeystr);
                 return SMTAssembly::OptionTypeDecl{ tkey, stype };
             }
             | BSQAssembly::ResultTypeDecl => { 

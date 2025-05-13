@@ -209,22 +209,22 @@ datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl
 of
 OptionTypeDecl { 
     field oftype: TypeSignature; 
-    field someType: SomeTypeDecl;
+    field someType: TypeSignature;
 }
 | ResultTypeDecl {
     field ttype: TypeSignature; 
     field etype: TypeSignature;
 
-    field okType: OkTypeDecl;
-    field failType: FailTypeDecl;
+    field okType: TypeSignature;
+    field failType: TypeSignature;
 }
 | APIResultTypeDecl {
     field ttype: TypeSignature;
 
-    field errorType: APIErrorTypeDecl;
-    field failedType: APIFailedTypeDecl;
-    field rejectedType: APIRejectedTypeDecl;
-    field successType: APISuccessTypeDecl;
+    field errorType: TypeSignature;
+    field failedType: TypeSignature;
+    field rejectedType: TypeSignature;
+    field successType: TypeSignature;
 }
 ;
 

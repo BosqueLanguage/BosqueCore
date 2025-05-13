@@ -211,21 +211,21 @@ recursive function emitConstructorMapSingletonsExpression(v: SMTAssembly::Constr
     %%TODO
     abort;
 }
+*%
 
 recursive function emitConstructorPrimarySpecialConstructableExpression(v: SMTAssembly::ConstructorPrimarySpecialConstructableExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
-    let vv = emitExpression[recursive](v.arg);
+    let vv = emitSafeExpression[recursive](v.arg);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
 
 recursive function emitConstructorTypeDeclExpression(v: SMTAssembly::ConstructorTypeDeclExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
-    let vv = emitExpression[recursive](v.arg);
+    let vv = emitSafeExpression[recursive](v.arg);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
-*%
 
 recursive function emitConstructorStdExpression(v: SMTAssembly::ConstructorStdExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
@@ -244,8 +244,8 @@ recursive function emitConstructorPrimaryExpression(v: SMTAssembly::ConstructorP
     match(v)@ {
         SMTAssembly::ConstructorListSingletonsExpression => {abort; }
         | SMTAssembly::ConstructorMapSingletonsExpression => { abort; }
-        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { abort; }
-        | SMTAssembly::ConstructorTypeDeclExpression => { abort; }
+        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($v); }
+        | SMTAssembly::ConstructorTypeDeclExpression => { return emitConstructorTypeDeclExpression[recursive]($v); }
         | SMTAssembly::ConstructorStdExpression => { return emitConstructorStdExpression[recursive]($v); }
     }
 }

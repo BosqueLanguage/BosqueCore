@@ -740,17 +740,17 @@ entity ConstantSimplification {
             overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => simplifier.processMethodDeclOverride(overmethod)),
             staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => simplifier.processMethodDeclStatic(staticmethod)),
 
-            enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => simplifier.processEnumTypeDecl(enumdecl)),
+            enums = assembly.enums,
             typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => simplifier.processTypedeclTypeDecl(typedecl)),
 
-            primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => simplifier.processPrimitiveEntityTypeDecl(primtype)),
-            constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => simplifier.processConstructableTypeDecl(ctype)),
-            collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => simplifier.processCollectionTypeDecl(ctype)),
+            primtives = assembly.primtives,
+            constructables = assembly.constructables,
+            collections = assembly.collections,
 
             entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => simplifier.processEntityTypeDecl(etype)),
             datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => simplifier.processDatatypeMemberEntityTypeDecl(dmtype)),
 
-            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => simplifier.processPrimitiveConceptTypeDecl(pconcept)),
+            pconcepts = assembly.pconcepts,
             concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => simplifier.processConceptTypeDecl(cconcept)),
 
             datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => simplifier.processDatatypeTypeDecl(ddatatype)),

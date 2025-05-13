@@ -448,8 +448,18 @@ class BSQIREmitter {
 
     private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {
         const ebase = this.emitExpressionBase(exp);
+        const cbase = `ctype=${this.emitTypeSignature(exp.constype as TypeSignature)}, args=${this.emitArgumentList(new ArgumentList([new PositionalArgumentValue(exp.arg)]))}`;
+        const targs = (exp.constype as NominalTypeSignature).alltermargs;
 
-        return `BSQAssembly::ConstructorPrimarySpecialConstructableExpression{ ${ebase} }`;
+        if(exp.rop === "some") {
+            return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${ebase}, ${cbase}, ofttype=${this.emitTypeSignature(targs[0])}}`;
+        }
+        else if (exp.rop === "ok") {
+            return `BSQAssembly::ConstructorPrimarySpecialOkExpression{ ${ebase}, ${cbase} ofttype=${this.emitTypeSignature(targs[0])}, ofetype=${this.emitTypeSignature(targs[1])} }`;
+        }
+        else {
+            return `BSQAssembly::ConstructorPrimarySpecialFailExpression{ ${ebase}, ${cbase}, ofttype=${this.emitTypeSignature(targs[0])}, ofetype=${this.emitTypeSignature(targs[1])} }`;
+        }
     }
 
     private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
@@ -1762,7 +1772,7 @@ class BSQIREmitter {
         const ccbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
         const tss = subtypes.map((st) => this.emitTypeSignature(st)).join(", ");
-        return `BSQAssembly::AbstractConceptTypeDecl{ ${ccbase}, subtypes=List<BSQAssembly::NominalTypeSignature>{ ${tss} } }`;
+        return `${ccbase}, subtypes=List<BSQAssembly::NominalTypeSignature>{ ${tss} }`;
     }
 
     private emitOptionTypeDecl(ns: FullyQualifiedNamespace, tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
@@ -1774,7 +1784,7 @@ class BSQIREmitter {
         const somedecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as AbstractNominalTypeDecl;
         const sometype = new NominalTypeSignature(tdecl.sinfo, undefined, somedecl, tsig.alltermargs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OptionTypeDecl{ ${ibase}, oftype=${oftype}, sometype=${this.emitTypeSignature(sometype)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OptionTypeDecl{ ${ibase}, oftype=${oftype}, someType=${this.emitTypeSignature(sometype)} }`];
     }
 
     private emitResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {

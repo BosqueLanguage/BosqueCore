@@ -95,6 +95,12 @@ entity ExplicitifyTransform {
         return this.processCoerceTypeAsNeeded(access, e.etype);
     }
 
+    recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListStd(e.args, List<TypeSignature>{e.ofttype}, vmap);
+
+        return e[args=nargs];
+    }
+
     recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
         let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2);
         let nargs = this.processArgumentListStd(e.args, types, vmap);
@@ -112,7 +118,7 @@ entity ExplicitifyTransform {
         match(e)@ {
             ConstructorPrimaryListExpression => { abort; }
             | ConstructorPrimaryMapExpression => { abort; }
-            | ConstructorPrimarySpecialSomeExpression => { abort; }
+            | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialOkExpression => { abort; }
             | ConstructorPrimarySpecialFailExpression => { abort; }
             | ConstructorTypeDeclExpression => { abort; }
@@ -443,23 +449,7 @@ entity ExplicitifyTransform {
         abort;
     }
 
-    method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
-        abort;
-    }
-
     method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
-        abort;
-    }
-
-    method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
-        return primtype;
-    }
-
-    method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
-        abort;
-    }
-
-    method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
         abort;
     }
 
@@ -493,10 +483,6 @@ entity ExplicitifyTransform {
         abort;
     }
 
-    method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
-        abort;
-    }
-
     method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
         abort;
     }
@@ -520,17 +506,17 @@ entity ExplicitifyTransform {
             overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => explicitifier.processMethodDeclOverride(overmethod)),
             staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => explicitifier.processMethodDeclStatic(staticmethod)),
 
-            enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => explicitifier.processEnumTypeDecl(enumdecl)),
+            enums = assembly.enums,
             typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclTypeDecl(typedecl)),
 
-            primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => explicitifier.processPrimitiveEntityTypeDecl(primtype)),
-            constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => explicitifier.processConstructableTypeDecl(ctype)),
-            collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => explicitifier.processCollectionTypeDecl(ctype)),
+            primtives = assembly.primtives,
+            constructables = assembly.constructables,
+            collections = assembly.collections,
 
             entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => explicitifier.processEntityTypeDecl(etype)),
             datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => explicitifier.processDatatypeMemberEntityTypeDecl(dmtype)),
 
-            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => explicitifier.processPrimitiveConceptTypeDecl(pconcept)),
+            pconcepts = assembly.pconcepts,
             concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => explicitifier.processConceptTypeDecl(cconcept)),
 
             datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => explicitifier.processDatatypeTypeDecl(ddatatype)),
