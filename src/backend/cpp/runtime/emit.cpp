@@ -1,7 +1,9 @@
 int main() {
     // Calling our emitted main is hardcoded for now
-    auto bsq_main = Main::main();
-    std::cout << bsq_main.get() << std::endl; // We will need a better way to print for all types
+    Main::main();
+
+    // We may want some way to convert what Main::main spits out into 
+    // a string and write to cout
 
     return 0;
 }

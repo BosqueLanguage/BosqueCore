@@ -6,21 +6,34 @@
 
 namespace __CoreCpp {
 
+#define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
+#define MIN_BSQ_INT (-(int64_t(1) << 62)) 
+#define MAX_BSQ_BIGINT ((__int128_t(1) << 126) - 1)
+#define MIN_BSQ_BIGINT (-(__int128_t(1) << 126))
+#define MAX_BSQ_NAT ((uint64_t(1) << 63) - 1)
+#define MAX_BSQ_BIGNAT ((__uint128_t(1) << 127) - 1)
+
 constexpr bool is_valid_int(int64_t val) {
-    return ((val >= -(1LL << 62)) && (val <= (1LL << 62) - 1));
+    return ((val >= MIN_BSQ_INT) && (val <= MAX_BSQ_INT));
 }
 
 constexpr bool is_valid_bigint(__int128_t val) {
-    return ((val >= -(__int128_t(1) << 126)) && (val <= (__int128_t(1) << 126) - 1));
+    return ((val >= MIN_BSQ_BIGINT) && (val <= MAX_BSQ_BIGINT));
 }
 
 constexpr bool is_valid_nat(uint64_t val) {
-    return (val <= (1ULL << 63) - 1);
+    return (val <= MAX_BSQ_NAT);
 }
 
 constexpr bool is_valid_bignat(__uint128_t val) {
-    return (val <= (__uint128_t(1) << 127) - 1);
+    return (val <= MAX_BSQ_BIGNAT);
 }
+
+//
+// Note: It appears that due to the nature of our builtin arithmetic operations, we are unable to catch
+// any overflow errors at compile time. This might be fine - if we need to be able to detect at compile
+// time we will likely need to add custom overflow checking functions.
+//
 
 // Signed 63 bit value
 class Int {
@@ -35,19 +48,65 @@ public:
     constexpr int64_t get() const noexcept { return value; }
 
     // "_i" postfix is overloaded to call from_literal
-    static constexpr Int from_literal(int64_t v) { return Int(v); }
+    // (user defined literals cannot handle explicit sign (+ or - prefix) so we convert from const char*)
+    static constexpr Int from_literal(const char* v) {
+        int64_t res = 0, neg = 0;        
+        const char* p = v;
+
+        // Check for sign
+        if(*p == '-') {
+            neg = 1;
+        }
+
+        while(*p >= '0' && *p <= '9') {
+            if(neg) {
+                res = (res * 10) - (*p - '0');
+            }
+            else {
+                res = (res * 10) + (*p - '0');
+            }
+            p++;
+        }
+
+        return Int(res);
+    }
 
     // Overloaded operations on Int
-    constexpr Int operator+(Int const& i1) { return Int(value + i1.value); }
-    constexpr Int operator-(Int const& i1) { return Int(value - i1.value); }
-    constexpr Int operator/(Int const& i1) { return Int(value / i1.value); }
-    constexpr Int operator*(Int const& i1) { return Int(value * i1.value); }
-    constexpr bool operator==(Int const& i1) const { return value == i1.value; }
-    constexpr bool operator!=(Int const& i1) const { return value != i1.value; }
-    constexpr bool operator<(Int const& i1) const { return value < i1.value; }
-    constexpr bool operator<=(Int const& i1) const { return value <= i1.value; }
-    constexpr bool operator>(Int const& i1) const { return value > i1.value; }
-    constexpr bool operator>=(Int const& i1) const { return value >= i1.value; }
+    constexpr Int operator+(Int const& rhs) { 
+        int64_t res = 0;
+        if(__builtin_add_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on addition of two 63 bit integers!\n");
+        }
+
+        return Int(res);
+    }
+    constexpr Int operator-(Int const& rhs) { 
+        int64_t res = 0;
+        if(__builtin_sub_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on subtraction of two 63 bit integers!\n");
+        }
+        return Int(res);
+    }
+    constexpr Int operator/(Int const& rhs) {
+        int64_t res = 0;
+        if(rhs.value == 0 || (value == MIN_BSQ_INT && rhs.value == -1)) {
+            throw std::runtime_error("Overflow detected on division of two 63 bit integers!\n");
+        }
+        return Int(value / rhs.value);
+    }
+    constexpr Int operator*(Int const& rhs) {
+        int64_t res = 0;
+        if(__builtin_mul_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on multiplication of two 63 bit integers!\n");
+        }
+        return Int(res);
+    }
+    constexpr bool operator==(Int const& rhs) const { return value == rhs.value; }
+    constexpr bool operator!=(Int const& rhs) const { return value != rhs.value; }
+    constexpr bool operator<(Int const& rhs) const { return value < rhs.value; }
+    constexpr bool operator<=(Int const& rhs) const { return value <= rhs.value; }
+    constexpr bool operator>(Int const& rhs) const { return value > rhs.value; }
+    constexpr bool operator>=(Int const& rhs) const { return value >= rhs.value; }
 };
 
 // Signed 127 bit value
@@ -63,19 +122,66 @@ public:
     constexpr __int128_t get() const noexcept { return value; }
 
     // "_I" postfix is overloaded to call from_literal
-    static constexpr BigInt from_literal(__int128_t v) { return BigInt(v); }
+    static constexpr BigInt from_literal(const char* v) {
+        __int128_t res = 0, neg = 0;        
+        const char* p = v;
+
+        // Check for sign
+        if(*p == '-') {
+            neg = 1;
+        }
+
+        while(*p >= '0' && *p <= '9') {
+            if(neg) {
+                res = (res * 10) - (*p - '0');
+            }
+            else {
+                res = (res * 10) + (*p - '0');
+            }
+            p++;
+        }
+
+        return BigInt(res);
+    }
 
     // Overloaded operators on BigInt 
-    constexpr BigInt operator+(BigInt const& i1) { return BigInt(value + i1.value); }
-    constexpr BigInt operator-(BigInt const& i1) { return BigInt(value - i1.value); }
-    constexpr BigInt operator/(BigInt const& i1) { return BigInt(value / i1.value); }
-    constexpr BigInt operator*(BigInt const& i1) { return BigInt(value * i1.value); }
-    constexpr bool operator==(BigInt const& i1) const { return value == i1.value; }
-    constexpr bool operator!=(BigInt const& i1) const { return value != i1.value; }
-    constexpr bool operator<(BigInt const& i1) const { return value < i1.value; }
-    constexpr bool operator<=(BigInt const& i1) const { return value <= i1.value; }
-    constexpr bool operator>(BigInt const& i1) const { return value > i1.value; }
-    constexpr bool operator>=(BigInt const& i1) const { return value >= i1.value; }
+    constexpr BigInt operator+(BigInt const& rhs) { 
+        __int128_t res = 0;
+        if(__builtin_add_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on addition of two 127 bit integers!\n");
+        }
+
+        return BigInt(res);
+    }
+    constexpr BigInt operator-(BigInt const& rhs) {
+        __int128_t res = 0;
+        if(__builtin_sub_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on subtraction of two 127 bit integers!\n");
+        }
+
+        return BigInt(res);
+    }
+    constexpr BigInt operator/(BigInt const& rhs) {
+        __int128_t res = 0;
+        if(rhs.value == 0 || (value == MIN_BSQ_BIGINT && rhs.value == -1)) {
+            throw std::runtime_error("Overflow detected on division of two 127 bit integers!\n");
+        }
+        return BigInt(value / rhs.value);
+    }
+    constexpr BigInt operator*(BigInt const& rhs) {
+        __int128_t res = 0;
+        if(__builtin_mul_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on multiplication of two 127 bit integers!\n");
+        }
+
+        return BigInt(res);
+    }
+    constexpr bool operator==(BigInt const& rhs) const { return value == rhs.value; }
+    constexpr bool operator!=(BigInt const& rhs) const { return value != rhs.value; }
+    constexpr bool operator<(BigInt const& rhs) const { return value < rhs.value; }
+    constexpr bool operator<=(BigInt const& rhs) const { return value <= rhs.value; }
+    constexpr bool operator>(BigInt const& rhs) const { return value > rhs.value; }
+    constexpr bool operator>=(BigInt const& rhs) const { return value >= rhs.value; }
 };
 
 // Unsigned 63 bit value
@@ -94,16 +200,43 @@ public:
     static constexpr Nat from_literal(int64_t v) { return Nat(v); }
 
     // Overloaded operators on Nat
-    constexpr Nat operator+(Nat const& i1) { return Nat(value + i1.value); }
-    constexpr Nat operator-(Nat const& i1) { return Nat(value - i1.value); }
-    constexpr Nat operator/(Nat const& i1) { return Nat(value / i1.value); }
-    constexpr Nat operator*(Nat const& i1) { return Nat(value * i1.value); }
-    constexpr bool operator==(Nat const& i1) const { return value == i1.value; }
-    constexpr bool operator!=(Nat const& i1) const { return value != i1.value; }
-    constexpr bool operator<(Nat const& i1) const { return value < i1.value; }
-    constexpr bool operator<=(Nat const& i1) const { return value <= i1.value; }
-    constexpr bool operator>(Nat const& i1) const { return value > i1.value; }
-    constexpr bool operator>=(Nat const& i1) const { return value >= i1.value; }
+    constexpr Nat operator+(Nat const& rhs) {
+        uint64_t res = 0;
+        if(__builtin_add_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on addition of two 63 bit unsigned integers!\n");
+        }
+
+        return Nat(res);
+    }
+    constexpr Nat operator-(Nat const& rhs) {
+        uint64_t res = 0;
+        if(__builtin_sub_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on subtraction of two 63 bit unsigned integers!\n");
+        }
+
+        return Nat(res);
+    }
+    constexpr Nat operator/(Nat const& rhs) {
+        uint64_t res = 0;
+        if(rhs.value == 0) {
+            throw std::runtime_error("Overflow detected on division of two 63 bit unsigned integers!\n");
+        }
+        return Nat(value / rhs.value);
+    }
+    constexpr Nat operator*(Nat const& rhs) {
+        uint64_t res = 0;
+        if(__builtin_mul_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on multiplication of two 63 bit unsigned integers!\n");
+        }
+
+        return Nat(res);
+    }
+    constexpr bool operator==(Nat const& rhs) const { return value == rhs.value; }
+    constexpr bool operator!=(Nat const& rhs) const { return value != rhs.value; }
+    constexpr bool operator<(Nat const& rhs) const { return value < rhs.value; }
+    constexpr bool operator<=(Nat const& rhs) const { return value <= rhs.value; }
+    constexpr bool operator>(Nat const& rhs) const { return value > rhs.value; }
+    constexpr bool operator>=(Nat const& rhs) const { return value >= rhs.value; }
 };
 
 // Unsigned 127 bit value
@@ -111,7 +244,7 @@ class BigNat {
     __uint128_t value;
     constexpr explicit BigNat(__uint128_t val) : value(val) {
         if(!is_valid_bignat(val)) {
-            throw std::runtime_error("Invalid size for 127 bit nat literal!\n");
+            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
         }
     }; 
 public:
@@ -119,26 +252,63 @@ public:
     constexpr __uint128_t get() const noexcept { return value; }
 
     // "_N" postfix is overloaded to call from_literal
-    static constexpr BigNat from_literal(__uint128_t v) { return BigNat(v); }
+    // (128 bit is too large for user defined literals so we convert from const char*)
+    static constexpr BigNat from_literal(const char* v) {
+        __uint128_t res = 0;
 
+        const char* p = v;
+        while(*p >= '0' && *p <= '9') {
+            res = (res * 10) + (*p - '0');
+            p++;
+        }
+
+        return BigNat(res); 
+    }
+    
     // Overloaded operators on BigNat
-    constexpr BigNat operator+(BigNat const& i1) { return BigNat(value + i1.value); }
-    constexpr BigNat operator-(BigNat const& i1) { return BigNat(value - i1.value); }
-    constexpr BigNat operator/(BigNat const& i1) { return BigNat(value / i1.value); }
-    constexpr BigNat operator*(BigNat const& i1) { return BigNat(value * i1.value); }
-    constexpr bool operator==(BigNat const& i1) const { return value == i1.value; }
-    constexpr bool operator!=(BigNat const& i1) const { return value != i1.value; }
-    constexpr bool operator<(BigNat const& i1) const { return value < i1.value; }
-    constexpr bool operator<=(BigNat const& i1) const { return value <= i1.value; }
-    constexpr bool operator>(BigNat const& i1) const { return value > i1.value; }
-    constexpr bool operator>=(BigNat const& i1) const { return value >= i1.value; }
+    constexpr BigNat operator+(BigNat const& rhs) {
+        __uint128_t res = 0;
+        if(__builtin_add_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on addition of two 127 bit unsigned integers!\n");
+        } 
+        
+        return BigNat(res);
+    }
+    constexpr BigNat operator-(BigNat const& rhs) {
+        __uint128_t res = 0;
+        if(__builtin_sub_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on subtraction of two 127 bit unsigned integers!\n");
+        }
+
+        return BigNat(res);
+    }
+    constexpr BigNat operator/(BigNat const& rhs) {
+        __uint128_t res = 0;
+        if(rhs.value == 0) {
+            throw std::runtime_error("Overflow detected on division of two 127 bit unsigned integers!\n");
+        }
+        return BigNat(value / rhs.value);
+    }
+    constexpr BigNat operator*(BigNat const& rhs) {
+        __uint128_t res = 0;
+        if(__builtin_mul_overflow(value, rhs.value, &res)) {
+            throw std::runtime_error("Overflow detected on multiplication of two 127 bit unsigned integers!\n");
+        }
+
+        return BigNat(res);
+    }
+    constexpr bool operator==(BigNat const& rhs) const { return value == rhs.value; }
+    constexpr bool operator!=(BigNat const& rhs) const { return value != rhs.value; }
+    constexpr bool operator<(BigNat const& rhs) const { return value < rhs.value; }
+    constexpr bool operator<=(BigNat const& rhs) const { return value <= rhs.value; }
+    constexpr bool operator>(BigNat const& rhs) const { return value > rhs.value; }
+    constexpr bool operator>=(BigNat const& rhs) const { return value >= rhs.value; }
 };
 
-// Are runtime checks necessary here?
 // 64 bit base 2 floats
 class Float {
     double value;
-    constexpr explicit Float(double val) : value(val) { 
+     constexpr explicit Float(double val) : value(val) { 
         if(!std::isfinite(val)) { 
             throw std::runtime_error("Bosque Float does now allow NAN/Infinity!\n");
         } 
@@ -151,16 +321,16 @@ public:
     static constexpr Float from_literal(double v) { return Float(v); }
 
     // Overloaded operators on float
-    constexpr Float operator+(Float const& i1) { return Float(value + i1.value); }
-    constexpr Float operator-(Float const& i1) { return Float(value - i1.value); }
-    constexpr Float operator/(Float const& i1) { return Float(value / i1.value); }
-    constexpr Float operator*(Float const& i1) { return Float(value * i1.value); }
-    constexpr bool operator==(Float const& i1) const { return value == i1.value; }
-    constexpr bool operator!=(Float const& i1) const { return value != i1.value; }
-    constexpr bool operator<(Float const& i1) const { return value < i1.value; }
-    constexpr bool operator<=(Float const& i1) const { return value <= i1.value; }
-    constexpr bool operator>(Float const& i1) const { return value > i1.value; }
-    constexpr bool operator>=(Float const& i1) const { return value >= i1.value; }
+    constexpr Float operator+(Float const& rhs) { return Float(value + rhs.value); }
+    constexpr Float operator-(Float const& rhs) { return Float(value - rhs.value); }
+    constexpr Float operator/(Float const& rhs) { return Float(value / rhs.value); }
+    constexpr Float operator*(Float const& rhs) { return Float(value * rhs.value); }
+    constexpr bool operator==(Float const& rhs) const { return value == rhs.value; }
+    constexpr bool operator!=(Float const& rhs) const { return value != rhs.value; }
+    constexpr bool operator<(Float const& rhs) const { return value < rhs.value; }
+    constexpr bool operator<=(Float const& rhs) const { return value <= rhs.value; }
+    constexpr bool operator>(Float const& rhs) const { return value > rhs.value; }
+    constexpr bool operator>=(Float const& rhs) const { return value >= rhs.value; }
 };
 
 // Useful for keeping track of path in tree iteration
@@ -207,8 +377,8 @@ struct UnicodeCharBuffer {
 
 } // namespace __CoreCpp
 
-constexpr __CoreCpp::Int operator"" _i(unsigned long long v) { return __CoreCpp::Int::from_literal(static_cast<int64_t>(v)); };
-constexpr __CoreCpp::BigInt operator"" _I(unsigned long long v) { return __CoreCpp::BigInt::from_literal(static_cast<__int128_t>(v)); }; 
-constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<int64_t>(v)); };
-constexpr __CoreCpp::BigNat operator"" _N(unsigned long long v) { return __CoreCpp::BigNat::from_literal(static_cast<__uint128_t>(v)); };
+constexpr __CoreCpp::Int operator"" _i(const char* v) { return __CoreCpp::Int::from_literal(v); };
+constexpr __CoreCpp::BigInt operator"" _I(const char* v) { return __CoreCpp::BigInt::from_literal(v); }; 
+constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<uint64_t>(v)); };
+constexpr __CoreCpp::BigNat operator"" _N(const char* v) { return __CoreCpp::BigNat::from_literal(v); };
 constexpr __CoreCpp::Float operator"" _f(long double v) { return __CoreCpp::Float::from_literal(static_cast<double>(v)); };
