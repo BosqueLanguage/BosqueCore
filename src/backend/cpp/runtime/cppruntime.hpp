@@ -30,8 +30,8 @@ constexpr bool is_valid_bignat(__uint128_t val) {
 }
 
 //
-// Note: It appears that due to the nature of our builtin arithmetic operations, we are unable to catch
-// any overflow errors at compile time. This might be fine - if we need to be able to detect at compile
+// Note: It appears that our builtin arithmetic operations do not evaluate at compile time (not 100% but seems to be the case).
+// This is why I decided to throw runtime errors. This might be fine - if we need to be able to detect at compile
 // time we will likely need to add custom overflow checking functions.
 //
 
@@ -42,7 +42,7 @@ public:
     constexpr Int() noexcept : value(0) {};
     constexpr explicit Int(int64_t val) : value(val){ 
         if(!is_valid_int(val)) {
-            throw std::runtime_error("Invalid size for 63 bit int literal!\n");
+            throw std::runtime_error("Invalid size for 63 bit signed integer!\n");
         }
     }; 
 
@@ -50,32 +50,29 @@ public:
     constexpr Int operator+(Int const& rhs) { 
         int64_t res = 0;
         if(__builtin_add_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit integers!\n");
+            throw std::runtime_error("Overflow detected on addition of two 63 bit signed integers!\n");
         }
 
         return Int(res);
     }
-    constexpr Int operator-() { // Negation 
-        return Int(value);
-    }
     constexpr Int operator-(Int const& rhs) { 
         int64_t res = 0;
         if(__builtin_sub_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on subtraction of two 63 bit integers!\n");
+            throw std::runtime_error("Overflow detected on subtraction of two 63 bit signed integers!\n");
         }
         return Int(res);
     }
     constexpr Int operator/(Int const& rhs) {
         int64_t res = 0;
         if(rhs.value == 0 || (value == MIN_BSQ_INT && rhs.value == -1)) {
-            throw std::runtime_error("Overflow detected on division of two 63 bit integers!\n");
+            throw std::runtime_error("Overflow detected on division of two 63 bit signed integers!\n");
         }
         return Int(value / rhs.value);
     }
     constexpr Int operator*(Int const& rhs) {
         int64_t res = 0;
         if(__builtin_mul_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on multiplication of two 63 bit integers!\n");
+            throw std::runtime_error("Overflow detected on multiplication of two 63 bit signed integers!\n");
         }
         return Int(res);
     }
@@ -122,14 +119,14 @@ public:
     // Used when constructing from bosque code
     constexpr explicit BigInt(const char* val) : value(to_int128(val)) {
         if(!is_valid_bigint(value)) {
-            throw std::runtime_error("Invalid size for 127 bit int literal!\n");
+            throw std::runtime_error("Invalid size for 127 bit signed integer!\n");
         }
     };
 
     // Used with our arithmetic operators
     constexpr explicit BigInt(__int128_t val) : value(val) {
         if(!is_valid_bigint(val)) {
-            throw std::runtime_error("Invalid size for 127 bit int literal!\n");
+            throw std::runtime_error("Invalid size for 127 bit signed integer!\n");
         }
     }; 
 
@@ -137,7 +134,7 @@ public:
     constexpr BigInt operator+(BigInt const& rhs) { 
         __int128_t res = 0;
         if(__builtin_add_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit integers!\n");
+            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
         }
 
         return BigInt(res);
@@ -145,7 +142,7 @@ public:
     constexpr BigInt operator-(BigInt const& rhs) {
         __int128_t res = 0;
         if(__builtin_sub_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on subtraction of two 127 bit integers!\n");
+            throw std::runtime_error("Overflow detected on subtraction of two 127 bit signed integers!\n");
         }
 
         return BigInt(res);
@@ -153,14 +150,14 @@ public:
     constexpr BigInt operator/(BigInt const& rhs) {
         __int128_t res = 0;
         if(rhs.value == 0 || (value == MIN_BSQ_BIGINT && rhs.value == -1)) {
-            throw std::runtime_error("Overflow detected on division of two 127 bit integers!\n");
+            throw std::runtime_error("Overflow detected on division of two 127 bit signed integers!\n");
         }
         return BigInt(value / rhs.value);
     }
     constexpr BigInt operator*(BigInt const& rhs) {
         __int128_t res = 0;
         if(__builtin_mul_overflow(value, rhs.value, &res)) {
-            throw std::runtime_error("Overflow detected on multiplication of two 127 bit integers!\n");
+            throw std::runtime_error("Overflow detected on multiplication of two 127 bit signed integers!\n");
         }
 
         return BigInt(res);
@@ -180,7 +177,7 @@ public:
     constexpr Nat() noexcept : value(0) {};
     constexpr explicit Nat(uint64_t val) : value(val) {
         if(!is_valid_nat(val)) {
-            throw std::runtime_error("Invalid size for 63 bit nat literal!\n");
+            throw std::runtime_error("Invalid size for 63 bit unsigned integer!\n");
         }
     }; 
 
@@ -307,7 +304,6 @@ public:
         } 
     }
 
-    // "_f" prefix is overloaded to call from_literal 
     static constexpr Float from_literal(double v) { return Float(v); }
 
     // Overloaded operators on float
