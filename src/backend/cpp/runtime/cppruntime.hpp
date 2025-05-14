@@ -300,7 +300,7 @@ public:
     constexpr Float() noexcept : value(0) {};
      constexpr explicit Float(double val) : value(val) { 
         if(!std::isfinite(val)) { 
-            throw std::runtime_error("Bosque Float does now allow NAN/Infinity!\n");
+            throw std::runtime_error("Bosque Float does not allow NAN/Infinity!\n");
         } 
     }
 
