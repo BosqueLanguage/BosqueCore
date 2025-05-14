@@ -38,38 +38,13 @@ constexpr bool is_valid_bignat(__uint128_t val) {
 // Signed 63 bit value
 class Int {
     int64_t value;
+public:
+    constexpr Int() noexcept : value(0) {};
     constexpr explicit Int(int64_t val) : value(val){ 
         if(!is_valid_int(val)) {
             throw std::runtime_error("Invalid size for 63 bit int literal!\n");
         }
     }; 
-public:
-    constexpr Int() noexcept : value(0) {};
-    constexpr int64_t get() const noexcept { return value; }
-
-    // "_i" postfix is overloaded to call from_literal
-    // (user defined literals cannot handle explicit sign (+ or - prefix) so we convert from const char*)
-    static constexpr Int from_literal(const char* v) {
-        int64_t res = 0, neg = 0;        
-        const char* p = v;
-
-        // Check for sign
-        if(*p == '-') {
-            neg = 1;
-        }
-
-        while(*p >= '0' && *p <= '9') {
-            if(neg) {
-                res = (res * 10) - (*p - '0');
-            }
-            else {
-                res = (res * 10) + (*p - '0');
-            }
-            p++;
-        }
-
-        return Int(res);
-    }
 
     // Overloaded operations on Int
     constexpr Int operator+(Int const& rhs) { 
@@ -79,6 +54,9 @@ public:
         }
 
         return Int(res);
+    }
+    constexpr Int operator-() { // Negation 
+        return Int(value);
     }
     constexpr Int operator-(Int const& rhs) { 
         int64_t res = 0;
@@ -112,23 +90,18 @@ public:
 // Signed 127 bit value
 class BigInt {
     __int128_t value;
-    constexpr explicit BigInt(int64_t val) : value(val){ 
-        if(!is_valid_bigint(val)) {
-            throw std::runtime_error("Invalid size for 127 bit int literal!\n");
-        }
-    }; 
-public:
-    constexpr BigInt() noexcept : value(0) {};
-    constexpr __int128_t get() const noexcept { return value; }
-
-    // "_I" postfix is overloaded to call from_literal
-    static constexpr BigInt from_literal(const char* v) {
+    static constexpr __int128_t to_int128(const char* v) {
         __int128_t res = 0, neg = 0;        
         const char* p = v;
 
         // Check for sign
         if(*p == '-') {
             neg = 1;
+            p++;
+        }
+        else if(*p == '+') {
+            neg = 0;
+            p++;
         }
 
         while(*p >= '0' && *p <= '9') {
@@ -141,8 +114,24 @@ public:
             p++;
         }
 
-        return BigInt(res);
+        return res;
     }
+public:
+    constexpr BigInt() noexcept : value(0) {};
+
+    // Used when constructing from bosque code
+    constexpr explicit BigInt(const char* val) : value(to_int128(val)) {
+        if(!is_valid_bigint(value)) {
+            throw std::runtime_error("Invalid size for 127 bit int literal!\n");
+        }
+    };
+
+    // Used with our arithmetic operators
+    constexpr explicit BigInt(__int128_t val) : value(val) {
+        if(!is_valid_bigint(val)) {
+            throw std::runtime_error("Invalid size for 127 bit int literal!\n");
+        }
+    }; 
 
     // Overloaded operators on BigInt 
     constexpr BigInt operator+(BigInt const& rhs) { 
@@ -187,17 +176,13 @@ public:
 // Unsigned 63 bit value
 class Nat {
     uint64_t value;
+public:
+    constexpr Nat() noexcept : value(0) {};
     constexpr explicit Nat(uint64_t val) : value(val) {
         if(!is_valid_nat(val)) {
             throw std::runtime_error("Invalid size for 63 bit nat literal!\n");
         }
     }; 
-public:
-    constexpr Nat() noexcept : value(0) {};
-    constexpr int64_t get() const noexcept { return value; }
-
-    // "_n" postfix is overloaded to call from_literal
-    static constexpr Nat from_literal(int64_t v) { return Nat(v); }
 
     // Overloaded operators on Nat
     constexpr Nat operator+(Nat const& rhs) {
@@ -242,18 +227,7 @@ public:
 // Unsigned 127 bit value
 class BigNat {
     __uint128_t value;
-    constexpr explicit BigNat(__uint128_t val) : value(val) {
-        if(!is_valid_bignat(val)) {
-            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
-        }
-    }; 
-public:
-    constexpr BigNat() noexcept : value(0) {};
-    constexpr __uint128_t get() const noexcept { return value; }
-
-    // "_N" postfix is overloaded to call from_literal
-    // (128 bit is too large for user defined literals so we convert from const char*)
-    static constexpr BigNat from_literal(const char* v) {
+    static constexpr __uint128_t to_uint128(const char* v) {
         __uint128_t res = 0;
 
         const char* p = v;
@@ -262,8 +236,25 @@ public:
             p++;
         }
 
-        return BigNat(res); 
+        return res; 
     }
+
+public:
+    constexpr BigNat() noexcept : value(0) {};
+
+    // Used when constructing from bosque code
+    constexpr explicit BigNat(const char* val) : value(to_uint128(val)) {
+        if(!is_valid_bignat(value)) {
+            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
+        }
+    }; 
+
+    // Used with our arithmetic operators
+    constexpr explicit BigNat(__uint128_t val) : value(val) {
+        if(!is_valid_bignat(val)) {
+            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
+        }
+    };
     
     // Overloaded operators on BigNat
     constexpr BigNat operator+(BigNat const& rhs) {
@@ -308,14 +299,13 @@ public:
 // 64 bit base 2 floats
 class Float {
     double value;
+public:
+    constexpr Float() noexcept : value(0) {};
      constexpr explicit Float(double val) : value(val) { 
         if(!std::isfinite(val)) { 
             throw std::runtime_error("Bosque Float does now allow NAN/Infinity!\n");
         } 
     }
-public:
-    constexpr Float() noexcept : value(0) {};
-    constexpr double get() const noexcept { return value; }
 
     // "_f" prefix is overloaded to call from_literal 
     static constexpr Float from_literal(double v) { return Float(v); }
@@ -376,9 +366,3 @@ struct UnicodeCharBuffer {
 };
 
 } // namespace __CoreCpp
-
-constexpr __CoreCpp::Int operator"" _i(const char* v) { return __CoreCpp::Int::from_literal(v); };
-constexpr __CoreCpp::BigInt operator"" _I(const char* v) { return __CoreCpp::BigInt::from_literal(v); }; 
-constexpr __CoreCpp::Nat operator"" _n(unsigned long long v) { return __CoreCpp::Nat::from_literal(static_cast<uint64_t>(v)); };
-constexpr __CoreCpp::BigNat operator"" _N(const char* v) { return __CoreCpp::BigNat::from_literal(v); };
-constexpr __CoreCpp::Float operator"" _f(long double v) { return __CoreCpp::Float::from_literal(static_cast<double>(v)); };
