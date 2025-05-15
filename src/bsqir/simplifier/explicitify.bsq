@@ -264,6 +264,26 @@ entity ExplicitifyTransform {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processIfExpression(e: IfExpression, vmap: VarMapping): Expression {
+        let ncond = this.processExpression[recursive](e.iftest.exp, vmap);
+        let nif = IfTest{ncond, e.iftest.itestopt};
+
+        if($binder = e.binder)@none {
+            let ntrue = this.processExpression[recursive](e.trueValue, vmap);
+            let nfalse = this.processExpression[recursive](e.falseValue, vmap);
+
+            return e[iftest=nif, trueValue=ntrue, falseValue=nfalse];
+        }
+        else {
+            let nvmap = vmap.extendMapping($binder.srcname);
+            
+            let ntrue = this.processExpression[recursive](e.thenbody, nvmap);
+            let nfalse = this.processExpression[recursive](e.falseValue, nvmap);
+
+            return e[iftest=nif, trueValue=ntrue, falseValue=nfalse];
+        }
+    }
+
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -303,7 +323,7 @@ entity ExplicitifyTransform {
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
-            | IfExpression => { abort; }
+            | IfExpression => { return this.processIfExpression[recursive]($e, vmap); }
         }
     }
 

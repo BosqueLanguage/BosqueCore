@@ -113,6 +113,10 @@ entity MayErrorAnalysis {
         return MayErrorAnalysis::processBinaryArgs[recursive](e.lhs, e.rhs);
     }
 
+    recursive function processIfExpression(e: BSQAssembly::IfExpression): Bool {
+        return \/(MayErrorAnalysis::processExpression[recursive](e.iftest.exp), MayErrorAnalysis::processExpression[recursive](e.trueValue), MayErrorAnalysis::processExpression[recursive](e.falseValue));
+    }
+
     recursive function processExpression(e: BSQAssembly::Expression): Bool {
         match(e)@ {
             BSQAssembly::LiteralNoneExpression => { return false; }
@@ -152,7 +156,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::BinaryNumericExpression => { return MayErrorAnalysis::processBinaryNumericExpression[recursive]($e); }
             | BSQAssembly::BinLogicExpression => { abort; }
             | BSQAssembly::MapEntryConstructorExpression => { abort; }
-            | BSQAssembly::IfExpression => { abort; }
+            | BSQAssembly::IfExpression => { return MayErrorAnalysis::processIfExpression[recursive]($e); }
         }
     }
 

@@ -460,6 +460,40 @@ entity ConstantSimplification {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processIfExpression(e: IfExpression): Expression {
+        let ncond = this.processExpression[recursive](e.iftest.exp, vmap);
+        let ntrue = this.processExpression[recursive](e.trueValue);
+        let nfalse = this.processExpression[recursive](e.falseValue);
+
+        if($itest = e.iftest.itest)@none {
+            if(ncond)@!<LiteralSimpleExpression> {
+                return e[iftest=ncond, trueValue=ntrue, falseValue=nfalse];
+            }
+            else {
+                if($ncond.value === 'true') {
+                    return ntrue;
+                }
+                else {
+                    return nfalse;
+                }
+            }
+        }
+        else {
+            const op = this.processITestAsTest(ncond.sinfo, ncond.etype, $itest);
+            if(op)@!<PostfixBoolConstant> {
+                return e[iftest=IfTest{ncond, e.iftest.itestopt}, trueValue=ntrue, falseValue=nfalse];
+            }
+            else {
+                if($op.value) {
+                    return ntrue;
+                }
+                else {
+                    return nfalse;
+                }
+            }
+        }
+    }
+
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -499,7 +533,7 @@ entity ConstantSimplification {
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
-            | IfExpression => { abort; }
+            | IfExpression => { return this.processIfExpression[recursive]($e); }
         }
     }
 

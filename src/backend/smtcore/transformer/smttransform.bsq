@@ -155,8 +155,9 @@ entity SMTTransformer {
     }
 
     recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
-        let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{arg}, ctx);
-        return rexps.get(0n), nctx, obinds;
+        let nctx, subexp = this.transformExpressionToSMT[recursive](arg, ctx);
+
+        return this.unpackSingleResultErrors(subexp, nctx);
     }
 
     recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
@@ -673,6 +674,37 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(exp.etype, opexp, obinds);
     }
 
+    recursive method transformIfExpression(exp: BSQAssembly::IfExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let cexp, cctx, cobinds = this.processUnaryArg[recursive](exp.ifest.exp, ctx);
+        
+        let tctx, ntexp = this.transformExpressionToSMT[recursive](exp.trueValue, cctx);
+        let fctx, nfexp = this.transformExpressionToSMT[recursive](exp.falseValue, tctx);
+
+        if($itest = exp.ifest.itest)@none {
+            if(ntexp)@<SafeResult> {
+                if(nfexp)@<SafeResult> {
+                    let ifop = SMTAssembly::IfThenElseSafeExpression{cexp, $ntexp.exp, $nfexp.exp};
+                    return fctx, this.wrapOperationResult(exp.etype, ifop, obinds);
+                }
+                else {
+                    xxxx;
+                }
+            }
+            else {
+                if(nfexp)@<SafeResult> {
+                    xxxx;
+                }
+                else {
+                    let ifop = SMTAssembly::IfThenElseExpression{cexp, $ntexp.exp, $nfexp.exp};
+                    return fctx, this.wrapOperationResultWErr(exp.etype, ifop, obinds);
+                }
+            }
+        }
+        else {
+            abort; %% NOT IMPLEMENTED
+        }
+    }
+
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -716,6 +748,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::BinaryNumericExpression => { 
                 return this.transformBinaryNumericCompareExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::IfExpression => { 
+                return this.transformIfExpression[recursive]($exp, ctx);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED
