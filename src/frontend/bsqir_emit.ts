@@ -134,6 +134,8 @@ class BSQIREmitter {
     allconcretetypes: string[] = [];
     allabstracttypes: string[] = [];
 
+    subtypemap: Map<string, string[]> = new Map<string, string[]>();
+
     constructor(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], generateTestInfo: boolean, testfilefilter: string[] | undefined, testfilters: TestAssociation[] | undefined) {
         this.assembly = assembly;
         this.asminstantiation = asminstantiation;
@@ -540,7 +542,7 @@ class BSQIREmitter {
         const opbase = this.emitPostfixOperationBase(exp);
         const ttype = this.emitITest(exp.ttest);
 
-        return `BSQAssembly::PostfixAsConvert{ ${opbase}, ttype=${ttype} }`;
+        return `BSQAssembly::PostfixAsConvert{ ${opbase}, ttest=${ttype} }`;
     }
 
     private emitPostfixAssignFields(exp: PostfixAssignFields): string {
@@ -1768,16 +1770,17 @@ class BSQIREmitter {
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::EntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${mfields} } }`];
     }
 
-    private emitAbstractConceptTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractConceptTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): string {
+    private emitAbstractConceptTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractConceptTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
         const ccbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+        const subtypes = this.subtypemap.get(EmitNameManager.generateTypeKey(tsig)) as string[];
 
-        const tss = subtypes.map((st) => this.emitTypeSignature(st)).join(", ");
-        return `${ccbase}, subtypes=List<BSQAssembly::NominalTypeSignature>{ ${tss} }`;
+        const tss = subtypes.map((st) => `'${st}'<BSQAssembly::TypeKey>`).join(", ");
+        return `${ccbase}, subtypes=List<BSQAssembly::TypeKey>{ ${tss} }`;
     }
 
-    private emitOptionTypeDecl(ns: FullyQualifiedNamespace, tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
+    private emitOptionTypeDecl(ns: FullyQualifiedNamespace, tdecl: OptionTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, subtypes, fmt);
+        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
         const oftype = this.emitTypeSignature(tsig.alltermargs[0]);
 
@@ -1787,17 +1790,17 @@ class BSQIREmitter {
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OptionTypeDecl{ ${ibase}, oftype=${oftype}, someType=${this.emitTypeSignature(sometype)} }`];
     }
 
-    private emitResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
+    private emitResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: ResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         assert(false, "Not implemented -- emitResultTypeDecl");
     }
 
-    private emitAPIResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
+    private emitAPIResultTypeDecl(ns: FullyQualifiedNamespace, tdecl: APIResultTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         assert(false, "Not implemented -- emitAPIResultTypeDecl");
     }
 
-    private emitConceptTypeDecl(ns: FullyQualifiedNamespace, tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
+    private emitConceptTypeDecl(ns: FullyQualifiedNamespace, tdecl: ConceptTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, subtypes, fmt);
+        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ConceptTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} } }`];
@@ -1813,9 +1816,9 @@ class BSQIREmitter {
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::DatatypeMemberEntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${fields} }, parentTypeDecl=${this.emitTypeSignature(parenttype)} }`];
     }
 
-    private emitDatatypeTypeDecl(ns: FullyQualifiedNamespace, tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, subtypes: TypeSignature[], fmt: BsqonCodeFormatter): [string, string] {
+    private emitDatatypeTypeDecl(ns: FullyQualifiedNamespace, tdecl: DatatypeTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
-        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, subtypes, fmt);
+        const ibase = this.emitAbstractConceptTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         const associatedMemberEntityDecls = tdecl.associatedMemberEntityDecls.map((dd) => this.emitTypeSignature(new NominalTypeSignature(dd.sinfo, undefined, dd, tsig.alltermargs))).join(", ");
@@ -1847,8 +1850,6 @@ class BSQIREmitter {
                 const instantiation = iinsts[j];
 
                 this.mapper = instantiation.binds;
-
-                const subtypes: TypeSignature[] = this.getSubtypes(tt, instantiation.binds);
 
                 if(tt instanceof EnumTypeDecl) {
                     const [tkey, decl] = this.emitEnumTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
@@ -1948,22 +1949,22 @@ class BSQIREmitter {
                     this.entities.push(decl);
                 }
                 else if(tt instanceof OptionTypeDecl) {
-                    const [tkey, decl] = this.emitOptionTypeDecl(ns.fullnamespace, tt, instantiation, subtypes, fmt);
+                    const [tkey, decl] = this.emitOptionTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allabstracttypes.push(tkey);
                     this.pconcepts.push(decl);
                 }
                 else if(tt instanceof ResultTypeDecl) {
-                    const [tkey, decl] = this.emitResultTypeDecl(ns.fullnamespace, tt, instantiation, subtypes, fmt);
+                    const [tkey, decl] = this.emitResultTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allabstracttypes.push(tkey);
                     this.pconcepts.push(decl);
                 }
                 else if(tt instanceof APIResultTypeDecl) {
-                    const [tkey, decl] = this.emitAPIResultTypeDecl(ns.fullnamespace, tt, instantiation, subtypes, fmt);
+                    const [tkey, decl] = this.emitAPIResultTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allabstracttypes.push(tkey);
                     this.pconcepts.push(decl);
                 }
                 else if(tt instanceof ConceptTypeDecl) {
-                    const [tkey, decl] = this.emitConceptTypeDecl(ns.fullnamespace, tt, instantiation, subtypes, fmt);
+                    const [tkey, decl] = this.emitConceptTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allabstracttypes.push(tkey);
                     this.concepts.push(decl);
                 }
@@ -1973,7 +1974,7 @@ class BSQIREmitter {
                     this.datamembers.push(decl);
                 }
                 else if(tt instanceof DatatypeTypeDecl) {
-                    const [tkey, decl] = this.emitDatatypeTypeDecl(ns.fullnamespace, tt, instantiation, subtypes, fmt);
+                    const [tkey, decl] = this.emitDatatypeTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allabstracttypes.push(tkey);
                     this.datatypes.push(decl);
                 }
@@ -2003,17 +2004,135 @@ class BSQIREmitter {
         this.emitNamespaceTypeDecls(decl, decl.typedecls, asminstantiation, fmt);
     }
 
+    private computeTKeyForDeclAndInstantiation(tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo): NominalTypeSignature {
+        if(tdecl instanceof EnumTypeDecl) {
+            return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        }
+        else if(tdecl instanceof TypedeclTypeDecl) {
+            return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        }
+        else if(tdecl instanceof PrimitiveEntityTypeDecl) {
+            return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        }
+        else if(tdecl instanceof OkTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
+        }
+        else if(tdecl instanceof FailTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
+        }
+        else if(tdecl instanceof APIRejectedTypeDecl) {
+            assert(false, "Not implemented -- emitAPIRejectedTypeDecl");
+        }
+        else if(tdecl instanceof APIFailedTypeDecl) {
+            assert(false, "Not implemented -- emitAPIFailedTypeDecl");
+        }
+        else if(tdecl instanceof APIErrorTypeDecl) {
+            assert(false, "Not implemented -- emitAPIErrorTypeDecl");
+        }
+        else if(tdecl instanceof APISuccessTypeDecl) {
+            assert(false, "Not implemented -- emitAPISuccessTypeDecl");
+        }
+        else if(tdecl instanceof SomeTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
+        }
+        else if(tdecl instanceof MapEntryTypeDecl) {
+            assert(false, "Not implemented -- emitMapEntryTypeDecl");
+        }
+        else if(tdecl instanceof ListTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof StackTypeDecl) {
+            assert(false, "Not implemented -- emitStackTypeDecl");
+        }
+        else if(tdecl instanceof QueueTypeDecl) {
+            assert(false, "Not implemented -- emitQueueTypeDecl");
+        }
+        else if(tdecl instanceof SetTypeDecl) {
+            assert(false, "Not implemented -- emitSetTypeDecl");
+        }
+        else if(tdecl instanceof MapTypeDecl) {
+            assert(false, "Not implemented -- emitMapTypeDecl");
+        }
+        else if(tdecl instanceof EventListTypeDecl) {
+            assert(false, "Not implemented -- emitEventListTypeDecl");
+        }
+        else if(tdecl instanceof EntityTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof OptionTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof ResultTypeDecl) {
+            assert(false, "Not implemented -- emitResultTypeDecl");
+        }
+        else if(tdecl instanceof APIResultTypeDecl) {
+            assert(false, "Not implemented -- emitAPIResultTypeDecl");
+        }
+        else if(tdecl instanceof ConceptTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof DatatypeMemberEntityTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof DatatypeTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else {
+            assert(false, "Unknown type decl kind");
+        }
+    }
+
+    private computeSubtypesForNamespace(decl: NamespaceDeclaration, asminstantiation: NamespaceInstantiationInfo, aainsts: NamespaceInstantiationInfo[]) {
+        for(let i = 0; i < decl.subns.length; ++i) {
+            const subdecl = decl.subns[i];
+            const nsii = aainsts.find((ai) => ai.ns.emit() === subdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                this.computeSubtypesForNamespace(subdecl, nsii, aainsts);
+            }
+        }
+
+        for(let i = 0; i < decl.typedecls.length; ++i) {
+            const tt = decl.typedecls[i];
+            const iinsts = asminstantiation.typebinds.get(tt.name);
+            if(iinsts === undefined) {
+                continue;
+            }
+            
+            for(let j = 0; j < iinsts.length; ++j) {
+                const instantiation = iinsts[j];
+                this.mapper = instantiation.binds;
+
+                const tsig = this.computeTKeyForDeclAndInstantiation(tt, instantiation);
+                const sprovides= tt.saturatedProvides.map((sp) => this.tproc(sp))
+
+                for(let k = 0; k < sprovides.length; ++k) {
+                    const st = sprovides[k];
+                    const tkey = EmitNameManager.generateTypeKey(st);
+
+                    if(!this.subtypemap.has(tkey)) {
+                        this.subtypemap.set(tkey, []);
+                    }
+                    
+                    let ste = this.subtypemap.get(tkey) as string[];
+                    ste.push(EmitNameManager.generateTypeKey(tsig));
+                }
+
+                this.mapper = undefined;
+            }
+        }
+    }
+
     private computeSubtypes() {
-        //
-        //TODO: this is a NOP we need to implement this -- walk all namespaces/types/instantiations and build an inverse map that we lookup below
-        //
+        for(let i = 0; i < this.assembly.toplevelNamespaces.length; ++i) {
+            const nsdecl = this.assembly.toplevelNamespaces[i];
+            const nsii = this.asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
+            
+            if(nsii !== undefined) {
+                this.computeSubtypesForNamespace(nsdecl, nsii, this.asminstantiation);
+            }
+        }
     }
-
-    private getSubtypes(tt: AbstractNominalTypeDecl, binds: TemplateNameMapper | undefined): TypeSignature[] {
-        return [];    
-    }
-
-    
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[]): string {
         const emitter = new BSQIREmitter(assembly, asminstantiation, false, undefined, undefined);

@@ -349,7 +349,7 @@ recursive function emitIsSubtypeTestExpression(v: SMTAssembly::IsSubtypeTestExpr
 *%
 
 recursive function emitConvertOptionToSomeTExpression(v: SMTAssembly::ConvertOptionToSomeTExpression): CString {
-    let ubx = SMTNameManager::generateStructTermFieldName(v.optiontype);
+    let ubx = SMTNameManager::generateStructTermFieldName(v.sometype);
     let extract = SMTNameManager::generateStructFieldName(v.sometype, 'value');
 
     let ubxop = CString::concat('(', ubx, ' ', emitSafeExpression[recursive](v.arg), ')');
@@ -1138,7 +1138,7 @@ function emitConstructableTypeDeclConstructor(ttype: SMTAssembly::ConstructableT
     }
     else {
         let tvals = CString::joinAll(' ', tlist);
-        return CString::concat('        (', consname, ' ', tvals, ')');
+        return CString::concat('        ((', consname, ' ', tvals, '))');
     }
 }
 
@@ -1244,7 +1244,7 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
     }
     elif(subtypes.isSingleElement()) {
-        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-', subtypes.single().value, ' tt))');
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-@Term-', subtypes.single().value, '-mk tt))');
     }
     else {
         let tlist = subtypes.map<CString>(fn(t) => CString::concat('(is-', t.value, ' tt)'));
@@ -1255,7 +1255,7 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
 function emitSpecialOptionSubtypePredicate(otype: SMTAssembly::OptionTypeDecl): CString {
     let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
     let tlist = List<CString>{
-        CString::concat('(is-', otype.someType.value, ' tt)'),
+        CString::concat('(is-@Term-', otype.someType.value, '-mk tt)'),
         CString::concat('(= tt @Term-mk-None)'),
     };
 

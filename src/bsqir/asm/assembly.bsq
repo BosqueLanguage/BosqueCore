@@ -202,7 +202,7 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
 concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
-    field subtypes: List<NominalTypeSignature>;
+    field subtypes: List<TypeKey>;
 }
 
 datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
@@ -383,7 +383,14 @@ entity Assembly {
             return true;
         }
         else {
-            abort;
+            if(t1.tkeystr === 'None'<TypeKey>) {
+                let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
+                return tt2?<OptionTypeDecl>;
+            }
+            else {
+                let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
+                return tt1.saturatedProvides.someOf(pred(st) => st.tkeystr === t2.tkeystr);
+            }
         }
     }
 }

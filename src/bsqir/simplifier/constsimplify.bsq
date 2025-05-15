@@ -230,6 +230,21 @@ entity ConstantSimplification {
         return e[args=nargs];
     }
 
+    recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
+    recursive method processCoerceWidenTypeExpression(e: CoerceWidenTypeExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
+    recursive method processSafeConvertExpression(e: SafeConvertExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
     recursive method processPostfixOp(e: PostfixOp): Expression {
         let ebase = this.processUnaryArg[recursive](e.rootExp);
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
@@ -471,9 +486,9 @@ entity ConstantSimplification {
             | LogicActionAndExpression => { abort; }
             | LogicActionOrExpression => { abort; }
             | TypeDeclPrimitiveFieldAccessExpression => { abort; }
-            | CoerceNarrowTypeExpression => { abort; }
-            | CoerceWidenTypeExpression => { abort; }
-            | SafeConvertExpression => { abort; }
+            | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
+            | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }
+            | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e); }
             | CreateDirectExpression => { abort; }
             | PostfixOp => { return this.processPostfixOp[recursive]($e); }
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e); }
