@@ -10,15 +10,19 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
-    function convertTypeSignature(tkey: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
-        let tk = CPPAssembly::TypeKey::from(tkey.tkeystr.value);
+    function convertTypeSignature(tsig: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
+        let tk = CPPAssembly::TypeKey::from(tsig.tkeystr.value);
 
-        if(tk.value === 'Int') {
-            %% We will need call our overloaded int type
-            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('int64_t') };
+        %% We will want to eventually not use nominal type signature always, i think itll be obvious when to not use
+        switch(tk.value) {
+            'Int' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int') }; }
+            | 'BigInt' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigInt') }; }
+            | 'Nat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Nat') }; }
+            | 'BigNat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigNat') }; }
+            | 'Float' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Float') }; }
+            | 'Bool' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('bool') }; }
+            | _ => { abort; }
         }
-
-        return CPPAssembly::NominalTypeSignature{ tk }; %% We wont want this to be nominal always (look at smttransfrom)
     }
 
     function convertIdentifier(ident: BSQAssembly::Identifier): CPPAssembly::Identifier {
@@ -33,39 +37,103 @@ namespace CPPTransformNameManager {
 entity CPPTransformer {
     field bsqasm: BSQAssembly::Assembly;
 
-    method transformBinAddExpressionToCpp(binadd: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
-        abort;
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression): CPPAssembly::Expression, CPPAssembly::Expression {
+        let cpplhs = this.transformExpressionToCpp[recursive](lhs);
+        let cpprhs = this.transformExpressionToCpp[recursive](rhs);
+
+        return cpplhs, cpprhs;
     }
 
-    method transformLiteralSimpleExpression(exp: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
-        let val = exp.value;
-        
+    recursive method transformBinAddExpressionToCpp(expr: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinAddExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinSubExpressionToCpp(expr: BSQAssembly::BinSubExpression): CPPAssembly::BinSubExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinSubExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinDivExpressionToCpp(expr: BSQAssembly::BinDivExpression): CPPAssembly::BinDivExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinDivExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    recursive method transformBinMultExpressionToCpp(expr: BSQAssembly::BinMultExpression): CPPAssembly::BinMultExpression {
+        let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
+        return CPPAssembly::BinMultExpression{ lexpr.etype, lexpr, rexpr };
+    }
+
+    method transformLiteralSimpleExpression(expr: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
+        let val = expr.value;
+        let exprtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
         %% May be cleaner to handle in cppemit
-        if(CPPAssembly::BsqInt::from(val).value !== '') {
-            return CPPAssembly::LiteralSimpleExpression{ val.removeSuffixString('i') };
+        if(val.endsWithString('i')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('i') };
         }
-
-        return CPPAssembly::LiteralSimpleExpression{ val };
+        elif(val.endsWithString('I')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('I') };
+        }
+        elif(val.endsWithString('n')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('n') };
+        }
+        elif(val.endsWithString('N')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('N') };
+        }
+        elif(val.endsWithString('f')) {
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('f') };
+        }
+        else {
+            %% Fall through
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val };
+        }
     }
 
-    method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
-        let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
-        let layouttype = CPPTransformNameManager::convertTypeSignature(exp.layouttype);
+    method transformAccessVariableExpression(expr: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
+        let vname = CPPTransformNameManager::convertVarIdentifier(expr.vname);
+        let vtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let layouttype = CPPTransformNameManager::convertTypeSignature(expr.layouttype);
 
-        return CPPAssembly::AccessVariableExpression { vname, layouttype };
+        return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
-    method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
+    %% I think we can simplify this and remove the transform functions, just match our bsqasm type then return transform type
+    recursive method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
-            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp($binarith); }
-            | BSQAssembly::BinSubExpression => { abort; } %% Eventually...
-            | _ => { abort; }
+            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
+            | BSQAssembly::BinSubExpression => { return this.transformBinSubExpressionToCpp[recursive]($binarith); }           
+            | BSQAssembly::BinDivExpression => { return this.transformBinDivExpressionToCpp[recursive]($binarith); }
+            | BSQAssembly::BinMultExpression => { return this.transformBinMultExpressionToCpp[recursive]($binarith); }
         }
     }
 
-    method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
+    recursive method transformBinaryNumericCompareExpression(expr: BSQAssembly::BinaryNumericExpression): CPPAssembly::BinaryNumericExpression {
+        let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+
+        let etype = CPPTransformNameManager::convertTypeSignature(expr.etype);
         match(expr)@ {
-            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp($expr); }
+            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ etype, cpplhs, cpprhs}; }
+            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ etype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ etype, cpplhs, cpprhs }; }
+        }
+    }
+
+    recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
+        match(expr)@ {
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp[recursive]($expr); }
+            | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
@@ -124,16 +192,25 @@ entity CPPTransformer {
         return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
     }   
 
-    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
-            let transformer = CPPTransformer{ bsqasm };
+    %*
+    method transformNamespaceConstDecl(decl: BSQAssembly::NamespaceConstDecl): CPPAssembly::NamespaceConstDecl {
+        abort;
+    }
+    *%
 
+    function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
+        let transformer = CPPTransformer{ bsqasm };
+
+        %% Maps each namespace key to a map for each function in the namespace 
         let transformer_nsfuncs = bsqasm.allfuncs
             .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
-            .reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>(Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{},
+            .reduce<Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>>(
+                Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>{},
                 fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    return acc.insert(cppdecl.invokeKey, cppdecl);
+                    let map = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{cppdecl.invokeKey => cppdecl};
+                    return acc.insert(cppdecl.ns, map);
                 });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));

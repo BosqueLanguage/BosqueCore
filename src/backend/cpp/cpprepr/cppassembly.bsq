@@ -12,12 +12,10 @@ const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPP
 type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
 type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit here
 
-const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9]+('<'.+'>')?/c;
+%% NOTE: The RE in basic nominal... allows for '::' to be detected. this is because we overload primitives and need access
+%% to matching our __CoreCpp namespace
+const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9'::']+('<'.+'>')?/c;
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
-
-%% For converting bsq value representation to cpp
-const bsqIntValue: CRegex = /[0-9]+'i'/c;
-type BsqInt = CString of CPPAssembly::bsqIntValue;
 
 const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
@@ -29,6 +27,13 @@ const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these 
 const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these identifiers so we can make special names
 type Identifier = CString of CPPAssembly::identifierRE;
 type VarIdentifier = CString of CPPAssembly::videntifierRE;
+
+%* 
+entity NamespaceConstDecl provides AbstractCoreDecl {
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+*%
 
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl {
@@ -46,6 +51,6 @@ entity NamespaceFunctionDecl {
 
 %% Will need expanding
 entity Assembly {
-    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
     field allfuncs: List<InvokeKey>;
 }

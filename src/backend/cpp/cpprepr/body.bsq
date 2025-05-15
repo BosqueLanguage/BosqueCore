@@ -11,6 +11,7 @@ VoidTypeSignature { }
 ;
 
 concept Expression {
+    field etype: TypeSignature;
 }
 
 concept Operation {
@@ -40,13 +41,45 @@ entity LiteralSimpleExpression provides Expression {
 }
 
 datatype BinaryArithExpression provides Expression using {
+    %% Need opertype?
+
     field lhs: Expression;
     field rhs: Expression;
 }
 of
 BinAddExpression { }
 | BinSubExpression { }
+| BinDivExpression { }
+| BinMultExpression { }
 ;
+
+datatype BinaryNumericExpression provides Expression using {
+    %% Need opertype?
+    
+    field lhs: Expression;
+    field rhs: Expression;
+}
+of
+NumericEqExpression { }
+| NumericNeqExpression { }
+| NumericLessExpression { }
+| NumericLessEqExpression { }
+| NumericGreaterExpression { }
+| NumericGreaterEqExpression { }
+;
+
+%*
+datatype BinLogicExpression provides Expression using {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+of
+BinLogicAndExpression { }
+| BinLogicOrExpression { }
+| BinLogicImpliesExpression { }
+| BinLogicIFFExpression { }
+;
+*%
 
 datatype BodyImplementation 
 of
