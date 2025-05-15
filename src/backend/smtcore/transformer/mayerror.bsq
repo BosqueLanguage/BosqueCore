@@ -33,6 +33,18 @@ entity MayErrorAnalysis {
         return chks || MayErrorAnalysis::processArgumentList[recursive](e.args);
     }
 
+    recursive function processCoerceNarrowTypeExpression(e: BSQAssembly::CoerceNarrowTypeExpression): Bool {
+        return MayErrorAnalysis::processUnaryArg[recursive](e.exp);
+    }
+
+    recursive function processCoerceWidenTypeExpression(e: BSQAssembly::CoerceWidenTypeExpression): Bool {
+        return MayErrorAnalysis::processUnaryArg[recursive](e.exp);
+    }
+
+    recursive function processSafeConvertExpression(e: BSQAssembly::SafeConvertExpression): Bool {
+        return MayErrorAnalysis::processUnaryArg[recursive](e.exp);
+    }
+
     recursive function processPostfixOp(e: BSQAssembly::PostfixOp): Bool {
         let baseerr = MayErrorAnalysis::processUnaryArg[recursive](e.rootExp);
         if(baseerr) {
@@ -50,13 +62,19 @@ entity MayErrorAnalysis {
                     | BSQAssembly::PostfixInvokeStatic => { abort; }
                     | BSQAssembly::PostfixInvokeVirtual => { abort; }
                     | BSQAssembly::PostfixLiteralKeyAccess => { return false; }
+                    | BSQAssembly::PostfixBoolConstant => { return false; }
+                    | BSQAssembly::PostfixNop => { return false; }
+                    | BSQAssembly::PostfixAbort => { return true; }
+                    | BSQAssembly::PostfixWidenConvert => { return false; }
+                    | BSQAssembly::PostfixAccessSomeValue => { return false; }
+                    | BSQAssembly::PostfixLiteralNoneValue => { return false; } 
                 }
             });
         }
     }
 
     recursive function processUnaryExpression(e: BSQAssembly::UnaryExpression): Bool {
-        return MayErrorAnalysis::processUnaryArg(e.exp);
+        return MayErrorAnalysis::processUnaryArg[recursive](e.exp);
     }
 
     function maySubtractionUnderflow(e: BSQAssembly::BinaryArithExpression): Bool {
@@ -121,9 +139,9 @@ entity MayErrorAnalysis {
             | BSQAssembly::LogicActionAndExpression => { abort; }
             | BSQAssembly::LogicActionOrExpression => { abort; }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
-            | BSQAssembly::CoerceNarrowTypeExpression => { abort; }
-            | BSQAssembly::CoerceWidenTypeExpression => { abort; }
-            | BSQAssembly::SafeConvertExpression => { abort; }
+            | BSQAssembly::CoerceNarrowTypeExpression => { return MayErrorAnalysis::processCoerceNarrowTypeExpression($e); }
+            | BSQAssembly::CoerceWidenTypeExpression => { return MayErrorAnalysis::processCoerceWidenTypeExpression($e); }
+            | BSQAssembly::SafeConvertExpression => { return MayErrorAnalysis::processSafeConvertExpression($e); }
             | BSQAssembly::CreateDirectExpression => { abort; }
             | BSQAssembly::PostfixOp => { return MayErrorAnalysis::processPostfixOp[recursive]($e); }
             | BSQAssembly::UnaryExpression => { return MayErrorAnalysis::processUnaryExpression[recursive]($e); }

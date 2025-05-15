@@ -306,6 +306,21 @@ PostfixAccessFromName {
 | PostfixLiteralKeyAccess {
     field kexp: Expression;
 }
+| PostfixBoolConstant {
+    field value: Bool;
+}
+| PostfixNop {
+}
+| PostfixAbort {
+    field finaltype: Option<TypeSignature>;
+}
+| PostfixWidenConvert {
+    field trgttype: NominalTypeSignature;
+}
+| PostfixAccessSomeValue {
+}
+| PostfixLiteralNoneValue {
+}
 ;
 
 entity PostfixOp provides Expression {

@@ -1657,7 +1657,7 @@ class TypeChecker {
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Some constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, this.relations.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl, [ttype]);
-                    return exp.setType(ninfer);
+                    return exp.setType(exp.constype);
                 }
                 else {
                     return this.checkSpecialConstructorExpressionNoInfer(env, exp);
@@ -1678,7 +1678,7 @@ class TypeChecker {
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Ok constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getOkType(), [ttype, ninfer.alltermargs[1]]);
-                    return exp.setType(ninfer);
+                    return exp.setType(exp.constype);
                 }
                 else {
                     this.reportError(exp.sinfo, `Cannot infer type for special Ok constructor -- got ${infertype.emit()}`);
@@ -1700,7 +1700,7 @@ class TypeChecker {
                     this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isSubtypeOf(etype, ttype, this.constraints), `Err constructor argument is not a subtype of ${ttype.emit()}`);
 
                     exp.constype = new NominalTypeSignature(exp.sinfo, undefined, ninfer.decl.getFailType(), [ninfer.alltermargs[0], ttype]);
-                    return exp.setType(ninfer);
+                    return exp.setType(exp.constype);
                 }
                 else {
                     this.reportError(exp.sinfo, `Cannot infer type for special Fail constructor -- got ${infertype.emit()}`);

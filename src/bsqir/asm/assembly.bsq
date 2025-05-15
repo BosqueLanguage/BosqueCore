@@ -202,30 +202,29 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
 concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
-    field subtypes: List<NominalTypeSignature>;
+    field subtypes: List<TypeKey>;
 }
 
 datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
 of
 OptionTypeDecl { 
     field oftype: TypeSignature; 
-
-    field someType: SomeTypeDecl;
+    field someType: TypeSignature;
 }
 | ResultTypeDecl {
     field ttype: TypeSignature; 
     field etype: TypeSignature;
 
-    field okType: OkTypeDecl;
-    field failType: FailTypeDecl;
+    field okType: TypeSignature;
+    field failType: TypeSignature;
 }
 | APIResultTypeDecl {
     field ttype: TypeSignature;
 
-    field errorType: APIErrorTypeDecl;
-    field failedType: APIFailedTypeDecl;
-    field rejectedType: APIRejectedTypeDecl;
-    field successType: APISuccessTypeDecl;
+    field errorType: TypeSignature;
+    field failedType: TypeSignature;
+    field rejectedType: TypeSignature;
+    field successType: TypeSignature;
 }
 ;
 
@@ -384,7 +383,14 @@ entity Assembly {
             return true;
         }
         else {
-            abort;
+            if(t1.tkeystr === 'None'<TypeKey>) {
+                let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
+                return tt2?<OptionTypeDecl>;
+            }
+            else {
+                let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
+                return tt1.saturatedProvides.someOf(pred(st) => st.tkeystr === t2.tkeystr);
+            }
         }
     }
 }

@@ -52,6 +52,138 @@ entity ConstantSimplification {
         }
     }
 
+    method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestNoneAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+        }
+        else {
+            return PostfixIsTest { sinfo, srctype, itest };
+        }
+    }
+
+    method processITestSomeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestSome): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+        }
+        else {
+            return PostfixIsTest { sinfo, srctype, itest };
+        }
+    }
+
+    method processITestOkAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestOk): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestFailAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestFail): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITest): PostfixOperation {
+        match(itest)@ {
+            ITestType => { return this.processITestTypeAsTest(sinfo, srctype, $itest); }
+            | ITestNone => { return this.processITestNoneAsTest(sinfo, srctype, $itest); }
+            | ITestSome => { return this.processITestSomeAsTest(sinfo, srctype, $itest); }
+            | ITestOk => { return this.processITestOkAsTest(sinfo, srctype, $itest); }
+            | ITestFail => { return this.processITestFailAsTest(sinfo, srctype, $itest); }
+        }
+    }
+
+    method processITestTypeAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestNoneAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            else {
+                return PostfixNop{ sinfo, srctype };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixAccessSomeValue{ sinfo, srctype };
+            }
+            else {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+        }
+        else {
+            return PostfixAsConvert { sinfo, srctype, itest };
+        }
+    }
+
+    method processITestSomeAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestSome): PostfixOperation {
+        if(srctype.tkeystr === 'None'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixNop{ sinfo, srctype};
+            }
+            else {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+        }
+        elif(srctype.tkeystr === 'Some'<TypeKey>) {
+            if(itest.isnot) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            else {
+                return PostfixAccessSomeValue{ sinfo, srctype };
+            }
+        }
+        else {
+            return PostfixAsConvert { sinfo, srctype, itest };
+        }
+    }
+
+    method processITestOkAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestOk): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestFailAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestFail): PostfixOperation {
+        abort; %% Not implemented
+    }
+
+    method processITestAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITest): PostfixOperation {
+        match(itest)@ {
+            ITestType => { return this.processITestTypeAsConvert(sinfo, srctype, $itest); }
+            | ITestNone => { return this.processITestNoneAsConvert(sinfo, srctype, $itest); }
+            | ITestSome => { return this.processITestSomeAsConvert(sinfo, srctype, $itest); }
+            | ITestOk => { return this.processITestOkAsConvert(sinfo, srctype, $itest); }
+            | ITestFail => { return this.processITestFailAsConvert(sinfo, srctype, $itest); }
+        }
+    }
+
     recursive method processArgs(args: List<Expression>): List<Expression> {
         return args.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
     }
@@ -98,6 +230,21 @@ entity ConstantSimplification {
         return e[args=nargs];
     }
 
+    recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
+    recursive method processCoerceWidenTypeExpression(e: CoerceWidenTypeExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
+    recursive method processSafeConvertExpression(e: SafeConvertExpression): Expression {
+        let nexp = this.processUnaryArg(e.exp);
+        return e[exp=nexp];
+    }
+
     recursive method processPostfixOp(e: PostfixOp): Expression {
         let ebase = this.processUnaryArg[recursive](e.rootExp);
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
@@ -105,16 +252,28 @@ entity ConstantSimplification {
                 PostfixAccessFromName => { return $op; }
                 | PostfixProjectFromNames => { abort; }
                 | PostfixAccessFromIndex => { abort; }
-                | PostfixIsTest => { abort; }
-                | PostfixAsConvert => { abort; }
+                | PostfixIsTest => { return this.processITestAsTest($op.sinfo, $op.baseType, $op.ttest); }
+                | PostfixAsConvert => { return this.processITestAsConvert($op.sinfo, $op.baseType, $op.ttest); }
                 | PostfixAssignFields => { abort; }
                 | PostfixInvokeStatic => { abort; }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
+                | PostfixBoolConstant => { return $op; }
+                | PostfixNop => { return $op; }
+                | PostfixAbort => { return $op; }
+                | PostfixWidenConvert => { return $op; }
+                | PostfixAccessSomeValue => { return $op; }
+                | PostfixLiteralNoneValue => { return $op; } 
             }
         });
 
-        return PostfixOp{ e.sinfo, e.etype, ebase, ops };
+        var sops = ops.filter(pred(op) => op?!<PostfixNop>);
+        let hasabort = sops.someOf(pred(op) => op?<PostfixAbort>);
+        if(hasabort) {
+            abort; %%TODO: we should trim the list if we have a PostfixAbort -- also set the type of the abort to be the final e.type
+        }
+
+        return PostfixOp{ e.sinfo, e.etype, ebase, sops };
     }
 
     function negateLiteralBoolean(v: CString, sinfo: SourceInfo, btype: TypeSignature): Expression {
@@ -327,9 +486,9 @@ entity ConstantSimplification {
             | LogicActionAndExpression => { abort; }
             | LogicActionOrExpression => { abort; }
             | TypeDeclPrimitiveFieldAccessExpression => { abort; }
-            | CoerceNarrowTypeExpression => { abort; }
-            | CoerceWidenTypeExpression => { abort; }
-            | SafeConvertExpression => { abort; }
+            | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
+            | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }
+            | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e); }
             | CreateDirectExpression => { abort; }
             | PostfixOp => { return this.processPostfixOp[recursive]($e); }
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e); }
@@ -596,17 +755,17 @@ entity ConstantSimplification {
             overmethods = assembly.overmethods.map<MethodDeclOverride>(fn(ikey, overmethod) => simplifier.processMethodDeclOverride(overmethod)),
             staticmethods = assembly.staticmethods.map<MethodDeclStatic>(fn(ikey, staticmethod) => simplifier.processMethodDeclStatic(staticmethod)),
 
-            enums = assembly.enums.map<EnumTypeDecl>(fn(ikey, enumdecl) => simplifier.processEnumTypeDecl(enumdecl)),
+            enums = assembly.enums,
             typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => simplifier.processTypedeclTypeDecl(typedecl)),
 
-            primtives = assembly.primtives.map<PrimitiveEntityTypeDecl>(fn(ikey, primtype) => simplifier.processPrimitiveEntityTypeDecl(primtype)),
-            constructables = assembly.constructables.map<ConstructableTypeDecl>(fn(ikey, ctype) => simplifier.processConstructableTypeDecl(ctype)),
-            collections = assembly.collections.map<CollectionTypeDecl>(fn(ikey, ctype) => simplifier.processCollectionTypeDecl(ctype)),
+            primtives = assembly.primtives,
+            constructables = assembly.constructables,
+            collections = assembly.collections,
 
             entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => simplifier.processEntityTypeDecl(etype)),
             datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => simplifier.processDatatypeMemberEntityTypeDecl(dmtype)),
 
-            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => simplifier.processPrimitiveConceptTypeDecl(pconcept)),
+            pconcepts = assembly.pconcepts,
             concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => simplifier.processConceptTypeDecl(cconcept)),
 
             datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => simplifier.processDatatypeTypeDecl(ddatatype)),
