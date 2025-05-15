@@ -14,21 +14,42 @@ namespace __CoreCpp {
 #define MAX_BSQ_NAT ((uint64_t(1) << 63) - 1)
 #define MAX_BSQ_BIGNAT ((__uint128_t(1) << 127) - 1)
 
-constexpr bool is_valid_int(int64_t val) {
-    return ((val >= MIN_BSQ_INT) && (val <= MAX_BSQ_INT));
-}
+#define is_valid_Int(V) ((V >= MIN_BSQ_INT) && (V <= MAX_BSQ_INT))
+#define is_valid_BigInt(V) ((V >= MIN_BSQ_BIGINT) && (V <= MAX_BSQ_BIGINT))
+#define is_valid_Nat(V) (V <= MAX_BSQ_NAT)
+#define is_valid_BigNat(V) (V <= MAX_BSQ_BIGNAT)
 
-constexpr bool is_valid_bigint(__int128_t val) {
-    return ((val >= MIN_BSQ_BIGINT) && (val <= MAX_BSQ_BIGINT));
-}
+#define do_safe_arithmetic(BSQ_TYPE, VAL_TYPE, TYPE)                \
+do {                                                                \
+    VAL_TYPE tmp = 0;                                               \
+    if(__builtin_##TYPE##_overflow(this->value, rhs.value, &tmp)) { \
+        std::longjmp(info.error_handler, true);                     \
+    }                                                               \
+    if(!is_valid_##BSQ_TYPE(tmp)) {                                 \
+        std::longjmp(info.error_handler, true);                     \
+    }                                                               \
+    this->value = tmp;                                              \
+    return *this;                                                   \
+}while(0)                                                           \
 
-constexpr bool is_valid_nat(uint64_t val) {
-    return (val <= MAX_BSQ_NAT);
-}
+#define do_safe_division()                      \
+do {                                            \
+    if(rhs.value == 0) {                        \
+        std::longjmp(info.error_handler, true); \
+    }                                           \
+    this->value /= rhs.value;                   \
+    return *this;                               \
+}while(0)                                       \
 
-constexpr bool is_valid_bignat(__uint128_t val) {
-    return (val <= MAX_BSQ_BIGNAT);
-}
+#define do_safe_float_arithmetic(OP)            \
+do {                                            \
+    double res = this->value OP rhs.value;      \
+    if(!std::isfinite(res)) {                   \
+        std::longjmp(info.error_handler, true); \
+    }                                           \
+    this->value = res;                          \
+    return *this;                               \
+} while(0)                                      \
 
 class ThreadLocalInfo {
 public:
@@ -69,36 +90,23 @@ class Int {
 public:
     constexpr Int() noexcept : value(0) {};
     constexpr explicit Int(int64_t val) noexcept : value(val){ 
-        if(!is_valid_int(val)) {
+        if(!is_valid_Int(val)) {
             std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operations on Int
     constexpr Int& operator+=(const Int& rhs) noexcept {
-        if(__builtin_add_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Int, int64_t, add);
     }
     constexpr Int& operator-=(const Int& rhs) noexcept {
-        if(__builtin_sub_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Int, int64_t, sub);
     }
-    constexpr Int& operator/=(const Int& rhs) noexcept { 
-        if(rhs.value == 0 || (value == MIN_BSQ_INT && rhs.value == -1)) {
-             std::longjmp(info.error_handler, true);           
-        }
-        value /= rhs.value;
-        return *this;
+    constexpr Int& operator/=(const Int& rhs) noexcept {
+        do_safe_division();
     }
     constexpr Int& operator*=(const Int& rhs) noexcept {
-        if(__builtin_mul_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Int, int64_t, mul);
     }
     constexpr Int operator-() noexcept { // dont want to modify value here
         if(value == MIN_BSQ_INT) {
@@ -138,46 +146,33 @@ public:
 
     // Used when constructing from bosque code
     constexpr explicit BigInt(const char* val) noexcept : value(string_to_t<__int128_t>(val)) {
-        if(!is_valid_bigint(value)) {
+        if(!is_valid_BigInt(value)) {
             std::longjmp(info.error_handler, true);
         }
     };
 
     // Used for negation
     constexpr explicit BigInt(__int128_t val) noexcept : value(val) {
-        if(!is_valid_bigint(val)) {
+        if(!is_valid_BigInt(val)) {
             std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operators on BigInt
     constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
-        if(__builtin_add_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(BigInt, __int128_t, add);
     }
     constexpr BigInt& operator-=(const BigInt& rhs) noexcept {
-        if(__builtin_sub_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+         do_safe_arithmetic(BigInt, __int128_t, sub);
     }
     constexpr BigInt& operator/=(const BigInt& rhs) noexcept { 
-        if(rhs.value == 0 || (value == MIN_BSQ_BIGINT && rhs.value == -1)) {
-            std::longjmp(info.error_handler, true);
-        }
-        value /= rhs.value;
-        return *this;
+        do_safe_division();
     }
     constexpr BigInt& operator*=(const BigInt& rhs) noexcept {
-        if(__builtin_mul_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(BigInt, __int128_t, mul);
     }
     constexpr BigInt operator-() noexcept { // dont want to modify value here
-        if(value == MIN_BSQ_BIGINT) {
+        if(this->value == MIN_BSQ_BIGINT) {
             std::longjmp(info.error_handler, true);
         }
         return BigInt(-value);
@@ -212,36 +207,23 @@ class Nat {
 public:
     constexpr Nat() noexcept : value(0) {};
     constexpr explicit Nat(uint64_t val) noexcept : value(val) {
-        if(!is_valid_nat(val)) {
+        if(!is_valid_Nat(val)) {
             std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operators on Nat
     constexpr Nat& operator+=(const Nat& rhs) noexcept {
-        if(__builtin_add_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Nat, uint64_t, add);
     }
     constexpr Nat& operator-=(const Nat& rhs) noexcept {
-        if(__builtin_sub_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Nat, uint64_t, sub);
     }
     constexpr Nat& operator/=(const Nat& rhs) noexcept {
-        if(rhs.value == 0) {
-            std::longjmp(info.error_handler, true);
-        }
-        value /= rhs.value;
-        return *this;
+        do_safe_division();
     }
     constexpr Nat& operator*=(const Nat& rhs) noexcept {
-        if(__builtin_mul_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(Nat, uint64_t, mul);
     }
     friend constexpr Nat operator+(Nat lhs, const Nat& rhs) noexcept { 
         lhs += rhs;
@@ -275,43 +257,30 @@ public:
 
     // Used when constructing from bosque code
     constexpr explicit BigNat(const char* val) noexcept : value(string_to_t<__uint128_t>(val)) {
-        if(!is_valid_bignat(value)) {
+        if(!is_valid_BigNat(value)) {
             std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Used with negation 
     constexpr explicit BigNat(__uint128_t val) noexcept : value(val) {
-        if(!is_valid_bignat(val)) {
+        if(!is_valid_BigNat(val)) {
             std::longjmp(info.error_handler, true);
         }
     };
     
     // Overloaded operators on BigInt
     constexpr BigNat& operator+=(const BigNat& rhs) noexcept {
-        if(__builtin_add_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(BigNat, __uint128_t, add);
     }
     constexpr BigNat& operator-=(const BigNat& rhs) noexcept {
-        if(__builtin_sub_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(BigNat, __uint128_t, sub);
     }
     constexpr BigNat& operator/=(const BigNat& rhs) noexcept {
-        if(rhs.value == 0) {
-            std::longjmp(info.error_handler, true);
-        }
-        value /= rhs.value;
-        return *this;
+        do_safe_division();
     }
     constexpr BigNat& operator*=(const BigNat& rhs) noexcept {
-        if(__builtin_mul_overflow(value, rhs.value, &value)) {
-            std::longjmp(info.error_handler, true);
-        }
-        return *this;       
+        do_safe_arithmetic(BigNat, __uint128_t, mul);
     }
     friend constexpr BigNat operator+(BigNat lhs, const BigNat& rhs) noexcept { 
         lhs += rhs;
@@ -352,39 +321,19 @@ public:
 
     // Overloaded operations on Float
     constexpr Float& operator+=(const Float& rhs) noexcept {
-        double res = value + rhs.value;
-        if(!std::isfinite(res)) {
-            std::longjmp(info.error_handler, true);
-        }
-        value = res;
-        return *this;       
+        do_safe_float_arithmetic(+); 
     }
     constexpr Float& operator-=(const Float& rhs) noexcept {
-        double res = value - rhs.value;
-        if(!std::isfinite(res)) {
-            std::longjmp(info.error_handler, true);
-        }
-        value = res;
-        return *this;
+        do_safe_float_arithmetic(-);
     }
     constexpr Float& operator/=(const Float& rhs) noexcept { 
-        double res = value / rhs.value;
-        if(!std::isfinite(res)) {
-            std::longjmp(info.error_handler, true);
-        }
-        value = res;
-        return *this;
+        do_safe_float_arithmetic(/);
     }
     constexpr Float& operator*=(const Float& rhs) noexcept {
-        double res = value * rhs.value;
-        if(!std::isfinite(res)) {
-            std::longjmp(info.error_handler, true);
-        }
-        value = res;
-        return *this;       
+        do_safe_float_arithmetic(*);
     }
     constexpr Float operator-() noexcept { // dont want to modify value here
-        return Float(-value);
+        return Float(-this->value);
     }
     friend constexpr Float operator+(Float lhs, const Float& rhs) noexcept { 
         lhs += rhs;
