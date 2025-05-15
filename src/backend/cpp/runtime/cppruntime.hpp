@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <cmath>
+#include <csetjmp>
 
 namespace __CoreCpp {
 
@@ -29,175 +30,180 @@ constexpr bool is_valid_bignat(__uint128_t val) {
     return (val <= MAX_BSQ_BIGNAT);
 }
 
+class ThreadLocalInfo {
+public:
+    std::jmp_buf error_handler;
+
+    ThreadLocalInfo() {} 
+    static ThreadLocalInfo& get() {
+        thread_local ThreadLocalInfo instance;
+        return instance;
+    }
+
+    // Cannot copy or move thread local info
+    ThreadLocalInfo(const ThreadLocalInfo&) = delete;
+    ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
+};
+ThreadLocalInfo& info = ThreadLocalInfo::get();
+
 //
-// Note: It appears that our builtin arithmetic operations do not evaluate at compile time (not 100% but seems to be the case).
-// This is why I decided to throw runtime errors. This might be fine - if we need to be able to detect at compile
-// time we will likely need to add custom overflow checking functions.
+// Converts string into corresponding integer representation. Used when
+// converting our literals to 128 bit values.
 //
+template<typename T>
+constexpr T string_to_t(const char* s) {
+    T res = 0;  
+    const char* p = s;
+
+    while(*p >= '0' && *p <= '9') {
+        res = (res * 10) + (*p - '0');
+        p++;
+    }
+
+    return res;
+}
 
 // Signed 63 bit value
 class Int {
     int64_t value;
 public:
-    //
-    // TODO: Perhaps in place of this-> value we can just use value? need to look this up 
-    // (in our members that is)
-    //
-
     constexpr Int() noexcept : value(0) {};
-    constexpr explicit Int(int64_t val) : value(val){ 
+    constexpr explicit Int(int64_t val) noexcept : value(val){ 
         if(!is_valid_int(val)) {
-            throw std::runtime_error("Invalid size for 63 bit signed integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operations on Int
-    constexpr Int& operator+=(const Int& rhs) {
-        if(__builtin_add_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed integers!\n");
+    constexpr Int& operator+=(const Int& rhs) noexcept {
+        if(__builtin_add_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr Int& operator-=(const Int& rhs) {
-        if(__builtin_sub_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed integers!\n");
+    constexpr Int& operator-=(const Int& rhs) noexcept {
+        if(__builtin_sub_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr Int& operator/=(const Int& rhs) { // NOTE: Need to verify these checks
-        if(this->value == 0 || (this->value == MIN_BSQ_INT && rhs.value == -1)) {
-            throw std::runtime_error("Overflow detected on division of two 63 bit signed integers!\n");
+    constexpr Int& operator/=(const Int& rhs) noexcept { 
+        if(rhs.value == 0 || (value == MIN_BSQ_INT && rhs.value == -1)) {
+             std::longjmp(info.error_handler, true);           
         }
-        this->value /= rhs.value;
+        value /= rhs.value;
         return *this;
     }
-    constexpr Int& operator*=(const Int& rhs) {
-        if(__builtin_mul_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed integers!\n");
+    constexpr Int& operator*=(const Int& rhs) noexcept {
+        if(__builtin_mul_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr Int operator-() { // dont want to modify this here
-        if(this->value == MIN_BSQ_INT) {
-            throw std::runtime_error("Overflow detected when negating 63 bit signed integer!\n");
+    constexpr Int operator-() noexcept { // dont want to modify value here
+        if(value == MIN_BSQ_INT) {
+            std::longjmp(info.error_handler, true);
         }
-        return Int(-this->value);
+        return Int(-value);
     }
-    friend constexpr Int operator+(Int lhs, const Int& rhs) { 
+    friend constexpr Int operator+(Int lhs, const Int& rhs) noexcept { 
         lhs += rhs;
         return lhs;
     }
-    friend constexpr Int operator-(Int lhs, const Int& rhs) { 
+    friend constexpr Int operator-(Int lhs, const Int& rhs) noexcept { 
         lhs -= rhs;
         return lhs;
     }
-    friend constexpr Int operator/(Int lhs, const Int& rhs) {
+    friend constexpr Int operator/(Int lhs, const Int& rhs) noexcept {
         lhs /= rhs;
         return lhs;
     }
-    friend constexpr Int operator*(Int lhs, const Int& rhs) {
+    friend constexpr Int operator*(Int lhs, const Int& rhs) noexcept {
         lhs *= rhs;
         return lhs;
     }
-    friend constexpr bool operator<(const Int& lhs, const Int& rhs) { return lhs.value < rhs.value; }
-    friend constexpr bool operator==(const Int& lhs, const Int& rhs) { return lhs.value == rhs.value; }
-    friend constexpr bool operator>(const Int& lhs, const Int& rhs) { return rhs < lhs; }
-    friend constexpr bool operator!=(const Int& lhs, const Int& rhs) { return !(lhs == rhs); }
-    friend constexpr bool operator<=(const Int& lhs, const Int& rhs) { return !(lhs > rhs); }
-    friend constexpr bool operator>=(const Int& lhs, const Int& rhs) { return !(lhs < rhs); }
+    friend constexpr bool operator<(const Int& lhs, const Int& rhs) noexcept { return lhs.value < rhs.value; }
+    friend constexpr bool operator==(const Int& lhs, const Int& rhs) noexcept { return lhs.value == rhs.value; }
+    friend constexpr bool operator>(const Int& lhs, const Int& rhs) noexcept { return rhs < lhs; }
+    friend constexpr bool operator!=(const Int& lhs, const Int& rhs) noexcept { return !(lhs == rhs); }
+    friend constexpr bool operator<=(const Int& lhs, const Int& rhs) noexcept { return !(lhs > rhs); }
+    friend constexpr bool operator>=(const Int& lhs, const Int& rhs) noexcept { return !(lhs < rhs); }
 };
 
 // Signed 127 bit value
 class BigInt {
     __int128_t value;
-    //
-    // TODO: Make these conversions some namespaced function
-    //
-    static constexpr __int128_t to_int128(const char* v) {
-        __int128_t res = 0;  
-        const char* p = v;
-
-        while(*p >= '0' && *p <= '9') {
-            res = (res * 10) + (*p - '0');
-            p++;
-        }
-
-        return res;
-    }
 public:
-    //
-    // TODO: Same with int, check if we can just replace this->value with value
-    //
     constexpr BigInt() noexcept : value(0) {};
 
     // Used when constructing from bosque code
-    constexpr explicit BigInt(const char* val) : value(to_int128(val)) {
+    constexpr explicit BigInt(const char* val) noexcept : value(string_to_t<__int128_t>(val)) {
         if(!is_valid_bigint(value)) {
-            throw std::runtime_error("Invalid size for 127 bit signed integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     };
 
-    // Used with our arithmetic operators
-    constexpr explicit BigInt(__int128_t val) : value(val) {
+    // Used for negation
+    constexpr explicit BigInt(__int128_t val) noexcept : value(val) {
         if(!is_valid_bigint(val)) {
-            throw std::runtime_error("Invalid size for 127 bit signed integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operators on BigInt
-    constexpr BigInt& operator+=(const BigInt& rhs) {
-        if(__builtin_add_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
+        if(__builtin_add_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr BigInt& operator-=(const BigInt& rhs) {
-        if(__builtin_sub_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigInt& operator-=(const BigInt& rhs) noexcept {
+        if(__builtin_sub_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr BigInt& operator/=(const BigInt& rhs) {
-        if(this->value == 0 || (this->value == MIN_BSQ_BIGINT && rhs.value == -1)) {
-            throw std::runtime_error("Overflow detected on division of two 127 bit signed integers!\n");
+    constexpr BigInt& operator/=(const BigInt& rhs) noexcept { 
+        if(rhs.value == 0 || (value == MIN_BSQ_BIGINT && rhs.value == -1)) {
+            std::longjmp(info.error_handler, true);
         }
-        this->value /= rhs.value;
+        value /= rhs.value;
         return *this;
     }
-    constexpr BigInt& operator*=(const BigInt& rhs) {
-        if(__builtin_mul_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigInt& operator*=(const BigInt& rhs) noexcept {
+        if(__builtin_mul_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr BigInt operator-() { // dont want to modify this here
-        if(this->value == MIN_BSQ_BIGINT) {
-            throw std::runtime_error("Overflow detected when negating 127 bit signed integer!\n");
+    constexpr BigInt operator-() noexcept { // dont want to modify value here
+        if(value == MIN_BSQ_BIGINT) {
+            std::longjmp(info.error_handler, true);
         }
-        return BigInt(-this->value);
+        return BigInt(-value);
     }
-    friend constexpr BigInt operator+(BigInt lhs, const BigInt& rhs) { 
+    friend constexpr BigInt operator+(BigInt lhs, const BigInt& rhs) noexcept { 
         lhs += rhs;
         return lhs;
     }
-    friend constexpr BigInt operator-(BigInt lhs, const BigInt& rhs) { 
+    friend constexpr BigInt operator-(BigInt lhs, const BigInt& rhs) noexcept { 
         lhs -= rhs;
         return lhs;
     }
-    friend constexpr BigInt operator/(BigInt lhs, const BigInt& rhs) {
+    friend constexpr BigInt operator/(BigInt lhs, const BigInt& rhs) noexcept {
         lhs /= rhs;
         return lhs;
     }
-    friend constexpr BigInt operator*(BigInt lhs, const BigInt& rhs) {
+    friend constexpr BigInt operator*(BigInt lhs, const BigInt& rhs) noexcept {
         lhs *= rhs;
         return lhs;
     }
-    friend constexpr bool operator<(const BigInt& lhs, const BigInt& rhs) { return lhs.value < rhs.value; }
-    friend constexpr bool operator==(const BigInt& lhs, const BigInt& rhs) { return lhs.value == rhs.value; }
-    friend constexpr bool operator>(const BigInt& lhs, const BigInt& rhs) { return rhs < lhs; }
-    friend constexpr bool operator!=(const BigInt& lhs, const BigInt& rhs) { return !(lhs == rhs); }
-    friend constexpr bool operator<=(const BigInt& lhs, const BigInt& rhs) { return !(lhs > rhs); }
-    friend constexpr bool operator>=(const BigInt& lhs, const BigInt& rhs) { return !(lhs < rhs); } 
+    friend constexpr bool operator<(const BigInt& lhs, const BigInt& rhs) noexcept { return lhs.value < rhs.value; }
+    friend constexpr bool operator==(const BigInt& lhs, const BigInt& rhs) noexcept { return lhs.value == rhs.value; }
+    friend constexpr bool operator>(const BigInt& lhs, const BigInt& rhs) noexcept { return rhs < lhs; }
+    friend constexpr bool operator!=(const BigInt& lhs, const BigInt& rhs) noexcept { return !(lhs == rhs); }
+    friend constexpr bool operator<=(const BigInt& lhs, const BigInt& rhs) noexcept { return !(lhs > rhs); }
+    friend constexpr bool operator>=(const BigInt& lhs, const BigInt& rhs) noexcept { return !(lhs < rhs); } 
 };
 
 // Unsigned 63 bit value
@@ -205,146 +211,130 @@ class Nat {
     uint64_t value;
 public:
     constexpr Nat() noexcept : value(0) {};
-    constexpr explicit Nat(uint64_t val) : value(val) {
+    constexpr explicit Nat(uint64_t val) noexcept : value(val) {
         if(!is_valid_nat(val)) {
-            throw std::runtime_error("Invalid size for 63 bit unsigned integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     }; 
 
     // Overloaded operators on Nat
-    constexpr Nat& operator+=(const Nat& rhs) {
-        if(__builtin_add_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit  integers!\n");
+    constexpr Nat& operator+=(const Nat& rhs) noexcept {
+        if(__builtin_add_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr Nat& operator-=(const Nat& rhs) {
-        if(__builtin_sub_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr Nat& operator-=(const Nat& rhs) noexcept {
+        if(__builtin_sub_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr Nat& operator/=(const Nat& rhs) {
+    constexpr Nat& operator/=(const Nat& rhs) noexcept {
         if(rhs.value == 0) {
-            throw std::runtime_error("Overflow detected on division of two 127 bit signed integers!\n");
+            std::longjmp(info.error_handler, true);
         }
-        this->value /= rhs.value;
+        value /= rhs.value;
         return *this;
     }
-    constexpr Nat& operator*=(const Nat& rhs) {
-        if(__builtin_mul_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr Nat& operator*=(const Nat& rhs) noexcept {
+        if(__builtin_mul_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    friend constexpr Nat operator+(Nat lhs, const Nat& rhs) { 
+    friend constexpr Nat operator+(Nat lhs, const Nat& rhs) noexcept { 
         lhs += rhs;
         return lhs;
     }
-    friend constexpr Nat operator-(Nat lhs, const Nat& rhs) { 
+    friend constexpr Nat operator-(Nat lhs, const Nat& rhs) noexcept { 
         lhs -= rhs;
         return lhs;
     }
-    friend constexpr Nat operator/(Nat lhs, const Nat& rhs) {
+    friend constexpr Nat operator/(Nat lhs, const Nat& rhs) noexcept {
         lhs /= rhs;
         return lhs;
     }
-    friend constexpr Nat operator*(Nat lhs, const Nat& rhs) {
+    friend constexpr Nat operator*(Nat lhs, const Nat& rhs) noexcept {
         lhs *= rhs;
         return lhs;
     }
-    friend constexpr bool operator<(const Nat& lhs, const Nat& rhs) { return lhs.value < rhs.value; }
-    friend constexpr bool operator==(const Nat& lhs, const Nat& rhs) { return lhs.value == rhs.value; }
-    friend constexpr bool operator>(const Nat& lhs, const Nat& rhs) { return rhs < lhs; }
-    friend constexpr bool operator!=(const Nat& lhs, const Nat& rhs) { return !(lhs == rhs); }
-    friend constexpr bool operator<=(const Nat& lhs, const Nat& rhs) { return !(lhs > rhs); }
-    friend constexpr bool operator>=(const Nat& lhs, const Nat& rhs) { return !(lhs < rhs); } 
+    friend constexpr bool operator<(const Nat& lhs, const Nat& rhs) noexcept { return lhs.value < rhs.value; }
+    friend constexpr bool operator==(const Nat& lhs, const Nat& rhs) noexcept { return lhs.value == rhs.value; }
+    friend constexpr bool operator>(const Nat& lhs, const Nat& rhs) noexcept { return rhs < lhs; }
+    friend constexpr bool operator!=(const Nat& lhs, const Nat& rhs) noexcept { return !(lhs == rhs); }
+    friend constexpr bool operator<=(const Nat& lhs, const Nat& rhs) noexcept { return !(lhs > rhs); }
+    friend constexpr bool operator>=(const Nat& lhs, const Nat& rhs) noexcept { return !(lhs < rhs); } 
 };
 
 // Unsigned 127 bit value
 class BigNat {
     __uint128_t value;
-    static constexpr __uint128_t to_uint128(const char* v) {
-        __uint128_t res = 0;
-
-        const char* p = v;
-        while(*p >= '0' && *p <= '9') {
-            res = (res * 10) + (*p - '0');
-            p++;
-        }
-
-        return res; 
-    }
-
 public:
     constexpr BigNat() noexcept : value(0) {};
 
     // Used when constructing from bosque code
-    constexpr explicit BigNat(const char* val) : value(to_uint128(val)) {
+    constexpr explicit BigNat(const char* val) noexcept : value(string_to_t<__uint128_t>(val)) {
         if(!is_valid_bignat(value)) {
-            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     }; 
 
-    // Used with our arithmetic operators
-    constexpr explicit BigNat(__uint128_t val) : value(val) {
+    // Used with negation 
+    constexpr explicit BigNat(__uint128_t val) noexcept : value(val) {
         if(!is_valid_bignat(val)) {
-            throw std::runtime_error("Invalid size for 127 bit unsigned integer!\n");
+            std::longjmp(info.error_handler, true);
         }
     };
     
-    //
-    // TODO: Same with int, check if we can just replace this->value with value
-    //
-
     // Overloaded operators on BigInt
-    constexpr BigNat& operator+=(const BigNat& rhs) {
-        if(__builtin_add_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigNat& operator+=(const BigNat& rhs) noexcept {
+        if(__builtin_add_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr BigNat& operator-=(const BigNat& rhs) {
-        if(__builtin_sub_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigNat& operator-=(const BigNat& rhs) noexcept {
+        if(__builtin_sub_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    constexpr BigNat& operator/=(const BigNat& rhs) {
-        if(this->value == 0) {
-            throw std::runtime_error("Overflow detected on division of two 127 bit signed integers!\n");
+    constexpr BigNat& operator/=(const BigNat& rhs) noexcept {
+        if(rhs.value == 0) {
+            std::longjmp(info.error_handler, true);
         }
-        this->value /= rhs.value;
+        value /= rhs.value;
         return *this;
     }
-    constexpr BigNat& operator*=(const BigNat& rhs) {
-        if(__builtin_mul_overflow(this->value, rhs.value, &this->value)) {
-            throw std::runtime_error("Overflow detected on addition of two 127 bit signed integers!\n");
+    constexpr BigNat& operator*=(const BigNat& rhs) noexcept {
+        if(__builtin_mul_overflow(value, rhs.value, &value)) {
+            std::longjmp(info.error_handler, true);
         }
         return *this;       
     }
-    friend constexpr BigNat operator+(BigNat lhs, const BigNat& rhs) { 
+    friend constexpr BigNat operator+(BigNat lhs, const BigNat& rhs) noexcept { 
         lhs += rhs;
         return lhs;
     }
-    friend constexpr BigNat operator-(BigNat lhs, const BigNat& rhs) { 
+    friend constexpr BigNat operator-(BigNat lhs, const BigNat& rhs) noexcept { 
         lhs -= rhs;
         return lhs;
     }
-    friend constexpr BigNat operator/(BigNat lhs, const BigNat& rhs) {
+    friend constexpr BigNat operator/(BigNat lhs, const BigNat& rhs) noexcept {
         lhs /= rhs;
         return lhs;
     }
-    friend constexpr BigNat operator*(BigNat lhs, const BigNat& rhs) {
+    friend constexpr BigNat operator*(BigNat lhs, const BigNat& rhs) noexcept {
         lhs *= rhs;
         return lhs;
     }
-    friend constexpr bool operator<(const BigNat& lhs, const BigNat& rhs) { return lhs.value < rhs.value; }
-    friend constexpr bool operator==(const BigNat& lhs, const BigNat& rhs) { return lhs.value == rhs.value; }
-    friend constexpr bool operator>(const BigNat& lhs, const BigNat& rhs) { return rhs < lhs; }
-    friend constexpr bool operator!=(const BigNat& lhs, const BigNat& rhs) { return !(lhs == rhs); }
-    friend constexpr bool operator<=(const BigNat& lhs, const BigNat& rhs) { return !(lhs > rhs); }
-    friend constexpr bool operator>=(const BigNat& lhs, const BigNat& rhs) { return !(lhs < rhs); }
+    friend constexpr bool operator<(const BigNat& lhs, const BigNat& rhs) noexcept { return lhs.value < rhs.value; }
+    friend constexpr bool operator==(const BigNat& lhs, const BigNat& rhs) noexcept { return lhs.value == rhs.value; }
+    friend constexpr bool operator>(const BigNat& lhs, const BigNat& rhs) noexcept { return rhs < lhs; }
+    friend constexpr bool operator!=(const BigNat& lhs, const BigNat& rhs) noexcept { return !(lhs == rhs); }
+    friend constexpr bool operator<=(const BigNat& lhs, const BigNat& rhs) noexcept { return !(lhs > rhs); }
+    friend constexpr bool operator>=(const BigNat& lhs, const BigNat& rhs) noexcept { return !(lhs < rhs); }
 };
 
 // 64 bit base 2 floats
@@ -352,72 +342,72 @@ class Float {
     double value;
 public:
     constexpr Float() noexcept : value(0) {};
-     constexpr explicit Float(double val) : value(val) { 
+     constexpr explicit Float(double val) noexcept : value(val) { 
         if(!std::isfinite(val)) { 
-            throw std::runtime_error("Bosque Float does not allow NAN/Infinity!\n");
+            std::longjmp(info.error_handler, true);
         } 
     }
 
-    static constexpr Float from_literal(double v) { return Float(v); }
+    static constexpr Float from_literal(double v) noexcept { return Float(v); }
 
     // Overloaded operations on Float
-    constexpr Float& operator+=(const Float& rhs) {
-        double res = this->value + rhs.value;
+    constexpr Float& operator+=(const Float& rhs) noexcept {
+        double res = value + rhs.value;
         if(!std::isfinite(res)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed Floategers!\n");
+            std::longjmp(info.error_handler, true);
         }
-        this->value = res;
+        value = res;
         return *this;       
     }
-    constexpr Float& operator-=(const Float& rhs) {
-        double res = this->value - rhs.value;
+    constexpr Float& operator-=(const Float& rhs) noexcept {
+        double res = value - rhs.value;
         if(!std::isfinite(res)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed Floategers!\n");
+            std::longjmp(info.error_handler, true);
         }
-        this->value = res;
+        value = res;
         return *this;
     }
-    constexpr Float& operator/=(const Float& rhs) { // NOTE: Need to verify these checks
-        double res = this->value / rhs.value;
+    constexpr Float& operator/=(const Float& rhs) noexcept { 
+        double res = value / rhs.value;
         if(!std::isfinite(res)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed Floategers!\n");
+            std::longjmp(info.error_handler, true);
         }
-        this->value = res;
+        value = res;
         return *this;
     }
-    constexpr Float& operator*=(const Float& rhs) {
-        double res = this->value * rhs.value;
+    constexpr Float& operator*=(const Float& rhs) noexcept {
+        double res = value * rhs.value;
         if(!std::isfinite(res)) {
-            throw std::runtime_error("Overflow detected on addition of two 63 bit signed Floategers!\n");
+            std::longjmp(info.error_handler, true);
         }
-        this->value = res;
+        value = res;
         return *this;       
     }
-    constexpr Float operator-() { // dont want to modify this here
-        return Float(-this->value);
+    constexpr Float operator-() noexcept { // dont want to modify value here
+        return Float(-value);
     }
-    friend constexpr Float operator+(Float lhs, const Float& rhs) { 
+    friend constexpr Float operator+(Float lhs, const Float& rhs) noexcept { 
         lhs += rhs;
         return lhs;
     }
-    friend constexpr Float operator-(Float lhs, const Float& rhs) { 
+    friend constexpr Float operator-(Float lhs, const Float& rhs) noexcept { 
         lhs -= rhs;
         return lhs;
     }
-    friend constexpr Float operator/(Float lhs, const Float& rhs) {
+    friend constexpr Float operator/(Float lhs, const Float& rhs) noexcept {
         lhs /= rhs;
         return lhs;
     }
-    friend constexpr Float operator*(Float lhs, const Float& rhs) {
+    friend constexpr Float operator*(Float lhs, const Float& rhs) noexcept {
         lhs *= rhs;
         return lhs;
     }
-    friend constexpr bool operator<(const Float& lhs, const Float& rhs) { return lhs.value < rhs.value; }
-    friend constexpr bool operator==(const Float& lhs, const Float& rhs) { return lhs.value == rhs.value; }
-    friend constexpr bool operator>(const Float& lhs, const Float& rhs) { return rhs < lhs; }
-    friend constexpr bool operator!=(const Float& lhs, const Float& rhs) { return !(lhs == rhs); }
-    friend constexpr bool operator<=(const Float& lhs, const Float& rhs) { return !(lhs > rhs); }
-    friend constexpr bool operator>=(const Float& lhs, const Float& rhs) { return !(lhs < rhs); }
+    friend constexpr bool operator<(const Float& lhs, const Float& rhs) noexcept { return lhs.value < rhs.value; }
+    friend constexpr bool operator==(const Float& lhs, const Float& rhs) noexcept { return lhs.value == rhs.value; }
+    friend constexpr bool operator>(const Float& lhs, const Float& rhs) noexcept { return rhs < lhs; }
+    friend constexpr bool operator!=(const Float& lhs, const Float& rhs) noexcept { return !(lhs == rhs); }
+    friend constexpr bool operator<=(const Float& lhs, const Float& rhs) noexcept { return !(lhs > rhs); }
+    friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
 
 // Useful for keeping track of path in tree iteration
