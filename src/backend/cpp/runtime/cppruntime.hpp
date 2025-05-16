@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <csetjmp>
+#include <variant>
 
 namespace __CoreCpp {
 
@@ -11,8 +12,8 @@ namespace __CoreCpp {
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
 #define MAX_BSQ_BIGINT ((__int128_t(1) << 126) - 1)
 #define MIN_BSQ_BIGINT (-(__int128_t(1) << 126) + 1)
-#define MAX_BSQ_NAT ((uint64_t(1) << 63) - 1)
-#define MAX_BSQ_BIGNAT ((__uint128_t(1) << 127) - 1)
+#define MAX_BSQ_NAT ((uint64_t(1) << 62) - 1)
+#define MAX_BSQ_BIGNAT ((__uint128_t(1) << 126) - 1)
 
 #define is_valid_Int(V) ((V >= MIN_BSQ_INT) && (V <= MAX_BSQ_INT))
 #define is_valid_BigInt(V) ((V >= MIN_BSQ_BIGINT) && (V <= MAX_BSQ_BIGINT))
@@ -93,7 +94,8 @@ public:
         if(!is_valid_Int(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr int64_t get() noexcept { return value; } 
 
     // Overloaded operations on Int
     constexpr Int& operator+=(const Int& rhs) noexcept {
@@ -156,7 +158,8 @@ public:
         if(!is_valid_BigInt(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr __int128_t get() noexcept { return value; }
 
     // Overloaded operators on BigInt
     constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
@@ -210,7 +213,8 @@ public:
         if(!is_valid_Nat(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr uint64_t get() noexcept { return value; } 
 
     // Overloaded operators on Nat
     constexpr Nat& operator+=(const Nat& rhs) noexcept {
@@ -268,6 +272,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
+    constexpr __uint128_t get() noexcept { return value; }
     
     // Overloaded operators on BigInt
     constexpr BigNat& operator+=(const BigNat& rhs) noexcept {
@@ -316,6 +321,7 @@ public:
             std::longjmp(info.error_handler, true);
         } 
     }
+    constexpr double get() noexcept { return value; }
 
     static constexpr Float from_literal(double v) noexcept { return Float(v); }
 
@@ -400,6 +406,67 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_7(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7);
     static UnicodeCharBuffer create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8);
 };
+
+//
+// Allows us to print 128 bit values
+//
+template<typename T>
+constexpr std::string t_to_string(T v) {
+    if(v == 0) {
+        return "0";
+    }
+
+    std::string tmp, res;
+    if(v < 0) {
+        res.push_back('-');
+        v = -v;
+    }
+    while (v > 0) {
+        tmp.push_back((v % 10) + '0');
+        v /= 10;
+    }
+    for(auto it = tmp.rbegin(); it != tmp.rend(); it++) {
+        res.push_back(*it);
+    }
+
+    return res;
+}
+
+// Will need to support Bosque CString and String eventually
+typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType; 
+
+//
+// Converts return type of main to string
+//
+std::string to_string(MainType v) {
+    if(std::holds_alternative<bool>(v)) {
+        bool res = std::get<bool>(v);
+        if(!res) {
+            return "false";
+        }
+        return "true";
+    }
+    else if(std::holds_alternative<Int>(v)) {
+        return std::to_string(std::get<Int>(v).get()) + "_i";
+    }
+    else if (std::holds_alternative<Nat>(v)) {
+        return std::to_string(std::get<Nat>(v).get()) + "_n";
+    }
+    else if (std::holds_alternative<Float>(v)) {
+        return std::to_string(std::get<Float>(v).get()) + "_f";
+    }
+    else if(std::holds_alternative<BigInt>(v)) {
+        __int128_t res = std::get<BigInt>(v).get();
+        return t_to_string<__int128_t>(res) + "_I";
+    }
+    else if(std::holds_alternative<BigNat>(v)) {
+        __int128_t res = std::get<BigNat>(v).get();
+        return t_to_string<__uint128_t>(res) + "_N";
+    }
+    else {
+        return "Unable to print main return type!\n";
+    }
+}
 
 } // namespace __CoreCpp
 
