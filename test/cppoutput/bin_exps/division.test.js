@@ -1,4 +1,6 @@
-import { runMainCode, runMainCodeError, bsq_max_nat, bsq_max_int,  bsq_max_bignat, bsq_max_bigint } from "../../../bin/test/cppoutput/cppemit_nf.js"
+"use strict";
+
+import { runMainCode, runMainCodeError } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
 describe( "CPP Evaluate --- Simple Division", () => {

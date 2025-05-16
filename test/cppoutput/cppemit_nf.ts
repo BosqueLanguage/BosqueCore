@@ -126,7 +126,7 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                             result = (e as any).stdout.toString();
                         }
                         else {
-                            return `[C++ RUNTIME ERROR] -- \n\n${cpp}`;
+                            return `[C++ RUNTIME ERROR] \n\n${cpp}`;
                         }
                     }
                 } 
@@ -142,7 +142,9 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
     return result;
 }
 
+//
 // Lets check what the emitted cpp code (from bsqcode) spits out and make sure it matches our expected output
+//
 function runMainCode(bsqcode: string, expected_output: string) {
     const cpp_output = execMainCode(bsqcode, false);
     assert.equal(cpp_output, expected_output);

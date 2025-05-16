@@ -159,7 +159,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
-    constexpr __int128_t get() noexcept { return value; } // Perhaps string convert here?
+    constexpr __int128_t get() noexcept { return value; }
 
     // Overloaded operators on BigInt
     constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
