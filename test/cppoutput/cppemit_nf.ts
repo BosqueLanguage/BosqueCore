@@ -17,6 +17,13 @@ const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs
 const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
+const bsq_max_int: string = "4611686018427387903";
+const bsq_min_int: string = "-4611686018427387903";
+const bsq_max_nat: string = "4611686018427387903";
+const bsq_max_bignat: string = "85070591730234615865843651857942052863";
+const bsq_max_bigint: string = "85070591730234615865843651857942052863";
+const bsq_min_bigint: string = "-85070591730234615865843651857942052863";
+
 import { tmpdir } from 'node:os';
 import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
 import { validateCStringLiteral } from "@bosque/jsbrex";
@@ -146,4 +153,4 @@ function runMainCodeError(bsqcode: string, error_msg: string) {
     assert.equal(cpp_err_msg, error_msg);   
 }
 
-export {runMainCode, runMainCodeError};
+export {runMainCode, runMainCodeError, bsq_max_int, bsq_max_nat, bsq_max_bigint, bsq_max_bignat, bsq_min_int, bsq_min_bigint};

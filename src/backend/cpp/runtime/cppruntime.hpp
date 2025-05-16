@@ -13,7 +13,7 @@ namespace __CoreCpp {
 #define MAX_BSQ_BIGINT ((__int128_t(1) << 126) - 1)
 #define MIN_BSQ_BIGINT (-(__int128_t(1) << 126) + 1)
 #define MAX_BSQ_NAT ((uint64_t(1) << 62) - 1)
-#define MAX_BSQ_BIGNAT ((__uint128_t(1) << 127) - 1)
+#define MAX_BSQ_BIGNAT ((__uint128_t(1) << 126) - 1)
 
 #define is_valid_Int(V) ((V >= MIN_BSQ_INT) && (V <= MAX_BSQ_INT))
 #define is_valid_BigInt(V) ((V >= MIN_BSQ_BIGINT) && (V <= MAX_BSQ_BIGINT))
