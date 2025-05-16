@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <csetjmp>
+#include <variant>
 
 namespace __CoreCpp {
 
@@ -93,7 +94,8 @@ public:
         if(!is_valid_Int(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr int64_t get() noexcept { return value; } 
 
     // Overloaded operations on Int
     constexpr Int& operator+=(const Int& rhs) noexcept {
@@ -156,7 +158,8 @@ public:
         if(!is_valid_BigInt(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr __int128_t get() noexcept { return value; } // Perhaps string convert here?
 
     // Overloaded operators on BigInt
     constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
@@ -210,7 +213,8 @@ public:
         if(!is_valid_Nat(val)) {
             std::longjmp(info.error_handler, true);
         }
-    }; 
+    };
+    constexpr uint64_t get() noexcept { return value; } 
 
     // Overloaded operators on Nat
     constexpr Nat& operator+=(const Nat& rhs) noexcept {
@@ -268,6 +272,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
+    constexpr __uint128_t get() noexcept { return value; }
     
     // Overloaded operators on BigInt
     constexpr BigNat& operator+=(const BigNat& rhs) noexcept {
@@ -316,6 +321,7 @@ public:
             std::longjmp(info.error_handler, true);
         } 
     }
+    constexpr double get() noexcept { return value; }
 
     static constexpr Float from_literal(double v) noexcept { return Float(v); }
 
@@ -400,6 +406,63 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_7(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7);
     static UnicodeCharBuffer create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8);
 };
+
+//
+// Allows us to print 128 bit values
+//
+template<typename T>
+constexpr std::string t_to_string(T v) {
+    if(v == 0) {
+        return "0";
+    }
+
+    std::string tmp, res;
+    if(v < 0) {
+        res.push_back('-');
+        v = -v;
+    }
+    while (v > 0) {
+        tmp.push_back((v % 10) + '0');
+        v /= 10;
+    }
+    for(auto it = tmp.rbegin(); it != tmp.rend(); it++) {
+        res.push_back(*it);
+    }
+
+    return res;
+}
+
+// Will need to support Bosque CString and String eventually
+typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType; 
+
+//
+// Converts return type of main to string
+//
+std::string to_string(MainType v) {
+    if(std::holds_alternative<bool>(v)) {
+        return std::to_string(std::get<bool>(v));
+    }
+    else if(std::holds_alternative<Int>(v)) {
+        return std::to_string(std::get<Int>(v).get());
+    }
+    else if (std::holds_alternative<Nat>(v)) {
+        return std::to_string(std::get<Nat>(v).get());
+    }
+    else if (std::holds_alternative<Float>(v)) {
+        return std::to_string(std::get<Float>(v).get());
+    }
+    else if(std::holds_alternative<BigInt>(v)) {
+        __int128_t res = std::get<BigInt>(v).get();
+        return t_to_string<__int128_t>(res);
+    }
+    else if(std::holds_alternative<BigNat>(v)) {
+        __int128_t res = std::get<BigNat>(v).get();
+        return t_to_string<__uint128_t>(res);
+    }
+    else {
+        return "Unable to print main return type!\n";
+    }
+}
 
 } // namespace __CoreCpp
 
