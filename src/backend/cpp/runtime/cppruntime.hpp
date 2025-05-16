@@ -12,7 +12,7 @@ namespace __CoreCpp {
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
 #define MAX_BSQ_BIGINT ((__int128_t(1) << 126) - 1)
 #define MIN_BSQ_BIGINT (-(__int128_t(1) << 126) + 1)
-#define MAX_BSQ_NAT ((uint64_t(1) << 63) - 1)
+#define MAX_BSQ_NAT ((uint64_t(1) << 62) - 1)
 #define MAX_BSQ_BIGNAT ((__uint128_t(1) << 127) - 1)
 
 #define is_valid_Int(V) ((V >= MIN_BSQ_INT) && (V <= MAX_BSQ_INT))
@@ -440,24 +440,28 @@ typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType;
 //
 std::string to_string(MainType v) {
     if(std::holds_alternative<bool>(v)) {
-        return std::to_string(std::get<bool>(v));
+        bool res = std::get<bool>(v);
+        if(!res) {
+            return "false";
+        }
+        return "true";
     }
     else if(std::holds_alternative<Int>(v)) {
-        return std::to_string(std::get<Int>(v).get());
+        return std::to_string(std::get<Int>(v).get()) + "_i";
     }
     else if (std::holds_alternative<Nat>(v)) {
-        return std::to_string(std::get<Nat>(v).get());
+        return std::to_string(std::get<Nat>(v).get()) + "_n";
     }
     else if (std::holds_alternative<Float>(v)) {
-        return std::to_string(std::get<Float>(v).get());
+        return std::to_string(std::get<Float>(v).get()) + "_f";
     }
     else if(std::holds_alternative<BigInt>(v)) {
         __int128_t res = std::get<BigInt>(v).get();
-        return t_to_string<__int128_t>(res);
+        return t_to_string<__int128_t>(res) + "_I";
     }
     else if(std::holds_alternative<BigNat>(v)) {
         __int128_t res = std::get<BigNat>(v).get();
-        return t_to_string<__uint128_t>(res);
+        return t_to_string<__uint128_t>(res) + "_N";
     }
     else {
         return "Unable to print main return type!\n";
