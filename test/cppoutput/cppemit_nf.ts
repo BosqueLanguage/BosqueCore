@@ -17,6 +17,9 @@ const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs
 const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
+const cc_flags: string = "-Og -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector";
+const cc: string = "/usr/bin/g++"; // Note: This will not work on all systems :(
+
 const bsq_max_int: string = "4611686018427387903";
 const bsq_min_int: string = "-4611686018427387903";
 const bsq_max_nat: string = "4611686018427387903";
@@ -109,10 +112,9 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                 else {
                     const emit_cpp_path = path.join(nndir, "emit.cpp");
                     const executable_path = path.join(nndir, "emit_executable");
-                    const cc = '/usr/bin/g++'; // Note: This will not work on all systems :(
                     
                     try {
-                        execSync(`${cc} ${emit_cpp_path} -o ${executable_path}`);
+                        execSync(`${cc} ${cc_flags} ${emit_cpp_path} -o ${executable_path}`);
                     }
                     catch {
                         return `[CPP COMPILATION ERROR] \n\n${cpp}`
