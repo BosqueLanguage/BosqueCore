@@ -89,6 +89,7 @@ entity CPPTransformer {
         }
     }
 
+    %% uh
     method transformAccessVariableExpression(expr: BSQAssembly::AccessVariableExpression): CPPAssembly::AccessVariableExpression {
         let vname = CPPTransformNameManager::convertVarIdentifier(expr.vname);
         let vtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
