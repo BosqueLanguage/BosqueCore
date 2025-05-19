@@ -40,9 +40,24 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
-datatype BinaryArithExpression provides Expression using {
-    %% Need opertype?
+entity LogicActionAndExpression provides Expression {
+    field args: List<Expression>;
+}
 
+entity LogicActionOrExpression provides Expression {
+    field args: List<Expression>;
+}
+
+datatype UnaryExpression provides Expression using {
+    field expr: Expression;
+}
+of
+PrefixNotOpExpression { }
+| PrefixNegateOpExpression { }
+| PrefixPlusOpExpression { }
+;
+
+datatype BinaryArithExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
 }
@@ -54,8 +69,6 @@ BinAddExpression { }
 ;
 
 datatype BinaryNumericExpression provides Expression using {
-    %% Need opertype?
-    
     field lhs: Expression;
     field rhs: Expression;
 }
@@ -68,7 +81,6 @@ NumericEqExpression { }
 | NumericGreaterEqExpression { }
 ;
 
-%*
 datatype BinLogicExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
@@ -79,7 +91,6 @@ BinLogicAndExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
 ;
-*%
 
 datatype BodyImplementation 
 of

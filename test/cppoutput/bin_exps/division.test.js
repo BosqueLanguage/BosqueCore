@@ -3,7 +3,7 @@
 import { runMainCode, runMainCodeError } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
-describe( "CPP Evaluate --- Simple Division", () => {
+describe( "CPP Emit Evaluate --- Simple Division", () => {
     it("should cpp emit division simple", function () {
         runMainCode("public function main(): Nat { return 2n // 2n; }", "1_n");
         runMainCode("public function main(): Int { return 4i // 1i; }", "4_i");

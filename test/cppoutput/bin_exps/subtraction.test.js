@@ -3,7 +3,7 @@
 import { runMainCode, runMainCodeError, bsq_min_int, bsq_min_bigint } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
-describe( "CPP Evaluate --- Simple Subtraction", () => {
+describe( "CPP Emit Evaluate --- Simple Subtraction", () => {
     it("should cpp emit subtraction simple", function () {
         runMainCode("public function main(): Nat { return 2n - 2n; }", "0_n");
         runMainCode("public function main(): Int { return 2i - -2i; }", "4_i");

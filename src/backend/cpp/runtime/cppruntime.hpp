@@ -110,8 +110,11 @@ public:
     constexpr Int& operator*=(const Int& rhs) noexcept {
         do_safe_arithmetic(Int, int64_t, mul);
     }
+    constexpr Int& operator+() noexcept {
+        return *this;
+    }
     constexpr Int operator-() noexcept { // dont want to modify value here
-        if(value == MIN_BSQ_INT) {
+        if(this->value == MIN_BSQ_INT) {
             std::longjmp(info.error_handler, true);
         }
         return Int(-value);
@@ -174,6 +177,9 @@ public:
     constexpr BigInt& operator*=(const BigInt& rhs) noexcept {
         do_safe_arithmetic(BigInt, __int128_t, mul);
     }
+    constexpr BigInt& operator+() noexcept {
+        return *this;
+    }
     constexpr BigInt operator-() noexcept { // dont want to modify value here
         if(this->value == MIN_BSQ_BIGINT) {
             std::longjmp(info.error_handler, true);
@@ -228,6 +234,9 @@ public:
     }
     constexpr Nat& operator*=(const Nat& rhs) noexcept {
         do_safe_arithmetic(Nat, uint64_t, mul);
+    }
+    constexpr Nat& operator+() noexcept {
+        return *this;
     }
     friend constexpr Nat operator+(Nat lhs, const Nat& rhs) noexcept { 
         lhs += rhs;
@@ -287,6 +296,9 @@ public:
     constexpr BigNat& operator*=(const BigNat& rhs) noexcept {
         do_safe_arithmetic(BigNat, __uint128_t, mul);
     }
+    constexpr BigNat& operator+() noexcept {
+        return *this;
+    }
     friend constexpr BigNat operator+(BigNat lhs, const BigNat& rhs) noexcept { 
         lhs += rhs;
         return lhs;
@@ -337,6 +349,9 @@ public:
     }
     constexpr Float& operator*=(const Float& rhs) noexcept {
         do_safe_float_arithmetic(*);
+    }
+    constexpr Float& operator+() noexcept {
+        return *this;
     }
     constexpr Float operator-() noexcept { // dont want to modify value here
         return Float(-this->value);

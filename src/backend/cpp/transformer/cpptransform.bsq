@@ -46,29 +46,21 @@ entity CPPTransformer {
 
     recursive method transformBinAddExpressionToCpp(expr: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinAddExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinSubExpressionToCpp(expr: BSQAssembly::BinSubExpression): CPPAssembly::BinSubExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinSubExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinDivExpressionToCpp(expr: BSQAssembly::BinDivExpression): CPPAssembly::BinDivExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinDivExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinMultExpressionToCpp(expr: BSQAssembly::BinMultExpression): CPPAssembly::BinMultExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinMultExpression{ lexpr.etype, lexpr, rexpr };
     }
 
@@ -92,8 +84,7 @@ entity CPPTransformer {
         elif(val.endsWithString('f')) {
             return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('f') };
         }
-        else {
-            %% Fall through
+        else { %% Fall through, may need explicit handling in future
             return CPPAssembly::LiteralSimpleExpression{ exprtype, val };
         }
     }
@@ -106,8 +97,18 @@ entity CPPTransformer {
         return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
+    recursive method transformUnaryExpression(uexpr: BSQAssembly::UnaryExpression): CPPAssembly::UnaryExpression {
+        let expr = this.transformExpressionToCpp[recursive](uexpr.exp);
+
+        match(uexpr)@ {
+            BSQAssembly::PrefixNotOpExpression => { return CPPAssembly::PrefixNotOpExpression{ expr.etype, expr }; }
+            | BSQAssembly::PrefixNegateOpExpression => { return CPPAssembly::PrefixNegateOpExpression{ expr.etype, expr }; }
+            | BSQAssembly::PrefixPlusOpExpression => { return CPPAssembly::PrefixPlusOpExpression{ expr.etype, expr }; }
+        }
+    }
+
     %% I think we can simplify this and remove the transform functions, just match our bsqasm type then return transform type
-    recursive method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
+    recursive method transformBinaryArithExpression(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
             BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
             | BSQAssembly::BinSubExpression => { return this.transformBinSubExpressionToCpp[recursive]($binarith); }           
@@ -119,38 +120,68 @@ entity CPPTransformer {
     recursive method transformBinaryNumericCompareExpression(expr: BSQAssembly::BinaryNumericExpression): CPPAssembly::BinaryNumericExpression {
         let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
 
-        let etype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
         match(expr)@ {
-            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ etype, cpplhs, cpprhs}; }
-            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ etype, cpplhs, cpprhs }; }
+            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ cpptype, cpplhs, cpprhs}; }
+            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ cpptype, cpplhs, cpprhs }; }
         }
+    }
+
+    recursive method transformBinLogicExpression(expr: BSQAssembly::BinLogicExpression): CPPAssembly::BinLogicExpression {
+        let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        match(expr)@ {
+            BSQAssembly::BinLogicAndExpression => { return CPPAssembly::BinLogicAndExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicOrExpression => { return CPPAssembly::BinLogicOrExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicImpliesExpression => { return CPPAssembly::BinLogicImpliesExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicIFFExpression => { return CPPAssembly::BinLogicIFFExpression{ cpptype, cpplhs, cpprhs }; }
+        }
+    }
+
+    recursive method transformLogicActionAndExpression(expr: BSQAssembly::LogicActionAndExpression): CPPAssembly::LogicActionAndExpression {
+        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        return CPPAssembly::LogicActionAndExpression{cpptype, args};
+    }
+
+    recursive method transformLogicActionOrExpression(expr: BSQAssembly::LogicActionOrExpression): CPPAssembly::LogicActionOrExpression {
+        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
-            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp[recursive]($expr); }
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
+            | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
+            | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
+            | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
+            | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
         }
     }
 
-    method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
+    recursive method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
         let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype);
-        let rexp = this.transformExpressionToCpp(ret.value);
+        let rexp = this.transformExpressionToCpp[recursive](ret.value);
 
         return CPPAssembly::ReturnSingleStatement{rtype, rexp};
     }
 
-    method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
+    recursive method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
         let name = CPPTransformNameManager::convertIdentifier(stmt.name);
         let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
-        let cppexpr = this.transformExpressionToCpp(stmt.exp);
+        let cppexpr = this.transformExpressionToCpp[recursive](stmt.exp);
 
         return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
     }
@@ -158,7 +189,7 @@ entity CPPTransformer {
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
-            | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp($stmt); }
+            | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
             | _ => { abort; }
         }
     }
