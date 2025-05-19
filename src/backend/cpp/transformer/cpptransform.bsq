@@ -46,29 +46,21 @@ entity CPPTransformer {
 
     recursive method transformBinAddExpressionToCpp(expr: BSQAssembly::BinAddExpression): CPPAssembly::BinAddExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinAddExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinSubExpressionToCpp(expr: BSQAssembly::BinSubExpression): CPPAssembly::BinSubExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinSubExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinDivExpressionToCpp(expr: BSQAssembly::BinDivExpression): CPPAssembly::BinDivExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinDivExpression{ lexpr.etype, lexpr, rexpr };
     }
 
     recursive method transformBinMultExpressionToCpp(expr: BSQAssembly::BinMultExpression): CPPAssembly::BinMultExpression {
         let lexpr, rexpr = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
-
-        %% lhs and rhs for addition operator must have same type, so it does not matter what expr we use for etype
         return CPPAssembly::BinMultExpression{ lexpr.etype, lexpr, rexpr };
     }
 
@@ -93,8 +85,7 @@ entity CPPTransformer {
             return CPPAssembly::LiteralSimpleExpression{ exprtype, val.removeSuffixString('f') };
         }
         else {
-            %% Fall through
-            return CPPAssembly::LiteralSimpleExpression{ exprtype, val };
+            return CPPAssembly::LiteralSimpleExpression{ exprtype, val }; %% Fall through
         }
     }
 
@@ -106,8 +97,18 @@ entity CPPTransformer {
         return CPPAssembly::AccessVariableExpression { vtype, vname, layouttype };
     }
 
+    recursive method transformUnaryExpression(uexpr: BSQAssembly::UnaryExpression): CPPAssembly::UnaryExpression {
+        let expr = this.transformExpressionToCpp[recursive](uexpr.exp);
+
+        match(uexpr)@ {
+            BSQAssembly::PrefixNotOpExpression => { return CPPAssembly::PrefixNotOpExpression{ expr.etype, expr }; }
+            | BSQAssembly::PrefixNegateOpExpression => { return CPPAssembly::PrefixNegateOpExpression{ expr.etype, expr }; }
+            | BSQAssembly::PrefixPlusOpExpression => { return CPPAssembly::PrefixPlusOpExpression{ expr.etype, expr }; }
+        }
+    }
+
     %% I think we can simplify this and remove the transform functions, just match our bsqasm type then return transform type
-    recursive method transformBinaryArithExpressionToCpp(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
+    recursive method transformBinaryArithExpression(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
             BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
             | BSQAssembly::BinSubExpression => { return this.transformBinSubExpressionToCpp[recursive]($binarith); }           
@@ -132,25 +133,26 @@ entity CPPTransformer {
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
-            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpressionToCpp[recursive]($expr); }
+            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
+            | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
         }
     }
 
-    method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
+    recursive method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
         let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype);
-        let rexp = this.transformExpressionToCpp(ret.value);
+        let rexp = this.transformExpressionToCpp[recursive](ret.value);
 
         return CPPAssembly::ReturnSingleStatement{rtype, rexp};
     }
 
-    method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
+    recursive method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
         let name = CPPTransformNameManager::convertIdentifier(stmt.name);
         let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
-        let cppexpr = this.transformExpressionToCpp(stmt.exp);
+        let cppexpr = this.transformExpressionToCpp[recursive](stmt.exp);
 
         return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
     }
@@ -158,7 +160,7 @@ entity CPPTransformer {
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
-            | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp($stmt); }
+            | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
             | _ => { abort; }
         }
     }
