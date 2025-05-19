@@ -40,6 +40,14 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
+entity LogicActionAndExpression provides Expression {
+    field args: List<Expression>;
+}
+
+entity LogicActionOrExpression provides Expression {
+    field args: List<Expression>;
+}
+
 datatype UnaryExpression provides Expression using {
     field expr: Expression;
 }
@@ -73,7 +81,6 @@ NumericEqExpression { }
 | NumericGreaterEqExpression { }
 ;
 
-%*
 datatype BinLogicExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
@@ -84,7 +91,6 @@ BinLogicAndExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
 ;
-*%
 
 datatype BodyImplementation 
 of

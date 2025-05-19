@@ -490,11 +490,17 @@ class BSQIREmitter {
     }
 
     private emitLogicActionAndExpression(exp: LogicActionAndExpression): string {
-        assert(false, "Not implemented -- LogicActionAnd");
+        const ebase = this.emitExpressionBase(exp);
+        const args = exp.args.map((arg) => this.emitExpression(arg)).join(", ");
+
+        return `BSQAssembly::LogicActionAndExpression{ ${ebase}, args = List<BSQAssembly::Expression>{${args}} }`
     }
     
     private emitLogicActionOrExpression(exp: LogicActionOrExpression): string {
-        assert(false, "Not implemented -- LogicActionOr");
+        const ebase = this.emitExpressionBase(exp);
+        const args = exp.args.map((arg) => this.emitExpression(arg)).join(", ");
+
+        return `BSQAssembly::LogicActionOrExpression{ ${ebase}, args = List<BSQAssembly::Expression>{${args}} }`
     }
     
     private emitParseAsTypeExpression(exp: ParseAsTypeExpression): string {

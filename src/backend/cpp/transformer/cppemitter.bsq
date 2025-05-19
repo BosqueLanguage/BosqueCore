@@ -181,6 +181,7 @@ recursive function emitNumericGreaterEqExpression(e: CPPAssembly::NumericGreater
     return CString::concat('(', lhs, ' >= ', rhs, ')');   
 }
 
+%% May be able to remove function calls here...?
 recursive function emitBinaryNumericExpression(e: CPPAssembly::BinaryNumericExpression): CString {
     match(e)@ {
         CPPAssembly::NumericEqExpression => { return emitNumericEqExpression[recursive]($e); }
@@ -192,11 +193,67 @@ recursive function emitBinaryNumericExpression(e: CPPAssembly::BinaryNumericExpr
     }
 }
 
+recursive function emitBinLogicAndExpression(e: CPPAssembly::BinLogicAndExpression): CString {
+    let lhs = emitExpression[recursive](e.lhs);
+    let rhs = emitExpression[recursive](e.rhs);   
+
+    return CString::concat('(', lhs, ' && ', rhs, ')');
+}
+
+recursive function emitBinLogicOrExpression(e: CPPAssembly::BinLogicOrExpression): CString {
+    let lhs = emitExpression[recursive](e.lhs);
+    let rhs = emitExpression[recursive](e.rhs);   
+
+    return CString::concat('(', lhs, ' || ', rhs, ')');
+}
+
+recursive function emitBinLogicImpliesExpression(e: CPPAssembly::BinLogicImpliesExpression): CString {
+    let lhs = emitExpression[recursive](e.lhs);
+    let rhs = emitExpression[recursive](e.rhs);  
+
+    let implies: CString = CString::concat('!', lhs, ' || ', rhs);
+    return CString::concat('(', implies ,')');
+}
+
+recursive function emitBinLogicIFFExpression(e: CPPAssembly::BinLogicIFFExpression): CString {
+    let lhs = emitExpression[recursive](e.lhs);
+    let rhs = emitExpression[recursive](e.rhs); 
+    let nlhs: CString = CString::concat('!', lhs);
+    let nrhs: CString = CString::concat('!', rhs);
+
+    let first: CString = CString::concat('(', lhs, ' && ', rhs, ')');
+    let second: CString = CString::concat('(', nlhs, ' && ', nrhs, ')');
+
+    return CString::concat('(', first, ' || ', second, ')');
+}
+
+recursive function emitBinLogicExpression(e: CPPAssembly::BinLogicExpression): CString {
+    match(e)@ {
+        CPPAssembly::BinLogicAndExpression => { return emitBinLogicAndExpression[recursive]($e); }
+        | CPPAssembly::BinLogicOrExpression => { return emitBinLogicOrExpression[recursive]($e); }
+        | CPPAssembly::BinLogicImpliesExpression => { return emitBinLogicImpliesExpression[recursive]($e); }
+        | CPPAssembly::BinLogicIFFExpression => { return emitBinLogicIFFExpression[recursive]($e); }
+    }
+}
+
+recursive function emitLogicActionAndExpression(e: CPPAssembly::LogicActionAndExpression): CString {
+    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr));
+    return CString::concat('(', CString::joinAll(' && ', args), ')');
+}
+
+recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpression): CString {
+    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr));
+    return CString::concat('(', CString::joinAll(' || ', args), ')');
+}
+
 function emitExpression(e: CPPAssembly::Expression): CString {
     match(e)@ {
         CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e); }
         | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e); }
         | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e); }
+        | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e); }
+        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e); }
+        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | _ => { abort; }

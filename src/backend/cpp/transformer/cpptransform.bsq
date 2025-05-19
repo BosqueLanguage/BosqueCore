@@ -120,15 +120,41 @@ entity CPPTransformer {
     recursive method transformBinaryNumericCompareExpression(expr: BSQAssembly::BinaryNumericExpression): CPPAssembly::BinaryNumericExpression {
         let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
 
-        let etype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
         match(expr)@ {
-            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ etype, cpplhs, cpprhs}; }
-            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ etype, cpplhs, cpprhs }; }
-            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ etype, cpplhs, cpprhs }; }
+            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ cpptype, cpplhs, cpprhs}; }
+            | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterExpression => { return CPPAssembly::NumericGreaterExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericGreaterEqExpression => { return CPPAssembly::NumericGreaterEqExpression{ cpptype, cpplhs, cpprhs }; }
         }
+    }
+
+    recursive method transformBinLogicExpression(expr: BSQAssembly::BinLogicExpression): CPPAssembly::BinLogicExpression {
+        let cpplhs, cpprhs = this.processBinaryArgs[recursive](expr.lhs, expr.rhs);
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        match(expr)@ {
+            BSQAssembly::BinLogicAndExpression => { return CPPAssembly::BinLogicAndExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicOrExpression => { return CPPAssembly::BinLogicOrExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicImpliesExpression => { return CPPAssembly::BinLogicImpliesExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicIFFExpression => { return CPPAssembly::BinLogicIFFExpression{ cpptype, cpplhs, cpprhs }; }
+        }
+    }
+
+    recursive method transformLogicActionAndExpression(expr: BSQAssembly::LogicActionAndExpression): CPPAssembly::LogicActionAndExpression {
+        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        return CPPAssembly::LogicActionAndExpression{cpptype, args};
+    }
+
+    recursive method transformLogicActionOrExpression(expr: BSQAssembly::LogicActionOrExpression): CPPAssembly::LogicActionOrExpression {
+        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+        let cpptype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+
+        return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
@@ -137,6 +163,9 @@ entity CPPTransformer {
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
+            | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
+            | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
+            | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | _ => { abort; }
         }
