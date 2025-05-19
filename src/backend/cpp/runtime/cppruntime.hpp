@@ -110,14 +110,14 @@ public:
     constexpr Int& operator*=(const Int& rhs) noexcept {
         do_safe_arithmetic(Int, int64_t, mul);
     }
+    constexpr Int& operator+() noexcept {
+        return *this;
+    }
     constexpr Int operator-() noexcept { // dont want to modify value here
         if(this->value == MIN_BSQ_INT) {
             std::longjmp(info.error_handler, true);
         }
         return Int(-value);
-    }
-    constexpr Int operator+() noexcept {
-        return *this;
     }
     friend constexpr Int operator+(Int lhs, const Int& rhs) noexcept { 
         lhs += rhs;
@@ -177,14 +177,14 @@ public:
     constexpr BigInt& operator*=(const BigInt& rhs) noexcept {
         do_safe_arithmetic(BigInt, __int128_t, mul);
     }
+    constexpr BigInt& operator+() noexcept {
+        return *this;
+    }
     constexpr BigInt operator-() noexcept { // dont want to modify value here
         if(this->value == MIN_BSQ_BIGINT) {
             std::longjmp(info.error_handler, true);
         }
         return BigInt(-value);
-    }
-    constexpr BigInt operator+() noexcept {
-        return *this;
     }
     friend constexpr BigInt operator+(BigInt lhs, const BigInt& rhs) noexcept { 
         lhs += rhs;

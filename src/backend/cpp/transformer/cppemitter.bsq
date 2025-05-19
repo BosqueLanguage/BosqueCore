@@ -126,7 +126,6 @@ recursive function emitPrefixNegateOpExpression(negop: CPPAssembly::PrefixNegate
     return CString::concat('-', expr);
 }
 
-%% I think this is how prefix plus works? doesnt convert value to positive, just visual specifier?
 recursive function emitPrefixPlusOpExpression(plusop: CPPAssembly::PrefixPlusOpExpression): CString {
     return emitExpression[recursive](plusop.expr);
 }
@@ -181,7 +180,6 @@ recursive function emitNumericGreaterEqExpression(e: CPPAssembly::NumericGreater
     return CString::concat('(', lhs, ' >= ', rhs, ')');   
 }
 
-%% May be able to remove function calls here...?
 recursive function emitBinaryNumericExpression(e: CPPAssembly::BinaryNumericExpression): CString {
     match(e)@ {
         CPPAssembly::NumericEqExpression => { return emitNumericEqExpression[recursive]($e); }
