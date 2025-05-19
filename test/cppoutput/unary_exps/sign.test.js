@@ -3,7 +3,7 @@
 import { runMainCode } from "../../../bin/test/cppoutput/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe( "CPP Evaluate -- Simple numeric sign", () => {
+describe( "CPP Emit Evaluate -- Simple numeric sign", () => {
     it("should exec (simplfy) simple sign", function () {
         runMainCode("public function main(): Int { return -(3i); }", "-3_i");
         runMainCode("public function main(): Nat { return +(12n); }", "12_n");

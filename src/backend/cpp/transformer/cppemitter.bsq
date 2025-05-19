@@ -118,18 +118,17 @@ recursive function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpressi
 
 recursive function emitPrefixNotOpExpression(notop: CPPAssembly::PrefixNotOpExpression): CString {
     let expr = emitExpression[recursive](notop.expr);
-    return CString::concat('(', '!', expr, ')');
+    return CString::concat('!', expr);
 }
 
 recursive function emitPrefixNegateOpExpression(negop: CPPAssembly::PrefixNegateOpExpression): CString {
     let expr = emitExpression[recursive](negop.expr);
-    return CString::concat('(', '-', expr, ')');
+    return CString::concat('-', expr);
 }
 
 %% I think this is how prefix plus works? doesnt convert value to positive, just visual specifier?
 recursive function emitPrefixPlusOpExpression(plusop: CPPAssembly::PrefixPlusOpExpression): CString {
-    let expr = emitExpression[recursive](plusop.expr);
-    return CString::concat('(', expr, ')');
+    return emitExpression[recursive](plusop.expr);
 }
 
 recursive function emitUnaryExpression(e: CPPAssembly::UnaryExpression): CString {

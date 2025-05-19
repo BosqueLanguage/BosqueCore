@@ -3,7 +3,7 @@
 import { runMainCode, runMainCodeError, bsq_max_nat, bsq_max_int,  bsq_max_bignat, bsq_max_bigint } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
-describe( "CPP Evaluate --- Simple Multiplication", () => {
+describe( "CPP Emit Evaluate --- Simple Multiplication", () => {
     it("should cpp emit multiplication simple", function () {
         runMainCode("public function main(): Nat { return 2n * 2n; }", "4_n");
         runMainCode("public function main(): Nat { return 2n * 0n; }", "0_n");
