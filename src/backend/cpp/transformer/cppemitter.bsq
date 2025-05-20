@@ -299,7 +299,7 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, indent:
     let ifcond = CString::concat(full_indent, 'if(', emitExpression(stmt.ifcond), ') {%n;');
     let ifbody = CString::concat(emitBlockStatement(stmt.ifflow, full_indent), full_indent, '}%n;');
     let ifblock = CString::concat(ifcond, ifbody);
-    let elseblock = CString::concat(full_indent, 'else {%n;', emitBlockStatement(stmt.elseflow, full_indent), '}%n;');
+    let elseblock = CString::concat(full_indent, 'else {%n;', emitBlockStatement(stmt.elseflow, full_indent), full_indent, '}%n;');
 
     let elifs_list = stmt.condflow.map<CString>(fn(elifs) => {
         let cond = emitExpression(elifs.0);
