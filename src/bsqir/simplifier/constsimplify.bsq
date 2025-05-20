@@ -461,7 +461,7 @@ entity ConstantSimplification {
     }
 
     recursive method processIfExpression(e: IfExpression): Expression {
-        let ncond = this.processExpression[recursive](e.iftest.exp, vmap);
+        let ncond = this.processExpression[recursive](e.iftest.exp);
         let ntrue = this.processExpression[recursive](e.trueValue);
         let nfalse = this.processExpression[recursive](e.falseValue);
 
