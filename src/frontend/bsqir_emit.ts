@@ -1206,7 +1206,20 @@ class BSQIREmitter {
     }
 
     private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: BsqonCodeFormatter): string {  
-        assert(false, "Not Implemented -- emitIfElifElseStatement");
+        const sbase = this.emitStatementBase(stmt);
+        let firstcond = stmt.condflow[0];
+        let ifcond: string = this.emitExpression(firstcond.cond);
+        let ifflow: string = this.emitBlockStatement(firstcond.block, fmt);
+
+        const condflow = stmt.condflow.slice(1).map((elif) => {
+            const cond = this.emitExpression(elif.cond);
+            const block = this.emitBlockStatement(elif.block, fmt);
+
+            return `(|${cond}, ${block}|)`;  
+        }).join(", ");
+        const elseflow = this.emitBlockStatement(stmt.elseflow, fmt);
+        
+        return [`BSQAssembly::IfElifElseStatement{ ${sbase}, ifcond = ${ifcond}, ifflow = ${ifflow}, elseflow=${elseflow}, `, fmt.nl(), `condflow = List<(|BSQAssembly::Expression, BSQAssembly::BlockStatement|)>{ ${condflow} }}`].join("");
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: BsqonCodeFormatter): string {
@@ -1273,8 +1286,9 @@ class BSQIREmitter {
     }
 
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
+        const sbase = this.emitStatementBase(stmt);
         const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt);
-        return ["BSQAssembly::BlockStatement{", `isScoping=${stmt.isScoping},`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, fmt.indent("}}")].join("");
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, "}}"].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {

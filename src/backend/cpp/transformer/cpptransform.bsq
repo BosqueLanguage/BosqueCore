@@ -183,13 +183,47 @@ entity CPPTransformer {
         let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
         let cppexpr = this.transformExpressionToCpp[recursive](stmt.exp);
 
-        return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
+        return CPPAssembly::VariableInitializationStatement{ name, stype, cppexpr };
+    }
+
+    method transformBlockStatement(block: BSQAssembly::BlockStatement): CPPAssembly::BlockStatement {
+        let stmts = block.statements.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
+        return CPPAssembly::BlockStatement{ stmts, block.isScoping };
+    }
+
+    recursive method transformIfStatement(stmt: BSQAssembly::IfStatement): CPPAssembly::IfStatement {
+        let cond = this.transformExpressionToCpp[recursive](stmt.cond);
+        let trueBlock = this.transformBlockStatement(stmt.trueBlock);
+
+        return CPPAssembly::IfStatement{ cond, trueBlock };
+    }
+
+    recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement): CPPAssembly::IfElseStatement {
+        let cond = this.transformExpressionToCpp[recursive](stmt.cond);
+        let trueBlock = this.transformBlockStatement(stmt.trueBlock);
+        let falseBlock = this.transformBlockStatement(stmt.falseBlock);
+
+        return CPPAssembly::IfElseStatement{ cond, trueBlock, falseBlock };
+    }
+
+    recursive method transformIfElifElseStatement(stmt: BSQAssembly::IfElifElseStatement): CPPAssembly::IfElifElseStatement {
+        let ifcond = this.transformExpressionToCpp[recursive](stmt.ifcond);
+        let ifflow = this.transformBlockStatement(stmt.ifflow);
+        let elseflow = this.transformBlockStatement(stmt.elseflow);
+
+        let condflow = stmt.condflow.map<(|CPPAssembly::Expression, CPPAssembly::BlockStatement|)>(fn(block) => 
+            (|this.transformExpressionToCpp[recursive](block.0), this.transformBlockStatement(block.1)|));
+    
+        return CPPAssembly::IfElifElseStatement{ ifcond, ifflow, condflow, elseflow };
     }
 
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
             | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
+            | BSQAssembly::IfStatement => { return this.transformIfStatement[recursive]($stmt); }
+            | BSQAssembly::IfElseStatement => { return this.transformIfElseStatement[recursive]($stmt); }
+            | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }
             | _ => { abort; }
         }
     }

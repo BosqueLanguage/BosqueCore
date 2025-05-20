@@ -20,20 +20,45 @@ concept Operation {
 concept Statement {
 }
 
+entity IfStatement provides Statement {
+    field cond: Expression;
+    field trueBlock: BlockStatement;
+}
+
+entity IfElseStatement provides Statement {
+    field cond: Expression;
+    field trueBlock: BlockStatement;
+    field falseBlock: BlockStatement;
+}
+
+entity IfElifElseStatement provides Statement {
+    field ifcond: Expression;
+    field ifflow: BlockStatement;
+    field condflow: List<(|Expression, BlockStatement|)>;
+    field elseflow: BlockStatement;
+
+    invariant !$condflow.empty();
+}
+
 entity VariableInitializationStatement provides Statement {
     field name: Identifier; 
     field vtype: TypeSignature;
     field exp: Expression;
 }
 
-entity AccessVariableExpression provides Expression {
-    field vname: VarIdentifier;
-    field layouttype: TypeSignature;
+entity BlockStatement provides Statement {
+    field statements: List<Statement>;
+    field isScoping: Bool;
 }
 
 entity ReturnSingleStatement provides Statement {
     field rtype: TypeSignature;
     field value: Expression;
+}
+
+entity AccessVariableExpression provides Expression {
+    field vname: VarIdentifier;
+    field layouttype: TypeSignature;
 }
 
 entity LiteralSimpleExpression provides Expression {
