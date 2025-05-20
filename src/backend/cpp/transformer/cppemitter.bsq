@@ -277,14 +277,40 @@ function emitIfStatement(stmt: CPPAssembly::IfStatement, indent: CString): CStri
     let expr = emitExpression(stmt.cond);
     let trueBlock = emitBlockStatement(stmt.trueBlock, full_indent);
     
-    if(stmt.trueBlock.isScoping) {
-        let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;');
-        return CString::concat(ifstmt, trueBlock, full_indent, '}');
-    }
-    else {
-        let ifstmt = CString::concat(full_indent, 'if( ', expr, ' )');      
-        return CString::concat(ifstmt, trueBlock);
-    }
+    let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;');
+    return CString::concat(ifstmt, trueBlock, full_indent, '}');
+}
+
+function emitIfElseStatement(stmt: CPPAssembly::IfElseStatement, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent); 
+    let expr = emitExpression(stmt.cond);
+    
+    let falseBlock = emitBlockStatement(stmt.falseBlock, full_indent);
+    let elseBlockText = CString::concat(full_indent, 'else {%n;', falseBlock, full_indent, '}%n;');
+
+    let trueBlock = emitBlockStatement(stmt.trueBlock, full_indent);
+    let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;'); 
+
+    return CString::concat(ifstmt, trueBlock, full_indent, '}%n;', elseBlockText);
+}
+
+function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent); 
+    let ifcond = CString::concat(full_indent, 'if(', emitExpression(stmt.ifcond), ') {%n;');
+    let ifbody = CString::concat(emitBlockStatement(stmt.ifflow, full_indent), full_indent, '}%n;');
+    let ifblock = CString::concat(ifcond, ifbody);
+    let elseblock = CString::concat(full_indent, 'else {%n;', emitBlockStatement(stmt.elseflow, full_indent), '}%n;');
+
+    let elifs_list = stmt.condflow.map<CString>(fn(elifs) => {
+        let cond = emitExpression(elifs.0);
+        let body = emitBlockStatement(elifs.1, full_indent);
+
+        let elif_stmt = CString::concat(full_indent, 'else if(', cond, ') {%n;');
+        return CString::concat(elif_stmt, body, full_indent, '}%n;');
+    });
+    let elifs = CString::joinAll('', elifs_list);
+
+    return CString::concat(ifcond, ifbody, elifs, elseblock);
 }
 
 function emitStatement(stmt: CPPAssembly::Statement, indent: CString): CString {
@@ -292,6 +318,8 @@ function emitStatement(stmt: CPPAssembly::Statement, indent: CString): CString {
         CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, indent); }
         | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, indent); }
         | CPPAssembly::IfStatement => { return emitIfStatement($stmt, indent); }
+        | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, indent); }
+        | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, indent); }
         | _ => { abort; }
     }
 }
