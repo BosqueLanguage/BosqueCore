@@ -183,13 +183,26 @@ entity CPPTransformer {
         let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
         let cppexpr = this.transformExpressionToCpp[recursive](stmt.exp);
 
-        return CPPAssembly::VariableInitializationStatement{name, stype, cppexpr};
+        return CPPAssembly::VariableInitializationStatement{ name, stype, cppexpr };
+    }
+
+    method transformBlockStatement(block: BSQAssembly::BlockStatement): CPPAssembly::BlockStatement {
+        let stmts = block.statements.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
+        return CPPAssembly::BlockStatement{ stmts, block.isScoping };
+    }
+
+    recursive method transformIfStatement(stmt: BSQAssembly::IfStatement): CPPAssembly::IfStatement {
+        let cond = this.transformExpressionToCpp[recursive](stmt.cond);
+        let trueBlock = this.transformBlockStatement(stmt.trueBlock);
+
+        return CPPAssembly::IfStatement{ cond, trueBlock };
     }
 
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
             | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
+            | BSQAssembly::IfStatement => { return this.transformIfStatement[recursive]($stmt); }
             | _ => { abort; }
         }
     }

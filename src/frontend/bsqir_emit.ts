@@ -1273,8 +1273,9 @@ class BSQIREmitter {
     }
 
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
+        const sbase = this.emitStatementBase(stmt);
         const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt);
-        return ["BSQAssembly::BlockStatement{", `isScoping=${stmt.isScoping},`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, fmt.indent("}}")].join("");
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, fmt.indent("}}")].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {

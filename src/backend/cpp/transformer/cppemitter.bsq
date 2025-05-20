@@ -267,10 +267,31 @@ function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitiali
     return CString::concat(full_indent, ' ', name, ' = ', exp, ';');
 }
 
+function emitBlockStatement(block: CPPAssembly::BlockStatement, indent: CString): CString {
+    let stmts = block.statements.map<CString>(fn(stmt) => emitStatement(stmt, indent));
+    return CString::joinAll('%n;', stmts);
+}
+
+function emitIfStatement(stmt: CPPAssembly::IfStatement, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent); 
+    let expr = emitExpression(stmt.cond);
+    let trueBlock = emitBlockStatement(stmt.trueBlock, full_indent);
+    
+    if(stmt.trueBlock.isScoping) {
+        let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;');
+        return CString::concat(ifstmt, trueBlock, full_indent, '}');
+    }
+    else {
+        let ifstmt = CString::concat(full_indent, 'if( ', expr, ' )');      
+        return CString::concat(ifstmt, trueBlock);
+    }
+}
+
 function emitStatement(stmt: CPPAssembly::Statement, indent: CString): CString {
     match(stmt)@ {
         CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, indent); }
         | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, indent); }
+        | CPPAssembly::IfStatement => { return emitIfStatement($stmt, indent); }
         | _ => { abort; }
     }
 }
