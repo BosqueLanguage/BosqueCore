@@ -1205,25 +1205,17 @@ class BSQIREmitter {
         }
     }
 
-    // Need to extract ifflow I think...?
     private emitIfElifElseStatement(stmt: IfElifElseStatement, fmt: BsqonCodeFormatter): string {  
         const sbase = this.emitStatementBase(stmt);
-        let ifflow: string = '';
-        let ifcond: string = '';
-        const condflow = stmt.condflow.filter((elif, it) => {        
-            // If stmt logic 
-            if(it === 0) {
-                ifcond = this.emitExpression(elif.cond);
-                ifflow = this.emitBlockStatement(elif.block, fmt);
-                return false;
-            }
-            return true;
-        }).map((elif) => {
+        let firstcond = stmt.condflow[0];
+        let ifcond: string = this.emitExpression(firstcond.cond);
+        let ifflow: string = this.emitBlockStatement(firstcond.block, fmt);
+
+        const condflow = stmt.condflow.slice(1).map((elif) => {
             const cond = this.emitExpression(elif.cond);
             const block = this.emitBlockStatement(elif.block, fmt);
 
-            return `(|${cond}, ${block}|)`; 
-            
+            return `(|${cond}, ${block}|)`;  
         }).join(", ");
         const elseflow = this.emitBlockStatement(stmt.elseflow, fmt);
         
