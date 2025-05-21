@@ -41,7 +41,6 @@ entity NamespaceFunctionDecl {
     field name: CString;
     field invokeKey: InvokeKey;
 
-    %% Will be List<InvokeParameterDecl> or something
     field params: None; %% TODO: Parameters not implemented
 
     field resultType: TypeSignature;
@@ -49,8 +48,27 @@ entity NamespaceFunctionDecl {
     field body: BodyImplementation;
 }
 
+%%
+%% What we can do is take the namespace name (not full key, just its name) and look it up from the assembly
+%% entity in order to populate its sub namespaces. This allows us to keep namespaces grouped properly. The
+%% main issue I am having is figuring out a way to actually grab the names themselves. From NamespaceFunctionDecl
+%% in bsqasm, we are able to grab a string of the format 'Main::Foo::Bar' representing namespace. Problem
+%% is there is no way to split lookup in our decks main, then go to its subns and lookup foo, then go to its sub ns
+%% and look up bar. I think a possible answer could be to modify the ir emission itself to include this list directly.
+%%
+entity NamespaceDecl {
+    %% field ns: NamespaceKey;
+    field nsname: CString;
+
+    %% Will need other stuff like nsconsts, enums, typedecls, etc...
+
+    field subns: Map<NamespaceKey, NamespaceDecl>;
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+}
+
 %% Will need expanding
 entity Assembly {
+    %% field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
     field allfuncs: List<InvokeKey>;
 }

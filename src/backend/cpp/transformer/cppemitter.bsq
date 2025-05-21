@@ -45,12 +45,25 @@ function emitVarIdentifier(vident: CPPAssembly::VarIdentifier): CString {
     return vident.value;
 }
 
-function emitFunction(ik: CPPAssembly::InvokeKey): CString {
+function emitInvokeKey(ik: CPPAssembly::InvokeKey): CString {
     return ik.value;
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): CString {
     return nsk.value;
+}
+
+function emitResolvedNamespace(ikey: CPPAssembly::InvokeKey, ns: CPPAssembly::NamespaceKey): CString {
+    let kval = emitInvokeKey(ikey);
+    let nsval = emitNamespaceKey(ns);
+
+    %% We can compare the invoke key and namespace value - emit only portion of ikey that is not in
+    %% nskey
+    let resolved = kval.removePrefixString(nsval);
+    if(resolved.startsWithString('::')) {
+        return resolved.removePrefixString('::');
+    }
+    return resolved;
 }
 
 function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): CString {
@@ -244,6 +257,14 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
+function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression): CString { 
+    let nsdecl = emitResolvedNamespace(e.ikey, e.ns);
+    let ident = emitInvokeKey(e.ikey);
+
+    %% No arguments supported currently
+    return CString::concat(ident, '()');
+}
+
 function emitExpression(e: CPPAssembly::Expression): CString {
     match(e)@ {
         CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e); }
@@ -254,6 +275,7 @@ function emitExpression(e: CPPAssembly::Expression): CString {
         | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
+        | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e); }
         | _ => { abort; }
     }
 }
@@ -340,7 +362,6 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, indent: C
     }
 }
 
-%% Will need to specific namespace of function
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, indent: CString): CString {
     let name = func.name;
     let nskey = emitNamespaceKey(func.ns);
@@ -366,7 +387,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
             return CString::concat(indent, funcacc, emitNamespaceFunctionDecl(func, indent));
         });
         
-        return emitNamespaceDecl(nskey, emission);
+        return CString::concat(acc, emitNamespaceDecl(nskey, emission));
     });
 
     %% TODO: Other non namespace functions

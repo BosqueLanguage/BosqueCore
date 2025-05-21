@@ -654,7 +654,8 @@ entity ConstantSimplification {
 
             preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            fkind = nsfunc.fkind
+            fkind = nsfunc.fkind,
+            fullns = nsfunc.fullns
         };
     }
 

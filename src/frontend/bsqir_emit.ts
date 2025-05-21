@@ -243,7 +243,7 @@ class BSQIREmitter {
 
         const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
         
-        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, TypeSignature|)>{${restinfocc}} }`;
+        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, BSQAssembly::TypeSignature|)>{${restinfocc}} }`;
     }
 
     private emitITestGeneral(itest: ITest): string {
@@ -475,7 +475,7 @@ class BSQIREmitter {
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, arginfo=${arginfo} }`;
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, argsinfo=${arginfo} }`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1545,11 +1545,14 @@ class BSQIREmitter {
                 fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
                 const fkind = fmt.indent(`fkind=${this.emitFKindTag((fdecl as NamespaceFunctionDecl).fkind)}`);
-                
+
+                const cstrns = ns.ns.map(e => `'${e}'`).join(", ");
+                const fmt_cstrns = fmt.indent(`fullns = List<CString>{${cstrns}}`);
+
                 this.mapper = omap;
                 fmt.indentPop();
 
-                this.nsfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{ ${ibase},${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
+                this.nsfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{ ${ibase}, ${fmt.nl() + fmt_cstrns}, ${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
                 this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);
             }
         }
@@ -2016,6 +2019,8 @@ class BSQIREmitter {
                 this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, fmt);
             }
         }
+
+        console.log(decl);
 
         this.emitNamespaceConstDecls(decl.fullnamespace, decl.consts);
 

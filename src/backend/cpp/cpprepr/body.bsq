@@ -56,6 +56,13 @@ entity ReturnSingleStatement provides Statement {
     field value: Expression;
 }
 
+entity CallNamespaceFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+    field ns: NamespaceKey;
+
+    field args: None; %% TODO: Not implemented
+}
+
 entity AccessVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
