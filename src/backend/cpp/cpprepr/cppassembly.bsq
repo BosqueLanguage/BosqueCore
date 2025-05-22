@@ -62,13 +62,13 @@ entity NamespaceDecl {
 
     %% Will need other stuff like nsconsts, enums, typedecls, etc...
 
-    field subns: Map<NamespaceKey, NamespaceDecl>;
+    field subns: Map<CString, NamespaceDecl>;
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
 }
 
 %% Will need expanding
 entity Assembly {
-    %% field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
+    field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
     field allfuncs: List<InvokeKey>;
 }

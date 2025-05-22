@@ -374,25 +374,51 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ind
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, indent), indent, '}%n;');
 }
 
-%% Emits all funcions inside a given namespace
-function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceKey, funcs: CString): CString {
-    return CString::concat('namespace ', nsdecl.value, ' {%n;', funcs, '}%n;%n;');
+%% I suspect we will need to be a bit more cleveer with how we emit names, just a cstr for now
+function emitNamespaceDecl(nsdecl: CString, funcs: CString): CString {
+    return CString::concat('namespace ', nsdecl, ' {%n;', funcs, '}%n;%n;');
+}
+
+%% This name isnt very descriptinve since we emit from subns too
+recursive function emitNamespaceFromTopLevel(nsdecl: CPPAssembly::NamespaceDecl): CString {
+    %% Emit namespace 
+    let ns = CString::concat('namespace ', nsdecl.nsname, '{%n;');
+
+    %% Emit functions
+    %*
+    let funcs_emission = nsdecl.nsfuncs.reduce<CString>(ns, fn(acc, key, func) => {
+        let indent: CString = '    ';
+        return CString::concat(indent, acc, emitNamespaceFunctionDecl(func, indent));           
+    });
+    *%
+
+    %% Emit sub-namespace functions and their declarations
+    let subns_emission = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
+        return CString::concat(acc, emitNamespaceFromTopLevel[recursive](decl));
+    });
+
+    return CString::concat(subns_emission, '}%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
     %% First emit all namespace blocks with their functions
+
+    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, name, nsdecl) => {
+        return CString::concat(acc, emitNamespaceFromTopLevel(nsdecl));
+    });
+
     let nsblocks = asm.nsfuncs.reduce<CString>('', fn(acc, nskey, funcs) => {
         let emission = funcs.reduce<CString>('', fn(funcacc, ikey, func) => {
             let indent: CString = '    ';
             return CString::concat(indent, funcacc, emitNamespaceFunctionDecl(func, indent));
         });
         
-        return CString::concat(acc, emitNamespaceDecl(nskey, emission));
+        return CString::concat(acc, emitNamespaceDecl(nskey.value, emission));
     });
 
     %% TODO: Other non namespace functions
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    return CString::join('%n;', nsblocks);
+    return CString::join('%n;', ns_emission);
 }

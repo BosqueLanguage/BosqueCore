@@ -32,6 +32,43 @@ namespace CPPTransformNameManager {
     function convertVarIdentifier(vident: BSQAssembly::VarIdentifier): CPPAssembly::VarIdentifier {
         return CPPAssembly::VarIdentifier::from(vident.value);
     }
+
+    function createNamespaceDecl(name: CString): CPPAssembly::NamespaceDecl {
+        let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
+        let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
+        return CPPAssembly::NamespaceDecl{ name, subns, nsfuncs };
+    }
+
+    %%
+    %% Note: This DOES appear to correctly build up the namespace hierarchy like we want,
+    %% but we do not correctly emit corresponding cpp code
+    %%
+    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>): Map<CString, CPPAssembly::NamespaceDecl> {
+        if(fullns.empty()) { %% Base case, we have recursed through all subdecls
+            return nsdecls;
+        }
+
+        let ns_name = fullns.front();
+        let remaining_ns_names = fullns.popFront().1;
+
+        var cur_nsdecl: CPPAssembly::NamespaceDecl;
+        if(nsdecls.has(ns_name)) {
+            cur_nsdecl = nsdecls.get(ns_name);
+        }
+        else {
+            cur_nsdecl = createNamespaceDecl(ns_name);
+        }
+
+        %% Recursively process remaining names
+        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns);
+
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.nsfuncs };
+        
+        if(!nsdecls.has(updated_nsdecl.nsname)) {
+            return nsdecls.insert(ns_name, updated_nsdecl);
+        }
+        return nsdecls;
+    }
 }
 
 entity CPPTransformer {
@@ -272,36 +309,24 @@ entity CPPTransformer {
     }
     *%
 
-    %%
-    %% Take our bsqasm namespace function, iterate through fullns field, then extract namespace decl
-    %% at lowest scope (last element in fullns)
-    %%
-    recursive method getNamespaceDecl(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>): CPPAssembly::NamespaceDecl {
-        if(fullns.empty()) {
-            abort; %% Should not happen
-        }
-
-        let cur_ns = fullns.front();
-        let remaining_ns = fullns.popFront().1;
-
-        %%
-        %% I think we need to do some logic for the inserted map here to make sure it
-        %% actually is initialized maybe...? Gonna wrestle this tomorrow.
-        %%
-
-        abort;
-    }
-
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{ bsqasm };            
 
-        %% let transformer_nsdecls = Map<CString, NamespaceDecl>{};
-
         %%
-        %% I think we will need to just call this getNamespaceDecl in a loop like this one for
-        %% iterating functions, but instead we just insert the cppdecl version of the bsqasm function
-        %% and return this transformer_nsdecls map as nsdecls in the cppassembly
+        %% As of now we do two passes, first builds the correct hierarchy of namespaces for
+        %% our nsdecls field, second inserts functions into correct namespace declaration
+        %% (I suspect these can and should be merged)
         %%
+        let transformer_nsdecls = bsqasm.allfuncs
+            .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
+            .reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+                Map<CString, CPPAssembly::NamespaceDecl>{},
+                fn(acc, ikey) => {
+                    let fullns = bsqasm.nsfuncs.get(ikey).fullns;
+                    return CPPTransformNameManager::getNamespaceDeclMapping(fullns, acc);
+                }
+            );
+ 
 
         %% Will leave for now
         let transformer_nsfuncs = bsqasm.allfuncs
@@ -318,6 +343,7 @@ entity CPPTransformer {
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
 
         return CPPAssembly::Assembly {
+            nsdecls = transformer_nsdecls,
             nsfuncs = transformer_nsfuncs,
             allfuncs = transformer_allfuncs
         };

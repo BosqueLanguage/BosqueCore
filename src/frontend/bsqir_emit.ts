@@ -1551,6 +1551,10 @@ class BSQIREmitter {
 
                 this.mapper = omap;
                 fmt.indentPop();
+                
+                if(ns.ns.length > 6) { 
+                    assert(false, "Not Implemented -- Namespace nesting of depth > 6" + cstrns);
+                }
 
                 this.nsfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{ ${ibase}, ${fmt.nl() + fmt_cstrns}, ${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
                 this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);
