@@ -33,6 +33,27 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
+%%
+%% We will want to (look in explicitify) create a namespace emitter entity
+%% and either pass that object around, maybe for each namespace we emit make a new class
+%% lets just pass around context in the arguments to each emitter function
+%%
+
+%% Not sure about this, likely doesnt work
+entity Context {
+    field currentns: CPPAssembly::NamespaceKey;
+
+    method create(): Context {
+        let ns_context = CPPAssembly::NamespaceKey::from(''); %% No namespace known yet
+        return Context{ ns_context };
+    }
+
+    method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey ): Context {
+        %% If we need more context will need to modify constructor
+        return Context{ new_ns };
+    }
+}
+
 function emitTypeSignature(ts: CPPAssembly::TypeSignature): CString {
     return ts.tkeystr.value;
 }
@@ -374,18 +395,17 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ind
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, indent), indent, '}%n;');
 }
 
-%% This name isnt very descriptinve since we emit from subns too
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, indent: CString): CString {
     %% Emit namespace 
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
 
-    %% Emit sub-namespace functions and their declarations
+    %% Emit sub-namespace declarations
     let subns_emission = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, full_indent));
     });
 
-    %% Emit functions
+    %% Emit functions in current namespace
     let funcs_emission = nsdecl.nsfuncs.reduce<CString>(subns_emission, fn(acc, key, func) => {
         return CString::concat(acc, emitNamespaceFunctionDecl(func, full_indent)); 
     });
@@ -394,6 +414,8 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, indent:
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
+    %% Need to give some thought to best way to approach this constructor
+    let ctx: Context = Context{}.create();
     let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, name, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ''));
     });

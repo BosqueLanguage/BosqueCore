@@ -39,10 +39,6 @@ namespace CPPTransformNameManager {
         return CPPAssembly::NamespaceDecl{ name, subns, nsfuncs };
     }
 
-    %%
-    %% Note: This does not correctly build up our map if there are mulstple namespaces of
-    %% same nesting
-    %%
     recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, func_key: CPPAssembly::InvokeKey, func_val: CPPAssembly::NamespaceFunctionDecl): Map<CString, CPPAssembly::NamespaceDecl> {
         if(fullns.empty()) { %% Base case, we have recursed through all subdecls
             return nsdecls;
@@ -72,7 +68,7 @@ namespace CPPTransformNameManager {
         let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, func_key, func_val);
         let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, func };
 
-        %% We need to always update the map as sub namespaces may change (this handle multiple ns at same depth)
+        %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
         if(!nsdecls.has(ns_name)) {
             return nsdecls.insert(ns_name, updated_nsdecl);
         }
