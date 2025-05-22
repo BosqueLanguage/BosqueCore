@@ -114,7 +114,7 @@ entity MayErrorAnalysis {
     }
 
     recursive function processIfExpression(e: BSQAssembly::IfExpression): Bool {
-        return \/(MayErrorAnalysis::processExpression[recursive](e.iftest.exp), MayErrorAnalysis::processExpression[recursive](e.trueValue), MayErrorAnalysis::processExpression[recursive](e.falseValue));
+        return \/(MayErrorAnalysis::processExpression[recursive](e.texp), MayErrorAnalysis::processExpression[recursive](e.thenexp), MayErrorAnalysis::processExpression[recursive](e.elseexp));
     }
 
     recursive function processExpression(e: BSQAssembly::Expression): Bool {

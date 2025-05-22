@@ -264,23 +264,39 @@ entity ExplicitifyTransform {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processIfSimpleExpression(e: IfSimpleExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](e.texp, vmap));
+
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+
+        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
+    recursive method processIfTestExpression(e: IfTestExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExpression[recursive](e.texp, vmap);
+
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+
+        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
+    recursive method processIfBinderExpression(e: IfBinderExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExpression[recursive](e.texp, vmap);
+
+        let nvmap = vmap.extendMapping(e.binder.srcname);
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, nvmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, nvmap), e.etype);
+
+        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
     recursive method processIfExpression(e: IfExpression, vmap: VarMapping): Expression {
-        let ncond = this.processExpression[recursive](e.iftest.exp, vmap);
-        let nif = IfTest{ncond, e.iftest.itestopt};
-
-        if($binder = e.binder)@none {
-            let ntrue = this.processExpression[recursive](e.trueValue, vmap);
-            let nfalse = this.processExpression[recursive](e.falseValue, vmap);
-
-            return e[iftest=nif, trueValue=ntrue, falseValue=nfalse];
-        }
-        else {
-            let nvmap = vmap.extendMapping($binder.srcname);
-            
-            let ntrue = this.processExpression[recursive](e.thenbody, nvmap);
-            let nfalse = this.processExpression[recursive](e.falseValue, nvmap);
-
-            return e[iftest=nif, trueValue=ntrue, falseValue=nfalse];
+        match(e)@ {
+            IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e, vmap); }
+            | IfTestExpression => { return this.processIfTestExpression[recursive]($e, vmap); }
+            | IfBinderExpression => { return this.processIfBinderExpression[recursive]($e, vmap); }
         }
     }
 

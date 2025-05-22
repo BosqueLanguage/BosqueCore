@@ -674,34 +674,53 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(exp.etype, opexp, obinds);
     }
 
-    recursive method transformIfExpression(exp: BSQAssembly::IfExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let cexp, cctx, cobinds = this.processUnaryArg[recursive](exp.ifest.exp, ctx);
+    recursive method transformIfSimpleExpression(exp: BSQAssembly::IfSimpleExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
         
-        let tctx, ntexp = this.transformExpressionToSMT[recursive](exp.trueValue, cctx);
-        let fctx, nfexp = this.transformExpressionToSMT[recursive](exp.falseValue, tctx);
+        let tctx, nthenexp = this.transformExpressionToSMT[recursive](exp.thenexp, cctx);
+        let fctx, nelseexp = this.transformExpressionToSMT[recursive](exp.elseexp, tctx);
 
-        if($itest = exp.ifest.itest)@none {
-            if(ntexp)@<SafeResult> {
-                if(nfexp)@<SafeResult> {
-                    let ifop = SMTAssembly::IfThenElseSafeExpression{cexp, $ntexp.exp, $nfexp.exp};
-                    return fctx, this.wrapOperationResult(exp.etype, ifop, obinds);
-                }
-                else {
-                    xxxx;
-                }
+        if(nthenexp)@<SafeResult> {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseSafeExpression{ntexp, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResult(exp.etype, ifop, cobinds);
             }
             else {
-                if(nfexp)@<SafeResult> {
-                    xxxx;
-                }
-                else {
-                    let ifop = SMTAssembly::IfThenElseExpression{cexp, $ntexp.exp, $nfexp.exp};
-                    return fctx, this.wrapOperationResultWErr(exp.etype, ifop, obinds);
-                }
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nthenexp.exp}, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
             }
         }
         else {
-            abort; %% NOT IMPLEMENTED
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, $nthenexp.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nelseexp.exp}};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+    }
+
+    recursive method transformIfTestExpression(exp: BSQAssembly::IfTestExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfBinderExpression(exp: BSQAssembly::IfBinderExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfExpression(exp: BSQAssembly::IfExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        match(exp)@ {
+            BSQAssembly::IfSimpleExpression => { 
+                return this.transformIfSimpleExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::IfTestExpression => { 
+                return this.transformIfTestExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::IfBinderExpression => { 
+                return this.transformIfBinderExpression[recursive]($exp, ctx); 
+            }
         }
     }
 

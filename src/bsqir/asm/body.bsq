@@ -2,7 +2,6 @@ namespace BSQAssembly;
 
 entity BinderInfo {
     field srcname: VarIdentifier;
-    field implicitdef: Bool;
     field refineonfollow: Bool;
 }
 
@@ -425,20 +424,21 @@ entity MapEntryConstructorExpression provides Expression {
     field vexp: Expression;
 }
 
-entity IfTest {
-    field exp: Expression;
-    field itestopt: Option<ITest>;
+datatype IfExpression provides Expression using {
+    field texp: Expression;
+    field thenexp: Expression;
+    field elseexp: Expression;
 }
-
-entity IfExpression provides Expression {
-    field iftest: IfTest;
-    field binder: Option<BinderInfo>;
-    field trueValue: Expression;
-    field falseValue: Expression;
-
-    field trueBindType: Option<TypeSignature>;
-    field falseBindType: Option<TypeSignature>;
+of
+IfSimpleExpression { }
+| IfTestExpression { 
+    field itest: ITest;
 }
+| IfBinderExpression {
+    field itest: ITest;
+    field binder: BinderInfo;
+}
+;
 
 concept Statement {
     field sinfo: SourceInfo;

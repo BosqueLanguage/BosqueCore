@@ -460,37 +460,67 @@ entity ConstantSimplification {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
-    recursive method processIfExpression(e: IfExpression): Expression {
-        let ncond = this.processExpression[recursive](e.iftest.exp);
-        let ntrue = this.processExpression[recursive](e.trueValue);
-        let nfalse = this.processExpression[recursive](e.falseValue);
+    recursive method processIfSimpleExpression(e: IfSimpleExpression): Expression {
+        let ntexp = this.processExpression[recursive](e.texp);
+        let nthen = this.processExpression[recursive](e.thenexp);
+        let nelse = this.processExpression[recursive](e.elseexp);
 
-        if($itest = e.iftest.itest)@none {
-            if(ncond)@!<LiteralSimpleExpression> {
-                return e[iftest=ncond, trueValue=ntrue, falseValue=nfalse];
-            }
-            else {
-                if($ncond.value === 'true') {
-                    return ntrue;
-                }
-                else {
-                    return nfalse;
-                }
-            }
+        if(ntexp)@!<LiteralSimpleExpression> {
+            return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
         }
         else {
-            const op = this.processITestAsTest(ncond.sinfo, ncond.etype, $itest);
-            if(op)@!<PostfixBoolConstant> {
-                return e[iftest=IfTest{ncond, e.iftest.itestopt}, trueValue=ntrue, falseValue=nfalse];
+            if($ntexp.value === 'true') {
+                return nthen;
             }
             else {
-                if($op.value) {
-                    return ntrue;
-                }
-                else {
-                    return nfalse;
-                }
+                return nelse;
             }
+        }
+    }
+
+    recursive method processIfTestExpression(e: IfTestExpression): Expression {
+        let ntexp = this.processExpression[recursive](e.texp);
+        let nthen = this.processExpression[recursive](e.thenexp);
+        let nelse = this.processExpression[recursive](e.elseexp);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, e.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+        }
+        else {
+            if($op.value) {
+                return nthen;
+            }
+            else {
+                return nelse;
+            }
+        }
+    }
+
+    recursive method processIfBinderExpression(e: IfBinderExpression): Expression {
+        let ntexp = this.processExpression[recursive](e.texp);
+        let nthen = this.processExpression[recursive](e.thenexp);
+        let nelse = this.processExpression[recursive](e.elseexp);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, e.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+        }
+        else {
+            if($op.value) {
+                return nthen;
+            }
+            else {
+                return nelse;
+            }
+        }
+    }
+
+    recursive method processIfExpression(e: IfExpression): Expression {
+        match(e)@ {
+            IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e); }
+            | IfTestExpression => { return this.processIfTestExpression[recursive]($e); }
+            | IfBinderExpression => { return this.processIfBinderExpression[recursive]($e); }
         }
     }
 
