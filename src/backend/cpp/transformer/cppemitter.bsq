@@ -368,52 +368,34 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ind
     let params = ''; %% TODO: Parameters not implemented
     let rtype = emitTypeSignature(func.resultType); 
 
-    let pre: CString = CString::concat(rtype, ' ', name );
+    let pre: CString = CString::concat(indent, rtype, ' ', name );
     let params_impl: CString = CString::concat('(', params, ')');
 
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, indent), indent, '}%n;');
 }
 
-%% I suspect we will need to be a bit more cleveer with how we emit names, just a cstr for now
-function emitNamespaceDecl(nsdecl: CString, funcs: CString): CString {
-    return CString::concat('namespace ', nsdecl, ' {%n;', funcs, '}%n;%n;');
-}
-
 %% This name isnt very descriptinve since we emit from subns too
-recursive function emitNamespaceFromTopLevel(nsdecl: CPPAssembly::NamespaceDecl): CString {
+recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, indent: CString): CString {
     %% Emit namespace 
-    let ns = CString::concat('namespace ', nsdecl.nsname, '{%n;');
-
-    %% Emit functions
-    %*
-    let funcs_emission = nsdecl.nsfuncs.reduce<CString>(ns, fn(acc, key, func) => {
-        let indent: CString = '    ';
-        return CString::concat(indent, acc, emitNamespaceFunctionDecl(func, indent));           
-    });
-    *%
+    let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
+    let full_indent = CString::concat('    ', indent);
 
     %% Emit sub-namespace functions and their declarations
     let subns_emission = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
-        return CString::concat(acc, emitNamespaceFromTopLevel[recursive](decl));
+        return CString::concat(acc, emitNamespaceDecl[recursive](decl, full_indent));
     });
 
-    return CString::concat(subns_emission, '}%n;');
+    %% Emit functions
+    let funcs_emission = nsdecl.nsfuncs.reduce<CString>(subns_emission, fn(acc, key, func) => {
+        return CString::concat(acc, emitNamespaceFunctionDecl(func, full_indent)); 
+    });
+
+    return CString::concat(funcs_emission, indent, '}%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% First emit all namespace blocks with their functions
-
     let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, name, nsdecl) => {
-        return CString::concat(acc, emitNamespaceFromTopLevel(nsdecl));
-    });
-
-    let nsblocks = asm.nsfuncs.reduce<CString>('', fn(acc, nskey, funcs) => {
-        let emission = funcs.reduce<CString>('', fn(funcacc, ikey, func) => {
-            let indent: CString = '    ';
-            return CString::concat(indent, funcacc, emitNamespaceFunctionDecl(func, indent));
-        });
-        
-        return CString::concat(acc, emitNamespaceDecl(nskey.value, emission));
+        return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ''));
     });
 
     %% TODO: Other non namespace functions

@@ -40,10 +40,10 @@ namespace CPPTransformNameManager {
     }
 
     %%
-    %% Note: This DOES appear to correctly build up the namespace hierarchy like we want,
-    %% but we do not correctly emit corresponding cpp code
+    %% Note: This does not correctly build up our map if there are mulstple namespaces of
+    %% same nesting
     %%
-    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>): Map<CString, CPPAssembly::NamespaceDecl> {
+    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, func_key: CPPAssembly::InvokeKey, func_val: CPPAssembly::NamespaceFunctionDecl): Map<CString, CPPAssembly::NamespaceDecl> {
         if(fullns.empty()) { %% Base case, we have recursed through all subdecls
             return nsdecls;
         }
@@ -59,15 +59,27 @@ namespace CPPTransformNameManager {
             cur_nsdecl = createNamespaceDecl(ns_name);
         }
 
-        %% Recursively process remaining names
-        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns);
+        %% See if we can insert our namespace function decl
+        var func: Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>;
+        if(remaining_ns_names.empty()) {
+            func = cur_nsdecl.nsfuncs.insert(func_key, func_val);
+        }
+        else{
+            func = cur_nsdecl.nsfuncs;
+        }
 
-        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.nsfuncs };
-        
-        if(!nsdecls.has(updated_nsdecl.nsname)) {
+        %% Recursively process remaining names
+        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, func_key, func_val);
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, func };
+
+        %% We need to always update the map as sub namespaces may change (this handle multiple ns at same depth)
+        if(!nsdecls.has(ns_name)) {
             return nsdecls.insert(ns_name, updated_nsdecl);
         }
-        return nsdecls;
+        else {
+            let tmp_map = nsdecls.delete(ns_name);
+            return tmp_map.insert(ns_name, updated_nsdecl);
+        }
     }
 }
 
@@ -312,39 +324,21 @@ entity CPPTransformer {
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{ bsqasm };            
 
-        %%
-        %% As of now we do two passes, first builds the correct hierarchy of namespaces for
-        %% our nsdecls field, second inserts functions into correct namespace declaration
-        %% (I suspect these can and should be merged)
-        %%
         let transformer_nsdecls = bsqasm.allfuncs
             .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
             .reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
                 Map<CString, CPPAssembly::NamespaceDecl>{},
                 fn(acc, ikey) => {
-                    let fullns = bsqasm.nsfuncs.get(ikey).fullns;
-                    return CPPTransformNameManager::getNamespaceDeclMapping(fullns, acc);
-                }
-            );
- 
-
-        %% Will leave for now
-        let transformer_nsfuncs = bsqasm.allfuncs
-            .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
-            .reduce<Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>>(
-                Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>{},
-                fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    let map = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{cppdecl.invokeKey => cppdecl};
-                    return acc.insert(cppdecl.ns, map);
-                });
+                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.invokeKey, cppdecl);
+                }
+            );
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls,
-            nsfuncs = transformer_nsfuncs,
             allfuncs = transformer_allfuncs
         };
     }

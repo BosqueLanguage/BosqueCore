@@ -69,6 +69,5 @@ entity NamespaceDecl {
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
-    field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
     field allfuncs: List<InvokeKey>;
 }
