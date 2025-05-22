@@ -61,10 +61,6 @@
 
 ;;--SUBTYPE_PREDICATES--;;
 
-;;NLA options
-(declare-fun @NLA_I_mult (Int Int) Int)
-(declare-fun @NLA_I_div (Int Int) Int)
-
 ;;--GLOBAL_DECLS--;;
 
 ;;--PRE_FUNCS--;;

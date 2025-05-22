@@ -2134,6 +2134,8 @@ class InstantiationPropagator {
         InstantiationPropagator.loadWellKnownType(assembly, "CRegex", wellknownTypes);
 
         let iim = new InstantiationPropagator(assembly, wellknownTypes);
+        iim.instantiateTypeSignature(iim.getWellKnownType("None"), undefined);
+        iim.instantiateTypeSignature(iim.getWellKnownType("Bool"), undefined);
 
         if(roonts !== undefined) {
             const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;

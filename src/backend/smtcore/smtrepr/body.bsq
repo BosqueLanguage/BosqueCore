@@ -228,8 +228,8 @@ datatype BinaryArithExpression provides SafeExpression using {
 of
 BinAddExpression { }
 | BinSubExpression { }
-| BinMultExpression { field useUninterpreted: Bool; }
-| BinDivExpression {field useUninterpreted: Bool; }
+| BinMultExpression { }
+| BinDivExpression { }
 ;
 
 datatype BinaryKeyEqExpression provides SafeExpression 

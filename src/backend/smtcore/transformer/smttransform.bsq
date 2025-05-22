@@ -329,15 +329,13 @@ entity SMTTransformer {
         abort; %% Not implemented
     }
 
-    method transformITestAsTest(op: BSQAssembly::PostfixIsTest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        let sinfo = op.sinfo;
-
-        match($itest = op.ttest)@ {
-            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+    method transformITestAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        match(itest)@ {
+            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(sinfo, srctype, $itest, ctx, bexp); }
+            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(sinfo, srctype, $itest, ctx, bexp); }
+            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(sinfo, srctype, $itest, ctx, bexp); }
+            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(sinfo, srctype, $itest, ctx, bexp); }
+            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(sinfo, srctype, $itest, ctx, bexp); }
         }
     }
 
@@ -468,7 +466,7 @@ entity SMTTransformer {
                 BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
                 | BSQAssembly::PostfixAccessFromIndex => { abort; }
-                | BSQAssembly::PostfixIsTest => { return this.transformITestAsTest($op, pstate.0, pstate.1); }
+                | BSQAssembly::PostfixIsTest => { return this.transformITestAsTest($op.sinfo, $op.baseType, $op.ttest, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAsConvert => { return this.processITestAsConvert($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAssignFields => { abort; }
                 | BSQAssembly::PostfixInvokeStatic => { abort; }
@@ -523,15 +521,9 @@ entity SMTTransformer {
         }
     }
 
-    function useUninterpretedOps(tkey: BSQAssembly::TypeKey): Bool {
-        return \/(tkey === 'Int'<BSQAssembly::TypeKey>, tkey === 'BigInt'<BSQAssembly::TypeKey>, tkey === 'Nat'<BSQAssembly::TypeKey>, tkey === 'BigNat'<BSQAssembly::TypeKey>);
-    }
-
     recursive method transformBinMultExpression(exp: BSQAssembly::BinMultExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let hasconstarg = \/(lexp?<SMTAssembly::LiteralSimpleExpression>, rexp?<SMTAssembly::LiteralSimpleExpression>);
-        let isuniterpreted = SMTTransformer::useUninterpretedOps(exp.etype.tkeystr);
-        let multop = SMTAssembly::BinMultExpression{lexp, rexp, /\(!hasconstarg, isuniterpreted)};
+        let multop = SMTAssembly::BinMultExpression{lexp, rexp};
 
         return nctx, this.wrapOperationResult(exp.etype, multop, obinds);
     }
@@ -540,9 +532,7 @@ entity SMTTransformer {
         let smtetype = this.transformStdTypeToSMT(exp.etype);
 
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let hasconstarg = \/(lexp?<SMTAssembly::LiteralSimpleExpression>, rexp?<SMTAssembly::LiteralSimpleExpression>);
-        let isuniterpreted = SMTTransformer::useUninterpretedOps(exp.etype.tkeystr);
-        let divop = SMTAssembly::BinDivExpression{lexp, rexp, /\(!hasconstarg, isuniterpreted)};
+        let divop = SMTAssembly::BinDivExpression{lexp, rexp};
 
         let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}};
         let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
@@ -703,7 +693,35 @@ entity SMTTransformer {
     }
 
     recursive method transformIfTestExpression(exp: BSQAssembly::IfTestExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        abort; %% NOT IMPLEMENTED
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
+        let eexp = this.wrapOperationResult(exp.texp.etype, ntexp, cobinds);
+        
+        let tttest, ttctx = this.transformITestAsTest(exp.sinfo, exp.texp.etype, exp.itest, cctx, eexp);
+        let nitest, nctx, fobinds = this.unpackSingleResultErrors(ttctx, tttest);
+
+        let tctx, nthenexp = this.transformExpressionToSMT[recursive](exp.thenexp, nctx);
+        let fctx, nelseexp = this.transformExpressionToSMT[recursive](exp.elseexp, tctx);
+
+        if(nthenexp)@<SafeResult> {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseSafeExpression{nitest, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResult(exp.etype, ifop, fobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{nitest, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nthenexp.exp}, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, fobinds);
+            }
+        }
+        else {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseExpression{nitest, $nthenexp.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nelseexp.exp}};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, fobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{nitest, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, fobinds);
+            }
+        }
     }
 
     recursive method transformIfBinderExpression(exp: BSQAssembly::IfBinderExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {

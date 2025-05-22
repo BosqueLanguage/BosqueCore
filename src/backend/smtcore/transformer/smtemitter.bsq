@@ -428,24 +428,14 @@ recursive function emitBinMultExpression(e: SMTAssembly::BinMultExpression): CSt
     let lhs = emitSafeExpression[recursive](e.lhs);
     let rhs = emitSafeExpression[recursive](e.rhs);
 
-    if(e.useUninterpreted) {
-        return CString::concat('(@NLA_I_mult ', lhs, ' ', rhs, ')');
-    }
-    else {
-        return CString::concat('(* ', lhs, ' ', rhs, ')');
-    }
+    return CString::concat('(* ', lhs, ' ', rhs, ')');
 }
 
 recursive function emitBinDivExpression(e: SMTAssembly::BinDivExpression): CString {
     let lhs = emitSafeExpression[recursive](e.lhs);
     let rhs = emitSafeExpression[recursive](e.rhs);
     
-    if(e.useUninterpreted) {
-        return CString::concat('(@NLA_I_div ', lhs, ' ', rhs, ')');
-    }
-    else {
-        return CString::concat('(/ ', lhs, ' ', rhs, ')');
-    }
+    return CString::concat('(/ ', lhs, ' ', rhs, ')');
 }
 
 recursive function emitBinaryArithExpression(e: SMTAssembly::BinaryArithExpression): CString {
