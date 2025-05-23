@@ -35,6 +35,11 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 }
 *%
 
+%%
+%% Not totaly sure if this is done in the parameter decl or in the args, but we will need to use the shuffle field
+%% to correctly determine the position of our arguments (for the sake of named parameters)
+%%
+
 entity ParameterDecl {
     field pname: Identifier;
     field ptype: TypeSignature;

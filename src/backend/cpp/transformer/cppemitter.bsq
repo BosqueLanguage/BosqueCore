@@ -441,11 +441,39 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return CString::concat(funcs_emission, indent, '}%n;');
 }
 
+function findNamespaceFunctionDecl(decls: List<NamespaceDecl>, ikey: CPPAssembly::InvokeKey): CPPAssembly::NamespaceFunctionDecl {
+    
+    %%
+    %% This is actually a bit trickier than I thought because we nneed to traverse subns for every ns as well?
+    %% May not quite work...
+    %%
+    return decls.reduce<CPPAssembly::NamespaceFunctionDecl>(CPPAssembly::NamespaceFunctionDecl{},
+        fn(acc, decl) => {
+            if(decl.nsfuncs.has(ikey)) {
+                return decl.nsfuncs.get(ikey);
+            }
+
+        });
+}
+
+%% I suspect we will need separate cases for entities, types, enums and such
+function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl): CString {
+    let pre = decl.invokeKey.value;
+    let params = emitParameters(decl.params);
+    return CString::concat(pre, '(', params, ');%n;');
+}
+
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
+    %% Emit forward declaration (only supports ns funcs right now :P )
+    let fwd_decl_emission = asm.allfuncs.reduce<CString>('', fn(acc, ikey) => {
+        let funcdecl = findNamespaceFunctionDecl(asm.nsdecls, ikey);
+        return CString::concat(acc, emitFunctionForwardDeclaration(funcdecl));
+    });
+
     %% Likely need to add support for an empty namespace (or reserved), when creating ctx
     %% if we pass in no namespace key (or empty string) regex gets mad
     let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}}; %% No known namespace yet
-    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, name, nsdecl) => {
+    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
     });
 
