@@ -549,6 +549,12 @@ recursive function emitMapEntryConstructorExpression(e: SMTAssembly::MapEntryCon
     return CString::concat('(', consname, ops, ')');
 }
 
+recursive function emitLetSafeExpression(e: SMTAssembly::LetSafeExpression): CString {
+    let vbind = CString::concat('((', e.vbind.value, ' ', emitSafeExpression[recursive](e.value), '))');
+    let inexp = emitSafeExpression[recursive](e.inexp);
+    return CString::concat('(let ', vbind, ' ', inexp, ')');
+}
+
 recursive function emitIfThenElseSafeExpression(e: SMTAssembly::IfThenElseSafeExpression): CString {
     let tst = emitSafeExpression[recursive](e.iftest);
     let tv = emitSafeExpression[recursive](e.trueexp);
@@ -638,6 +644,12 @@ recursive function emitIfThenElseExpression(e: SMTAssembly::IfThenElseExpression
     return CString::concat('(ite ', tst, flows, ')');
 }
 
+recursive function emitLetGeneralExpression(e: SMTAssembly::LetGeneralExpression, eev: SMTEmitterEnv): CString {
+    let vbind = CString::concat('((', e.vbind.value, ' ', emitSafeExpression[recursive](e.value), '))');
+    let inexp = emitExpression[recursive](e.inexp, eev);
+    return CString::concat('(let ', vbind, ' ', inexp, ')');
+}
+
 recursive function emitLetWErrorsExpression(e: SMTAssembly::LetWErrorsExpression, eev: SMTEmitterEnv): CString {
     abort;
 }
@@ -681,6 +693,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression): CString {
         | SMTAssembly::KeyLessExpression => { return emitKeyLessExpression[recursive]($e); }
         | SMTAssembly::BinaryNumericCompareExpression => { return emitBinaryNumericCompareExpression[recursive]($e); }
         | SMTAssembly::MapEntryConstructorExpression => { return emitMapEntryConstructorExpression[recursive]($e); }
+        | SMTAssembly::LetSafeExpression => { return emitLetSafeExpression[recursive]($e); }
         | SMTAssembly::IfThenElseSafeExpression => { return emitIfThenElseSafeExpression[recursive]($e); }
         | SMTAssembly::UnwrapFromResultExpression => { return emitUnwrapFromResultExpression[recursive]($e); }
         | SMTAssembly::WrapIntoResultExpression => { return emitWrapIntoResultExpression[recursive]($e); }
@@ -693,6 +706,7 @@ recursive function emitExpression(e: SMTAssembly::Expression, eev: SMTEmitterEnv
         | SMTAssembly::AssertExpression => { return emitAssertExpression($e, eev); }
         | SMTAssembly::AssertSetExpression => { return emitAssertSetExpression($e, eev); }
         | SMTAssembly::ConvertResultExpression => { return emitConvertResultExpression[recursive]($e, eev); }
+        | SMTAssembly::LetGeneralExpression => { return emitLetGeneralExpression[recursive]($e, eev); }
         | SMTAssembly::LetWErrorsExpression => { return emitLetWErrorsExpression[recursive]($e, eev); }
         | SMTAssembly::IfThenElseExpression => { return emitIfThenElseExpression[recursive]($e, eev); }
         | SMTAssembly::CallFunctionExpression => { return emitCallFunctionExpression[recursive]($e, eev); }

@@ -13,11 +13,16 @@ entity VarMapping {
         var nbm: Map<VarIdentifier, VarIdentifier>;
 
         if(!this.bnmap.has(name)) {
-            nbm = this.bnmap.insert(name, VarIdentifier::from(name.value.append('_$v_')));
+            nbm = this.bnmap.insert(name, name);
         }
         else {
             let nname = this.bnmap.get(name);
-            nbm = this.bnmap.set(name, VarIdentifier::from(nname.value.append('$')));
+            if(nname === name) {
+                nbm = this.bnmap.set(name, VarIdentifier::from(name.value.append('_$v$_')));
+            }
+            else {
+                nbm = this.bnmap.set(name, VarIdentifier::from(nname.value.append('$')));
+            }
         }
 
         return VarMapping{ nbm };
@@ -286,10 +291,13 @@ entity ExplicitifyTransform {
         let ntexp = this.processExpression[recursive](e.texp, vmap);
 
         let nvmap = vmap.extendMapping(e.binder.srcname);
+        let nname = vmap.resolveVariableAsNeeded(e.binder.srcname);
+        let nbinder = BinderInfo{nname, e.binder.refineonfollow};
+
         let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, nvmap), e.etype);
         let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, nvmap), e.etype);
 
-        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+        return e[binder=nbinder, texp=ntexp, thenexp=nthen, elseexp=nelse];
     }
 
     recursive method processIfExpression(e: IfExpression, vmap: VarMapping): Expression {

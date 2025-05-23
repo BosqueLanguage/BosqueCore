@@ -300,7 +300,7 @@ entity MapEntryConstructorExpression provides SafeExpression {
     field vexp: SafeExpression;
 }
 
-entity LetExpression provides SafeExpression {
+entity LetSafeExpression provides SafeExpression {
     field vbind: Identifier;
     field value: SafeExpression;
     field inexp: SafeExpression;
@@ -354,6 +354,12 @@ entity IfThenElseExpression provides Expression {
     field iftest: SafeExpression;
     field trueexp: Expression;
     field falseexp: Expression;
+}
+
+entity LetGeneralExpression provides Expression {
+    field vbind: Identifier;
+    field value: SafeExpression;
+    field inexp: Expression;
 }
 
 entity LetWErrorsExpression provides Expression {
