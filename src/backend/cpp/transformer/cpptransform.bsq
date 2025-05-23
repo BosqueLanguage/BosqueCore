@@ -302,13 +302,14 @@ entity CPPTransformer {
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let fullns = decl.fullns;
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
         %% Parameters
         let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
 
         let body = this.transformBodyToCpp(decl.body);
 
-        return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
+        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, decl.name.value, ikey, none, res, body};
     }   
 
     %*

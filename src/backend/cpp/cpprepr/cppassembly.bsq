@@ -38,6 +38,7 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl {
     field ns: NamespaceKey;
+    field fullns: List<CString>;
     field name: CString;
     field invokeKey: InvokeKey;
 
