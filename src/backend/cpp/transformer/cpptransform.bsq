@@ -290,6 +290,15 @@ entity CPPTransformer {
         return stmts.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
     }
 
+    method transformParameterDecl(decl: List<BSQAssembly::InvokeParameterDecl>): List<CPPAssembly::ParameterDecl> {
+        return decl.map<CPPAssembly::ParameterDecl>(fn(pdecl) => {
+            return CPPAssembly::ParameterDecl{ 
+                CPPTransformNameManager::convertIdentifier(pdecl.pname), 
+                CPPTransformNameManager::convertTypeSignature(pdecl.ptype) 
+            };
+        });
+    }
+
     method transformBodyToCpp(body: BSQAssembly::BodyImplementation): CPPAssembly::BodyImplementation {
         match(body)@ {
             BSQAssembly::StandardBodyImplementation => { 
@@ -304,12 +313,12 @@ entity CPPTransformer {
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let fullns = decl.fullns;
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
-        %% Parameters
+        let params = this.transformParameterDecl(decl.params);
         let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
 
         let body = this.transformBodyToCpp(decl.body);
 
-        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, decl.name.value, ikey, none, res, body};
+        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, decl.name.value, ikey, params, res, body};
     }   
 
     %*

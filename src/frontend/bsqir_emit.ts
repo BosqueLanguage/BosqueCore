@@ -2024,8 +2024,6 @@ class BSQIREmitter {
             }
         }
 
-        console.log(decl);
-
         this.emitNamespaceConstDecls(decl.fullnamespace, decl.consts);
 
         this.emitFunctionDecls(decl.fullnamespace, undefined, decl.functions.map((fd) => [fd, asminstantiation.functionbinds.get(fd.name)]), fmt);

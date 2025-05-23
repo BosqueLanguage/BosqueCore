@@ -63,17 +63,22 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): CString {
     return nsk.value;
 }
 
-function emitResolvedNamespace(ikey: CPPAssembly::InvokeKey, ns: CPPAssembly::NamespaceKey): CString {
-    let kval = emitInvokeKey(ikey);
-    let nsval = emitNamespaceKey(ns);
-
-    %% We can compare the invoke key and namespace value - emit only portion of ikey that is not in
-    %% nskey
-    let resolved = kval.removePrefixString(nsval);
-    if(resolved.startsWithString('::')) {
-        return resolved.removePrefixString('::');
-    }
-    return resolved;
+%%
+%% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
+%% giving resolved namespace for given scope
+%%
+function emitResolvedNamespace(fullns_list: List<CString>, fullns_key: CPPAssembly::NamespaceKey): CString {
+    let fullns: CString = emitNamespaceKey(fullns_key);
+    return fullns_list.reduce<CString>(fullns, fn(acc, s) => {
+        if(acc.startsWithString(s)) {
+            let nopre = acc.removePrefixString(s);
+            if(nopre.startsWithString('::')) {
+                return nopre.removePrefixString('::');
+            }
+            return nopre;
+        }
+        return acc;
+    });
 }
 
 function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): CString {
@@ -268,24 +273,11 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
 }
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
+    let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns); 
+
     let ident = emitInvokeKey(e.ikey);
+    let name = ident.removePrefixString(e.ns.value);
     
-    let declaredns = e.ns.value;
-    let cur_fullns = ctx.fullns_list; %% ns we are currently in
-
-    %% Remove all matching prefix strings
-    let resolvedns = cur_fullns.reduce<CString>(declaredns, fn(acc, s) => {
-        if(acc.startsWithString(s)) {
-            let nopre = acc.removePrefixString(s);
-            if(nopre.startsWithString('::')) {
-                return nopre.removePrefixString('::');
-            }
-            return nopre;
-        }
-        return acc;
-    });
-
-    let name = ident.removePrefixString(declaredns);
     var resolvedName: CString;
     if(name.startsWithString('::')) {
         resolvedName = name.removePrefixString('::');
@@ -398,10 +390,20 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
     }
 }
 
+function emitParameters(params: List<CPPAssembly::ParameterDecl>): CString {
+    let all_params = params.map<CString>(fn(param) => {
+        let ptype = emitTypeSignature(param.ptype);
+        let pident = emitIdentifier(param.pname);
+        return CString::concat(ptype, ' ', pident);
+    });
+
+    return CString::joinAll(', ', all_params);
+}
+
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
     let name = func.name;
     let nskey = emitNamespaceKey(func.ns);
-    let params = ''; %% TODO: Parameters not implemented
+    let params = emitParameters(func.params); %% TODO: Parameters not implemented
     let rtype = emitTypeSignature(func.resultType); 
 
     let nctx = ctx.updateCurrentNamespace(func.ns, func.fullns);

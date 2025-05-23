@@ -20,6 +20,28 @@ concept Operation {
 concept Statement {
 }
 
+datatype ArgumentValue using {
+    field exp: Expression;
+}
+of
+RefArgumentValue { } %% TODO: Not implemented
+| PositionalArgumentValue { } %% TODO: Not implemented
+| NamedArgumentValue { field name: VarIdentifier; }
+| SpreadArgumentValue { } %% TODO: Not implemented
+;
+
+entity ArgumentList {
+    field args: List<ArgumentValue>;
+}
+
+entity InvokeArgumentInfo {
+    field name: Identifier;
+    %% field rec: RecursiveAnnotation; %% TODO: Not supported
+    field args: ArgumentList;
+
+    %% Not quite sure if we type stuff thats in bsqir
+}
+
 entity IfStatement provides Statement {
     field cond: Expression;
     field trueBlock: BlockStatement;

@@ -35,6 +35,13 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 }
 *%
 
+entity ParameterDecl {
+    field pname: Identifier;
+    field ptype: TypeSignature;
+
+    %% TODO: Support ref/rest params, default vals
+}
+
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl {
     field ns: NamespaceKey;
@@ -42,7 +49,8 @@ entity NamespaceFunctionDecl {
     field name: CString;
     field invokeKey: InvokeKey;
 
-    field params: None; %% TODO: Parameters not implemented
+    %% currently implementing
+    field params: List<ParameterDecl>;
 
     field resultType: TypeSignature;
 
