@@ -165,10 +165,15 @@ function emitAccessVariableExpression(e: SMTAssembly::AccessVariableExpression):
 }
 
 recursive function emitTermifyExpression(e: SMTAssembly::TermifyExpression): CString {
-    let consname = SMTNameManager::generateStructTermConstructorName(e.fromtype);
-    let vv = emitSafeExpression[recursive](e.value);
+    if(e.fromtype === 'None'<SMTAssembly::TypeKey>) {
+        return '@Term-mk-None';
+    }
+    else {
+        let consname = SMTNameManager::generateStructTermConstructorName(e.fromtype);
+        let vv = emitSafeExpression[recursive](e.value);
     
-    return CString::concat('(', consname, ' ', vv, ')');
+        return CString::concat('(', consname, ' ', vv, ')');
+    }
 }
 
 recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression): CString {
