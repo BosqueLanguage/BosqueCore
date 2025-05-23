@@ -202,12 +202,29 @@ entity CPPTransformer {
         return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
+    method transformArgument(arg: BSQAssembly::ArgumentValue): CPPAssembly::ArgumentValue {
+        let exp = this.transformExpressionToCpp[recursive](arg.exp);
+
+        match(arg)@ {
+            BSQAssembly::NamedArgumentValue => { return CPPAssembly::NamedArgumentValue{ 
+                exp, CPPTransformNameManager::convertVarIdentifier($arg.name) }; }
+            | BSQAssembly::PositionalArgumentValue => { return CPPAssembly::PositionalArgumentValue{ exp }; }
+            | _ => { abort; } %% TODO: Not implemented
+        }
+    }
+
+    method transformArgumentList(bsqargs: BSQAssembly::ArgumentList): CPPAssembly::ArgumentList {
+        let alist = bsqargs.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
+        return CPPAssembly::ArgumentList{ alist };   
+    }
+
     method transformCallNamespaceFunctionExpression(expr: BSQAssembly::CallNamespaceFunctionExpression): CPPAssembly::CallNamespaceFunctionExpression {
         let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
+        let args = this.transformArgumentList(expr.argsinfo.args);
 
-        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, none };
+        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, args };
     }
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {

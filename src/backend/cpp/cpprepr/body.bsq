@@ -25,7 +25,7 @@ datatype ArgumentValue using {
 }
 of
 RefArgumentValue { } %% TODO: Not implemented
-| PositionalArgumentValue { } %% TODO: Not implemented
+| PositionalArgumentValue { } %% Implemented but broken (no cpp support for named args)
 | NamedArgumentValue { field name: VarIdentifier; }
 | SpreadArgumentValue { } %% TODO: Not implemented
 ;
@@ -34,6 +34,7 @@ entity ArgumentList {
     field args: List<ArgumentValue>;
 }
 
+%*
 entity InvokeArgumentInfo {
     field name: Identifier;
     %% field rec: RecursiveAnnotation; %% TODO: Not supported
@@ -41,6 +42,7 @@ entity InvokeArgumentInfo {
 
     %% Not quite sure if we type stuff thats in bsqir
 }
+*%
 
 entity IfStatement provides Statement {
     field cond: Expression;
@@ -82,7 +84,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
 
-    field args: None; %% TODO: Not implemented
+    field args: ArgumentList;
 }
 
 entity AccessVariableExpression provides Expression {

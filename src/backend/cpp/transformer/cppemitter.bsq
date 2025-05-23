@@ -1,11 +1,5 @@
 namespace CPPEmitter;
 
-%%
-%% TODO: We will need to properly overload our conversion from bosque types to cpp types to ensure
-%% everything stays safe (such as Nat in bosque only being 63 bits not 64) and all operations on 
-%% these values need to be provided via overloading and using compiler builtins (like __builtin_add_overflow__)
-%%
-
 %% CPP Pre-defined backend
 namespace PathStack {
     function emitPathStackCreate(): CString {
@@ -38,7 +32,6 @@ entity Context {
     field fullns_list: List<CString>; %% ['Main', 'Foo', 'Bar', ...]
 
     method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString> ): Context {
-        %% If we need more context will need to modify constructor
         return Context{ new_ns, new_nsname };
     }
 }
@@ -272,6 +265,21 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
+function emitArgumentValue(av: CPPAssembly::ArgumentValue, ctx: Context): CString {
+    let expr = emitExpression[recursive](av.exp, ctx);
+
+    match(av)@ {
+        CPPAssembly::NamedArgumentValue => { return expr; } %% Not functional, just emits expr no named param
+        | CPPAssembly::PositionalArgumentValue => { return expr; }
+        | _ => { abort; } %% TODO: Not Implemented
+    }
+}
+
+function emitArgumentList(al: CPPAssembly::ArgumentList, ctx: Context): CString {
+    let emit_al = al.args.map<CString>(fn(arg) => emitArgumentValue(arg, ctx));
+    return CString::joinAll(', ', emit_al);
+}
+
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns); 
 
@@ -286,11 +294,12 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
         resolvedName = name;
     }
 
-    %% No arguments supported currently
+    let args = emitArgumentList(e.args, ctx);
+
     if(resolvedns !== '') {
-        return CString::concat(resolvedns, '::', resolvedName,'()');
+        return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
     }
-    return CString::concat(resolvedName, '()');
+    return CString::concat(resolvedName, '(', args, ')');
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
@@ -403,7 +412,7 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>): CString {
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
     let name = func.name;
     let nskey = emitNamespaceKey(func.ns);
-    let params = emitParameters(func.params); %% TODO: Parameters not implemented
+    let params = emitParameters(func.params);
     let rtype = emitTypeSignature(func.resultType); 
 
     let nctx = ctx.updateCurrentNamespace(func.ns, func.fullns);
@@ -434,7 +443,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
     %% Likely need to add support for an empty namespace (or reserved), when creating ctx
-    %% if we pass in no namespace key (or empty string) it gets mad
+    %% if we pass in no namespace key (or empty string) regex gets mad
     let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}}; %% No known namespace yet
     let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, name, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
