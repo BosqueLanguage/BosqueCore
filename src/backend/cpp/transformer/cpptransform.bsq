@@ -354,11 +354,21 @@ entity CPPTransformer {
                 fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.invokeKey, cppdecl);
+                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.ikey, cppdecl);
                 }
             );
 
-        let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
+        let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
+            let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
+            if(bsqasm.nsfuncs.has(ikey)) {
+                let bsqfunc = bsqasm.nsfuncs.get(ikey);
+                return CPPAssembly::FunctionDecl{ CPPTransformNameManager::convertNamespaceKey(bsqfunc.declaredInNS), 
+                    bsqfunc.fullns, cppikey };
+            }
+            else {
+                abort; 
+            }
+        });
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls,

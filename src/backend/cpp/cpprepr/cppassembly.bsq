@@ -7,6 +7,11 @@ entity SourceInfo {
     field column: Nat;
 }
 
+concept AbstractDecl {
+    field declaredInNS: NamespaceKey;
+    field fullns: List<CString>;
+}
+
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
 const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPPAssembly::namespaceComponentRE}/c;
 type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
@@ -47,19 +52,23 @@ entity ParameterDecl {
     %% TODO: Support ref/rest params, default vals
 }
 
+%%
+%% Will need to move this fullns to a more general entity (or maybe just concept) because
+%% other stuff like types and enums and stuff will also need namespace resolution
+%%
+
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
-entity NamespaceFunctionDecl {
-    field ns: NamespaceKey;
-    field fullns: List<CString>;
+entity NamespaceFunctionDecl provides AbstractDecl {
     field name: CString;
-    field invokeKey: InvokeKey;
-
-    %% currently implementing
+    field ikey: InvokeKey;
     field params: List<ParameterDecl>;
-
     field resultType: TypeSignature;
-
     field body: BodyImplementation;
+}
+
+%% Use for function lookups (and maybe other stuff in the future)
+entity FunctionDecl provides AbstractDecl {
+    field ikey: InvokeKey;
 }
 
 entity NamespaceDecl {
@@ -74,5 +83,5 @@ entity NamespaceDecl {
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
-    field allfuncs: List<InvokeKey>;
+    field allfuncs: List<FunctionDecl>;
 }

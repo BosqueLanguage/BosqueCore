@@ -411,11 +411,11 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>): CString {
 
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
     let name = func.name;
-    let nskey = emitNamespaceKey(func.ns);
+    let nskey = emitNamespaceKey(func.declaredInNS);
     let params = emitParameters(func.params);
     let rtype = emitTypeSignature(func.resultType); 
 
-    let nctx = ctx.updateCurrentNamespace(func.ns, func.fullns);
+    let nctx = ctx.updateCurrentNamespace(func.declaredInNS, func.fullns);
 
     let pre: CString = CString::concat(indent, rtype, ' ', name );
     let params_impl: CString = CString::concat('(', params, ')');
@@ -441,32 +441,45 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return CString::concat(funcs_emission, indent, '}%n;');
 }
 
-function findNamespaceFunctionDecl(decls: List<NamespaceDecl>, ikey: CPPAssembly::InvokeKey): CPPAssembly::NamespaceFunctionDecl {
-    
-    %%
-    %% This is actually a bit trickier than I thought because we nneed to traverse subns for every ns as well?
-    %% May not quite work...
-    %%
-    return decls.reduce<CPPAssembly::NamespaceFunctionDecl>(CPPAssembly::NamespaceFunctionDecl{},
-        fn(acc, decl) => {
-            if(decl.nsfuncs.has(ikey)) {
-                return decl.nsfuncs.get(ikey);
-            }
+%%
+%% May be nice to handle case where func doesnt exist
+%%
+recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, func: CPPAssembly::FunctionDecl, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
+    let ikey = func.ikey;
 
-        });
+    let ns_name = fullns.front();
+    let remaining_ns_names = fullns.popFront().1;
+
+    %% Found func we are looking for
+    if(remaining_ns_names.empty() && decls.has(ns_name)) {
+        let cur_nsfuncs = decls.get(ns_name).nsfuncs;
+        if(!cur_nsfuncs.has(func.ikey)) {
+            abort; %% Func does not exist
+        }
+        return cur_nsfuncs.get(func.ikey);
+    }
+
+    if(decls.has(ns_name)) {
+        let cur_nsdecl = decls.get(ns_name);
+        return findNamespaceFunctionDecl[recursive](cur_nsdecl.subns, func, remaining_ns_names);
+    }
+    else {
+        abort; %% Namespace does not exist
+    }
 }
 
 %% I suspect we will need separate cases for entities, types, enums and such
 function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl): CString {
-    let pre = decl.invokeKey.value;
+    let pre = decl.ikey.value;
+    let rtype = emitTypeSignature(decl.resultType); 
     let params = emitParameters(decl.params);
-    return CString::concat(pre, '(', params, ');%n;');
+    return CString::concat(rtype, ' ', pre, '(', params, ');%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% Emit forward declaration (only supports ns funcs right now :P )
-    let fwd_decl_emission = asm.allfuncs.reduce<CString>('', fn(acc, ikey) => {
-        let funcdecl = findNamespaceFunctionDecl(asm.nsdecls, ikey);
+    %% Emit forward declaration (only supports namespace funcs right now :P )
+    let fwddecl_emission = asm.allfuncs.reduce<CString>('', fn(acc, func) => {
+        let funcdecl = findNamespaceFunctionDecl[recursive](asm.nsdecls, func, func.fullns);
         return CString::concat(acc, emitFunctionForwardDeclaration(funcdecl));
     });
 
@@ -481,5 +494,5 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    return CString::join('%n;', ns_emission);
+    return CString::join('%n;', fwddecl_emission, ns_emission, '%n;');
 }
