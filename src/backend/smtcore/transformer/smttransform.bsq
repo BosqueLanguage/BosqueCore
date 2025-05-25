@@ -173,7 +173,7 @@ entity SMTTransformer {
         }
         else {
             let rexp = SMTAssembly::WrapIntoResultExpression{smtetype, exp};
-            let lerr = SMTAssembly::LetWErrorsExpression{$binds, rexp};
+            let lerr = SMTAssembly::LetWErrorsExpression{smtetype, $binds, rexp};
 
             return ErrorResult{smtetype, lerr};
         }
@@ -186,7 +186,7 @@ entity SMTTransformer {
             return ErrorResult{smtetype, exp};
         }
         else {
-            return ErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{$binds, exp}};
+            return ErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{smtetype, $binds, exp}};
         }
     }
 

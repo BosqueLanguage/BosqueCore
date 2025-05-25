@@ -363,7 +363,8 @@ entity LetGeneralExpression provides Expression {
 }
 
 entity LetWErrorsExpression provides Expression {
-    field vvbind: List<(|Expression, Identifier|)>;
+    field errtype: TypeKey;
+    field vvbind: List<(|Expression, TypeKey, Identifier|)>;
     field inexp: Expression;
 
     invariant !$vvbind.empty();

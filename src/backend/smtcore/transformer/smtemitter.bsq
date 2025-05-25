@@ -656,7 +656,18 @@ recursive function emitLetGeneralExpression(e: SMTAssembly::LetGeneralExpression
 }
 
 recursive function emitLetWErrorsExpression(e: SMTAssembly::LetWErrorsExpression, eev: SMTEmitterEnv): CString {
-    abort;
+    let iiexp = emitExpression[recursive](e.inexp, eev);
+    let lbs = e.vvbind.lreduce<CString>(iiexp, fn(acc, vb) => {
+        let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, eev), '))');
+        let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
+
+        let errop = emitResultErrTypeConvertAsNeeded(vb.1.value, vb.1, e.errtype);
+
+        let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
+        return CString::concat('(let ', vbind, ' ', wcheck, ')');
+    });
+
+    return lbs;
 }
 
 recursive function emitSafeExpression(e: SMTAssembly::SafeExpression): CString {
@@ -784,10 +795,10 @@ recursive function emitMethodInvokeStaticExpression(e: SMTAssembly::MethodInvoke
 }
 *%
 
-function emitResultErrTypeConvert(cval: CString, tkey: SMTAssembly::TypeKey, eev: SMTEmitterEnv): CString {
+function emitResultErrTypeConvert(cval: CString, tkey: SMTAssembly::TypeKey, ekey: SMTAssembly::TypeKey): CString {
     let ttest = emitResultErrTrgtTest(cval, tkey);
-    let astrgt = emitResultErrTrgtAs(eev.restype);
-    let asother = emitResultErrOtherAs(eev.restype);
+    let astrgt = emitResultErrTrgtAs(ekey);
+    let asother = emitResultErrOtherAs(ekey);
 
     let opack = CString::join(' ', ttest, astrgt, asother);
     return CString::concat('(ite ', opack, ')');
@@ -798,7 +809,16 @@ function emitResultErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::Type
         return cval;
     }
     else {
-        return emitResultErrTypeConvert(cval, tkey, eev);
+        return emitResultErrTypeConvert(cval, tkey, eev.restype);
+    }
+}
+
+function emitExpectedErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::TypeKey, ekey: SMTAssembly::TypeKey): CString {
+    if(tkey === ekey) {
+        return cval;
+    }
+    else {
+        return emitResultErrTypeConvert(cval, tkey, ekey);
     }
 }
 
@@ -886,7 +906,7 @@ function doLetIndent(enext: SMTAssembly::Operation): Bool {
 }
 
 recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
-    let vbind = CString::concat('((', e.vbind.value, ' ', emitExpression(e.value, eev), '))');
+    let vbind = CString::concat('((', e.vbind.value, ' ', emitSafeExpression(e.value), '))');
 
     if(indent)@none {
         let inexp = emitOperation[recursive](e.inop, eev, none);
