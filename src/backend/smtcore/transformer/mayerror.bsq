@@ -160,6 +160,14 @@ entity MayErrorAnalysis {
         }
     }
 
+    recursive function processIfStatement(s: BSQAssembly::IfStatement): Bool {
+        return \/(MayErrorAnalysis::processExpression[recursive](s.cond), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock));
+    }
+
+    recursive function processIfElseStatement(s: BSQAssembly::IfElseStatement): Bool {
+        return \/(MayErrorAnalysis::processExpression[recursive](s.cond), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock), MayErrorAnalysis::processBlockStatement[recursive](s.falseBlock));
+    }
+
     recursive function processStatement(s: BSQAssembly::Statement): Bool {
         match(s)@ {
             BSQAssembly::EmptyStatement => { 
@@ -198,13 +206,26 @@ entity MayErrorAnalysis {
             | BSQAssembly::ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
+            | BSQAssembly::IfStatement => {
+                return MayErrorAnalysis::processIfStatement[recursive]($s);
+            }
+            | BSQAssembly::IfElseStatement => {
+                return MayErrorAnalysis::processIfElseStatement[recursive]($s);
+            }
             | BSQAssembly::AbortStatement => {
                 return true;
             }
             | BSQAssembly::AssertStatement => {
                 return true;
             }
+            | BSQAssembly::BlockStatement => {
+                return MayErrorAnalysis::processBlockStatement[recursive]($s);
+            }
         }
+    }
+
+    recursive function processBlockStatement(s: BSQAssembly::BlockStatement): Bool {
+        return s.statements.someOf[recursive](recursive pred(stmt) => MayErrorAnalysis::processStatement[recursive](stmt));
     }
 
     recursive function processBodyStatementList(stmts: List<BSQAssembly::Statement>): Bool {

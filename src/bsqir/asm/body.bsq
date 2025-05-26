@@ -521,38 +521,36 @@ entity ReturnMultiStatement provides Statement {
     invariant !$values.empty();
 }
 
-entity IfStatement provides Statement {
-    field cond: Expression;
+datatype IfStatement using {
+    field texp: Expression;
     field trueBlock: BlockStatement;
 }
-
-entity IfBinderStatement provides Statement {
-    field cond: Expression;
-
+of
+IfSimpleStatement { }
+| IfTestStatement {
+    field itest: ITest;
+}
+| IfBinderStatement {
     field itest: ITest;
     field binder: BinderInfo;
-    field trueBindType: TypeSignature;
-
-    field trueBlock: BlockStatement;
 }
+;
 
-entity IfElseStatement provides Statement {
-    field cond: Expression;
+datatype IfElseStatement using {
+    field texp: Expression;
     field trueBlock: BlockStatement;
     field falseBlock: BlockStatement;
 }
-
-entity IfElseBinderStatement provides Statement {
-    field cond: Expression;
-    
+of
+IfElseSimpleStatement { }
+| IfElseTestStatement {
+    field itest: ITest;
+}
+| IfElseBinderStatement {
     field itest: ITest;
     field binder: BinderInfo;
-    field trueBindType: TypeSignature;
-    field falseBindType: TypeSignature;
-
-    field trueBlock: BlockStatement;
-    field falseBlock: BlockStatement;
 }
+;
 
 entity IfElifElseStatement provides Statement {
     field ifcond: Expression;
