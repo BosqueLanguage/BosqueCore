@@ -951,8 +951,8 @@ entity SMTTransformer {
     }
 
     recursive method transformIfSimpleStatement(stmt: BSQAssembly::IfSimpleStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
-        let tctx, ontb = this.transformBlockStatement[recursive](exp.trueBlock, cctx);
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, cctx);
         let ntb = ontb@some;
 
         if(cobinds)@none {
@@ -965,11 +965,11 @@ entity SMTTransformer {
         }
     }
 
-    recursive method transformIfTestExpression(exp: BSQAssembly::IfTestExpression, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfTestStmt(stmt: BSQAssembly::IfTestStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         abort; %% NOT IMPLEMENTED
     }
 
-    recursive method transformIfBinderExpression(exp: BSQAssembly::IfBinderExpression, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfBinderStatement(stmt: BSQAssembly::IfBinderStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         abort; %% NOT IMPLEMENTED
     }
 
@@ -991,15 +991,15 @@ entity SMTTransformer {
         abort; %% NOT IMPLEMENTED
     }
 
-    recursive method transformIfElseTestExpression(exp: BSQAssembly::IfElseTestExpression, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfElseTestStatement(stmt: BSQAssembly::IfElseTestStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         abort; %% NOT IMPLEMENTED
     }
 
-    recursive method transformIfElseBinderExpression(exp: BSQAssembly::IfElseBinderExpression, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfElseBinderStatement(atmt: BSQAssembly::IfElseBinderStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         abort; %% NOT IMPLEMENTED
     }
 
-    recursive method transformIfStatement(stmt: BSQAssembly::IfStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         match(stmt)@ {
             BSQAssembly::IfElseSimpleStatement => { 
                 return this.transformIfElseSimpleStatement[recursive]($stmt, tail, ctx); 
@@ -1051,11 +1051,11 @@ entity SMTTransformer {
             | BSQAssembly::ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
-            | IfStatement => {
-                return this.transformIfStatement[recursive]($stmt, tail@some, vmap);
+            | BSQAssembly::IfStatement => {
+                return this.transformIfStatement[recursive]($stmt, tail@some, ctx);
             }
-            | IfElseStatement => {
-                return this.transformIfElseStatement[recursive]($stmt, tail, vmap);
+            | BSQAssembly::IfElseStatement => {
+                return this.transformIfElseStatement[recursive]($stmt, tail, ctx);
             }
             | BSQAssembly::AbortStatement => {
                 return this.transformAbortStatement($stmt, ctx);

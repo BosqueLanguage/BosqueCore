@@ -681,14 +681,14 @@ entity ConstantSimplification {
         }
     }
 
-    recursive method processIfElseBinderStatement(e: IfElseBinderStatement): Expression {
+    recursive method processIfElseBinderStatement(s: IfElseBinderStatement): Expression {
         let ntexp = this.processExpression[recursive](s.texp);
         let ntb = this.processBlockStatement[recursive](s.trueBlock);
         let nfb = this.processBlockStatement[recursive](s.falseBlock);
 
         let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, s.itest);
         if(op)@!<PostfixBoolConstant> {
-            return s[texp=ntexp, trueBlock=ntb, falseBlock=nnfb];
+            return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
         }
         else {
             if($op.value) {
@@ -759,7 +759,7 @@ entity ConstantSimplification {
     }
 
     recursive method processBlockStatement(s: BlockStatement): Statement {
-        let nstmts = stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt));
+        let nstmts = s.stmts.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
 
         return s[statements=nstmts];
     }

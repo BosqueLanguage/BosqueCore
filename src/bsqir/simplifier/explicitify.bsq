@@ -386,34 +386,34 @@ entity ExplicitifyTransform {
     }
 
     recursive method processIfElseSimpleStatement(s: IfElseSimpleStatement, vmap: VarMapping): Expression {
-        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](e.texp, vmap));
+        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](s.texp, vmap));
 
-        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
-        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
 
-        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+        return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
     }
 
     recursive method processIfElseTestStatement(s: IfElseTestStatement, vmap: VarMapping): Expression {
-        let ntexp = this.processExpression[recursive](e.texp, vmap);
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
 
-        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
-        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
 
-        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+        return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
     }
 
-    recursive method processIfElseBinderStatement(e: IfElseBinderStatement, vmap: VarMapping): Expression {
-        let ntexp = this.processExpression[recursive](e.texp, vmap);
+    recursive method processIfElseBinderStatement(s: IfElseBinderStatement, vmap: VarMapping): Expression {
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
 
-        let nvmap = vmap.extendMapping(e.binder.srcname);
-        let nname = vmap.resolveVariableAsNeeded(e.binder.srcname);
-        let nbinder = BinderInfo{nname, e.binder.refineonfollow};
+        let nvmap = vmap.extendMapping(s.binder.srcname);
+        let nname = vmap.resolveVariableAsNeeded(s.binder.srcname);
+        let nbinder = BinderInfo{nname, s.binder.refineonfollow};
 
-        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, nvmap), e.etype);
-        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, nvmap), e.etype);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
 
-        return e[binder=nbinder, texp=ntexp, thenexp=nthen, elseexp=nelse];
+        return s[binder=nbinder, texp=ntexp, trueBlock=ntb, falseBlock=nfb];
     }
 
     recursive method processIfElseStatement(s: IfElseStatement, vmap: VarMapping): Statement {
@@ -491,7 +491,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processBlockStatement(s: BlockStatement, vmap: VarMapping): Statement {
-        let nstmts = stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt, vmap));
+        let nstmts = s.stmts.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt, vmap));
 
         return s[statements=nstmts];
     }
