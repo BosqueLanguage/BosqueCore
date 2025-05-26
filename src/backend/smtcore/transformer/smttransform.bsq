@@ -104,20 +104,21 @@ entity SMTTransformer {
         }
     }
 
-    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         if(subexp)@<SafeResult> {
             return $subexp.exp, ctx, none;
         }
         else {
             let mtag = ctx.tempCtr.toCString();
             let vname = SMTAssembly::Identifier::from(CString::concat('@tmp-', mtag));
+            let vtype = $subexp.oftype;
             let rexp = SMTAssembly::UnwrapFromResultExpression{$subexp.oftype, vname};
 
-            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>{(|$subexp.exp, vname|)});
+            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>{(|$subexp.exp, vtype, vname|)});
         }
     }
 
-    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         if(subexps.allOf(pred(etr) => etr?<SafeResult>)) {
             return subexps.map<SMTAssembly::SafeExpression>(fn(etr) => etr@<SafeResult>.exp), ctx, none;
         }
@@ -142,29 +143,30 @@ entity SMTTransformer {
                 }
             });
 
-            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.1@some|));
+            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.0@<ErrorResult>.oftype, etrp.1@some|));
 
             return exps, ctx[tempCtr = $tempCtr + 1n], some(binds);
         }
     }
 
-    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
 
         return this.unpackExpressionErrors(subexps, nctx);
     }
 
-    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
-        let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{arg}, ctx);
-        return rexps.get(0n), nctx, obinds;
+    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
+        let nctx, subexp = this.transformExpressionToSMT[recursive](arg, ctx);
+
+        return this.unpackSingleResultErrors(subexp, nctx);
     }
 
-    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{lhs, rhs}, ctx);
         return rexps.get(0n), rexps.get(1n), nctx, obinds;
     }
 
-    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
+    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {
@@ -172,20 +174,20 @@ entity SMTTransformer {
         }
         else {
             let rexp = SMTAssembly::WrapIntoResultExpression{smtetype, exp};
-            let lerr = SMTAssembly::LetWErrorsExpression{$binds, rexp};
+            let lerr = SMTAssembly::LetWErrorsExpression{smtetype, $binds, rexp};
 
             return ErrorResult{smtetype, lerr};
         }
     }
 
-    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
+    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {
             return ErrorResult{smtetype, exp};
         }
         else {
-            return ErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{$binds, exp}};
+            return ErrorResult{smtetype, SMTAssembly::LetWErrorsExpression{smtetype, $binds, exp}};
         }
     }
 
@@ -302,41 +304,88 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(e.trgttype, onarg, obinds);
     }
 
-    method transformITestTypeAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestTypeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
         abort; %% Not implemented
     }
 
-    method transformITestNoneAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestNoneAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        return if(itest.isnot) then SMTAssembly::BinKeyNotEqNoneExpression{onarg} else SMTAssembly::BinKeyEqNoneExpression{onarg};
+    }
+
+    method transformITestSomeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        return if(itest.isnot) then SMTAssembly::BinKeyEqNoneExpression{onarg} else SMTAssembly::BinKeyNotEqNoneExpression{onarg};
+    }
+
+    method transformITestOkAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        abort; %% Not implemented
+    }
+
+    method transformITestFailAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        abort; %% Not implemented
+    }
+
+    method transformITestAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITest, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        match(itest)@ {
+            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(srctype, $itest, onarg); }
+            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(srctype, $itest, onarg); }
+            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(srctype, $itest, onarg); }
+            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(srctype, $itest, onarg); }
+            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(srctype, $itest, onarg); }
+        }
+    }
+
+    method transformITestPostfixOp(op: BSQAssembly::PostfixIsTest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let ncop = if(itest.isnot) then SMTAssembly::BinKeyNotEqNoneExpression{onarg} else SMTAssembly::BinKeyEqNoneExpression{onarg};
+        let testop = this.transformITestAsTest(op.baseType, op.ttest, onarg);
 
-        return nctx, this.wrapOperationResult(SMTTransformer::booltype, ncop, obinds);
+        return nctx, this.wrapOperationResult(SMTTransformer::booltype, testop, obinds);
     }
 
-    method transformITestSomeAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let ncop = if(itest.isnot) then SMTAssembly::BinKeyEqNoneExpression{onarg} else SMTAssembly::BinKeyNotEqNoneExpression{onarg};
-
-        return nctx, this.wrapOperationResult(SMTTransformer::booltype, ncop, obinds);
-    }
-
-    method transformITestOkAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestTypeAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
         abort; %% Not implemented
     }
 
-    method transformITestFailAsTest(sinfo: BSQAssembly::SourceInfo, srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+    method transformITestNoneAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+        let someopt = SMTAssembly::ConvertOptionToSomeTExpression{TransformNameManager::convertTypeKey(srctype.tkeystr), TransformNameManager::convertTypeKey(optdecl.someType.tkeystr), onarg};
+        let noneopt = SMTAssembly::LiteralNoneExpression{};
+
+        if(itest.isnot) {    
+            return someopt, noneopt;
+        }
+        else {
+            return noneopt, someopt;
+        }
+    }
+
+    method transformITestSomeAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestSome, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        let optdecl = this.assembly.lookupNominalTypeDeclaration(srctype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+        let someopt = SMTAssembly::ConvertOptionToSomeTExpression{TransformNameManager::convertTypeKey(srctype.tkeystr), TransformNameManager::convertTypeKey(optdecl.someType.tkeystr), onarg};
+        let noneopt = SMTAssembly::LiteralNoneExpression{};
+        
+        if(itest.isnot) {
+            return noneopt, someopt;
+        }
+        else {
+            return someopt, noneopt;
+        }
+    }
+
+    method transformITestOkAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestOk, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
         abort; %% Not implemented
     }
 
-    method transformITestAsTest(op: BSQAssembly::PostfixIsTest, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        let sinfo = op.sinfo;
+    method transformITestFailAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestFail, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        abort; %% Not implemented
+    }
 
-        match($itest = op.ttest)@ {
-            BSQAssembly::ITestType => { return this.transformITestTypeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestNone => { return this.transformITestNoneAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestSome => { return this.transformITestSomeAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestOk => { return this.transformITestOkAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
-            | BSQAssembly::ITestFail => { return this.transformITestFailAsTest(sinfo, op.baseType, $itest, ctx, bexp); }
+    method transformITestAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITest, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        match(itest)@ {
+            BSQAssembly::ITestType => { return this.transformITestTypeAsSafeConvertOptions(srctype, $itest, onarg); }
+            | BSQAssembly::ITestNone => { return this.transformITestNoneAsSafeConvertOptions(srctype, $itest, onarg); }
+            | BSQAssembly::ITestSome => { return this.transformITestSomeAsSafeConvertOptions(srctype, $itest, onarg); }
+            | BSQAssembly::ITestOk => { return this.transformITestOkAsSafeConvertOptions(srctype, $itest, onarg); }
+            | BSQAssembly::ITestFail => { return this.transformITestFailAsSafeConvertOptions(srctype, $itest, onarg); }
         }
     }
 
@@ -467,7 +516,7 @@ entity SMTTransformer {
                 BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
                 | BSQAssembly::PostfixAccessFromIndex => { abort; }
-                | BSQAssembly::PostfixIsTest => { return this.transformITestAsTest($op, pstate.0, pstate.1); }
+                | BSQAssembly::PostfixIsTest => { return this.transformITestPostfixOp($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAsConvert => { return this.processITestAsConvert($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAssignFields => { abort; }
                 | BSQAssembly::PostfixInvokeStatic => { abort; }
@@ -522,15 +571,9 @@ entity SMTTransformer {
         }
     }
 
-    function useUninterpretedOps(tkey: BSQAssembly::TypeKey): Bool {
-        return \/(tkey === 'Int'<BSQAssembly::TypeKey>, tkey === 'BigInt'<BSQAssembly::TypeKey>, tkey === 'Nat'<BSQAssembly::TypeKey>, tkey === 'BigNat'<BSQAssembly::TypeKey>);
-    }
-
     recursive method transformBinMultExpression(exp: BSQAssembly::BinMultExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let hasconstarg = \/(lexp?<SMTAssembly::LiteralSimpleExpression>, rexp?<SMTAssembly::LiteralSimpleExpression>);
-        let isuniterpreted = SMTTransformer::useUninterpretedOps(exp.etype.tkeystr);
-        let multop = SMTAssembly::BinMultExpression{lexp, rexp, /\(!hasconstarg, isuniterpreted)};
+        let multop = SMTAssembly::BinMultExpression{lexp, rexp};
 
         return nctx, this.wrapOperationResult(exp.etype, multop, obinds);
     }
@@ -539,9 +582,7 @@ entity SMTTransformer {
         let smtetype = this.transformStdTypeToSMT(exp.etype);
 
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let hasconstarg = \/(lexp?<SMTAssembly::LiteralSimpleExpression>, rexp?<SMTAssembly::LiteralSimpleExpression>);
-        let isuniterpreted = SMTTransformer::useUninterpretedOps(exp.etype.tkeystr);
-        let divop = SMTAssembly::BinDivExpression{lexp, rexp, /\(!hasconstarg, isuniterpreted)};
+        let divop = SMTAssembly::BinDivExpression{lexp, rexp};
 
         let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}};
         let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
@@ -673,6 +714,120 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(exp.etype, opexp, obinds);
     }
 
+    recursive method transformIfSimpleExpression(exp: BSQAssembly::IfSimpleExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
+        
+        let tctx, nthenexp = this.transformExpressionToSMT[recursive](exp.thenexp, cctx);
+        let fctx, nelseexp = this.transformExpressionToSMT[recursive](exp.elseexp, tctx);
+
+        if(nthenexp)@<SafeResult> {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseSafeExpression{ntexp, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResult(exp.etype, ifop, cobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nthenexp.exp}, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+        else {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, $nthenexp.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nelseexp.exp}};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{ntexp, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+    }
+
+    recursive method transformIfTestExpression(exp: BSQAssembly::IfTestExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
+        let ttest = this.transformITestAsTest(exp.texp.etype, exp.itest, onarg);
+        
+        let tctx, nthenexp = this.transformExpressionToSMT[recursive](exp.thenexp, cctx);
+        let fctx, nelseexp = this.transformExpressionToSMT[recursive](exp.elseexp, tctx);
+
+        if(nthenexp)@<SafeResult> {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseSafeExpression{ttest, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResult(exp.etype, ifop, cobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nthenexp.exp}, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+        else {
+            if(nelseexp)@<SafeResult> {
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, $nthenexp.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nelseexp.exp}};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+            else {
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, $nthenexp.exp, $nelseexp.exp};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+    }
+
+    recursive method transformIfBinderExpression(exp: BSQAssembly::IfBinderExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
+        let ttest = this.transformITestAsTest(exp.texp.etype, exp.itest, onarg);
+        let topt, fopt = this.transformITestAsSafeConvertOptions(exp.texp.etype, exp.itest, onarg);
+        
+        let tctx, nthenexp = this.transformExpressionToSMT[recursive](exp.thenexp, cctx);
+        let fctx, nelseexp = this.transformExpressionToSMT[recursive](exp.elseexp, tctx);
+
+        let bindname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.binder.srcname.value));
+        if(nthenexp)@<SafeResult> {
+            if(nelseexp)@<SafeResult> {
+                let bindthen = SMTAssembly::LetSafeExpression{bindname, topt, $nthenexp.exp};
+                let bindelse = SMTAssembly::LetSafeExpression{bindname, fopt, $nelseexp.exp};
+
+                let ifop = SMTAssembly::IfThenElseSafeExpression{ttest, bindthen, bindelse};
+                return fctx, this.wrapOperationResult(exp.etype, ifop, cobinds);
+            }
+            else {
+                let bindthen = SMTAssembly::LetGeneralExpression{bindname, topt, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nthenexp.exp}};
+                let bindelse = SMTAssembly::LetGeneralExpression{bindname, fopt, $nelseexp.exp};
+
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, bindthen, bindelse};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+        else {
+            if(nelseexp)@<SafeResult> {
+                let bindthen = SMTAssembly::LetGeneralExpression{bindname, topt, $nthenexp.exp};
+                let bindelse = SMTAssembly::LetGeneralExpression{bindname, fopt, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), $nelseexp.exp}};
+
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, bindthen, bindelse};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+            else {
+                let bindthen = SMTAssembly::LetGeneralExpression{bindname, topt, $nthenexp.exp};
+                let bindelse = SMTAssembly::LetGeneralExpression{bindname, fopt, $nelseexp.exp};
+
+                let ifop = SMTAssembly::IfThenElseExpression{ttest, bindthen, bindelse};
+                return fctx, this.wrapOperationResultWErr(exp.etype, ifop, cobinds);
+            }
+        }
+    }
+
+    recursive method transformIfExpression(exp: BSQAssembly::IfExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        match(exp)@ {
+            BSQAssembly::IfSimpleExpression => { 
+                return this.transformIfSimpleExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::IfTestExpression => { 
+                return this.transformIfTestExpression[recursive]($exp, ctx); 
+            }
+            | BSQAssembly::IfBinderExpression => { 
+                return this.transformIfBinderExpression[recursive]($exp, ctx); 
+            }
+        }
+    }
+
     recursive method transformExpressionToSMT(exp: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(exp)@ {
             BSQAssembly::LiteralNoneExpression => { 
@@ -716,6 +871,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::BinaryNumericExpression => { 
                 return this.transformBinaryNumericCompareExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::IfExpression => { 
+                return this.transformIfExpression[recursive]($exp, ctx);
             }
             | _ => { 
                 abort; %% NOT IMPLEMENTED

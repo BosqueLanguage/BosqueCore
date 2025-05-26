@@ -13,11 +13,16 @@ entity VarMapping {
         var nbm: Map<VarIdentifier, VarIdentifier>;
 
         if(!this.bnmap.has(name)) {
-            nbm = this.bnmap.insert(name, VarIdentifier::from(name.value.append('_$v_')));
+            nbm = this.bnmap.insert(name, name);
         }
         else {
             let nname = this.bnmap.get(name);
-            nbm = this.bnmap.set(name, VarIdentifier::from(nname.value.append('$')));
+            if(nname === name) {
+                nbm = this.bnmap.set(name, VarIdentifier::from(name.value.append('_$v$_')));
+            }
+            else {
+                nbm = this.bnmap.set(name, VarIdentifier::from(nname.value.append('$')));
+            }
         }
 
         return VarMapping{ nbm };
@@ -264,6 +269,45 @@ entity ExplicitifyTransform {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processIfSimpleExpression(e: IfSimpleExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](e.texp, vmap));
+
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+
+        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
+    recursive method processIfTestExpression(e: IfTestExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExpression[recursive](e.texp, vmap);
+
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, vmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, vmap), e.etype);
+
+        return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
+    recursive method processIfBinderExpression(e: IfBinderExpression, vmap: VarMapping): Expression {
+        let ntexp = this.processExpression[recursive](e.texp, vmap);
+
+        let nvmap = vmap.extendMapping(e.binder.srcname);
+        let nname = vmap.resolveVariableAsNeeded(e.binder.srcname);
+        let nbinder = BinderInfo{nname, e.binder.refineonfollow};
+
+        let nthen = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.thenexp, nvmap), e.etype);
+        let nelse = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.elseexp, nvmap), e.etype);
+
+        return e[binder=nbinder, texp=ntexp, thenexp=nthen, elseexp=nelse];
+    }
+
+    recursive method processIfExpression(e: IfExpression, vmap: VarMapping): Expression {
+        match(e)@ {
+            IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e, vmap); }
+            | IfTestExpression => { return this.processIfTestExpression[recursive]($e, vmap); }
+            | IfBinderExpression => { return this.processIfBinderExpression[recursive]($e, vmap); }
+        }
+    }
+
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -303,7 +347,7 @@ entity ExplicitifyTransform {
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { abort; }
             | MapEntryConstructorExpression => { abort; }
-            | IfExpression => { abort; }
+            | IfExpression => { return this.processIfExpression[recursive]($e, vmap); }
         }
     }
 

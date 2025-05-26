@@ -228,8 +228,8 @@ datatype BinaryArithExpression provides SafeExpression using {
 of
 BinAddExpression { }
 | BinSubExpression { }
-| BinMultExpression { field useUninterpreted: Bool; }
-| BinDivExpression {field useUninterpreted: Bool; }
+| BinMultExpression { }
+| BinDivExpression { }
 ;
 
 datatype BinaryKeyEqExpression provides SafeExpression 
@@ -300,7 +300,7 @@ entity MapEntryConstructorExpression provides SafeExpression {
     field vexp: SafeExpression;
 }
 
-entity LetExpression provides SafeExpression {
+entity LetSafeExpression provides SafeExpression {
     field vbind: Identifier;
     field value: SafeExpression;
     field inexp: SafeExpression;
@@ -356,8 +356,15 @@ entity IfThenElseExpression provides Expression {
     field falseexp: Expression;
 }
 
+entity LetGeneralExpression provides Expression {
+    field vbind: Identifier;
+    field value: SafeExpression;
+    field inexp: Expression;
+}
+
 entity LetWErrorsExpression provides Expression {
-    field vvbind: List<(|Expression, Identifier|)>;
+    field errtype: TypeKey;
+    field vvbind: List<(|Expression, TypeKey, Identifier|)>;
     field inexp: Expression;
 
     invariant !$vvbind.empty();

@@ -288,7 +288,6 @@ class TypeCheckerRelations {
                 }
             }
 
-
             //ok check for lubopt
             if(lubopt !== undefined && restypel.every((t) => this.isSubtypeOf(t, lubopt, tconstrain))) {
                 return lubopt;
