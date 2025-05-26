@@ -104,20 +104,21 @@ entity SMTTransformer {
         }
     }
 
-    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    method unpackSingleResultErrors(subexp: SMTExpTransformResult, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         if(subexp)@<SafeResult> {
             return $subexp.exp, ctx, none;
         }
         else {
             let mtag = ctx.tempCtr.toCString();
             let vname = SMTAssembly::Identifier::from(CString::concat('@tmp-', mtag));
+            let vtype = $subexp.oftype;
             let rexp = SMTAssembly::UnwrapFromResultExpression{$subexp.oftype, vname};
 
-            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>{(|$subexp.exp, vname|)});
+            return rexp, ctx[tempCtr = $tempCtr + 1n], some(List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>{(|$subexp.exp, vtype, vname|)});
         }
     }
 
-    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    method unpackExpressionErrors(subexps: List<SMTExpTransformResult>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         if(subexps.allOf(pred(etr) => etr?<SafeResult>)) {
             return subexps.map<SMTAssembly::SafeExpression>(fn(etr) => etr@<SafeResult>.exp), ctx, none;
         }
@@ -142,30 +143,30 @@ entity SMTTransformer {
                 }
             });
 
-            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.1@some|));
+            let binds = eexps.filter(pred(etrp) => etrp.0?<ErrorResult>).map<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(etrp) => (|etrp.0@<ErrorResult>.exp, etrp.0@<ErrorResult>.oftype, etrp.1@some|));
 
             return exps, ctx[tempCtr = $tempCtr + 1n], some(binds);
         }
     }
 
-    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
 
         return this.unpackExpressionErrors(subexps, nctx);
     }
 
-    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         let nctx, subexp = this.transformExpressionToSMT[recursive](arg, ctx);
 
         return this.unpackSingleResultErrors(subexp, nctx);
     }
 
-    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>> {
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
         let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{lhs, rhs}, ctx);
         return rexps.get(0n), rexps.get(1n), nctx, obinds;
     }
 
-    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
+    method wrapOperationResult(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {
@@ -179,7 +180,7 @@ entity SMTTransformer {
         }
     }
 
-    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
+    method wrapOperationResultWErr(etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>): SMTExpTransformResult {
         let smtetype = this.transformStdTypeToSMT(etype);
 
         if(binds)@none {

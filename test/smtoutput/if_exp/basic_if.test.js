@@ -24,8 +24,8 @@ describe ("SMT exec -- Simple if-expression", () => {
         runishMainCodeUnsat("public function main(x: Int): Int { return if(x > 0i) then (5i // 0i) else x; }", "(assert (not (= (@Result-ok 0) (Main@main 0))))");
         runishMainCodeUnsat("public function main(x: Int): Int { return if(x > 0i) then (5i // 0i) else (5i // 0i); }", "(assert (not (= @Result-err-other (Main@main 0))))");
 
-        //runishMainCodeUnsat("public function main(): Int { return if(1i == 2i // 2i) then 2i else 3i; }", "(assert (not (= (@Result-ok 2) Main@main)))");
-        //runishMainCodeUnsat("public function main(): Int { return if(1i == 2i // 2i) then 2i else 3i // 0i; }", "(assert (not (= (@Result-ok 2) Main@main)))");
+        runishMainCodeUnsat("public function main(): Int { return if(1i == 2i // 2i) then 2i else 3i; }", "(assert (not (= (@Result-ok 2) Main@main)))");
+        runishMainCodeUnsat("public function main(): Int { return if(1i == 2i // 2i) then 2i else 3i // 0i; }", "(assert (not (= (@Result-ok 2) Main@main)))");
     });
 
     it("should SMT exec simple refine", function () {

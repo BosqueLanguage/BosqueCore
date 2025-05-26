@@ -661,7 +661,7 @@ recursive function emitLetWErrorsExpression(e: SMTAssembly::LetWErrorsExpression
         let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, eev), '))');
         let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
 
-        let errop = emitResultErrTypeConvertAsNeeded(vb.1.value, vb.1, e.errtype);
+        let errop = emitExpectedErrTypeConvertAsNeeded(vb.2.value, vb.1, e.errtype);
 
         let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
         return CString::concat('(let ', vbind, ' ', wcheck, ')');
