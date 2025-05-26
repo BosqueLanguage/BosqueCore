@@ -9,12 +9,12 @@ describe ("Exec -- NamespaceFunction (no template)", () => {
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(1i, true); }", "1_i");
     });
 
-    /*
     it("should exec simple named", function () {
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(x=1i, y=true); }", "1_i");
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(y=true, x=1i); }", "1_i");
     });
 
+    /*
     it("should exec simple mixed", function () {
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(1i, y=true); }", "1_i");
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(y=true, x=1i); }", "1_i");

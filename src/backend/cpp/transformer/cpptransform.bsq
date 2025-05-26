@@ -213,16 +213,23 @@ entity CPPTransformer {
         }
     }
 
-    method transformArgumentList(bsqargs: BSQAssembly::ArgumentList): CPPAssembly::ArgumentList {
-        let alist = bsqargs.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
-        return CPPAssembly::ArgumentList{ alist };   
+    method transformArgumentList(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
+        let alist = bsqargs.args.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
+        let shuffled = alist.mapIdx<CPPAssembly::ArgumentValue>(fn(cpparg, ii) => {
+            let cur_shuffleinfo = bsqargs.shuffleinfo.get(ii).0;
+            match(cur_shuffleinfo)@ {
+                None => { abort; } %% TODO: Handle default parameter
+                | _ => { return alist.get($cur_shuffleinfo.value); }
+            }
+        });
+        return CPPAssembly::ArgumentList{ shuffled };   
     }
 
     method transformCallNamespaceFunctionExpression(expr: BSQAssembly::CallNamespaceFunctionExpression): CPPAssembly::CallNamespaceFunctionExpression {
         let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
-        let args = this.transformArgumentList(expr.argsinfo.args);
+        let args = this.transformArgumentList(expr.argsinfo);
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, args };
     }
@@ -327,6 +334,14 @@ entity CPPTransformer {
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
+        var name: CString;
+        if(decl.name.value === 'main') {
+            name = '__main';
+        }
+        else {
+            name = decl.name.value;
+        }
+
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let fullns = decl.fullns;
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
@@ -335,7 +350,7 @@ entity CPPTransformer {
 
         let body = this.transformBodyToCpp(decl.body);
 
-        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, decl.name.value, ikey, params, res, body};
+        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, name, ikey, params, res, body};
     }   
 
     %*

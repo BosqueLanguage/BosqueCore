@@ -428,8 +428,14 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
 
+    let fwd_decls = nsdecl.nsfuncs.reduce<CString>('', fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitFunctionForwardDeclaration(decl, full_indent));
+    });
+
+    let base = CString::concat(ns, fwd_decls);
+
     %% Emit sub-namespace declarations
-    let subns_emission = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
+    let subns_emission = nsdecl.subns.reduce<CString>(base, fn(acc, name, decl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
@@ -442,7 +448,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
 }
 
 %%
-%% May be nice to handle case where func doesnt exist
+%% I think this can be deleted (ill check on tuesday mornign)
 %%
 recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, func: CPPAssembly::FunctionDecl, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
     let ikey = func.ikey;
@@ -469,20 +475,15 @@ recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::Na
 }
 
 %% I suspect we will need separate cases for entities, types, enums and such
-function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl): CString {
-    let pre = decl.ikey.value;
+function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl, ident: CString): CString {
+    let pre = decl.name;
     let rtype = emitTypeSignature(decl.resultType); 
     let params = emitParameters(decl.params);
-    return CString::concat(rtype, ' ', pre, '(', params, ');%n;');
+    let first = CString::concat(ident, rtype, ' ', pre );
+    return CString::concat(first, '(', params, ');%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% Emit forward declaration (only supports namespace funcs right now :P )
-    let fwddecl_emission = asm.allfuncs.reduce<CString>('', fn(acc, func) => {
-        let funcdecl = findNamespaceFunctionDecl[recursive](asm.nsdecls, func, func.fullns);
-        return CString::concat(acc, emitFunctionForwardDeclaration(funcdecl));
-    });
-
     %% Likely need to add support for an empty namespace (or reserved), when creating ctx
     %% if we pass in no namespace key (or empty string) regex gets mad
     let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}}; %% No known namespace yet
@@ -494,5 +495,5 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    return CString::join('%n;', fwddecl_emission, ns_emission, '%n;');
+    return CString::join('%n;', ns_emission, '%n;');
 }
