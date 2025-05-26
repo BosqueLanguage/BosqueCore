@@ -902,7 +902,7 @@ recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, evv: SMT
 *%
 
 function doLetIndent(enext: SMTAssembly::Operation): Bool {
-    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetOperationWError>);
+    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetOperationWError>, enext?<SMTAssembly::LetWErrorsOperation>);
 }
 
 recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
@@ -959,6 +959,44 @@ recursive function emitLetOperationWError(e: SMTAssembly::LetOperationWError, ee
     }
 }
 
+recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
+    var inexp: CString;
+    if(indent)@none {
+        inexp = CString::concat(' ', emitOperation[recursive](e.inop, eev, none));
+    }
+    else {        
+        var iident = $indent;
+        var tident = '';
+
+        if(doLetIndent(e.inop)) {
+            iident = CString::concat('    ', $indent);
+            tident = CString::concat('%n;', $indent);
+        }
+
+        inexp = CString::concat('%n;', emitOperation[recursive](e.inop, eev, some(iident)), tident);
+    }
+    
+    let lbs = e.vvbind.lreduce<CString>(inexp, fn(acc, vb) => {
+        let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, none), '))');
+        let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
+
+        let errop = emitResultErrTypeConvertAsNeeded(vb.2.value, vb.1);
+
+        let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
+        return CString::concat('(let ', vbind, ' ', wcheck, ')');
+    });
+    
+    let iiexp = emitOperation[recursive](e.inop, eev, none);
+    
+
+    if(indent)@none {
+        return lbs;
+    }
+    else {
+        return CString::concat(indent, lbs);
+    }
+}
+
 recursive function emitOperation(op: SMTAssembly::Operation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
     var opstr: CString;
     match(op)@ {
@@ -970,6 +1008,7 @@ recursive function emitOperation(op: SMTAssembly::Operation, eev: SMTEmitterEnv,
         *%
         | SMTAssembly::LetOperation => { opstr = emitLetOperation[recursive]($op, eev, indent); }
         | SMTAssembly::LetOperationWError => { opstr = emitLetOperationWError[recursive]($op, eev, indent); }
+        | SMTAssembly::LetWErrorsOperation => { opstr = emitLetWErrorsOperation[recursive]($op, eev, indent); }
         %*
         | SMTAssembly::IfThenElseOperation => { opstr = emitIfOperation[recursive]($op, eev, indent); }
         *%

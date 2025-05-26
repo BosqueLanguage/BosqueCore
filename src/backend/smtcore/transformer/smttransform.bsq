@@ -881,13 +881,13 @@ entity SMTTransformer {
         }
     }
 
-    method transformVariableInitializationStatement(stmt: BSQAssembly::VariableInitializationStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+    method transformVariableInitializationStatement(stmt: BSQAssembly::VariableInitializationStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
         
         if(smtexp)@<SafeResult> {
             let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.name.value));
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
-            return rctx, SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail};
+            return rctx, some(SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail});
         }
         else {
             let tname = TransformNameManager::safeifyName(stmt.name.value);
@@ -895,17 +895,17 @@ entity SMTTransformer {
             let vbind = SMTAssembly::Identifier::from(tname);
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
 
-            return rctx, SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail};
+            return rctx, some(SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail});
         }
     }
 
-    method transformVariableAssignmentStatement(stmt: BSQAssembly::VariableAssignmentStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+    method transformVariableAssignmentStatement(stmt: BSQAssembly::VariableAssignmentStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
         
         if(smtexp)@<SafeResult> {
             let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.name.value));
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
-            return rctx, SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail};
+            return rctx, some(SMTAssembly::LetOperation{vname, vtype, $smtexp.exp, tail});
         }
         else {
             let tname = TransformNameManager::safeifyName(stmt.name.value);
@@ -913,23 +913,107 @@ entity SMTTransformer {
             let vbind = SMTAssembly::Identifier::from(tname);
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
 
-            return rctx, SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail};
+            return rctx, some(SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail});
         }
     }
 
-    method transformAssertStatement(stmt: BSQAssembly::AssertStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+    method transformAbortStatement(stmt: BSQAssembly::AbortStatement, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let aop = SMTAssembly::AbortOperation{ctx.errCtr};
+        return ctx.addError(stmt.sinfo), some(aop);
+    }
+
+    method transformAssertStatement(stmt: BSQAssembly::AssertStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.cond, ctx);
         
         if(smtexp)@<SafeResult> {
             let aop = SMTAssembly::AssertOperation{$smtexp.exp, ctx.errCtr, tail};
-            return ctx.addError(stmt.sinfo), aop;
+            return ctx.addError(stmt.sinfo), some(aop);
         }
         else {
-            abort;
+            abort; %%NOT IMPLEMENTED -- I think failure in the assert is mapped to this assert failing
         }
     }
 
-    recursive method transformStatementToSMT(stmt: BSQAssembly::Statement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
+    method transformReturnSingleStatement(stmt: BSQAssembly::ReturnSingleStatement, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.value, ctx);
+
+        if(smtexp)@<ErrorResult> {
+            return rctx, some(SMTAssembly::ReturnOperation{$smtexp.exp});
+        }
+        else {
+            if(!ctx.mayErrorReturn) {
+                return rctx, some(SMTAssembly::ReturnOperation{$smtexp.exp});
+            }
+            else {
+                return rctx, some(SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(stmt.rtype), $smtexp.exp}});
+            }
+        }
+    }
+
+    recursive method transformIfSimpleStatement(stmt: BSQAssembly::IfSimpleStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
+        let tctx, ontb = this.transformBlockStatement[recursive](exp.trueBlock, cctx);
+        let ntb = ontb@some;
+
+        if(cobinds)@none {
+            let ifop = SMTAssembly::IfThenElseOperation{ntexp, ntb, tail};
+            return tctx, some(ifop);
+        }
+        else {
+            let ifop = SMTAssembly::IfThenElseOperation{ntexp, ntb, tail};
+            return tctx, some(SMTAssembly::LetWErrorsOperation{$binds, ifop});
+        }
+    }
+
+    recursive method transformIfTestExpression(exp: BSQAssembly::IfTestExpression, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfBinderExpression(exp: BSQAssembly::IfBinderExpression, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfStatement(stmt: BSQAssembly::IfStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        match(stmt)@ {
+            BSQAssembly::IfSimpleStatement => { 
+                return this.transformIfSimpleStatement[recursive]($stmt, tail, ctx); 
+            }
+            | BSQAssembly::IfTestStatement => { 
+                return this.transformIfTestStatement[recursive]($stmt, tail, ctx); 
+            }
+            | BSQAssembly::IfBinderStatement => { 
+                return this.transformIfBinderStatement[recursive]($stmt, tail, ctx); 
+            }
+        }
+    }
+
+    recursive method transformIfElseSimpleStatement(stmt: BSQAssembly::IfElseSimpleStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfElseTestExpression(exp: BSQAssembly::IfElseTestExpression, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfElseBinderExpression(exp: BSQAssembly::IfElseBinderExpression, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        abort; %% NOT IMPLEMENTED
+    }
+
+    recursive method transformIfStatement(stmt: BSQAssembly::IfStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        match(stmt)@ {
+            BSQAssembly::IfElseSimpleStatement => { 
+                return this.transformIfElseSimpleStatement[recursive]($stmt, tail, ctx); 
+            }
+            | BSQAssembly::IfElseTestStatement => { 
+                return this.transformIfElseTestStatement[recursive]($stmt, tail, ctx); 
+            }
+            | BSQAssembly::IfElseBinderStatement => { 
+                return this.transformIfElseBinderStatement[recursive]($stmt, tail, ctx); 
+            }
+        }
+    }
+
+    recursive method transformStatement(stmt: BSQAssembly::Statement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => {
                 return ctx, tail;
@@ -941,7 +1025,7 @@ entity SMTTransformer {
                 return ctx, tail;
             }
             | BSQAssembly::VariableInitializationStatement => {
-                return this.transformVariableInitializationStatement($stmt, tail, ctx);
+                return this.transformVariableInitializationStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiInitializationExplicitStatement => {
                 abort; %% NOT IMPLEMENTED
@@ -950,7 +1034,7 @@ entity SMTTransformer {
                 abort; %% NOT IMPLEMENTED
             }
             | BSQAssembly::VariableAssignmentStatement => {
-                return this.transformVariableAssignmentStatement($stmt, tail, ctx);
+                return this.transformVariableAssignmentStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiAssignmentExplicitStatement => {
                 abort; %% NOT IMPLEMENTED
@@ -958,67 +1042,37 @@ entity SMTTransformer {
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => {
                 abort; %% NOT IMPLEMENTED
             }
-            | BSQAssembly::AssertStatement => {
-                return this.transformAssertStatement($stmt, tail, ctx);
-            }
-        }
-    }
-
-    recursive method transformStatementListToSMTStep(stmts: List<BSQAssembly::Statement>, idx: Nat, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
-        if(idx == 0n) {
-            return this.transformStatementToSMT(stmts.get(idx), tail, ctx);
-        }
-        else {
-            let rctx, smtstmt = this.transformStatementToSMT(stmts.get(idx), tail, ctx);
-            return this.transformStatementListToSMTStep(stmts, idx - 1n, smtstmt, rctx);
-        }
-    }
-
-    recursive method transformStatementListToSMT(stmts: List<BSQAssembly::Statement>, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::Operation {
-        let tailop = stmts.back();
-
-        var lop: SMTAssembly::Operation;
-        var lctx: SMTTransformerCtx;
-        match(tailop)@ {
-            BSQAssembly::ReturnVoidStatement => {
+            | BSQAssembly::ReturnVoidStatement => {
                 abort; %% NOT IMPLEMENTED
             }
             | BSQAssembly::ReturnSingleStatement => {
-                let rctx, smtexp = this.transformExpressionToSMT($tailop.value, ctx);
-
-                if(smtexp)@<ErrorResult> {
-                    lop = SMTAssembly::ReturnOperation{$smtexp.exp};
-                }
-                else {
-                    if(!ctx.mayErrorReturn) {
-                        lop = SMTAssembly::ReturnOperation{$smtexp.exp};
-                    }
-                    else {
-                        lop = SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT($tailop.rtype), $smtexp.exp}};
-                    }
-                }
-
-                lctx = rctx;
+                return this.transformReturnSingleStatement($stmt, ctx);
             }
             | BSQAssembly::ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
+            | IfStatement => {
+                return this.transformIfStatement[recursive]($stmt, tail@some, vmap);
+            }
+            | IfElseStatement => {
+                return this.transformIfElseStatement[recursive]($stmt, tail, vmap);
+            }
             | BSQAssembly::AbortStatement => {
-                lop = SMTAssembly::AbortOperation{ctx.errCtr};
-                lctx = ctx.addError($tailop.sinfo);
+                return this.transformAbortStatement($stmt, ctx);
             }
-            | BSQAssembly::VoidRefCallStatement => {
-                abort; %% NOT IMPLEMENTED
+            | BSQAssembly::AssertStatement => {
+                return this.transformAssertStatement($stmt, tail@some, ctx);
+            }
+            | BSQAssembly::BlockStatement => {
+                return this.transformBlockStatement($stmt, tail, ctx);
             }
         }
+    }
 
-        if(stmts.isSingleElement()) {
-            return lctx, lop;
-        }
-        else {
-            let ttidx = stmts.lastIndex() - 1n;
-            return this.transformStatementListToSMTStep(stmts, ttidx, lop, lctx);
-        }
+    recursive method transformBlockStatement(stmt: BSQAssembly::BlockStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        return this.stmts.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, tail|), recursive fn(acc, s) => {
+            return this.transformStatement[recursive](s, acc.1, acc.0);
+        });
     }
 
     method transformBodyToSMT(impl: BSQAssembly::BodyImplementation, currentFile: String, ikey: BSQAssembly::InvokeKey, mayerror: Bool, ttype: BSQAssembly::TypeSignature): SMTAssembly::Body {
