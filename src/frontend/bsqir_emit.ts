@@ -1231,7 +1231,7 @@ class BSQIREmitter {
         const ibase = `${sbase}, texp=${cond}, trueBlock=${tblock}, falseBlock=${fblock}`;
 
         if(stmt.cond.itestopt === undefined) {
-            return `BSQAssembly::IfElseSimpleStatement{ ${sbase}, cond=${cond}, trueBlock=${tblock}, falseBlock=${fblock} }`;
+            return `BSQAssembly::IfElseSimpleStatement{ ${ibase} }`;
         }
         else {
             if(stmt.binder === undefined) {

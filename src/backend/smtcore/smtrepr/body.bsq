@@ -389,7 +389,7 @@ entity AssertOperation provides Operation {
 }
 
 entity AssumeOperation provides Operation {
-    field cond: SafeExpression;
+    field cond: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
 
     field inop: Operation;
 }
