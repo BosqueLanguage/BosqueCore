@@ -704,6 +704,7 @@ entity ConstantSimplification {
         return NamespaceFunctionDecl{
             file = nsfunc.file,
             sinfo = nsfunc.sinfo,
+            fullns = nsfunc.fullns,
             declaredInNS = nsfunc.declaredInNS,
 
             attributes = nsfunc.attributes,
@@ -766,6 +767,7 @@ entity ConstantSimplification {
         return EntityTypeDecl{
             file=etype.file,
             sinfo=etype.sinfo,
+            fullns = etype.fullns,
             declaredInNS=etype.declaredInNS,
             
             tkey=etype.tkey,

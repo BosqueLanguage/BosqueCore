@@ -32,6 +32,51 @@ namespace CPPTransformNameManager {
     function convertVarIdentifier(vident: BSQAssembly::VarIdentifier): CPPAssembly::VarIdentifier {
         return CPPAssembly::VarIdentifier::from(vident.value);
     }
+
+    function createNamespaceDecl(name: CString): CPPAssembly::NamespaceDecl {
+        let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
+        let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
+        return CPPAssembly::NamespaceDecl{ name, subns, nsfuncs };
+    }
+
+    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, func_key: CPPAssembly::InvokeKey, func_val: CPPAssembly::NamespaceFunctionDecl): Map<CString, CPPAssembly::NamespaceDecl> {
+        if(fullns.empty()) { %% Base case, we have recursed through all subdecls
+            return nsdecls;
+        }
+
+        let ns_name = fullns.front();
+        let remaining_ns_names = fullns.popFront().1;
+
+        var cur_nsdecl: CPPAssembly::NamespaceDecl;
+        if(nsdecls.has(ns_name)) {
+            cur_nsdecl = nsdecls.get(ns_name);
+        }
+        else {
+            cur_nsdecl = createNamespaceDecl(ns_name);
+        }
+
+        %% See if we can insert our namespace function decl
+        var func: Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>;
+        if(remaining_ns_names.empty()) {
+            func = cur_nsdecl.nsfuncs.insert(func_key, func_val);
+        }
+        else{
+            func = cur_nsdecl.nsfuncs;
+        }
+
+        %% Recursively process remaining names
+        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, func_key, func_val);
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, func };
+
+        %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
+        if(!nsdecls.has(ns_name)) {
+            return nsdecls.insert(ns_name, updated_nsdecl);
+        }
+        else {
+            let tmp_map = nsdecls.delete(ns_name);
+            return tmp_map.insert(ns_name, updated_nsdecl);
+        }
+    }
 }
 
 entity CPPTransformer {
@@ -157,6 +202,48 @@ entity CPPTransformer {
         return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
+    method transformArgument(arg: BSQAssembly::ArgumentValue): CPPAssembly::ArgumentValue {
+        let exp = this.transformExpressionToCpp[recursive](arg.exp);
+
+        match(arg)@ {
+            BSQAssembly::NamedArgumentValue => { return CPPAssembly::NamedArgumentValue{ 
+                exp, CPPTransformNameManager::convertVarIdentifier($arg.name) }; }
+            | BSQAssembly::PositionalArgumentValue => { return CPPAssembly::PositionalArgumentValue{ exp }; }
+            | _ => { abort; } %% TODO: Not implemented
+        }
+    }
+
+    method transformArgumentList(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
+        let shuffled = bsqargs.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(e, ii) => {
+            var cur_arg: CPPAssembly::ArgumentValue;
+            if(ii >= bsqargs.args.args.size()) {
+                return none;
+            }
+            else { %% Resolve shuffle value
+                let shuffle_idx = e.0;
+                if(shuffle_idx)@none {
+                    let arg = bsqargs.args.args.get(ii);
+                    return some(this.transformArgument(arg));
+                }
+                else {
+                    let arg = bsqargs.args.args.get($shuffle_idx);
+                    return some(this.transformArgument(arg));
+                }
+            }
+        });
+        return CPPAssembly::ArgumentList{ shuffled };   
+    }
+
+    method transformCallNamespaceFunctionExpression(expr: BSQAssembly::CallNamespaceFunctionExpression): CPPAssembly::CallNamespaceFunctionExpression {
+        let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
+        let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
+        let args = this.transformArgumentList(expr.argsinfo);
+        let fullns = expr.fullns; %% For looking up func we are calling
+
+        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
@@ -167,6 +254,7 @@ entity CPPTransformer {
             | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
             | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
+            | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); }
             | _ => { abort; }
         }
     }
@@ -236,6 +324,23 @@ entity CPPTransformer {
         return stmts.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
     }
 
+    method transformDefaultVal(val: Option<BSQAssembly::Expression>): Option<CPPAssembly::Expression> {
+        match(val)@ {
+            None => { return none; }
+            | _ => { return some(this.transformExpressionToCpp[recursive]($val.value)); }
+        }
+    }
+
+    method transformParameterDecl(decl: List<BSQAssembly::InvokeParameterDecl>): List<CPPAssembly::ParameterDecl> {
+        return decl.map<CPPAssembly::ParameterDecl>(fn(pdecl) => {
+            return CPPAssembly::ParameterDecl{ 
+                CPPTransformNameManager::convertIdentifier(pdecl.pname), 
+                CPPTransformNameManager::convertTypeSignature(pdecl.ptype),
+                this.transformDefaultVal(pdecl.defaultval)
+            };
+        });
+    }
+
     method transformBodyToCpp(body: BSQAssembly::BodyImplementation): CPPAssembly::BodyImplementation {
         match(body)@ {
             BSQAssembly::StandardBodyImplementation => { 
@@ -247,14 +352,16 @@ entity CPPTransformer {
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
+        let name = decl.name.value;
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let fullns = decl.fullns;
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
-        %% Parameters
+        let params = this.transformParameterDecl(decl.params);
         let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
 
         let body = this.transformBodyToCpp(decl.body);
 
-        return CPPAssembly::NamespaceFunctionDecl{nskey, decl.name.value, ikey, none, res, body};
+        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, name, ikey, params, res, body};
     }   
 
     %*
@@ -264,24 +371,33 @@ entity CPPTransformer {
     *%
 
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
-        let transformer = CPPTransformer{ bsqasm };
+        let transformer = CPPTransformer{ bsqasm };            
 
-        %% Maps each namespace key to a map for each function in the namespace 
-        let transformer_nsfuncs = bsqasm.allfuncs
+        let transformer_nsdecls = bsqasm.allfuncs
             .filter(pred(ikey) => bsqasm.nsfuncs.has(ikey))
-            .reduce<Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>>(
-                Map<CPPAssembly::NamespaceKey, Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>>{},
+            .reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+                Map<CString, CPPAssembly::NamespaceDecl>{},
                 fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    let map = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{cppdecl.invokeKey => cppdecl};
-                    return acc.insert(cppdecl.ns, map);
-                });
+                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.ikey, cppdecl);
+                }
+            );
 
-        let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::InvokeKey>(fn(ikey) => CPPTransformNameManager::convertInvokeKey(ikey));
+        let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
+            let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
+            if(bsqasm.nsfuncs.has(ikey)) {
+                let bsqfunc = bsqasm.nsfuncs.get(ikey);
+                return CPPAssembly::FunctionDecl{ CPPTransformNameManager::convertNamespaceKey(bsqfunc.declaredInNS), 
+                    bsqfunc.fullns, cppikey };
+            }
+            else {
+                abort; %% We will need to eventually support non-ns funcs
+            }
+        });
 
         return CPPAssembly::Assembly {
-            nsfuncs = transformer_nsfuncs,
+            nsdecls = transformer_nsdecls,
             allfuncs = transformer_allfuncs
         };
     }

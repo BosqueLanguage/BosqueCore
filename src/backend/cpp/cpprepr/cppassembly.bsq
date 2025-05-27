@@ -7,6 +7,11 @@ entity SourceInfo {
     field column: Nat;
 }
 
+concept AbstractDecl {
+    field declaredInNS: NamespaceKey;
+    field fullns: List<CString>;
+}
+
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
 const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPPAssembly::namespaceComponentRE}/c;
 type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
@@ -35,22 +40,39 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 }
 *%
 
+entity ParameterDecl {
+    field pname: Identifier;
+    field ptype: TypeSignature;
+    field defaultval: Option<Expression>;
+
+    %% TODO: Support ref/rest param
+}
+
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
-entity NamespaceFunctionDecl {
-    field ns: NamespaceKey;
+entity NamespaceFunctionDecl provides AbstractDecl {
     field name: CString;
-    field invokeKey: InvokeKey;
-
-    %% Will be List<InvokeParameterDecl> or something
-    field params: None; %% TODO: Parameters not implemented
-
+    field ikey: InvokeKey;
+    field params: List<ParameterDecl>;
     field resultType: TypeSignature;
-
     field body: BodyImplementation;
+}
+
+%% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
+entity FunctionDecl provides AbstractDecl {
+    field ikey: InvokeKey;
+}
+
+entity NamespaceDecl {
+    field nsname: CString;
+
+    %% Will need other stuff like nsconsts, enums, typedecls, etc...
+
+    field subns: Map<CString, NamespaceDecl>;
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
 }
 
 %% Will need expanding
 entity Assembly {
-    field nsfuncs: Map<NamespaceKey, Map<InvokeKey, NamespaceFunctionDecl>>;
-    field allfuncs: List<InvokeKey>;
+    field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
+    field allfuncs: List<FunctionDecl>;
 }

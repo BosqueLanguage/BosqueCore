@@ -243,7 +243,7 @@ class BSQIREmitter {
 
         const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
         
-        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, TypeSignature|)>{${restinfocc}} }`;
+        return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, args=${this.emitArgumentList(args)}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, BSQAssembly::TypeSignature|)>{${restinfocc}} }`;
     }
 
     private emitBinderInfo(binder: BinderInfo): string {
@@ -479,7 +479,11 @@ class BSQIREmitter {
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, arginfo=${arginfo} }`;
+        // CallNSExprs provide expression (not AbstractDecl), so we need to emit fullns explicitly
+        const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
+        const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
+
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, argsinfo=${arginfo} }`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
@@ -1450,7 +1454,8 @@ class BSQIREmitter {
     }
 
     private emitAbstractDeclBase(decl: AbstractDecl, nskey: string): string {
-        return `file="${decl.file}", sinfo=${this.emitSourceInfo(decl.sinfo)}, declaredInNS='${nskey}'<BSQAssembly::NamespaceKey>`;
+        let fullns = nskey.split('::').map(e => `'${e}'`).join(", ");
+        return `file="${decl.file}", sinfo=${this.emitSourceInfo(decl.sinfo)}, fullns = List<CString>{${fullns}}, declaredInNS='${nskey}'<BSQAssembly::NamespaceKey>`;
     }
 
     private emitConditionDeclBase(decl: ConditionDecl, nskey: string, label: string, exp: Expression): string {
@@ -1568,11 +1573,15 @@ class BSQIREmitter {
                 fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
                 const fkind = fmt.indent(`fkind=${this.emitFKindTag((fdecl as NamespaceFunctionDecl).fkind)}`);
-                
+
                 this.mapper = omap;
                 fmt.indentPop();
+                
+                if(ns.ns.length > 6) { 
+                    assert(false, "Not Implemented -- Namespace nesting of depth > 6");
+                }
 
-                this.nsfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{ ${ibase},${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
+                this.nsfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::NamespaceFunctionDecl{ ${ibase}, ${fmt.nl()}${fkind}${fmt.nl() + fmt.indent("}")}`);
                 this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);
             }
         }

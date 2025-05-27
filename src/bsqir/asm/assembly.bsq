@@ -4,6 +4,7 @@ concept AbstractDecl {
     field file: String;
     field sinfo: SourceInfo;
 
+    field fullns: List<CString>; %% Useful for namespace resolution in our cppemitter
     field declaredInNS: NamespaceKey;
 }
 

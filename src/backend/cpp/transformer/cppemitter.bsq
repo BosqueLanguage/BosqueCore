@@ -1,11 +1,5 @@
 namespace CPPEmitter;
 
-%%
-%% TODO: We will need to properly overload our conversion from bosque types to cpp types to ensure
-%% everything stays safe (such as Nat in bosque only being 63 bits not 64) and all operations on 
-%% these values need to be provided via overloading and using compiler builtins (like __builtin_add_overflow__)
-%%
-
 %% CPP Pre-defined backend
 namespace PathStack {
     function emitPathStackCreate(): CString {
@@ -33,6 +27,16 @@ namespace UnicodeCharBuffer {
     %% Emit c++ for buffer creation here
 }
 
+entity Context {
+    field fullns_key: CPPAssembly::NamespaceKey; %% Main::Foo::Bar::...
+    field fullns_list: List<CString>; %% ['Main', 'Foo', 'Bar', ...]
+    field nsdecls: Map<CString, CPPAssembly::NamespaceDecl>;
+
+    method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString>): Context {
+        return Context{ new_ns, new_nsname, this.nsdecls };
+    }
+}
+
 function emitTypeSignature(ts: CPPAssembly::TypeSignature): CString {
     return ts.tkeystr.value;
 }
@@ -45,12 +49,30 @@ function emitVarIdentifier(vident: CPPAssembly::VarIdentifier): CString {
     return vident.value;
 }
 
-function emitFunction(ik: CPPAssembly::InvokeKey): CString {
+function emitInvokeKey(ik: CPPAssembly::InvokeKey): CString {
     return ik.value;
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): CString {
     return nsk.value;
+}
+
+%%
+%% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
+%% giving resolved namespace for given scope
+%%
+function emitResolvedNamespace(fullns_list: List<CString>, fullns_key: CPPAssembly::NamespaceKey): CString {
+    let fullns: CString = emitNamespaceKey(fullns_key);
+    return fullns_list.reduce<CString>(fullns, fn(acc, s) => {
+        if(acc.startsWithString(s)) {
+            let nopre = acc.removePrefixString(s);
+            if(nopre.startsWithString('::')) {
+                return nopre.removePrefixString('::');
+            }
+            return nopre;
+        }
+        return acc;
+    });
 }
 
 function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): CString {
@@ -71,151 +93,151 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
     return emitVarIdentifier(exp.vname);
 }
 
-function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement, indent: CString): CString {
+function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement, ctx: Context, indent: CString): CString {
     %% let rtype = emitTypeSignature(ret.rtype);
-    let exp = emitExpression(ret.value);
+    let exp = emitExpression(ret.value, ctx);
 
     let full_indent: CString = CString::concat(indent, '    ');
     return CString::concat(full_indent, 'return ', exp, ';%n;');
 }
 
-recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression): CString {
-    let lhs = emitExpression[recursive](add.lhs);
-    let rhs = emitExpression[recursive](add.rhs);
+recursive function emitBinAddExpression(add: CPPAssembly::BinAddExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](add.lhs, ctx);
+    let rhs = emitExpression[recursive](add.rhs, ctx);
 
     return CString::concat('(', lhs, ' + ', rhs, ')');
 }
 
-recursive function emitBinSubExpression(sub: CPPAssembly::BinSubExpression): CString {
-    let lhs = emitExpression[recursive](sub.lhs);
-    let rhs = emitExpression[recursive](sub.rhs);
+recursive function emitBinSubExpression(sub: CPPAssembly::BinSubExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](sub.lhs, ctx);
+    let rhs = emitExpression[recursive](sub.rhs, ctx);
 
     return CString::concat('(', lhs, ' - ', rhs, ')');
 }
 
-recursive function emitBinDivExpression(div: CPPAssembly::BinDivExpression): CString {
-    let lhs = emitExpression[recursive](div.lhs);
-    let rhs = emitExpression[recursive](div.rhs);
+recursive function emitBinDivExpression(div: CPPAssembly::BinDivExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](div.lhs, ctx);
+    let rhs = emitExpression[recursive](div.rhs, ctx);
 
     return CString::concat('(', lhs, ' / ', rhs, ')');
 }
 
-recursive function emitBinMultExpression(mult: CPPAssembly::BinMultExpression): CString {
-    let lhs = emitExpression[recursive](mult.lhs);
-    let rhs = emitExpression[recursive](mult.rhs);
+recursive function emitBinMultExpression(mult: CPPAssembly::BinMultExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](mult.lhs, ctx);
+    let rhs = emitExpression[recursive](mult.rhs, ctx);
 
     return CString::concat('(', lhs, ' * ', rhs, ')');
 }
 
-recursive function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression): CString {
+recursive function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpression, ctx: Context): CString {
     match(e)@ {
-        CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e); }
-        | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e); }
-        | CPPAssembly::BinDivExpression => { return emitBinDivExpression[recursive]($e); }
-        | CPPAssembly::BinMultExpression => { return emitBinMultExpression[recursive]($e); }
+        CPPAssembly::BinAddExpression => { return emitBinAddExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinSubExpression => { return emitBinSubExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinDivExpression => { return emitBinDivExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinMultExpression => { return emitBinMultExpression[recursive]($e, ctx); }
     }
 }
 
-recursive function emitPrefixNotOpExpression(notop: CPPAssembly::PrefixNotOpExpression): CString {
-    let expr = emitExpression[recursive](notop.expr);
+recursive function emitPrefixNotOpExpression(notop: CPPAssembly::PrefixNotOpExpression, ctx: Context): CString {
+    let expr = emitExpression[recursive](notop.expr, ctx);
     return CString::concat('!', expr);
 }
 
-recursive function emitPrefixNegateOpExpression(negop: CPPAssembly::PrefixNegateOpExpression): CString {
-    let expr = emitExpression[recursive](negop.expr);
+recursive function emitPrefixNegateOpExpression(negop: CPPAssembly::PrefixNegateOpExpression, ctx: Context): CString {
+    let expr = emitExpression[recursive](negop.expr, ctx);
     return CString::concat('-', expr);
 }
 
-recursive function emitPrefixPlusOpExpression(plusop: CPPAssembly::PrefixPlusOpExpression): CString {
-    return emitExpression[recursive](plusop.expr);
+recursive function emitPrefixPlusOpExpression(plusop: CPPAssembly::PrefixPlusOpExpression, ctx: Context): CString {
+    return emitExpression[recursive](plusop.expr, ctx);
 }
 
-recursive function emitUnaryExpression(e: CPPAssembly::UnaryExpression): CString {
+recursive function emitUnaryExpression(e: CPPAssembly::UnaryExpression, ctx: Context): CString {
     match(e)@ {
-        CPPAssembly::PrefixNotOpExpression => { return emitPrefixNotOpExpression[recursive]($e); }
-        | CPPAssembly::PrefixNegateOpExpression => { return emitPrefixNegateOpExpression[recursive]($e); }
-        | CPPAssembly::PrefixPlusOpExpression => { return emitPrefixPlusOpExpression[recursive]($e); }
+        CPPAssembly::PrefixNotOpExpression => { return emitPrefixNotOpExpression[recursive]($e, ctx); }
+        | CPPAssembly::PrefixNegateOpExpression => { return emitPrefixNegateOpExpression[recursive]($e, ctx); }
+        | CPPAssembly::PrefixPlusOpExpression => { return emitPrefixPlusOpExpression[recursive]($e, ctx); }
     }
 }
 
-recursive function emitNumericEqExpression(e: CPPAssembly::NumericEqExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericEqExpression(e: CPPAssembly::NumericEqExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' == ', rhs, ')');   
 }
 
-recursive function emitNumericNeqExpression(e: CPPAssembly::NumericNeqExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericNeqExpression(e: CPPAssembly::NumericNeqExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' != ', rhs, ')');   
 }
 
-recursive function emitNumericLessExpression(e: CPPAssembly::NumericLessExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericLessExpression(e: CPPAssembly::NumericLessExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' < ', rhs, ')');   
 }
 
-recursive function emitNumericLessEqExpression(e: CPPAssembly::NumericLessEqExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericLessEqExpression(e: CPPAssembly::NumericLessEqExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' <= ', rhs, ')');   
 }
 
-recursive function emitNumericGreaterExpression(e: CPPAssembly::NumericGreaterExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericGreaterExpression(e: CPPAssembly::NumericGreaterExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' > ', rhs, ')');   
 }
 
-recursive function emitNumericGreaterEqExpression(e: CPPAssembly::NumericGreaterEqExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);
+recursive function emitNumericGreaterEqExpression(e: CPPAssembly::NumericGreaterEqExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);
 
     return CString::concat('(', lhs, ' >= ', rhs, ')');   
 }
 
-recursive function emitBinaryNumericExpression(e: CPPAssembly::BinaryNumericExpression): CString {
+recursive function emitBinaryNumericExpression(e: CPPAssembly::BinaryNumericExpression, ctx: Context): CString {
     match(e)@ {
-        CPPAssembly::NumericEqExpression => { return emitNumericEqExpression[recursive]($e); }
-        | CPPAssembly::NumericNeqExpression => { return emitNumericNeqExpression[recursive]($e); }
-        | CPPAssembly::NumericLessExpression => { return emitNumericLessExpression[recursive]($e); }
-        | CPPAssembly::NumericLessEqExpression => { return emitNumericLessEqExpression[recursive]($e); }
-        | CPPAssembly::NumericGreaterExpression => { return emitNumericGreaterExpression[recursive]($e); }
-        | CPPAssembly::NumericGreaterEqExpression => { return emitNumericGreaterEqExpression[recursive]($e); }
+        CPPAssembly::NumericEqExpression => { return emitNumericEqExpression[recursive]($e, ctx); }
+        | CPPAssembly::NumericNeqExpression => { return emitNumericNeqExpression[recursive]($e, ctx); }
+        | CPPAssembly::NumericLessExpression => { return emitNumericLessExpression[recursive]($e, ctx); }
+        | CPPAssembly::NumericLessEqExpression => { return emitNumericLessEqExpression[recursive]($e, ctx); }
+        | CPPAssembly::NumericGreaterExpression => { return emitNumericGreaterExpression[recursive]($e, ctx); }
+        | CPPAssembly::NumericGreaterEqExpression => { return emitNumericGreaterEqExpression[recursive]($e, ctx); }
     }
 }
 
-recursive function emitBinLogicAndExpression(e: CPPAssembly::BinLogicAndExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);   
+recursive function emitBinLogicAndExpression(e: CPPAssembly::BinLogicAndExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);   
 
     return CString::concat('(', lhs, ' && ', rhs, ')');
 }
 
-recursive function emitBinLogicOrExpression(e: CPPAssembly::BinLogicOrExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);   
+recursive function emitBinLogicOrExpression(e: CPPAssembly::BinLogicOrExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);   
 
     return CString::concat('(', lhs, ' || ', rhs, ')');
 }
 
-recursive function emitBinLogicImpliesExpression(e: CPPAssembly::BinLogicImpliesExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs);  
+recursive function emitBinLogicImpliesExpression(e: CPPAssembly::BinLogicImpliesExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx);  
 
     let implies: CString = CString::concat('!', lhs, ' || ', rhs);
     return CString::concat('(', implies ,')');
 }
 
-recursive function emitBinLogicIFFExpression(e: CPPAssembly::BinLogicIFFExpression): CString {
-    let lhs = emitExpression[recursive](e.lhs);
-    let rhs = emitExpression[recursive](e.rhs); 
+recursive function emitBinLogicIFFExpression(e: CPPAssembly::BinLogicIFFExpression, ctx: Context): CString {
+    let lhs = emitExpression[recursive](e.lhs, ctx);
+    let rhs = emitExpression[recursive](e.rhs, ctx); 
     let nlhs: CString = CString::concat('!', lhs);
     let nrhs: CString = CString::concat('!', rhs);
 
@@ -225,85 +247,177 @@ recursive function emitBinLogicIFFExpression(e: CPPAssembly::BinLogicIFFExpressi
     return CString::concat('(', first, ' || ', second, ')');
 }
 
-recursive function emitBinLogicExpression(e: CPPAssembly::BinLogicExpression): CString {
+recursive function emitBinLogicExpression(e: CPPAssembly::BinLogicExpression, ctx: Context): CString {
     match(e)@ {
-        CPPAssembly::BinLogicAndExpression => { return emitBinLogicAndExpression[recursive]($e); }
-        | CPPAssembly::BinLogicOrExpression => { return emitBinLogicOrExpression[recursive]($e); }
-        | CPPAssembly::BinLogicImpliesExpression => { return emitBinLogicImpliesExpression[recursive]($e); }
-        | CPPAssembly::BinLogicIFFExpression => { return emitBinLogicIFFExpression[recursive]($e); }
+        CPPAssembly::BinLogicAndExpression => { return emitBinLogicAndExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinLogicOrExpression => { return emitBinLogicOrExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinLogicImpliesExpression => { return emitBinLogicImpliesExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinLogicIFFExpression => { return emitBinLogicIFFExpression[recursive]($e, ctx); }
     }
 }
 
-recursive function emitLogicActionAndExpression(e: CPPAssembly::LogicActionAndExpression): CString {
-    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr));
+recursive function emitLogicActionAndExpression(e: CPPAssembly::LogicActionAndExpression, ctx: Context): CString {
+    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr, ctx));
     return CString::concat('(', CString::joinAll(' && ', args), ')');
 }
 
-recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpression): CString {
-    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr));
+recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpression, ctx: Context): CString {
+    let args = e.args.map<CString>(fn(expr) => emitExpression[recursive](expr, ctx));
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
-function emitExpression(e: CPPAssembly::Expression): CString {
+function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+    if(av)@none {
+        let param = func.params.get(i).defaultval;
+        if(param)@none {
+            abort; %% Should be impossible
+        }
+        else {
+            return emitExpression[recursive]($param, ctx);
+        }
+    }
+    else {
+        let arg = $av;
+        let expr = emitExpression[recursive](arg.exp, ctx);
+        match(arg)@ {
+            CPPAssembly::NamedArgumentValue => { return expr; } 
+            | CPPAssembly::PositionalArgumentValue => { return expr; }
+            | _ => { abort; }
+        }
+    }
+}
+
+function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFunctionDecl): List<CString> {
+    return al.map<CString>(fn(arg) => { 
+        if(arg.startsWithString('$')) {
+            let ident = arg.removePrefixString('$');
+
+            %% This is a bit hacky but works for getting default val idx
+            let idx = func.params.mapIdx<Nat>(fn(param, ii) => {
+                if(emitIdentifier(param.pname) === ident) {
+                    return ii;
+                }
+                return 0n;
+            }).sum();
+
+            return al.get(idx);
+        }
+        return arg; 
+    });
+}
+
+function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, func, ctx));
+    
+    return CString::joinAll(', ', resolveDefaultParams[recursive](emit_al, func));
+}
+
+recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, ikey: CPPAssembly::InvokeKey, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
+    let ns_name = fullns.front();
+    let remaining_ns_names = fullns.popFront().1;
+
+    %% Found func we are looking for
+    if(remaining_ns_names.empty() && decls.has(ns_name)) {
+        let cur_nsfuncs = decls.get(ns_name).nsfuncs;
+        if(!cur_nsfuncs.has(ikey)) {
+            abort; %% Func does not exist
+        }
+        return cur_nsfuncs.get(ikey);
+    }
+
+    if(decls.has(ns_name)) {
+        let cur_nsdecl = decls.get(ns_name);
+        return findNamespaceFunctionDecl[recursive](cur_nsdecl.subns, ikey, remaining_ns_names);
+    }
+    else {
+        abort; %% Namespace does not exist
+    }
+}
+
+function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
+    let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns); 
+
+    let ident = emitInvokeKey(e.ikey);
+    let name = ident.removePrefixString(e.ns.value);
+    
+    var resolvedName: CString;
+    if(name.startsWithString('::')) {
+        resolvedName = name.removePrefixString('::');
+    }
+    else {
+        resolvedName = name;
+    }
+
+    let func = findNamespaceFunctionDecl(ctx.nsdecls, e.ikey, e.fullns);
+    let args = emitArgumentList(e.args, func, ctx);
+
+    if(resolvedns !== '') {
+        return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
+    }
+    return CString::concat(resolvedName, '(', args, ')');
+}
+
+function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
     match(e)@ {
-        CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e); }
-        | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e); }
-        | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e); }
-        | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e); }
-        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e); }
-        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e); }
+        CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e, ctx); }
+        | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
+        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
+        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
+        | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
         | _ => { abort; }
     }
 }
 
-function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, indent: CString): CString {
+function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(stmt.name);
     let stype = emitTypeSignature(stmt.vtype);
-    let exp = emitExpression(stmt.exp);
+    let exp = emitExpression(stmt.exp, ctx);
 
     let full_indent: CString = CString::concat(indent, '    ', stype); %% List constructor size max 6
     return CString::concat(full_indent, ' ', name, ' = ', exp, ';');
 }
 
-function emitBlockStatement(block: CPPAssembly::BlockStatement, indent: CString): CString {
-    let stmts = block.statements.map<CString>(fn(stmt) => emitStatement(stmt, indent));
+function emitBlockStatement(block: CPPAssembly::BlockStatement, ctx: Context, indent: CString): CString {
+    let stmts = block.statements.map<CString>(fn(stmt) => emitStatement(stmt, ctx, indent));
     return CString::joinAll('%n;', stmts);
 }
 
-function emitIfStatement(stmt: CPPAssembly::IfStatement, indent: CString): CString {
+function emitIfStatement(stmt: CPPAssembly::IfStatement, ctx: Context, indent: CString): CString {
     let full_indent = CString::concat('    ', indent); 
-    let expr = emitExpression(stmt.cond);
-    let trueBlock = emitBlockStatement(stmt.trueBlock, full_indent);
+    let expr = emitExpression(stmt.cond, ctx);
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, full_indent);
     
     let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;');
     return CString::concat(ifstmt, trueBlock, full_indent, '}');
 }
 
-function emitIfElseStatement(stmt: CPPAssembly::IfElseStatement, indent: CString): CString {
+function emitIfElseStatement(stmt: CPPAssembly::IfElseStatement, ctx: Context, indent: CString): CString {
     let full_indent = CString::concat('    ', indent); 
-    let expr = emitExpression(stmt.cond);
+    let expr = emitExpression(stmt.cond, ctx);
     
-    let falseBlock = emitBlockStatement(stmt.falseBlock, full_indent);
+    let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, full_indent);
     let elseBlockText = CString::concat(full_indent, 'else {%n;', falseBlock, full_indent, '}%n;');
 
-    let trueBlock = emitBlockStatement(stmt.trueBlock, full_indent);
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, full_indent);
     let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;'); 
 
     return CString::concat(ifstmt, trueBlock, full_indent, '}%n;', elseBlockText);
 }
 
-function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, indent: CString): CString {
+function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Context, indent: CString): CString {
     let full_indent = CString::concat('    ', indent); 
-    let ifcond = CString::concat(full_indent, 'if(', emitExpression(stmt.ifcond), ') {%n;');
-    let ifbody = CString::concat(emitBlockStatement(stmt.ifflow, full_indent), full_indent, '}%n;');
+    let ifcond = CString::concat(full_indent, 'if(', emitExpression(stmt.ifcond, ctx), ') {%n;');
+    let ifbody = CString::concat(emitBlockStatement(stmt.ifflow, ctx, full_indent), full_indent, '}%n;');
     let ifblock = CString::concat(ifcond, ifbody);
-    let elseblock = CString::concat(full_indent, 'else {%n;', emitBlockStatement(stmt.elseflow, full_indent), full_indent, '}%n;');
+    let elseblock = CString::concat(full_indent, 'else {%n;', emitBlockStatement(stmt.elseflow, ctx, full_indent), full_indent, '}%n;');
 
     let elifs_list = stmt.condflow.map<CString>(fn(elifs) => {
-        let cond = emitExpression(elifs.0);
-        let body = emitBlockStatement(elifs.1, full_indent);
+        let cond = emitExpression(elifs.0, ctx);
+        let body = emitBlockStatement(elifs.1, ctx, full_indent);
 
         let elif_stmt = CString::concat(full_indent, 'else if(', cond, ') {%n;');
         return CString::concat(elif_stmt, body, full_indent, '}%n;');
@@ -313,65 +427,97 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, indent:
     return CString::concat(ifcond, ifbody, elifs, elseblock);
 }
 
-function emitStatement(stmt: CPPAssembly::Statement, indent: CString): CString {
+function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: CString): CString {
     match(stmt)@ {
-        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, indent); }
-        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, indent); }
-        | CPPAssembly::IfStatement => { return emitIfStatement($stmt, indent); }
-        | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, indent); }
-        | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, indent); }
+        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
+        | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, ctx, indent); }
+        | CPPAssembly::IfStatement => { return emitIfStatement($stmt, ctx, indent); }
+        | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
+        | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
         | _ => { abort; }
     }
 }
 
-function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation, indent: CString): CString {
-    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt, indent)));
+function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation, ctx: Context, indent: CString): CString {
+    return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt, ctx, indent)));
 }
 
-function emitBodyImplementation(body: CPPAssembly::BodyImplementation, indent: CString): CString {
+function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Context, indent: CString): CString {
     match(body)@ {
         %% CPPAssembly::AbstractBodyImplementation => { abort; }
         %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
         %% | CPPAssembly::BuiltinBodyImplementation => { abort; }
         %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
         %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
-        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, indent); }
+        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, ctx, indent); }
         | _ => { abort; }
     }
 }
 
-%% Will need to specific namespace of function
-function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, indent: CString): CString {
-    let name = func.name;
-    let nskey = emitNamespaceKey(func.ns);
-    let params = ''; %% TODO: Parameters not implemented
-    let rtype = emitTypeSignature(func.resultType); 
+function emitParameters(params: List<CPPAssembly::ParameterDecl>): CString {
+    let all_params = params.map<CString>(fn(param) => {
+        let ptype = emitTypeSignature(param.ptype);
+        let pident = emitIdentifier(param.pname);
+        return CString::concat(ptype, ' ', pident);
+    });
 
-    let pre: CString = CString::concat(rtype, ' ', name );
-    let params_impl: CString = CString::concat('(', params, ')');
-
-    return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, indent), indent, '}%n;');
+    return CString::joinAll(', ', all_params);
 }
 
-%% Emits all funcions inside a given namespace
-function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceKey, funcs: CString): CString {
-    return CString::concat('namespace ', nsdecl.value, ' {%n;', funcs, '}%n;%n;');
+function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
+    let name = func.name;
+    let nskey = emitNamespaceKey(func.declaredInNS);
+    let params = emitParameters(func.params);
+    let rtype = emitTypeSignature(func.resultType); 
+
+    let nctx = ctx.updateCurrentNamespace(func.declaredInNS, func.fullns);
+
+    let pre: CString = CString::concat(indent, rtype, ' ', name );
+    let params_impl: CString = CString::concat('(', params, ')');
+
+    return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, nctx, indent), indent, '}%n;');
+}
+
+recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
+    %% Emit namespace 
+    let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
+    let full_indent = CString::concat('    ', indent);
+
+    %% Emit sub-namespace declarations
+    let subns = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
+        return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
+    });
+
+    let fwd_decls = nsdecl.nsfuncs.reduce<CString>(subns, fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitFunctionForwardDeclaration(decl, full_indent));
+    });
+
+    %% Emit functions in current namespace
+    let funcs = nsdecl.nsfuncs.reduce<CString>(CString::concat(fwd_decls, '%n;'), fn(acc, key, func) => {
+        return CString::concat(acc, emitNamespaceFunctionDecl(func, ctx, full_indent)); 
+    });
+
+    return CString::concat(funcs, indent, '}%n;');
+}
+
+%% I suspect we will need separate cases for entities, types, enums and such
+function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl, ident: CString): CString {
+    let pre = decl.name;
+    let rtype = emitTypeSignature(decl.resultType); 
+    let params = emitParameters(decl.params);
+    let first = CString::concat(ident, rtype, ' ', pre );
+    return CString::concat(first, '(', params, ');%n;');
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% First emit all namespace blocks with their functions
-    let nsblocks = asm.nsfuncs.reduce<CString>('', fn(acc, nskey, funcs) => {
-        let emission = funcs.reduce<CString>('', fn(funcacc, ikey, func) => {
-            let indent: CString = '    ';
-            return CString::concat(indent, funcacc, emitNamespaceFunctionDecl(func, indent));
-        });
-        
-        return emitNamespaceDecl(nskey, emission);
+    let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}, asm.nsdecls}; %% No known namespace yet
+    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
+        return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
     });
 
     %% TODO: Other non namespace functions
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    return CString::join('%n;', nsblocks);
+    return CString::join('%n;', ns_emission, '%n;');
 }
