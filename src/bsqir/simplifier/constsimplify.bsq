@@ -583,6 +583,131 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processIfSimpleStatement(s: IfSimpleStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+
+        if(ntexp)@!<LiteralSimpleExpression> {
+            return s[texp=ntexp, trueBlock=ntb];
+        }
+        else {
+            if($ntexp.value === 'true') {
+                return ntb;
+            }
+            else {
+                return EmptyStatement{ s.sinfo };
+            }
+        }
+    }
+
+    recursive method processIfTestStatement(s: IfTestStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, s.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return s[texp=ntexp, trueBlock=ntb];
+        }
+        else {
+            if($op.value) {
+                return ntb;
+            }
+            else {
+                return EmptyStatement{ s.sinfo };
+            }
+        }
+    }
+
+    recursive method processIfBinderStatement(s: IfBinderStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, s.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return s[texp=ntexp, trueBlock=ntb];
+        }
+        else {
+            if($op.value) {
+                return ntb;
+            }
+            else {
+                return EmptyStatement{ s.sinfo };
+            }
+        }
+    }
+
+    recursive method processIfStatement(s: IfStatement): Statement {
+        match(s)@ {
+            IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s); }
+            | IfTestStatement => { return this.processIfTestStatement[recursive]($s); }
+            | IfBinderStatement => { return this.processIfBinderStatement[recursive]($s); }
+        }
+    }
+
+    recursive method processIfElseSimpleStatement(s: IfElseSimpleStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock);
+
+        if(ntexp)@!<LiteralSimpleExpression> {
+            return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+        }
+        else {
+            if($ntexp.value === 'true') {
+                return ntb;
+            }
+            else {
+                return nfb;
+            }
+        }
+    }
+
+    recursive method processIfElseTestStatement(s: IfElseTestStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, s.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+        }
+        else {
+            if($op.value) {
+                return ntb;
+            }
+            else {
+                return nfb;
+            }
+        }
+    }
+
+    recursive method processIfElseBinderStatement(s: IfElseBinderStatement): Statement {
+        let ntexp = this.processExpression[recursive](s.texp);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock);
+
+        let op = this.processITestAsTest(ntexp.sinfo, ntexp.etype, s.itest);
+        if(op)@!<PostfixBoolConstant> {
+            return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+        }
+        else {
+            if($op.value) {
+                return ntb;
+            }
+            else {
+                return nfb;
+            }
+        }
+    }
+
+    recursive method processIfElseStatement(s: IfElseStatement): Statement {
+        match(s)@ {
+            IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s); }
+            | IfElseTestStatement => { return this.processIfElseTestStatement[recursive]($s); }
+            | IfElseBinderStatement => { return this.processIfElseBinderStatement[recursive]($s); }
+        }
+    }
+
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
             VariableDeclarationStatement => {
@@ -618,6 +743,12 @@ entity ConstantSimplification {
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
+            | IfStatement => {
+                return this.processIfStatement[recursive]($s);
+            }
+            | IfElseStatement => {
+                return this.processIfElseStatement[recursive]($s);
+            }
             | AbortStatement => {
                 return s;
             }
@@ -625,6 +756,12 @@ entity ConstantSimplification {
                 return this.processAssertStatement($s);
             }
         }
+    }
+
+    recursive method processBlockStatement(s: BlockStatement): BlockStatement {
+        let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
+
+        return s[statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

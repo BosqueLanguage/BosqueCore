@@ -280,14 +280,14 @@ entity CPPTransformer {
     }
 
     recursive method transformIfStatement(stmt: BSQAssembly::IfStatement): CPPAssembly::IfStatement {
-        let cond = this.transformExpressionToCpp[recursive](stmt.cond);
+        let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
 
         return CPPAssembly::IfStatement{ cond, trueBlock };
     }
 
     recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement): CPPAssembly::IfElseStatement {
-        let cond = this.transformExpressionToCpp[recursive](stmt.cond);
+        let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
         let falseBlock = this.transformBlockStatement(stmt.falseBlock);
 

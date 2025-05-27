@@ -351,6 +351,79 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processIfSimpleStatement(s: IfSimpleStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](s.texp, vmap));
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+
+        return s[texp=ntexp, trueBlock=ntb];
+    }
+
+    recursive method processIfTestStatement(s: IfTestStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+
+        return s[texp=ntexp, trueBlock=ntb];
+    }
+
+    recursive method processIfBinderStatement(s: IfBinderStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
+
+        let nvmap = vmap.extendMapping(s.binder.srcname);
+        let nname = vmap.resolveVariableAsNeeded(s.binder.srcname);
+        let nbinder = BinderInfo{nname, s.binder.refineonfollow};
+
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+
+        return s[binder=nbinder, texp=ntexp, trueBlock=ntb];
+    }
+
+    recursive method processIfStatement(s: IfStatement, vmap: VarMapping): Statement {
+        match(s)@ {
+            IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s, vmap); }
+            | IfTestStatement => { return this.processIfTestStatement[recursive]($s, vmap); }
+            | IfBinderStatement => { return this.processIfBinderStatement[recursive]($s, vmap); }
+        }
+    }
+
+    recursive method processIfElseSimpleStatement(s: IfElseSimpleStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](s.texp, vmap));
+
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
+
+        return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+    }
+
+    recursive method processIfElseTestStatement(s: IfElseTestStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
+
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
+
+        return s[texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+    }
+
+    recursive method processIfElseBinderStatement(s: IfElseBinderStatement, vmap: VarMapping): Statement {
+        let ntexp = this.processExpression[recursive](s.texp, vmap);
+
+        let nvmap = vmap.extendMapping(s.binder.srcname);
+        let nname = vmap.resolveVariableAsNeeded(s.binder.srcname);
+        let nbinder = BinderInfo{nname, s.binder.refineonfollow};
+
+        let ntb = this.processBlockStatement[recursive](s.trueBlock, vmap);
+        let nfb = this.processBlockStatement[recursive](s.falseBlock, vmap);
+
+        return s[binder=nbinder, texp=ntexp, trueBlock=ntb, falseBlock=nfb];
+    }
+
+    recursive method processIfElseStatement(s: IfElseStatement, vmap: VarMapping): Statement {
+        match(s)@ {
+            IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s, vmap); }
+            | IfElseTestStatement => { return this.processIfElseTestStatement[recursive]($s, vmap); }
+            | IfElseBinderStatement => { return this.processIfElseBinderStatement[recursive]($s, vmap); }
+        }
+    }
+
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
             EmptyStatement => {
@@ -397,6 +470,12 @@ entity ExplicitifyTransform {
             | ReturnMultiStatement => {
                 abort; %% NOT IMPLEMENTED
             }
+            | IfStatement => {
+                return this.processIfStatement[recursive]($s, vmap);
+            }
+            | IfElseStatement => {
+                return this.processIfElseStatement[recursive]($s, vmap);
+            }
             | AbortStatement => {
                 return s;
             }
@@ -405,7 +484,16 @@ entity ExplicitifyTransform {
                 let nc = this.processExplicitBoolConvertAsNeeded(nr);
                 return $s[cond = nc];
             }
+            | BlockStatement => {
+                return this.processBlockStatement[recursive]($s, vmap);
+            }
         }
+    }
+
+    recursive method processBlockStatement(s: BlockStatement, vmap: VarMapping): BlockStatement {
+        let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt, vmap));
+
+        return s[statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

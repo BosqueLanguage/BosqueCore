@@ -389,14 +389,13 @@ entity AssertOperation provides Operation {
 }
 
 entity AssumeOperation provides Operation {
-    field cond: SafeExpression;
+    field cond: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
 
     field inop: Operation;
 }
 
 entity LetOperation provides Operation {
     field vbind: Identifier;
-    field vtype: TypeKey;
     field value: SafeExpression;
 
     field inop: Operation;
@@ -409,6 +408,13 @@ entity LetOperationWError provides Operation {
     field value: Expression;
 
     field inop: Operation;
+}
+
+entity LetWErrorsOperation provides Operation {
+    field vvbind: List<(|Expression, TypeKey, Identifier|)>;
+    field inop: Operation;
+
+    invariant !$vvbind.empty();
 }
 
 entity IfThenElseOperation provides Operation {

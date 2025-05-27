@@ -1209,11 +1209,19 @@ class BSQIREmitter {
         const cond = this.emitExpression(stmt.cond.exp);
         const tblock = this.emitBlockStatement(stmt.trueBlock, fmt);
 
-        if(stmt.binder === undefined) {
-            return `BSQAssembly::IfStatement{ ${sbase}, cond=${cond}, trueBlock=${tblock} }`;
+        const ibase = `${sbase}, texp=${cond}, trueBlock=${tblock}`;
+
+        if(stmt.cond.itestopt === undefined) {
+            return `BSQAssembly::IfSimpleStatement{ ${ibase} }`;
         }
         else {
-            assert(false, "Not Implemented -- emitIfStatement with binder");
+            if(stmt.binder === undefined) {
+                return `BSQAssembly::IfTestStatement{ ${ibase}, itest=${this.emitITest(stmt.cond.itestopt)} }`;
+            }
+            else {
+                const binder = this.emitBinderInfo(stmt.binder);
+                return `BSQAssembly::IfBinderStatement{ ${ibase}, itest=${this.emitITest(stmt.cond.itestopt)}, binder=${binder} }`;
+            }
         }
     }
 
@@ -1224,11 +1232,19 @@ class BSQIREmitter {
         const tblock = this.emitBlockStatement(stmt.trueBlock, fmt);
         const fblock = this.emitBlockStatement(stmt.falseBlock, fmt);
 
-        if(stmt.binder === undefined) {
-            return `BSQAssembly::IfElseStatement{ ${sbase}, cond=${cond}, trueBlock=${tblock}, falseBlock=${fblock} }`;
+        const ibase = `${sbase}, texp=${cond}, trueBlock=${tblock}, falseBlock=${fblock}`;
+
+        if(stmt.cond.itestopt === undefined) {
+            return `BSQAssembly::IfElseSimpleStatement{ ${ibase} }`;
         }
         else {
-            assert(false, "Not Implemented -- emitIfElseStatement with binder");
+            if(stmt.binder === undefined) {
+                return `BSQAssembly::IfElseTestStatement{ ${ibase}, itest=${this.emitITest(stmt.cond.itestopt)} }`;
+            }
+            else {
+                const binder = this.emitBinderInfo(stmt.binder);
+                return `BSQAssembly::IfElseBinderStatement{ ${ibase}, itest=${this.emitITest(stmt.cond.itestopt)}, binder=${binder} }`;
+            }
         }
     }
 
