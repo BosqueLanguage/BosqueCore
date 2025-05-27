@@ -287,12 +287,8 @@ function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func:
     }
 }
 
-recursive function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFunctionDecl): List<CString> {
-    if(al.allOf(pred(param) => !(param.startsWithString('$')))) { %% All default params resolved
-        return al;
-    }
-    
-    let resolved = al.map<CString>(fn(arg) => { %% Resolve one layer of default param nesting
+function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFunctionDecl): List<CString> {
+    return al.map<CString>(fn(arg) => { 
         if(arg.startsWithString('$')) {
             let ident = arg.removePrefixString('$');
 
@@ -308,8 +304,6 @@ recursive function resolveDefaultParams(al: List<CString>, func: CPPAssembly::Na
         }
         return arg; 
     });
-
-    return resolveDefaultParams[recursive](resolved, func);
 }
 
 function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
