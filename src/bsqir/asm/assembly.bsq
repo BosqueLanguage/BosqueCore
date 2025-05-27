@@ -72,7 +72,7 @@ enum FunctionDeclKindTag {
 
 entity NamespaceFunctionDecl provides FunctionInvokeDecl {
     field fkind: FunctionDeclKindTag;
-    field fullns: List<CString>;
+    field fullns: List<CString>; %% I will need to also move this (I think)
 }
 
 entity TypeFunctionDecl provides FunctionInvokeDecl {

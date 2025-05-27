@@ -213,14 +213,27 @@ entity CPPTransformer {
         }
     }
 
+    %%
+    %% We can do these two loops together
+    %%
     method transformArgumentList(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
         let alist = bsqargs.args.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
-        let shuffled = alist.mapIdx<CPPAssembly::ArgumentValue>(fn(cpparg, ii) => {
-            let cur_shuffleinfo = bsqargs.shuffleinfo.get(ii).0;
-            match(cur_shuffleinfo)@ {
-                None => { abort; } %% TODO: Handle default parameter
-                | _ => { return alist.get($cur_shuffleinfo.value); }
+        let shuffled = bsqargs.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(e, ii) => {
+            var cur_arg: CPPAssembly::ArgumentValue;
+            if(ii >= alist.size()) {
+                return none;
             }
+            else { %% Resolve shuffle value
+                let shuffle_idx = e.0;
+                if(shuffle_idx)@none {
+                    return none;
+                }
+                else {
+                    cur_arg = alist.get($shuffle_idx);
+                }
+            }
+
+            return some(cur_arg);
         });
         return CPPAssembly::ArgumentList{ shuffled };   
     }
@@ -230,8 +243,9 @@ entity CPPTransformer {
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
         let args = this.transformArgumentList(expr.argsinfo);
+        let fullns = expr.fullns; %% For looking up func we are calling
 
-        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, args };
+        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
     }
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
@@ -314,11 +328,19 @@ entity CPPTransformer {
         return stmts.map<CPPAssembly::Statement>(fn(stmt) => this.transformStatementToCpp(stmt));
     }
 
+    method transformDefaultVal(val: Option<BSQAssembly::Expression>): Option<CPPAssembly::Expression> {
+        match(val)@ {
+            None => { return none; }
+            | _ => { return some(this.transformExpressionToCpp[recursive]($val.value)); }
+        }
+    }
+
     method transformParameterDecl(decl: List<BSQAssembly::InvokeParameterDecl>): List<CPPAssembly::ParameterDecl> {
         return decl.map<CPPAssembly::ParameterDecl>(fn(pdecl) => {
             return CPPAssembly::ParameterDecl{ 
                 CPPTransformNameManager::convertIdentifier(pdecl.pname), 
-                CPPTransformNameManager::convertTypeSignature(pdecl.ptype) 
+                CPPTransformNameManager::convertTypeSignature(pdecl.ptype),
+                this.transformDefaultVal(pdecl.defaultval)
             };
         });
     }
@@ -381,7 +403,7 @@ entity CPPTransformer {
                     bsqfunc.fullns, cppikey };
             }
             else {
-                abort; 
+                abort; %% I suspect we will need to eventually support non-ns funcs
             }
         });
 

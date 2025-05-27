@@ -475,7 +475,10 @@ class BSQIREmitter {
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, argsinfo=${arginfo} }`;
+        const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
+        const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
+        
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, argsinfo=${arginfo} }`;
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {

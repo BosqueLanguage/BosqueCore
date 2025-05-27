@@ -48,8 +48,9 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 entity ParameterDecl {
     field pname: Identifier;
     field ptype: TypeSignature;
+    field defaultval: Option<Expression>;
 
-    %% TODO: Support ref/rest params, default vals
+    %% TODO: Support ref/rest param
 }
 
 %%

@@ -25,13 +25,13 @@ datatype ArgumentValue using {
 }
 of
 RefArgumentValue { } %% TODO: Not implemented
-| PositionalArgumentValue { } %% Implemented but broken (no cpp support for named args)
+| PositionalArgumentValue { } 
 | NamedArgumentValue { field name: VarIdentifier; }
 | SpreadArgumentValue { } %% TODO: Not implemented
 ;
 
 entity ArgumentList {
-    field args: List<ArgumentValue>;
+    field args: List<Option<ArgumentValue>>; %% if none get default val in emitter
 }
 
 %*
@@ -83,6 +83,7 @@ entity ReturnSingleStatement provides Statement {
 entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
+    field fullns: List<CString>;
 
     field args: ArgumentList;
 }

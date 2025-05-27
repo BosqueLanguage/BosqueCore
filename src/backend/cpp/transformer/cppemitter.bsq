@@ -30,9 +30,10 @@ namespace UnicodeCharBuffer {
 entity Context {
     field fullns_key: CPPAssembly::NamespaceKey; %% Main::Foo::Bar::...
     field fullns_list: List<CString>; %% ['Main', 'Foo', 'Bar', ...]
+    field nsdecls: Map<CString, CPPAssembly::NamespaceDecl>;
 
-    method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString> ): Context {
-        return Context{ new_ns, new_nsname };
+    method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString>): Context {
+        return Context{ new_ns, new_nsname, this.nsdecls };
     }
 }
 
@@ -265,19 +266,76 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
-function emitArgumentValue(av: CPPAssembly::ArgumentValue, ctx: Context): CString {
-    let expr = emitExpression[recursive](av.exp, ctx);
+function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+    if(av)@none {
+        let param = func.params.get(i).defaultval;
+        if(param)@none {
+            abort; %% Should be impossible
+        }
+        else {
+            %%
+            %% Current issue is that default parameters just emit of form y: Int = $x and spits out just $x, not resolving whatever x is.
+            %%
 
-    match(av)@ {
-        CPPAssembly::NamedArgumentValue => { return expr; } %% Not functional, just emits expr no named param
-        | CPPAssembly::PositionalArgumentValue => { return expr; }
-        | _ => { abort; } %% TODO: Not Implemented
+            return emitExpression[recursive]($param, ctx);
+        }
+    }
+    else {
+        let arg = $av;
+        let expr = emitExpression[recursive](arg.exp, ctx);
+        match(arg)@ {
+            CPPAssembly::NamedArgumentValue => { return expr; } %% Not functional, just emits expr no named param
+            | CPPAssembly::PositionalArgumentValue => { return expr; }
+            | _ => { abort; }
+        }
     }
 }
 
-function emitArgumentList(al: CPPAssembly::ArgumentList, ctx: Context): CString {
-    let emit_al = al.args.map<CString>(fn(arg) => emitArgumentValue(arg, ctx));
-    return CString::joinAll(', ', emit_al);
+function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, func, ctx));
+    
+    %% Second pass to resolve any default parameters by finding matching param name
+    let resolved_default_params_al = emit_al.map<CString>(fn(arg) => {
+        if(arg.startsWithString('$')) { %% We need to resolve this default params value 
+            let ident = arg.removePrefixString('$');
+
+            %% This is a bit hacky but works
+            let idxes = func.params.mapIdx<Nat>(fn(param, ii) => {
+                if(emitIdentifier(param.pname) === ident) {
+                    return ii;
+                }
+                return 0n;
+            });
+            let idx = idxes.sum();
+
+            return emit_al.get(idx);
+        }
+        return arg; 
+    });
+    
+    return CString::joinAll(', ', resolved_default_params_al);
+}
+
+recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, ikey: CPPAssembly::InvokeKey, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
+    let ns_name = fullns.front();
+    let remaining_ns_names = fullns.popFront().1;
+
+    %% Found func we are looking for
+    if(remaining_ns_names.empty() && decls.has(ns_name)) {
+        let cur_nsfuncs = decls.get(ns_name).nsfuncs;
+        if(!cur_nsfuncs.has(ikey)) {
+            abort; %% Func does not exist
+        }
+        return cur_nsfuncs.get(ikey);
+    }
+
+    if(decls.has(ns_name)) {
+        let cur_nsdecl = decls.get(ns_name);
+        return findNamespaceFunctionDecl[recursive](cur_nsdecl.subns, ikey, remaining_ns_names);
+    }
+    else {
+        abort; %% Namespace does not exist
+    }
 }
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
@@ -294,7 +352,8 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
         resolvedName = name;
     }
 
-    let args = emitArgumentList(e.args, ctx);
+    let func = findNamespaceFunctionDecl(ctx.nsdecls, e.ikey, e.fullns);
+    let args = emitArgumentList(e.args, func, ctx);
 
     if(resolvedns !== '') {
         return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
@@ -428,50 +487,21 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
 
-    let fwd_decls = nsdecl.nsfuncs.reduce<CString>('', fn(acc, ikey, decl) => {
-        return CString::concat(acc, emitFunctionForwardDeclaration(decl, full_indent));
-    });
-
-    let base = CString::concat(ns, fwd_decls);
-
     %% Emit sub-namespace declarations
-    let subns_emission = nsdecl.subns.reduce<CString>(base, fn(acc, name, decl) => {
+    let subns = nsdecl.subns.reduce<CString>(ns, fn(acc, name, decl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
+    let fwd_decls = nsdecl.nsfuncs.reduce<CString>(subns, fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitFunctionForwardDeclaration(decl, full_indent));
+    });
+
     %% Emit functions in current namespace
-    let funcs_emission = nsdecl.nsfuncs.reduce<CString>(subns_emission, fn(acc, key, func) => {
+    let funcs = nsdecl.nsfuncs.reduce<CString>(CString::concat(fwd_decls, '%n;'), fn(acc, key, func) => {
         return CString::concat(acc, emitNamespaceFunctionDecl(func, ctx, full_indent)); 
     });
 
-    return CString::concat(funcs_emission, indent, '}%n;');
-}
-
-%%
-%% I think this can be deleted (ill check on tuesday mornign)
-%%
-recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, func: CPPAssembly::FunctionDecl, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
-    let ikey = func.ikey;
-
-    let ns_name = fullns.front();
-    let remaining_ns_names = fullns.popFront().1;
-
-    %% Found func we are looking for
-    if(remaining_ns_names.empty() && decls.has(ns_name)) {
-        let cur_nsfuncs = decls.get(ns_name).nsfuncs;
-        if(!cur_nsfuncs.has(func.ikey)) {
-            abort; %% Func does not exist
-        }
-        return cur_nsfuncs.get(func.ikey);
-    }
-
-    if(decls.has(ns_name)) {
-        let cur_nsdecl = decls.get(ns_name);
-        return findNamespaceFunctionDecl[recursive](cur_nsdecl.subns, func, remaining_ns_names);
-    }
-    else {
-        abort; %% Namespace does not exist
-    }
+    return CString::concat(funcs, indent, '}%n;');
 }
 
 %% I suspect we will need separate cases for entities, types, enums and such
@@ -484,9 +514,7 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    %% Likely need to add support for an empty namespace (or reserved), when creating ctx
-    %% if we pass in no namespace key (or empty string) regex gets mad
-    let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}}; %% No known namespace yet
+    let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}, asm.nsdecls}; %% No known namespace yet
     let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
     });
