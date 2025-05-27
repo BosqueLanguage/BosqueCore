@@ -396,7 +396,6 @@ entity AssumeOperation provides Operation {
 
 entity LetOperation provides Operation {
     field vbind: Identifier;
-    field vtype: TypeKey;
     field value: SafeExpression;
 
     field inop: Operation;
