@@ -952,7 +952,7 @@ entity SMTTransformer {
 
     recursive method transformIfSimpleStatement(stmt: BSQAssembly::IfSimpleStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
-        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, cctx);
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, some(tail), cctx);
         let ntb = ontb@some;
 
         if(cobinds)@none {
@@ -961,11 +961,11 @@ entity SMTTransformer {
         }
         else {
             let ifop = SMTAssembly::IfThenElseOperation{ntexp, ntb, tail};
-            return tctx, some(SMTAssembly::LetWErrorsOperation{$binds, ifop});
+            return tctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, ifop});
         }
     }
 
-    recursive method transformIfTestStmt(stmt: BSQAssembly::IfTestStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+    recursive method transformIfTestStatement(stmt: BSQAssembly::IfTestStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         abort; %% NOT IMPLEMENTED
     }
 
@@ -1070,7 +1070,7 @@ entity SMTTransformer {
     }
 
     recursive method transformBlockStatement(stmt: BSQAssembly::BlockStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        return this.stmts.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, tail|), recursive fn(acc, s) => {
+        return stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, tail|), recursive fn(acc, s) => {
             return this.transformStatement[recursive](s, acc.1, acc.0);
         });
     }
@@ -1098,8 +1098,11 @@ entity SMTTransformer {
                 }
             }
             | BSQAssembly::StandardBodyImplementation => {
-                let rctx, smtop = this.transformStatementListToSMT($impl.statements, ctx);
-                return SMTAssembly::Body{smtop, rctx.errors};
+                let rctx, smtop = $impl.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, none|), recursive fn(acc, s) => {
+                    return this.transformStatement[recursive](s, acc.1, acc.0);
+                });
+                
+                return SMTAssembly::Body{smtop@some, rctx.errors};
             }
             | _ => {
                 abort; %% NOT IMPLEMENTED

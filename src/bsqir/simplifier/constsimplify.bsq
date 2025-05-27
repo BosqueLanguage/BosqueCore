@@ -636,15 +636,15 @@ entity ConstantSimplification {
         }
     }
 
-    recursive method processIfStatement(s: IfStatement, vmap: VarMapping): Statement {
+    recursive method processIfStatement(s: IfStatement): Statement {
         match(s)@ {
             IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s); }
             | IfTestStatement => { return this.processIfTestStatement[recursive]($s); }
             | IfBinderStatement => { return this.processIfBinderStatement[recursive]($s); }
-        };
+        }
     }
 
-    recursive method processIfElseSimpleStatement(s: IfElseSimpleStatement): Expression {
+    recursive method processIfElseSimpleStatement(s: IfElseSimpleStatement): Statement {
         let ntexp = this.processExpression[recursive](s.texp);
         let ntb = this.processBlockStatement[recursive](s.trueBlock);
         let nfb = this.processBlockStatement[recursive](s.falseBlock);
@@ -662,7 +662,7 @@ entity ConstantSimplification {
         }
     }
 
-    recursive method processIfElseTestStatement(s: IfElseTestStatement): Expression {
+    recursive method processIfElseTestStatement(s: IfElseTestStatement): Statement {
         let ntexp = this.processExpression[recursive](s.texp);
         let ntb = this.processBlockStatement[recursive](s.trueBlock);
         let nfb = this.processBlockStatement[recursive](s.falseBlock);
@@ -681,7 +681,7 @@ entity ConstantSimplification {
         }
     }
 
-    recursive method processIfElseBinderStatement(s: IfElseBinderStatement): Expression {
+    recursive method processIfElseBinderStatement(s: IfElseBinderStatement): Statement {
         let ntexp = this.processExpression[recursive](s.texp);
         let ntb = this.processBlockStatement[recursive](s.trueBlock);
         let nfb = this.processBlockStatement[recursive](s.falseBlock);
@@ -705,7 +705,7 @@ entity ConstantSimplification {
             IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s); }
             | IfElseTestStatement => { return this.processIfElseTestStatement[recursive]($s); }
             | IfElseBinderStatement => { return this.processIfElseBinderStatement[recursive]($s); }
-        };
+        }
     }
 
     recursive method processStatement(s: Statement): Statement {
@@ -758,8 +758,8 @@ entity ConstantSimplification {
         }
     }
 
-    recursive method processBlockStatement(s: BlockStatement): Statement {
-        let nstmts = s.stmts.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
+    recursive method processBlockStatement(s: BlockStatement): BlockStatement {
+        let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
 
         return s[statements=nstmts];
     }

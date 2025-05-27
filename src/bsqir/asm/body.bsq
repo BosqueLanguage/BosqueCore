@@ -521,7 +521,7 @@ entity ReturnMultiStatement provides Statement {
     invariant !$values.empty();
 }
 
-datatype IfStatement using {
+datatype IfStatement provides Statement using {
     field texp: Expression;
     field trueBlock: BlockStatement;
 }
@@ -536,7 +536,7 @@ IfSimpleStatement { }
 }
 ;
 
-datatype IfElseStatement using {
+datatype IfElseStatement provides Statement using {
     field texp: Expression;
     field trueBlock: BlockStatement;
     field falseBlock: BlockStatement;

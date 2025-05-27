@@ -977,10 +977,10 @@ recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, 
     }
     
     let lbs = e.vvbind.lreduce<CString>(inexp, fn(acc, vb) => {
-        let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, none), '))');
+        let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, eev), '))');
         let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
 
-        let errop = emitResultErrTypeConvertAsNeeded(vb.2.value, vb.1);
+        let errop = emitResultErrTypeConvertAsNeeded(vb.2.value, vb.1, eev);
 
         let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
         return CString::concat('(let ', vbind, ' ', wcheck, ')');
@@ -993,7 +993,7 @@ recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, 
         return lbs;
     }
     else {
-        return CString::concat(indent, lbs);
+        return CString::concat($indent, lbs);
     }
 }
 

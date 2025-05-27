@@ -3369,7 +3369,7 @@ class TypeChecker {
         let exhaustive = false;
         let results: TypeEnvironment[] = [];
 
-        this.checkError(stmt.sinfo, stmt.matchflow.length < 2, "Switch statement must have 2 or more choices");
+        this.checkError(stmt.sinfo, stmt.matchflow.length < 2, "Match statement must have 2 or more choices");
 
         for (let i = 0; i < stmt.matchflow.length && !exhaustive; ++i) {
             //it is a wildcard match

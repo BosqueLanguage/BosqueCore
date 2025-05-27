@@ -161,11 +161,11 @@ entity MayErrorAnalysis {
     }
 
     recursive function processIfStatement(s: BSQAssembly::IfStatement): Bool {
-        return \/(MayErrorAnalysis::processExpression[recursive](s.cond), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock));
+        return \/(MayErrorAnalysis::processExpression[recursive](s.texp), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock));
     }
 
     recursive function processIfElseStatement(s: BSQAssembly::IfElseStatement): Bool {
-        return \/(MayErrorAnalysis::processExpression[recursive](s.cond), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock), MayErrorAnalysis::processBlockStatement[recursive](s.falseBlock));
+        return \/(MayErrorAnalysis::processExpression[recursive](s.texp), MayErrorAnalysis::processBlockStatement[recursive](s.trueBlock), MayErrorAnalysis::processBlockStatement[recursive](s.falseBlock));
     }
 
     recursive function processStatement(s: BSQAssembly::Statement): Bool {

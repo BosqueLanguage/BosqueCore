@@ -413,7 +413,7 @@ entity LetOperationWError provides Operation {
 
 entity LetWErrorsOperation provides Operation {
     field vvbind: List<(|Expression, TypeKey, Identifier|)>;
-    field inexp: Operation;
+    field inop: Operation;
 
     invariant !$vvbind.empty();
 }
