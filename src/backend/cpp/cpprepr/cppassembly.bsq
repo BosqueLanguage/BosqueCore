@@ -40,11 +40,6 @@ entity NamespaceConstDecl provides AbstractCoreDecl {
 }
 *%
 
-%%
-%% Not totaly sure if this is done in the parameter decl or in the args, but we will need to use the shuffle field
-%% to correctly determine the position of our arguments (for the sake of named parameters)
-%%
-
 entity ParameterDecl {
     field pname: Identifier;
     field ptype: TypeSignature;
@@ -52,11 +47,6 @@ entity ParameterDecl {
 
     %% TODO: Support ref/rest param
 }
-
-%%
-%% Will need to move this fullns to a more general entity (or maybe just concept) because
-%% other stuff like types and enums and stuff will also need namespace resolution
-%%
 
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl provides AbstractDecl {
@@ -67,7 +57,7 @@ entity NamespaceFunctionDecl provides AbstractDecl {
     field body: BodyImplementation;
 }
 
-%% Use for function lookups (and maybe other stuff in the future)
+%% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
 entity FunctionDecl provides AbstractDecl {
     field ikey: InvokeKey;
 }

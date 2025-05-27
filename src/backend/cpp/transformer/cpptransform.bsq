@@ -213,27 +213,23 @@ entity CPPTransformer {
         }
     }
 
-    %%
-    %% We can do these two loops together
-    %%
     method transformArgumentList(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
-        let alist = bsqargs.args.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
         let shuffled = bsqargs.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(e, ii) => {
             var cur_arg: CPPAssembly::ArgumentValue;
-            if(ii >= alist.size()) {
+            if(ii >= bsqargs.args.args.size()) {
                 return none;
             }
             else { %% Resolve shuffle value
                 let shuffle_idx = e.0;
                 if(shuffle_idx)@none {
-                    return none;
+                    let arg = bsqargs.args.args.get(ii);
+                    return some(this.transformArgument(arg));
                 }
                 else {
-                    cur_arg = alist.get($shuffle_idx);
+                    let arg = bsqargs.args.args.get($shuffle_idx);
+                    return some(this.transformArgument(arg));
                 }
             }
-
-            return some(cur_arg);
         });
         return CPPAssembly::ArgumentList{ shuffled };   
     }
@@ -356,14 +352,7 @@ entity CPPTransformer {
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
-        var name: CString;
-        if(decl.name.value === 'main') {
-            name = '__main';
-        }
-        else {
-            name = decl.name.value;
-        }
-
+        let name = decl.name.value;
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let fullns = decl.fullns;
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
@@ -403,7 +392,7 @@ entity CPPTransformer {
                     bsqfunc.fullns, cppikey };
             }
             else {
-                abort; %% I suspect we will need to eventually support non-ns funcs
+                abort; %% We will need to eventually support non-ns funcs
             }
         });
 

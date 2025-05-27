@@ -273,10 +273,6 @@ function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func:
             abort; %% Should be impossible
         }
         else {
-            %%
-            %% Current issue is that default parameters just emit of form y: Int = $x and spits out just $x, not resolving whatever x is.
-            %%
-
             return emitExpression[recursive]($param, ctx);
         }
     }
@@ -284,36 +280,42 @@ function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func:
         let arg = $av;
         let expr = emitExpression[recursive](arg.exp, ctx);
         match(arg)@ {
-            CPPAssembly::NamedArgumentValue => { return expr; } %% Not functional, just emits expr no named param
+            CPPAssembly::NamedArgumentValue => { return expr; } 
             | CPPAssembly::PositionalArgumentValue => { return expr; }
             | _ => { abort; }
         }
     }
 }
 
-function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
-    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, func, ctx));
+recursive function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFunctionDecl): List<CString> {
+    if(al.allOf(pred(param) => !(param.startsWithString('$')))) { %% All default params resolved
+        return al;
+    }
     
-    %% Second pass to resolve any default parameters by finding matching param name
-    let resolved_default_params_al = emit_al.map<CString>(fn(arg) => {
-        if(arg.startsWithString('$')) { %% We need to resolve this default params value 
+    let resolved = al.map<CString>(fn(arg) => { %% Resolve one layer of default param nesting
+        if(arg.startsWithString('$')) {
             let ident = arg.removePrefixString('$');
 
-            %% This is a bit hacky but works
-            let idxes = func.params.mapIdx<Nat>(fn(param, ii) => {
+            %% This is a bit hacky but works for getting default val idx
+            let idx = func.params.mapIdx<Nat>(fn(param, ii) => {
                 if(emitIdentifier(param.pname) === ident) {
                     return ii;
                 }
                 return 0n;
-            });
-            let idx = idxes.sum();
+            }).sum();
 
-            return emit_al.get(idx);
+            return al.get(idx);
         }
         return arg; 
     });
+
+    return resolveDefaultParams[recursive](resolved, func);
+}
+
+function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, func, ctx));
     
-    return CString::joinAll(', ', resolved_default_params_al);
+    return CString::joinAll(', ', resolveDefaultParams[recursive](emit_al, func));
 }
 
 recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, ikey: CPPAssembly::InvokeKey, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {

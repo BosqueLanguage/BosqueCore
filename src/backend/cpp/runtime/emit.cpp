@@ -5,7 +5,7 @@ int main() {
     }
 
     // Calling our emitted main is hardcoded for now
-    __CoreCpp::MainType ret = Main::__main();
+    __CoreCpp::MainType ret = Main::main();
     std::cout << __CoreCpp::to_string(ret) << std::endl;
 
     return 0;

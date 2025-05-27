@@ -4,6 +4,7 @@ concept AbstractDecl {
     field file: String;
     field sinfo: SourceInfo;
 
+    field fullns: List<CString>; %% Useful for namespace resolution in our cppemitter
     field declaredInNS: NamespaceKey;
 }
 
@@ -72,7 +73,6 @@ enum FunctionDeclKindTag {
 
 entity NamespaceFunctionDecl provides FunctionInvokeDecl {
     field fkind: FunctionDeclKindTag;
-    field fullns: List<CString>; %% I will need to also move this (I think)
 }
 
 entity TypeFunctionDecl provides FunctionInvokeDecl {

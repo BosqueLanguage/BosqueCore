@@ -429,6 +429,7 @@ entity ExplicitifyTransform {
         return NamespaceFunctionDecl{
             file = nsfunc.file,
             sinfo = nsfunc.sinfo,
+            fullns = nsfunc.fullns,
             declaredInNS = nsfunc.declaredInNS,
 
             attributes = nsfunc.attributes,
@@ -443,8 +444,7 @@ entity ExplicitifyTransform {
 
             preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            fkind = nsfunc.fkind,
-            fullns = nsfunc.fullns
+            fkind = nsfunc.fkind
         };
     }
 
@@ -476,6 +476,7 @@ entity ExplicitifyTransform {
         return EntityTypeDecl{
             file=etype.file,
             sinfo=etype.sinfo,
+            fullns=etype.fullns,
             declaredInNS=etype.declaredInNS,
             
             tkey=etype.tkey,
