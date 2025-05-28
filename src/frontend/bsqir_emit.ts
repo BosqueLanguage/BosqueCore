@@ -360,14 +360,58 @@ class BSQIREmitter {
     }
 
     private emitAccessVariableExpression(exp: AccessVariableExpression): string {
-        if(exp.specialaccess.length === 0) {
-            const ebase = this.emitExpressionBase(exp);
+        const ebase = this.emitExpressionBase(exp);
 
-            return `BSQAssembly::AccessVariableExpression{ ${ebase}, vname='${exp.srcname}'<BSQAssembly::VarIdentifier>, layouttype=${this.emitTypeSignature(exp.layouttype as TypeSignature)} }`;
+        if(exp.specialaccess.length === 0) {
+            if(!exp.isCaptured) {
+                return `BSQAssembly::AccessVariableExpression{ ${ebase}, vname='${exp.srcname}'<BSQAssembly::VarIdentifier>, layouttype=${this.emitTypeSignature(exp.layouttype as TypeSignature)} }`;
+            }
+            else {
+                return `BSQAssembly::AccessCapturedVariableExpression{ ${ebase}, vname='${exp.srcname}'<BSQAssembly::VarIdentifier>, layouttype=${this.emitTypeSignature(exp.layouttype as TypeSignature)} }`;
+            }
         }
         else {
-            //special access espression is converted to explicit accesses
-            assert(false, "Not implemented -- AccessVariableExpressionSpecial");
+            let eexp: string;
+            let ctype: TypeSignature;
+            if(!exp.isCaptured) {
+                eexp = `BSQAssembly::AccessVariableExpression{ ${ebase}, vname='${exp.srcname}'<BSQAssembly::VarIdentifier>, layouttype=${this.emitTypeSignature(exp.layouttype as TypeSignature)} }`;
+                ctype = exp.layouttype as TypeSignature;
+            }
+            else {
+                eexp = `BSQAssembly::AccessCapturedVariableExpression{ ${ebase}, vname='${exp.srcname}'<BSQAssembly::VarIdentifier>, layouttype=${this.emitTypeSignature(exp.layouttype as TypeSignature)} }`;
+                ctype = exp.layouttype as TypeSignature;
+            }
+
+            for(let i = 0; i < exp.specialaccess.length; ++i) {
+                const acc = exp.specialaccess[i];
+                
+                if(acc.specialaccess !== undefined) {
+                    const dd = (ctype as NominalTypeSignature).decl;
+                    if(dd instanceof OptionTypeDecl) {
+                        const somedecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "Some") as SomeTypeDecl
+                        const sometype = new NominalTypeSignature(ctype.sinfo, undefined, somedecl, (ctype as NominalTypeSignature).alltermargs);
+                        const oftype = (ctype as NominalTypeSignature).alltermargs[0];
+
+                        eexp = `BSQAssembly::CoerceNarrowTypeExpression{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${this.emitTypeSignature(sometype)}, exp=${eexp}, srctype=${this.emitTypeSignature(ctype)}, trgttype=${this.emitTypeSignature(sometype)} }`;
+                        eexp = `BSQAssembly::PostfixOp{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${this.emitTypeSignature(oftype)}, rootExp=${eexp}, ops=List<BSQAssembly::PostfixOperation>{ BSQAssembly::PostfixAccessSomeValue{ sinfo=${this.emitSourceInfo(exp.sinfo)}, baseType=${this.emitTypeSignature(sometype)} } } }`;
+                    }
+                    else {
+                        if(acc.specialaccess === "value") {
+                            assert(false, "NOT IMPLEMENTED -- AccessVariableExpression OkTypeDecl");
+                        }
+                        else {
+                            assert(false, "NOT IMPLEMENTED -- AccessVariableExpression FailTypeDecl");
+                        }
+                    }
+                }
+                else {
+                    eexp = `BSQAssembly::CoerceNarrowTypeExpression{ sinfo=${this.emitSourceInfo(exp.sinfo)}, etype=${this.emitTypeSignature(acc.ttype)}, exp=${eexp}, srctype=${this.emitTypeSignature(ctype)}, trgttype=${this.emitTypeSignature(acc.ttype)} }`;
+                }
+
+                ctype = acc.ttype;
+            }
+
+            return eexp;
         }
     }
 

@@ -211,6 +211,10 @@ entity SMTTransformer {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
 
+    method transformAccessCapturedVariableExpression(exp: BSQAssembly::AccessCapturedVariableExpression): SMTAssembly::SafeExpression {
+        return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
+    }
+
     recursive method transformConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let uarg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
@@ -845,6 +849,9 @@ entity SMTTransformer {
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 
             }
+            | BSQAssembly::AccessCapturedVariableExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessCapturedVariableExpression($exp)}; 
+            }
             | BSQAssembly::ConstructorExpression => { 
                 return this.transformConstructorExpression[recursive]($exp, ctx);
             }
@@ -1011,15 +1018,55 @@ entity SMTTransformer {
     }
 
     recursive method transformIfElseSimpleStatement(stmt: BSQAssembly::IfElseSimpleStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        abort; %% NOT IMPLEMENTED
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
+
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, tail, cctx);
+        let fctx, onfb = this.transformBlockStatement[recursive](stmt.falseBlock, tail, tctx);
+        let ifop = SMTAssembly::IfThenElseOperation{ntexp, ontb@some, onfb@some};
+
+        if(cobinds)@none {
+            return fctx, some(ifop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, ifop});
+        }
     }
 
     recursive method transformIfElseTestStatement(stmt: BSQAssembly::IfElseTestStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        abort; %% NOT IMPLEMENTED
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
+        let ttest = this.transformITestAsTest(stmt.texp.etype, stmt.itest, ntexp);
+
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, tail, cctx);
+        let fctx, onfb = this.transformBlockStatement[recursive](stmt.falseBlock, tail, tctx);
+        let ifop = SMTAssembly::IfThenElseOperation{ttest, ontb@some, onfb@some};
+
+        if(cobinds)@none {
+            return fctx, some(ifop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, ifop});
+        }
     }
 
-    recursive method transformIfElseBinderStatement(atmt: BSQAssembly::IfElseBinderStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        abort; %% NOT IMPLEMENTED
+    recursive method transformIfElseBinderStatement(stmt: BSQAssembly::IfElseBinderStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
+        let ttest = this.transformITestAsTest(stmt.texp.etype, stmt.itest, ntexp);
+        let topt, fopt = this.transformITestAsSafeConvertOptions(stmt.texp.etype, stmt.itest, ntexp);
+
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, tail, cctx);
+        let fctx, onfb = this.transformBlockStatement[recursive](stmt.falseBlock, tail, tctx);
+
+        let bindname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.binder.srcname.value));
+        let bindtb = SMTAssembly::LetOperation{bindname, topt, ontb@some};
+        let bindfb = SMTAssembly::LetOperation{bindname, fopt, onfb@some};
+        let ifop = SMTAssembly::IfThenElseOperation{ttest, bindtb, bindfb};
+
+        if(cobinds)@none {
+            return fctx, some(ifop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, ifop});
+        }
     }
 
     recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {

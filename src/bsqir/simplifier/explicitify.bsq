@@ -95,9 +95,12 @@ entity ExplicitifyTransform {
 
     method processAccessVariableExpression(e: AccessVariableExpression, vmap: VarMapping): Expression {
         let nname = vmap.resolveVariableAsNeeded(e.vname);
-        let access = AccessVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
+        return AccessVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
+    }
 
-        return this.processCoerceTypeAsNeeded(access, e.etype);
+    method processAccessCapturedVariableExpression(e: AccessCapturedVariableExpression, vmap: VarMapping): Expression {
+        let nname = vmap.resolveVariableAsNeeded(e.vname);
+        return AccessCapturedVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
     }
 
     recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
@@ -321,7 +324,7 @@ entity ExplicitifyTransform {
             | AccessStaticFieldExpression => { return e; }
             | AccessEnumExpression => { return e; }
             | AccessVariableExpression => { return this.processAccessVariableExpression($e, vmap); }
-            | AccessCapturedVariableExpressionSpecial => { abort; }
+            | AccessCapturedVariableExpression => { return this.processAccessCapturedVariableExpression($e, vmap); }
             | ConstructorExpression => { return this.processConstructorExpression[recursive]($e, vmap); }
             | ConstructorLambdaExpression => { abort; }
             | LetExpression => { abort; }
