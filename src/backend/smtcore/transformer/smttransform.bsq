@@ -1011,7 +1011,18 @@ entity SMTTransformer {
     }
 
     recursive method transformIfElseSimpleStatement(stmt: BSQAssembly::IfElseSimpleStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        abort; %% NOT IMPLEMENTED
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
+
+        let tctx, ontb = this.transformBlockStatement[recursive](stmt.trueBlock, tail, cctx);
+        let fctx, onfb = this.transformBlockStatement[recursive](stmt.falseBlock, tail, tctx);
+        let ifop = SMTAssembly::IfThenElseOperation{ntexp, ontb@some, onfb@some};
+
+        if(cobinds)@none {
+            return fctx, some(ifop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, ifop});
+        }
     }
 
     recursive method transformIfElseTestStatement(stmt: BSQAssembly::IfElseTestStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
