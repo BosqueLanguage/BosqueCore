@@ -246,7 +246,7 @@ entity CPPTransformer {
         }
     }
 
-    method transformArgumentList(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
+    method transformArgumentInfo(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
         let shuffled = bsqargs.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(e, ii) => {
             var cur_arg: CPPAssembly::ArgumentValue;
             if(ii >= bsqargs.args.args.size()) {
@@ -271,11 +271,64 @@ entity CPPTransformer {
         let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
-        let args = this.transformArgumentList(expr.argsinfo);
+        let args = this.transformArgumentInfo(expr.argsinfo);
         let fullns = expr.fullns; %% For looking up func we are calling
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
     }
+
+    method transformPostfixOpImpl(op: BSQAssembly::PostfixOperation): CPPAssembly::PostfixOperation {
+        let baseType = CPPTransformNameManager::convertTypeSignature(op.baseType);
+        if(op)@ <BSQAssembly::PostfixAccessFromName> {
+            let name = CPPTransformNameManager::convertIdentifier($op.name);
+
+            %% I really should add this nominal type sign conversion to the transform name manager...
+            let declaredInType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey($op.declaredInType.tkeystr) };
+            let ftype = CPPTransformNameManager::convertTypeSignature($op.ftype);
+
+            return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
+        }
+
+        abort;
+    }
+
+    method transformPostfixOp(pop: BSQAssembly::PostfixOp): CPPAssembly::PostfixOp {
+        let etype = CPPTransformNameManager::convertTypeSignature(pop.etype);
+        let rootExp = this.transformExpressionToCpp(pop.rootExp);
+        let ops = pop.ops.map<CPPAssembly::PostfixOperation>(fn(op) => {
+            return this.transformPostfixOpImpl(op);
+        });
+
+        return CPPAssembly::PostfixOp{ etype, rootExp, ops };
+    }
+
+    method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
+        %%
+        %% This is quite silly as its legit the same code from transformArgumentInfo, so we will need to 
+        %% do some hacking with transformArg.. to get the constructor tomatch what we got here.
+        %%
+        let args = e.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(she, ii) => {
+            var cur_arg: CPPAssembly::ArgumentValue;
+            if(ii >= e.args.args.size()) {
+                return none;
+            }
+            else { %% Resolve shuffle value
+                let shuffle_idx = she.0;
+                if(shuffle_idx)@none {
+                    let arg = e.args.args.get(ii);
+                    return some(this.transformArgument(arg));
+                }
+                else {
+                    let arg = e.args.args.get($shuffle_idx);
+                    return some(this.transformArgument(arg));
+                }
+            }
+         });
+        let ctype = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey(e.ctype.tkeystr) };
+        let etype = CPPTransformNameManager::convertTypeSignature(e.etype);
+
+        return CPPAssembly::ConstructorStdExpression{ etype, CPPAssembly::ArgumentList{ args }, ctype };
+    } 
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
@@ -287,7 +340,9 @@ entity CPPTransformer {
             | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
             | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
-            | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); }
+            | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
+            | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
+            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
             | _ => { abort; }
         }
     }

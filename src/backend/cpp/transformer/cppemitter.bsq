@@ -266,6 +266,9 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
+%%
+%% Hmmm this will not allow us to emit args for constructors...
+%%
 function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
     if(av)@none {
         let param = func.params.get(i).defaultval;
@@ -357,6 +360,27 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     return CString::concat(resolvedName, '(', args, ')');
 }
 
+function emitPostfixOpImpl(op: CPPAssembly::PostfixOperation): CString {
+    %%if(op)@<CPPAssembly::PostfixAccessFromName> {
+        return CString::concat( '.', emitIdentifier(op@<CPPAssembly::PostfixAccessFromName>.name));
+    %%}
+
+%%    abort;
+}
+
+function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
+    let rootExp = emitExpression(pop.rootExp, ctx);
+    let ops = pop.ops.map<CString>(fn(op) => {
+        return emitPostfixOpImpl(op); 
+    });
+
+    return CString::concat(rootExp, CString::joinAll(', ', ops));
+}
+
+function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
+    return e.ctype.tkeystr.value;
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
     match(e)@ {
         CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
@@ -368,6 +392,8 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
+        | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
+        | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
         | _ => { abort; }
     }
 }
@@ -478,6 +504,20 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, nctx, indent), indent, '}%n;');
 }
 
+function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, indent: CString): CString {
+    let name = emitIdentifier(member.name);
+    let mtype = emitTypeSignature(member.declaredType);
+    return CString::concat(indent, mtype, ' ', name, ';%n;');
+}
+
+function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, indent: CString): CString {
+    let entries = e.fields.reduce<CString>(CString::concat(indent, 'class ', tk, '{%n;'), fn(acc, entry) => {
+        return CString::concat(acc, emitMemberFieldDecl(entry, CString::concat('    ', indent)));
+    });
+
+    return CString::concat(entries, indent, '}%n;');
+}
+
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
     %% Emit namespace 
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
@@ -488,12 +528,20 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
-    let fwd_decls = nsdecl.nsfuncs.reduce<CString>(subns, fn(acc, ikey, decl) => {
+    let entities = nsdecl.entities.reduce<CString>(subns, fn(acc, tk, e) => {
+        let typekey = tk.value;
+        let emit_entity = emitEntityTypeDecl(e, typekey, full_indent);
+
+        return CString::concat(acc, indent, emit_entity);
+    });
+
+    %% TODO: Fwd decls for entities
+    let fwd_decls = nsdecl.nsfuncs.reduce<CString>(entities, fn(acc, ikey, decl) => {
         return CString::concat(acc, emitFunctionForwardDeclaration(decl, full_indent));
     });
 
     %% Emit functions in current namespace
-    let funcs = nsdecl.nsfuncs.reduce<CString>(CString::concat(fwd_decls, '%n;'), fn(acc, key, func) => {
+    let funcs = nsdecl.nsfuncs.reduce<CString>(fwd_decls, fn(acc, key, func) => {
         return CString::concat(acc, emitNamespaceFunctionDecl(func, ctx, full_indent)); 
     });
 

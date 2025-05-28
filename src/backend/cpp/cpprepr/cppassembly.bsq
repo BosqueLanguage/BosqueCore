@@ -54,7 +54,6 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
 }
 
-
 entity ParameterDecl {
     field pname: Identifier;
     field ptype: TypeSignature;
