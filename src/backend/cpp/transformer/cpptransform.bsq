@@ -10,6 +10,10 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
+    function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
+        return CPPAssembly::TypeKey::from(tk.value);
+    }
+
     function convertTypeSignature(tsig: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
         let tk = CPPAssembly::TypeKey::from(tsig.tkeystr.value);
 
@@ -21,7 +25,7 @@ namespace CPPTransformNameManager {
             | 'BigNat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigNat') }; }
             | 'Float' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Float') }; }
             | 'Bool' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('bool') }; }
-            | _ => { abort; }
+            | _ => { return CPPAssembly::NominalTypeSignature{ tk }; }
         }
     }
 
@@ -36,7 +40,8 @@ namespace CPPTransformNameManager {
     function createNamespaceDecl(name: CString): CPPAssembly::NamespaceDecl {
         let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
         let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
-        return CPPAssembly::NamespaceDecl{ name, subns, nsfuncs };
+        let entities = Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>{};
+        return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs };
     }
 
     recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, func_key: CPPAssembly::InvokeKey, func_val: CPPAssembly::NamespaceFunctionDecl): Map<CString, CPPAssembly::NamespaceDecl> {
@@ -66,7 +71,7 @@ namespace CPPTransformNameManager {
 
         %% Recursively process remaining names
         let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, func_key, func_val);
-        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, func };
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.entities, func }; %% Need to be cautious here
 
         %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
         if(!nsdecls.has(ns_name)) {
@@ -75,6 +80,34 @@ namespace CPPTransformNameManager {
         else {
             let tmp_map = nsdecls.delete(ns_name);
             return tmp_map.insert(ns_name, updated_nsdecl);
+        }
+    }
+
+    %%
+    %% We will need to be able to handle a namespace with no func, only entities. This is possible adn valid code.
+    %% This likely means we do something similar to getNamespaceDeclMappign (prehaps make a bse method that recurses
+    %% until entityns is emtpty and generates necessary NamespaceDecl when needed as we recurse, then returns last mapping)
+    %%
+    recursive function insertEntityDecl(ens: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, e: CPPAssembly::EntityTypeDecl, etk: CPPAssembly::TypeKey): Map<CString, CPPAssembly::NamespaceDecl> {
+        if(ens.empty()) {
+            return nsdecls;
+        }
+
+        let ns_name = ens.front();
+        let remaining_ns_names = ens.popFront().1;
+
+        if(remaining_ns_names.empty()) {
+            %% This feels incredibly clunky
+            let tmp_entities = nsdecls.get(ns_name).entities.insert(etk, e);
+            let tmp_subns = nsdecls.get(ns_name).subns;
+            let tmp_funcs = nsdecls.get(ns_name).nsfuncs;
+            let tmp_map = nsdecls.delete(ns_name);
+            let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, tmp_subns, tmp_entities, tmp_funcs };
+
+            return tmp_map.insert(ns_name, updated_nsdecl);
+        }
+        else {
+            return insertEntityDecl[recursive](remaining_ns_names, nsdecls.get(ns_name).subns, e, etk);
         }
     }
 }
@@ -364,6 +397,33 @@ entity CPPTransformer {
         return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, name, ikey, params, res, body};
     }   
 
+    method transformMemberFieldDecl(fields: List<BSQAssembly::MemberFieldDecl>): List<CPPAssembly::MemberFieldDecl> {
+        return fields.map<CPPAssembly::MemberFieldDecl>(fn(f) => {
+            let declaredInNS = CPPTransformNameManager::convertNamespaceKey(f.declaredInNS);
+            let name = CPPTransformNameManager::convertIdentifier(f.name);
+            let declaredInType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey(f.declaredInType.tkeystr) };
+            let declaredType = CPPTransformNameManager::convertTypeSignature(f.declaredType);
+            let defv = f.defaultValue;
+            var defaultval: Option<CPPAssembly::Expression>;
+            if(defv)@none { %% Maybe add this converstion of default val to the name manager
+                defaultval = none;
+            }
+            else {
+                defaultval = some(this.transformExpressionToCpp($defv));
+            }
+            return CPPAssembly::MemberFieldDecl{ declaredInNS, f.fullns, name, declaredInType, declaredType, defaultval };
+        });
+    }
+
+    method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
+        let declaredInNS = CPPTransformNameManager::convertNamespaceKey(e.declaredInNS);
+        let tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
+        
+        let fields = this.transformMemberFieldDecl(e.fields);
+
+        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields };
+    }
+
     %*
     method transformNamespaceConstDecl(decl: BSQAssembly::NamespaceConstDecl): CPPAssembly::NamespaceConstDecl {
         abort;
@@ -381,8 +441,14 @@ entity CPPTransformer {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
                     return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.ikey, cppdecl);
-                }
-            );
+        });
+
+        let nsdecls_entities = bsqasm.entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            transformer_nsdecls, fn(acc, tk, e) => {
+                let key = CPPTransformNameManager::convertTypeKey(tk);
+                let cppentity = transformer.transformEntityDeclToCpp(e);
+                return CPPTransformNameManager::insertEntityDecl(cppentity.fullns, acc, cppentity, key);
+        });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
             let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
@@ -397,7 +463,7 @@ entity CPPTransformer {
         });
 
         return CPPAssembly::Assembly {
-            nsdecls = transformer_nsdecls,
+            nsdecls = nsdecls_entities,
             allfuncs = transformer_allfuncs
         };
     }
