@@ -40,6 +40,8 @@ const KW_true = "true";
 const KW_type = "type";
 const KW_var = "var";
 const KW_yield = "yield";
+const KW_contine = "continue";
+const KW_break = "break";
 const KW_under = "_";
 
 const KW_debug = "debug";
@@ -153,6 +155,8 @@ const KeywordStrings = [
     KW_var,
     KW_when,
     KW_yield,
+    KW_contine,
+    KW_break,
     KW_under,
     KW_event,
     KW_status,
@@ -413,6 +417,8 @@ export {
     KW_var,
     KW_when,
     KW_yield,
+    KW_contine,
+    KW_break,
     KW_under,
     KW_event,
     KW_resource,
