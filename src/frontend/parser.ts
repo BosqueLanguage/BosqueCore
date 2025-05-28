@@ -3480,6 +3480,18 @@ class Parser {
         }
     }
 
+    private testPostfixInvokePrefix(): boolean {
+        if(this.testToken(SYM_langle) || this.testToken(SYM_lparen)) {
+            return true;
+        }
+
+        if(this.testToken(SYM_lbrack) && (this.peekTokenKind(1) === KW_recursive || this.peekTokenKind(1) === KW_recursive_q)) {
+            return true;
+        }
+
+        return false;
+    }
+
     private parsePostfixExpression(): Expression {
         let rootexp = this.parsePrimaryExpression();
 
@@ -3535,7 +3547,7 @@ class Parser {
                     }
 
                     const name = this.parseIdentifierAsStdVariable();
-                    if(!this.testToken(SYM_langle) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen)) {
+                    if(!this.testPostfixInvokePrefix()) {
                         if(resolvedScope !== undefined) {
                             this.recordErrorGeneral(sinfo, "Encountered named access but given type resolver (only valid on method calls)");
                         }
