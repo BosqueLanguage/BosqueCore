@@ -130,7 +130,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::AccessStaticFieldExpression => { return false; }
             | BSQAssembly::AccessEnumExpression => { return false; }
             | BSQAssembly::AccessVariableExpression => { return false; }
-            | BSQAssembly::AccessCapturedVariableExpressionSpecial => { return false; }
+            | BSQAssembly::AccessCapturedVariableExpression => { return false; }
             | BSQAssembly::ConstructorExpression => { return MayErrorAnalysis::processConstructorExpression[recursive]($e); }
             | BSQAssembly::ConstructorLambdaExpression => { return false; }
             | BSQAssembly::LetExpression => { abort; }

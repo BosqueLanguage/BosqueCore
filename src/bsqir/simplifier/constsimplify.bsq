@@ -537,7 +537,7 @@ entity ConstantSimplification {
             | AccessStaticFieldExpression => { return this.processAccessStaticFieldExpression($e); }
             | AccessEnumExpression => { return e; }
             | AccessVariableExpression => { return e; }
-            | AccessCapturedVariableExpressionSpecial => { abort; }
+            | AccessCapturedVariableExpression => { return e; }
             | ConstructorExpression => { return this.processConstructorExpression($e); }
             | ConstructorLambdaExpression => { abort; }
             | LetExpression => { abort; }

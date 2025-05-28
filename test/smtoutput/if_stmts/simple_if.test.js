@@ -36,11 +36,9 @@ describe ("SMT Exec -- If Statement", () => {
         runishMainCodeUnsat("public function main(x: Int): Int { var y: Int = 0i; if(x != 0i) { y = 1i; } return y + 1i; }", "(assert (not (= 2 (Main@main 3))))");
     });
 
-    /*
     it("should SMT exec binder & reflow itest ifs", function () {
         runishMainCodeUnsat("public function main(): Int { let x: Option<Int> = some(3i); if(x)@@!some { return 0i; } return x; }", "(assert (not (= 3 Main@main)))");
         runishMainCodeUnsat("public function main(): Int { let x: Option<Int> = none; if(x)@@!some { return 0i; } return x; }", "(assert (not (= 0 Main@main)))");
     });
-    */
 });
 

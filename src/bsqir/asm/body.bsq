@@ -104,10 +104,9 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
-entity AccessCapturedVariableExpressionSpecial provides Expression {
+entity AccessCapturedVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
-    field isCaptured: Bool;
 }
 
 concept ConstructorExpression provides Expression {
