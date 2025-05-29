@@ -44,7 +44,8 @@ namespace CPPTransformNameManager {
         return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs };
     }
 
-    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, func_key: CPPAssembly::InvokeKey, func_val: CPPAssembly::NamespaceFunctionDecl): Map<CString, CPPAssembly::NamespaceDecl> {
+    %% If ns decl does not exist for name insert, otherwise continue recursing until fullns is empty
+    recursive function getNamespaceDeclMapping(fullns: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, insertion: fn(CPPAssembly::NamespaceDecl) -> CPPAssembly::NamespaceDecl): Map<CString, CPPAssembly::NamespaceDecl> {
         if(fullns.empty()) { %% Base case, we have recursed through all subdecls
             return nsdecls;
         }
@@ -60,54 +61,17 @@ namespace CPPTransformNameManager {
             cur_nsdecl = createNamespaceDecl(ns_name);
         }
 
-        %% See if we can insert our namespace function decl
-        var func: Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>;
-        if(remaining_ns_names.empty()) {
-            func = cur_nsdecl.nsfuncs.insert(func_key, func_val);
-        }
-        else{
-            func = cur_nsdecl.nsfuncs;
-        }
-
         %% Recursively process remaining names
-        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, func_key, func_val);
-        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.entities, func }; %% Need to be cautious here
+        let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, insertion);
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.entities, cur_nsdecl.nsfuncs };
 
         %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
         if(!nsdecls.has(ns_name)) {
-            return nsdecls.insert(ns_name, updated_nsdecl);
+            return nsdecls.insert(ns_name, insertion(updated_nsdecl));
         }
         else {
             let tmp_map = nsdecls.delete(ns_name);
-            return tmp_map.insert(ns_name, updated_nsdecl);
-        }
-    }
-
-    %%
-    %% We will need to be able to handle a namespace with no func, only entities. This is possible adn valid code.
-    %% This likely means we do something similar to getNamespaceDeclMappign (prehaps make a bse method that recurses
-    %% until entityns is emtpty and generates necessary NamespaceDecl when needed as we recurse, then returns last mapping)
-    %%
-    recursive function insertEntityDecl(ens: List<CString>, nsdecls: Map<CString, CPPAssembly::NamespaceDecl>, e: CPPAssembly::EntityTypeDecl, etk: CPPAssembly::TypeKey): Map<CString, CPPAssembly::NamespaceDecl> {
-        if(ens.empty()) {
-            return nsdecls;
-        }
-
-        let ns_name = ens.front();
-        let remaining_ns_names = ens.popFront().1;
-
-        if(remaining_ns_names.empty()) {
-            %% This feels incredibly clunky
-            let tmp_entities = nsdecls.get(ns_name).entities.insert(etk, e);
-            let tmp_subns = nsdecls.get(ns_name).subns;
-            let tmp_funcs = nsdecls.get(ns_name).nsfuncs;
-            let tmp_map = nsdecls.delete(ns_name);
-            let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, tmp_subns, tmp_entities, tmp_funcs };
-
-            return tmp_map.insert(ns_name, updated_nsdecl);
-        }
-        else {
-            return insertEntityDecl[recursive](remaining_ns_names, nsdecls.get(ns_name).subns, e, etk);
+            return tmp_map.insert(ns_name, insertion(updated_nsdecl));
         }
     }
 }
@@ -495,14 +459,22 @@ entity CPPTransformer {
                 fn(acc, ikey) => {
                     let bsqdecl = bsqasm.nsfuncs.get(ikey);
                     let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqdecl);
-                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc, cppdecl.ikey, cppdecl);
+                    return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc,
+                        fn(decl) => { 
+                            let new_nsfuncs = decl.nsfuncs.insert(cppdecl.ikey, cppdecl);
+                            return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.entities, new_nsfuncs };
+                        });
         });
 
         let nsdecls_entities = bsqasm.entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
             transformer_nsdecls, fn(acc, tk, e) => {
                 let key = CPPTransformNameManager::convertTypeKey(tk);
                 let cppentity = transformer.transformEntityDeclToCpp(e);
-                return CPPTransformNameManager::insertEntityDecl(cppentity.fullns, acc, cppentity, key);
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
+                    fn(decl) => {
+                        let new_entities = decl.entities.insert(key, cppentity);
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs };
+                    });
         });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
