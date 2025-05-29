@@ -245,8 +245,6 @@ entity CPPTransformer {
         let baseType = CPPTransformNameManager::convertTypeSignature(op.baseType);
         if(op)@ <BSQAssembly::PostfixAccessFromName> {
             let name = CPPTransformNameManager::convertIdentifier($op.name);
-
-            %% I really should add this nominal type sign conversion to the transform name manager...
             let declaredInType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey($op.declaredInType.tkeystr) };
             let ftype = CPPTransformNameManager::convertTypeSignature($op.ftype);
 
@@ -267,10 +265,7 @@ entity CPPTransformer {
     }
 
     method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
-        %%
-        %% This is quite silly as its legit the same code from transformArgumentInfo, so we will need to 
-        %% do some hacking with transformArg.. to get the constructor tomatch what we got here.
-        %%
+        %% Would be good to have transformArgumentInfo eventually be able to handle different format shuffleinfo
         let args = e.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(she, ii) => {
             var cur_arg: CPPAssembly::ArgumentValue;
             if(ii >= e.args.args.size()) {

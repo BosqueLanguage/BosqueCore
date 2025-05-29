@@ -265,9 +265,6 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
-%%
-%% Hmmm this will not allow us to emit args for constructors...
-%%
 function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
     if(av)@none {
         let param = func.params.get(i).defaultval;
@@ -346,7 +343,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
         resolvedName = name;
     }
 
-    let func = findNamespaceDecl(ctx.nsdecls, e.fullns).nsfuncs.get(e.ikey); %% TODO: Check that this is safe
+    let func = findNamespaceDecl(ctx.nsdecls, e.fullns).nsfuncs.get(e.ikey);
     let args = emitArgumentList(e.args, func, ctx);
 
     if(resolvedns !== '') {
@@ -368,11 +365,8 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     return CString::concat(rootExp, CString::joinAll(', ', ops));
 }
 
-%%
-%% TODO: Need to fix the emitArguments or whatever method so we dont have to duplicate loads of code,
-%% most of this method is just copy pasted :(
-%%
 function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
+    %% Eventually might want to rework emitArgumentList to support constructors too 
     let emitargs =  CString::joinAll(', ', e.args.args.mapIdx<CString>(fn(av, ii) => {
         if(av)@none {
             let ns_entity = findNamespaceDecl(ctx.nsdecls, e.fullns).entities.get(e.ctype.tkeystr);
@@ -570,7 +564,6 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let entityfwd_decls = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
         return CString::concat(acc, emitEntityForwardDeclaration(e, ctx, full_indent));
     });
-
 
     %% All entities
     let entities = nsdecl.entities.reduce<CString>(entityfwd_decls, fn(acc, tk, e) => {
