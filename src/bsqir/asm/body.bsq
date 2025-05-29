@@ -155,6 +155,7 @@ entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
     field shuffleinfo: List<(|Option<Nat>, Identifier, TypeSignature|)>;
+    field fullns: List<CString>;
     field invchecks: Bool;
 }
 

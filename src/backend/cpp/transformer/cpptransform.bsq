@@ -327,7 +327,7 @@ entity CPPTransformer {
         let ctype = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey(e.ctype.tkeystr) };
         let etype = CPPTransformNameManager::convertTypeSignature(e.etype);
 
-        return CPPAssembly::ConstructorStdExpression{ etype, CPPAssembly::ArgumentList{ args }, ctype };
+        return CPPAssembly::ConstructorStdExpression{ etype, CPPAssembly::ArgumentList{ args }, ctype, e.fullns };
     } 
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {

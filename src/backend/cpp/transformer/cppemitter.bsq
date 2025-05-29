@@ -314,22 +314,18 @@ function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::Name
     return CString::joinAll(', ', resolveDefaultParams[recursive](emit_al, func));
 }
 
-recursive function findNamespaceFunctionDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, ikey: CPPAssembly::InvokeKey, fullns: List<CString>): CPPAssembly::NamespaceFunctionDecl {
+recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, fullns: List<CString>): CPPAssembly::NamespaceDecl {
     let ns_name = fullns.front();
     let remaining_ns_names = fullns.popFront().1;
 
     %% Found func we are looking for
     if(remaining_ns_names.empty() && decls.has(ns_name)) {
-        let cur_nsfuncs = decls.get(ns_name).nsfuncs;
-        if(!cur_nsfuncs.has(ikey)) {
-            abort; %% Func does not exist
-        }
-        return cur_nsfuncs.get(ikey);
+        return decls.get(ns_name);
     }
 
     if(decls.has(ns_name)) {
         let cur_nsdecl = decls.get(ns_name);
-        return findNamespaceFunctionDecl[recursive](cur_nsdecl.subns, ikey, remaining_ns_names);
+        return findNamespaceDecl[recursive](cur_nsdecl.subns, remaining_ns_names);
     }
     else {
         abort; %% Namespace does not exist
@@ -350,7 +346,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
         resolvedName = name;
     }
 
-    let func = findNamespaceFunctionDecl(ctx.nsdecls, e.ikey, e.fullns);
+    let func = findNamespaceDecl(ctx.nsdecls, e.fullns).nsfuncs.get(e.ikey); %% TODO: Check that this is safe
     let args = emitArgumentList(e.args, func, ctx);
 
     if(resolvedns !== '') {
@@ -377,9 +373,16 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
 %% most of this method is just copy pasted :(
 %%
 function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
-    let emitargs =  CString::joinAll(', ', e.args.args.map<CString>(fn(av) => {
+    let emitargs =  CString::joinAll(', ', e.args.args.mapIdx<CString>(fn(av, ii) => {
         if(av)@none {
-            abort; %% TODO: Default parameters not supported for entity connstructors yet!
+            let ns_entity = findNamespaceDecl(ctx.nsdecls, e.fullns).entities.get(e.ctype.tkeystr);
+            let member_defval = ns_entity.fields.get(ii).defaultval;
+            if(member_defval)@none {
+                abort; %% Default value detected in transform, yet none provided for emission
+            }
+            else {
+                return emitExpression[recursive]($member_defval, ctx);
+            }
         }
         else {
             let arg = $av;
