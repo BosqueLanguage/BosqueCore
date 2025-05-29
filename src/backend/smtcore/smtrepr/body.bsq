@@ -1,19 +1,16 @@
 namespace SMTAssembly;
 
-concept CallArgExpression {
-}
-
 concept CallArgSafeExpression {
 }
 
-concept Expression provides CallArgExpression {
+concept Expression provides CallArgSafeExpression {
 }
 
 concept SafeExpression provides CallArgSafeExpression, Expression {
 }
 
-entity LambdaConstructor provides CallArgExpression, CallArgSafeExpression {
-    field params: List<InvokeParameterDecl>;
+entity LambdaConstructor provides CallArgSafeExpression {
+    field params: List<TypeSignature>;
     field resultType: ResultType;
 
     field body: Body;
@@ -120,12 +117,17 @@ entity CallFunctionSafeExpression provides CallFunctionConcept, SafeExpression {
 } 
 
 entity CallFunctionExpression provides CallFunctionConcept, Expression { 
-    field args: List<CallArgExpression>;
+    field args: List<CallArgSafeExpression>;
+}
+
+entity CallLambdaFunctionSafeExpression provides SafeExpression {
+    field lambda: Identifier;
+    field args: List<CallArgSafeExpression>;
 }
 
 entity CallLambdaFunctionExpression provides Expression {
     field lambda: Identifier;
-    field args: List<CallArgExpression>;
+    field args: List<CallArgSafeExpression>;
 }
 
 entity LogicActionAndExpression provides SafeExpression {
@@ -209,7 +211,7 @@ entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: InvokeKey;
     field name: CString;
     field rootExp: SafeExpression;
-    field args: List<CallArgExpression>;
+    field args: List<CallArgSafeExpression>;
 }
 
 datatype UnaryExpression provides SafeExpression using {

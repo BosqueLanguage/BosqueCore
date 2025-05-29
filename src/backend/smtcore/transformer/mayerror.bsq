@@ -134,8 +134,8 @@ entity MayErrorAnalysis {
             | BSQAssembly::ConstructorExpression => { return MayErrorAnalysis::processConstructorExpression[recursive]($e); }
             | BSQAssembly::ConstructorLambdaExpression => { return false; }
             | BSQAssembly::LetExpression => { abort; }
-            | BSQAssembly::LambdaInvokeExpression => { abort; }
-            | BSQAssembly::CallNamespaceFunctionExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { return false; }
+            | BSQAssembly::CallNamespaceFunctionExpression => { return false; }
             | BSQAssembly::CallTypeFunctionExpression => { abort; }
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }

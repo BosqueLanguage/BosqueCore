@@ -80,8 +80,12 @@ entity ExplicitifyTransform {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
+    %%
+    %%TODO: we will want to have a simple (for strictly positional arguments) and a tail processing method too
+    %%
+
     recursive method processArgumentListStd(argl: ArgumentList, expected: List<TypeSignature>, vmap: VarMapping): ArgumentList 
-        requires argl.args.size() == expected.size();
+        requires argl.args.size() <= expected.size();
     {
         let nargs = argl.args.mapIdx[recursive]<ArgumentValue>(recursive fn(arg, i) => {
             let nexp = this.processExpression[recursive](arg.exp, vmap);
@@ -134,6 +138,26 @@ entity ExplicitifyTransform {
             | ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e, vmap); }
             | ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, vmap); }
         }
+    }
+
+    recursive method processConstructorLambdaExpression(e: ConstructorLambdaExpression, vmap: VarMapping): Expression {
+        let nbody = this.processBodyImpl(e.body, vmap);
+
+        return e[body=nbody];
+    }
+
+    recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression, vmap: VarMapping): Expression {
+        let etypes = e.etype@<LambdaTypeSignature>.params.map(fn(param) => param.ptype);
+        let nargs = this.processArgumentListStd(e.args, etypes, vmap);
+
+        return e[args=nargs];
+    }
+
+    recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression, vmap: VarMapping): Expression {
+        let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2); 
+        let nargs = this.processArgumentListStd(e.args, types, vmap);
+
+        return e[args=nargs];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression, vmap: VarMapping): Expression {
@@ -326,10 +350,10 @@ entity ExplicitifyTransform {
             | AccessVariableExpression => { return this.processAccessVariableExpression($e, vmap); }
             | AccessCapturedVariableExpression => { return this.processAccessCapturedVariableExpression($e, vmap); }
             | ConstructorExpression => { return this.processConstructorExpression[recursive]($e, vmap); }
-            | ConstructorLambdaExpression => { abort; }
+            | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e, vmap); }
             | LetExpression => { abort; }
-            | LambdaInvokeExpression => { abort; }
-            | CallNamespaceFunctionExpression => { abort; }
+            | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e, vmap); }
+            | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, vmap); }
             | CallTypeFunctionExpression => { abort; }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }
@@ -532,10 +556,10 @@ entity ExplicitifyTransform {
         return stmts.map<Statement>(fn(stmt) => this.processStatement[recursive](stmt, vmap));
     }
 
-    method processBodyImpl(body: BodyImplementation): BodyImplementation {
+    method processBodyImpl(body: BodyImplementation, vmap: VarMapping): BodyImplementation {
         match(body)@ {
-            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, VarMapping::createEmpty()) }; }
-            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, VarMapping::createEmpty()) }; }
+            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, vmap) }; }
+            | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, vmap) }; }
             | _ => { return body; }
         }
     }
@@ -575,7 +599,7 @@ entity ExplicitifyTransform {
             params = nsfunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
             resultType = nsfunc.resultType,
 
-            body = this.processBodyImpl(nsfunc.body),
+            body = this.processBodyImpl(nsfunc.body, VarMapping::createEmpty()),
 
             preconditions = nsfunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = nsfunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),

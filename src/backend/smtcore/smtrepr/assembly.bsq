@@ -18,12 +18,7 @@ const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly:
 const lambdaTypeKeyRE: CRegex = /('@fn'|'@pred') '<'.*'>' '-' ${SMTAssembly::typeKeyRE}/c;
 const paramTypeKeyRE: CRegex = /${SMTAssembly::typeKeyRE}|${lambdaTypeKeyRE}/c;
 
-const resultTypeKeyRE: CRegex = /'(@Result '${SMTAssembly::typeKeyRE}')'/c;
-const returnTypeKeyRE: CRegex = /'${SMTAssembly::typeKeyRE}|${SMTAssembly::resultTypeKeyRE}'/c;
-
 type TypeKey = CString of SMTAssembly::typeKeyRE;
-type ParamTypeKey = CString of SMTAssembly::paramTypeKeyRE;
-type ReturnTypeKey = CString of SMTAssembly::resultTypeKeyRE;
 
 const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+/c;
 type InvokeKey = CString of SMTAssembly::invokeKeyRE;
