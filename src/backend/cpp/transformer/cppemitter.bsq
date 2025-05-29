@@ -37,8 +37,10 @@ entity Context {
     }
 }
 
-function emitTypeSignature(ts: CPPAssembly::TypeSignature): CString {
-    return ts.tkeystr.value;
+function emitTypeSignature(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
+    let resolved_typesig = emitResolvedNamespace(ctx.fullns_list, ts.tkeystr.value);
+    
+    return resolved_typesig;
 }
 
 function emitIdentifier(ident: CPPAssembly::Identifier): CString {
@@ -412,7 +414,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
 
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(stmt.name);
-    let stype = emitTypeSignature(stmt.vtype);
+    let stype = emitTypeSignature(stmt.vtype, ctx);
     let exp = emitExpression(stmt.exp, ctx);
 
     let full_indent: CString = CString::concat(indent, '    ', stype); %% List constructor size max 6
@@ -494,7 +496,7 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
 
 function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context): CString {
     let all_params = params.map<CString>(fn(param) => {
-        let ptype = emitTypeSignature(param.ptype);
+        let ptype = emitTypeSignature(param.ptype, ctx);
         let resolved_ptype = emitResolvedNamespace(ctx.fullns_list, ptype);
         let pident = emitIdentifier(param.pname);
         return CString::concat(resolved_ptype, ' ', pident);
@@ -509,25 +511,25 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
     let name = func.name;
     let nskey = emitNamespaceKey(func.declaredInNS);
     let params = emitParameters(func.params, nctx);
-    let rtype = emitTypeSignature(func.resultType); 
+    let rtype = emitTypeSignature(func.resultType, ctx); 
 
     let pre: CString = CString::concat(indent, rtype, ' ', name );
-    let params_impl: CString = CString::concat('(', params, ')');
+    let params_impl: CString = CString::concat('(', params, ') noexcept ');
 
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, nctx, indent), indent, '}%n;');
 }
 
 function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(member.name);
-    let mtype = emitTypeSignature(member.declaredType);
-    return CString::concat(indent, mtype, ' ', name, ';%n;');
+    let mtype = emitTypeSignature(member.declaredType, ctx);
+    return CString::concat(indent, 'const ',mtype, ' ', name, ';%n;');
 }
 
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     
     let resolved_tk = emitResolvedNamespace(nctx.fullns_list, tk);
-    let entries = e.fields.reduce<CString>(CString::concat(indent, 'class ', resolved_tk, '{ %n;', indent, 'public:%n;'), 
+    let entries = e.fields.reduce<CString>(CString::concat(indent, 'struct ', resolved_tk, '{ %n;'), 
     fn(acc, entry) => {
         return CString::concat(acc, emitMemberFieldDecl(entry, nctx, CString::concat('    ', indent)));
     });
@@ -537,7 +539,7 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Co
 
 function emitEntityForwardDeclaration(e: CPPAssembly::EntityTypeDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
-    return CString::concat(indent, 'class ', emitResolvedNamespace(nctx.fullns_list, e.tkey.value), ';%n;');
+    return CString::concat(indent, 'struct ', emitResolvedNamespace(nctx.fullns_list, e.tkey.value), ';%n;');
 }
 
 %% I suspect we will need separate cases for entities, types, enums and such
@@ -545,10 +547,10 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, decl.fullns);
 
     let pre = decl.name;
-    let rtype = emitTypeSignature(decl.resultType); 
+    let rtype = emitTypeSignature(decl.resultType, ctx); 
     let params = emitParameters(decl.params, nctx);
     let first = CString::concat(ident, rtype, ' ', pre );
-    return CString::concat(first, '(', params, ');%n;');
+    return CString::concat(first, '(', params, ') noexcept;%n;');
 }
 
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
