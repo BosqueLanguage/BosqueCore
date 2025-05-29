@@ -29,7 +29,6 @@ concept AbstractDecl {
 }
 
 concept AbstractCoreDecl provides AbstractDecl {
-    %% bsqir has field 'attributes'. Not sure how these work.
     field name: Identifier;
 }
 
@@ -38,7 +37,6 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     
     field declaredType: TypeSignature;
     field defaultval: Option<Expression>;
-    %% bsqir has 'isSpecialAccess` field. No clue what that means
 }
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
