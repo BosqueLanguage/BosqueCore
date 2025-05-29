@@ -556,17 +556,17 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
 
-    %% Emit our function and entity forward decls (all that is supported for now)
-    let funcfwd_decls = nsdecl.nsfuncs.reduce<CString>(ns, fn(acc, ikey, decl) => {
-        return CString::concat(acc, emitFunctionForwardDeclaration(decl, ctx, full_indent));
-    });
-
-    let entityfwd_decls = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
+    let entityfwd_decls = nsdecl.entities.reduce<CString>(ns, fn(acc, tk, e) => {
         return CString::concat(acc, emitEntityForwardDeclaration(e, ctx, full_indent));
     });
 
+    %% Emit our function and entity forward decls (all that is supported for now)
+    let funcfwd_decls = nsdecl.nsfuncs.reduce<CString>(entityfwd_decls, fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitFunctionForwardDeclaration(decl, ctx, full_indent));
+    });
+
     %% All entities
-    let entities = nsdecl.entities.reduce<CString>(entityfwd_decls, fn(acc, tk, e) => {
+    let entities = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
         let typekey = tk.value;
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
 
