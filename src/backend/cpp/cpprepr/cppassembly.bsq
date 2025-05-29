@@ -2,16 +2,6 @@ declare namespace CPPAssembly;
 
 %% Most map well from Bosque/SMT emit
 
-entity SourceInfo {
-    field line: Nat;
-    field column: Nat;
-}
-
-concept AbstractDecl {
-    field declaredInNS: NamespaceKey;
-    field fullns: List<CString>;
-}
-
 const namespaceComponentRE: CRegex = /[A-Z][_a-zA-Z0-9]+/c;
 const namespaceKeyRE: CRegex = /(${CPPAssembly::namespaceComponentRE}'::')*${CPPAssembly::namespaceComponentRE}/c;
 type NamespaceComponentKey = CString of CPPAssembly::namespaceComponentRE;
@@ -33,12 +23,34 @@ const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside t
 type Identifier = CString of CPPAssembly::identifierRE;
 type VarIdentifier = CString of CPPAssembly::videntifierRE;
 
-%* 
-entity NamespaceConstDecl provides AbstractCoreDecl {
-    field declaredType: TypeSignature;
-    field value: Expression;
+concept AbstractDecl {
+    field declaredInNS: NamespaceKey;
+    field fullns: List<CString>;
 }
-*%
+
+concept AbstractCoreDecl provides AbstractDecl {
+    field name: Identifier;
+}
+
+entity MemberFieldDecl provides AbstractCoreDecl {
+    field declaredInType: NominalTypeSignature; %% What entity is this field in?
+    
+    field declaredType: TypeSignature;
+    field defaultval: Option<Expression>;
+}
+
+concept AbstractNominalTypeDecl provides AbstractDecl {
+    field tkey: TypeKey;
+
+    %% invariants, validates, methods, saturated, as well
+}
+
+concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
+}
+
+entity EntityTypeDecl provides AbstractEntityTypeDecl{
+    field fields: List<MemberFieldDecl>;
+}
 
 entity ParameterDecl {
     field pname: Identifier;
@@ -68,6 +80,7 @@ entity NamespaceDecl {
     %% Will need other stuff like nsconsts, enums, typedecls, etc...
 
     field subns: Map<CString, NamespaceDecl>;
+    field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
 }
 

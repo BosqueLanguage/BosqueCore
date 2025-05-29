@@ -34,16 +34,6 @@ entity ArgumentList {
     field args: List<Option<ArgumentValue>>; %% if none get default val in emitter
 }
 
-%*
-entity InvokeArgumentInfo {
-    field name: Identifier;
-    %% field rec: RecursiveAnnotation; %% TODO: Not supported
-    field args: ArgumentList;
-
-    %% Not quite sure if we type stuff thats in bsqir
-}
-*%
-
 entity IfStatement provides Statement {
     field cond: Expression;
     field trueBlock: BlockStatement;
@@ -148,6 +138,34 @@ BinLogicAndExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
 ;
+
+concept ConstructorExpression provides Expression {
+    field args: ArgumentList;
+}
+
+concept ConstructorPrimaryExpression provides ConstructorExpression {
+    field ctype: NominalTypeSignature;
+}
+
+entity ConstructorStdExpression provides ConstructorPrimaryExpression {
+    field fullns: List<CString>;
+}
+
+datatype PostfixOperation using {
+    field baseType: TypeSignature;
+}
+of
+PostfixAccessFromName {
+    field name: Identifier;
+    field declaredInType: NominalTypeSignature;
+    field ftype: TypeSignature;
+}
+;
+
+entity PostfixOp provides Expression {
+    field rootExp: Expression;
+    field ops: List<PostfixOperation>;
+}
 
 datatype BodyImplementation 
 of

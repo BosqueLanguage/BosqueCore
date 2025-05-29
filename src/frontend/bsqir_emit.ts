@@ -457,8 +457,16 @@ class BSQIREmitter {
             const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
             return `(|${iidx}, '${si[1]}'<BSQAssembly::Identifier>, ${this.emitTypeSignature(si[2])}|)`;
         });
+
+         // ConstructorStdExpression provides Expression (not AbstractDecl), so we need to emit fullns explicitly
+        let cstrns = exp.ctype.tkeystr.split('::').map(e => `'${e}'`);
         
-        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, invchecks=${invchecks} }`;
+        // Last element is entity name, we cannot properly look this up as fullns is for resolving namespaces
+        if(cstrns.length >= 1) {
+            cstrns.pop();
+        }
+        const fmt_cstrns = `fullns = List<CString>{${cstrns.join(', ')}}`;
+        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, ${fmt_cstrns}, invchecks=${invchecks} }`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {
