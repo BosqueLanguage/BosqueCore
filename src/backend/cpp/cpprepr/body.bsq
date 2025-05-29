@@ -148,8 +148,6 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 }
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression {
-    %% I suspect we will want to move this to ConstructorPrimaryExpression or just more generally
-    %% ConstructorExpression...
     field fullns: List<CString>;
 }
 
