@@ -429,13 +429,27 @@ entity CPPTransformer {
         });
     }
 
-    method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
+    method generateTypeInfo(e: BSQAssembly::EntityTypeDecl, i: Nat): CPPAssembly::TypeInfo {
+        let id: Nat = i;
+        let typesize: Nat = e.fields.size();
+        let slotsize: Nat = typesize * 8n; %% Everything in the GC is 8 byte aligned 
+        let ptrmask: CString = e.fields.reduce<CString>('', fn(acc, f) => {
+            %% I am thinking once we support entities having other entities as fields, we need to store these as ptrs ('1' instead of '0')
+            return CString::concat(acc, '0');
+        }); %% Ignoring strings for now
+        let typekey: CPPAssembly::TypeKey = CPPTransformNameManager::convertTypeKey(e.tkey);
+
+        return CPPAssembly::TypeInfo{ id, typesize, slotsize, ptrmask, typekey };
+    }
+
+    method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl, i: Nat): CPPAssembly::EntityTypeDecl {
         let declaredInNS = CPPTransformNameManager::convertNamespaceKey(e.declaredInNS);
-        let tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
-        
+        let tkey = CPPTransformNameManager::convertTypeKey(e.tkey); 
+        let tinfo = this.generateTypeInfo(e, i);
+
         let fields = this.transformMemberFieldDecl(e.fields);
 
-        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields };
+        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, tinfo, fields };
     }
 
     %*
@@ -461,15 +475,16 @@ entity CPPTransformer {
                         });
         });
 
-        let nsdecls_entities = bsqasm.entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
-            transformer_nsdecls, fn(acc, tk, e) => {
-                let key = CPPTransformNameManager::convertTypeKey(tk);
-                let cppentity = transformer.transformEntityDeclToCpp(e);
-                return CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
+        let nsdecls_entities = bsqasm.entities.reduce<(|Nat, Map<CString, CPPAssembly::NamespaceDecl>|)>(
+            (|0n, transformer_nsdecls|), fn(acc, it, e) => {
+                let key = CPPTransformNameManager::convertTypeKey(it);
+                let cppentity = transformer.transformEntityDeclToCpp(e, acc.0);
+                let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc.1,
                     fn(decl) => {
                         let new_entities = decl.entities.insert(key, cppentity);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs };
                     });
+                return (|acc.0 + 1n, ns_insertion|);
         });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
@@ -485,7 +500,7 @@ entity CPPTransformer {
         });
 
         return CPPAssembly::Assembly {
-            nsdecls = nsdecls_entities,
+            nsdecls = nsdecls_entities.1,
             allfuncs = transformer_allfuncs
         };
     }

@@ -553,6 +553,21 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
     return CString::concat(first, '(', params, ') noexcept;%n;');
 }
 
+function emitTypeInfo(info: CPPAssembly::TypeInfo, ns: List<CString>, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent);
+
+    let resolved_typename = CString::concat(emitResolvedNamespace(ns, info.typekey.value), 'Type');
+
+    let base = CString::concat(indent, 'TypeInfoBase ', resolved_typename, ' = {%n;');
+    let id = CString::concat(base, full_indent, '.type_id = ', info.id.toCString(), ',%n;');
+    let typesize = CString::concat(id, full_indent, '.type_size = ', info.typesize.toCString(), ', %n;');
+    let slotsize = CString::concat(typesize, full_indent, '.slot_size = ', info.slotsize.toCString(), ',%n;');
+    let ptrmask = CString::concat(slotsize, full_indent, '.ptr_mask = "', info.ptrmask, '",%n;');
+    let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey.value, '"%n;');
+
+    return CString::concat(typekey, indent, '};%n;');
+}
+
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
     %% Emit namespace 
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
@@ -571,8 +586,9 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let entities = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
         let typekey = tk.value;
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
+        let tinfo = emitTypeInfo(e.tinfo, e.fullns, full_indent);
 
-        return CString::concat(acc, indent, emit_entity);
+        return CString::concat(acc, indent, tinfo, emit_entity);
     });
 
     %% Emit sub-namespace declarations

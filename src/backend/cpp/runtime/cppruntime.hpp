@@ -6,6 +6,16 @@
 #include <csetjmp>
 #include <variant>
 
+// Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
+struct TypeInfoBase 
+{
+    uint32_t type_id;
+    uint32_t type_size;
+    uint32_t slot_size;
+    const char* ptr_mask;
+    const char* typekey;
+};
+
 namespace __CoreCpp {
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)

@@ -41,6 +41,7 @@ entity MemberFieldDecl provides AbstractCoreDecl {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
+    field tinfo: TypeInfo;
 
     %% invariants, validates, methods, saturated, as well
 }
@@ -50,6 +51,15 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+}
+
+%% Info for the GC 
+entity TypeInfo {
+    field id: Nat;
+    field typesize: Nat;
+    field slotsize: Nat;
+    field ptrmask: CString;
+    field typekey: CPPAssembly::TypeKey;
 }
 
 entity ParameterDecl {
