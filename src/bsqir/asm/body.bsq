@@ -175,6 +175,7 @@ entity LambdaInvokeExpression provides Expression {
     field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;
 
+    field fname: Identifier;
     field argsinfo: InvokeArgumentInfo;
 }
 

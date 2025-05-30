@@ -95,14 +95,14 @@ entity SMTTransformer {
         }
     }
 
-    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::ParamTypeKey {
+    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@!<BSQAssembly::LambdaTypeSignature> {
-            return SMTAssembly::ParamTypeKey::from(this.transformStdTypeToSMT(tsig));
+            return SMTAssembly::TypeKey::from(this.transformStdTypeToSMT(tsig));
         }
         else {
             let ptypes = $tsig.params.map<CString>(fn(pt) => this.transformStdTypeToSMT(pt.ptype).value);
             let rtype = this.transformStdTypeToSMT($tsig.resultType).value;
-            return SMTAssembly::ParamTypeKey::from(CString::concat('(Array', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
+            return SMTAssembly::TypeKey::from(CString::concat('(Array', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
         }
     }
 
@@ -158,9 +158,8 @@ entity SMTTransformer {
     }
 
     recursive method processUnaryArg(arg: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
-        let nctx, subexp = this.transformExpressionToSMT[recursive](arg, ctx);
-
-        return this.unpackSingleResultErrors(subexp, nctx);
+        let rexps, nctx, obinds = this.processArgsInOrder[recursive](List<BSQAssembly::Expression>{arg}, ctx);
+        return rexps.get(0n), nctx, obinds;
     }
 
     recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, ctx: SMTTransformerCtx): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
@@ -288,39 +287,40 @@ entity SMTTransformer {
         }
     }
 
-    recursive method transformConstructorLambdaExpression(e: BSQAssembly::ConstructorLambdaExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTAssembly::LambdaConstructor {
-        let params = e.lambda.params.map<SMTAssembly::TypeKey>(fn(p) => this.transformStdTypeToSMT(p.ptype));
-        let resultType = if(ctx.mayErrorReturn) then ErrorResult{ this.transformStdTypeToSMT(e.lambda.resultType) } else SafeResult{ this.transformStdTypeToSMT(e.lambda.resultType) };
-        let rctx, bop = this.transformBodyToSMTOperation[recursive](e.body, ctx, e.lambda.resultType);
+    recursive method transformConstructorLambdaExpression(e: BSQAssembly::ConstructorLambdaExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let lambda = e.etype@<BSQAssembly::LambdaTypeSignature>;
+        
+        let params = lambda.params.map<(|SMTAssembly::Identifier, SMTAssembly::TypeKey|)>(fn(p) => (|SMTAssembly::Identifier::from(p.pname), this.transformStdTypeToSMT(p.ptype)|));
+        let resultType = if(ctx.mayErrorReturn) then SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(lambda.resultType) } else SMTAssembly::SafeResult{ this.transformStdTypeToSMT(lambda.resultType) };
+        let rctx, bop = this.transformBodyToSMTOperation[recursive](e.body, ctx, lambda.resultType);
 
-        return rctx, SMTAssembly::LambdaConstructor{ params, resultType, bop };
+        return rctx, this.wrapOperationResult(e.etype, SMTAssembly::LambdaConstructor{ params, resultType, bop }, none);
     }
 
     recursive method transformLambdaInvokeExpression(e: BSQAssembly::LambdaInvokeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
-        let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
-
-        if(!this.errinvokes.get(e.ikey)) {
-            let callop = SMTAssembly::CallLambdaFunctionSafeExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResult(e.ftype, callop, obinds);
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        
+        if(!ctx.mayErrorReturn) {
+            let callop = SMTAssembly::CallLambdaFunctionSafeExpression{SMTAssembly::Identifier::from(e.fname), aargs};
+            return nctx, this.wrapOperationResult(e.lambda.resultType, callop, obinds);
         }
         else {
-            let callop = SMTAssembly::CallLambdaFunctionExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResultWErr(e.ftype, callop, obinds);
+            let callop = SMTAssembly::CallLambdaFunctionExpression{SMTAssembly::Identifier::from(e.fname), aargs};
+            return nctx, this.wrapOperationResultWErr(e.lambda.resultType, callop, obinds);
         }
     }
 
     recursive method transformCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
 
         if(!this.errinvokes.get(e.ikey)) {
             let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResult(e.ftype, callop, obinds);
+            return nctx, this.wrapOperationResult(e.etype, callop, obinds);
         }
         else {
             let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResultWErr(e.ftype, callop, obinds);
+            return nctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
         }
     }
 
