@@ -485,7 +485,10 @@ class BSQIREmitter {
     }
 
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
-       assert(false, "Not implemented -- ConstructorLambda");
+        const ebase = this.emitExpressionBase(exp);
+        const bdecl = this.emitBodyImplementation(exp.invoke.body, new BsqonCodeFormatter(undefined));
+
+        return `BSQAssembly::ConstructorLambdaExpression{ ${ebase}, body=${bdecl} }`;
     }
 
     private emitLetExpression(exp: LetExpression): string {
@@ -493,7 +496,13 @@ class BSQIREmitter {
     }
 
     private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
-        assert(false, "Not implemented -- LambdaInvoke");
+        const ebase = this.emitExpressionBase(exp);
+
+        const lambda = exp.lambda as LambdaTypeSignature;
+        const shuffle = lambda.params.map((lp, ii) => [ii, lp.type] as [number, TypeSignature]);
+        const argsinfo = this.emitInvokeArgumentInfo(exp.name, lambda.recursive, exp.args, shuffle, exp.resttype, exp.restinfo);
+
+        return `BSQAssembly::LambdaInvokeExpression{ ${ebase}, isCapturedLambda=${exp.isCapturedLambda}, lambda=${this.emitTypeSignature(exp.lambda as TypeSignature)}, fname='${exp.name}'<BSQAssembly::Identifier>, argsinfo=${argsinfo} }`;
     }
 
     private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {

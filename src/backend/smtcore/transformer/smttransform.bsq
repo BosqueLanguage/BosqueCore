@@ -314,6 +314,8 @@ entity SMTTransformer {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
 
+        %%TODO: check lambda params -- and see if there are then specialize smtikey to $lambda_err if this is an err
+
         if(!this.errinvokes.get(e.ikey)) {
             let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
             return nctx, this.wrapOperationResult(e.etype, callop, obinds);
@@ -890,6 +892,15 @@ entity SMTTransformer {
             }
             | BSQAssembly::ConstructorExpression => { 
                 return this.transformConstructorExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::ConstructorLambdaExpression => { 
+                return this.transformConstructorLambdaExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::LambdaInvokeExpression => { 
+                return this.transformLambdaInvokeExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::CallNamespaceFunctionExpression => { 
+                return this.transformCallNamespaceFunctionExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::CoerceNarrowTypeExpression => { 
                 return this.transformCoerceNarrowTypeExpression[recursive]($exp, ctx);
