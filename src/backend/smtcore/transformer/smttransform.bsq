@@ -100,7 +100,9 @@ entity SMTTransformer {
             return SMTAssembly::ParamTypeKey::from(this.transformStdTypeToSMT(tsig));
         }
         else {
-            abort; %% NOT IMPLEMENTED LAMBDA TYPES
+            let ptypes = $tsig.params.map<CString>(fn(pt) => this.transformStdTypeToSMT(pt.ptype).value);
+            let rtype = this.transformStdTypeToSMT($tsig.resultType).value;
+            return SMTAssembly::ParamTypeKey::from(CString::concat('(Array', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
         }
     }
 

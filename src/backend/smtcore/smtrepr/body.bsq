@@ -10,10 +10,10 @@ concept SafeExpression provides CallArgSafeExpression, Expression {
 }
 
 entity LambdaConstructor provides CallArgSafeExpression {
-    field params: List<TypeSignature>;
+    field params: List<(|Identifier, ParamTypeKey|)>;
     field resultType: ResultType;
 
-    field body: Body;
+    field body: Operation;
 }
 
 datatype ConstantExpression provides SafeExpression
@@ -163,14 +163,6 @@ entity AccessFromIndexExpression provides SafeExpression {
     field elisttype: TypeKey;
     field idx: CString;
 
-    field arg: SafeExpression;
-}
-
-entity IsNoneTestExpression provides SafeExpression {
-    field arg: SafeExpression;
-}
-
-entity IsSomeTestExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 

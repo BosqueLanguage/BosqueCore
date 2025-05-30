@@ -237,13 +237,13 @@ entity ConstantSimplification {
     }
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression): Expression {
-        let nargs = this.processArgumentListStd(e.args);
-        return e[args=nargs];
+        let nargs = this.processArgumentList(e.argsinfo.args);
+        return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): Expression {
-        let nargs = this.processArgumentListStd(e.args);
-        return e[args=nargs];
+        let nargs = this.processArgumentList(e.argsinfo.args);
+        return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {

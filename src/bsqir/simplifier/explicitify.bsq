@@ -147,17 +147,17 @@ entity ExplicitifyTransform {
     }
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression, vmap: VarMapping): Expression {
-        let etypes = e.etype@<LambdaTypeSignature>.params.map(fn(param) => param.ptype);
-        let nargs = this.processArgumentListStd(e.args, etypes, vmap);
+        let etypes = e.etype@<LambdaTypeSignature>.params.map<TypeSignature>(fn(param) => param.ptype);
+        let nargs = this.processArgumentListStd(e.argsinfo.args, etypes, vmap);
 
-        return e[args=nargs];
+        return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression, vmap: VarMapping): Expression {
-        let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2); 
-        let nargs = this.processArgumentListStd(e.args, types, vmap);
+        let types = e.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
+        let nargs = this.processArgumentListStd(e.argsinfo.args, types, vmap);
 
-        return e[args=nargs];
+        return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression, vmap: VarMapping): Expression {
