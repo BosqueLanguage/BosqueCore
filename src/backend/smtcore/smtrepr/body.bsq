@@ -1,22 +1,9 @@
 namespace SMTAssembly;
 
-concept CallArgExpression {
+concept Expression {
 }
 
-concept CallArgSafeExpression {
-}
-
-concept Expression provides CallArgExpression {
-}
-
-concept SafeExpression provides CallArgSafeExpression, Expression {
-}
-
-entity LambdaConstructor provides CallArgExpression, CallArgSafeExpression {
-    field params: List<InvokeParameterDecl>;
-    field resultType: ResultType;
-
-    field body: Body;
+concept SafeExpression provides Expression {
 }
 
 datatype ConstantExpression provides SafeExpression
@@ -111,21 +98,33 @@ entity ConstructorEListExpression provides SafeExpression {
     field args: List<SafeExpression>;
 }
 
+entity LambdaConstructor provides SafeExpression {
+    field params: List<(|Identifier, TypeKey|)>;
+    field resultType: ResultType;
+
+    field body: Operation;
+}
+
 concept CallFunctionConcept {
     field invokeKey: InvokeKey;
 }
 
 entity CallFunctionSafeExpression provides CallFunctionConcept, SafeExpression { 
-    field args: List<CallArgSafeExpression>;
+    field args: List<SafeExpression>;
 } 
 
 entity CallFunctionExpression provides CallFunctionConcept, Expression { 
-    field args: List<CallArgExpression>;
+    field args: List<SafeExpression>;
+}
+
+entity CallLambdaFunctionSafeExpression provides SafeExpression {
+    field lambda: Identifier;
+    field args: List<SafeExpression>;
 }
 
 entity CallLambdaFunctionExpression provides Expression {
     field lambda: Identifier;
-    field args: List<CallArgExpression>;
+    field args: List<SafeExpression>;
 }
 
 entity LogicActionAndExpression provides SafeExpression {
@@ -161,14 +160,6 @@ entity AccessFromIndexExpression provides SafeExpression {
     field elisttype: TypeKey;
     field idx: CString;
 
-    field arg: SafeExpression;
-}
-
-entity IsNoneTestExpression provides SafeExpression {
-    field arg: SafeExpression;
-}
-
-entity IsSomeTestExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 
@@ -209,7 +200,7 @@ entity MethodInvokeStaticExpression provides Expression {
     field resolvedTrgt: InvokeKey;
     field name: CString;
     field rootExp: SafeExpression;
-    field args: List<CallArgExpression>;
+    field args: List<SafeExpression>;
 }
 
 datatype UnaryExpression provides SafeExpression using {

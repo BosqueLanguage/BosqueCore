@@ -1546,7 +1546,7 @@ class TypeChecker {
                     const ipdecl = exp.invoke.params[i];
 
                     args.push(new VarInfo(ipdecl.name, iptype.type, [], true, true, ipdecl.isRefParam));
-                    params.push(new LambdaParameterSignature(iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                    params.push(new LambdaParameterSignature(ipdecl.name, iptype.type, ipdecl.isRefParam, ipdecl.isRestParam));
                 }
             }
         }
@@ -1555,7 +1555,7 @@ class TypeChecker {
                 const ipdecl = exp.invoke.params[i];
 
                 args.push(new VarInfo(ipdecl.name, ipdecl.type, [], true, true, ipdecl.isRefParam));
-                params.push(new LambdaParameterSignature(ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
+                params.push(new LambdaParameterSignature(ipdecl.name, ipdecl.type, ipdecl.isRefParam, ipdecl.isRestParam));
             }
         }
 

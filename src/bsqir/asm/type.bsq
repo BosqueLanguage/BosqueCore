@@ -1,6 +1,7 @@
 namespace BSQAssembly;
 
 entity LambdaParameterSignature {
+    field pname: Identifier;
     field ptype: TypeSignature;
     field isRefParam: Bool;
     field isRestParam: Bool;

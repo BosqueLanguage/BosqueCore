@@ -75,7 +75,12 @@ class EmitNameManager {
     }
 
     static generateTypeKey(tsig: TypeSignature): string {
-        return tsig.tkeystr;
+         if(!(tsig instanceof LambdaTypeSignature)) {
+            return tsig.tkeystr;
+        }
+        else {
+            return `${tsig.name}(${tsig.params.map((pp) => pp.emit()).join(", ")})->${tsig.resultType.tkeystr}`;
+        }
     }
 
     static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string): string {
@@ -171,12 +176,12 @@ class BSQIREmitter {
     }
 
     private emitTypeSignatureBase(ttype: TypeSignature): string {
-        return `sinfo=${this.emitSourceInfo(ttype.sinfo)}, tkeystr='${ttype.tkeystr}'<TypeKey>`;
+        return `sinfo=${this.emitSourceInfo(ttype.sinfo)}, tkeystr='${EmitNameManager.generateTypeKey(ttype)}'<TypeKey>`;
     }
 
     private emitLambdaParameterSignature(lps: LambdaParameterSignature): string {
         const ptype = this.emitTypeSignature(lps.type);
-        return `BSQAssembly::LambdaParameterSignature{ ptype=${ptype}, isRefParam=${lps.isRefParam}, isRestParam=${lps.isRestParam} }`;
+        return `BSQAssembly::LambdaParameterSignature{ pname='${lps.name || "_"}'<BSQAssembly::Identifier>, ptype=${ptype}, isRefParam=${lps.isRefParam}, isRestParam=${lps.isRestParam} }`;
     }
 
     private emitTypeSignature(ttype: TypeSignature): string {
@@ -493,7 +498,10 @@ class BSQIREmitter {
     }
 
     private emitConstructorLambdaExpression(exp: ConstructorLambdaExpression): string {
-       assert(false, "Not implemented -- ConstructorLambda");
+        const ebase = this.emitExpressionBase(exp);
+        const bdecl = this.emitBodyImplementation(exp.invoke.body, new BsqonCodeFormatter(undefined));
+
+        return `BSQAssembly::ConstructorLambdaExpression{ ${ebase}, body=${bdecl} }`;
     }
 
     private emitLetExpression(exp: LetExpression): string {
@@ -501,7 +509,13 @@ class BSQIREmitter {
     }
 
     private emitLambdaInvokeExpression(exp: LambdaInvokeExpression): string {
-        assert(false, "Not implemented -- LambdaInvoke");
+        const ebase = this.emitExpressionBase(exp);
+
+        const lambda = exp.lambda as LambdaTypeSignature;
+        const shuffle = lambda.params.map((lp, ii) => [ii, lp.type] as [number, TypeSignature]);
+        const argsinfo = this.emitInvokeArgumentInfo(exp.name, lambda.recursive, exp.args, shuffle, exp.resttype, exp.restinfo);
+
+        return `BSQAssembly::LambdaInvokeExpression{ ${ebase}, isCapturedLambda=${exp.isCapturedLambda}, lambda=${this.emitTypeSignature(exp.lambda as TypeSignature)}, fname='${exp.name}'<BSQAssembly::Identifier>, argsinfo=${argsinfo} }`;
     }
 
     private emitSpecialConstructorExpression(exp: SpecialConstructorExpression): string {

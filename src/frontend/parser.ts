@@ -2020,7 +2020,7 @@ class Parser {
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new LambdaParameterSignature(ptype, isref, isrest);
+        return new LambdaParameterSignature(undefined, ptype, isref, isrest);
     }
 
     private parseLambdaSignatureParameters(cinfo: SourceInfo): LambdaParameterSignature[] {

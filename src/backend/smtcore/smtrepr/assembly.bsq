@@ -13,17 +13,10 @@ const basicNominalTypeKeyRE: CRegex = /(${SMTAssembly::namespaceComponentRE}'@')
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /${SMTAssembly::basicNominalTypeKeyRE}|${SMTAssembly::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'@EList<'.*'>'/c;
-const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}/c;
 
-const lambdaTypeKeyRE: CRegex = /('@fn'|'@pred') '<'.*'>' '-' ${SMTAssembly::typeKeyRE}/c;
-const paramTypeKeyRE: CRegex = /${SMTAssembly::typeKeyRE}|${lambdaTypeKeyRE}/c;
-
-const resultTypeKeyRE: CRegex = /'(@Result '${SMTAssembly::typeKeyRE}')'/c;
-const returnTypeKeyRE: CRegex = /'${SMTAssembly::typeKeyRE}|${SMTAssembly::resultTypeKeyRE}'/c;
-
+const lambdaTypeKeyRE: CRegex = /'(Array' .* ')'/c;
+const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}|${SMTAssembly::lambdaTypeKeyRE}/c;
 type TypeKey = CString of SMTAssembly::typeKeyRE;
-type ParamTypeKey = CString of SMTAssembly::paramTypeKeyRE;
-type ReturnTypeKey = CString of SMTAssembly::resultTypeKeyRE;
 
 const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+/c;
 type InvokeKey = CString of SMTAssembly::invokeKeyRE;
@@ -49,7 +42,7 @@ entity ErrorInfo {
 
 entity InvokeParameterDecl {
     field pname: Identifier;
-    field ptype: ParamTypeKey;
+    field ptype: TypeKey;
 }
 
 entity PredicateFunctionDecl {

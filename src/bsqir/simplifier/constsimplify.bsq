@@ -230,6 +230,22 @@ entity ConstantSimplification {
         return e[args=nargs];
     }
 
+    recursive method processConstructorLambdaExpression(e: ConstructorLambdaExpression): Expression {
+        let nbody = this.processBodyImpl(e.body);
+
+        return e[body=nbody];
+    }
+
+    recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression): Expression {
+        let nargs = this.processArgumentList(e.argsinfo.args);
+        return e[argsinfo=$argsinfo[args=nargs]];
+    }
+
+    recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): Expression {
+        let nargs = this.processArgumentList(e.argsinfo.args);
+        return e[argsinfo=$argsinfo[args=nargs]];
+    }
+
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
         let nexp = this.processUnaryArg(e.exp);
         return e[exp=nexp];
@@ -539,10 +555,10 @@ entity ConstantSimplification {
             | AccessVariableExpression => { return e; }
             | AccessCapturedVariableExpression => { return e; }
             | ConstructorExpression => { return this.processConstructorExpression($e); }
-            | ConstructorLambdaExpression => { abort; }
+            | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression($e); }
             | LetExpression => { abort; }
-            | LambdaInvokeExpression => { abort; }
-            | CallNamespaceFunctionExpression => { abort; }
+            | LambdaInvokeExpression => { return this.processLambdaInvokeExpression($e); }
+            | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression($e); }
             | CallTypeFunctionExpression => { abort; }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }

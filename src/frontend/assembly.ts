@@ -299,7 +299,7 @@ class LambdaDecl extends AbstractInvokeDecl {
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
-        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.type, p.isRefParam, p.isRestParam));
+        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.isRefParam, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
 
