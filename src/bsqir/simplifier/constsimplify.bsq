@@ -555,9 +555,9 @@ entity ConstantSimplification {
             | AccessVariableExpression => { return e; }
             | AccessCapturedVariableExpression => { return e; }
             | ConstructorExpression => { return this.processConstructorExpression($e); }
-            | ConstructorLambdaExpression => { abort; }
+            | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression($e); }
             | LetExpression => { abort; }
-            | LambdaInvokeExpression => { abort; }
+            | LambdaInvokeExpression => { return this.processLambdaInvokeExpression($e); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression($e); }
             | CallTypeFunctionExpression => { abort; }
             | CallTypeFunctionSpecialExpression => { abort; }

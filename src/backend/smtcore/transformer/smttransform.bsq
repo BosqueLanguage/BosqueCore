@@ -82,27 +82,23 @@ entity SMTTransformer {
     }
 
     method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
-        if(tsig)@!<BSQAssembly::NominalTypeSignature> {
-            return TransformNameManager::convertTypeKey(tsig.tkeystr);
-        }
-        else {
-            if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
-                return TransformNameManager::convertTypeKey($tsig.tkeystr);
-            }
-            else {
-                return SMTAssembly::TypeKey::from('@Term');
-            }
-        }
-    }
-
-    method transformCallTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
-        if(tsig)@!<BSQAssembly::LambdaTypeSignature> {
-            return SMTAssembly::TypeKey::from(this.transformStdTypeToSMT(tsig));
-        }
-        else {
+        if(tsig)@<BSQAssembly::LambdaTypeSignature> {
             let ptypes = $tsig.params.map<CString>(fn(pt) => this.transformStdTypeToSMT(pt.ptype).value);
             let rtype = this.transformStdTypeToSMT($tsig.resultType).value;
-            return SMTAssembly::TypeKey::from(CString::concat('(Array', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
+            return SMTAssembly::TypeKey::from(CString::concat('(Array ', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
+        }
+        else {
+            if(tsig)@!<BSQAssembly::NominalTypeSignature> {
+                return TransformNameManager::convertTypeKey(tsig.tkeystr);
+            }
+            else {
+                if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
+                    return TransformNameManager::convertTypeKey($tsig.tkeystr);
+                }
+                else {
+                    return SMTAssembly::TypeKey::from('@Term');
+                }
+            }
         }
     }
 
@@ -1234,7 +1230,7 @@ entity SMTTransformer {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
 
-        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformCallTypeToSMT(p.ptype)});
+        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformStdTypeToSMT(p.ptype)});
         let rtype = this.transformStdTypeToSMT(decl.resultType);
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -1248,7 +1244,7 @@ entity SMTTransformer {
 
         let params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
                 let pname = SMTAssembly::Identifier::from(CString::concat('$', TransformNameManager::safeifyName(f.fname.value)));
-                return SMTAssembly::InvokeParameterDecl{pname, this.transformCallTypeToSMT(f.ftype)};
+                return SMTAssembly::InvokeParameterDecl{pname, this.transformStdTypeToSMT(f.ftype)};
             });
 
         let rtype = 'Bool'<SMTAssembly::TypeKey>;

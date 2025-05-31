@@ -147,7 +147,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression, vmap: VarMapping): Expression {
-        let etypes = e.etype@<LambdaTypeSignature>.params.map<TypeSignature>(fn(param) => param.ptype);
+        let etypes = e.lambda.params.map<TypeSignature>(fn(param) => param.ptype);
         let nargs = this.processArgumentListStd(e.argsinfo.args, etypes, vmap);
 
         return e[argsinfo=$argsinfo[args=nargs]];
