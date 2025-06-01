@@ -1,0 +1,19 @@
+namespace Core;
+
+namespace Algorithms {
+    recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = s_algo_while;
+
+    recursive? function worklist<S, T>(s: S, init: List<T>, proc: recursive? fn(S, T) -> (|S, List<T>|)): S {
+        let wl = init;
+
+        return Algorithms::while[recursive?]<(|S, List<T>|)>((|s, wl|), 
+            pred(state) => !state.1.empty(), 
+            recursive? fn(state) => {
+                let vp, nwl = state.1.popFront();
+                let ns, nelems = proc(state.0, vp.1);
+
+                let fwl = nwl.append(nelems);
+                return (|ns, fwl|);
+            });
+    }
+}
