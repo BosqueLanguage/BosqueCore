@@ -553,10 +553,12 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
     return CString::concat(first, '(', params, ') noexcept;%n;');
 }
 
-function emitTypeInfo(info: CPPAssembly::TypeInfo, indent: CString): CString {
+function emitTypeInfo(info: CPPAssembly::TypeInfo, fullns: List<CString>, indent: CString): CString {
     let full_indent = CString::concat('    ', indent);
 
-    let base = CString::concat(indent, 'TypeInfoBase ', info.typekey, ' = {%n;');
+    let resolved_name = CString::concat(emitResolvedNamespace(fullns, info.typekey), 'Type');
+
+    let base = CString::concat(indent, 'TypeInfoBase ', resolved_name, ' = {%n;');
     let id = CString::concat(base, full_indent, '.type_id = ', info.id.toCString(), ',%n;');
     let typesize = CString::concat(id, full_indent, '.type_size = ', info.typesize.toCString(), ', %n;');
     let slotsize = CString::concat(typesize, full_indent, '.slot_size = ', info.slotsize.toCString(), ',%n;');
@@ -566,7 +568,7 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, indent: CString): CString {
     return CString::concat(typekey, indent, '};%n;');
 }
 
-recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
+recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, typeinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, indent: CString): CString {
     %% Emit namespace 
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
@@ -584,13 +586,13 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let entities = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
         let typekey = tk.value;
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
-
-        return CString::concat(acc, indent, emit_entity);
+        let entity_tinfo = emitTypeInfo(typeinfos.get(tk), e.fullns, full_indent);
+        return CString::concat(acc, indent, entity_tinfo, emit_entity);
     });
 
     %% Emit sub-namespace declarations
     let subns = nsdecl.subns.reduce<CString>(entities, fn(acc, name, decl) => {
-        return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
+        return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, typeinfos, full_indent));
     });
 
     %% Emit functions in current namespace
@@ -601,14 +603,10 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return CString::concat(funcs, indent, '}%n;');
 }
 
-function emitAssembly(asm: CPPAssembly::Assembly): CString {
-    let typeinfos = asm.typeinfos.reduce<CString>('', fn(acc, tkey, tinfo) => {
-        return CString::concat(acc, emitTypeInfo(tinfo, ''));
-    });
-    
+function emitAssembly(asm: CPPAssembly::Assembly): CString {    
     let ctx: Context = Context{CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''}, asm.nsdecls}; %% No known namespace yet
-    let ns_emission = asm.nsdecls.reduce<CString>(typeinfos, fn(acc, nsname, nsdecl) => {
-        return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
+    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
+        return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, asm.typeinfos, ''));
     });
 
     %% TODO: Other non namespace functions
