@@ -41,8 +41,7 @@ entity MemberFieldDecl provides AbstractCoreDecl {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
-    field tinfo: TypeInfo;
-
+ 
     %% invariants, validates, methods, saturated, as well
 }
 
@@ -59,7 +58,7 @@ entity TypeInfo {
     field typesize: Nat;
     field slotsize: Nat;
     field ptrmask: CString;
-    field typekey: CPPAssembly::TypeKey;
+    field typekey: CString;
 }
 
 entity ParameterDecl {
@@ -98,4 +97,5 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    field typeinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
 }

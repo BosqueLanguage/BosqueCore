@@ -429,27 +429,51 @@ entity CPPTransformer {
         });
     }
 
-    method generateTypeInfo(e: BSQAssembly::EntityTypeDecl, i: Nat): CPPAssembly::TypeInfo {
-        let id: Nat = i;
-        let typesize: Nat = e.fields.size();
-        let slotsize: Nat = typesize * 8n; %% Everything in the GC is 8 byte aligned 
-        let ptrmask: CString = e.fields.reduce<CString>('', fn(acc, f) => {
-            %% I am thinking once we support entities having other entities as fields, we need to store these as ptrs ('1' instead of '0')
-            return CString::concat(acc, '0');
-        }); %% Ignoring strings for now
-        let typekey: CPPAssembly::TypeKey = CPPTransformNameManager::convertTypeKey(e.tkey);
+    method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
+        let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
-        return CPPAssembly::TypeInfo{ id, typesize, slotsize, ptrmask, typekey };
+        var matchedType: CPPAssembly::TypeInfo;
+        if(tinfos.has(cpptkey)) {
+            return tinfos.get(cpptkey), tinfos;
+        }
+        elif(asm.isPrimtitiveType(typekey)) {
+            switch(typekey) {
+                'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', 'Int' }; }
+                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', 'Nat' }; }
+                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', 'BigInt' }; }
+                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 3n, 16n, 2n, '00', 'BigNat' }; }
+                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', 'Float' }; }
+                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', 'Bool' }; }
+                | 'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', 'None' }; }
+                | _ => { abort; } %% Not supported by cpp emitter yet!
+            }
+        }
+        elif(asm.isNominalTypeConcrete(typekey)) {
+            %% We can't compare tkey like primtives, so check if container has our tkey
+            if(asm.entities.has(typekey)) {
+                let m_entity = asm.entities.get(typekey);
+                let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', m_entity.tkey.value }, fn(acc, tinfo) => {
+                    return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey };
+                });
+            }
+            else {
+                abort; %% TODO: Add support for other types
+            }
+        }
+        else {
+            abort; %% Type is not known or generic!
+        }
+
+        return matchedType, tinfos.insert(CPPTransformNameManager::convertTypeKey(typekey), matchedType);
     }
 
-    method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl, i: Nat): CPPAssembly::EntityTypeDecl {
+    method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
         let declaredInNS = CPPTransformNameManager::convertNamespaceKey(e.declaredInNS);
         let tkey = CPPTransformNameManager::convertTypeKey(e.tkey); 
-        let tinfo = this.generateTypeInfo(e, i);
-
         let fields = this.transformMemberFieldDecl(e.fields);
 
-        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, tinfo, fields };
+        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields };
     }
 
     %*
@@ -475,16 +499,16 @@ entity CPPTransformer {
                         });
         });
 
-        let nsdecls_entities = bsqasm.entities.reduce<(|Nat, Map<CString, CPPAssembly::NamespaceDecl>|)>(
-            (|0n, transformer_nsdecls|), fn(acc, it, e) => {
+        let nsdecls_entities = bsqasm.entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            transformer_nsdecls, fn(acc, it, e) => {
                 let key = CPPTransformNameManager::convertTypeKey(it);
-                let cppentity = transformer.transformEntityDeclToCpp(e, acc.0);
-                let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc.1,
+                let cppentity = transformer.transformEntityDeclToCpp(e);
+                let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
                     fn(decl) => {
                         let new_entities = decl.entities.insert(key, cppentity);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs };
                     });
-                return (|acc.0 + 1n, ns_insertion|);
+                return ns_insertion;
         });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
@@ -499,9 +523,19 @@ entity CPPTransformer {
             }
         });
 
+        %% Will need to also handle abstract types
+        let generated_typeinfos = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, fn(acc, tkey) => {
+                if(bsqasm.isPrimtitiveType(tkey)) {
+                    return acc; %% GC doesnt need primitive type info
+                }
+                return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
+            });
+
         return CPPAssembly::Assembly {
-            nsdecls = nsdecls_entities.1,
-            allfuncs = transformer_allfuncs
+            nsdecls = nsdecls_entities,
+            allfuncs = transformer_allfuncs,
+            typeinfos = generated_typeinfos
         };
     }
 }
