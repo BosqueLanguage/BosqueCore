@@ -369,9 +369,28 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName): CStr
     return CString::concat('.', emitIdentifier(op.name));
 }
 
+%% Does not emit arguments yet
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
+    let ik = emitInvokeKey(op.resolvedTrgt, ctx);
     let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
-    return CString::concat(tk, '(', expr, ', args go here', ')');
+    
+    %% Remove abstract nominal we were in
+    var resolvedInvoke: CString;
+    if(ik.startsWithString(tk)) {
+        let tmp = ik.removePrefixString(tk);
+        if(tmp.startsWithString('::')) {
+            resolvedInvoke = tmp.removePrefixString('::');
+        }
+        else {
+            resolvedInvoke = tmp;
+        }
+        
+    }
+    else {
+        resolvedInvoke = ik;
+    }
+
+    return CString::concat(resolvedInvoke, '(', expr, ')');
 }
 
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
