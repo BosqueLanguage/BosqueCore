@@ -278,9 +278,9 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return CString::concat('(', CString::joinAll(' || ', args), ')');
 }
 
-function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
+function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, params: List<CPPAssembly::ParameterDecl>, ctx: Context): CString {
     if(av)@none {
-        let param = func.params.get(i).defaultval;
+        let param = params.get(i).defaultval;
         if(param)@none {
             abort; %% Should be impossible
         }
@@ -299,13 +299,13 @@ function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, func:
     }
 }
 
-function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFunctionDecl): List<CString> {
+function resolveDefaultParams(al: List<CString>, params: List<CPPAssembly::ParameterDecl>): List<CString> {
     return al.map<CString>(fn(arg) => { 
         if(arg.startsWithString('$')) {
             let ident = arg.removePrefixString('$');
 
             %% This is a bit hacky but works for getting default val idx
-            let idx = func.params.mapIdx<Nat>(fn(param, ii) => {
+            let idx = params.mapIdx<Nat>(fn(param, ii) => {
                 if(emitIdentifier(param.pname) === ident) {
                     return ii;
                 }
@@ -318,10 +318,10 @@ function resolveDefaultParams(al: List<CString>, func: CPPAssembly::NamespaceFun
     });
 }
 
-function emitArgumentList(al: CPPAssembly::ArgumentList, func: CPPAssembly::NamespaceFunctionDecl, ctx: Context): CString {
-    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, func, ctx));
+function emitArgumentList(al: CPPAssembly::ArgumentList, params: List<CPPAssembly::ParameterDecl>, ctx: Context): CString {
+    let emit_al = al.args.mapIdx<CString>(fn(arg, ii) => emitArgumentValue(arg, ii, params, ctx));
     
-    return CString::joinAll(', ', resolveDefaultParams[recursive](emit_al, func));
+    return CString::joinAll(', ', resolveDefaultParams[recursive](emit_al, params));
 }
 
 recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceDecl>, fullns: List<CString>): CPPAssembly::NamespaceDecl {
@@ -346,7 +346,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns.value); 
 
     let ident = emitInvokeKey(e.ikey, ctx);
-    let name = ident.removePrefixString(e.ns.value);
+    let name = ident.removePrefixString(resolvedns);
     
     var resolvedName: CString;
     if(name.startsWithString('::')) {
@@ -357,7 +357,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     }
 
     let func = findNamespaceDecl(ctx.nsdecls, e.fullns).nsfuncs.get(e.ikey);
-    let args = emitArgumentList(e.args, func, ctx);
+    let args = emitArgumentList(e.args, func.params, ctx);
 
     if(resolvedns !== '') {
         return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
@@ -373,7 +373,18 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName): CStr
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
     let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
-    
+
+    %% this does NOT work for lookup namespace, would be better to get the method directly 
+    let nsdecl = findNamespaceDecl(ctx.nsdecls, ctx.fullns_list);
+    var params: CString;
+    if(nsdecl.staticmethods.has(op.resolvedTrgt)) {
+        let trgt = nsdecl.staticmethods.get(op.resolvedTrgt);
+        params = emitParameters(trgt.params, ctx);
+    }
+    else {
+        abort; %% TODO: Support methods in abstract nominal types other than static!
+    }
+
     %% Remove abstract nominal we were in
     var resolvedInvoke: CString;
     if(ik.startsWithString(tk)) {
@@ -390,7 +401,12 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         resolvedInvoke = ik;
     }
 
-    return CString::concat(resolvedInvoke, '(', expr, ')');
+    if(params === '') {
+        return CString::concat(resolvedInvoke, '(', expr, ')');
+    }
+    else {
+         return CString::concat(resolvedInvoke, '(', expr, ', ', params, ')');       
+    }
 }
 
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
@@ -559,7 +575,15 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, ctx: Context, indent: CStrin
         let this_type = emitResolvedNamespace(nctx.fullns_list, m.declaredIn.value); %% Find necessary ns resolution for the structure we are declared in
 
         let pre = CString::concat(indent, 'const ', rtype, ' ', name);
-        let params_impl = CString::concat('(const ', this_type, ' ', emitSpecialThis(), params, ') noexcept');
+        
+        var params_impl: CString;
+        if(params === '') {
+            params_impl = CString::concat('(const ', this_type, ' ', emitSpecialThis(), ') noexcept');
+        }
+        else {
+            let base = CString::concat('(const ', this_type, ' ');
+            params_impl = CString::concat(base, emitSpecialThis(), ', ', params, ') noexcept');           
+        }
 
         return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(m.body, nctx, indent), indent, '}%n;');
     }
@@ -614,9 +638,15 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, ctx: Context, 
         let this_type = emitResolvedNamespace(nctx.fullns_list, m.declaredIn.value);
         let params = emitParameters(m.params, nctx);
         let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(const ');
-        return CString::concat(first, this_type, ' ', emitSpecialThis(), params, ') noexcept;%n;');
-    }
 
+        if(params === '') {
+            return CString::concat(first, this_type, ' ', emitSpecialThis(), params, ') noexcept;%n;');
+        }
+        else {
+            let base = CString::concat(first, this_type, ' ');
+            return CString::concat(base, emitSpecialThis(), ', ', params, ') noexcept;%n;');           
+        }
+    }
     abort; %% TODO: Support other method types!
 }
 

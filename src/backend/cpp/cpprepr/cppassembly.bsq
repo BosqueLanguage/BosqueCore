@@ -117,6 +117,11 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+
+    %% We will need to put static, abstract, override, virtual methods here then in NamespaceDecl
+    %% we just have a List<InvokeKey>, allows for very easy lookups and ns resolution 
+    %% (this helps us get the parameter list for constructors and stuff)
+
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
 }

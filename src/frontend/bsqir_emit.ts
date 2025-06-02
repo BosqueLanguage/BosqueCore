@@ -1694,6 +1694,9 @@ class BSQIREmitter {
             this.allmethods.push(ret); 
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
+        else {
+            assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
+        }
 
         // Need to figure out what this does
         this.mapper = omap;
