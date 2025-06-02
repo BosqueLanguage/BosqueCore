@@ -50,6 +50,8 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+    field staticmethods: List<InvokeKey>;
+    %% Other method types too
 }
 
 %% Info for the GC 
@@ -60,6 +62,24 @@ entity TypeInfo {
     field ptrmask: CString;
     field typekey: CString;
 }
+
+datatype MethodDecl provides AbstractDecl using {
+    %% Not quite sure what this does
+    %% field isThisRef: Bool;
+    field name: CString;
+    field ikey: InvokeKey;
+    field params: List<ParameterDecl>;
+    field resultType: TypeSignature;
+    field body: BodyImplementation;
+
+
+}
+of
+MethodDeclStatic { }
+| MethodDeclAbstract {}
+| MethodDeclVirtual {}
+| MethodDeclOverride {}
+;
 
 entity ParameterDecl {
     field pname: Identifier;
@@ -91,11 +111,13 @@ entity NamespaceDecl {
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
 }
 
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    field allmethods: List<InvokeKey>;
     field typeinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
 }

@@ -41,7 +41,8 @@ namespace CPPTransformNameManager {
         let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
         let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
         let entities = Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>{};
-        return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs };
+        let staticmethods = Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>{};
+        return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs, staticmethods };
     }
 
     %% If ns decl does not exist for name insert, otherwise continue recursing until fullns is empty
@@ -63,7 +64,7 @@ namespace CPPTransformNameManager {
 
         %% Recursively process remaining names
         let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, insertion);
-        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.entities, cur_nsdecl.nsfuncs };
+        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.entities, cur_nsdecl.nsfuncs, cur_nsdecl.staticmethods };
 
         %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
         if(!nsdecls.has(ns_name)) {
@@ -404,6 +405,30 @@ entity CPPTransformer {
         }
     }
 
+    %%
+    %% I think we will need to keep these as their own separate entities (not converting methods to functions in the transformer)
+    %% since we need to do some speical work on them maybe. I also dont like all the repition here (basically same method as funcdecl)
+    %%
+    method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic): CPPAssembly::MethodDeclStatic {
+        let name = m.name.value;
+        let nskey = CPPTransformNameManager::convertNamespaceKey(m.declaredInNS);
+        let fullns = m.fullns;
+        let ikey = CPPTransformNameManager::convertInvokeKey(m.ikey);
+        let params = this.transformParameterDecl(m.params);
+        let res = CPPTransformNameManager::convertTypeSignature(m.resultType);
+        let body = this.transformBodyToCpp(m.body);
+
+        return CPPAssembly::MethodDeclStatic{ nskey, fullns, name, ikey, params, res, body };
+    }
+
+    method transformMethodDeclToCpp(m: BSQAssembly::MethodDecl): CPPAssembly::MethodDecl {
+        if(m)@<BSQAssembly::MethodDeclStatic> {
+            return this.transformStaticMethodDecl($m);
+        }
+
+        abort; %% TODO: Not implemented
+    }
+
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
         let name = decl.name.value;
         let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
@@ -411,7 +436,6 @@ entity CPPTransformer {
         let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
         let params = this.transformParameterDecl(decl.params);
         let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
-
         let body = this.transformBodyToCpp(decl.body);
 
         return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, name, ikey, params, res, body};
@@ -478,8 +502,9 @@ entity CPPTransformer {
         let declaredInNS = CPPTransformNameManager::convertNamespaceKey(e.declaredInNS);
         let tkey = CPPTransformNameManager::convertTypeKey(e.tkey); 
         let fields = this.transformMemberFieldDecl(e.fields);
+        let staticmethods = e.staticmethods.map<CPPAssembly::InvokeKey>(fn(m) => CPPTransformNameManager::convertInvokeKey(m));
 
-        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields };
+        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields, staticmethods };
     }
 
     %*
@@ -501,7 +526,7 @@ entity CPPTransformer {
                     return CPPTransformNameManager::getNamespaceDeclMapping(bsqdecl.fullns, acc,
                         fn(decl) => { 
                             let new_nsfuncs = decl.nsfuncs.insert(cppdecl.ikey, cppdecl);
-                            return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.entities, new_nsfuncs };
+                            return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.entities, new_nsfuncs, decl.staticmethods };
                         });
         });
 
@@ -512,7 +537,19 @@ entity CPPTransformer {
                 let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
                     fn(decl) => {
                         let new_entities = decl.entities.insert(key, cppentity);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs };
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs, decl.staticmethods };
+                    });
+                return ns_insertion;
+        });
+
+        let nsdecls_staticmethods = bsqasm.staticmethods.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            nsdecls_entities, fn(acc, it, m) => {
+                let ikey = CPPTransformNameManager::convertInvokeKey(it);
+                let cppmethod = transformer.transformStaticMethodDecl(m);
+                let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppmethod.fullns, acc,
+                    fn(decl) => {
+                        let new_staticmethods = decl.staticmethods.insert(ikey, cppmethod);
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.entities, decl.nsfuncs, new_staticmethods };
                     });
                 return ns_insertion;
         });
@@ -529,6 +566,10 @@ entity CPPTransformer {
             }
         });
 
+        let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
+            return CPPTransformNameManager::convertInvokeKey(ikey);
+        });
+
         %% Will need to also handle abstract types
         let generated_typeinfos = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
             Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, fn(acc, tkey) => {
@@ -539,8 +580,9 @@ entity CPPTransformer {
             });
 
         return CPPAssembly::Assembly {
-            nsdecls = nsdecls_entities,
+            nsdecls = nsdecls_staticmethods,
             allfuncs = transformer_allfuncs,
+            allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
             typeinfos = generated_typeinfos
         };
     }

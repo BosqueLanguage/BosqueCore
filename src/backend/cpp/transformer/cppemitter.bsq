@@ -41,6 +41,12 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, ctx: Context): CStrin
     return emitResolvedNamespace(ctx.fullns_list, ts.tkeystr.value);    
 }
 
+%% We wont do this for now, gets weird with the interation wiht CStrings
+function emitSpecialThis(): CString {
+    %% return "tᖺis";
+    return 'specialthis';
+}
+
 function emitTypeKey(tk: CPPAssembly::TypeKey, ctx: Context): CString {
     return emitResolvedNamespace(ctx.fullns_list, tk.value); 
 }
@@ -50,11 +56,14 @@ function emitIdentifier(ident: CPPAssembly::Identifier): CString {
 }
 
 function emitVarIdentifier(vident: CPPAssembly::VarIdentifier): CString {
+    if(vident.value === 'this') {
+        return emitSpecialThis();
+    }
     return vident.value;
 }
 
-function emitInvokeKey(ik: CPPAssembly::InvokeKey): CString {
-    return ik.value;
+function emitInvokeKey(ik: CPPAssembly::InvokeKey, ctx: Context): CString {
+    return emitResolvedNamespace(ctx.fullns_list, ik.value); 
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): CString {
@@ -336,7 +345,7 @@ recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceD
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns.value); 
 
-    let ident = emitInvokeKey(e.ikey);
+    let ident = emitInvokeKey(e.ikey, ctx);
     let name = ident.removePrefixString(e.ns.value);
     
     var resolvedName: CString;
@@ -521,11 +530,27 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     return CString::joinAll(', ', all_params);
 }
 
+function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredInType: CString, ctx: Context, indent: CString): CString {
+    let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
+    if(m)@<CPPAssembly::MethodDeclStatic> { %% Pass "this" ptr as first argument
+        let name = m.name;
+        let params = emitParameters(m.params, nctx);
+        let rtype = emitTypeSignature(m.resultType, ctx);
+        let this_type = emitResolvedNamespace(nctx.fullns_list, declaredInType); %% Find necessary ns resolution for the structure we are declared in
+
+        let pre = CString::concat(indent, 'const ', rtype, ' ', name);
+        let params_impl = CString::concat('(const ', this_type, ' ', emitSpecialThis(), params, ') noexcept');
+
+        return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(m.body, nctx, indent), indent, '}%n;');
+    }
+
+    abort; %% TODO: Need to support other method types!
+}
+
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(func.declaredInNS, func.fullns);
 
     let name = func.name;
-    let nskey = emitNamespaceKey(func.declaredInNS);
     let params = emitParameters(func.params, nctx);
     let rtype = emitTypeSignature(func.resultType, ctx); 
 
@@ -556,6 +581,21 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Co
 function emitEntityForwardDeclaration(e: CPPAssembly::EntityTypeDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     return CString::concat(indent, 'struct ', emitResolvedNamespace(nctx.fullns_list, e.tkey.value), ';%n;');
+}
+
+function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, ctx: Context, indent: CString): CString {
+    let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
+
+    %% Methods may all emit fwd decl the same, will keep as is incase they do not (once i get to other method types)
+    if(m)@<CPPAssembly::MethodDeclStatic> {
+        let pre = m.name;
+        let rtype = emitTypeSignature(m.resultType, ctx); 
+        let params = emitParameters(m.params, nctx);
+        let first = CString::concat(rtype, ' ', pre );
+        return CString::concat(indent, 'const ', first, '( ', params, ') noexcept;%n;');
+    }
+
+    abort; %% TODO: Support other method types!
 }
 
 %% I suspect we will need separate cases for entities, types, enums and such
@@ -598,14 +638,27 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return CString::concat(acc, emitFunctionForwardDeclaration(decl, ctx, full_indent));
     });
 
+    %% Akward to add the this special first argument...
+    let methodfwd_decls = nsdecl.staticmethods.reduce<CString>(funcfwd_decls, fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitMethodForwardDeclaration(decl, ctx, full_indent));
+    });
+
     %% All entities
-    let entities = nsdecl.entities.reduce<CString>(funcfwd_decls, fn(acc, tk, e) => {
+    let entities = nsdecl.entities.reduce<CString>(methodfwd_decls, fn(acc, tk, e) => {
         let typekey = tk.value;
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
         let entity_tinfo = emitTypeInfo(typeinfos.get(tk), e.fullns, full_indent);
-        return CString::concat(acc, indent, entity_tinfo, emit_entity);
+        let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
+            return CString::concat(acc, emitMethodDecl(nsdecl.staticmethods.get(m), e.tkey.value, ctx, full_indent));
+        });
+        return CString::concat(acc, indent, entity_tinfo, emit_entity, entity_staticmethods);
     });
 
+%*
+    let methods = nsdecl.staticmethods.reduce<CString>(entities, fn(acc, ikey, decl) => {
+        return CString::concat(acc, emitMethodDecl(decl, ctx, full_indent));
+    });
+*%
     %% Emit sub-namespace declarations
     let subns = nsdecl.subns.reduce<CString>(entities, fn(acc, name, decl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, typeinfos, full_indent));
