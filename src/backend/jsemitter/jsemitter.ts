@@ -2276,6 +2276,7 @@ class JSEmitter {
     private emitBuiltinBodyImplementation(body: BuiltinBodyImplementation, fmt: JSCodeFormatter): string {
         const bname = body.builtin;
 
+        var preop: string = "";
         var bop: string = "";
         if(bname === "s_nat_to_cstring") {
             bop = `v.toString()`;
@@ -2373,11 +2374,15 @@ class JSEmitter {
         else if(bname === "string_replace_all_string_occurrences") {
             bop = `s.replaceAll(target, replacement)`;
         }
+        else if(bname === "s_algo_while") {
+            preop = `var state = s; while(guard(state)) { state = op(state); } `;
+            bop = `state`;
+        }
         else {
             assert(false, `Unknown builtin function -- ${bname}`);
         }
 
-        return `{ return ${bop}; }`;
+        return `{ ${preop}return ${bop}; }`;
     }
 
     private emitBodyImplementation(body: BodyImplementation, ismethod: boolean, initializers: string[], preconds: string[], refsaves: string[], optrefreturn: string | undefined, returncompletecall: string | undefined, fmt: JSCodeFormatter): string | undefined {
