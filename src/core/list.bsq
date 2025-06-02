@@ -337,5 +337,62 @@ __internal entity List<T> {
             return ListOps::s_list_sum<T>(this, T::zero);
         }
     }
+
+    method binarySearchSingle(v: T, p: pred(T, T) -> Bool): Option<Nat> {
+        xxx;
+    }
+
+    method binarySearchLower(v: T, p: pred(T, T) -> Bool): Option<Nat> {
+        xxx;
+    }
+
+    method binarySearchUpper(v: T, p: pred(T, T) -> Bool): Option<Nat> {
+        xxx;
+    }
+
+    function sortedMerge(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
+        xxxx;
+    }
+
+    method sort(cmp: recursive? pred(T, T) -> Bool): List<T> {
+        xxxx;
+    }
+
+    function sortedMergeUniqueify(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
+        xxxx;
+    }
+
+    method sortUniqueify(cmp: recursive? pred(T, T) -> Bool): List<T> {
+        xxxx;
+    }
+
+    method {when T: keytype} binarySearchKeySingle(v: T): Option<Nat> {
+        abort; %%TODO: implement binary search on keytype lists
+    }
+
+    method {when T: keytype} binarySearchKeyLower(v: T): Option<Nat> {
+        abort; %%TODO: implement binary search on keytype lists
+    }
+
+    method {when T: keytype} binarySearchKeyUpper(v: T): Option<Nat> {
+        abort; %%TODO: implement binary search on keytype lists
+    }
+
+    function {when T: keytype} sortedKeyMerge(l1: List<T>, l2: List<T>): List<T> {
+        abort; %%TODO: implement sorted merge on keytype lists
+    }
+
+    method {when T: keytype} sortKey(): List<T> {
+        abort; %%TODO: implement sort on keytype lists
+    }
+
+    function {when T: keytype} sortedMergeKeyUniqueify(l1: List<T>, l2: List<T>): List<T> {
+        xxxx;
+    }
+
+    method {when T: keytype} sortKeyUniqueify(): List<T> {
+        xxxx;
+    }
+
 #endif %% STRIPPED_CORE 
 }

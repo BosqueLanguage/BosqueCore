@@ -9,23 +9,6 @@ entity BSQInvokeInfo {
 
     %** List of every reachable invoke **%
     field reachable: List<BSQAssembly::InvokeKey>;
-
-    method addCallee(current: BSQAssembly::InvokeKey, callee: BSQAssembly::InvokeKey): BSQInvokeInfo {
-        var ncalleemap = this.calleemap;
-        if(!ncalleemap.get(current).contains(callee)) {
-            ncalleemap = ncalleemap.set(ncalleemap.get(current).insert(callee));
-        }
-
-        var ncallermap = this.callermap;
-        if(!ncallermap.contains(callee)) {
-            ncallermap = ncallermap.insert(callee);
-        }
-        if(!ncallermap.get(callee).contains(caller)) {
-            ncallermap = ncallermap.set(ncallermap.get(callee).insert(caller));
-        }
-
-        return this[calleemap=ncalleemap, callermap=ncallermap];
-    }
 }
 
 entity BSQToSMTCallGraph {
@@ -39,6 +22,53 @@ entity BSQToSMTCallGraph {
 
     method isInSCC(inv: BSQAssembly::InvokeKey): Bool {
         return this.sccs.someOf(pred(scc) => scc.contains(inv));
+    }
+}
+
+entity BSQCCInfo {
+    %** Map from an invoke to all of the callees **%
+    field calleemap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    %** Map from an invoke to all of the callers **%
+    field callermap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    function createEmpty(): BSQCCInfo {
+        return BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
+    }
+
+    function createWCallInfo(current: BSQAssembly::InvokeKey, ...callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
+        return createWAllCallInfo(current, callees);
+    }
+
+    function createWAllCallInfo(current: BSQAssembly::InvokeKey, callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
+        let calleemap = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::createEmpty();
+        calleemap.set(current, callees);
+        
+        let callermap = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::createEmpty();
+        callees.forEach(fn(callee) => {
+            if(!callermap.has(callee)) {
+                callermap.set(callee, List<BSQAssembly::InvokeKey>{});
+            }
+            callermap.get(callee).add(current);
+        });
+
+        return BSQCCInfo{calleemap, callermap};
+    }
+
+    function mergeInfos(reachable: List<BSQAssembly::InvokeKey>, ...infos: List<BSQInvokeInfo>): BSQInvokeInfo {
+        return mergeAllInfos(reachable, infos);
+    }
+
+    function mergeAllInfos(reachable: List<BSQAssembly::InvokeKey>, infos: List<BSQInvokeInfo>): BSQInvokeInfo {
+        if(infos.empty()) {
+            return BSQInvokeInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, reachable};
+        }
+        else {
+            let callees = BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllIdempotent(infos.map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>(fn(info) => info.calleemap));
+            let callers = BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllIdempotent(infos.map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>(fn(info) => info.callermap));
+
+            return BSQInvokeInfo{callees, callers, reachable};
+        }
     }
 }
 
@@ -74,15 +104,15 @@ entity BSQToSMTCallGraphBuilder {
     }
 
     recursive method processUnaryArg(current: BSQAssembly::InvokeKey, exp: BSQAssembly::Expression, info: BSQInvokeInfo): BSQInvokeInfo {
-        return MayErrorAnalysis::processExpression(exp);
+        return this.processExpression(current, exp, info);
     }
 
     recursive method processBinaryArgs(current: BSQAssembly::InvokeKey, lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, info: BSQInvokeInfo): BSQInvokeInfo {
-        return \/(MayErrorAnalysis::processExpression(lhs), MayErrorAnalysis::processExpression(rhs));
+        return BSQInvokeInfo::mergeInfos(info.reachable, this.processExpression[recursive](current, lhs, info), this.processExpression[recursive](current, rhs, info));
     }
 
     recursive method processArgumentList(current: BSQAssembly::InvokeKey, argl: BSQAssembly::ArgumentList, info: BSQInvokeInfo): BSQInvokeInfo {
-        return argl.args.someOf[recursive](recursive pred(arg) => MayErrorAnalysis::processExpression[recursive](arg.exp));
+        let infos = argl.args.map[recursive]<BSQInvokeInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg.exp));
     }
 
     recursive method processLiteralTypeDeclValueExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorExpression, info: BSQInvokeInfo): BSQInvokeInfo {
@@ -156,10 +186,10 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processIfExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::IfExpression, info: BSQInvokeInfo): BSQInvokeInfo {
         let infotest = this.processExpression[recursive](current, e.texp, info);
-        let infothen = this.processExpression[recursive](current, e.thenexp, infotest);
-        let infoelse = this.processExpression[recursive](current, e.elseexp, infothen);
+        let infothen = this.processExpression[recursive](current, e.thenexp, info);
+        let infoelse = this.processExpression[recursive](current, e.elseexp, info);
 
-        return infoelse;
+        return BSQInvokeInfo::mergeInfos(info.reachable, infotest, infothen, infoelse);
     }
 
     recursive method processExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::Expression, info: BSQInvokeInfo): BSQInvokeInfo {
@@ -207,17 +237,17 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processIfStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::IfStatement, info: BSQInvokeInfo): BSQInvokeInfo {
         let infotest = this.processExpression[recursive](current, s.texp, info);
-        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock, infotest);
+        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock, info);
 
-        return infotrue;
+        return BSQInvokeInfo::mergeInfos(info.reachable, infotest, infotrue);
     }
 
     recursive method processIfElseStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::IfElseStatement, info: BSQInvokeInfo): BSQInvokeInfo {
         let infotest = this.processExpression[recursive](current, s.texp, info);
-        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock, infotest);
-        let infofalse = this.processBlockStatement[recursive](current, s.falseBlock, infotrue);
+        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock, info);
+        let infofalse = this.processBlockStatement[recursive](current, s.falseBlock, info);
 
-        return infofalse;
+        return BSQInvokeInfo::mergeInfos(info.reachable, infotest, infotrue, infofalse);
     }
 
     recursive method processStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::Statement, info: BSQInvokeInfo): BSQInvokeInfo {
@@ -243,11 +273,13 @@ entity BSQToSMTCallGraphBuilder {
     }
 
     recursive method processBlockStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::BlockStatement, info: BSQInvokeInfo): BSQInvokeInfo {
-        return s.statements.reduce[recursive](info, recursive fn(iinfo, stmt) => this.processStatement[recursive](iinfo, current, stmt));
+        let infos = s.statements.reduce[recursive](info, recursive fn(iinfo, stmt) => this.processStatement[recursive](iinfo, current, stmt));
+        return BSQInvokeInfo::mergeAllInfos(infos.reachable, infos);
     }
 
     recursive method processBodyStatementList(current: BSQAssembly::InvokeKey, stmts: List<BSQAssembly::Statement>, info: BSQInvokeInfo): BSQInvokeInfo {
-        return stmts.reduce[recursive](info, recursive fn(iinfo, stmt) => this.processStatement[recursive](iinfo, current, stmt));
+        let infos = stmts.reduce[recursive](info, recursive fn(iinfo, stmt) => this.processStatement[recursive](iinfo, current, stmt));
+        return BSQInvokeInfo::mergeAllInfos(infos.reachable, infos);
     }
 
     recursive method processBodyImpl(current: BSQAssembly::InvokeKey, body: BSQAssembly::BodyImplementation, info: BSQInvokeInfo): BSQInvokeInfo {
