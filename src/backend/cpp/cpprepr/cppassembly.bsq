@@ -71,8 +71,7 @@ datatype MethodDecl provides AbstractDecl using {
     field params: List<ParameterDecl>;
     field resultType: TypeSignature;
     field body: BodyImplementation;
-
-
+    field declaredIn: TypeKey;
 }
 of
 MethodDeclStatic { }
@@ -119,5 +118,5 @@ entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
     field allmethods: List<InvokeKey>;
-    field typeinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
+    field typeinfos: Map<TypeKey, TypeInfo>;
 }

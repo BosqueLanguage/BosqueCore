@@ -530,13 +530,14 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     return CString::joinAll(', ', all_params);
 }
 
-function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredInType: CString, ctx: Context, indent: CString): CString {
+%% Will need to make some changes in case of actually having parameters (needs a comma after special this if params, not if none)
+function emitMethodDecl(m: CPPAssembly::MethodDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     if(m)@<CPPAssembly::MethodDeclStatic> { %% Pass "this" ptr as first argument
         let name = m.name;
         let params = emitParameters(m.params, nctx);
         let rtype = emitTypeSignature(m.resultType, ctx);
-        let this_type = emitResolvedNamespace(nctx.fullns_list, declaredInType); %% Find necessary ns resolution for the structure we are declared in
+        let this_type = emitResolvedNamespace(nctx.fullns_list, m.declaredIn.value); %% Find necessary ns resolution for the structure we are declared in
 
         let pre = CString::concat(indent, 'const ', rtype, ' ', name);
         let params_impl = CString::concat('(const ', this_type, ' ', emitSpecialThis(), params, ') noexcept');
@@ -563,7 +564,7 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
 function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(member.name);
     let mtype = emitTypeSignature(member.declaredType, ctx);
-    return CString::concat(indent, 'const ',mtype, ' ', name, ';%n;');
+    return CString::concat(indent, 'const ', mtype, ' ', name, ';%n;');
 }
 
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Context, indent: CString): CString {
@@ -583,16 +584,18 @@ function emitEntityForwardDeclaration(e: CPPAssembly::EntityTypeDecl, ctx: Conte
     return CString::concat(indent, 'struct ', emitResolvedNamespace(nctx.fullns_list, e.tkey.value), ';%n;');
 }
 
+%% Will need to make some changes in case of actually having parameters (needs a comma after special this if params, not if none)
 function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
 
     %% Methods may all emit fwd decl the same, will keep as is incase they do not (once i get to other method types)
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.name;
-        let rtype = emitTypeSignature(m.resultType, ctx); 
+        let rtype = emitTypeSignature(m.resultType, ctx);
+        let this_type = emitResolvedNamespace(nctx.fullns_list, m.declaredIn.value);
         let params = emitParameters(m.params, nctx);
-        let first = CString::concat(rtype, ' ', pre );
-        return CString::concat(indent, 'const ', first, '( ', params, ') noexcept;%n;');
+        let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(const ');
+        return CString::concat(first, this_type, ' ', emitSpecialThis(), params, ') noexcept;%n;');
     }
 
     abort; %% TODO: Support other method types!
@@ -649,16 +652,11 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
         let entity_tinfo = emitTypeInfo(typeinfos.get(tk), e.fullns, full_indent);
         let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
-            return CString::concat(acc, emitMethodDecl(nsdecl.staticmethods.get(m), e.tkey.value, ctx, full_indent));
+            return CString::concat(acc, emitMethodDecl(nsdecl.staticmethods.get(m), ctx, full_indent));
         });
         return CString::concat(acc, indent, entity_tinfo, emit_entity, entity_staticmethods);
     });
 
-%*
-    let methods = nsdecl.staticmethods.reduce<CString>(entities, fn(acc, ikey, decl) => {
-        return CString::concat(acc, emitMethodDecl(decl, ctx, full_indent));
-    });
-*%
     %% Emit sub-namespace declarations
     let subns = nsdecl.subns.reduce<CString>(entities, fn(acc, name, decl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](decl, ctx, typeinfos, full_indent));
