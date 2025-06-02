@@ -621,12 +621,12 @@ class BSQIREmitter {
         const rtrgt = (this.tproc(exp.resolvedTrgt as TypeSignature) as NominalTypeSignature);
         const rdecl = exp.resolvedMethod as MethodDecl;
 
-        const tkey = EmitNameManager.generateTypeKey(rtrgt);
+        const tsig = this.emitTypeSignature(rtrgt);
         const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        return `BSQAssembly::PostfixInvokeStatic{ ${opbase}, resolvedType='${tkey}'<BSQAssembly::TypeKey>, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, arginfo=${arginfo} }`;
+        return `BSQAssembly::PostfixInvokeStatic{ ${opbase}, resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
     }
 
     private emitVirtualPostfixInvoke(exp: PostfixInvoke): string {
@@ -1673,18 +1673,33 @@ class BSQIREmitter {
         }
     }
 
+    // We will assume for now all methods are static
     private emitMethodDecl(ns: FullyQualifiedNamespace, rcvrtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
         const omap = this.mapper;
         if(optmapping !== undefined) {
             this.mapper = TemplateNameMapper.tryMerge(rcvrtype[1], optmapping);
         }
 
-        //TODO: handle emit here...
+        fmt.indentPush();
+        let ret: string = "";
+        const nskey = EmitNameManager.generateNamespaceKey(ns);
+        const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, mdecl.name);          
+        const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
+        const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
+        fmt.indentPop();
 
+        // Not actually sure if this is quite correct, maybe we just emit always static?
+        if(rcvrtype[1] === undefined && optmapping === undefined) {
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+            this.allmethods.push(ret); 
+            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
+        }
+
+        // Need to figure out what this does
         this.mapper = omap;
 
-        assert(false, "Not implemented -- emitMethodDecl");
-    }
+        return ret;
+     }
 
     private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let decls: string[] = [];
@@ -1711,7 +1726,7 @@ class BSQIREmitter {
         //TODO: need to split these up based on the kind of method (abstract, virtual, override, static)
         //
 
-        return [decls, [], [], []];
+        return [[], [], [], decls];
     }
 
     private emitConstMemberDecls(ns: FullyQualifiedNamespace, declInType: NominalTypeSignature, decls: ConstMemberDecl[]) {

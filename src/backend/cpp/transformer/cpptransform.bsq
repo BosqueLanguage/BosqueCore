@@ -250,8 +250,14 @@ entity CPPTransformer {
 
             return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
         }
+        if(op)@<BSQAssembly::PostfixInvokeStatic> { %% Invoke for static methods
+            let resolvedType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey($op.resolvedType.tkeystr) };
+            let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
+            let args = this.transformArgumentInfo($op.argsinfo);
 
-        abort;
+            return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
+        }
+        abort; %% TODO: Not implemented
     }
 
     method transformPostfixOp(pop: BSQAssembly::PostfixOp): CPPAssembly::PostfixOp {

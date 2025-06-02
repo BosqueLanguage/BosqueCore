@@ -38,9 +38,11 @@ entity Context {
 }
 
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
-    let resolved_typesig = emitResolvedNamespace(ctx.fullns_list, ts.tkeystr.value);
-    
-    return resolved_typesig;
+    return emitResolvedNamespace(ctx.fullns_list, ts.tkeystr.value);    
+}
+
+function emitTypeKey(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+    return emitResolvedNamespace(ctx.fullns_list, tk.value); 
 }
 
 function emitIdentifier(ident: CPPAssembly::Identifier): CString {
@@ -354,17 +356,31 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     return CString::concat(resolvedName, '(', args, ')');
 }
 
-function emitPostfixOpImpl(op: CPPAssembly::PostfixOperation): CString {
-    return CString::concat( '.', emitIdentifier(op@<CPPAssembly::PostfixAccessFromName>.name));
+function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName): CString {
+    return CString::concat('.', emitIdentifier(op.name));
+}
+
+function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
+    let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
+    return CString::concat(tk, '(', expr, ', args go here', ')');
 }
 
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     let rootExp = emitExpression(pop.rootExp, ctx);
-    let ops = pop.ops.map<CString>(fn(op) => {
-        return emitPostfixOpImpl(op); 
+    let ops = pop.ops.mapIdx<CString>(fn(op, ii) => {
+        if(op)@<CPPAssembly::PostfixAccessFromName> {
+            if (ii == 0n) {
+                return CString::concat(rootExp, emitPostfixAccessFromName($op));
+            }
+            return emitPostfixAccessFromName($op);
+        }
+        if(op)@<CPPAssembly::PostfixInvokeStatic> {
+            return emitPostfixInvokeStatic($op, rootExp, ctx);
+        }
+        abort; %% TODO: Not implemented
     });
 
-    return CString::concat(rootExp, CString::joinAll(', ', ops));
+    return CString::joinAll('', ops);
 }
 
 function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
