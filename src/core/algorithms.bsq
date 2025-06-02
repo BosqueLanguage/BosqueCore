@@ -1,5 +1,7 @@
 namespace Core;
 
+#if STRIPPED_CORE
+#else
 namespace Algorithm {
     recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = s_algo_while;
 
@@ -19,3 +21,5 @@ namespace Algorithm {
         return sfinal;
     }
 }
+#endif // STRIPPED_CORE
+
