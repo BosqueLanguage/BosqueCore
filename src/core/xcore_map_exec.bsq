@@ -74,6 +74,44 @@ namespace MapOps {
         return Tree<K, V>::reduce[recursive?]<U>(m.value, init, f);
     }
 
+    function s_map_mergei2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>): Map<K, V> {
+        if(s_map_empty<K, V>(m1)) {
+            return m2;
+        }
+        elif(s_map_empty<K, V>(m2)) {
+            return m1;
+        }
+        else {
+            return MapOps::s_map_reduce<K, V, Map<K, V>>(m1, m2, fn(mm: Map<K, V>, k: K, v: V): Map<K, V> => {
+                if(mm.has(k)) {
+                    return mm;
+                } 
+                else {
+                    return MapOps::s_map_insert<K, V>(mm, k, v);
+                }
+            });
+        }
+    }
+
+    function s_map_mergec2<K: keytype, V>(m1: Map<K, V>, m2: Map<K, V>, f: recursive? fn(V, V) -> V): Map<K, V> {
+        if(s_map_empty<K, V>(m1)) {
+            return m2;
+        }
+        elif(s_map_empty<K, V>(m2)) {
+            return m1;
+        }
+        else {
+            return MapOps::s_map_reduce[recursive?]<K, V, Map<K, V>>(m1, m2, recursive? fn(mm: Map<K, V>, k: K, v: V): Map<K, V> => {
+                if(!mm.has(k)) {
+                    return MapOps::s_map_insert<K, V>(mm, k, v);
+                } 
+                else {
+                    return MapOps::s_map_set<K, V>(mm, k, f[recursive](MapOps::s_map_get_direct<K, V>(mm, k), v));
+                }
+            });
+        }
+    }
+
     function s_map_create_empty<K: keytype, V>(): Map<K, V> {
         return XCore::s_createDirect<Tree<K, V>, Map<K, V>>(Tree<K, V>::emptyTree);
     }
