@@ -41,7 +41,7 @@ namespace CPPTransformNameManager {
         let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
         let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
         let entities = Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>{};
-        let staticmethods = Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>{};
+        let staticmethods = List<CPPAssembly::InvokeKey>{};
         return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs, staticmethods };
     }
 
@@ -409,7 +409,7 @@ entity CPPTransformer {
     %% I think we will need to keep these as their own separate entities (not converting methods to functions in the transformer)
     %% since we need to do some speical work on them maybe. I also dont like all the repition here (basically same method as funcdecl)
     %%
-    method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic, declaredIn: CPPAssembly::TypeKey): CPPAssembly::MethodDeclStatic {
+    method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic): CPPAssembly::MethodDeclStatic {
         let name = m.name.value;
         let nskey = CPPTransformNameManager::convertNamespaceKey(m.declaredInNS);
         let fullns = m.fullns;
@@ -418,7 +418,7 @@ entity CPPTransformer {
         let res = CPPTransformNameManager::convertTypeSignature(m.resultType);
         let body = this.transformBodyToCpp(m.body);
 
-        return CPPAssembly::MethodDeclStatic{ nskey, fullns, name, ikey, params, res, body, declaredIn };
+        return CPPAssembly::MethodDeclStatic{ nskey, fullns, name, ikey, params, res, body };
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
@@ -526,16 +526,10 @@ entity CPPTransformer {
             transformer_nsdecls, fn(acc, it, e) => {
                 let key = CPPTransformNameManager::convertTypeKey(it);
                 let cppentity = transformer.transformEntityDeclToCpp(e);
-                let cppstaticmethods = bsqasm.staticmethods.reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>>(
-                    Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>{},
-                    fn(acc, ikey, m) => acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformStaticMethodDecl(m, key)));
-                
-                %% TODO: Support other method types!
-
                 let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
                     fn(decl) => {
                         let new_entities = decl.entities.insert(key, cppentity);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs, cppstaticmethods };
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs, cppentity.staticmethods };
                     });
                 return ns_insertion;
         });
@@ -550,6 +544,11 @@ entity CPPTransformer {
             else {
                 abort; %% We will need to eventually support non-ns funcs
             }
+        });
+
+        let transformer_staticmethods = bsqasm.staticmethods.reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>>(
+            Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>{}, fn(acc, ikey, decl) => {
+                return acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformStaticMethodDecl(decl));
         });
 
         let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
@@ -568,6 +567,7 @@ entity CPPTransformer {
         return CPPAssembly::Assembly {
             nsdecls = nsdecls_entities,
             allfuncs = transformer_allfuncs,
+            staticmethods = transformer_staticmethods,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
             typeinfos = generated_typeinfos
         };

@@ -45,7 +45,7 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     %% invariants, validates, methods, saturated, as well
 }
 
-concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
+concept AbstractEntityTypeDecl provides AbstractNoinalTypeDecl {
 }
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
@@ -71,7 +71,6 @@ datatype MethodDecl provides AbstractDecl using {
     field params: List<ParameterDecl>;
     field resultType: TypeSignature;
     field body: BodyImplementation;
-    field declaredIn: TypeKey;
 }
 of
 MethodDeclStatic { }
@@ -110,7 +109,7 @@ entity NamespaceDecl {
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
+    field staticmethods: List<InvokeKey>; %% Convienent for fwd decls
 }
 
 %% Will need expanding
@@ -121,6 +120,7 @@ entity Assembly {
     %% We will need to put static, abstract, override, virtual methods here then in NamespaceDecl
     %% we just have a List<InvokeKey>, allows for very easy lookups and ns resolution 
     %% (this helps us get the parameter list for constructors and stuff)
+    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
