@@ -29,7 +29,7 @@ const bsq_min_bigint: string = "-85070591730234615865843651857942052863";
 
 import { tmpdir } from 'node:os';
 import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
-import { validateCStringLiteral } from "@bosque/jsbrex";
+import { validateStringLiteral } from "@bosque/jsbrex";
 
 function buildMainCode(assembly: Assembly, outname: string): string | undefined {
     const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
@@ -53,7 +53,7 @@ function buildMainCode(assembly: Assembly, outname: string): string | undefined 
         return undefined;
     }
 
-    return validateCStringLiteral(res.slice(1, -2));
+    return validateStringLiteral(res.slice(1, -2));
 }
 
 function generateCPPFile(cpp: string, outdir: string): boolean {    

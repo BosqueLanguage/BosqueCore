@@ -68,7 +68,7 @@ entity TypeInfo {
     field typesize: Nat;
     field slotsize: Nat;
     field ptrmask: CString;
-    field typekey: CString;
+    field typekey: TypeKey;
 }
 
 datatype MethodDecl provides AbstractInvokeDecl using {

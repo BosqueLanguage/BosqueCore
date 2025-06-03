@@ -43,8 +43,7 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, ctx: Context): CStrin
 
 %% We wont do this for now, gets weird with the interation wiht CStrings
 function emitSpecialThis(): CString {
-    %% return "tᖺis";
-    return 'specialthis';
+    return '!!!';
 }
 
 function emitTypeKey(tk: CPPAssembly::TypeKey, ctx: Context): CString {
@@ -663,14 +662,14 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
 function emitTypeInfo(info: CPPAssembly::TypeInfo, fullns: List<CString>, indent: CString): CString {
     let full_indent = CString::concat('    ', indent);
 
-    let resolved_name = CString::concat(emitResolvedNamespace(fullns, info.typekey), 'Type');
+    let resolved_name = CString::concat(emitResolvedNamespace(fullns, info.typekey.value), 'Type');
 
     let base = CString::concat(indent, 'TypeInfoBase ', resolved_name, ' = {%n;');
     let id = CString::concat(base, full_indent, '.type_id = ', info.id.toCString(), ',%n;');
     let typesize = CString::concat(id, full_indent, '.type_size = ', info.typesize.toCString(), ', %n;');
     let slotsize = CString::concat(typesize, full_indent, '.slot_size = ', info.slotsize.toCString(), ',%n;');
     let ptrmask = CString::concat(slotsize, full_indent, '.ptr_mask = "', info.ptrmask, '",%n;');
-    let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey, '"%n;');
+    let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey.value, '"%n;');
 
     return CString::concat(typekey, indent, '};%n;');
 }
@@ -718,7 +717,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return CString::concat(funcs, indent, '}%n;');
 }
 
-function emitAssembly(asm: CPPAssembly::Assembly): CString {    
+function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
     let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
@@ -728,5 +727,9 @@ function emitAssembly(asm: CPPAssembly::Assembly): CString {
 
     %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
 
-    return CString::join('%n;', ns_emission, '%n;');
+    let convert = String::fromCString(ns_emission);
+    let target = String::fromCString(emitSpecialThis());
+    let updated = convert.replaceAllStringOccurrences(target, "tᖺis");
+
+    return String::join("%n;", updated, "%n;");
 }

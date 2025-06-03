@@ -450,23 +450,26 @@ entity CPPTransformer {
         }
         elif(asm.isPrimtitiveType(typekey)) {
             switch(typekey) {
-                'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', 'Int' }; }
-                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', 'Nat' }; }
-                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', 'BigInt' }; }
-                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 3n, 16n, 2n, '00', 'BigNat' }; }
-                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', 'Float' }; }
-                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', 'Bool' }; }
-                | 'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', 'None' }; }
+                'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', cpptkey }; }
+                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey }; }
+                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', cpptkey }; }
+                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 3n, 16n, 2n, '00', cpptkey }; }
+                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', cpptkey }; }
+                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', cpptkey }; }
+                | 'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', cpptkey }; }
                 | _ => { abort; } %% Not supported by cpp emitter yet!
             }
         }
-        %% I think this could be weird. If we happen to have an entity as a field inside another entity we should put a 1 in ptrmask field...
         elif(asm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
-            if(asm.entities.has(typekey)) {
+            if(asm.entities.has(typekey)) { %% TODO: add a method
                 let m_entity = asm.entities.get(typekey);
                 let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
-                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', m_entity.tkey.value }, fn(acc, tinfo) => {
+                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey) }, fn(acc, tinfo) => {
+                    let bsqtkey = BSQAssembly::TypeKey::from(tinfo.0.typekey.value);
+                    if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
+                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey }; 
+                    }
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey };
                 });
             }
