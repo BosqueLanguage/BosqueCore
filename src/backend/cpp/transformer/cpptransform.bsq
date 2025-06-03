@@ -41,7 +41,7 @@ namespace CPPTransformNameManager {
         let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
         let nsfuncs = Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>{};
         let entities = Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>{};
-        let staticmethods = List<CPPAssembly::InvokeKey>{};
+        let staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
         return CPPAssembly::NamespaceDecl{ name, subns, entities, nsfuncs, staticmethods };
     }
 
@@ -405,32 +405,22 @@ entity CPPTransformer {
         }
     }
 
-    %%
-    %% I think we will need to keep these as their own separate entities (not converting methods to functions in the transformer)
-    %% since we need to do some speical work on them maybe. I also dont like all the repition here (basically same method as funcdecl)
-    %%
-    method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic): CPPAssembly::MethodDeclStatic {
-        let name = m.name.value;
-        let nskey = CPPTransformNameManager::convertNamespaceKey(m.declaredInNS);
-        let fullns = m.fullns;
-        let ikey = CPPTransformNameManager::convertInvokeKey(m.ikey);
-        let params = this.transformParameterDecl(m.params);
-        let res = CPPTransformNameManager::convertTypeSignature(m.resultType);
-        let body = this.transformBodyToCpp(m.body);
+    method transformAbstractInvokeDecl(decl: BSQAssembly::AbstractInvokeDecl): (|CPPAssembly::NamespaceKey, List<CString>, CString, CPPAssembly::InvokeKey,
+        List<CPPAssembly::ParameterDecl>, CPPAssembly::TypeSignature, CPPAssembly::BodyImplementation|) {
+        return
+            (|CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS), decl.fullns, decl.name.value, 
+            CPPTransformNameManager::convertInvokeKey(decl.ikey), this.transformParameterDecl(decl.params),
+            CPPTransformNameManager::convertTypeSignature(decl.resultType), this.transformBodyToCpp(decl.body)|);
+    }
 
-        return CPPAssembly::MethodDeclStatic{ nskey, fullns, name, ikey, params, res, body };
+    method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic): CPPAssembly::MethodDeclStatic {
+        let base = this.transformAbstractInvokeDecl(m);
+        return CPPAssembly::MethodDeclStatic{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
-        let name = decl.name.value;
-        let nskey = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
-        let fullns = decl.fullns;
-        let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
-        let params = this.transformParameterDecl(decl.params);
-        let res = CPPTransformNameManager::convertTypeSignature(decl.resultType);
-        let body = this.transformBodyToCpp(decl.body);
-
-        return CPPAssembly::NamespaceFunctionDecl{nskey, fullns, name, ikey, params, res, body};
+        let base = this.transformAbstractInvokeDecl(decl);
+        return CPPAssembly::NamespaceFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
     }   
 
     method transformMemberFieldDecl(fields: List<BSQAssembly::MemberFieldDecl>): List<CPPAssembly::MemberFieldDecl> {
@@ -470,6 +460,7 @@ entity CPPTransformer {
                 | _ => { abort; } %% Not supported by cpp emitter yet!
             }
         }
+        %% I think this could be weird. If we happen to have an entity as a field inside another entity we should put a 1 in ptrmask field...
         elif(asm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
             if(asm.entities.has(typekey)) {
@@ -526,10 +517,11 @@ entity CPPTransformer {
             transformer_nsdecls, fn(acc, it, e) => {
                 let key = CPPTransformNameManager::convertTypeKey(it);
                 let cppentity = transformer.transformEntityDeclToCpp(e);
+                let cppstaticmethods = cppentity.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cppentity.tkey|));
                 let ns_insertion = CPPTransformNameManager::getNamespaceDeclMapping(cppentity.fullns, acc,
                     fn(decl) => {
                         let new_entities = decl.entities.insert(key, cppentity);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs, cppentity.staticmethods };
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_entities, decl.nsfuncs, cppstaticmethods };
                     });
                 return ns_insertion;
         });

@@ -14,6 +14,10 @@ describe ("Exec -- entity methods", () => {
         runMainCode('entity Foo { field f: Int; method foo(x: Int = 1i): Int { return this.f + x; }} public function main(): Int { let x = Foo{3i}; return x.foo(); }', "4_i"); 
     });
 
+    it("should exec simple entity methods with named args", function () {
+        runMainCode('entity Foo { field f: Int; method foo(x: Int, y: Int): Int { return this.f + x + y; }} public function main(): Int { return Foo{3i}.foo(x=1i,y=2i); }', "6_i"); 
+    });
+
 /*
     it("should exec simple entity methods with template", function () {
         runMainCode('entity Foo { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} public function main(): Bool { let x = Foo{3i}; return x.foo<Nat>(); }', "false"); 

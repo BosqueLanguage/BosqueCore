@@ -1682,8 +1682,11 @@ class BSQIREmitter {
 
         fmt.indentPush();
         let ret: string = "";
+
+        const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, mdecl.name);          
+        const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+
         const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
         fmt.indentPop();

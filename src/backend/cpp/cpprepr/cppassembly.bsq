@@ -45,7 +45,15 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     %% invariants, validates, methods, saturated, as well
 }
 
-concept AbstractEntityTypeDecl provides AbstractNoinalTypeDecl {
+concept AbstractInvokeDecl provides AbstractDecl {
+    field name: CString;
+    field ikey: InvokeKey;
+    field params: List<ParameterDecl>;
+    field resultType: TypeSignature;
+    field body: BodyImplementation;
+}
+
+concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 }
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
@@ -63,14 +71,9 @@ entity TypeInfo {
     field typekey: CString;
 }
 
-datatype MethodDecl provides AbstractDecl using {
+datatype MethodDecl provides AbstractInvokeDecl using {
     %% Not quite sure what this does
     %% field isThisRef: Bool;
-    field name: CString;
-    field ikey: InvokeKey;
-    field params: List<ParameterDecl>;
-    field resultType: TypeSignature;
-    field body: BodyImplementation;
 }
 of
 MethodDeclStatic { }
@@ -88,12 +91,7 @@ entity ParameterDecl {
 }
 
 %% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
-entity NamespaceFunctionDecl provides AbstractDecl {
-    field name: CString;
-    field ikey: InvokeKey;
-    field params: List<ParameterDecl>;
-    field resultType: TypeSignature;
-    field body: BodyImplementation;
+entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
@@ -109,7 +107,7 @@ entity NamespaceDecl {
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field staticmethods: List<InvokeKey>; %% Convienent for fwd decls
+    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Convienent for fwd decls
 }
 
 %% Will need expanding

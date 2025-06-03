@@ -375,10 +375,10 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
     let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
 
     %% TODO: Need to figure out why this method isnt found in the asm...
-    var params: CString;
+    var args: CString;
     if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
-        params = emitParameters(trgt.params, ctx);
+        args = emitArgumentList(op.args, trgt.params, ctx);
     }
     else {
         abort; %% TODO: Support methods in abstract nominal types other than static!
@@ -400,11 +400,11 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         resolvedInvoke = ik;
     }
 
-    if(params === '') {
+    if(args === '') {
         return CString::concat(resolvedInvoke, '(', expr, ')');
     }
     else {
-         return CString::concat(resolvedInvoke, '(', expr, ', ', params, ')');       
+         return CString::concat(resolvedInvoke, '(', expr, ', ', args, ')');       
     }
 }
 
@@ -627,14 +627,14 @@ function emitEntityForwardDeclaration(e: CPPAssembly::EntityTypeDecl, ctx: Conte
 }
 
 %% Will need to make some changes in case of actually having parameters (needs a comma after special this if params, not if none)
-function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, ctx: Context, indent: CString): CString {
+function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
 
     %% Methods may all emit fwd decl the same, will keep as is incase they do not (once i get to other method types)
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.name;
         let rtype = emitTypeSignature(m.resultType, ctx);
-        let this_type = m.ikey.value; 
+        let this_type = emitTypeKey(declaredIn, nctx); 
         let params = emitParameters(m.params, nctx);
         let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(const ');
 
@@ -690,8 +690,8 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     });
 
     %% Akward to add the this special first argument...
-    let methodfwd_decls = nsdecl.staticmethods.reduce<CString>(funcfwd_decls, fn(acc, ikey) => {
-        return CString::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(ikey), ctx, full_indent));
+    let methodfwd_decls = nsdecl.staticmethods.reduce<CString>(funcfwd_decls, fn(acc, mtkey) => {
+        return CString::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
 
     %% All entities
