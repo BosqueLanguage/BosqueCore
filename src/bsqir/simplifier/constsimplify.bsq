@@ -39,7 +39,9 @@ entity ConstantSimplification {
                 return some(exp);
             }
             | LiteralTypeDeclValueExpression => {
-                if($exp.invchecks) {
+                let tdecl = this.assembly.lookupNominalTypeDeclaration(e.constype.tkeystr);
+                
+                if(!tdecl.allInvariants.empty()) {
                     return none;
                 }
                 else {

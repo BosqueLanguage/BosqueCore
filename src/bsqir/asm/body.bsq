@@ -79,7 +79,6 @@ entity LiteralRegexExpression provides Expression {
 entity LiteralTypeDeclValueExpression provides Expression {
     field value: Expression;
     field constype: NominalTypeSignature;
-    field invchecks: Bool;
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
@@ -144,18 +143,15 @@ ConstructorPrimarySpecialSomeExpression {
 ;
 
 entity ConstructorTypeDeclExpression provides ConstructorPrimaryExpression {
-    field invchecks: Bool;
 }
 
 entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression {
-    field invchecks: Bool;
     field ofcheck: Option<Expression>;
 }
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
     field shuffleinfo: List<(|Option<Nat>, Identifier, TypeSignature|)>;
     field fullns: List<CString>;
-    field invchecks: Bool;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {
