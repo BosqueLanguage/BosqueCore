@@ -368,12 +368,10 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName): CStr
     return CString::concat('.', emitIdentifier(op.name));
 }
 
-%% Does not emit arguments yet
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
     let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
 
-    %% TODO: Need to figure out why this method isnt found in the asm...
     var args: CString;
     if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
