@@ -1673,7 +1673,6 @@ class BSQIREmitter {
         }
     }
 
-    // We will assume for now all methods are static
     private emitMethodDecl(ns: FullyQualifiedNamespace, rcvrtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
         const omap = this.mapper;
         if(optmapping !== undefined) {
@@ -1691,7 +1690,6 @@ class BSQIREmitter {
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
         fmt.indentPop();
 
-        // Not actually sure if this is quite correct, maybe we just emit always static?
         if(rcvrtype[1] === undefined && optmapping === undefined) {
             ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
             this.allmethods.push(ret); 
@@ -1701,7 +1699,6 @@ class BSQIREmitter {
             assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
         }
 
-        // Need to figure out what this does
         this.mapper = omap;
 
         return ret;

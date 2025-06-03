@@ -462,9 +462,10 @@ entity CPPTransformer {
         }
         elif(asm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
-            if(asm.entities.has(typekey)) { %% TODO: add a method
+            if(asm.entities.has(typekey)) {
                 let m_entity = asm.entities.get(typekey);
                 let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                
                 matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey) }, fn(acc, tinfo) => {
                     let bsqtkey = BSQAssembly::TypeKey::from(tinfo.0.typekey.value);
                     if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type

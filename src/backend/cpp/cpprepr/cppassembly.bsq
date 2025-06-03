@@ -72,8 +72,6 @@ entity TypeInfo {
 }
 
 datatype MethodDecl provides AbstractInvokeDecl using {
-    %% Not quite sure what this does
-    %% field isThisRef: Bool;
 }
 of
 MethodDeclStatic { }
@@ -90,7 +88,6 @@ entity ParameterDecl {
     %% TODO: Support ref/rest param
 }
 
-%% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
 entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
@@ -115,10 +112,8 @@ entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
 
-    %% We will need to put static, abstract, override, virtual methods here then in NamespaceDecl
-    %% we just have a List<InvokeKey>, allows for very easy lookups and ns resolution 
-    %% (this helps us get the parameter list for constructors and stuff)
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
+    %% TODO: Abstract, Override, Virtual methods
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;

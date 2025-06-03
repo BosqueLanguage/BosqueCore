@@ -160,7 +160,7 @@ PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
 }
-| PostfixInvokeStatic { %% May only need args here...?
+| PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
