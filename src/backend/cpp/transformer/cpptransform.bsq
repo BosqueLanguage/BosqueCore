@@ -10,23 +10,27 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
+    %% This is mega broken. Will fix when I am not tired.... :)
     function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
-        return CPPAssembly::TypeKey::from(tk.value);
+        switch(tk) {
+            'None'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('None'); }
+            | 'Bool'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('bool'); }
+            | 'Nat'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
+            | 'Int'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
+            | 'BigNat'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
+            | 'BigInt'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
+            | 'Float'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
+            | _ => { return CPPAssembly::TypeKey::from(''); } 
+        }
     }
 
     function convertTypeSignature(tsig: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
-        let tk = CPPAssembly::TypeKey::from(tsig.tkeystr.value);
-
-        %% We will want to eventually not use nominal type signature always, i think itll be obvious when to not use
-        switch(tk.value) {
-            'Int' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Int') }; }
-            | 'BigInt' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigInt') }; }
-            | 'Nat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Nat') }; }
-            | 'BigNat' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::BigNat') }; }
-            | 'Float' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::Float') }; }
-            | 'Bool' => { return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('bool') }; }
-            | _ => { return CPPAssembly::NominalTypeSignature{ tk }; }
+        let tk = convertTypeKey(tsig.tkeystr); 
+        if(tk.value === '') { %% EhhhhhhhI dont relaly like returning '' here
+            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from(tsig.tkeystr.value) };
         }
+
+        return CPPAssembly::NominalTypeSignature{ tk };
     }
 
     function convertIdentifier(ident: BSQAssembly::Identifier): CPPAssembly::Identifier {
@@ -441,6 +445,10 @@ entity CPPTransformer {
         });
     }
 
+    %%
+    %% We will need to dynamicall determine whether we have a ref, value, or tagged type (abstract) and adjust accordingly.
+    %%
+
     method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
@@ -450,13 +458,13 @@ entity CPPTransformer {
         }
         elif(asm.isPrimtitiveType(typekey)) {
             switch(typekey) {
-                'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', cpptkey }; }
-                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey }; }
-                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', cpptkey }; }
-                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 3n, 16n, 2n, '00', cpptkey }; }
-                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', cpptkey }; }
-                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', cpptkey }; }
-                | 'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', cpptkey }; }
+                'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | _ => { abort; } %% Not supported by cpp emitter yet!
             }
         }
@@ -465,13 +473,20 @@ entity CPPTransformer {
             if(asm.entities.has(typekey)) {
                 let m_entity = asm.entities.get(typekey);
                 let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
-                
-                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey) }, fn(acc, tinfo) => {
+
+                %%
+                %% Here we need to do some sorta lookup to determine whether we need to do the silly first slot is type info and determineing refernce 
+                %% type stuff wiht the check that we are less that K=4 fields to become emitted as a refernce type. Not sure if this is done here, 
+                %% but we need to check the context in which our type is being used. If ref, the emission for decl is same as for value. If param needs
+                %% to be const foo*, if cpnstructor, needs to be foo*
+                %%
+
+                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey), CPPAssembly::Tag#Value }, fn(acc, tinfo) => {
                     let bsqtkey = BSQAssembly::TypeKey::from(tinfo.0.typekey.value);
                     if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
-                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey }; 
+                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag }; 
                     }
-                    return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey };
+                    return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                 });
             }
             else {
@@ -554,9 +569,6 @@ entity CPPTransformer {
         %% Will need to also handle abstract types
         let generated_typeinfos = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
             Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, fn(acc, tkey) => {
-                if(bsqasm.isPrimtitiveType(tkey)) {
-                    return acc; %% GC doesnt need primitive type info
-                }
                 return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
             });
 

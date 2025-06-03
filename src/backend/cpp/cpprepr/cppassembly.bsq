@@ -62,6 +62,12 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl{
     %% Other method types too
 }
 
+enum Tag {
+    Value,
+    Ref,
+    Tagged
+}
+
 %% Info for the GC 
 entity TypeInfo {
     field id: Nat;
@@ -69,6 +75,7 @@ entity TypeInfo {
     field slotsize: Nat;
     field ptrmask: CString;
     field typekey: TypeKey;
+    field tag: Tag;
 }
 
 datatype MethodDecl provides AbstractInvokeDecl using {

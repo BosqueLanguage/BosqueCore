@@ -46,8 +46,24 @@ function emitSpecialThis(): CString {
     return '!!!';
 }
 
-function emitTypeKey(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+function emitTypeKeyBase(tk: CPPAssembly::TypeKey, ctx: Context): CString {
     return emitResolvedNamespace(ctx.fullns_list, tk.value); 
+}
+
+function emitTypeKeyField(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+    let resolved = emitResolvedNamespace(ctx.fullns_list, tk.value);
+
+    if(!ctx.asm.typeinfos.has(tk)) {
+        abort;
+    }
+
+    let tinfo = ctx.asm.typeinfos.get(tk);
+
+    switch(tinfo.tag) {
+        CPPAssembly::Tag#Value => { return resolved; }
+        | CPPAssembly::Tag#Ref => { return CString::concat(resolved, '*'); }
+        | CPPAssembly::Tag#Tagged => { abort; } %% Not fully confident on how to handle this quite yet
+    }
 }
 
 function emitIdentifier(ident: CPPAssembly::Identifier): CString {
@@ -364,13 +380,20 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     return CString::concat(resolvedName, '(', args, ')');
 }
 
-function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName): CString {
-    return CString::concat('.', emitIdentifier(op.name));
+function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): CString {
+    let ident = emitIdentifier(op.name);
+
+    let op_tinfo = ctx.asm.typeinfos.get(op.declaredInType.tkeystr);
+    switch(op_tinfo.tag) {
+        CPPAssembly::Tag#Value => { return CString::concat('.', ident); }
+        | CPPAssembly::Tag#Ref => { return CString::concat('->', ident); }
+        | CPPAssembly::Tag#Tagged => { abort; } %% TODO: Need to handle virtual lookups (and add our little vtable to backend that emits)
+    }
 }
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
-    let tk = emitTypeKey(op.resolvedType.tkeystr, ctx);
+    let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;
     if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
@@ -410,9 +433,9 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     let ops = pop.ops.mapIdx<CString>(fn(op, ii) => {
         if(op)@<CPPAssembly::PostfixAccessFromName> {
             if (ii == 0n) {
-                return CString::concat(rootExp, emitPostfixAccessFromName($op));
+                return CString::concat(rootExp, emitPostfixAccessFromName($op, ctx));
             }
-            return emitPostfixAccessFromName($op);
+            return emitPostfixAccessFromName($op, ctx);
         }
         if(op)@<CPPAssembly::PostfixInvokeStatic> {
             return emitPostfixInvokeStatic($op, rootExp, ctx);
@@ -601,7 +624,7 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
 
 function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(member.name);
-    let mtype = emitTypeSignature(member.declaredType, ctx);
+    let mtype = emitTypeKeyField(member.declaredType.tkeystr, ctx);
     return CString::concat(indent, 'const ', mtype, ' ', name, ';%n;');
 }
 
@@ -628,7 +651,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.name;
         let rtype = emitTypeSignature(m.resultType, ctx);
-        let this_type = emitTypeKey(declaredIn, nctx); 
+        let this_type = emitTypeKeyBase(declaredIn, nctx); 
         let params = emitParameters(m.params, nctx);
         let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(const ');
 
