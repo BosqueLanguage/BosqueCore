@@ -68,6 +68,52 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, idx));
     }
 
+    function {when T: keytype} s_sorted_key_merge_unique<T>(l1: List<T>, l2: List<T>): List<T> {
+        let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|acc, l1, l2|), 
+            pred(state) => !/\(ListOps::s_list_empty<T>(state.1), ListOps::s_list_empty<T>(state.2)),  
+            fn(state) => {
+                %% l1 is empty, append l2
+                if(ListOps::s_list_empty<T>(state.1)) {
+                    return ListOps::s_concat2<T>(state.0, state.2), List<T>{}, List<T>{};
+                }
+
+                %% l2 is empty, append l1
+                if(ListOps::s_list_empty<T>(state.2)) {
+                    return ListOps::s_concat2<T>(state.0, state.1), List<T>{}, List<T>{};
+                }
+
+                let v1, nl1 = state.1.popFront();
+                let v2, nl2 = state.2.popFront();
+
+                if(KeyComparator::less<T>(v1, v2)) {
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, n2;
+                }
+                elif(KeyComparator::less<T>(v2, v1)) {
+                    return ListOps::s_list_push_back<T>(state.0, v2), n1, nl2;
+                }
+                else {
+                    %% skip duplicates
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, nl2;
+                }
+            }
+        );
+
+        return res;
+    }
+
+    recursive function {when T: keytype} s_sort_key_uniqueify<T>(l: List<T>): List<T> {
+        if(ListOps::s_list_size<T>(this) <= 1n) {
+            return this;
+        }
+        else {
+            let splitl, splitr = Tree<T>::split(l.value);
+            let sortl = ListOps::s_sort_key_uniqueify[recursive]<T>(XCore::s_createDirect<Tree<T>, List<T>>(splitl));
+            let sortr = ListOps::s_sort_key_uniqueify[recursive]<T>(XCore::s_createDirect<Tree<T>, List<T>>(splitr));
+
+            return ListOps::s_sorted_key_merge_unique<T>(sortl, sortr);
+        }
+    }
+
     function s_list_create_empty<T>(): List<T> {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::emptyTree);
     }
@@ -1011,6 +1057,11 @@ namespace ListOps {
                     return Tree<T>::sum[recursive]($t.r, Tree<T>::sum[recursive]($t.l, acc));
                 }
             }
+        }
+
+        function split(t: Tree<T>), Tree<T>, Tree<T> {
+            let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
+            return nn.l, nn.r;
         }
     }
 }

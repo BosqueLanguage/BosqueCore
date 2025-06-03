@@ -339,31 +339,31 @@ __internal entity List<T> {
     }
 
     method binarySearchSingle(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        xxx;
+        abort; %%TODO: implement binary search on lists
     }
 
     method binarySearchLower(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        xxx;
+        abort; %%TODO: implement binary search on lists
     }
 
     method binarySearchUpper(v: T, p: pred(T, T) -> Bool): Option<Nat> {
-        xxx;
+        abort; %%TODO: implement binary search on lists
     }
 
     function sortedMerge(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
-        xxxx;
+        abort; %%TODO: implement sorted merge on lists
     }
 
     method sort(cmp: recursive? pred(T, T) -> Bool): List<T> {
-        xxxx;
+        abort; %%TODO: implement sort on lists
     }
 
-    function sortedMergeUniqueify(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
-        xxxx;
+    function sortedMergeUnique(l1: List<T>, l2: List<T>, cmp: recursive? pred(T, T) -> Bool): List<T> {
+        abort; %%TODO: implement sorted merge uniqueify on lists
     }
 
     method sortUniqueify(cmp: recursive? pred(T, T) -> Bool): List<T> {
-        xxxx;
+        abort; %%TODO: implement sort uniqueify on lists
     }
 
     method {when T: keytype} binarySearchKeySingle(v: T): Option<Nat> {
@@ -386,12 +386,25 @@ __internal entity List<T> {
         abort; %%TODO: implement sort on keytype lists
     }
 
-    function {when T: keytype} sortedMergeKeyUniqueify(l1: List<T>, l2: List<T>): List<T> {
-        xxxx;
+    function {when T: keytype} sortedKeyMergeUnique(l1: List<T>, l2: List<T>): List<T> {
+        if(ListOps::s_list_empty<T>(l1)) {
+            return l2;
+        }
+        else if(ListOps::s_list_empty<T>(l2)) {
+            return l1;
+        }
+        else {
+            return ListOps::s_sorted_key_merge_unique<T>(l1, l2);
+        }
     }
 
     method {when T: keytype} sortKeyUniqueify(): List<T> {
-        xxxx;
+        if(ListOps::s_list_size<T>(this) <= 1n) {
+            return this;
+        }
+        else {
+            return ListOps::s_sort_key_uniqueify<T>(this);
+        }
     }
 
 #endif %% STRIPPED_CORE 
