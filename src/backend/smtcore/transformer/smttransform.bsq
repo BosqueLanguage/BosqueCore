@@ -1371,7 +1371,7 @@ entity SMTTransformer {
         return none;
     }
 
-    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: BSQAssembly::CallGraph): SMTAssembly::Assembly {
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: SMTEmitter::BSQToSMTCallGraph): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, errinvokes};
 
         let tnsfuncs = callg.topoorder

@@ -150,21 +150,7 @@ __internal entity Map<K: keytype, V> {
         }
     }
 
-    recursive? function mergeConfluent(merge: recursive? fn(V, V) -> V, ...maps: List<Map<K, V>>): Map<K, V> {
-        if(maps.empty()) {
-            return Map<K, V>{};
-        }
-        else {
-            if(maps.isSingleElement()) {
-                return maps.single();
-            }
-            else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, recursive? fn(acc, m) => MapOps::s_map_mergec2[recursive?]<K, V>(acc, m, merge));
-            }
-        }
-    }
-
-    function mergeAllConfluent(merge: recursive? fn(V, V) -> V, maps: List<Map<K, V>>): Map<K, V> {
+    function mergeAllConfluent(maps: List<Map<K, V>>, merge: recursive? fn(V, V) -> V): Map<K, V> {
         if(maps.empty()) {
             return Map<K, V>{};
         }
