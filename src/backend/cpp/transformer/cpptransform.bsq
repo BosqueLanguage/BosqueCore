@@ -96,6 +96,13 @@ namespace CPPTransformNameManager {
         }
         return false;
     }
+
+    recursive function repeatCString(str: CString, n: Nat, acc: CString): CString {
+        if(n > 0) {
+            return repeatCString[recursive](str, n-1, CString::concat(acc, str));
+        }
+        return acc;
+    }
 }
 
 entity CPPTransformer {
@@ -462,11 +469,7 @@ entity CPPTransformer {
         });
     }
 
-    %%
-    %% We will need to dynamicall determine whether we have a ref, value, or tagged type (abstract) and adjust accordingly.
-    %%
-
-    method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
+    recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
         var matchedType: CPPAssembly::TypeInfo;
@@ -479,7 +482,7 @@ entity CPPTransformer {
                 | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | _ => { abort; } %% Not supported by cpp emitter yet!
@@ -503,22 +506,39 @@ entity CPPTransformer {
                         if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
                             return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
                         }
-                        elif(tinfo.0.tag === CPPAssembly::Tag#Value) {
-                            return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
-                        }
-                        else {
-                            abort; %% TODO: Add support for concept! (maybe not here, we need to check isNominalConcept whatever first)
-                        }
+                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                     }
+                    %% Value type 
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                 });
             }
             else {
-                abort; %% TODO: Add support for other types
+                abort; %% TODO: Type not supported for typeinfo emission!
             }
         }
+        elif(asm.isNominalTypeConcept(typekey)) {
+            var maxFieldCount: Nat;
+            if(asm.concepts.has(typekey)) {
+                maxFieldCount = asm.concepts.reduce<Nat>(0n, fn(acc, c, e) => {
+                    let size = e.fields.size();
+                    return if(acc < size) then size else acc;
+                });
+            }
+            elif(asm.pconcepts.has(typekey)) {
+                abort; %% TODO: Add support for primtive concepts 
+            }
+            else {
+                abort; %% Not a concept
+            }
+            
+            %% ptrmask == '2' means it is storing type info
+            %% To prevent dataloss we fill the rest of slots with zeros, where the number of 
+            %% zeros represents the maximum number of possible fields in subtypes
+            let ptr_mask = CPPTransformNameManager::repeatCString('0', maxFieldCount, '2');
+            matchedType = CPPAssembly::TypeInfo{ 8n, 8n + (maxFieldCount * 8n), maxFieldCount + 1n, ptr_mask, CPPTransformNameManager::convertTypeKey(typekey), CPPAssembly::Tag#Tagged }; 
+        }
         else {
-            abort; %% Type is not known or generic!
+            abort; %% TODO: Type not supported for generating typeinfo!
         }
 
         return matchedType, tinfos.insert(CPPTransformNameManager::convertTypeKey(typekey), matchedType);
