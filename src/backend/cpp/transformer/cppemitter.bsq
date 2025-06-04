@@ -703,19 +703,61 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
     return CString::concat(first, '(', params, ') noexcept;%n;');
 }
 
-function emitTypeInfo(info: CPPAssembly::TypeInfo, fullns: List<CString>, indent: CString): CString {
+%%
+%% TODO: Need to add lookup methods for these vtables and give this some thought. A lot of this code is repetitive or could be
+%% cleaned up pretty signifigantly. We currently emit a vtable entry for all fields, not just those who are derived. (this may need changed)
+%%
+
+function generateVTableEntry(entry: CPPAssembly::MemberFieldDecl, resolved_name: CString, enum_name: CString, idx: Nat, ctx: Context, indent: CString): CString {
+    let tinfo = ctx.asm.typeinfos.get(entry.declaredType.tkeystr);
+
+    let id = tinfo.id.toCString();
+    let entrytype = CString::concat(enum_name, '::', resolved_name, '_', emitIdentifier(entry.name));
+    let byteoffset = (idx * 8n).toCString(); %% Woudlnt be a bad idea to make these 8 byte alignment a const
+
+    let base = CString::concat('{ ', id, ', ', entrytype, ', ', byteoffset);
+    return CString::concat(indent, base, ' }');
+}
+
+function generateVTable(e: CPPAssembly::EntityTypeDecl, fullns: List<CString>, ctx: Context, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent);
+    
+    let resolved_name = CString::concat(emitResolvedNamespace(fullns, e.tkey.value));
+    let enum_name = CString::concat(resolved_name, '_entries');
+    let vtable_name = CString::concat(resolved_name, '_vtable');
+
+    let base = CString::concat('const FieldOffsetInfo ', vtable_name, '[] = ', '{%n;');
+    let field_names = e.fields.mapIdx<CString>(fn(f_entry, ii) => generateVTableEntry(f_entry, resolved_name, enum_name, ii, ctx, full_indent));
+    return CString::concat(indent, base, CString::joinAll(',%n;', field_names), '%n;', indent, '};%n;'); 
+}
+
+%% Might need to be a bit careful with the naming here, perhaps some funny unicode magic again
+function generateEntriesEnum(e: CPPAssembly::EntityTypeDecl, fullns: List<CString>, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent);
+    
+    let resolved_name = CString::concat(emitResolvedNamespace(fullns, e.tkey.value));
+    let enum_name = CString::concat(resolved_name, '_entries');
+
+    let base = CString::concat('enum ', enum_name, ' {%n;');
+    let field_names = e.fields.map<CString>(fn(f_entry) => CString::concat(full_indent, resolved_name, '_', emitIdentifier(f_entry.name)));
+    return CString::concat(indent, base, CString::joinAll(',%n;', field_names), '%n;', indent, '};%n;');
+}
+
+function emitTypeInfo(info: CPPAssembly::TypeInfo, fullns: List<CString>, e: CPPAssembly::EntityTypeDecl, indent: CString): CString {
     let full_indent = CString::concat('    ', indent);
 
-    let resolved_name = CString::concat(emitResolvedNamespace(fullns, info.typekey.value), 'Type');
+    let resolved_name = emitResolvedNamespace(fullns, info.typekey.value);
+    let tinfo_name = CString::concat(resolved_name, 'Type');
 
-    let base = CString::concat(indent, 'TypeInfoBase ', resolved_name, ' = {%n;');
+    let base = CString::concat(indent, 'TypeInfoBase ', tinfo_name, ' = {%n;');
     let id = CString::concat(base, full_indent, '.type_id = ', info.id.toCString(), ',%n;');
     let typesize = CString::concat(id, full_indent, '.type_size = ', info.typesize.toCString(), ', %n;');
     let slotsize = CString::concat(typesize, full_indent, '.slot_size = ', info.slotsize.toCString(), ',%n;');
     let ptrmask = CString::concat(slotsize, full_indent, '.ptr_mask = "', info.ptrmask, '",%n;');
-    let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey.value, '"%n;');
+    let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey.value, '",%n;');
+    let vtable = CString::concat(typekey, full_indent, '.vtable = ', CString::concat(resolved_name, '_vtable'), '%n;');
 
-    return CString::concat(typekey, indent, '};%n;');
+    return CString::concat(vtable, indent, '};%n;');
 }
 
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
@@ -739,12 +781,15 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     %% All entities && their typeinfo
     let entities = nsdecl.entities.reduce<CString>(methodfwd_decls, fn(acc, tk, e) => {
         let typekey = tk.value;
+        let entities_enum = generateEntriesEnum(e, e.fullns, full_indent);
+        let vtable = generateVTable(e, e.fullns, ctx, full_indent);
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
-        let entity_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), e.fullns, full_indent);
+        let entity_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), e.fullns, e, full_indent);
         let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
             return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), tk, ctx, full_indent));
         });
-        return CString::concat(acc, indent, entity_tinfo, emit_entity, entity_staticmethods);
+        let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods);
+        return CString::concat(acc, indent, res);
     });
 
     %% Emit sub-namespace declarations

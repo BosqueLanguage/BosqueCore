@@ -98,8 +98,8 @@ namespace CPPTransformNameManager {
     }
 
     recursive function repeatCString(str: CString, n: Nat, acc: CString): CString {
-        if(n > 0) {
-            return repeatCString[recursive](str, n-1, CString::concat(acc, str));
+        if(n > 0n) {
+            return repeatCString[recursive](str, n - 1n, CString::concat(acc, str));
         }
         return acc;
     }
@@ -506,9 +506,9 @@ entity CPPTransformer {
                         if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
                             return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
                         }
-                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
+                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                     }
-                    %% Value type 
+                    %% Primitive type 
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                 });
             }
