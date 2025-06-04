@@ -2,6 +2,39 @@ namespace Core;
 
 #if STRIPPED_CORE
 #else
+namespace AlgorithmOps {
+    recursive function s_topologicalSort_single<T: keytype>(t: T, ordered: List<T>, vmap: Map<T, Bool>, next: recursive? fn(T) -> List<T>): List<T>, Map<T, Bool> {
+        if(vmap.has(t)) {
+            return ordered, vmap;
+        }
+
+        var pvmap = vmap.insert(t, false);
+        let nexts = next[recursive?](t);
+
+        let nordered, nmap = nexts.reduce((|ordered, pvmap|), recursive fn(acc, v) => {
+            return AlgorithmOps::s_topologicalSort_single<T>(v, acc.o, acc.1, next);
+        });
+
+        return nordered.pushBack(t), nmap.set(t, true);
+    }
+
+    recursive function s_scc_visit<T: keytype>(t: T, scc: List<T>, vmap: Map<T, Bool>, next: recursive? fn(T) -> List<T>): List<T>, Map<T, Bool> {
+        if(vmap.has(t)) {
+            return scc, vmap;
+        }
+        else {
+            var pvmap = vmap.insert(t, false);
+            let nexts = next[recursive?](t);
+
+            let tscc, nmap = nexts.reduce((|scc, pvmap|), recursive fn(acc, v) => {
+                return AlgorithmOps::s_scc_visit<T>(v, acc.o, acc.1, next);
+            });
+
+            return tscc.pushBack(t), nmap.set(t, true);
+        }
+    }
+}
+
 namespace Algorithm {
     recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = s_algo_while;
 
@@ -19,6 +52,36 @@ namespace Algorithm {
             });
 
         return sfinal;
+    }
+
+    recursive? function topologicalSort<T: keytype>(init: List<T>, next: recursive? fn(T) -> List<T>): List<T> {
+        let ordered, _ = init.reduce((|List<T>{}, Map<T, Bool>{}|), recursive? fn(acc, t) => {
+            return AlgorithmOps::s_topologicalSort_single<T>(t, acc.o, acc.1, next);
+        });
+
+        return ordered;
+    }
+
+    recursive? function topologicalSortWComponents<T: keytype>(init: List<T>, next: recursive? fn(T) -> List<T>): List<T>, List<List<T>>  {
+        let topol = Algorithm::topologicalSort<T>(init, next);
+
+        let sccs, _ = topol.reduce((|List<List<T>>{}, Map<T, Bool>{}|), recursive? fn(acc, t) => {
+            let nnext = next[recursive?](t);
+            if(nnext.allOf(v => acc.1.tryGet(v) === true)) {
+                return acc.0, acc.1.set(t, true);
+            }
+            else {
+                let scc, nmap = AlgorithmOps::s_scc_visit<T>(t, acc.0, acc.1, next);
+                if(!scc.empty()) {
+                    return acc.0.pushBack(scc), nmap;
+                }
+                else {
+                    return acc.0, nmap;
+                }
+            }
+        });
+
+        return topol, sccs;
     }
 }
 #endif %% STRIPPED_CORE

@@ -330,8 +330,9 @@ entity BSQToSMTCallGraphBuilder {
 
     function constructBSQToSMTCallGraph(assembly: BSQAssembly::Assembly): BSQToSMTCallGraph {
         let invokeinfo = BSQToSMTCallGraphBuilder::constructBSQInvokeInfo(assembly);
+        let topo, scc = Algorithm::topologicalSortWComponents<BSQAssembly::InvokeKey>(invokeinfo.reachable, fn(ii) => invokeinfo.calleemap.get(ii));
 
-        xxxx;
+        return BSQToSMTCallGraph{invokeinfo, topo, scc};
     }
 }
 
@@ -570,27 +571,27 @@ entity MayErrorAnalysis {
         abort;
     }
 
-    function generate(assembly: BSQAssembly::Assembly, callg: BSQAssembly::CallGraph): Map<BSQAssembly::InvokeKey, Bool> {
-        let baseerrinvokes = MayErrorAnalysis::setDirectMayErrorInfo(assembly);
+    method processInvokeKey(ikey: BSQAssembly::InvokeKey, cerrors: Map<BSQAssembly::InvokeKey, Bool>): Bool {
+        let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
+        if(ff)@some {
+            return this.processBodyImpl(ikey, $ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+        }
 
-        let properrinvokes = callg.topoorder.reduce<Map<BSQAssembly::InvokeKey, Bool>>(baseerrinvokes, fn(emap, ikey) => {
-            let err = baseerrinvokes.get(ikey);
-            if(err) {
-                return emap;
-            }
-            else {
-                if(callg.isInSCC(ikey)) {
-                    return emap.set(ikey, true);
-                }
-                else {
-                    let callees = callg.callgraph.get(ikey);
-                    let transerr = callees.someOf(pred(ckey) => emap.get(ckey));
+        let iif = this.assembly.tryLookupInvariantAndValidateFunction(ikey);
+        if(iif)@some {
+            return this.processExpression(ikey, $iif.0.exp, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+        }
+        else {
+            abort; %% an implicit field or arg initializer
+        }
+    }
 
-                    return emap.set(ikey, transerr);
-                }
-            }
+    function generateInvokeErrorInfo(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph): Map<BSQAssembly::InvokeKey, Bool> {
+        let erranalysis = MayErrorAnalysis{assembly, callg};
+
+        return callg.topo.reduce<Map<BSQAssembly::InvokeKey, Bool>>(fn(cerrors, ikey) => {
+            let mayerror = erranalysis.processInvokeKey(ikey, cerrors);
+            return cerrors.set(ikey, mayerror);
         });
-
-        return properrinvokes;
     }
 }
