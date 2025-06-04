@@ -34,6 +34,11 @@ entity BSQCCInfo {
 
     const emptyinfo: BSQCCInfo = BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
 
+    function createInit(current: BSQAssembly::InvokeKey): BSQCCInfo {
+        let emptyentry = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{current => List<BSQAssembly::InvokeKey>{}};
+        return BSQCCInfo{emptyentry, emptyentry};
+    }
+
     function createWCallInfo(current: BSQAssembly::InvokeKey, ...callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
         return BSQCCInfo::createWAllCallInfo(current, callees);
     }
@@ -302,12 +307,12 @@ entity BSQToSMTCallGraphBuilder {
     method processInvokeKey(ikey: BSQAssembly::InvokeKey): BSQCCInfo {
         let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
         if(ff)@some {
-            return this.processBodyImpl(ikey, $ff.body);
+            return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processBodyImpl(ikey, $ff.body));
         }
 
         let iif = this.assembly.tryGetImplicitInvariantInfo(ikey);
         if(iif)@some {
-            return this.processExpression(ikey, $iif.0.exp);
+            return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processExpression(ikey, $iif.0.exp));
         }
         else {
             abort; %% an implicit field or arg initializer

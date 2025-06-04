@@ -66,9 +66,13 @@ namespace Algorithm {
         let topol = Algorithm::topologicalSort<T>(init, next);
 
         let sccs, _ = topol.reduce[recursive?]<(|List<List<T>>, Map<T, Bool>|)>((|List<List<T>>{}, Map<T, Bool>{}|), recursive? fn(acc, t) => {
+            if(acc.1.has(t)) {
+                return acc;
+            }
+
             let nnext = next[recursive?](t);
             if(nnext.allOf(pred(v) => acc.1.tryGet(v) === true)) {
-                return acc.0, acc.1.set(t, true);
+                return acc.0, acc.1.insert(t, true);
             }
             else {
                 let scc, nmap = AlgorithmOps::s_scc_visit[recursive?]<T>(t, List<T>{}, acc.1, next);
