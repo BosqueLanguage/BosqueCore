@@ -68,8 +68,8 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(delete<T>(l.value, idx));
     }
 
-    function {when T: keytype} s_sorted_key_merge<T>(l1: List<T>, l2: List<T>): List<T> {
-        let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|acc, l1, l2|), 
+    function s_sorted_key_merge<T: keytype>(l1: List<T>, l2: List<T>): List<T> {
+        let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|List<T>{}, l1, l2|), 
             pred(state) => !/\(ListOps::s_list_empty<T>(state.1), ListOps::s_list_empty<T>(state.2)),  
             fn(state) => {
                 %% l1 is empty, append l2
@@ -86,24 +86,23 @@ namespace ListOps {
                 let v2, nl2 = state.2.popFront();
 
                 if(KeyComparator::less<T>(v1, v2)) {
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, n2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
                 }
                 elif(KeyComparator::less<T>(v2, v1)) {
-                    return ListOps::s_list_push_back<T>(state.0, v2), n1, nl2;
+                    return ListOps::s_list_push_back<T>(state.0, v2), l1, nl2;
                 }
                 else {
                     %% keep duplicates but take from v1 first
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, n2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
                 }
-            }
-        );
+            });
 
         return res;
     }
 
-    recursive function {when T: keytype} s_sort_key<T>(l: List<T>): List<T> {
-        if(ListOps::s_list_size<T>(this) <= 1n) {
-            return this;
+    recursive function s_sort_key<T: keytype>(l: List<T>): List<T> {
+        if(ListOps::s_list_size<T>(l) <= 1n) {
+            return l;
         }
         else {
             let splitl, splitr = Tree<T>::split(l.value);
@@ -114,8 +113,8 @@ namespace ListOps {
         }
     }
 
-    function {when T: keytype} s_sorted_key_merge_unique<T>(l1: List<T>, l2: List<T>): List<T> {
-        let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|acc, l1, l2|), 
+    function s_sorted_key_merge_unique<T: keytype>(l1: List<T>, l2: List<T>): List<T> {
+        let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|List<T>{}, l1, l2|), 
             pred(state) => !/\(ListOps::s_list_empty<T>(state.1), ListOps::s_list_empty<T>(state.2)),  
             fn(state) => {
                 %% l1 is empty, append l2
@@ -132,10 +131,10 @@ namespace ListOps {
                 let v2, nl2 = state.2.popFront();
 
                 if(KeyComparator::less<T>(v1, v2)) {
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, n2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
                 }
                 elif(KeyComparator::less<T>(v2, v1)) {
-                    return ListOps::s_list_push_back<T>(state.0, v2), n1, nl2;
+                    return ListOps::s_list_push_back<T>(state.0, v2), l1, nl2;
                 }
                 else {
                     %% skip duplicates
@@ -147,9 +146,9 @@ namespace ListOps {
         return res;
     }
 
-    recursive function {when T: keytype} s_sort_key_uniqueify<T>(l: List<T>): List<T> {
-        if(ListOps::s_list_size<T>(this) <= 1n) {
-            return this;
+    recursive function s_sort_key_uniqueify<T: keytype>(l: List<T>): List<T> {
+        if(ListOps::s_list_size<T>(l) <= 1n) {
+            return l;
         }
         else {
             let splitl, splitr = Tree<T>::split(l.value);
@@ -1105,7 +1104,7 @@ namespace ListOps {
             }
         }
 
-        function split(t: Tree<T>), Tree<T>, Tree<T> {
+        function split(t: Tree<T>): Tree<T>, Tree<T> {
             let nn = XCore::s_safeas<Tree<T>, Node<T>>(t);
             return nn.l, nn.r;
         }

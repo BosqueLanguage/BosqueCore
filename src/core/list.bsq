@@ -382,7 +382,7 @@ __internal entity List<T> {
         if(ListOps::s_list_empty<T>(l1)) {
             return l2;
         }
-        else if(ListOps::s_list_empty<T>(l2)) {
+        elif(ListOps::s_list_empty<T>(l2)) {
             return l1;
         }
         else {
@@ -403,7 +403,7 @@ __internal entity List<T> {
         if(ListOps::s_list_empty<T>(l1)) {
             return l2;
         }
-        else if(ListOps::s_list_empty<T>(l2)) {
+        elif(ListOps::s_list_empty<T>(l2)) {
             return l1;
         }
         else {

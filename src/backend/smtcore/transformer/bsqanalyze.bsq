@@ -35,7 +35,7 @@ entity BSQCCInfo {
     const emptyinfo: BSQCCInfo = BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
 
     function createWCallInfo(current: BSQAssembly::InvokeKey, ...callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
-        return createWAllCallInfo(current, callees);
+        return BSQCCInfo::createWAllCallInfo(current, callees);
     }
 
     function createWAllCallInfo(current: BSQAssembly::InvokeKey, callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
@@ -43,8 +43,7 @@ entity BSQCCInfo {
             return BSQCCInfo::emptyinfo;
         }
         else {
-            let rcallees = callees.sortKeyUniqueify()
-
+            let rcallees = callees.sortKeyUniqueify();
             let calleemap = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{current => rcallees};
         
             let callermap = rcallees.reduce<BSQAssembly::InvokeKey, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::createEmpty(), 
@@ -62,7 +61,7 @@ entity BSQCCInfo {
     }
 
     function mergeInfos(...infos: List<BSQCCInfo>): BSQCCInfo {
-        return mergeAllInfos(infos);
+        return BSQCCInfo::mergeAllInfos(infos);
     }
 
     function mergeAllInfos(infos: List<BSQCCInfo>): BSQCCInfo {
@@ -70,13 +69,13 @@ entity BSQCCInfo {
             return BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
         }
         else {
-            let calleemaps = infos.map<BSQAssembly::InvokeKey, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.calleemap);
-            let callees = BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllConfluent(calleemaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
+            let calleemaps = infos.map<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.calleemap);
+            let callees = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllConfluent(calleemaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
 
-            let callermaps = infos.map<BSQAssembly::InvokeKey, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.callermap);
-            let callers = BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllIdempotent(callermaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
+            let callermaps = infos.map<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.callermap);
+            let callers = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllIdempotent(callermaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
 
-            return BSQInvokeInfo{callees, callers, reachable};
+            return BSQCCInfo{callees, callers};
         }
     }
 }
@@ -139,7 +138,7 @@ entity BSQToSMTCallGraphBuilder {
         let nsfunc = this.assembly.nsfuncs.get(e.nsfkey);
 
         %%TODO: we need to handle implicit default params here too
-        var defaultcalls = BBSQCCInfo::emptyinfo;
+        var defaultcalls = BSQCCInfo::emptyinfo;
 
         var invariantcalls = BSQCCInfo::emptyinfo;
         if(\/(!nsfunc.preconditions.empty(), !nsfunc.postconditions.empty())) {
@@ -190,9 +189,9 @@ entity BSQToSMTCallGraphBuilder {
     }
 
     recursive method processIfExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::IfExpression): BSQCCInfo {
-        let infotest = this.processExpression[recursive](current, e.texp, info);
-        let infothen = this.processExpression[recursive](current, e.thenexp, info);
-        let infoelse = this.processExpression[recursive](current, e.elseexp, info);
+        let infotest = this.processExpression[recursive](current, e.texp);
+        let infothen = this.processExpression[recursive](current, e.thenexp);
+        let infoelse = this.processExpression[recursive](current, e.elseexp);
 
         return BSQCCInfo::mergeInfos(infotest, infothen, infoelse);
     }
@@ -263,7 +262,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive](current, $s.exp,); }
             | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; } %% NOT IMPLEMENTED
             | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; } %% NOT IMPLEMENTED
-            | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive](current $s.exp); }
+            | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive](current, $s.exp); }
             | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; } %% NOT IMPLEMENTED
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
             | BSQAssembly::ReturnVoidStatement => { return BSQCCInfo::emptyinfo; }
@@ -272,7 +271,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive](current, $s);}
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive](current, $s); }
             | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
-            | BSQAssembly::AssertStatement => { return this.processExpression[recursive](current $s.cond); }
+            | BSQAssembly::AssertStatement => { return this.processExpression[recursive](current, $s.cond); }
             | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive](current, $s); }
         }
     }
@@ -291,7 +290,7 @@ entity BSQToSMTCallGraphBuilder {
         match(body)@ {
             BSQAssembly::ExpressionBodyImplementation => { return this.processExpression[recursive](current, $body.exp); }
             | BSQAssembly::StandardBodyImplementation => { return this.processBodyStatementList[recursive](current, $body.statements); }
-            | _ => { return info; }
+            | _ => { return BSQCCInfo::emptyinfo; }
         }
     }
 
@@ -314,15 +313,15 @@ entity BSQToSMTCallGraphBuilder {
         let builder = BSQToSMTCallGraphBuilder{assembly};
 
         let iivs = assembly.gatherInvariantAndValidateFunctions();
-        let iivinfos = BBSQCCInfo::mergeAllInfos(iivs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let iivinfos = BSQCCInfo::mergeAllInfos(iivs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
 
-        let ifvs = List<InvokeKey>{}; %%TODO gather all of the implicit field and arg initializers
-        let ifvinfos = BBSQCCInfo::mergeAllInfos(ifvs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let ifvs = List<BSQAssembly::InvokeKey>{}; %%TODO gather all of the implicit field and arg initializers
+        let ifvinfos = BSQCCInfo::mergeAllInfos(ifvs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
 
-        let funcinfos = BBSQCCInfo::mergeAllInfos(assembly.allfuncs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
-        let minfos = BBSQCCInfo::mergeAllInfos(assembly.allmethods.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let funcinfos = BSQCCInfo::mergeAllInfos(assembly.allfuncs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let minfos = BSQCCInfo::mergeAllInfos(assembly.allmethods.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
 
-        let allinfo = BBSQCCInfo::mergeInfos(iivinfos, ifvinfos, funcinfos, minfos);
+        let allinfo = BSQCCInfo::mergeInfos(iivinfos, ifvinfos, funcinfos, minfos);
         let reachable = List<BSQAssembly::InvokeKey>::concat(iivs, ifvs, assembly.allfuncs, assembly.allmethods).sortKey();
 
         return BSQInvokeInfo{allinfo.calleemap, allinfo.callermap, reachable};
@@ -340,8 +339,8 @@ entity BSQToSMTCallGraphBuilder {
  * Compute the may error status of every invoke in the assembly
  *%
 entity MayErrorAnalysis {
-    field BSQAssembly::Assembly assembly;
-    field BSQToSMTCallGraph callgraph;
+    field assembly: BSQAssembly::Assembly;
+    field callgraph: BSQToSMTCallGraph;
 
     recursive method processArgs(args: List<BSQAssembly::Expression>, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         return args.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
@@ -372,7 +371,7 @@ entity MayErrorAnalysis {
         else {
             let argserr = this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
 
-            if(tdecl)@!<ConstructorTypeDeclStringExpression> {
+            if(tdecl)@!<BSQAssembly::ConstructorTypeDeclStringExpression> {
                 return argserr; %% no invariants to check
             }
             else {
@@ -383,7 +382,7 @@ entity MayErrorAnalysis {
 
     recursive method processConstructorLambdaExpression(e: BSQAssembly::ConstructorLambdaExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         %% We associate all errors in the lambda with the defining invoke (not the one whre the lambda is eventually invoked) -- will parametric later
-        return this.processBodyImpl[recursive](current, e.body, cerrors, lerrors);
+        return this.processBodyImpl[recursive](e.body, cerrors, lerrors);
     }
 
     recursive method processCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
@@ -400,7 +399,7 @@ entity MayErrorAnalysis {
     }
 
     recursive method processPostfixOp(e: BSQAssembly::PostfixOp, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        let baseerr = MayErrorAnalysis::processUnaryArg[recursive](e.rootExp, cerrors, lerr);
+        let baseerr = MayErrorAnalysis::processUnaryArg[recursive](e.rootExp, cerrors, lerrors);
         if(baseerr) {
             return true;
         }
