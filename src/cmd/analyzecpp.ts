@@ -9,7 +9,7 @@ import * as path from "path";
 import { fileURLToPath } from 'url';
 import { PackageConfig } from "../frontend/build_decls.js";
 import { execSync } from "child_process";
-import { validateCStringLiteral } from "@bosque/jsbrex";
+import { validateStringLiteral } from "@bosque/jsbrex";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,7 +81,7 @@ function runCPPEmit(outname: string): string {
         Status.error("Failed to write bsqir info file!\n");
     }
 
-    return validateCStringLiteral(res.slice(1, -2));
+    return validateStringLiteral(res.slice(1, -2));
 }
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {

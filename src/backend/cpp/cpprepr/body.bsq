@@ -160,6 +160,11 @@ PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
 }
+| PostfixInvokeStatic { 
+    field resolvedType: NominalTypeSignature;
+    field resolvedTrgt: InvokeKey;
+    field args: ArgumentList;
+}
 ;
 
 entity PostfixOp provides Expression {

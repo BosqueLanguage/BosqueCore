@@ -6,6 +6,24 @@
 #include <csetjmp>
 #include <variant>
 
+// Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
+struct FieldOffsetInfo 
+{
+    uint16_t id;
+    uint16_t type;
+    uint32_t byteoffset;
+};
+
+struct TypeInfoBase 
+{
+    uint32_t type_id;
+    uint32_t type_size;
+    uint32_t slot_size;
+    const char* ptr_mask;
+    const char* typekey;
+    const FieldOffsetInfo* vtable; // Will need to add to gc
+};
+
 namespace __CoreCpp {
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)

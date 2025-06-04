@@ -4,7 +4,7 @@ declare namespace CPPEmitter {
 }
 
 %% Our API for emitting cpp
-public function main(asm: BSQAssembly::Assembly): CString {
+public function main(asm: BSQAssembly::Assembly): String {
     let tasm = CPPEmitter::CPPTransformer::convertBsqAsmToCpp(asm);
     let cppstr = CPPEmitter::emitAssembly(tasm);
 

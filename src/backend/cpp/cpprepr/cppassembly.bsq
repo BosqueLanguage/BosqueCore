@@ -41,8 +41,16 @@ entity MemberFieldDecl provides AbstractCoreDecl {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
-
+ 
     %% invariants, validates, methods, saturated, as well
+}
+
+concept AbstractInvokeDecl provides AbstractDecl {
+    field name: CString;
+    field ikey: InvokeKey;
+    field params: List<ParameterDecl>;
+    field resultType: TypeSignature;
+    field body: BodyImplementation;
 }
 
 concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
@@ -50,7 +58,34 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+    field staticmethods: List<InvokeKey>;
+    %% Other method types too
 }
+
+enum Tag {
+    Value,
+    Ref,
+    Tagged
+}
+
+%% Info for the GC 
+entity TypeInfo {
+    field id: Nat;
+    field typesize: Nat;
+    field slotsize: Nat;
+    field ptrmask: CString;
+    field typekey: TypeKey;
+    field tag: Tag;
+}
+
+datatype MethodDecl provides AbstractInvokeDecl using {
+}
+of
+MethodDeclStatic { }
+| MethodDeclAbstract {}
+| MethodDeclVirtual {}
+| MethodDeclOverride {}
+;
 
 entity ParameterDecl {
     field pname: Identifier;
@@ -60,13 +95,7 @@ entity ParameterDecl {
     %% TODO: Support ref/rest param
 }
 
-%% May want to change this as it doesnt map super well to bsqir (but maps nice to how smtemit)
-entity NamespaceFunctionDecl provides AbstractDecl {
-    field name: CString;
-    field ikey: InvokeKey;
-    field params: List<ParameterDecl>;
-    field resultType: TypeSignature;
-    field body: BodyImplementation;
+entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
@@ -82,10 +111,17 @@ entity NamespaceDecl {
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Convienent for fwd decls
 }
 
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+
+    field staticmethods: Map<InvokeKey, MethodDeclStatic>;
+    %% TODO: Abstract, Override, Virtual methods
+
+    field allmethods: List<InvokeKey>;
+    field typeinfos: Map<TypeKey, TypeInfo>;
 }
