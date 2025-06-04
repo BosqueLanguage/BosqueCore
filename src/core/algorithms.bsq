@@ -47,6 +47,7 @@ namespace Algorithm {
                 let vp, nwl = state.1.popFront();
                 let ns, nelems = proc(state.0, vp);
 
+                %%TODO: this is a potential performance issue, as it creates a new list every and does a linear search in the worklist
                 let fwl = nwl.append(nelems.filter(pred(v) => !nwl.contains(v)));
                 return (|ns, fwl|);
             });
