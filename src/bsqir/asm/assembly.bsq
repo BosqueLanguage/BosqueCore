@@ -384,28 +384,28 @@ entity Assembly {
         return none;
     }
 
-    function gatherInvariantAndValidateFunctions(assembly: BSQAssembly::Assembly): List<BSQAssembly::InvokeKey> {
-        let cinvs = assembly.allconcretetypes
-            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+    method gatherInvariantAndValidateFunctions(): List<InvokeKey> {
+        let cinvs = this.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.invariants.empty())
-            .map<List<BSQAssembly::InvokeKey>>(fn(tdecl) => tdecl.invariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey));
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
             
-        let cvalidates = assembly.allconcretetypes
-            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+        let cvalidates = this.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.validates.empty())
-            .map<List<BSQAssembly::InvokeKey>>(fn(tdecl) => tdecl.validates.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey));
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
 
-        let ainvs = assembly.allabstracttypes
-            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+        let ainvs = this.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.invariants.empty())
-            .map<List<BSQAssembly::InvokeKey>>(fn(tdecl) => tdecl.invariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey));
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
 
-        let avalidates = assembly.allabstracttypes
-            .map<BSQAssembly::AbstractNominalTypeDecl>(fn(tkey) => assembly.lookupNominalTypeDeclaration(tkey))
+        let avalidates = this.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
             .filter(pred(tdecl) => !tdecl.validates.empty())
-            .map<List<BSQAssembly::InvokeKey>>(fn(tdecl) => tdecl.validates.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey));
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
 
-        return List<BSQAssembly::InvokeKey>::concat(List<BSQAssembly::InvokeKey>::concatAll(cinvs), List<BSQAssembly::InvokeKey>::concatAll(cvalidates), List<BSQAssembly::InvokeKey>::concatAll(ainvs), List<BSQAssembly::InvokeKey>::concatAll(avalidates));
+        return List<InvokeKey>::concat(List<InvokeKey>::concatAll(cinvs), List<InvokeKey>::concatAll(cvalidates), List<InvokeKey>::concatAll(ainvs), List<InvokeKey>::concatAll(avalidates));
     }
 
     method isNominalTypeConcrete(tkey: TypeKey): Bool {

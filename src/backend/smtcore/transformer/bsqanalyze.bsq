@@ -295,14 +295,42 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    function constructBSQInvokeInfo(assembly: BSQAssembly::Assembly, entrypoints: List<BSQAssembly::InvokeKey>): BSQInvokeInfo {
-        gatherInvariantAndValidateFunctions
+    method processInvokeKey(ikey: BSQAssembly::InvokeKey): BSQCCInfo {
+        let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
+        if(ff)@some {
+            return this.processBodyImpl(ikey, $ff.body);
+        }
 
-        return this.processBodyImpl(nsfunc.ikey, nsfunc.body);
-        xxxx;
+        let iif = this.assembly.tryLookupInvariantAndValidateFunction(ikey);
+        if(iif)@some {
+            return this.processExpression(ikey, $iif.0.exp);
+        }
+        else {
+            abort; %% an implicit field or arg initializer
+        }
     }
 
-    function constructBSQToSMTCallGraph(assembly: BSQAssembly::Assembly, entrypoints: List<BSQAssembly::InvokeKey>): BSQToSMTCallGraph {
+    function constructBSQInvokeInfo(assembly: BSQAssembly::Assembly): BSQInvokeInfo {
+        let builder = BSQToSMTCallGraphBuilder{assembly};
+
+        let iivs = assembly.gatherInvariantAndValidateFunctions();
+        let iivinfos = BBSQCCInfo::mergeAllInfos(iivs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let ifvs = List<InvokeKey>{}; %%TODO gather all of the implicit field and arg initializers
+        let ifvinfos = BBSQCCInfo::mergeAllInfos(ifvs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let funcinfos = BBSQCCInfo::mergeAllInfos(assembly.allfuncs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let minfos = BBSQCCInfo::mergeAllInfos(assembly.allmethods.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let allinfo = BBSQCCInfo::mergeInfos(iivinfos, ifvinfos, funcinfos, minfos);
+        let reachable = List<BSQAssembly::InvokeKey>::concat(iivs, ifvs, assembly.allfuncs, assembly.allmethods).sortKey();
+
+        return BSQInvokeInfo{allinfo.calleemap, allinfo.callermap, reachable};
+    }
+
+    function constructBSQToSMTCallGraph(assembly: BSQAssembly::Assembly): BSQToSMTCallGraph {
+        let invokeinfo = BSQToSMTCallGraphBuilder::constructBSQInvokeInfo(assembly);
+
         xxxx;
     }
 }

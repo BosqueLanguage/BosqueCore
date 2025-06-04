@@ -53,7 +53,9 @@ namespace ListOps {
 
     function s_list_sum<T: numeric>(l: List<T>, zero: T): T = s_list_sum;
 
-    function {when T: keytype} s_sorted_key_merge_unique<T>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge_unique;
+    function {when T: keytype} s_sorted_key_merge<T>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge;
+    function {when T: keytype} s_sort_key<T>(l: List<T>): List<T> = s_sort_key_uniqueify;
+    function {when T: keytype} s_sorted_key_merge_unique<T>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge;
     function {when T: keytype} s_sort_key_uniqueify<T>(l: List<T>): List<T> = s_sort_key_uniqueify;
 }
 #else
