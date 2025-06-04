@@ -10,26 +10,35 @@ namespace CPPTransformNameManager {
         return CPPAssembly::InvokeKey::from(ikey.value);
     }
 
-    %% This is mega broken. Will fix when I am not tired.... :)
     function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
-        switch(tk) {
-            'None'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('None'); }
-            | 'Bool'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('bool'); }
-            | 'Nat'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
-            | 'Int'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
-            | 'BigNat'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
-            | 'BigInt'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
-            | 'Float'<BSQAssembly::TypeKey> => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
-            | _ => { return CPPAssembly::TypeKey::from(''); } 
+        switch(tk.value) {
+            'None' => { return CPPAssembly::TypeKey::from('None'); }
+            | 'Bool' => { return CPPAssembly::TypeKey::from('bool'); }
+            | 'Nat' => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
+            | 'Int' => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
+            | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
+            | 'BigInt' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
+            | 'Float' => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
+            | _ => { return CPPAssembly::TypeKey::from(tk.value); } 
+        }
+    }
+
+    %% Necessary when generating typeinfos for containers
+    function revertTypeKey(tk: CPPAssembly::TypeKey): BSQAssembly::TypeKey {
+        switch(tk.value) {
+            'None' => { return BSQAssembly::TypeKey::from('None'); }
+            | 'bool' => { return BSQAssembly::TypeKey::from('Bool'); }
+            | '__CoreCpp::Nat' => { return BSQAssembly::TypeKey::from('Nat'); }
+            | '__CoreCpp::Int' => { return BSQAssembly::TypeKey::from('Int'); }
+            | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }
+            | '__CoreCpp::BigInt' => { return BSQAssembly::TypeKey::from('BigInt'); }
+            | '__CoreCpp::Float' => { return BSQAssembly::TypeKey::from('Float'); }
+            | _ => { return BSQAssembly::TypeKey::from(tk.value); }
         }
     }
 
     function convertTypeSignature(tsig: BSQAssembly::TypeSignature): CPPAssembly::TypeSignature {
-        let tk = convertTypeKey(tsig.tkeystr); 
-        if(tk.value === '') { %% EhhhhhhhI dont relaly like returning '' here
-            return CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from(tsig.tkeystr.value) };
-        }
-
+        let tk = convertTypeKey(tsig.tkeystr);
         return CPPAssembly::NominalTypeSignature{ tk };
     }
 
@@ -78,6 +87,14 @@ namespace CPPTransformNameManager {
             let tmp_map = nsdecls.delete(ns_name);
             return tmp_map.insert(ns_name, insertion(updated_nsdecl));
         }
+    }
+
+    function shouldBeRef(fields: List<BSQAssembly::MemberFieldDecl>, asm: BSQAssembly::Assembly): Bool {
+        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.declaredType.tkeystr));
+        if(fields.size() > 4n || !fieldsPrimitive) {
+            return true;
+        }
+        return false;
     }
 }
 
@@ -474,17 +491,24 @@ entity CPPTransformer {
                 let m_entity = asm.entities.get(typekey);
                 let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
 
-                %%
-                %% Here we need to do some sorta lookup to determine whether we need to do the silly first slot is type info and determineing refernce 
-                %% type stuff wiht the check that we are less that K=4 fields to become emitted as a refernce type. Not sure if this is done here, 
-                %% but we need to check the context in which our type is being used. If ref, the emission for decl is same as for value. If param needs
-                %% to be const foo*, if cpnstructor, needs to be foo*
-                %%
+                %% TODO: Add support for tagged types. If isNominalTypeConcept is true, then we find the field with largest nbumber of sub fiuelds and 
+                %% emit corresponding zeros as blank space. First slot is a 2 meaning its typeinfo
 
-                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey), CPPAssembly::Tag#Value }, fn(acc, tinfo) => {
-                    let bsqtkey = BSQAssembly::TypeKey::from(tinfo.0.typekey.value);
+                let isRef = CPPTransformNameManager::shouldBeRef(m_entity.fields, asm);
+                let tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+
+                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey), tag }, fn(acc, tinfo) => {
+                    let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
                     if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
-                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag }; 
+                        if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
+                            return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
+                        }
+                        elif(tinfo.0.tag === CPPAssembly::Tag#Value) {
+                            return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
+                        }
+                        else {
+                            abort; %% TODO: Add support for concept! (maybe not here, we need to check isNominalConcept whatever first)
+                        }
                     }
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
                 });

@@ -37,8 +37,18 @@ entity Context {
     }
 }
 
-function emitTypeSignature(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
-    return emitResolvedNamespace(ctx.fullns_list, ts.tkeystr.value);    
+%%
+%% TODO: THe mehtods below likely need to be split up into their unique cases.
+%%
+
+%% Could remove these two and just call emitTypeKey... but I suspect we will eventually need to handle
+%% lambda and elist explicitly (so fornow these are fine)
+function emitTypeSignatureBase(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
+    return emitTypeKeyBase(ts.tkeystr, ctx);    
+}
+
+function emitTypeSignatureParamFieldType(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
+    return emitTypeKeyParamField(ts.tkeystr, ctx);
 }
 
 %% Temporary invalid string we replace just before emission (with our special unicode tᖺis)
@@ -50,7 +60,7 @@ function emitTypeKeyBase(tk: CPPAssembly::TypeKey, ctx: Context): CString {
     return emitResolvedNamespace(ctx.fullns_list, tk.value); 
 }
 
-function emitTypeKeyField(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+function emitTypeKeyParamField(tk: CPPAssembly::TypeKey, ctx: Context): CString {
     let resolved = emitResolvedNamespace(ctx.fullns_list, tk.value);
 
     if(!ctx.asm.typeinfos.has(tk)) {
@@ -121,7 +131,6 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
 }
 
 function emitReturnSingleStatement(ret: CPPAssembly::ReturnSingleStatement, ctx: Context, indent: CString): CString {
-    %% let rtype = emitTypeSignature(ret.rtype);
     let exp = emitExpression(ret.value, ctx);
 
     let full_indent: CString = CString::concat(indent, '    ');
@@ -446,6 +455,10 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     return CString::joinAll('', ops);
 }
 
+%%
+%% TODO: Once the GC is integrated we will need to call our special GC allocate on ref type objects instead of the default
+%% constructor like we do now. Ref type object constructors will not work as is currently.
+%%
 function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
     %% Eventually might want to rework emitArgumentList to support constructors too 
     let emitargs =  CString::joinAll(', ', e.args.args.mapIdx<CString>(fn(av, ii) => {
@@ -471,7 +484,11 @@ function emitConstructorStdExpression(e: CPPAssembly::ConstructorStdExpression, 
     }));
 
     let resolved_type = emitResolvedNamespace(ctx.fullns_list, e.ctype.tkeystr.value);
-    return CString::concat(resolved_type, '{ ', emitargs, ' }');
+
+    if(ctx.asm.typeinfos.get(e.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) {
+        return CString::concat('new ', resolved_type, '{ ', emitargs, ' }'); %% We use new solely to keep the code compiling before GC integration
+    }
+    return CString::concat(resolved_type, '{ ', emitargs, ' }'); 
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
@@ -493,7 +510,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
 
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(stmt.name);
-    let stype = emitTypeSignature(stmt.vtype, ctx);
+    let stype = emitTypeSignatureParamFieldType(stmt.vtype, ctx);
     let exp = emitExpression(stmt.exp, ctx);
 
     let full_indent: CString = CString::concat(indent, '    ', stype); %% List constructor size max 6
@@ -575,7 +592,7 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
 
 function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context): CString {
     let all_params = params.map<CString>(fn(param) => {
-        let ptype = emitTypeSignature(param.ptype, ctx);
+        let ptype = emitTypeSignatureParamFieldType(param.ptype, ctx);
         let resolved_ptype = emitResolvedNamespace(ctx.fullns_list, ptype);
         let pident = emitIdentifier(param.pname);
         return CString::concat(resolved_ptype, ' ', pident);
@@ -584,22 +601,32 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     return CString::joinAll(', ', all_params);
 }
 
-function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CString, ctx: Context, indent: CString): CString {
+%% Determine whether to emit this param as const this* or this
+function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+    let resolved_type = emitResolvedNamespace(ctx.fullns_list, tk.value);
+    
+    if(ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Ref) {
+        return CString::concat('const ', resolved_type, '*');
+    }
+    return resolved_type;
+}
+
+function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     if(m)@<CPPAssembly::MethodDeclStatic> { %% Pass "this" ptr as first argument
         let name = m.name;
         let params = emitParameters(m.params, nctx);
-        let rtype = emitTypeSignature(m.resultType, ctx);
-        let this_type = emitResolvedNamespace(nctx.fullns_list, declaredIn); %% Find necessary ns resolution for the structure we are declared in
+        let rtype = emitTypeSignatureBase(m.resultType, ctx);
+        let this_type = emitThisType(declaredIn, nctx);
 
         let pre = CString::concat(indent, 'const ', rtype, ' ', name);
         
         var params_impl: CString;
         if(params === '') {
-            params_impl = CString::concat('(const ', this_type, ' ', emitSpecialThis(), ') noexcept');
+            params_impl = CString::concat('(', this_type, ' ', emitSpecialThis(), ') noexcept');
         }
         else {
-            let base = CString::concat('(const ', this_type, ' ');
+            let base = CString::concat('(', this_type, ' ');
             params_impl = CString::concat(base, emitSpecialThis(), ', ', params, ') noexcept');           
         }
 
@@ -614,7 +641,7 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
 
     let name = func.name;
     let params = emitParameters(func.params, nctx);
-    let rtype = emitTypeSignature(func.resultType, ctx); 
+    let rtype = emitTypeSignatureBase(func.resultType, ctx); 
 
     let pre: CString = CString::concat(indent, rtype, ' ', name );
     let params_impl: CString = CString::concat('(', params, ') noexcept ');
@@ -624,8 +651,8 @@ function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx
 
 function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(member.name);
-    let mtype = emitTypeKeyField(member.declaredType.tkeystr, ctx);
-    return CString::concat(indent, 'const ', mtype, ' ', name, ';%n;');
+    let mtype = emitTypeSignatureParamFieldType(member.declaredType, ctx);
+    return CString::concat(indent, mtype, ' ', name, ';%n;');
 }
 
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Context, indent: CString): CString {
@@ -650,10 +677,10 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.name;
-        let rtype = emitTypeSignature(m.resultType, ctx);
-        let this_type = emitTypeKeyBase(declaredIn, nctx); 
+        let rtype = emitTypeSignatureBase(m.resultType, ctx);
+        let this_type = emitThisType(declaredIn, ctx);
         let params = emitParameters(m.params, nctx);
-        let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(const ');
+        let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(');
 
         if(params === '') {
             return CString::concat(first, this_type, ' ', emitSpecialThis(), params, ') noexcept;%n;');
@@ -670,7 +697,7 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::NamespaceFunctionDecl
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, decl.fullns);
 
     let pre = decl.name;
-    let rtype = emitTypeSignature(decl.resultType, ctx); 
+    let rtype = emitTypeSignatureBase(decl.resultType, ctx); 
     let params = emitParameters(decl.params, nctx);
     let first = CString::concat(ident, rtype, ' ', pre );
     return CString::concat(first, '(', params, ') noexcept;%n;');
@@ -715,7 +742,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         let emit_entity = emitEntityTypeDecl(e, typekey, ctx, full_indent);
         let entity_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), e.fullns, full_indent);
         let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
-            return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), typekey, ctx, full_indent));
+            return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), tk, ctx, full_indent));
         });
         return CString::concat(acc, indent, entity_tinfo, emit_entity, entity_staticmethods);
     });
