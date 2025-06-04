@@ -176,7 +176,7 @@ function _$bval(v) {
 
 const _$fkeq = {
     "Enum": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
-    "Bool": function(v1, v2) { return _$opubx(v1) && _$opubx(v2); },
+    "Bool": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "Int": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "Nat": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
     "BigInt": function(v1, v2) { return _$opubx(v1) === _$opubx(v2); },
