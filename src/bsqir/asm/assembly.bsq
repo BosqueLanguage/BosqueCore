@@ -323,6 +323,27 @@ entity Assembly {
         }
     }
 
+    method tryLookupInvokeImplDeclaration(ikey: InvokeKey): Option<AbstractInvokeDecl> {
+        if(this.nsfuncs.has(ikey)) {
+            return some(this.nsfuncs.get(ikey));
+        }
+        elif(this.typefuncs.has(ikey)) {
+            return some(this.typefuncs.get(ikey));
+        }
+        elif(this.virtmethods.has(ikey)) {
+            return some(this.virtmethods.get(ikey));
+        }
+        elif(this.overmethods.has(ikey)) {
+            return some(this.overmethods.get(ikey));
+        }
+        elif(this.staticmethods.has(ikey)) {
+            return some(this.staticmethods.get(ikey));
+        }
+        else {
+            return none;
+        }
+    }
+
     method tryGetImplicitInvariantInfo(ikey: InvokeKey): Option<(|ConditionDecl, AbstractNominalTypeDecl|)> {
         %%TODO: we may want to move this into a setup where we have a map of ikey to invariant 
 
@@ -361,6 +382,30 @@ entity Assembly {
         }
 
         return none;
+    }
+
+    method gatherInvariantAndValidateFunctions(): List<InvokeKey> {
+        let cinvs = this.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+            
+        let cvalidates = this.allconcretetypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let ainvs = this.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.invariants.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.invariants.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        let avalidates = this.allabstracttypes
+            .map<AbstractNominalTypeDecl>(fn(tkey) => this.lookupNominalTypeDeclaration(tkey))
+            .filter(pred(tdecl) => !tdecl.validates.empty())
+            .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
+
+        return List<InvokeKey>::concat(List<InvokeKey>::concatAll(cinvs), List<InvokeKey>::concatAll(cvalidates), List<InvokeKey>::concatAll(ainvs), List<InvokeKey>::concatAll(avalidates));
     }
 
     method isNominalTypeConcrete(tkey: TypeKey): Bool {

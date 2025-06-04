@@ -52,6 +52,11 @@ namespace ListOps {
     recursive? function s_list_ltransduce<T, E, U>(l: List<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> = s_list_ltransduce;
 
     function s_list_sum<T: numeric>(l: List<T>, zero: T): T = s_list_sum;
+
+    function s_sorted_key_merge<T: keytype>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge;
+    function s_sort_key<T: keytype>(l: List<T>): List<T> = s_sort_key_uniqueify;
+    function s_sorted_key_merge_unique<T: keytype>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge;
+    function s_sort_key_uniqueify<T: keytype>(l: List<T>): List<T> = s_sort_key_uniqueify;
 }
 #else
 #endif %% SMT_LIBS

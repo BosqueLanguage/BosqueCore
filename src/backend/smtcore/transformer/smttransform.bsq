@@ -225,16 +225,17 @@ entity SMTTransformer {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
 
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+        let invchecks = !tdecl.allInvariants.empty();
+
         let needsdefault = !e.shuffleinfo.allOf(pred(arg) => arg.0?some);
-        if(!e.invchecks && !needsdefault) {
+        if(!invchecks && !needsdefault) {
             let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
             return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
         }
         else {
-            let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
-
             var orderargs: List<SMTAssembly::SafeExpression>;
             if(!needsdefault) {
                 orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
@@ -1370,7 +1371,7 @@ entity SMTTransformer {
         return none;
     }
 
-    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: BSQAssembly::CallGraph): SMTAssembly::Assembly {
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: SMTEmitter::BSQToSMTCallGraph): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, errinvokes};
 
         let tnsfuncs = callg.topoorder

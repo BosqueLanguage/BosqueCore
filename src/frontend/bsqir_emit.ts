@@ -341,10 +341,7 @@ class BSQIREmitter {
         const value = this.emitExpression(exp.value);
         const constype = this.emitTypeSignature(exp.constype);
 
-        const ttdecl = (exp.constype as NominalTypeSignature).decl as TypedeclTypeDecl;
-        const invchecks = ttdecl.allInvariants.length !== 0 || ttdecl.optofexp !== undefined;
-
-        return `BSQAssembly::LiteralTypeDeclValueExpression{ ${ebase}, value=${value}, constype=${constype}, invchecks=${invchecks} }`;
+        return `BSQAssembly::LiteralTypeDeclValueExpression{ ${ebase}, value=${value}, constype=${constype} }`;
     }
 
     private emitAccessNamespaceConstantExpression(exp: AccessNamespaceConstantExpression): string {
@@ -442,10 +439,9 @@ class BSQIREmitter {
 
     private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-        const invchecks = cdecl.allInvariants.length !== 0;
 
         if(cdecl.valuetype.tkeystr !== "CString" && cdecl.valuetype.tkeystr !== "String") {
-            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee}, invchecks=${invchecks} }`;
+            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee} }`;
             
         }
         else {
@@ -456,7 +452,6 @@ class BSQIREmitter {
 
     private emitConstructorStdExpression(cdecl: EntityTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-        const invchecks = cdecl.allInvariants.length !== 0;
 
         const shuffleinfo = exp.shuffleinfo.map((si) => {
             const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
@@ -471,7 +466,7 @@ class BSQIREmitter {
             cstrns.pop();
         }
         const fmt_cstrns = `fullns = List<CString>{${cstrns.join(', ')}}`;
-        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, ${fmt_cstrns}, invchecks=${invchecks} }`;
+        return `BSQAssembly::ConstructorStdExpression{ ${cpee}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{${shuffleinfo}}, ${fmt_cstrns} }`;
     }
 
     private emitConstructorPrimaryExpression(exp: ConstructorPrimaryExpression): string {

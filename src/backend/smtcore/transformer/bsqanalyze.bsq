@@ -1,0 +1,606 @@
+namespace SMTEmitter;
+
+entity BSQInvokeInfo {
+    %** Map from an invoke to all of the callees **%
+    field calleemap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    %** Map from an invoke to all of the callers **%
+    field callermap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    %** List of every reachable invoke **%
+    field reachable: List<BSQAssembly::InvokeKey>;
+}
+
+entity BSQToSMTCallGraph {
+    field invokeinfo: BSQInvokeInfo;
+
+    %** Topological order of invokes (up to SCC) **%
+    field topoorder: List<BSQAssembly::InvokeKey>;
+
+    %** Info on the strongly connected components **%
+    field sccs: List<List<BSQAssembly::InvokeKey>>;
+
+    method isInSCC(inv: BSQAssembly::InvokeKey): Bool {
+        return this.sccs.someOf(pred(scc) => scc.contains(inv));
+    }
+}
+
+entity BSQCCInfo {
+    %** Map from an invoke to all of the callees **%
+    field calleemap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    %** Map from an invoke to all of the callers **%
+    field callermap: Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>;
+
+    const emptyinfo: BSQCCInfo = BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
+
+    function createInit(current: BSQAssembly::InvokeKey): BSQCCInfo {
+        let emptyentry = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{current => List<BSQAssembly::InvokeKey>{}};
+        return BSQCCInfo{emptyentry, emptyentry};
+    }
+
+    function createWCallInfo(current: BSQAssembly::InvokeKey, ...callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
+        return BSQCCInfo::createWAllCallInfo(current, callees);
+    }
+
+    function createWAllCallInfo(current: BSQAssembly::InvokeKey, callees: List<BSQAssembly::InvokeKey>): BSQCCInfo {
+        if(callees.empty()) {
+            return BSQCCInfo::emptyinfo;
+        }
+        else {
+            let rcallees = callees.sortKeyUniqueify();
+            let calleemap = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{current => rcallees};
+        
+            let callermap = rcallees.reduce<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, 
+                fn(callermap, callee) => {
+                    return callermap.insert(callee, List<BSQAssembly::InvokeKey>{current});                      
+                });
+        
+            return BSQCCInfo{calleemap, callermap};
+        }
+    }
+
+    function mergeInfos(...infos: List<BSQCCInfo>): BSQCCInfo {
+        return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    function mergeAllInfos(infos: List<BSQCCInfo>): BSQCCInfo {
+        if(infos.empty()) {
+            return BSQCCInfo{Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}};
+        }
+        else {
+            let calleemaps = infos.map<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.calleemap);
+            let callees = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllConfluent(calleemaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
+
+            let callermaps = infos.map<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(info) => info.callermap);
+            let callers = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>::mergeAllConfluent(callermaps, fn(v1, v2) => List<BSQAssembly::InvokeKey>::sortedKeyMergeUnique(v1, v2));
+
+            return BSQCCInfo{callees, callers};
+        }
+    }
+}
+
+entity BSQToSMTCallGraphBuilder {
+    field assembly: BSQAssembly::Assembly;
+
+    recursive method processArgs(current: BSQAssembly::InvokeKey, args: List<BSQAssembly::Expression>): BSQCCInfo {
+        let infos = args.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg));
+
+        return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    recursive method processUnaryArg(current: BSQAssembly::InvokeKey, exp: BSQAssembly::Expression): BSQCCInfo {
+        return this.processExpression(current, exp);
+    }
+
+    recursive method processBinaryArgs(current: BSQAssembly::InvokeKey, lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression): BSQCCInfo {
+        return BSQCCInfo::mergeInfos(this.processExpression[recursive](current, lhs), this.processExpression[recursive](current, rhs));
+    }
+
+    recursive method processArgumentList(current: BSQAssembly::InvokeKey, argl: BSQAssembly::ArgumentList): BSQCCInfo {
+        let infos = argl.args.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg.exp));
+
+        return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    method processLiteralTypeDeclValueExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::LiteralTypeDeclValueExpression): BSQCCInfo {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.constype.tkeystr);
+        if(tdecl.allInvariants.empty()) {
+            return BSQCCInfo::emptyinfo; %% no invariants to check
+        }
+        else {
+            let implicitinvs = tdecl.allInvariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            return BSQCCInfo::createWAllCallInfo(current, implicitinvs);
+        }
+    }
+
+    recursive method processConstructorEListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorEListExpression): BSQCCInfo {
+        abort;
+    }
+
+    recursive method processConstructorPrimaryExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimaryExpression): BSQCCInfo {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
+        let argscalls = this.processArgumentList[recursive](current, e.args);
+        if(tdecl.allInvariants.empty()) {
+            return argscalls;
+        }
+        else {
+            let implicitinvs = tdecl.allInvariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            return BSQCCInfo::mergeInfos(argscalls, BSQCCInfo::createWAllCallInfo(current, implicitinvs));
+        }
+    }
+
+    recursive method processConstructorExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorExpression): BSQCCInfo {
+        match(e)@ {
+            BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimaryExpression => { return this.processConstructorPrimaryExpression[recursive](current, $e); }
+        }
+    }
+
+    recursive method processConstructorLambdaExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorLambdaExpression): BSQCCInfo {
+        %% We associate all calls in the lambda with the defining invoke (not the one whre the lambda is eventually invoked)
+        return this.processBodyImpl[recursive](current, e.body);
+    }
+
+    recursive method processCallNamespaceFunctionExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::CallNamespaceFunctionExpression): BSQCCInfo {
+        let argscalls = this.processArgumentList[recursive](current, e.argsinfo.args);
+        let nsfunc = this.assembly.nsfuncs.get(e.ikey);
+
+        %%TODO: we need to handle implicit default params here too
+        var defaultcalls = BSQCCInfo::emptyinfo;
+
+        var invariantcalls = BSQCCInfo::emptyinfo;
+        if(\/(!nsfunc.preconditions.empty(), !nsfunc.postconditions.empty())) {
+            let precalls = nsfunc.preconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            let postcalls = nsfunc.postconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+
+            invariantcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
+        }
+
+        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, invariantcalls);
+    }
+
+    recursive method processPostfixOp(current: BSQAssembly::InvokeKey, e: BSQAssembly::PostfixOp): BSQCCInfo {
+        let rootinfo = this.processUnaryArg[recursive](current, e.rootExp);
+        
+        let opsinfo = e.ops.map[recursive]<BSQCCInfo>(recursive fn(op) => {
+            match(op)@ {
+                BSQAssembly::PostfixAccessFromName => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixProjectFromNames => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAccessFromIndex => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixIsTest => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAsConvert => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAssignFields => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeVirtual => { abort; }
+                | BSQAssembly::PostfixLiteralKeyAccess => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixBoolConstant => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixNop => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAbort => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixWidenConvert => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAccessSomeValue => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixLiteralNoneValue => { return BSQCCInfo::emptyinfo; } 
+            }
+        });
+
+        return BSQCCInfo::mergeInfos(rootinfo, BSQCCInfo::mergeAllInfos(opsinfo));
+    }
+
+    recursive method processBinaryKeyEqExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::BinaryKeyEqExpression): BSQCCInfo {
+        match(e)@ {
+            BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.neoption, $e.neval); }
+            | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+        }
+    }
+
+    recursive method processIfExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::IfExpression): BSQCCInfo {
+        let infotest = this.processExpression[recursive](current, e.texp);
+        let infothen = this.processExpression[recursive](current, e.thenexp);
+        let infoelse = this.processExpression[recursive](current, e.elseexp);
+
+        return BSQCCInfo::mergeInfos(infotest, infothen, infoelse);
+    }
+
+    recursive method processExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::Expression): BSQCCInfo {
+        match(e)@ {
+            BSQAssembly::LiteralNoneExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralSimpleExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralCStringExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralStringExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralCRegexExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralRegexExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralTypeDeclValueExpression => { return this.processLiteralTypeDeclValueExpression(current, $e); }
+            | BSQAssembly::AccessNamespaceConstantExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::AccessStaticFieldExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::AccessEnumExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::AccessVariableExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::AccessCapturedVariableExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::ConstructorExpression => { return this.processConstructorExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive](current, $e); }
+            | BSQAssembly::LetExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { return this.processArgumentList[recursive](current, $e.argsinfo.args); }
+            | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive](current, $e); }
+            | BSQAssembly::CallTypeFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
+            | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
+            | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { abort; }
+            | BSQAssembly::LogicActionOrExpression => { abort; }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::SafeConvertExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::CreateDirectExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::PostfixOp => { return this.processPostfixOp[recursive](current, $e); }
+            | BSQAssembly::UnaryExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::BinaryArithExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive](current, $e); }
+            | BSQAssembly::KeyCmpEqualExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::KeyCmpLessExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::BinaryNumericExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::BinLogicExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
+            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::IfExpression => { return this.processIfExpression[recursive](current, $e); }
+        }
+    }
+
+    recursive method processIfStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::IfStatement): BSQCCInfo {
+        let infotest = this.processExpression[recursive](current, s.texp);
+        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock);
+
+        return BSQCCInfo::mergeInfos(infotest, infotrue);
+    }
+
+    recursive method processIfElseStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::IfElseStatement): BSQCCInfo {
+        let infotest = this.processExpression[recursive](current, s.texp);
+        let infotrue = this.processBlockStatement[recursive](current, s.trueBlock);
+        let infofalse = this.processBlockStatement[recursive](current, s.falseBlock);
+
+        return BSQCCInfo::mergeInfos(infotest, infotrue, infofalse);
+    }
+
+    recursive method processStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::Statement): BSQCCInfo {
+        match(s)@ {
+            BSQAssembly::EmptyStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::VariableDeclarationStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::VariableMultiDeclarationStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive](current, $s.exp,); }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive](current, $s.exp); }
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnVoidStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::ReturnSingleStatement => { return this.processExpression(current, $s.value); }
+            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::IfStatement => { return this.processIfStatement[recursive](current, $s);}
+            | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive](current, $s); }
+            | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::AssertStatement => { return this.processExpression[recursive](current, $s.cond); }
+            | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive](current, $s); }
+        }
+    }
+
+    recursive method processBlockStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::BlockStatement): BSQCCInfo {
+        let infos = s.statements.map[recursive]<BSQCCInfo>(recursive fn(stmt) => this.processStatement[recursive](current, stmt));
+        return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    recursive method processBodyStatementList(current: BSQAssembly::InvokeKey, stmts: List<BSQAssembly::Statement>): BSQCCInfo {
+        let infos = stmts.map[recursive]<BSQCCInfo>(recursive fn(stmt) => this.processStatement[recursive](current, stmt));
+        return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    recursive method processBodyImpl(current: BSQAssembly::InvokeKey, body: BSQAssembly::BodyImplementation): BSQCCInfo {
+        match(body)@ {
+            BSQAssembly::ExpressionBodyImplementation => { return this.processExpression[recursive](current, $body.exp); }
+            | BSQAssembly::StandardBodyImplementation => { return this.processBodyStatementList[recursive](current, $body.statements); }
+            | _ => { return BSQCCInfo::emptyinfo; }
+        }
+    }
+
+    method processInvokeKey(ikey: BSQAssembly::InvokeKey): BSQCCInfo {
+        let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
+        if(ff)@some {
+            return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processBodyImpl(ikey, $ff.body));
+        }
+
+        let iif = this.assembly.tryGetImplicitInvariantInfo(ikey);
+        if(iif)@some {
+            return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processExpression(ikey, $iif.0.exp));
+        }
+        else {
+            abort; %% an implicit field or arg initializer
+        }
+    }
+
+    function constructBSQInvokeInfo(assembly: BSQAssembly::Assembly): BSQInvokeInfo {
+        let builder = BSQToSMTCallGraphBuilder{assembly};
+
+        let iivs = assembly.gatherInvariantAndValidateFunctions();
+        let iivinfos = BSQCCInfo::mergeAllInfos(iivs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let ifvs = List<BSQAssembly::InvokeKey>{}; %%TODO gather all of the implicit field and arg initializers
+        let ifvinfos = BSQCCInfo::mergeAllInfos(ifvs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let funcinfos = BSQCCInfo::mergeAllInfos(assembly.allfuncs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+        let minfos = BSQCCInfo::mergeAllInfos(assembly.allmethods.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let allinfo = BSQCCInfo::mergeInfos(iivinfos, ifvinfos, funcinfos, minfos);
+        let reachable = List<BSQAssembly::InvokeKey>::concat(iivs, ifvs, assembly.allfuncs, assembly.allmethods).sortKey();
+
+        return BSQInvokeInfo{allinfo.calleemap, allinfo.callermap, reachable};
+    }
+
+    function constructBSQToSMTCallGraph(assembly: BSQAssembly::Assembly): BSQToSMTCallGraph {
+        let invokeinfo = BSQToSMTCallGraphBuilder::constructBSQInvokeInfo(assembly);
+        let topo, scc = Algorithm::topologicalSortWComponents<BSQAssembly::InvokeKey>(invokeinfo.reachable, fn(ii) => invokeinfo.calleemap.get(ii));
+
+        return BSQToSMTCallGraph{invokeinfo, topo, scc};
+    }
+}
+
+%*
+ * Compute the may error status of every invoke in the assembly
+ *%
+entity MayErrorAnalysis {
+    field assembly: BSQAssembly::Assembly;
+    field callgraph: BSQToSMTCallGraph;
+
+    recursive method processArgs(args: List<BSQAssembly::Expression>, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return args.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
+    }
+
+    recursive method processUnaryArg(exp: BSQAssembly::Expression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processExpression(exp, cerrors, lerrors);
+    }
+
+    recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return \/(this.processExpression(lhs, cerrors, lerrors), this.processExpression(rhs, cerrors, lerrors));
+    }
+
+    recursive method processArgumentList(argl: BSQAssembly::ArgumentList, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return argl.args.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg.exp, cerrors, lerrors));
+    }
+
+    method processLiteralTypeDeclValueExpression(e: BSQAssembly::LiteralTypeDeclValueExpression): Bool {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.constype.tkeystr);
+        return !tdecl.allInvariants.empty();
+    }
+
+    recursive method processConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        abort;
+    }
+
+    recursive method processConstructorPrimaryExpression(e: BSQAssembly::ConstructorPrimaryExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+        if(!tdecl.allInvariants.empty()) {
+            return true;
+        }
+        else {
+            if(tdecl)@<BSQAssembly::TypedeclStringOfTypeDecl> {
+                return true;
+            }
+            else {
+                return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+            }
+        }
+    }
+
+    recursive method processConstructorExpression(e: BSQAssembly::ConstructorExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        match(e)@ {
+            BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorPrimaryExpression => { return this.processConstructorPrimaryExpression[recursive]($e, cerrors, lerrors); }
+        }
+    }
+
+    recursive method processConstructorLambdaExpression(e: BSQAssembly::ConstructorLambdaExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        %% We associate all errors in the lambda with the defining invoke (not the one whre the lambda is eventually invoked) -- will parametric later
+        return this.processBodyImpl[recursive](e.body, cerrors, lerrors);
+    }
+
+    recursive method processCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        if(cerrors.tryGet(e.ikey) === true) {
+            return true; %% the called function may error
+        }
+
+        let nsfunc = this.assembly.nsfuncs.get(e.ikey);
+        if(\/(!nsfunc.preconditions.empty(), !nsfunc.postconditions.empty())) {
+            return true;
+        }
+        
+        return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
+    }
+
+    recursive method processPostfixOp(e: BSQAssembly::PostfixOp, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        let baseerr = this.processUnaryArg[recursive](e.rootExp, cerrors, lerrors);
+        if(baseerr) {
+            return true;
+        }
+        
+        return e.ops.someOf[recursive](recursive pred(op) => {
+            match(op)@ {
+                BSQAssembly::PostfixAccessFromName => { return false; }
+                | BSQAssembly::PostfixProjectFromNames => { return false; }
+                | BSQAssembly::PostfixAccessFromIndex => { return false; }
+                | BSQAssembly::PostfixIsTest => { return false; }
+                | BSQAssembly::PostfixAsConvert => { return true; }
+                | BSQAssembly::PostfixAssignFields => { abort; }
+                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeVirtual => { abort; }
+                | BSQAssembly::PostfixLiteralKeyAccess => { return false; }
+                | BSQAssembly::PostfixBoolConstant => { return false; }
+                | BSQAssembly::PostfixNop => { return false; }
+                | BSQAssembly::PostfixAbort => { return true; }
+                | BSQAssembly::PostfixWidenConvert => { return false; }
+                | BSQAssembly::PostfixAccessSomeValue => { return false; }
+                | BSQAssembly::PostfixLiteralNoneValue => { return false; } 
+            }
+        });
+    }
+
+    method maySubtractionUnderflow(e: BSQAssembly::BinaryArithExpression): Bool {
+        if(e)!<BSQAssembly::BinSubExpression> {
+            return false;
+        }
+        else {
+            return \/(e.etype.tkeystr === 'Nat'<BSQAssembly::TypeKey>, e.etype.tkeystr === 'BigNat'<BSQAssembly::TypeKey>);
+        }
+    }
+
+    recursive method processBinaryArithExpression(e: BSQAssembly::BinaryArithExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        if(e?<BSQAssembly::BinDivExpression>) { 
+            return true; %%div zero may always happen
+        }
+        elif(this.maySubtractionUnderflow(e)) {
+            return true;
+        }
+        else {
+            return this.processBinaryArgs[recursive](e.lhs, e.rhs, cerrors, lerrors);
+        }
+    }
+
+    recursive method processBinaryKeyEqExpression(e: BSQAssembly::BinaryKeyEqExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        match(e)@ {
+            BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
+            | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.neoption, $e.neval, cerrors, lerrors); }
+            | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+            | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+        }
+    }
+
+    recursive method processIfExpression(e: BSQAssembly::IfExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return \/(this.processExpression[recursive](e.texp, cerrors, lerrors), this.processExpression[recursive](e.thenexp, cerrors, lerrors), this.processExpression[recursive](e.elseexp, cerrors, lerrors));
+    }
+
+    recursive method processExpression(e: BSQAssembly::Expression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        match(e)@ {
+            BSQAssembly::LiteralNoneExpression => { return false; }
+            | BSQAssembly::LiteralSimpleExpression => { return false; }
+            | BSQAssembly::LiteralCStringExpression => { return false; }
+            | BSQAssembly::LiteralStringExpression => { return false; }
+            | BSQAssembly::LiteralCRegexExpression => { return false; }
+            | BSQAssembly::LiteralRegexExpression => { return false; }
+            | BSQAssembly::LiteralTypeDeclValueExpression => { return this.processLiteralTypeDeclValueExpression($e); }
+            | BSQAssembly::AccessNamespaceConstantExpression => { return false; }
+            | BSQAssembly::AccessStaticFieldExpression => { return false; }
+            | BSQAssembly::AccessEnumExpression => { return false; }
+            | BSQAssembly::AccessVariableExpression => { return false; }
+            | BSQAssembly::AccessCapturedVariableExpression => { return false; }
+            | BSQAssembly::ConstructorExpression => { return this.processConstructorExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::LetExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { return \/(lerrors.tryGet($e.fname) === true, this.processArgumentList[recursive]($e.argsinfo.args, cerrors, lerrors)); }
+            | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::CallTypeFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
+            | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
+            | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { abort; }
+            | BSQAssembly::LogicActionOrExpression => { abort; }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
+            | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
+            | BSQAssembly::SafeConvertExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
+            | BSQAssembly::CreateDirectExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
+            | BSQAssembly::PostfixOp => { return this.processPostfixOp[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::UnaryExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
+            | BSQAssembly::BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::KeyCmpEqualExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+            | BSQAssembly::KeyCmpLessExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+            | BSQAssembly::BinaryNumericExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+            | BSQAssembly::BinLogicExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
+            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::IfExpression => { return this.processIfExpression[recursive]($e, cerrors, lerrors); }
+        }
+    }
+
+    recursive method processIfStatement(s: BSQAssembly::IfStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return \/(this.processExpression[recursive](s.texp, cerrors, lerrors), this.processBlockStatement[recursive](s.trueBlock, cerrors, lerrors));
+    }
+
+    recursive method processIfElseStatement(s: BSQAssembly::IfElseStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return \/(this.processExpression[recursive](s.texp, cerrors, lerrors), this.processBlockStatement[recursive](s.trueBlock, cerrors, lerrors), this.processBlockStatement[recursive](s.falseBlock, cerrors, lerrors));
+    }
+
+    recursive method processStatement(s: BSQAssembly::Statement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        match(s)@ {
+            BSQAssembly::EmptyStatement => { return false; }
+            | BSQAssembly::VariableDeclarationStatement => { return false; }
+            | BSQAssembly::VariableMultiDeclarationStatement => { return false; }
+            | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnVoidStatement => { return false; }
+            | BSQAssembly::ReturnSingleStatement => { return this.processExpression[recursive]($s.value, cerrors, lerrors); }
+            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::IfStatement => { return this.processIfStatement[recursive]($s, cerrors, lerrors); }
+            | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive]($s, cerrors, lerrors); }
+            | BSQAssembly::AbortStatement => { return true; }
+            | BSQAssembly::AssertStatement => { return true; }
+            | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive]($s, cerrors, lerrors); }
+        }
+    }
+
+    recursive method processBlockStatement(s: BSQAssembly::BlockStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return s.statements.someOf[recursive](recursive pred(stmt) => this.processStatement[recursive](stmt, cerrors, lerrors));
+    }
+
+    recursive method processBodyStatementList(stmts: List<BSQAssembly::Statement>, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return stmts.someOf[recursive](recursive pred(stmt) => this.processStatement[recursive](stmt, cerrors, lerrors));
+    }
+
+    recursive method processBodyImpl(body: BSQAssembly::BodyImplementation, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        match(body)@ {
+            BSQAssembly::ExpressionBodyImplementation => { return this.processExpression($body.exp, cerrors, lerrors); }
+            | BSQAssembly::StandardBodyImplementation => { return this.processBodyStatementList($body.statements, cerrors, lerrors); }
+            | _ => { return false; }
+        }
+    }
+
+    method processInvokeKey(ikey: BSQAssembly::InvokeKey, cerrors: Map<BSQAssembly::InvokeKey, Bool>): Bool {
+        let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
+        if(ff)@some {
+            return this.processBodyImpl($ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+        }
+
+        let iif = this.assembly.tryGetImplicitInvariantInfo(ikey);
+        if(iif)@some {
+            return this.processExpression($iif.0.exp, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+        }
+        else {
+            abort; %% an implicit field or arg initializer
+        }
+    }
+
+    function generateInvokeErrorInfo(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph): Map<BSQAssembly::InvokeKey, Bool> {
+        let erranalysis = MayErrorAnalysis{assembly, callg};
+
+        let ierrors = callg.invokeinfo.reachable.reduce<Map<BSQAssembly::InvokeKey, Bool>>(Map<BSQAssembly::InvokeKey, Bool>{}, fn(emap, ikey) => {
+            return emap.insert(ikey, false);
+        });
+
+        let ferrors = Algorithm::worklist<Map<BSQAssembly::InvokeKey, Bool>, BSQAssembly::InvokeKey>(ierrors, callg.topoorder, fn(emap, ikey) => {
+            let mayerror = erranalysis.processInvokeKey(ikey, emap);
+            if(emap.get(ikey) === mayerror) {
+                return (|emap, List<BSQAssembly::InvokeKey>{}|);
+            }
+            else {
+                return (|emap.set(ikey, true), callg.invokeinfo.callermap.get(ikey)|);
+            }
+        });
+        
+        return ferrors;
+    }
+}

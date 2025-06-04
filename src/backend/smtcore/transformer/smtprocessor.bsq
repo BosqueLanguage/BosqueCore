@@ -16,8 +16,8 @@ entity Transformer {
 
         let treeAssembly = simpleAssembly; %%TODO:: treeflow.bsq
         
-        let callg = BSQAssembly::CallGraphBuilder::buildCallGraph(treeAssembly);
-        let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generate(treeAssembly, callg);
+        let callg = BSQToSMTCallGraphBuilder::constructBSQToSMTCallGraph(treeAssembly);
+        let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generateInvokeErrorInfo(treeAssembly, callg);
 
         return SMTTransformer::transformAssemblyToSMT(treeAssembly, errinvokes, callg);
     }
