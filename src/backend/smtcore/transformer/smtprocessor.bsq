@@ -8,6 +8,7 @@ declare namespace SMTEmitter {
 }
 
 const s_ignoreErrTrgt: Nat = 0n;
+const s_invalidErrTrgt: Nat = 65536n;
 
 entity Transformer {
     function transformAssembly(assembly: BSQAssembly::Assembly): SMTAssembly::Assembly {
@@ -19,7 +20,7 @@ entity Transformer {
         let callg = BSQToSMTCallGraphBuilder::constructBSQToSMTCallGraph(treeAssembly);
         let errinvokes: Map<BSQAssembly::InvokeKey, Bool> = MayErrorAnalysis::generateInvokeErrorInfo(treeAssembly, callg);
 
-        return SMTTransformer::transformAssemblyToSMT(treeAssembly, errinvokes, callg);
+        return SMTTransformer::transformAssemblyToSMT(treeAssembly, callg, errinvokes);
     }
 }
 

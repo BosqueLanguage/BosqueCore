@@ -55,7 +55,7 @@ entity SMTTransformerCtx {
     field mayErrorReturn: Bool;
 
     field currentFile: String;
-    field currentInvoke: Option<SMTAssembly::InvokeKey>;
+    field currentInvoke: Option<BSQAssembly::InvokeKey>;
 
     field tempCtr: Nat;
     field errCtr: Nat;
@@ -64,7 +64,8 @@ entity SMTTransformerCtx {
 
     method addError(bsqsinfo: BSQAssembly::SourceInfo): SMTTransformerCtx {
         let smtsinfo = SMTAssembly::SourceInfo{bsqsinfo.line, bsqsinfo.column};
-        let errinfo = SMTAssembly::ErrorInfo{this.errCtr, this.currentFile, smtsinfo, this.currentInvoke};
+        let iiv = if ($ci = this.currentInvoke)@some then some($ci.value) else none; 
+        let errinfo = SMTAssembly::ErrorInfo{this.errCtr, this.currentFile, smtsinfo, iiv};
 
         return this[errors = $errors.pushBack(errinfo), errCtr = $errCtr + 1n];
     }
@@ -72,6 +73,7 @@ entity SMTTransformerCtx {
 
 entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
+    field callg: BSQToSMTCallGraph;
     field errinvokes: Map<BSQAssembly::InvokeKey, Bool>;
 
     const nonetype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'None'<BSQAssembly::TypeKey> };
@@ -308,18 +310,29 @@ entity SMTTransformer {
     }
 
     recursive method transformCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
-        let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
+        var sccerr = false;
+        if($cinv = ctx.currentInvoke)@some {
+            sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(e.ikey)));
+        }
 
-        %%TODO: check lambda params -- and see if there are then specialize smtikey to $lambda_err if this is an err
-
-        if(!this.errinvokes.get(e.ikey)) {
-            let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResult(e.etype, callop, obinds);
+        if(sccerr) {
+            let abtop = SMTAssembly::AbortExpression{this.transformStdTypeToSMT(e.etype), SMTEmitter::s_invalidErrTrgt};
+            return ctx, ErrorResult{this.transformStdTypeToSMT(e.etype), abtop};
         }
         else {
-            let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-            return nctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
+            let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+            let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
+
+            %%TODO: check lambda params -- and see if there are then specialize smtikey to $lambda_err if this is an err
+
+            if(!this.errinvokes.get(e.ikey)) {
+                let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
+                return nctx, this.wrapOperationResult(e.etype, callop, obinds);
+            }
+            else {
+                let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
+                return nctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
+            }
         }
     }
 
@@ -1191,10 +1204,7 @@ entity SMTTransformer {
 
     method transformBodyToSMTOperation(impl: BSQAssembly::BodyImplementation, ctx: SMTTransformerCtx, ttype: BSQAssembly::TypeSignature): SMTTransformerCtx, SMTAssembly::Operation {
         match(impl)@ {
-            BSQAssembly::BuiltinBodyImplementation => {
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::ExpressionBodyImplementation => {
+            BSQAssembly::ExpressionBodyImplementation => {
                 let rctx, smtexp = this.transformExpressionToSMT($impl.exp, ctx);
 
                 if(smtexp)@<ErrorResult> {
@@ -1216,15 +1226,28 @@ entity SMTTransformer {
                 
                 return rctx, smtop@some;
             }
-            | _ => {
-                abort; %% NOT IMPLEMENTED
-            }
         }
     }
 
     method transformBodyToSMTBody(impl: BSQAssembly::BodyImplementation, ctx: SMTTransformerCtx, ttype: BSQAssembly::TypeSignature): SMTAssembly::Body {
         let rctx, body = this.transformBodyToSMTOperation(impl, ctx, ttype);
         return SMTAssembly::Body{body, rctx.errors};
+    }
+
+    method transformNamespaceFunctionDeclToBuiltinSMT(decl: BSQAssembly::NamespaceFunctionDecl): SMTAssembly::BuiltinFunctionDecl {
+        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
+
+        let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformStdTypeToSMT(p.ptype)});
+        let rtype = this.transformStdTypeToSMT(decl.resultType);
+        let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+    
+        %%TODO: handle lambda here
+        let bname = decl.body@<BSQAssembly::BuiltinBodyImplementation>.builtin;
+
+        return SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, bname };
     }
 
     method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl): SMTAssembly::FunctionDecl {
@@ -1235,7 +1258,7 @@ entity SMTTransformer {
         let rtype = this.transformStdTypeToSMT(decl.resultType);
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(TransformNameManager::convertInvokeKey(decl.ikey)), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
         let body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
         return SMTAssembly::FunctionDecl{ ikey, params, artype, body };
     }
@@ -1251,7 +1274,7 @@ entity SMTTransformer {
         let rtype = 'Bool'<SMTAssembly::TypeKey>;
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(TransformNameManager::convertInvokeKey(decl.ikey)), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
+        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}};
         let rctx, smtexp = this.transformExpressionToSMT(decl.exp, ctx);
 
         var body: SMTAssembly::Body;
@@ -1357,6 +1380,20 @@ entity SMTTransformer {
         }
     }
 
+    method transformInvokeToSMTBuiltinFunction(ikey: BSQAssembly::InvokeKey): Option<SMTAssembly::BuiltinFunctionDecl> {
+        let bsqnsdecl = this.assembly.nsfuncs.tryGet(ikey);
+        if(bsqnsdecl)@some {
+            if($bsqnsdecl.body?!<BSQAssembly::BuiltinBodyImplementation>) {
+                return none;
+            }
+            else {
+                return some(this.transformNamespaceFunctionDeclToBuiltinSMT($bsqnsdecl));
+            }
+        }
+
+        return none;
+    }
+
     method transformInvokeToSMTFunction(ikey: BSQAssembly::InvokeKey): Option<SMTAssembly::FunctionDecl> {
         let bsqnsdecl = this.assembly.nsfuncs.tryGet(ikey);
         if(bsqnsdecl)@some {
@@ -1371,20 +1408,23 @@ entity SMTTransformer {
         return none;
     }
 
-    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, errinvokes: Map<BSQAssembly::InvokeKey, Bool>, callg: SMTEmitter::BSQToSMTCallGraph): SMTAssembly::Assembly {
-        let transformer = SMTTransformer{assembly, errinvokes};
+    function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
+        let transformer = SMTTransformer{assembly, callg, errinvokes};
 
         let tnsfuncs = callg.topoorder
-            .reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
+            .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
                 fn(acc, ikey) => {
+                    let bid = transformer.transformInvokeToSMTBuiltinFunction(ikey);
+                    if(bid)@some {
+                        return acc.insert($bid.invokeKey, $bid);
+                    }
+                    
                     let fd = transformer.transformInvokeToSMTFunction(ikey);
-
                     if(fd)@some {
                         return acc.insert($fd.invokeKey, $fd);
                     }
-                    else {
-                        return acc;
-                    }
+
+                    abort; %% NOT IMPLEMENTED -- should never happen
                 });
 
         let tentities = assembly.allconcretetypes
@@ -1394,7 +1434,6 @@ entity SMTTransformer {
         let tconstructables = assembly.allconcretetypes
             .filter(pred(tkey) => assembly.constructables.has(tkey))
             .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => transformer.transformConstructableDeclToSMT(assembly.constructables.get(tkey)));
-
 
         let tpconcepts = assembly.allabstracttypes
             .filter(pred(tkey) => assembly.pconcepts.has(tkey))

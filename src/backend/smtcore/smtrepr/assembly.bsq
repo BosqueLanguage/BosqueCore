@@ -37,7 +37,7 @@ entity ErrorInfo {
     field errCtr: Nat;
     field infile: String;
     field sinfo: SourceInfo;
-    field ininvoke: Option<InvokeKey>;
+    field ininvoke: Option<CString>;
 }
 
 entity InvokeParameterDecl {

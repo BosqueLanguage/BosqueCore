@@ -592,7 +592,10 @@ entity MayErrorAnalysis {
         });
 
         let ferrors = Algorithm::worklist<Map<BSQAssembly::InvokeKey, Bool>, BSQAssembly::InvokeKey>(ierrors, callg.topoorder, fn(emap, ikey) => {
-            let mayerror = erranalysis.processInvokeKey(ikey, emap);
+            let sccerror = callg.sccs.someOf(pred(scc) => scc.contains(ikey));
+            let bodyerror = erranalysis.processInvokeKey(ikey, emap);
+            let mayerror = \/(sccerror, bodyerror);
+
             if(emap.get(ikey) === mayerror) {
                 return (|emap, List<BSQAssembly::InvokeKey>{}|);
             }
