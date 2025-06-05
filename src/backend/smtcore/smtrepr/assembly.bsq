@@ -58,6 +58,7 @@ entity BuiltinFunctionDecl {
     field params: List<InvokeParameterDecl>;
     field resultType: ResultType;
 
+    field lgen: Option<(|Identifier, Bool|)>;
     field specialname: CString;
 }
 

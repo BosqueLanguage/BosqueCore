@@ -1571,6 +1571,15 @@ class TypeChecker {
             }
         }
 
+        //check that we don't have a lambda parameter that takes a lambda
+        for(let i = 0; i < params.length; ++i) {
+            const ptype = params[i].type;
+            if(ptype instanceof LambdaTypeSignature) {
+                this.reportError(exp.sinfo, `Lambda parameters cannot be a lambda type --  ${params[i].name}`);
+                argsok = false;
+            }
+        }
+
         if(!argsok || (rtype instanceof ErrorTypeSignature)) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
