@@ -357,7 +357,7 @@ class BSQIREmitter {
         // May not be the best way to handle, bsqir does not support undefined though (i dont think atleast) 
         const resolvedDeclType = (exp.resolvedDeclType !== undefined) ? this.emitTypeSignature(exp.resolvedDeclType) : assert(false, "AccessStatiField no defined resolvedDeclType");
         
-        return `BSQAssembly::AccessStaticFieldExpression{ ${ebase}, stype=${stype}, name=${name}, resolvedDeclType=${resolvedDeclType}}`;
+        return `BSQAssembly::AccessStaticFieldExpression{ ${ebase}, stype=${stype}, name='${name}'<BSQAssembly::Identifier>, resolvedDeclType=${resolvedDeclType}}`;
     }
     
     private emitAccessEnumExpression(exp: AccessEnumExpression): string {
@@ -580,7 +580,7 @@ class BSQIREmitter {
         }
         else {
             const argsinfo = this.emitArgumentList(exp.args);
-            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey=${ikey}, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`
+            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`
         }
     }
 
@@ -824,7 +824,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype} lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitKeyCompareLessExpression(exp: KeyCompareLessExpression): string {
@@ -832,7 +832,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype} lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression): string {
@@ -1376,7 +1376,7 @@ class BSQIREmitter {
         const optypes = stmt.optypes.map((op) => this.emitTypeSignature(op)).join(", ");
 
         // TODO: Need to format correctly
-        return `BSQAssembly::SwitchStatement{${sbase}, sval=${sval}, switchflow=${switchflow}, mustExhaustive=${mustExhaustive}, optypes=${optypes}}`;
+        return `BSQAssembly::SwitchStatement{${sbase}, sval=${sval}, switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}}, mustExhaustive=${mustExhaustive}, optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`;
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: BsqonCodeFormatter): string {
@@ -1390,10 +1390,12 @@ class BSQIREmitter {
         }).join(", ");
         const mustExhaustive = stmt.mustExhaustive;
         // Need to check if none type here works
-        const implicitFinalType = (stmt.implicitFinalType !== undefined) ? this.emitTypeSignature(stmt.implicitFinalType) : "none";
+        const finalop = stmt.matchflow[stmt.matchflow.length-1];
+        const implicitfinalop = stmt.implicitFinalType !== undefined ? stmt.implicitFinalType : finalop.mtype;
+        const implicitFinalType = (implicitfinalop !== undefined) ? this.emitTypeSignature(implicitfinalop) : assert(false, "No final type signature found in match statement");
 
         // TODO: Need to format correctly
-        return `BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo}, matchflow=${matchflow}, mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`;
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl(), ` matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
@@ -1453,8 +1455,8 @@ class BSQIREmitter {
 
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
         const sbase = this.emitStatementBase(stmt);
-        const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt);
-        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, "}}"].join("");
+        const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt).join(`, `);
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", stmts, "}}"].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {
@@ -1751,8 +1753,6 @@ class BSQIREmitter {
         }
 
         fmt.indentPush();
-        let ret: string = "";
-
         const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
         const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
@@ -1761,13 +1761,22 @@ class BSQIREmitter {
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
         fmt.indentPop();
 
+        // May need to be moved into each case individually
+        let ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+        this.allmethods.push(ret); 
+
+        // Need to double check he abstract and virtual methods here make sense...
         if(rcvrtype[1] === undefined && optmapping === undefined) {
-            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-            this.allmethods.push(ret); 
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
+        else if(rcvrtype[1] !== undefined && optmapping !== undefined) {
+            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
+        }
+        else if(rcvrtype[1] !== undefined && optmapping === undefined) {
+             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
+        }
         else {
-            assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
+            assert(false, "Not Implemented -- Override methods");
         }
 
         this.mapper = omap;
@@ -1776,7 +1785,10 @@ class BSQIREmitter {
      }
 
     private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
-        let decls: string[] = [];
+        let staticdecls: string[] = [];
+        let abstractdecls: string[] = [];
+        let virtualdecls: string[] = [];
+        let overridedecls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
             const mdecl = mdecls[i][0];
@@ -1785,22 +1797,25 @@ class BSQIREmitter {
             if(mii !== undefined) {
                 if(mii.binds === undefined) {
                     const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
-                    decls.push(bsqondecl);
+                    if(rcvr[1] === undefined) {
+                        staticdecls.push(bsqondecl);
+                    }
+                    else {
+                        abstractdecls.push(bsqondecl);
+                    }
                 }
                 else {
                     for(let j = 0; j < mii.binds.length; ++j) {
                         const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
-                        decls.push(bsqondecl);
+                        // TODO: Need to split up between override and virtual. Not quite sure how this goes.
+                        // Also I am guessing no instantation info means we are virtual here.
+                        virtualdecls.push(bsqondecl);
                     }
                 }
             }
         }
 
-        //
-        //TODO: need to split these up based on the kind of method (abstract, virtual, override, static)
-        //
-
-        return [[], [], [], decls];
+        return [abstractdecls, virtualdecls, overridedecls, staticdecls];
     }
 
     private emitConstMemberDecls(ns: FullyQualifiedNamespace, declInType: NominalTypeSignature, decls: ConstMemberDecl[]) {
