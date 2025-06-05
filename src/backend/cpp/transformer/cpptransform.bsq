@@ -429,6 +429,7 @@ entity CPPTransformer {
                 let cppstmts = this.transformStatementListToCpp($body.statements);
                 return CPPAssembly::StandardBodyImplementation{ cppstmts };
             }
+            | BSQAssembly::BuiltinBodyImplementation => { return CPPAssembly::BuiltinBodyImplementation{ $body.builtin }; }
             | _ => { abort; }
         }
     }

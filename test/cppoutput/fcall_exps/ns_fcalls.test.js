@@ -3,7 +3,7 @@
 import { runMainCode } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
-describe ("Exec -- NamespaceFunction (no template)", () => {
+describe ("CPP Emit Evaluate -- NamespaceFunction (no template)", () => {
     it("should exec simple positional", function () {
         runMainCode("function foo(): Int { return 1i; } public function main(): Int { return foo(); }", "1_i");
         runMainCode("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(1i, true); }", "1_i");

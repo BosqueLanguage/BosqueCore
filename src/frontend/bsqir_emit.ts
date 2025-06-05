@@ -351,7 +351,13 @@ class BSQIREmitter {
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
-        assert(false, "Not implemented -- AccessStaticField");
+        const ebase = this.emitExpressionBase(exp);
+        const stype = this.emitTypeSignature(exp.stype);
+        const name = exp.name;
+        // May not be the best way to handle, bsqir does not support undefined though (i dont think atleast) 
+        const resolvedDeclType = (exp.resolvedDeclType !== undefined) ? this.emitTypeSignature(exp.resolvedDeclType) : assert(false, "AccessStatiField no defined resolvedDeclType");
+        
+        return `BSQAssembly::AccessStaticFieldExpression{ ${ebase}, stype=${stype}, name=${name}, resolvedDeclType=${resolvedDeclType}}`;
     }
     
     private emitAccessEnumExpression(exp: AccessEnumExpression): string {
@@ -430,7 +436,21 @@ class BSQIREmitter {
     }
 
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
-        assert(false, "Not implemented -- CollectionConstructor");
+        let ctype = exp.ctype as NominalTypeSignature;
+        const cebase = this.emitConstructorPrimaryExpressionBase(exp);
+        
+        if(cdecl instanceof ListTypeDecl) {
+            const elemtype = this.emitTypeSignature(ctype.alltermargs[0]);
+            return `BSQAssembly::ConstructorPrimaryListExpression{ ${cebase}, elemtype=${elemtype} }`
+        }
+        else if(cdecl instanceof MapTypeDecl) {
+            const ktype = this.emitTypeSignature(ctype.alltermargs[0]);
+            const vtype = this.emitTypeSignature(ctype.alltermargs[1]);
+            return `BSQAssembly::ConstructorPrimaryMapExpression{${cebase}, keytype=${ktype}, valuetype=${vtype}}`;           
+        }
+        else {
+            assert(false, "Unknown collection type -- emitCollectionConstructor");
+        }
     }
 
     private emitSpecialConstructableConstructor(exp: ConstructorPrimaryExpression): string {
@@ -549,12 +569,18 @@ class BSQIREmitter {
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         //const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
+        const ebase = this.emitExpressionBase(exp);
+        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name);
+        const ttype = this.emitTypeSignature(exp.ttype);
+        // May not want to assert here, bsqir appears to not allow undefined though?
+        const resolvedDeclType = exp.resolvedDeclType !== undefined ? this.emitTypeSignature(exp.resolvedDeclType) : assert(false, "CallTypeFunction resolvedDeclType undefined");
 
         if(exp.isSpecialCall) {
             assert(false, "Not implemented -- CallTypeFunction Special");
         }
         else {
-            assert(false, "Not implemented -- CallTypeFunction");
+            const argsinfo = this.emitArgumentList(exp.args);
+            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey=${ikey}, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`
         }
     }
 
@@ -577,11 +603,23 @@ class BSQIREmitter {
     }
 
     private emitSafeConvertExpression(exp: SafeConvertExpression): string {
-        assert(false, "Not implemented -- SafeConvert");
+        const ebase = this.emitExpressionBase(exp);
+        const expr = this.emitExpression(exp.exp);
+        const srctype = this.emitTypeSignature(exp.srctype);
+        const trgttype = this.emitTypeSignature(exp.trgttype);
+
+        return `BSQAssembly::SafeConvertExpression{ ${ebase}, exp=${expr}, srctype=${srctype}, trgttype=${trgttype}}`;
     }
 
     private emitCreateDirectExpression(exp: CreateDirectExpression): string {
-        assert(false, "Not implemented -- CreateDirect");
+        const ebase = this.emitExpressionBase(exp);
+        const expr = this.emitExpression(exp.exp);
+
+        // Not sure if these two are right
+        const srctype = this.emitTypeSignature(exp.srctype);
+        const trgttype = this.emitTypeSignature(exp.trgttype);
+
+        return `BSQAssembly::CreateDirectExpression{ ${ebase}, exp=${expr}, srctype=${srctype}, trgttype=${trgttype} }`
     }
 
     private emitPostfixOperationBase(exp: PostfixOperation): string {
@@ -1327,11 +1365,35 @@ class BSQIREmitter {
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: BsqonCodeFormatter): string {
-        assert(false, "Not Implemented -- emitSwitchStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const sval = this.emitExpression(stmt.sval);
+        const switchflow = stmt.switchflow.slice(1).map((e) => {
+            const cond = e.lval !== undefined ? `some(${this.emitExpression(e.lval.exp)})` : "none";
+            const body = this.emitBlockStatement(e.value, fmt);
+            return `(|${cond}, ${body}|)`;
+        }).join(", ");
+        const mustExhaustive = stmt.mustExhaustive;
+        const optypes = stmt.optypes.map((op) => this.emitTypeSignature(op)).join(", ");
+
+        // TODO: Need to format correctly
+        return `BSQAssembly::SwitchStatement{${sbase}, sval=${sval}, switchflow=${switchflow}, mustExhaustive=${mustExhaustive}, optypes=${optypes}}`;
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: BsqonCodeFormatter): string {
-        assert(false, "Not Implemented -- emitMatchStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const sval = this.emitExpression(stmt.sval[0]);
+        const bindInfo = (stmt.sval[1] != undefined) ? `some(${this.emitBinderInfo(stmt.sval[1])})` : "none";
+        const matchflow = stmt.matchflow.slice(1).map((e) => {
+            const cond = e.mtype !== undefined ? `some(${this.emitTypeSignature(e.mtype)})` : "none";
+            const body = this.emitBlockStatement(e.value, fmt);
+            return `(|${cond}, ${body}|)`;
+        }).join(", ");
+        const mustExhaustive = stmt.mustExhaustive;
+        // Need to check if none type here works
+        const implicitFinalType = (stmt.implicitFinalType !== undefined) ? this.emitTypeSignature(stmt.implicitFinalType) : "none";
+
+        // TODO: Need to format correctly
+        return `BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo}, matchflow=${matchflow}, mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`;
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {

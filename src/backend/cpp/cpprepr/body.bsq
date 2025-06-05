@@ -176,7 +176,7 @@ datatype BodyImplementation
 of
 AbstractBodyImplementation { } %% N/A
 | PredicateUFBodyImplementation { } %% N/A
-| BuiltinBodyImplementation { field builtin: CString; } %% N/A
+| BuiltinBodyImplementation { field builtin: CString; }
 | SynthesisBodyImplementation { } %% N/A
 | ExpressionBodyImplementation { field exp: Expression; } %% N/A
 | StandardBodyImplementation { field statements: List<Statement>; } %% Is Available :)
