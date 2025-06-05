@@ -1806,7 +1806,7 @@ class TypeChecker {
     private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {
         for(let i = 0; i < exp.args.length; ++i) {
             const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `And expression is not a subtype of Bool`);
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `And subexpression ${i} is not a subtype of Bool`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1815,7 +1815,7 @@ class TypeChecker {
     private checkLogicActionOrExpression(env: TypeEnvironment, exp: LogicActionOrExpression): TypeSignature {
         for(let i = 0; i < exp.args.length; ++i) {
             const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `Or expression is not a subtype of Bool`);
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `Or subexpression ${i} is not a subtype of Bool`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));

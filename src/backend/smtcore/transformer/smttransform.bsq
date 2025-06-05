@@ -30,8 +30,14 @@ namespace TransformNameManager {
         return SMTAssembly::TypeKey::from(resymbolCStringForSMT(nskey.value));
     }
 
-    function convertInvokeKey(ikey: BSQAssembly::InvokeKey): SMTAssembly::InvokeKey {
-        return SMTAssembly::InvokeKey::from(resymbolCStringForSMT(ikey.value));
+    function convertInvokeKey(ikey: BSQAssembly::InvokeKey, ttags: List<Bool>): SMTAssembly::InvokeKey {
+        if(ttags.empty()) {
+            return SMTAssembly::InvokeKey::from(resymbolCStringForSMT(ikey.value));
+        }
+        else {
+            let ttagstr = CString::concatAll(ttags.map<CString>(fn(tt) => if(tt) then 'T' else 'F'));
+            return SMTAssembly::InvokeKey::from(CString::concat(resymbolCStringForSMT(ikey.value), '$$', ttagstr));
+        }
     }
 
     function generateNameForFieldDefaultFunction(tkey: BSQAssembly::TypeKey, fname: CString): CString {
@@ -120,6 +126,8 @@ entity SMTTransformer {
     field assembly: BSQAssembly::Assembly;
     field callg: BSQToSMTCallGraph;
     field errinvokes: Map<BSQAssembly::InvokeKey, Bool>;
+
+    field erranalysis: MayErrorAnalysis;
 
     const nonetype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'None'<BSQAssembly::TypeKey> };
     const booltype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<BSQAssembly::TypeKey> };
@@ -296,7 +304,7 @@ entity SMTTransformer {
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
                 let iitypekey = this.transformStdTypeToSMT(iiv.declaredInType);
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
-                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey);
+                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
                 let eeid = cctx.errCtr;
                 let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size());
@@ -366,19 +374,31 @@ entity SMTTransformer {
         }
         else {
             let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
-            let smtikey = TransformNameManager::convertInvokeKey(e.ikey);
 
-            %%%
-            %%TODO: check lambda params
-            %%%
+            let fdecl = this.assembly.tryLookupInvokeImplDeclaration(e.ikey)@some;
+            let largs = fdecl.params.mapIdx<Option<(|BSQAssembly::Identifier, Bool|)>>(fn(p, ii) => {
+                if(p.ptype)@!<BSQAssembly::LambdaTypeSignature> {
+                    return none;
+                }
+                else {
+                    let iserr = this.erranalysis.processExpression(e.argsinfo.args.args.get(ii).exp, this.errinvokes, ctx.lambdaerr);
+                    return some((|p.pname, iserr|));
+                }
+            })
+            .filterSome<(|BSQAssembly::Identifier, Bool|)>();
 
-            if(!this.errinvokes.get(e.ikey)) {
+            let fctx = if(!largs.empty()) then nctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{e.ikey, largs})] else nctx;
+            if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(e.ikey))) {
+                let smtikey = TransformNameManager::convertInvokeKey(e.ikey, List<Bool>{});
+
                 let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-                return nctx, this.wrapOperationResult(e.etype, callop, obinds);
+                return fctx, this.wrapOperationResult(e.etype, callop, obinds);
             }
             else {
+                let smtikey = TransformNameManager::convertInvokeKey(e.ikey, largs.map<Bool>(fn(aa) => aa.1));
+
                 let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-                return nctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
+                return fctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
             }
         }
     }
@@ -1468,7 +1488,7 @@ entity SMTTransformer {
     }
 
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
-        let transformer = SMTTransformer{assembly, callg, errinvokes};
+        let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
     
         let tnsconstsinfo = assembly.nsconsts.map<(|SMTAssembly::NamespaceConstDecl, List<LambdaGeneratorInfo>|)>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc));
         let ttypeconstsinfo = assembly.typeconsts.map<(|SMTAssembly::ConstMemberDecl, List<LambdaGeneratorInfo>|)>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc));
@@ -1516,6 +1536,8 @@ entity SMTTransformer {
             .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(assembly.pconcepts.get(tkey)));
 
         let tallfuncs = callg.topoorder.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
+
+        %%TODO: nuts!!!!!
 
         return SMTAssembly::Assembly {
             nsconsts = tnsconstsinfo.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => nsc.0),
