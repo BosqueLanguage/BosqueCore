@@ -342,6 +342,8 @@ entity SMTTransformer {
     recursive method transformConstructorLambdaExpression(e: BSQAssembly::ConstructorLambdaExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lambda = e.etype@<BSQAssembly::LambdaTypeSignature>;
         
+        %%TODO clean this up we need to re-check the lambda using the lcall errors
+
         let params = lambda.params.map<(|SMTAssembly::Identifier, SMTAssembly::TypeKey|)>(fn(p) => (|SMTAssembly::Identifier::from(p.pname), this.transformStdTypeToSMT(p.ptype)|));
         let resultType = if(ctx.mayErrorReturn) then SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(lambda.resultType) } else SMTAssembly::SafeResult{ this.transformStdTypeToSMT(lambda.resultType) };
         let rctx, bop = this.transformBodyToSMTOperation[recursive](e.body, ctx, lambda.resultType);
