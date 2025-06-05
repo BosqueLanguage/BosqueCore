@@ -194,7 +194,7 @@ entity Assembly {
     field typeconsts: List<ConstMemberDecl>;
 
     field nspreds: List<PredicateFunctionDecl>;
-    field nsbuiltins: List<BuiltinFunctionDecl>;
+    field nsbuiltins: Map<InvokeKey, BuiltinFunctionDecl>;
     
     field funcs: Map<InvokeKey, FunctionDecl>;
     
@@ -211,5 +211,5 @@ entity Assembly {
 
     field datatypes: List<DatatypeTypeDecl>;
 
-    field allfuncs: List<InvokeKey>;
+    field orderedfuncs: List<InvokeKey>;
 }

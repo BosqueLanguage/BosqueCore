@@ -203,15 +203,9 @@ const CoreOnlyAttributes = [
     
     "__keycomparable",
     "__numeric",
-    "__revalidator",
-    "__crevalidator",
-    "__pathvalidator",
     
-    "__register",
     "__inline",
-    "__safe",
-    "__assume_safe",
-    "__conditional_safe"
+    "__intrinsic_error"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const TermRestrictions = [

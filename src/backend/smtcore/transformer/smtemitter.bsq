@@ -1363,15 +1363,23 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
     );
 
     let nspreds = CString::joinAll('%n;', asm.nspreds.map<CString>(fn(f) => emitPredicateFunctionDecl(f)));
-    let nsbuiltins = CString::joinAll('%n;', asm.nsbuiltins.map<CString>(fn(f) => emitBuiltinFunctionDecl(f, trgterr)));
     let prestr = CString::join('%n;',
         '#BEGIN ;;--PRE_FUNCS--;;',
         nspreds,
-        nsbuiltins,
         '#END ;;--PRE_FUNCS--;;'
     );
 
-    let efuncs_list = asm.allfuncs.map<CString>(fn(t) => emitFunctionDecl(asm.funcs.get(t), trgterr));
+    let efuncs_list = asm.orderedfuncs.map<CString>(fn(t) => {
+        if(asm.funcs.has(t)) {
+            return emitFunctionDecl(asm.funcs.get(t), trgterr);
+        }
+
+        if(asm.nsbuiltins.has(t)) {
+            return emitBuiltinFunctionDecl(asm.nsbuiltins.get(t), trgterr);
+        }
+        
+        abort;
+    });
     let efuncs = CString::concat(
         '#BEGIN ;;--FUNCTION_DECLS--;;',
         CString::joinAll('%n;%n;', efuncs_list),

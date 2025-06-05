@@ -1397,7 +1397,12 @@ entity SMTTransformer {
     method transformInvokeToSMTFunction(ikey: BSQAssembly::InvokeKey): Option<SMTAssembly::FunctionDecl> {
         let bsqnsdecl = this.assembly.nsfuncs.tryGet(ikey);
         if(bsqnsdecl)@some {
-            return some(this.transformNamespaceFunctionDeclToSMT($bsqnsdecl));
+            if(\/($bsqnsdecl.body?<BSQAssembly::StandardBodyImplementation>, $bsqnsdecl.body?!<BSQAssembly::ExpressionBodyImplementation>)) {
+                return some(this.transformNamespaceFunctionDeclToSMT($bsqnsdecl));
+            }
+            else {
+                return none;
+            }
         }
 
         let implicitinv = this.assembly.tryGetImplicitInvariantInfo(ikey);
@@ -1414,17 +1419,25 @@ entity SMTTransformer {
         let tnsfuncs = callg.topoorder
             .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, 
                 fn(acc, ikey) => {
-                    let bid = transformer.transformInvokeToSMTBuiltinFunction(ikey);
-                    if(bid)@some {
-                        return acc.insert($bid.invokeKey, $bid);
-                    }
-                    
                     let fd = transformer.transformInvokeToSMTFunction(ikey);
                     if(fd)@some {
                         return acc.insert($fd.invokeKey, $fd);
                     }
+                    else {
+                        return acc;
+                    }
+                });
 
-                    abort; %% NOT IMPLEMENTED -- should never happen
+        let tnsfuncsbuiltin = callg.topoorder
+            .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>{}, 
+                fn(acc, ikey) => {
+                    let bid = transformer.transformInvokeToSMTBuiltinFunction(ikey);
+                    if(bid)@some {
+                        return acc.insert($bid.invokeKey, $bid);
+                    }
+                    else {
+                        return acc;
+                    }
                 });
 
         let tentities = assembly.allconcretetypes
@@ -1446,7 +1459,7 @@ entity SMTTransformer {
             typeconsts = assembly.typeconsts.map<SMTAssembly::ConstMemberDecl>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc)),
 
             nspreds = List<SMTAssembly::PredicateFunctionDecl>{},
-            nsbuiltins = List<SMTAssembly::BuiltinFunctionDecl>{},
+            nsbuiltins = tnsfuncsbuiltin,
     
             funcs = tnsfuncs,
     
@@ -1463,7 +1476,7 @@ entity SMTTransformer {
 
             datatypes = List<SMTAssembly::DatatypeTypeDecl>{},
 
-            allfuncs = tallfuncs
+            orderedfuncs = tallfuncs
         };
     }
 }

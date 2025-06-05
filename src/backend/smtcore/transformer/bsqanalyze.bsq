@@ -572,7 +572,10 @@ entity MayErrorAnalysis {
     method processInvokeKey(ikey: BSQAssembly::InvokeKey, cerrors: Map<BSQAssembly::InvokeKey, Bool>): Bool {
         let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
         if(ff)@some {
-            return this.processBodyImpl($ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+            let exerr = $ff.attributes.someOf(pred(attr) => attr.name === '__intrinsic_error'<BSQAssembly::Identifier>);
+            let bodyerr = this.processBodyImpl($ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+
+            return \/(exerr, bodyerr);
         }
 
         let iif = this.assembly.tryGetImplicitInvariantInfo(ikey);
