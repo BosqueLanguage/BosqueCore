@@ -354,8 +354,7 @@ class BSQIREmitter {
         const ebase = this.emitExpressionBase(exp);
         const stype = this.emitTypeSignature(exp.stype);
         const name = exp.name;
-        // May not be the best way to handle, bsqir does not support undefined though (i dont think atleast) 
-        const resolvedDeclType = (exp.resolvedDeclType !== undefined) ? this.emitTypeSignature(exp.resolvedDeclType) : assert(false, "AccessStatiField no defined resolvedDeclType");
+        const resolvedDeclType = this.emitTypeSignature(this.tproc(exp.resolvedDeclType as TypeSignature));
         
         return `BSQAssembly::AccessStaticFieldExpression{ ${ebase}, stype=${stype}, name='${name}'<BSQAssembly::Identifier>, resolvedDeclType=${resolvedDeclType}}`;
     }
@@ -568,19 +567,17 @@ class BSQIREmitter {
     }
     
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
-        //const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
         const ebase = this.emitExpressionBase(exp);
         const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name);
         const ttype = this.emitTypeSignature(exp.ttype);
-        // May not want to assert here, bsqir appears to not allow undefined though?
-        const resolvedDeclType = exp.resolvedDeclType !== undefined ? this.emitTypeSignature(exp.resolvedDeclType) : assert(false, "CallTypeFunction resolvedDeclType undefined");
-
+        const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
+       
         if(exp.isSpecialCall) {
             assert(false, "Not implemented -- CallTypeFunction Special");
         }
         else {
-            const argsinfo = this.emitArgumentList(exp.args);
-            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`
+            const argsinfo = this.emitInvokeArgumentInfo(exp.name, exp.rec, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo); 
+            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`;
         }
     }
 
@@ -614,10 +611,8 @@ class BSQIREmitter {
     private emitCreateDirectExpression(exp: CreateDirectExpression): string {
         const ebase = this.emitExpressionBase(exp);
         const expr = this.emitExpression(exp.exp);
-
-        // Not sure if these two are right
-        const srctype = this.emitTypeSignature(exp.srctype);
-        const trgttype = this.emitTypeSignature(exp.trgttype);
+        const srctype = this.emitTypeSignature(exp.srctype as NominalTypeSignature);
+        const trgttype = this.emitTypeSignature(exp.trgttype as NominalTypeSignature);
 
         return `BSQAssembly::CreateDirectExpression{ ${ebase}, exp=${expr}, srctype=${srctype}, trgttype=${trgttype} }`
     }
@@ -1375,8 +1370,7 @@ class BSQIREmitter {
         const mustExhaustive = stmt.mustExhaustive;
         const optypes = stmt.optypes.map((op) => this.emitTypeSignature(op)).join(", ");
 
-        // TODO: Need to format correctly
-        return `BSQAssembly::SwitchStatement{${sbase}, sval=${sval}, switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}}, mustExhaustive=${mustExhaustive}, optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`;
+        return [`BSQAssembly::SwitchStatement{${sbase}, sval=${sval},`, fmt.nl(),`switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive},`, fmt.nl(), `optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`].join("");
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: BsqonCodeFormatter): string {
@@ -1389,13 +1383,12 @@ class BSQIREmitter {
             return `(|${cond}, ${body}|)`;
         }).join(", ");
         const mustExhaustive = stmt.mustExhaustive;
-        // Need to check if none type here works
+
         const finalop = stmt.matchflow[stmt.matchflow.length-1];
         const implicitfinalop = stmt.implicitFinalType !== undefined ? stmt.implicitFinalType : finalop.mtype;
         const implicitFinalType = (implicitfinalop !== undefined) ? this.emitTypeSignature(implicitfinalop) : assert(false, "No final type signature found in match statement");
 
-        // TODO: Need to format correctly
-        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl(), ` matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl(), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
@@ -1770,10 +1763,10 @@ class BSQIREmitter {
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
         else if(rcvrtype[1] !== undefined && optmapping !== undefined) {
-            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
+            this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
         }
         else if(rcvrtype[1] !== undefined && optmapping === undefined) {
-             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
+            this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
         }
         else {
             assert(false, "Not Implemented -- Override methods");

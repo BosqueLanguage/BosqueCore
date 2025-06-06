@@ -13,6 +13,10 @@ function resolveParseMapEntry(name) {
     return _$parsemap[name];
 }
 
+function generateErrorMessage(peek) {
+    return `\nError detected at:\nLine: ${peek.line}\nColumn: ${peek.column}\nPosition: ${peek.pos}\nSpan: ${peek.span}\nData: ${peek.data}`;   
+}
+
 function NOT_IMPLEMENTED(name) {
     throw new ParseError(new SourceInfo(0, 0, 0, 0) `Not implemented: ${name}`);
 }
@@ -957,7 +961,7 @@ BSQONParser.prototype.consumeAndGetData = function() {
 BSQONParser.prototype.consumeExpected = function(kind) {
     const tok = this.consume();
     if(tok.kind !== kind) {
-        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}`);
+        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}` + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -967,7 +971,7 @@ BSQONParser.prototype.consumeExpected = function(kind) {
 BSQONParser.prototype.consumeExpectedAndGetData = function(kind) {
     const tok = this.consume();
     if(tok.kind !== kind) {
-        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}`);
+        throw new ParserError(tok.sinfo, `Expected token ${kind} but found ${tok.kind}` + generateErrorMessage(this.peek()));
     }
 
     return tok.data;
@@ -1010,7 +1014,7 @@ BSQONParser.prototype.parseNone = function() {
  */
 BSQONParser.prototype.parseBool = function() {
     if(!(this.test(KW_true) || this.test(KW_false))) {
-        throw new ParserError(this.peek().sinfo, "Expected boolean literal");
+        throw new ParserError(this.peek().sinfo, "Expected boolean literal" + generateErrorMessage(this.peek()));
     }
     else {
         const bv = this.consumeAndGetData();
@@ -1102,7 +1106,7 @@ BSQONParser.prototype.parseCChar = function() {
         return ss.slice(2, -1);
     }
     catch(e) {
-        throw new ParserError(this.peek().sinfo, "Invalid CChar literal");
+        throw new ParserError(this.peek().sinfo, "Invalid CChar literal" + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -1115,7 +1119,7 @@ BSQONParser.prototype.parseUnicodeChar = function() {
         return ss.slice(2, -1);
     }
     catch(e) {
-        throw new ParserError(this.peek().sinfo, "Invalid UnicodeChar literal");
+        throw new ParserError(this.peek().sinfo, "Invalid UnicodeChar literal" + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -1128,7 +1132,7 @@ BSQONParser.prototype.parseString = function() {
         return validateStringLiteral(ss.slice(1, -1));
     }
     catch(e) {
-        throw new ParserError(this.peek().sinfo, "Invalid Unicode string literal");
+        throw new ParserError(this.peek().sinfo, "Invalid Unicode string literal" + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -1141,7 +1145,7 @@ BSQONParser.prototype.parseCString = function() {
         return validateCStringLiteral(ss.slice(1, -1));
     }
     catch(e) {
-        throw new ParserError(this.peek().sinfo, "Invalid CString literal");
+        throw new ParserError(this.peek().sinfo, "Invalid CString literal" + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -1419,7 +1423,7 @@ BSQONParser.prototype.parseIdentifier = function(tkey) {
     }
     else {
         if(vbind.tkey !== tkey) {
-            throw new ParserError(idinfo, `Expected type ${tkey} but found ${vbind.tkey}`);
+            throw new ParserError(idinfo, `Expected type ${tkey} but found ${vbind.tkey}` + generateErrorMessage(this.peek()));
         }
 
         return vbind.value;
@@ -1460,11 +1464,11 @@ BSQONParser.prototype.peekScopedType = function() {
  */
 BSQONParser.prototype.parseScopedType = function() {
     if(!this.test(TokenStrings.IdentifierName)) {
-        throw new ParserError(this.peek().sinfo, "Expected scoped type");
+        throw new ParserError(this.peek().sinfo, "Expected scoped type" + generateErrorMessage(this.peek()));
     }
 
     if(!isTypeIdentifierName(this.peek().data)) {
-        throw new ParserError(this.peek().sinfo, "Expected scoped type");
+        throw new ParserError(this.peek().sinfo, "Expected scoped type", + generateErrorMessage(this.peek()));
     }
 
     let sctype = this.tokens[this.idx].data;
@@ -1511,7 +1515,7 @@ BSQONParser.prototype.peekScopedTypeTailing = function() {
  */
 BSQONParser.prototype.parseScopedTypeTailing = function() {
     if(this.idx + 3 >= this.tokens.length || this.tokens[this.idx].kind !== SYM_langle || this.tokens[this.idx + 1].kind !== TokenStrings.IdentifierName) {
-        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
+        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type" + generateErrorMessage(this.peek()));
     }
     this.idx++;
 
@@ -1522,7 +1526,7 @@ BSQONParser.prototype.parseScopedTypeTailing = function() {
     }
 
     if(this.idx >= this.tokens.length || this.tokens[this.idx].kind !== SYM_rangle) {
-        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type");
+        throw new ParserError(this.peek().sinfo, "Expected tailing scoped type" + generateErrorMessage(this.peek()));
     }
     this.idx++;
 
@@ -1627,7 +1631,7 @@ BSQONParser.prototype.checkSpecialCons = function(token) {
 BSQONParser.prototype.checkConsType = function(tkey) {
     const tt = this.parseScopedType();
     if(tt !== tkey) {
-        throw new ParserError(this.peek().sinfo, `Expected type ${tkey} but found ${tt}`);
+        throw new ParserError(this.peek().sinfo, `Expected type ${tkey} but found ${tt}` + generateErrorMessage(this.peek()));
     }
 }
 /**
@@ -1648,7 +1652,7 @@ BSQONParser.prototype.parseSingleArg = function(special, fname, tkey) {
         this.consume();
 
         if(nval !== fname) {
-            throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
+            throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}` + generateErrorMessage(this.peek()));
         }
     }
 
@@ -1686,7 +1690,7 @@ BSQONParser.prototype.parseArgListGeneral = function(tkeys) {
     }
 
     if(!this.test(SYM_lbrace)) {
-        throw new ParserError(this.peek().sinfo, "Expected argument list");
+        throw new ParserError(this.peek().sinfo, "Expected argument list" + generateErrorMessage(this.peek()));
     }
     this.consume();
 
@@ -1712,18 +1716,18 @@ BSQONParser.prototype.parseArgListGeneral = function(tkeys) {
 
                 const ffidx = tkeys.findIndex((mm) => mm[0] === nval);
                 if(ffidx === -1) {
-                    throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}`);
+                    throw new ParserError(this.peek().sinfo, `Unknown named argument: ${nval}` + generateErrorMessage(this.peek()));
                 }
 
                 if(res[ffidx] !== undefined) {
-                    throw new ParserError(this.peek().sinfo, `Duplicate argument: ${nval}`);
+                    throw new ParserError(this.peek().sinfo, `Duplicate argument: ${nval}` + generateErrorMessage(this.peek()));
                 }
 
                 res[ffidx] = this.parseValue(tkeys[ffidx][1]);
             }
             else {
                 if(!positional) {
-                    throw new ParserError(this.peek().sinfo, "All positional arguments must come before named arguments");
+                    throw new ParserError(this.peek().sinfo, "All positional arguments must come before named arguments" + generateErrorMessage(this.peek()));
                 }
 
                 res[pval] = this.parseValue(tkeys[pval][1]);
@@ -1756,7 +1760,7 @@ BSQONParser.prototype.parseMapEnty = function(ktype, vtype) {
 BSQONParser.prototype.parseCollectionConsArgs = function(etype) {
     const res = [];
     if(!this.test(SYM_lbrace)) {
-        throw new ParserError(this.peek().sinfo, "Expected collection argument list");
+        throw new ParserError(this.peek().sinfo, "Expected collection argument list" + generateErrorMessage(this.peek()));
     }
     this.consume();
 
