@@ -392,7 +392,7 @@ __internal __typedeclable __keycomparable entity CString {
 
 %** Primitive unicode regex value. **%
 __internal entity Regex {
-    __safe internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;
+    internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;
     %*
     method accepts(s: String): Bool {
         return Regex::s_accepts(this, s);
@@ -402,7 +402,7 @@ __internal entity Regex {
 
 %** Primitive unicode regex value. **%
 __internal entity CRegex {
-    __safe internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
+    internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
     %*
     method accepts(s: CString): Bool {
         return CRegex::s_accepts(this, s);
@@ -450,8 +450,8 @@ namespace XCore {
     internal function s_reshavoc<T>(): T = s_reshavoc;
 #endif
 
-    __assume_safe internal function s_safeas<T, U>(v: T): U = special_function;
-    __assume_safe internal function s_createDirect<T, U>(t: T): U = special_function;
+    internal function s_safeas<T, U>(v: T): U = special_function;
+    internal function s_createDirect<T, U>(t: T): U = special_function;
 }
 
 

@@ -572,7 +572,10 @@ entity MayErrorAnalysis {
     method processInvokeKey(ikey: BSQAssembly::InvokeKey, cerrors: Map<BSQAssembly::InvokeKey, Bool>): Bool {
         let ff = this.assembly.tryLookupInvokeImplDeclaration(ikey);
         if(ff)@some {
-            return this.processBodyImpl($ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+            let exerr = $ff.attributes.someOf(pred(attr) => attr.name === '__intrinsic_error'<BSQAssembly::Identifier>);
+            let bodyerr = this.processBodyImpl($ff.body, cerrors, Map<BSQAssembly::Identifier, Bool>{});
+
+            return \/(exerr, bodyerr);
         }
 
         let iif = this.assembly.tryGetImplicitInvariantInfo(ikey);
@@ -592,7 +595,10 @@ entity MayErrorAnalysis {
         });
 
         let ferrors = Algorithm::worklist<Map<BSQAssembly::InvokeKey, Bool>, BSQAssembly::InvokeKey>(ierrors, callg.topoorder, fn(emap, ikey) => {
-            let mayerror = erranalysis.processInvokeKey(ikey, emap);
+            let sccerror = callg.sccs.someOf(pred(scc) => scc.contains(ikey));
+            let bodyerror = erranalysis.processInvokeKey(ikey, emap);
+            let mayerror = \/(sccerror, bodyerror);
+
             if(emap.get(ikey) === mayerror) {
                 return (|emap, List<BSQAssembly::InvokeKey>{}|);
             }

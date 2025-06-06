@@ -1571,6 +1571,15 @@ class TypeChecker {
             }
         }
 
+        //check that we don't have a lambda parameter that takes a lambda
+        for(let i = 0; i < params.length; ++i) {
+            const ptype = params[i].type;
+            if(ptype instanceof LambdaTypeSignature) {
+                this.reportError(exp.sinfo, `Lambda parameters cannot be a lambda type --  ${params[i].name}`);
+                argsok = false;
+            }
+        }
+
         if(!argsok || (rtype instanceof ErrorTypeSignature)) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -1797,7 +1806,7 @@ class TypeChecker {
     private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {
         for(let i = 0; i < exp.args.length; ++i) {
             const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `And expression is not a subtype of Bool`);
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `And subexpression ${i} is not a subtype of Bool`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
@@ -1806,7 +1815,7 @@ class TypeChecker {
     private checkLogicActionOrExpression(env: TypeEnvironment, exp: LogicActionOrExpression): TypeSignature {
         for(let i = 0; i < exp.args.length; ++i) {
             const etype = this.checkExpression(env, exp.args[i], new SimpleTypeInferContext(this.getWellKnownType("Bool")));
-            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `Or expression is not a subtype of Bool`);
+            this.checkError(exp.sinfo, etype instanceof ErrorTypeSignature || !this.relations.isBooleanType(etype), `Or subexpression ${i} is not a subtype of Bool`);
         }
 
         return exp.setType(this.getWellKnownType("Bool"));
