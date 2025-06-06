@@ -291,9 +291,12 @@ __internal entity List<T> {
         }
     }
 
+%*
+TODO: this should work (I think)
     method {when T: Option<U>} filterSome<U>(): List<U> {
         return this.filter(pred(v) => v?some).map<U>(fn(v) => XCore::s_safeas<Option<U>, Some<U>>(v).value);
     }
+*%
 
     %% we need to some more flavors here like refduce and reduceIdx
 

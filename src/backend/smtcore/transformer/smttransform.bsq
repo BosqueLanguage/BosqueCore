@@ -387,7 +387,9 @@ entity SMTTransformer {
                     return some((|p.pname, iserr|));
                 }
             })
-            .filterSome<(|BSQAssembly::Identifier, Bool|)>();
+            %%TODO: make this filterSome<(|BSQAssembly::Identifier, Bool|)>(); when that works
+            .filter(pred(aa) => aa?some)
+            .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
 
             let fctx = if(!largs.empty()) then nctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{e.ikey, largs})] else nctx;
             if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(e.ikey))) {
@@ -1305,29 +1307,32 @@ entity SMTTransformer {
 
     method transformNamespaceFunctionDeclToBuiltinSMT(decl: BSQAssembly::NamespaceFunctionDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::BuiltinFunctionDecl> {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
-        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
-
+        
         let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformStdTypeToSMT(p.ptype)});
         let rtype = this.transformStdTypeToSMT(decl.resultType);
-        let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
-
+        
         if(lambdainvs)@none {
+            let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
+            let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
             return List<SMTAssembly::BuiltinFunctionDecl>{ SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, none, decl.body@<BSQAssembly::BuiltinBodyImplementation>.builtin } };
         }
         else {
+            %%TODO: Handle lambdainvs
             abort;
         }
     }
 
     method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
-        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
 
         let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformStdTypeToSMT(p.ptype)});
         let rtype = this.transformStdTypeToSMT(decl.resultType);
-        let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
-
+        
         if(lambdainvs)@none {
+            let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
+            let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
             let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
             let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
             return List<SMTAssembly::FunctionDecl>{ SMTAssembly::FunctionDecl{ ikey, params, artype, body } }, rctx.lambdagen;
@@ -1338,7 +1343,7 @@ entity SMTTransformer {
     }
 
     method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo> {
-        let ikey = TransformNameManager::convertInvokeKey(decl.ikey);
+        let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
 
         let params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
                 let pname = SMTAssembly::Identifier::from(CString::concat('$', TransformNameManager::safeifyName(f.fname.value)));
@@ -1498,15 +1503,16 @@ entity SMTTransformer {
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(tnsconstsinfo.map<List<LambdaGeneratorInfo>>(fn(nsc) => nsc.1)))
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(ttypeconstsinfo.map<List<LambdaGeneratorInfo>>(fn(tc) => tc.1)));
 
-        let tnsfuncs, lgstatef = callg.topoorder
-            .lreduce<(|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>, LambdaGeneratorState|)>((|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, lgstate|), 
+        let tnsfuncs, lgstatef, tnsinvkeys = callg.topoorder
+            .lreduce<(|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>, LambdaGeneratorState, List<SMTAssembly::InvokeKey>|)>((|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, lgstate, List<SMTAssembly::InvokeKey>{}|), 
                 fn(acc, ikey) => {
                     let fdinfo = transformer.transformInvokeToSMTFunction(ikey, acc.1.getLambdaGeneratorInfo(ikey));
                     if(fdinfo)@some {
                         let nfm = $fdinfo.0.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(acc.0, fn(mm, f) => mm.insert(f.invokeKey, f));
                         let nlgen = acc.1.mergeLambdaGeneratorInfo($fdinfo.1);
+                        let nlsort = acc.2.prepend($fdinfo.0.map<SMTAssembly::InvokeKey>(fn(f) => f.invokeKey));
 
-                        return nfm, nlgen;
+                        return nfm, nlgen, nlsort;
                     }
                     else {
                         return acc;
@@ -1537,9 +1543,7 @@ entity SMTTransformer {
             .filter(pred(tkey) => assembly.pconcepts.has(tkey))
             .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(assembly.pconcepts.get(tkey)));
 
-        let tallfuncs = callg.topoorder.map<SMTAssembly::InvokeKey>(fn(ikey) => TransformNameManager::convertInvokeKey(ikey));
-
-        %%TODO: nuts!!!!!
+        let tallfuncs = List<SMTAssembly::InvokeKey>::concat(tnsfuncsbuiltin.keyList(), tnsinvkeys);
 
         return SMTAssembly::Assembly {
             nsconsts = tnsconstsinfo.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => nsc.0),
