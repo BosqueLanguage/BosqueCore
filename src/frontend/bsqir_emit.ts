@@ -108,7 +108,7 @@ class EmitNameManager {
                         resolvedTemplateTerms = resolvedTemplateTerms.concat(term);
                     }
                     else {
-                        resolvedTemplateTerms = resolvedTemplateTerms.concat(", ", term);
+                        resolvedTemplateTerms = resolvedTemplateTerms.concat("", term);
                     }
                 }
             }
@@ -691,7 +691,7 @@ class BSQIREmitter {
 
         const tsig = this.emitTypeSignature(rtrgt);
         const ikeybase = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
-        const ikey = (exp.terms.length > 0) ? ikeybase + '$' + exp.terms.map((tt) => this.tproc(tt).emit()).join(", ") : ikeybase;
+        const ikey = (exp.terms.length > 0) ? ikeybase + '$' + exp.terms.map((tt) => this.tproc(tt).emit()).join("") : ikeybase;
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -1779,42 +1779,33 @@ class BSQIREmitter {
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
         fmt.indentPop();
 
-        let ret = '';
+        let ikey = '';
 
         // Need to double check he abstract and virtual methods here make sense...
         if(rcvrtype[1] === undefined && optmapping === undefined) {
-            const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+            ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-            this.allmethods.push(ret); 
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
         else if(rcvrtype[1] === undefined && optmapping !== undefined) { 
             const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, mdecl);
-            const ikey = `${declaredIn}::${mdecl.name}${resolvedTemplateTerms}`;
+            ikey = `${declaredIn}::${mdecl.name}${resolvedTemplateTerms}`;
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-
-            if(this.allmethods.indexOf(ret) === -1) {
-                this.allmethods.push(ret); 
-                this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
-            } 
+            this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
         }
         else if(rcvrtype[1] !== undefined) { // This may be incorrect
             // TODO: We will need to resolve rcvrtype[1] for ikey generation
-            const ikey = `${declaredIn}::${mdecl.name}`;
+            ikey = `${declaredIn}::${mdecl.name}`;
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-            
-            if(this.allmethods.indexOf(ret) === -1) {
-                this.allmethods.push(ret); 
-                this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
-            }
-        }
+            this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
+         }
         else {
             assert(false, "Not Implemented -- Override methods");
         }
 
+        let ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+        this.allmethods.push(ret);
+            
         this.mapper = omap;
 
         return ret;
@@ -1849,9 +1840,7 @@ class BSQIREmitter {
                 }
             }
             else {
-                // No instantiation so abstract 
-                const decl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
-                abstractdecls.push(decl);
+                // TODO: Likely need to handle abstractdecls here
             }
         }
 
