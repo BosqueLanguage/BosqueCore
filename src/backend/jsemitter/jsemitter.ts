@@ -3387,7 +3387,7 @@ class JSEmitter {
 
         const conscall = EmitNameManager.generateAccessorForConstructorParseAPI(this.currentns as NamespaceDeclaration, rcvr, usesvalidate);
         decls.push(`$parseAPI: { value: (parser) => { const vv = ${conscall}(parser.parseValue("${tdecl.valuetype.tkeystr}")); parser.parseScopedTypeTailing(); return vv; } }`);
-        decls.push(`$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${tdecl.valuetype.tkeystr}", value) + "<${rcvr.tkeystr}>"; } }`);
+        decls.push(`$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${tdecl.valuetype.tkeystr}", value.value) + "<${rcvr.tkeystr}>"; } }`);
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
