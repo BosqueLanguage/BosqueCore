@@ -627,8 +627,11 @@ entity CPPTransformer {
                 return CPPAssembly::FunctionDecl{ CPPTransformNameManager::convertNamespaceKey(bsqfunc.declaredInNS), 
                     bsqfunc.fullns, cppikey };
             }
+            elif(bsqasm.typefuncs.has(ikey)) {
+                abort; %% TODO: Need to support type functions still
+            }
             else {
-                abort; %% We will need to eventually support non-ns funcs
+                abort; 
             }
         });
 

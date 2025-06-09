@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
@@ -92,13 +92,13 @@ class EmitNameManager {
     }
 
     // Resolves types of parameters and emits
-    static generateResolvedTypeKey(optmapping: TemplateNameMapper, mdecl: MethodDecl): string {
+    static generateResolvedTypeKey(optmapping: TemplateNameMapper, terms: InvokeTemplateTermDecl[]): string {
         // This feels incredibly excessive, see if we can use combination of reduce and map instead
         let resolvedTemplateTerms = "";
         for(let i = 0; i < optmapping.mapper.length; i++) {
-            for(let j = 0; j < mdecl.terms.length; j++) {
-                if(optmapping.mapper[i].has(mdecl.terms[j].name)) {
-                    let term = optmapping.mapper[i].get(mdecl.terms[j].name)?.emit();
+            for(let j = 0; j < terms.length; j++) {
+                if(optmapping.mapper[i].has(terms[j].name)) {
+                    let term = optmapping.mapper[i].get(terms[j].name)?.emit();
                    
                     if(term === undefined) {
                         continue;
@@ -1719,9 +1719,14 @@ class BSQIREmitter {
         }
 
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        if(optenclosingtype !== undefined) {
-            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
-            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
+
+        // For whatever reason this emitted code does not end up in the bsqir...
+        if(fdecl.terms.length > 0 && optmapping !== undefined) {
+            const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, fdecl.terms);
+            // const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
+            const ikeybase = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
+            const ikey = `${ikeybase}${resolvedTemplateTerms}`;
+            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikeybase, fmt);
             this.mapper = omap;
 
             this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`)
@@ -1788,7 +1793,7 @@ class BSQIREmitter {
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
         else if(rcvrtype[1] === undefined && optmapping !== undefined) { 
-            const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, mdecl);
+            const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, mdecl.terms);
             ikey = `${declaredIn}::${mdecl.name}${resolvedTemplateTerms}`;
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
             this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
@@ -1900,10 +1905,10 @@ class BSQIREmitter {
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
-        
-        // This SHOULD be what we need to emit typefunctions
-        // HOWEVER IT DOESNT! for whatever reason these type functions are only registered as ns functions, not typefunctions
-        // const tmp = this.emitFunctionDecls(ns, [tsig, instantiation.binds], tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+      
+        //
+        // Likely will need to do some type function emissoin here as well
+        //
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
