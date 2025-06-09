@@ -164,6 +164,7 @@ PostfixAccessFromName {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
+    field callingikey: InvokeKey; %% Excludes the $TermType postfix seen in resolvedTrgt to make generatting invoke easier
 }
 ;
 

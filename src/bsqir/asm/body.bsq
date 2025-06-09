@@ -294,6 +294,7 @@ PostfixAccessFromName {
     field resolvedTrgt: InvokeKey;
 
     field argsinfo: InvokeArgumentInfo;
+    field callingikey: InvokeKey;
 }
 | PostfixInvokeVirtual {
     field definedInType: NominalTypeSignature;

@@ -402,6 +402,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
+    let callingikey = emitInvokeKey(op.callingikey, ctx);
     let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;
@@ -414,13 +415,13 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
     else {
-        abort; %% TODO: Add support for Override and Virtual methods!
+        abort; %% TODO: Add support for Override and Abstract methods!
     }
 
     %% Remove abstract nominal we were in
     var resolvedInvoke: CString;
-    if(ik.startsWithString(tk)) {
-        let tmp = ik.removePrefixString(tk);
+    if(callingikey.startsWithString(tk)) {
+        let tmp = callingikey.removePrefixString(tk);
         if(tmp.startsWithString('::')) {
             resolvedInvoke = tmp.removePrefixString('::');
         }
@@ -616,25 +617,23 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): CString {
 
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
-        let name = m.name;
-        let params = emitParameters(m.params, nctx);
-        let rtype = emitTypeSignatureBase(m.resultType, ctx);
-        let this_type = emitThisType(declaredIn, nctx);
+    let name = m.name;
+    let params = emitParameters(m.params, nctx);
+    let rtype = emitTypeSignatureBase(m.resultType, ctx);
+    let this_type = emitThisType(declaredIn, nctx);
 
-        let pre = CString::concat(indent, 'const ', rtype, ' ', name);
-        
-        var params_impl: CString;
-        if(params === '') {
-            params_impl = CString::concat('(', this_type, ' ', emitSpecialThis(), ') noexcept');
-        }
-        else {
-            let base = CString::concat('(', this_type, ' ');
-            params_impl = CString::concat(base, emitSpecialThis(), ', ', params, ') noexcept');           
-        }
+    let pre = CString::concat(indent, 'const ', rtype, ' ', name);
+    
+    var params_impl: CString;
+    if(params === '') {
+        params_impl = CString::concat('(', this_type, ' ', emitSpecialThis(), ') noexcept');
+    }
+    else {
+        let base = CString::concat('(', this_type, ' ');
+        params_impl = CString::concat(base, emitSpecialThis(), ', ', params, ') noexcept');           
+    }
 
-        return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(m.body, nctx, indent), indent, '}%n;');
-
-%%    abort; %% TODO: Need to support other method types!
+    return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(m.body, nctx, indent), indent, '}%n;');
 }
 
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
