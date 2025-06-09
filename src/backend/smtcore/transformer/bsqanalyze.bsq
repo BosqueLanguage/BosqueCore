@@ -158,7 +158,8 @@ entity BSQToSMTCallGraphBuilder {
             invariantcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
         }
 
-        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, invariantcalls);
+        let tinfo = BSQCCInfo::createWCallInfo(current, e.ikey);
+        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, invariantcalls, tinfo);
     }
 
     recursive method processPostfixOp(current: BSQAssembly::InvokeKey, e: BSQAssembly::PostfixOp): BSQCCInfo {

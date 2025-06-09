@@ -30,7 +30,7 @@ describe ("SMT Exec -- NamespaceFunction", () => {
     });
 
     it("should smt exec nested lambda", function () {
-        runishMainCodeUnsat("function bar(x: Int, f: fn(Int) -> Int): Int { return baz(x, fn(a) => f(a) + 1i); } function baz(x: Int, g: fn(Int) -> Int): Int { return g(x); } public function main(): Int { return bar(2i, fn(a) => { return a + 1i; }); }", "(assert (not (= 3 Main@main)))");
+        runishMainCodeUnsat("function bar(x: Int, f: fn(Int) -> Int): Int { return baz(x, fn(a) => f(a) + 1i); } function baz(x: Int, g: fn(Int) -> Int): Int { return g(x); } public function main(): Int { return bar(2i, fn(a) => { return a + 1i; }); }", "(assert (not (= 4 Main@main)))");
         runishMainCodeUnsat("function bar(x: Int, f: fn(Int) -> Int): Int { return f(x); } public function main(): Int { return bar(0i, fn(a) => { assert a != 0i; return a + 1i; }); }", "(assert (not (= @Result-err-other Main@main)))");
     });
 });
