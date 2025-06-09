@@ -593,6 +593,58 @@ entity SMTTransformer {
         }
     }
 
+    recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), nctx);
+        
+        let aargs = scargs.pushFront(onarg);
+        var allobinds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>;
+        if(obinds)@some {
+            if(scobinds)@some {
+                allobinds = some($obinds.append($scobinds));
+            }
+            else {
+                allobinds = obinds;
+            }
+        }
+        else {
+            if(scobinds)@some {
+                allobinds = scobinds;
+            }
+            else {
+                allobinds = none;
+            }
+        }
+
+        let smdecl = this.assembly.tryLookupInvokeImplDeclaration(op.resolvedTrgt)@some;
+        let largs = smdecl.params.mapIdx<Option<(|BSQAssembly::Identifier, Bool|)>>(fn(p, ii) => {
+            if(p.ptype)@!<BSQAssembly::LambdaTypeSignature> {
+                return none;
+            }
+            else {
+                let iserr = this.erranalysis.processExpression(op.argsinfo.args.args.get(ii).exp, this.errinvokes, ctx.lambdaerr);
+                return some((|p.pname, iserr|));
+            }
+        })
+        %%TODO: make this filterSome<(|BSQAssembly::Identifier, Bool|)>(); when that works
+        .filter(pred(aa) => aa?some)
+        .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
+        
+        let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
+        if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
+            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, List<Bool>{});
+
+            let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
+            return smctx, this.wrapOperationResult(op.resolvedType, callop, allobinds);
+        }
+        else {
+            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, largs.map<Bool>(fn(aa) => aa.1));
+
+            let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
+            return smctx, this.wrapOperationResultWErr(op.resolvedType, callop, allobinds);
+        }
+    }
+
     method transformPostfixAccessFromName(op: BSQAssembly::PostfixAccessFromName, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         if(this.assembly.isNominalTypeConcrete(op.baseType.tkeystr)) {
             let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
@@ -658,7 +710,7 @@ entity SMTTransformer {
                 | BSQAssembly::PostfixIsTest => { return this.transformITestPostfixOp($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAsConvert => { return this.processITestAsConvert($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAssignFields => { abort; }
-                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeStatic => { return this.processPostfixInvokeStatic[recursive]($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixInvokeVirtual => { abort; }
                 | BSQAssembly::PostfixLiteralKeyAccess => { abort; }
                 | BSQAssembly::PostfixBoolConstant => { return this.transformPostfixBoolConstant($op, pstate.0, pstate.1); }
