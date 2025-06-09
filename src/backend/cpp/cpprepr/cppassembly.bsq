@@ -58,8 +58,11 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+
     field staticmethods: List<InvokeKey>;
-    %% Other method types too
+    field virtmethods: List<InvokeKey>;
+    field absmethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
 }
 
 enum Tag {
@@ -111,7 +114,11 @@ entity NamespaceDecl {
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Convienent for fwd decls
+
+    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
+    field virtmethods: List<(|InvokeKey, TypeKey|)>;
+    field absmethods: List<(|InvokeKey, TypeKey|)>;
+    field overmethods: List<(|InvokeKey, TypeKey|)>; 
 }
 
 %% Will need expanding
@@ -120,7 +127,9 @@ entity Assembly {
     field allfuncs: List<FunctionDecl>;
 
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
-    %% TODO: Abstract, Override, Virtual methods
+    field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
+    field absmethods: Map<InvokeKey, MethodDeclAbstract>;
+    field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;

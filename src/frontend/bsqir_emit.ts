@@ -90,6 +90,34 @@ class EmitNameManager {
     static generateTypeInvokeKey(tsig: TypeSignature, name: string): string {
         return `${this.generateTypeKey(tsig)}::${name}`;
     }
+
+    // Resolves types of parameters and emits
+    static generateResolvedTypeKey(optmapping: TemplateNameMapper, mdecl: MethodDecl): string {
+        // This feels incredibly excessive, see if we can use combination of reduce and map instead
+        let resolvedTemplateTerms = "";
+        for(let i = 0; i < optmapping.mapper.length; i++) {
+            for(let j = 0; j < mdecl.terms.length; j++) {
+                if(optmapping.mapper[i].has(mdecl.terms[j].name)) {
+                    let term = optmapping.mapper[i].get(mdecl.terms[j].name)?.emit();
+                   
+                    console.log(term);
+
+                    if(term === undefined) {
+                        continue;
+                    }
+
+                    if(resolvedTemplateTerms === "") {
+                        resolvedTemplateTerms = resolvedTemplateTerms.concat(term);
+                    }
+                    else {
+                        resolvedTemplateTerms = resolvedTemplateTerms.concat(", ", term);
+                    }
+                }
+            }
+        }
+
+        return '$'+resolvedTemplateTerms;
+    }
 }
 
 class BSQIREmitter {
@@ -664,7 +692,9 @@ class BSQIREmitter {
         const rdecl = exp.resolvedMethod as MethodDecl;
 
         const tsig = this.emitTypeSignature(rtrgt);
-        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
+        const ikey = (this.mapper !== undefined) ? EmitNameManager.generateResolvedTypeKey(this.mapper, rdecl) : EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
+
+        console.log(rdecl);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -1449,7 +1479,7 @@ class BSQIREmitter {
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
         const sbase = this.emitStatementBase(stmt);
         const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt).join(`, `);
-        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", stmts, "}}"].join("");
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping},`, fmt.nl(),"statements=List<BSQAssembly::Statement>{", stmts, "}}"].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {
@@ -1748,25 +1778,39 @@ class BSQIREmitter {
         fmt.indentPush();
         const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
-
-        const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
         fmt.indentPop();
 
-        // May need to be moved into each case individually
-        let ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-        this.allmethods.push(ret); 
+        let ret = '';
 
         // Need to double check he abstract and virtual methods here make sense...
         if(rcvrtype[1] === undefined && optmapping === undefined) {
+            const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+            this.allmethods.push(ret); 
             this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
         }
-        else if(rcvrtype[1] !== undefined && optmapping !== undefined) {
-            this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
+        else if(rcvrtype[1] === undefined && optmapping !== undefined) { 
+            const ikey = `${declaredIn}::${mdecl.name}`;
+            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+
+            if(this.allmethods.indexOf(ret) === -1) {
+                this.allmethods.push(ret); 
+                this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
+            }
         }
-        else if(rcvrtype[1] !== undefined && optmapping === undefined) {
-            this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
+        else if(rcvrtype[1] !== undefined) {
+            // TODO: We will need to resolve rcvrtype[1] for ikey generation
+            const ikey = `${declaredIn}::${mdecl.name}`;
+            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+            
+            if(this.allmethods.indexOf(ret) === -1) {
+                this.allmethods.push(ret); 
+                this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
+            }
         }
         else {
             assert(false, "Not Implemented -- Override methods");
@@ -1775,7 +1819,7 @@ class BSQIREmitter {
         this.mapper = omap;
 
         return ret;
-     }
+    }
 
     private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let staticdecls: string[] = [];
@@ -1788,23 +1832,27 @@ class BSQIREmitter {
             const mii = mdecls[i][1];
 
             if(mii !== undefined) {
+                // Not 100% sure this is the correct way to determine abstract, static, and virtual...
                 if(mii.binds === undefined) {
                     const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
                     if(rcvr[1] === undefined) {
                         staticdecls.push(bsqondecl);
                     }
                     else {
-                        abstractdecls.push(bsqondecl);
-                    }
-                }
-                else {
-                    for(let j = 0; j < mii.binds.length; ++j) {
-                        const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
-                        // TODO: Need to split up between override and virtual. Not quite sure how this goes.
-                        // Also I am guessing no instantation info means we are virtual here.
                         virtualdecls.push(bsqondecl);
                     }
                 }
+                else {
+                    for(let j = 0; j < mii.binds.length; ++j) { // TODO: Override support
+                        const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
+                        virtualdecls.push(bsqondecl);
+                    }
+                }
+            }
+            else {
+                // No instantiation so abstract 
+                const decl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
+                abstractdecls.push(decl);
             }
         }
 
@@ -1864,6 +1912,11 @@ class BSQIREmitter {
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+        
+        // This SHOULD be what we need to emit typefunctions
+        // HOWEVER IT DOESNT! for whatever reason these type functions are only registered as ns functions, not typefunctions
+        const tmp = this.emitFunctionDecls(ns, [tsig, instantiation.binds], tdecl.functions.map((fd) => [fd, instantiation.functionbinds.get(fd.name)]), fmt);
+        console.log(tmp);
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
@@ -2359,7 +2412,7 @@ class BSQIREmitter {
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
-            
+
             if(nsii !== undefined) {
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
             }

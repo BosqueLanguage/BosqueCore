@@ -409,8 +409,12 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
+    elif(ctx.asm.virtmethods.has(op.resolvedTrgt)) {
+        let trgt = ctx.asm.virtmethods.get(op.resolvedTrgt);
+        args = emitArgumentList(op.args, trgt.params, ctx);
+    }
     else {
-        abort; %% TODO: Support methods in abstract nominal types other than static!
+        abort; %% TODO: Add support for Override and Virtual methods!
     }
 
     %% Remove abstract nominal we were in
@@ -422,8 +426,7 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         }
         else {
             resolvedInvoke = tmp;
-        }
-        
+        } 
     }
     else {
         resolvedInvoke = ik;
@@ -613,7 +616,6 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): CString {
 
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
-    if(m)@<CPPAssembly::MethodDeclStatic> { %% Pass "this" ptr as first argument
         let name = m.name;
         let params = emitParameters(m.params, nctx);
         let rtype = emitTypeSignatureBase(m.resultType, ctx);
@@ -631,9 +633,8 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
         }
 
         return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(m.body, nctx, indent), indent, '}%n;');
-    }
 
-    abort; %% TODO: Need to support other method types!
+%%    abort; %% TODO: Need to support other method types!
 }
 
 function emitNamespaceFunctionDecl(func: CPPAssembly::NamespaceFunctionDecl, ctx: Context, indent: CString): CString {
@@ -788,7 +789,10 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
             return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), tk, ctx, full_indent));
         });
-        let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods);
+        let entity_virtmethods = e.virtmethods.reduce<CString>('', fn(acc, m) => { 
+            return CString::concat(acc, emitMethodDecl(ctx.asm.virtmethods.get(m), tk, ctx, full_indent));
+        });
+        let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods, entity_virtmethods);
         return CString::concat(acc, indent, res);
     });
 

@@ -10,7 +10,13 @@ let _$parsemap = {};
 let _$emitmap = {};
 
 function resolveParseMapEntry(name) {
-    return _$parsemap[name];
+    let entry = _$parsemap[name];
+
+    if(entry === undefined) {
+        console.log("Unable to find parse map entry for " + name);
+    }
+
+    return entry;
 }
 
 function generateErrorMessage(peek) {
