@@ -455,6 +455,7 @@ entity CPPTransformer {
         return CPPAssembly::MethodDeclStatic{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
     }
 
+    %% Virtual, abstract, and override methods should not emit for now
     method transformVirtualMethodDecl(m: BSQAssembly::MethodDeclVirtual): CPPAssembly::MethodDeclVirtual {
         let base = this.transformAbstractInvokeDecl(m);
         return CPPAssembly::MethodDeclVirtual{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };

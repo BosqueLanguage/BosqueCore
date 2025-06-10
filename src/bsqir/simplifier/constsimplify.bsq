@@ -906,52 +906,11 @@ entity ConstantSimplification {
     }
 
     method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {
-        return MethodDeclAbstract {
-            file = absmethod.file,
-            sinfo = absmethod.sinfo,
-            fullns = absmethod.fullns,
-            declaredInNS = absmethod.declaredInNS,
-
-            attributes = absmethod.attributes,
-            name = absmethod.name,
-
-            ikey = absmethod.ikey,
-            irecursive = absmethod.irecursive,
-            params = absmethod.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
-            resultType = absmethod.resultType,
-
-            body = this.processBodyImpl(absmethod.body),
-
-            preconditions = absmethod.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
-            postconditions = absmethod.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            isThisRef = absmethod.isThisRef,
-            ofrcvrtype = absmethod.ofrcvrtype
-        };
+        abort;
     }
 
     method processMethodDeclVirtual(virtmethod: MethodDeclVirtual): MethodDeclVirtual {
-        return MethodDeclVirtual {
-            file = virtmethod.file,
-            sinfo = virtmethod.sinfo,
-
-            fullns = virtmethod.fullns,
-            declaredInNS = virtmethod.declaredInNS,
-
-            attributes = virtmethod.attributes,
-            name = virtmethod.name,
-
-            ikey = virtmethod.ikey,
-            irecursive = virtmethod.irecursive,
-            params = virtmethod.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
-            resultType = virtmethod.resultType,
-
-            body = this.processBodyImpl(virtmethod.body),
-
-            preconditions = virtmethod.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
-            postconditions = virtmethod.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            isThisRef = virtmethod.isThisRef,
-            ofrcvrtype = virtmethod.ofrcvrtype
-        };
+        abort;
     }
 
     method processMethodDeclOverride(overmethod: MethodDeclOverride): MethodDeclOverride {

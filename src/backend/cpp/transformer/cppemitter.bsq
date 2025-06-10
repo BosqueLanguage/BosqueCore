@@ -417,12 +417,14 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
+    %*
     elif(ctx.asm.virtmethods.has(op.resolvedTrgt)) {
         let trgt = ctx.asm.virtmethods.get(op.resolvedTrgt);
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
+    *%
     else {
-        abort; %% TODO: Add support for Override and Abstract methods!
+        abort; %% TODO: Add support for Override, Abstract, and Virtual methods!
     }
 
     %% Remove abstract nominal we were in
@@ -794,6 +796,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return CString::concat(acc, emitFunctionForwardDeclaration(decl@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent));
     });
 
+    %% Eventually will need to modify this to allow other method types
     let methodfwd_decls = nsdecl.staticmethods.reduce<CString>(typefuncfwd_decls, fn(acc, mtkey) => {
         return CString::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
@@ -808,9 +811,11 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         let entity_staticmethods = e.staticmethods.reduce<CString>('', fn(acc, m) => { 
             return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), tk, ctx, full_indent));
         });
+        %*
         let entity_virtmethods = e.virtmethods.reduce<CString>('', fn(acc, m) => { 
             return CString::concat(acc, emitMethodDecl(ctx.asm.virtmethods.get(m), tk, ctx, full_indent));
         });
+        *%
         let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods, entity_virtmethods);
         return CString::concat(acc, indent, res);
     });
