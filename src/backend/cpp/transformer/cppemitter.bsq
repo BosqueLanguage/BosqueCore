@@ -409,7 +409,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
-    let callingikey = op.callingikey;
+    let callingikey = emitResolvedNamespace(ctx.fullns_list, op.callingikey);
     let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;

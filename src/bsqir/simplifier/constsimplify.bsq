@@ -924,7 +924,8 @@ entity ConstantSimplification {
 
             preconditions = absmethod.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = absmethod.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            isThisRef = absmethod.isThisRef
+            isThisRef = absmethod.isThisRef,
+            ofrcvrtype = absmethod.ofrcvrtype
         };
     }
 
@@ -948,7 +949,8 @@ entity ConstantSimplification {
 
             preconditions = virtmethod.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = virtmethod.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            isThisRef = virtmethod.isThisRef
+            isThisRef = virtmethod.isThisRef,
+            ofrcvrtype = virtmethod.ofrcvrtype
         };
     }
 

@@ -91,29 +91,19 @@ class EmitNameManager {
         return `${this.generateTypeKey(tsig)}::${name}`;
     }
 
-    // Resolves types of parameters and emits
-    static generateResolvedTypeKey(optmapping: TemplateNameMapper, terms: InvokeTemplateTermDecl[]): string {
-        // This feels incredibly excessive, see if we can use combination of reduce and map instead
-        let resolvedTemplateTerms = "";
-        for(let i = 0; i < optmapping.mapper.length; i++) {
-            for(let j = 0; j < terms.length; j++) {
-                if(optmapping.mapper[i].has(terms[j].name)) {
-                    let term = optmapping.mapper[i].get(terms[j].name)?.emit();
-                   
-                    if(term === undefined) {
-                        continue;
-                    }
-
-                    if(resolvedTemplateTerms === "") {
-                        resolvedTemplateTerms = resolvedTemplateTerms.concat(term);
-                    }
-                    else {
-                        resolvedTemplateTerms = resolvedTemplateTerms.concat(", ", term);
-                    }
-                }
-            }
+    // Resolves term types and emits
+    static generateResolvedTypeKey(optmapping: TemplateNameMapper | undefined, terms: InvokeTemplateTermDecl[]): string {
+        if (!optmapping) {
+            return "";
         }
-
+    
+        const resolvedTemplateTerms = optmapping.mapper
+            .flatMap(mapper => 
+                terms.filter(term => mapper.has(term.name))
+                     .map(term => mapper.get(term.name)?.emit())
+                     .filter((term): term is string => term !== undefined)
+            ).join(", ");
+    
         return `<${resolvedTemplateTerms}>`;
     }
 
@@ -1787,38 +1777,35 @@ class BSQIREmitter {
         }
 
         fmt.indentPush();
+        let ret: string = "";
+
         const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
         const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
 
-        const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
         const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(rcvrtype[0])}`);
         fmt.indentPop();
 
         const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
         if(isstatic) {
-            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+            let resolvedTemplateTermsIKey = mdecl.terms.length > 0 ? `${declaredIn}::${mdecl.name}${EmitNameManager.generateResolvedTypeKey(optmapping, mdecl.terms)}` : ikey; 
+            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, resolvedTemplateTermsIKey, fmt);
+            ret = `'${resolvedTemplateTermsIKey}'<BSQAssembly::InvokeKey>`;
             this.allmethods.push(ret); 
-            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
+            this.staticmethods.push(`'${resolvedTemplateTermsIKey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
         }
         else {
-            assert(false, "Not Implemented -- Override methods");
+            assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
         }
 
-        let ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
-        this.allmethods.push(ret);
-            
         this.mapper = omap;
 
         return ret;
     }
 
     private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
-        let staticdecls: string[] = [];
-        let abstractdecls: string[] = [];
-        let virtualdecls: string[] = [];
-        let overridedecls: string[] = [];
+        let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
             const mdecl = mdecls[i][0];
@@ -1827,26 +1814,22 @@ class BSQIREmitter {
             if(mii !== undefined) {
                 if(mii.binds === undefined) {
                     const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
-                    if(rcvr[1] === undefined) {
-                        staticdecls.push(bsqondecl);
-                    }
-                    else {
-                        virtualdecls.push(bsqondecl);
-                    }
+                    decls.push(bsqondecl);
                 }
                 else {
-                    for(let j = 0; j < mii.binds.length; ++j) { // TODO: Override support
+                    for(let j = 0; j < mii.binds.length; ++j) {
                         const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
-                        virtualdecls.push(bsqondecl);
+                        decls.push(bsqondecl);
                     }
                 }
-            }
-            else {
-                // TODO: Likely need to handle abstractdecls here
             }
         }
 
-        return [abstractdecls, virtualdecls, overridedecls, staticdecls];
+        //
+        //TODO: need to split these up based on the kind of method (abstract, virtual, override, static)
+        //
+
+        return [[], [], [], decls];
     }
 
     private emitConstMemberDecls(ns: FullyQualifiedNamespace, declInType: NominalTypeSignature, decls: ConstMemberDecl[]) {
