@@ -585,6 +585,14 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: CStri
     }
 }
 
+function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: CString): CString {
+    switch(body.builtin) {
+        's_float_power' => { return 'powf64(a, b)'; }
+        | 's_float_sqrt' => { return 'sqrtf64(a)'; }
+        | _ => { abort; } %% TODO: Not implemented
+    }
+}
+
 function emitStandardBodyImplementation(body: CPPAssembly::StandardBodyImplementation, ctx: Context, indent: CString): CString {
     return CString::joinAll('%n;', body.statements.map<CString>(fn(stmt) => emitStatement(stmt, ctx, indent)));
 }
@@ -593,10 +601,10 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
     match(body)@ {
         %% CPPAssembly::AbstractBodyImplementation => { abort; }
         %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
-        %% | CPPAssembly::BuiltinBodyImplementation => { abort; }
+        CPPAssembly::BuiltinBodyImplementation => { return emitBuiltinBodyImplementation($body, ctx, indent); }
         %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
         %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
-        CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, ctx, indent); }
+        | CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, ctx, indent); }
         | _ => { abort; }
     }
 }

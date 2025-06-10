@@ -116,6 +116,11 @@ class EmitNameManager {
 
         return `<${resolvedTemplateTerms}>`;
     }
+
+    static generatedResolvedTypeKeyFromTerms(terms: TypeSignature[], tsigs: TypeSignature[], ikeybase: string): string {
+        let emit_tinstinfos = tsigs.map((t) => t.emit()).join(", ");
+        return (terms.length > 0) ? `${ikeybase}<${emit_tinstinfos}>` : ikeybase;
+    }
 }
 
 class BSQIREmitter {
@@ -584,7 +589,7 @@ class BSQIREmitter {
         const ikeybase = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
         
         // Should probably make this a function as its used in emitPostfixOperationBase as well
-        const ikey = (exp.terms.length > 0) ? `${ikeybase}<${exp.terms.map((tt) => this.tproc(tt).emit()).join(", ")}>` : ikeybase;
+        const ikey = EmitNameManager.generatedResolvedTypeKeyFromTerms(exp.terms, exp.terms.map((tt) => this.tproc(tt)), ikeybase);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -695,11 +700,11 @@ class BSQIREmitter {
 
         const tsig = this.emitTypeSignature(rtrgt);
         const ikeybase = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
-        const ikey = (exp.terms.length > 0) ? `${ikeybase}<${exp.terms.map((tt) => this.tproc(tt).emit()).join(", ")}>` : ikeybase;
+        const ikey = EmitNameManager.generatedResolvedTypeKeyFromTerms(exp.terms, exp.terms.map((tt) => this.tproc(tt)), ikeybase); 
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        // callingikey is used to generate correct function signature in the cpp emitter
+        // callingikey is used to generate correct signature in the cpp emitter
         return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo}, callingikey='${ikeybase}' }`;
     }
 
@@ -1724,7 +1729,6 @@ class BSQIREmitter {
 
         const nskey = EmitNameManager.generateNamespaceKey(ns);
 
-        // For whatever reason this emitted code does not end up in the bsqir...
         if(fdecl.terms.length > 0 && optmapping !== undefined) {
             const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, fdecl.terms);
             // const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
@@ -1790,7 +1794,6 @@ class BSQIREmitter {
 
         let ikey = '';
 
-        // Need to double check he abstract and virtual methods here make sense...
         if(rcvrtype[1] === undefined && optmapping === undefined) {
             ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
@@ -1802,7 +1805,7 @@ class BSQIREmitter {
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
             this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
         }
-        else if(rcvrtype[1] !== undefined) { // This may be incorrect
+        else if(rcvrtype[1] !== undefined) { 
             // TODO: We will need to resolve rcvrtype[1] for ikey generation
             ikey = `${declaredIn}::${mdecl.name}`;
             const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
@@ -1831,7 +1834,6 @@ class BSQIREmitter {
             const mii = mdecls[i][1];
 
             if(mii !== undefined) {
-                // Not 100% sure this is the correct way to determine abstract, static, and virtual...
                 if(mii.binds === undefined) {
                     const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
                     if(rcvr[1] === undefined) {
@@ -1909,6 +1911,9 @@ class BSQIREmitter {
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+
+        // in BSQAssembly::AbstractNominalTypeDecl there is no field for typefuncs, so we just call the emission here and let emitFunctionDecl do the insert
+        this.emitFunctionDecls(ns, [tsig, instantiation.binds], tdecl.functions.map(((f) => [f, instantiation.functionbinds.get(f.name)])), fmt);
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
