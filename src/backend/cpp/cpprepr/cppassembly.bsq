@@ -101,6 +101,9 @@ entity ParameterDecl {
 entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
+entity TypeFunctionDecl provides AbstractInvokeDecl {
+}
+
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
 entity FunctionDecl provides AbstractDecl {
     field ikey: InvokeKey;
@@ -113,7 +116,9 @@ entity NamespaceDecl {
 
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
+
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;

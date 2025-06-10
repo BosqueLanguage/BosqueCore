@@ -180,6 +180,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
     field fullns: List<CString>;
+    field callingikey: InvokeKey;
 
     field argsinfo: InvokeArgumentInfo;
 }

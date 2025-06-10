@@ -879,7 +879,25 @@ entity ConstantSimplification {
     }
 
     method processTypeFunctionDecl(typefunc: TypeFunctionDecl): TypeFunctionDecl {
-        abort;
+        return TypeFunctionDecl{
+            file = typefunc.file,
+            sinfo = typefunc.sinfo,
+            fullns = typefunc.fullns,
+            declaredInNS = typefunc.declaredInNS,
+
+            attributes = typefunc.attributes,
+            name = typefunc.name,
+
+            ikey = typefunc.ikey,
+            irecursive = typefunc.irecursive,
+            params = typefunc.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
+            resultType = typefunc.resultType,
+
+            body = this.processBodyImpl(typefunc.body),
+
+            preconditions = typefunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
+            postconditions = typefunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond))
+        }; 
     }
 
     method processMethodDeclAbstract(absmethod: MethodDeclAbstract): MethodDeclAbstract {

@@ -574,14 +574,17 @@ class BSQIREmitter {
         }
     }
 
-    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
+    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {        
         const ebase = this.emitExpressionBase(exp);
 
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
         const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
-        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
+        const ikeybase = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
+        
+        // Should probably make this a function as its used in emitPostfixOperationBase as well
+        const ikey = (exp.terms.length > 0) ? ikeybase + '$' + exp.terms.map((tt) => this.tproc(tt).emit()).join("") : ikeybase;
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -589,9 +592,10 @@ class BSQIREmitter {
         const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
         const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, argsinfo=${arginfo} }`;
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, callingikey='${ikeybase}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
     }
-    
+   
+    // Our emitted functions are always considered namespace functions, not type functions. This never gets called even if we have type function calls in our code...
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
         const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name);
@@ -1726,11 +1730,11 @@ class BSQIREmitter {
             // const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
             const ikeybase = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
             const ikey = `${ikeybase}${resolvedTemplateTerms}`;
-            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikeybase, fmt);
+            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`)
-            this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`);
+            this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
@@ -1905,10 +1909,6 @@ class BSQIREmitter {
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
-      
-        //
-        // Likely will need to do some type function emissoin here as well
-        //
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");

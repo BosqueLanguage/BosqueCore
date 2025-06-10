@@ -808,7 +808,7 @@ class JSEmitter {
 
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
-
+ 
         if(exp.isSpecialCall) {
             return this.emitCallTypeFunctionExpressionSpecial(exp, rtrgt);
         }
