@@ -1696,13 +1696,15 @@ class BSQIREmitter {
         const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
 
         const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-        const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
+        const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
+        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(rcvrtype[0])}`);
         fmt.indentPop();
 
-        if(rcvrtype[1] === undefined && optmapping === undefined) {
+        const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
+        if(isstatic) {
             ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
             this.allmethods.push(ret); 
-            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
+            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
         }
         else {
             assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");

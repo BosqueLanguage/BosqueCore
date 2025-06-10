@@ -635,13 +635,13 @@ entity SMTTransformer {
             let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, List<Bool>{});
 
             let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-            return smctx, this.wrapOperationResult(op.resolvedType, callop, allobinds);
+            return smctx, this.wrapOperationResult(smdecl.resultType, callop, allobinds);
         }
         else {
             let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, largs.map<Bool>(fn(aa) => aa.1));
 
             let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-            return smctx, this.wrapOperationResultWErr(op.resolvedType, callop, allobinds);
+            return smctx, this.wrapOperationResultWErr(smdecl.resultType, callop, allobinds);
         }
     }
 
@@ -1449,6 +1449,49 @@ entity SMTTransformer {
         }
     }
 
+    method transformMethodDeclStaticToSMT(decl: BSQAssembly::MethodDeclStatic, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
+        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let thisdecl = SMTAssembly::InvokeParameterDecl{'this'<SMTAssembly::Identifier>, this.transformParamTypeToSMT(decl.ofrcvrtype, false)};
+        
+        if(lambdainvs)@none {
+            let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
+            let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, false)});
+        
+            let rtype = this.transformStdTypeToSMT(decl.resultType);
+            let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
+            return List<SMTAssembly::FunctionDecl>{ SMTAssembly::FunctionDecl{ ikey, List<SMTAssembly::InvokeParameterDecl>{thisdecl}.append(params), artype, body } }, rctx.lambdagen;
+        }
+        else {
+            let allprocs = $lambdainvs.map<(|SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
+                let ikey = TransformNameManager::convertInvokeKey(decl.ikey, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
+                let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => {
+                    let mlp = lgi.largerrors.tryFind(pred(gg) => gg.0 === p.pname);
+                    let islerr = if(mlp)@some then $mlp.1 else false;
+
+                    return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
+                });
+
+                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let rtype = this.transformStdTypeToSMT(decl.resultType);
+                let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+
+                let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
+                return SMTAssembly::FunctionDecl{ ikey, List<SMTAssembly::InvokeParameterDecl>{thisdecl}.append(params), artype, body }, rctx.lambdagen; 
+            });
+
+            let decls = allprocs.map<SMTAssembly::FunctionDecl>(fn(p) => p.0);
+            let lambdagen = List<LambdaGeneratorInfo>::concatAll(allprocs.map<List<LambdaGeneratorInfo>>(fn(p) => p.1));
+
+            return decls, lambdagen;
+        }
+    }
+
     method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo> {
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
 
@@ -1590,6 +1633,12 @@ entity SMTTransformer {
             else {
                 return none;
             }
+        }
+
+        let bsqsmdecl = this.assembly.staticmethods.tryGet(ikey);
+        if(bsqsmdecl)@some {
+            let ffinfo = this.transformMethodDeclStaticToSMT($bsqsmdecl, lambdainvs);
+            return some(ffinfo);
         }
 
         let implicitinv = this.assembly.tryGetImplicitInvariantInfo(ikey);
