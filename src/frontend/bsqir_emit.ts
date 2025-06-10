@@ -1789,28 +1789,19 @@ class BSQIREmitter {
         fmt.indentPush();
         const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`); 
+        const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+
+        const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
+        const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
+        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(rcvrtype[0])}`);
         fmt.indentPop();
 
-        let ikey = '';
-
-        if(rcvrtype[1] === undefined && optmapping === undefined) {
-            ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
-            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);
+        const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
+        if(isstatic) {
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
+            this.allmethods.push(ret); 
+            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
         }
-        else if(rcvrtype[1] === undefined && optmapping !== undefined) { 
-            const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, mdecl.terms);
-            ikey = `${declaredIn}::${mdecl.name}${resolvedTemplateTerms}`;
-            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            this.virtmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclVirtual{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`); 
-        }
-        else if(rcvrtype[1] !== undefined) { 
-            // TODO: We will need to resolve rcvrtype[1] for ikey generation
-            ikey = `${declaredIn}::${mdecl.name}`;
-            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
-            this.absmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclAbstract{ ${ibase}, ${fmt.nl()}${isThisRef}${fmt.nl() + fmt.indent("}")}`);            
-         }
         else {
             assert(false, "Not Implemented -- Override methods");
         }

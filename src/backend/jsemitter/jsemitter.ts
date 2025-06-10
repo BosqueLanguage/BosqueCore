@@ -3387,7 +3387,7 @@ class JSEmitter {
 
         const conscall = EmitNameManager.generateAccessorForConstructorParseAPI(this.currentns as NamespaceDeclaration, rcvr, usesvalidate);
         decls.push(`$parseAPI: { value: (parser) => { const vv = ${conscall}(parser.parseValue("${tdecl.valuetype.tkeystr}")); parser.parseScopedTypeTailing(); return vv; } }`);
-        decls.push(`$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${tdecl.valuetype.tkeystr}", value) + "<${rcvr.tkeystr}>"; } }`);
+        decls.push(`$emitAPI: { value: (emitter, value) => { return emitter.emitValue("${tdecl.valuetype.tkeystr}", value.value) + "<${rcvr.tkeystr}>"; } }`);
 
         decls.push(...this.emitConstMemberDecls(tdecl.consts));
 
@@ -3478,7 +3478,7 @@ class JSEmitter {
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, llns, pushdecl, rcvr.alltermargs);
         const pedecls = [
             `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${rcvr.alltermargs[0].tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v); }, ${emptyconst}); } }`,
-            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
+            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitCollectionEntries("${rcvr.alltermargs[0].tkeystr}", value.value) + "}"; } }`
         ];
 
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [{fname: "value", ftype: vtype}], undefined, false, pedecls, undefined);
@@ -3515,7 +3515,7 @@ class JSEmitter {
         const pushcall = EmitNameManager.generateAccssorNameForNamespaceFunction(this.currentns as NamespaceDeclaration, mmns, pushdecl, [rcvr.alltermargs[0], rcvr.alltermargs[1]]);
         const pedecls = [
             `$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ee = parser.parseCollectionConsArgs("${metype.tkeystr}"); return ee.reduce((acc, v) => { return ${pushcall}(acc, v.key, v.value); }, ${emptyconst}); } }`,
-            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitValue("${vtype.tkeystr}", value.value) + "}"; } }`
+            `$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "{" + emitter.emitCollectionEntries("MapEntry<${rcvr.alltermargs[0].tkeystr}, ${rcvr.alltermargs[1].tkeystr}>", value.value) + "}"; } }`
         ];
 
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, fmt, [{fname: "value", ftype: vtype}], undefined, false, pedecls, undefined);

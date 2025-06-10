@@ -955,7 +955,7 @@ class Lexer {
     }
 
     private tryLexAttribute() {
-        const mm = AllAttributes.find((value) => this.input.startsWith(value, this.jsStrPos));
+        const mm = AllAttributes.find((value) => this.trylex(new RegExp(value + "[[ \n\t]", "y")) !== null);
         if(mm !== undefined) {
             let jepos = this.jsStrPos + mm.length;
             if(this.input.startsWith("[", jepos)) {
