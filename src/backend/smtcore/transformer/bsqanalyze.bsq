@@ -114,11 +114,19 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    recursive method processConstructorEListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorEListExpression): BSQCCInfo {
-        abort;
+    recursive method processConstructorPrimaryListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimaryListExpression): BSQCCInfo {
+        return this.processArgumentList[recursive](current, e.args);
     }
 
-    recursive method processConstructorPrimaryExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimaryExpression): BSQCCInfo {
+    recursive method processConstructorEListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorEListExpression): BSQCCInfo {
+        return this.processArgumentList[recursive](current, e.args);
+    }
+
+    recursive method processConstructorPrimarySpecialSomeExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimarySpecialSomeExpression): BSQCCInfo {
+        return this.processArgumentList[recursive](current, e.args);
+    }
+
+    recursive method processConstructorStdExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorStdExpression): BSQCCInfo {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
 
         let argscalls = this.processArgumentList[recursive](current, e.args);
@@ -133,8 +141,15 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processConstructorExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorExpression): BSQCCInfo {
         match(e)@ {
-            BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
-            | BSQAssembly::ConstructorPrimaryExpression => { return this.processConstructorPrimaryExpression[recursive](current, $e); }
+            BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression[recursive](current, $e); }
         }
     }
 
@@ -393,11 +408,19 @@ entity MayErrorAnalysis {
         return !tdecl.allInvariants.empty();
     }
 
-    recursive method processConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        abort;
+    recursive method processConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processArgumentList[recursive](e.args, cerrors, lerrors);
     }
 
-    recursive method processConstructorPrimaryExpression(e: BSQAssembly::ConstructorPrimaryExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+    recursive method processConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+    }
+
+    recursive method processConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+    }
+
+    recursive method processConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
         if(!tdecl.allInvariants.empty()) {
             return true;
@@ -414,8 +437,15 @@ entity MayErrorAnalysis {
 
     recursive method processConstructorExpression(e: BSQAssembly::ConstructorExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(e)@ {
-            BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, cerrors, lerrors); }
-            | BSQAssembly::ConstructorPrimaryExpression => { return this.processConstructorPrimaryExpression[recursive]($e, cerrors, lerrors); }
+            BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e, cerrors, lerrors); }
         }
     }
 

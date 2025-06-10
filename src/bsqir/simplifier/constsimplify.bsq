@@ -233,38 +233,38 @@ entity ConstantSimplification {
     }
 
     recursive method processConstructorLambdaExpression(e: ConstructorLambdaExpression): Expression {
-        let nbody = this.processBodyImpl(e.body);
+        let nbody = this.processBodyImpl[recursive](e.body);
 
         return e[body=nbody];
     }
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression): Expression {
-        let nargs = this.processArgumentList(e.argsinfo.args);
+        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): Expression {
-        let nargs = this.processArgumentList(e.argsinfo.args);
+        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
-        let nexp = this.processUnaryArg(e.exp);
+        let nexp = this.processUnaryArg[recursive](e.exp);
         return e[exp=nexp];
     }
 
     recursive method processCoerceWidenTypeExpression(e: CoerceWidenTypeExpression): Expression {
-        let nexp = this.processUnaryArg(e.exp);
+        let nexp = this.processUnaryArg[recursive](e.exp);
         return e[exp=nexp];
     }
 
     recursive method processSafeConvertExpression(e: SafeConvertExpression): Expression {
-        let nexp = this.processUnaryArg(e.exp);
+        let nexp = this.processUnaryArg[recursive](e.exp);
         return e[exp=nexp];
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic): PostfixInvokeStatic {
-        let nargs = this.processArgumentList(op.argsinfo.args);
+        let nargs = this.processArgumentList[recursive](op.argsinfo.args);
         return op[argsinfo=$argsinfo[args=nargs]];
     }
 

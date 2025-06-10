@@ -415,9 +415,10 @@ class InstantiationPropagator {
                         this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
                     }
                     else if(args.length <= 6) {
-                        const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`) as NamespaceFunctionDecl;
- 
-                        this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                        const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`);
+                        if(ff !== undefined) {
+                            this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                        }
                     }
                     else {
                         assert(false, "Not Implemented -- large explicit list constructors");
