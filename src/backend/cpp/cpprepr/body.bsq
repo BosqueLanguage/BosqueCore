@@ -79,6 +79,14 @@ entity CallNamespaceFunctionExpression provides Expression {
     field args: ArgumentList;
 }
 
+entity CallTypeFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+    field ttype: NominalTypeSignature;
+    field resolvedDeclType: NominalTypeSignature;
+
+    field argsinfo: InvokeArgumentInfo;
+}
+
 entity AccessVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
@@ -165,7 +173,7 @@ PostfixAccessFromName {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
-    field callingikey: CString; %% Excludes the $TermType postfix seen in resolvedTrgt to make generatting invoke easier
+    field callingikey: CString; %% Excludes any resolved postfix template types (ex removes <Int, Nat>) 
 }
 ;
 

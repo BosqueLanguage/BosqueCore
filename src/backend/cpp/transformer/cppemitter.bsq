@@ -396,6 +396,14 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     return CString::concat(resolvedName, '(', args, ')');
 }
 
+function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): CString { 
+    let ident = emitIdentifier(e.ikey);
+    let ttype = emitTypeSignatureBase(e.ttype.tkeystr);
+    let resolvedDeclType = emitTypeSignatureBase(e.resolvedDeclType.tkeystr);
+    let args = emitArgumentList(); %% This needs params so we will have to move our type functions to global scope or find current nsdecl
+}
+
+
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): CString {
     let ident = emitIdentifier(op.name);
 
@@ -515,6 +523,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
+        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression{$e, ctx}; }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
         | _ => { abort; }
@@ -587,6 +596,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: CStri
     }
 }
 
+%% Likely will need to do some maniplation here to keep things in terms of our CoreCpp types (and typefunction call emission isnt quite supported)
 function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: CString): CString {
     switch(body.builtin) {
         's_float_power' => { return 'powf64(a, b)'; }
@@ -816,7 +826,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
             return CString::concat(acc, emitMethodDecl(ctx.asm.virtmethods.get(m), tk, ctx, full_indent));
         });
         *%
-        let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods, entity_virtmethods);
+        let res = CString::concat(entities_enum, vtable, entity_tinfo, emit_entity, entity_staticmethods);
         return CString::concat(acc, indent, res);
     });
 

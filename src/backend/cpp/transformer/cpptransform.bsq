@@ -277,6 +277,16 @@ entity CPPTransformer {
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, callingikey, args };
     }
 
+    method transformCallTypeFunctionExpression(expr: BSQAssembly::CallTypeFunctionExpression): CPPAssembly::CallTypeFunctionExpression {
+        let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
+        let ttype = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeSignature(expr.ttype.tkeystr) };
+        let resolvedDeclType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeSignature(expr.resolvedDeclType.tkeystr) };
+        let argsinfo = this.transformArgumentInfo(expr.argsinfo);
+
+        return CPPAssembly::CallTypeFunctionExpression{ ts, ikey, ttype, resolvedDeclType, argsinfo };
+    }
+
     method transformPostfixOpImpl(op: BSQAssembly::PostfixOperation): CPPAssembly::PostfixOperation {
         let baseType = CPPTransformNameManager::convertTypeSignature(op.baseType);
         if(op)@ <BSQAssembly::PostfixAccessFromName> {
@@ -343,6 +353,7 @@ entity CPPTransformer {
             | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
+            | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }
             | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
             | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
             | _ => { abort; }

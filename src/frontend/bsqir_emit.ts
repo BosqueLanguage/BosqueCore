@@ -578,7 +578,6 @@ class BSQIREmitter {
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
         const ikeybase = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
         
-        // Should probably make this a function as its used in emitPostfixOperationBase as well
         const ikey = EmitNameManager.generatedResolvedTypeKeyFromTerms(exp.terms, exp.terms.map((tt) => this.tproc(tt)), ikeybase);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
@@ -1716,14 +1715,11 @@ class BSQIREmitter {
         if(optmapping !== undefined) {
             this.mapper = TemplateNameMapper.tryMerge(optenclosingtype !== undefined ? optenclosingtype[1] : undefined, optmapping);
         }
-
+    
         const nskey = EmitNameManager.generateNamespaceKey(ns);
 
-        if(fdecl.terms.length > 0 && optmapping !== undefined) {
-            const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, fdecl.terms);
-            // const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
-            const ikeybase = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
-            const ikey = `${ikeybase}${resolvedTemplateTerms}`;
+        if(optenclosingtype !== undefined) {
+            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
@@ -1733,7 +1729,9 @@ class BSQIREmitter {
         else {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
             if(ftag === "function" || ftag === "predicate" || this.testEmitEnabled(fdecl as NamespaceFunctionDecl)) {
-                const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
+                const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, fdecl.terms);
+                const ikeybase = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
+                const ikey = `${ikeybase}${resolvedTemplateTerms}`;
 
                 fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
