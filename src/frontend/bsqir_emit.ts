@@ -1495,7 +1495,8 @@ class BSQIREmitter {
             return "BSQAssembly::PredicateUFBodyImplementation { }";
         }
         else if(body instanceof BuiltinBodyImplementation) {
-            return `BSQAssembly::BuiltinBodyImplementation { '${body.builtin}' }`;
+            let binds = this.mapper !== undefined ? this.mapper.computeBindingSet().map(ee => `(|'${ee[0]}', ${this.emitTypeSignature(ee[1])}|)`).join(", ") : ''
+            return `BSQAssembly::BuiltinBodyImplementation { '${body.builtin}', List<(|CString, BSQAssembly::TypeSignature|)>{${binds}} }`;
         }
         else if(body instanceof SynthesisBodyImplementation) {
             return "BSQAssembly::SynthesisBodyImplementation { }";

@@ -60,6 +60,7 @@ entity BuiltinFunctionDecl {
 
     field lgen: Option<List<(|Identifier, Bool|)>>;
     field specialname: CString;
+    field binds: List<(|CString, TypeKey|)>;
 }
 
 entity FunctionDecl {

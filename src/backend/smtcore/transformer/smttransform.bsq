@@ -1388,7 +1388,10 @@ entity SMTTransformer {
 
     method transformNamespaceFunctionDeclToBuiltinSMT(decl: BSQAssembly::NamespaceFunctionDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::BuiltinFunctionDecl> {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
-        
+
+        let builtin = decl.body@<BSQAssembly::BuiltinBodyImplementation>.builtin;
+        let binds = decl.body@<BSQAssembly::BuiltinBodyImplementation>.binds.map<(|CString, SMTAssembly::TypeKey|)>(fn(bb) => (|bb.0, this.transformStdTypeToSMT(bb.1)|));
+
         if(lambdainvs)@none {
             let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
             let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, false)});
@@ -1396,7 +1399,7 @@ entity SMTTransformer {
             let rtype = this.transformStdTypeToSMT(decl.resultType);
             let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-            return List<SMTAssembly::BuiltinFunctionDecl>{ SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, none, decl.body@<BSQAssembly::BuiltinBodyImplementation>.builtin } };
+            return List<SMTAssembly::BuiltinFunctionDecl>{ SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, none, builtin, binds } };
         }
         else {
             let allprocs = $lambdainvs.map<SMTAssembly::BuiltinFunctionDecl>(fn(lgi) => {
@@ -1413,7 +1416,7 @@ entity SMTTransformer {
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
                 let lambdaerr = lgi.largerrors.map<(|SMTAssembly::Identifier, Bool|)>(fn(gg) => (|SMTAssembly::Identifier::from(TransformNameManager::safeifyName(gg.0.value)), gg.1|));
-                return SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, some(lambdaerr), decl.body@<BSQAssembly::BuiltinBodyImplementation>.builtin }; 
+                return SMTAssembly::BuiltinFunctionDecl{ ikey, params, artype, some(lambdaerr), builtin, binds }; 
             });
 
             return allprocs;
