@@ -369,7 +369,7 @@ recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceD
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns.value); 
 
-    let ident = emitInvokeKey(e.callingikey, ctx);
+    let ident = e.callingikey;
     let name = ident.removePrefixString(resolvedns);
     
     var resolvedName: CString;
@@ -409,7 +409,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
-    let callingikey = emitInvokeKey(op.callingikey, ctx);
+    let callingikey = op.callingikey;
     let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;

@@ -108,13 +108,13 @@ class EmitNameManager {
                         resolvedTemplateTerms = resolvedTemplateTerms.concat(term);
                     }
                     else {
-                        resolvedTemplateTerms = resolvedTemplateTerms.concat("", term);
+                        resolvedTemplateTerms = resolvedTemplateTerms.concat(", ", term);
                     }
                 }
             }
         }
 
-        return '$'+resolvedTemplateTerms;
+        return `<${resolvedTemplateTerms}>`;
     }
 }
 
@@ -584,7 +584,7 @@ class BSQIREmitter {
         const ikeybase = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
         
         // Should probably make this a function as its used in emitPostfixOperationBase as well
-        const ikey = (exp.terms.length > 0) ? ikeybase + '$' + exp.terms.map((tt) => this.tproc(tt).emit()).join("") : ikeybase;
+        const ikey = (exp.terms.length > 0) ? `${ikeybase}<${exp.terms.map((tt) => this.tproc(tt).emit()).join(", ")}>` : ikeybase;
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -592,7 +592,7 @@ class BSQIREmitter {
         const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
         const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, callingikey='${ikeybase}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, callingikey='${ikeybase}', argsinfo=${arginfo} }`;
     }
    
     // Our emitted functions are always considered namespace functions, not type functions. This never gets called even if we have type function calls in our code...
@@ -695,12 +695,12 @@ class BSQIREmitter {
 
         const tsig = this.emitTypeSignature(rtrgt);
         const ikeybase = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
-        const ikey = (exp.terms.length > 0) ? ikeybase + '$' + exp.terms.map((tt) => this.tproc(tt).emit()).join("") : ikeybase;
+        const ikey = (exp.terms.length > 0) ? `${ikeybase}<${exp.terms.map((tt) => this.tproc(tt).emit()).join(", ")}>` : ikeybase;
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
         // callingikey is used to generate correct function signature in the cpp emitter
-        return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo}, callingikey='${ikeybase}'<BSQAssembly::InvokeKey> }`;
+        return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo}, callingikey='${ikeybase}' }`;
     }
 
     private emitVirtualPostfixInvoke(exp: PostfixInvoke): string {
@@ -1402,7 +1402,7 @@ class BSQIREmitter {
         const mustExhaustive = stmt.mustExhaustive;
         const optypes = stmt.optypes.map((op) => this.emitTypeSignature(op)).join(", ");
 
-        return [`BSQAssembly::SwitchStatement{${sbase}, sval=${sval},`, fmt.nl(),`switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive},`, fmt.nl(), `optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`].join("");
+        return [`BSQAssembly::SwitchStatement{${sbase}, sval=${sval},`, fmt.nl()+fmt.indent(""),`switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive},`, fmt.nl()+fmt.indent(""), `optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`].join("");
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: BsqonCodeFormatter): string {
@@ -1420,7 +1420,7 @@ class BSQIREmitter {
         const implicitfinalop = stmt.implicitFinalType !== undefined ? stmt.implicitFinalType : finalop.mtype;
         const implicitFinalType = (implicitfinalop !== undefined) ? this.emitTypeSignature(implicitfinalop) : assert(false, "No final type signature found in match statement");
 
-        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl(), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl(), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
@@ -1481,7 +1481,7 @@ class BSQIREmitter {
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
         const sbase = this.emitStatementBase(stmt);
         const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt).join(`, `);
-        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping},`, fmt.nl(),"statements=List<BSQAssembly::Statement>{", stmts, "}}"].join("");
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping},`, fmt.nl()+fmt.indent(""),"statements=List<BSQAssembly::Statement>{", stmts, "}}"].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {

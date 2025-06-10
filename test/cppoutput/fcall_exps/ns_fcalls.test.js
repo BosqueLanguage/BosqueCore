@@ -24,3 +24,13 @@ describe ("CPP Emit Evaluate -- NamespaceFunction (no template)", () => {
         runMainCode("function foo(x: Int, y: Int = $x): Int { return x + y; } public function main(): Int { return foo(1i); }", "2_i");
     });
  });
+
+describe ("CPP Emit Evaluate -- NamespaceFunction (with template)", () => {
+    it("should exec simple positional", function () {
+        runMainCode("function foo<T>(x: T): T { return x; } public function main(): Int { return foo<Int>(1i); }", "1_i");
+    });
+
+    it("should exec two instantiations", function () {
+        runMainCode("function foo<T>(x: T): T { return x; } public function main(): Int { if(foo<Nat>(1n) > 0n) { return foo<Int>(1i); } return 0i; }", "1_i");
+    });
+});

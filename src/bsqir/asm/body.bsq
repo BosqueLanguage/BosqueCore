@@ -180,7 +180,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
     field fullns: List<CString>;
-    field callingikey: InvokeKey;
+    field callingikey: CString;
 
     field argsinfo: InvokeArgumentInfo;
 }
@@ -295,7 +295,7 @@ PostfixAccessFromName {
     field resolvedTrgt: InvokeKey;
 
     field argsinfo: InvokeArgumentInfo;
-    field callingikey: InvokeKey;
+    field callingikey: CString;
 }
 | PostfixInvokeVirtual {
     field definedInType: NominalTypeSignature;

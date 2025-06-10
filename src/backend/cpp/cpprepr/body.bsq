@@ -74,7 +74,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ikey: InvokeKey;
     field ns: NamespaceKey;
     field fullns: List<CString>;
-    field callingikey: InvokeKey;
+    field callingikey: CString;
 
     field args: ArgumentList;
 }
@@ -165,7 +165,7 @@ PostfixAccessFromName {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
-    field callingikey: InvokeKey; %% Excludes the $TermType postfix seen in resolvedTrgt to make generatting invoke easier
+    field callingikey: CString; %% Excludes the $TermType postfix seen in resolvedTrgt to make generatting invoke easier
 }
 ;
 

@@ -272,7 +272,7 @@ entity CPPTransformer {
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
         let args = this.transformArgumentInfo(expr.argsinfo);
         let fullns = expr.fullns; %% For looking up func we are calling
-        let callingikey = CPPTransformNameManager::convertInvokeKey(expr.callingikey); %% Typefuncs (since they get grouped with nsfuncs due to type resolution)
+        let callingikey = expr.callingikey; %% Typefuncs (since they get grouped with nsfuncs due to type resolution)
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, callingikey, args };
     }
@@ -290,7 +290,7 @@ entity CPPTransformer {
             let resolvedType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey($op.resolvedType.tkeystr) };
             let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
             let args = this.transformArgumentInfo($op.argsinfo);
-            let callingikey = CPPTransformNameManager::convertInvokeKey($op.callingikey);
+            let callingikey = $op.callingikey;
 
             return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args, callingikey };
         }

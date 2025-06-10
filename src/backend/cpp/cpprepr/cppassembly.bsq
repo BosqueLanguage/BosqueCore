@@ -15,7 +15,8 @@ const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% 
 const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}|${CPPAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]*/c;
+%% Optional '<' * '>' allows support for resolved templates on functions or methods
+const invokeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}|${CPPAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]*('<'.+'>')?/c;
 type InvokeKey = CString of CPPAssembly::invokeKeyRE;
 
 const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these identifiers so we can make special names
