@@ -2202,6 +2202,23 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
         return "[UNKNOWN PRIMTIVE TYPE -- " + tkey + "]";
     }
 }
+
+/**
+ * @param {string} tkey
+ * @param {any} l 
+ * @returns {string}
+ */
+BSQONEmitter.prototype.emitCollectionEntries = function(tkey, l) {
+    if(l.hasOwnProperty("v")) {
+        return this.emitValue(tkey, l.v);
+    }
+    else if(l.hasOwnProperty("l") && l.hasOwnProperty("r")) {
+        return [this.emitCollectionEntries(tkey, l.l), this.emitCollectionEntries(tkey, l.r)].filter((mm) => mm !== "").join(", ");
+    }
+    else {
+        return "";
+    }
+}
 /**
  * @param {string} tkey
  * @param {any} v 
