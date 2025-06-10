@@ -178,6 +178,13 @@ entity ExplicitifyTransform {
         return e[exp=nexp];
     }
 
+    recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
+        let types = op.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
+        let nargs = this.processArgumentListStd(op.argsinfo.args, types, vmap);
+
+        return op[argsinfo=$argsinfo[args=nargs]];
+    }
+
     recursive method processPostfixOp(e: PostfixOp, vmap: VarMapping): Expression {
         let ebase = this.processUnaryArg[recursive](e.rootExp, vmap);
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
@@ -188,7 +195,7 @@ entity ExplicitifyTransform {
                 | PostfixIsTest => { return $op; }
                 | PostfixAsConvert => { return $op; }
                 | PostfixAssignFields => { abort; }
-                | PostfixInvokeStatic => { abort; }
+                | PostfixInvokeStatic => { return this.processPostfixInvokeStatic[recursive]($op, vmap); }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
                 | PostfixBoolConstant => { return $op; }
@@ -624,7 +631,28 @@ entity ExplicitifyTransform {
     }
 
     method processMethodDeclStatic(staticmethod: MethodDeclStatic): MethodDeclStatic {
-        abort;
+        return MethodDeclStatic{
+            file = staticmethod.file,
+            sinfo = staticmethod.sinfo,
+            fullns = staticmethod.fullns,
+            declaredInNS = staticmethod.declaredInNS,
+
+            attributes = staticmethod.attributes,
+            name = staticmethod.name,
+
+            ikey = staticmethod.ikey,
+            irecursive = staticmethod.irecursive,
+            params = staticmethod.params.map<InvokeParameterDecl>(fn(param) => this.processInvokeParameter(param)),
+            resultType = staticmethod.resultType,
+
+            body = this.processBodyImpl(staticmethod.body, VarMapping::createEmpty()),
+
+            preconditions = staticmethod.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
+            postconditions = staticmethod.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
+
+            isThisRef = staticmethod.isThisRef,
+            ofrcvrtype = staticmethod.ofrcvrtype
+        };
     }
 
     method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {

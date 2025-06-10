@@ -150,16 +150,35 @@ entity BSQToSMTCallGraphBuilder {
         %%TODO: we need to handle implicit default params here too
         var defaultcalls = BSQCCInfo::emptyinfo;
 
-        var invariantcalls = BSQCCInfo::emptyinfo;
+        var prepostcalls = BSQCCInfo::emptyinfo;
         if(\/(!nsfunc.preconditions.empty(), !nsfunc.postconditions.empty())) {
             let precalls = nsfunc.preconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
             let postcalls = nsfunc.postconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
 
-            invariantcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
+            prepostcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
         }
 
         let tinfo = BSQCCInfo::createWCallInfo(current, e.ikey);
-        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, invariantcalls, tinfo);
+        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, prepostcalls, tinfo);
+    }
+
+    recursive method processPostfixInvokeStatic(current: BSQAssembly::InvokeKey, op: BSQAssembly::PostfixInvokeStatic): BSQCCInfo {
+        let argscalls = this.processArgumentList[recursive](current, op.argsinfo.args);
+        let smethod = this.assembly.staticmethods.get(op.resolvedTrgt);
+        
+        %%TODO: we need to handle implicit default params here too
+        var defaultcalls = BSQCCInfo::emptyinfo;
+
+        var prepostcalls = BSQCCInfo::emptyinfo;
+        if(\/(!smethod.preconditions.empty(), !smethod.postconditions.empty())) {
+            let precalls = smethod.preconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            let postcalls = smethod.postconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+
+            prepostcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
+        }
+
+        let tinfo = BSQCCInfo::createWCallInfo(current, op.resolvedTrgt);
+        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, prepostcalls, tinfo);
     }
 
     recursive method processPostfixOp(current: BSQAssembly::InvokeKey, e: BSQAssembly::PostfixOp): BSQCCInfo {
@@ -173,7 +192,7 @@ entity BSQToSMTCallGraphBuilder {
                 | BSQAssembly::PostfixIsTest => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixAsConvert => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixAssignFields => { return BSQCCInfo::emptyinfo; }
-                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeStatic => { return this.processPostfixInvokeStatic[recursive](current, $op); }
                 | BSQAssembly::PostfixInvokeVirtual => { abort; }
                 | BSQAssembly::PostfixLiteralKeyAccess => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixBoolConstant => { return BSQCCInfo::emptyinfo; }
@@ -418,6 +437,19 @@ entity MayErrorAnalysis {
         return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
     }
 
+    recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        if(cerrors.tryGet(op.resolvedTrgt) === true) {
+            return true; %% the called function may error
+        }
+
+        let smethod = this.assembly.staticmethods.get(op.resolvedTrgt);
+        if(\/(!smethod.preconditions.empty(), !smethod.postconditions.empty())) {
+            return true;
+        }
+        
+        return this.processArgumentList[recursive](op.argsinfo.args, cerrors, lerrors);
+    }
+
     recursive method processPostfixOp(e: BSQAssembly::PostfixOp, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         let baseerr = this.processUnaryArg[recursive](e.rootExp, cerrors, lerrors);
         if(baseerr) {
@@ -432,7 +464,7 @@ entity MayErrorAnalysis {
                 | BSQAssembly::PostfixIsTest => { return false; }
                 | BSQAssembly::PostfixAsConvert => { return true; }
                 | BSQAssembly::PostfixAssignFields => { abort; }
-                | BSQAssembly::PostfixInvokeStatic => { abort; }
+                | BSQAssembly::PostfixInvokeStatic => { return this.processPostfixInvokeStatic[recursive]($op, cerrors, lerrors); }
                 | BSQAssembly::PostfixInvokeVirtual => { abort; }
                 | BSQAssembly::PostfixLiteralKeyAccess => { return false; }
                 | BSQAssembly::PostfixBoolConstant => { return false; }

@@ -10,6 +10,9 @@ describe ("SMT Exec -- NamespaceFunction", () => {
 
         runishMainCodeUnsat("function bar(x: Int): Int { assert x != 0i; return x + 1i; } public function main(): Int { return bar(2i); }", "(assert (not (= (@Result-ok 3) Main@main)))");
         runishMainCodeUnsat("function bar(x: Int): Int { assert x != 0i; return x + 1i; } public function main(): Int { return bar(0i); }", "(assert (not (= @Result-err-other Main@main)))");
+
+        runishMainCodeUnsat("function bar(x: Int): Int { return x + 1i; } public function main(): Int { let v: Option<Int> = some(2i); return bar(v@some); }", "(assert (not (= (@Result-ok 3) Main@main)))");
+        runishMainCodeUnsat("function bar(x: Int): Int { return x + 1i; } public function main(): Int { let v: Option<Int> = none; return bar(v@some); }", "(assert (not (= @Result-err-other Main@main)))");
     });
 
     it("should smt exec simple lambda", function () {

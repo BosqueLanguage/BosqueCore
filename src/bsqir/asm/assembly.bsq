@@ -80,12 +80,15 @@ entity TypeFunctionDecl provides FunctionInvokeDecl {
 
 datatype MethodDecl provides ExplicitInvokeDecl using {
     field isThisRef: Bool;
+    field ofrcvrtype: NominalTypeSignature; %%Type type that this method is defined in (as opposed to the declaration type which differs for overrides)
 }
 of
 MethodDeclStatic { }
 | MethodDeclAbstract {}
 | MethodDeclVirtual {}
-| MethodDeclOverride {}
+| MethodDeclOverride { 
+    field overrideintype: NominalTypeSignature; %%The type that declares this override method
+}
 ;
 
 entity TaskMethodDecl provides ExplicitInvokeDecl {
