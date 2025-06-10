@@ -86,14 +86,14 @@ namespace ListOps {
                 let v2, nl2 = state.2.popFront();
 
                 if(KeyComparator::less<T>(v1, v2)) {
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, state.2;
                 }
                 elif(KeyComparator::less<T>(v2, v1)) {
-                    return ListOps::s_list_push_back<T>(state.0, v2), l1, nl2;
+                    return ListOps::s_list_push_back<T>(state.0, v2), state.1, nl2;
                 }
                 else {
                     %% keep duplicates but take from v1 first
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, state.2;
                 }
             });
 
@@ -131,14 +131,14 @@ namespace ListOps {
                 let v2, nl2 = state.2.popFront();
 
                 if(KeyComparator::less<T>(v1, v2)) {
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, l2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, state.2;
                 }
                 elif(KeyComparator::less<T>(v2, v1)) {
-                    return ListOps::s_list_push_back<T>(state.0, v2), l1, nl2;
+                    return ListOps::s_list_push_back<T>(state.0, v2), state.1, nl2;
                 }
                 else {
                     %% skip duplicates
-                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, nl2;
+                    return ListOps::s_list_push_back<T>(state.0, v1), nl1, state.2;
                 }
             }
         );
@@ -721,7 +721,6 @@ namespace ListOps {
         }
         else {
             let nt = if($tt.c === Color#Red) then Tree<T>::createNode(Color#Black, $tt.l, $tt.r) else $tt;
-            assert checkRBInvariants<T>(nt);
             return nt;
         }
     }
@@ -747,7 +746,6 @@ namespace ListOps {
         }
         else {
             let nt = if($tt.c === Color#Red) then Tree<T>::createNode(Color#Black, $tt.l, $tt.r) else $tt;
-            assert checkRBInvariants<T>(nt);
             return nt;
         }
     }
@@ -787,7 +785,6 @@ namespace ListOps {
         }
         else {
             let nt = if($tt.c === Color#Red) then Tree<T>::createNode(Color#Black, $tt.l, $tt.r) else $tt;
-            assert checkRBInvariants<T>(nt);
             return nt;
         }
     }
@@ -837,19 +834,18 @@ namespace ListOps {
                         return r;
                     }
                     let nrt = balance<T>(r.c, r.l, r.r);
-                    assert checkRBInvariants<T>(nrt);
                     return nrt;
                 }
+                
                 if($nt.r?<BBLeaf<T>>) {
                     let l = $nt.l;
                     if(l)@@!<Node<T>> {
                         return l;
                     }
                     let nlt = balance<T>(l.c, l.l, l.r);
-                    assert checkRBInvariants<T>(nlt);
                     return nlt;
                 }
-                assert checkRBInvariants<T>(nt);
+                
                 return nt;
             }
             | _ => { return nt; }

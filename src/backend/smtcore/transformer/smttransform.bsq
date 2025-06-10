@@ -337,13 +337,26 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let smttype = this.transformStdTypeToSMT(e.ctype);
+        let oftype = this.transformStdTypeToSMT(e.ctype);
+
+        if(e.args.args.allOf(pred(arg) => arg?<BSQAssembly::PositionalArgumentValue>)) {
+            return nctx, this.wrapOperationResult(e.ctype, SMTAssembly::ConstructorListSingletonExpression{smttype, oftype, aargs}, obinds);
+        }
+        else {
+            abort; %% Not implemented
+        }
+    }
+
     recursive method transformConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         abort;
     }
 
     recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         match(e)@ {
-            BSQAssembly::ConstructorPrimaryListExpression => { abort; }
+            BSQAssembly::ConstructorPrimaryListExpression => { return this.transformConstructorPrimaryListExpression($e, ctx); }
             | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($e, ctx); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }

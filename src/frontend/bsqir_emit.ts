@@ -430,7 +430,14 @@ class BSQIREmitter {
     }
 
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
-        assert(false, "Not implemented -- CollectionConstructor");
+        if(cdecl instanceof ListTypeDecl) {
+            const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+            const elemtype = this.emitTypeSignature(exp.elemtype as TypeSignature);
+            return `BSQAssembly::ConstructorPrimaryListExpression{ ${cpee}, elemtype=${elemtype} }`;
+        }
+        else {
+            assert(false, "Not implemented -- CollectionConstructor of Map");
+        }
     }
 
     private emitSpecialConstructableConstructor(exp: ConstructorPrimaryExpression): string {

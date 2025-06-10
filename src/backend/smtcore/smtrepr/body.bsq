@@ -74,11 +74,11 @@ datatype ConstructorPrimaryExpression provides SafeExpression using {
     field constype: TypeKey;
 }
 of 
-ConstructorListSingletonsExpression { 
+ConstructorListSingletonExpression { 
     field oftype: TypeKey;
     field args: List<SafeExpression>;
 }
-| ConstructorMapSingletonsExpression { 
+| ConstructorMapSingletonExpression { 
     field oftype: TypeKey;
     field args: List<SafeExpression>;
 }
