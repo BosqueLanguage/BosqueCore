@@ -595,13 +595,14 @@ entity CPPTransformer {
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
         let declaredInNS = CPPTransformNameManager::convertNamespaceKey(e.declaredInNS);
         let tkey = CPPTransformNameManager::convertTypeKey(e.tkey); 
+        let name = e.name;
         let fields = this.transformMemberFieldDecl(e.fields);
         let staticmethods = e.staticmethods.map<CPPAssembly::InvokeKey>(fn(m) => CPPTransformNameManager::convertInvokeKey(m));
         let virtmethods = e.virtmethods.map<CPPAssembly::InvokeKey>(fn(m) => CPPTransformNameManager::convertInvokeKey(m));
         let absmethods = e.virtmethods.map<CPPAssembly::InvokeKey>(fn(m) => CPPTransformNameManager::convertInvokeKey(m));
         let overmethods = e.virtmethods.map<CPPAssembly::InvokeKey>(fn(m) => CPPTransformNameManager::convertInvokeKey(m));
 
-        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, fields, staticmethods, virtmethods, absmethods, overmethods };
+        return CPPAssembly::EntityTypeDecl{ declaredInNS, e.fullns, tkey, name, staticmethods, virtmethods, absmethods, overmethods, fields };
     }
 
     %*

@@ -132,6 +132,7 @@ entity SaturatedInvariantInfo {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
+    field name: CString;
 
     field invariants: List<InvariantDecl>;
     field validates: List<ValidateDecl>;

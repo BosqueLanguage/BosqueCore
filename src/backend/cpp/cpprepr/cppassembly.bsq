@@ -42,8 +42,13 @@ entity MemberFieldDecl provides AbstractCoreDecl {
 
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
- 
-    %% invariants, validates, methods, saturated, as well
+    field name: CString;
+
+    field staticmethods: List<InvokeKey>;
+    field virtmethods: List<InvokeKey>;
+    field absmethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
+    %% invariants, validates, saturated, as well
 }
 
 concept AbstractInvokeDecl provides AbstractDecl {
@@ -59,11 +64,6 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
-
-    field staticmethods: List<InvokeKey>;
-    field virtmethods: List<InvokeKey>;
-    field absmethods: List<InvokeKey>;
-    field overmethods: List<InvokeKey>;
 }
 
 enum Tag {

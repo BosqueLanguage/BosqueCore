@@ -76,6 +76,11 @@ function emitTypeKeyParamField(tk: CPPAssembly::TypeKey, ctx: Context): CString 
     }
 }
 
+function resolveTemplates(name: CString, base: CString): CString {
+    let templates = base.removePrefixString(name);
+    return if(templates !== '') then base.removeSuffixString(templates) else base;
+}
+
 function emitIdentifier(ident: CPPAssembly::Identifier): CString {
     return ident.value;
 }
@@ -376,10 +381,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
     let nsfunc = findNamespaceDecl(ctx.asm.nsdecls, e.fullns).nsfuncs.get(e.ikey); 
     let args = emitArgumentList(e.args, nsfunc.params, ctx); 
 
-    %% Remove templates
-    let templates = resolvedName.removePrefixString(nsfunc.name);
-    let finalName = if(templates !== '') then resolvedName.removeSuffixString(templates) else resolvedName;
-
+    let finalName = resolveTemplates(nsfunc.name, resolvedName);
     if(resolvedns !== '') {
         return CString::concat(resolvedns, '::', finalName,'(', args, ')');
     }
@@ -451,14 +453,12 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         resolvedInvoke = ik;
     }
 
-    let template = if(resolvedInvoke.startsWithString(name)) then resolvedInvoke.removePrefixString(name) else '';
-    let noTemplateInvoke = resolvedInvoke.removeSuffixString(template);
-
+    let resolvedName = resolveTemplates(name, resolvedInvoke);
     if(args === '') {
-        return CString::concat(noTemplateInvoke, '(', expr, ')');
+        return CString::concat(resolvedName, '(', expr, ')');
     }
     else {
-         return CString::concat(noTemplateInvoke, '(', expr, ', ', args, ')');       
+         return CString::concat(resolvedName, '(', expr, ', ', args, ')');       
     }
 }
 
@@ -628,8 +628,13 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     let all_params = params.map<CString>(fn(param) => {
         let ptype = emitTypeSignatureParamFieldType(param.ptype, ctx);
         let resolved_ptype = emitResolvedNamespace(ctx.fullns_list, ptype);
+
+        %% May need to move the entity storage into asm rather than ns storage,
+        %% could prove useful to acess from here
+
+        let resolvedName = resolveTemplates(resolved_ptype, ptype);
         let pident = emitIdentifier(param.pname);
-        return CString::concat(resolved_ptype, ' ', pident);
+        return CString::concat(resolvedName, ' ', pident);
     });
 
     return CString::joinAll(', ', all_params);
@@ -688,9 +693,10 @@ function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context,
 
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
-    
     let resolved_tk = emitResolvedNamespace(nctx.fullns_list, tk);
-    let entries = e.fields.reduce<CString>(CString::concat(indent, 'struct ', resolved_tk, '{ %n;'), 
+
+    let finalName = resolveTemplates(e.name, resolved_tk);
+    let entries = e.fields.reduce<CString>(CString::concat(indent, 'struct ', finalName, '{ %n;'), 
     fn(acc, entry) => {
         return CString::concat(acc, emitMemberFieldDecl(entry, nctx, CString::concat('    ', indent)));
     });
@@ -700,7 +706,8 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Co
 
 function emitEntityForwardDeclaration(e: CPPAssembly::EntityTypeDecl, ctx: Context, indent: CString): CString {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
-    return CString::concat(indent, 'struct ', emitResolvedNamespace(nctx.fullns_list, e.tkey.value), ';%n;');
+    let resolvedName = resolveTemplates(e.name, emitResolvedNamespace(nctx.fullns_list, e.tkey.value));
+    return CString::concat(indent, 'struct ', resolvedName, ';%n;');
 }
 
 function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: CString): CString {

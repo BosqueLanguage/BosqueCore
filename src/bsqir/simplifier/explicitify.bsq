@@ -707,6 +707,7 @@ entity ExplicitifyTransform {
             declaredInNS=etype.declaredInNS,
             
             tkey=etype.tkey,
+            name=etype.name,
 
             invariants=etype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
             validates=etype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
