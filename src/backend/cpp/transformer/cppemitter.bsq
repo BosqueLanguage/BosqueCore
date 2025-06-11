@@ -368,27 +368,13 @@ recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceD
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns.value); 
-
     let ident = e.callingikey;
-    let name = ident.removePrefixString(resolvedns);
-    
-    var resolvedName: CString;
-    if(name.startsWithString('::')) {
-        resolvedName = name.removePrefixString('::');
-    }
-    else {
-        resolvedName = name;
-    }
+
+    let name: CString = if(ident.startsWithString(resolvedns)) then ident.removePrefixString(resolvedns) else ident;
+    let resolvedName: CString = if(name.startsWithString('::')) then name.removePrefixString('::') else name;
 
     let nsdecl = findNamespaceDecl(ctx.asm.nsdecls, e.fullns); 
-
-    var args: CString;
-    if(!findNamespaceDecl(ctx.asm.nsdecls, e.fullns).nsfuncs.has(e.ikey)) {
-        args = emitArgumentList(e.args, nsdecl.typefuncs.get(e.ikey).params, ctx);
-    }
-    else {
-        args = emitArgumentList(e.args, nsdecl.nsfuncs.get(e.ikey).params, ctx); 
-    }
+    let args = emitArgumentList(e.args, nsdecl.nsfuncs.get(e.ikey).params, ctx); 
 
     if(resolvedns !== '') {
         return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
@@ -397,12 +383,19 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
 }
 
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): CString { 
-    let ident = emitIdentifier(e.ikey);
-    let ttype = emitTypeSignatureBase(e.ttype.tkeystr);
-    let resolvedDeclType = emitTypeSignatureBase(e.resolvedDeclType.tkeystr);
-    let args = emitArgumentList(); %% This needs params so we will have to move our type functions to global scope or find current nsdecl
-}
+    let ident = e.ikey.value;
+    let ttype = emitTypeSignatureBase(e.ttype, ctx);
+    let resolvedDeclType = emitTypeSignatureBase(e.resolvedDeclType, ctx);
 
+    if(!ctx.asm.typefuncs.has(e.ikey)) {
+        abort;
+    }
+
+    let typefunc = ctx.asm.typefuncs.get(e.ikey);
+    let args = emitArgumentList(e.args, typefunc.params, ctx); 
+
+    return CString::concat(resolvedDeclType, '(', args, ')');
+}
 
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): CString {
     let ident = emitIdentifier(op.name);
@@ -523,7 +516,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
-        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression{$e, ctx}; }
+        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
         | _ => { abort; }
@@ -599,8 +592,8 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: CStri
 %% Likely will need to do some maniplation here to keep things in terms of our CoreCpp types (and typefunction call emission isnt quite supported)
 function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: CString): CString {
     switch(body.builtin) {
-        's_float_power' => { return 'powf64(a, b)'; }
-        | 's_float_sqrt' => { return 'sqrtf64(a)'; }
+        's_float_power' => { return CString::concat(indent, '    ', 'return powf64(a.get(), b.get());%n;'); }
+        | 's_float_sqrt' => { return CString::concat(indent, '    ', 'return sqrtf64(a.get());%n;'); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }
@@ -802,8 +795,8 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return CString::concat(acc, emitFunctionForwardDeclaration(decl@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent));
     });
 
-    let typefuncfwd_decls = nsdecl.typefuncs.reduce<CString>(nsfuncfwd_decls, fn(acc, ikey, decl) => {
-        return CString::concat(acc, emitFunctionForwardDeclaration(decl@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent));
+    let typefuncfwd_decls = nsdecl.typefuncs.reduce<CString>(nsfuncfwd_decls, fn(acc, ikey) => {
+        return CString::concat(acc, emitFunctionForwardDeclaration(ctx.asm.typefuncs.get(ikey), ctx, full_indent));
     });
 
     %% Eventually will need to modify this to allow other method types
@@ -840,8 +833,8 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return CString::concat(acc, emitFunctionDecl(func@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
     });
 
-    let typefuncs = nsdecl.typefuncs.reduce<CString>(nsfuncs, fn(acc, key, func) => {
-        return CString::concat(acc, emitFunctionDecl(func@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
+    let typefuncs = nsdecl.typefuncs.reduce<CString>(nsfuncs, fn(acc, ikey) => {
+        return CString::concat(acc, emitFunctionDecl(ctx.asm.typefuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
     });
 
     return CString::concat(typefuncs, indent, '}%n;');

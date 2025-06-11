@@ -84,7 +84,7 @@ entity CallTypeFunctionExpression provides Expression {
     field ttype: NominalTypeSignature;
     field resolvedDeclType: NominalTypeSignature;
 
-    field argsinfo: InvokeArgumentInfo;
+    field args: ArgumentList;
 }
 
 entity AccessVariableExpression provides Expression {

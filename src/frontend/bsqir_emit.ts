@@ -589,7 +589,6 @@ class BSQIREmitter {
         return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, callingikey='${ikeybase}', argsinfo=${arginfo} }`;
     }
    
-    // Our emitted functions are always considered namespace functions, not type functions. This never gets called even if we have type function calls in our code...
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
         const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name);
@@ -1720,10 +1719,12 @@ class BSQIREmitter {
 
         if(optenclosingtype !== undefined) {
             const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
-            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
+            const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
+            let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
+            const ibase = this.emitExplicitInvokeDecl(fdecl, typeUpdatedNsKey, ikey, fmt);
             this.mapper = omap;
 
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`);
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, fullikey=List<CString>{${cstrns}} }`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {

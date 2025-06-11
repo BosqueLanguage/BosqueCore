@@ -103,6 +103,7 @@ entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
 entity TypeFunctionDecl provides AbstractInvokeDecl {
+    field fullikey: List<CString>;
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
@@ -119,7 +120,7 @@ entity NamespaceDecl {
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
 
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
+    field typefuncs: List<InvokeKey>;
 
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
@@ -131,6 +132,7 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
     field virtmethods: Map<InvokeKey, MethodDeclVirtual>;

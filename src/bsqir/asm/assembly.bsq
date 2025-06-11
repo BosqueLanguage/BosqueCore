@@ -76,6 +76,7 @@ entity NamespaceFunctionDecl provides FunctionInvokeDecl {
 }
 
 entity TypeFunctionDecl provides FunctionInvokeDecl {
+    field fullikey: List<CString>; %% For ns resolution 
 }
 
 datatype MethodDecl provides ExplicitInvokeDecl using {
