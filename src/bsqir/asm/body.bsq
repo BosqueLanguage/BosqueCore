@@ -642,7 +642,7 @@ datatype BodyImplementation
 of
 AbstractBodyImplementation { }
 | PredicateUFBodyImplementation { }
-| BuiltinBodyImplementation { field builtin: CString; }
+| BuiltinBodyImplementation { field builtin: CString; field binds: List<(|CString, TypeSignature|)>; }
 | SynthesisBodyImplementation { }
 | ExpressionBodyImplementation { field exp: Expression; }
 | StandardBodyImplementation { field statements: List<Statement>; }

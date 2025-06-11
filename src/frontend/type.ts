@@ -153,6 +153,15 @@ class TemplateNameMapper {
         
         return ttype;
     }
+
+    computeBindingSet(): [string, TypeSignature][] {
+        let allterms: string[] = [];
+        for(let i = this.mapper.length - 1; i >= 0; --i) {
+            allterms.push(...this.mapper[i].keys());
+        }
+
+        return allterms.map((tt) => [tt, this.resolveTemplateMapping(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt))]);
+    }
 }
 
 abstract class TypeSignature {

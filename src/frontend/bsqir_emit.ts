@@ -83,33 +83,21 @@ class EmitNameManager {
         }
     }
 
-    static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string): string {
-        return `${this.generateNamespaceKey(ns)}::${name}`;
-    }
-
-    static generateTypeInvokeKey(tsig: TypeSignature, name: string): string {
-        return `${this.generateTypeKey(tsig)}::${name}`;
-    }
-
-    // Resolves term types and emits
-    static generateResolvedTypeKey(optmapping: TemplateNameMapper | undefined, terms: InvokeTemplateTermDecl[]): string {
-        if (!optmapping) {
+    static generateTermPostfixForInvoke(terms: TypeSignature[]): string {
+        if(terms.length === 0) {
             return "";
         }
-    
-        const resolvedTemplateTerms = optmapping.mapper
-            .flatMap(mapper => 
-                terms.filter(term => mapper.has(term.name))
-                     .map(term => mapper.get(term.name)?.emit())
-                     .filter((term): term is string => term !== undefined)
-            ).join(", ");
-    
-        return `<${resolvedTemplateTerms}>`;
+        else {
+            return `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+        }
     }
 
-    static generatedResolvedTypeKeyFromTerms(terms: TypeSignature[], tsigs: TypeSignature[], ikeybase: string): string {
-        let emit_tinstinfos = tsigs.map((t) => t.emit()).join(", ");
-        return (terms.length > 0) ? `${ikeybase}<${emit_tinstinfos}>` : ikeybase;
+    static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[]): string {
+        return `${this.generateNamespaceKey(ns)}::${name}${this.generateTermPostfixForInvoke(terms)}`;
+    }
+
+    static generateTypeInvokeKey(tsig: TypeSignature, name: string, terms: TypeSignature[]): string {
+        return `${this.generateTypeKey(tsig)}::${name}${this.generateTermPostfixForInvoke(terms)}`;
     }
 }
 
@@ -456,20 +444,13 @@ class BSQIREmitter {
     }
 
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
-        let ctype = exp.ctype as NominalTypeSignature;
-        const cebase = this.emitConstructorPrimaryExpressionBase(exp);
-        
         if(cdecl instanceof ListTypeDecl) {
-            const elemtype = this.emitTypeSignature(ctype.alltermargs[0]);
-            return `BSQAssembly::ConstructorPrimaryListExpression{ ${cebase}, elemtype=${elemtype} }`
-        }
-        else if(cdecl instanceof MapTypeDecl) {
-            const ktype = this.emitTypeSignature(ctype.alltermargs[0]);
-            const vtype = this.emitTypeSignature(ctype.alltermargs[1]);
-            return `BSQAssembly::ConstructorPrimaryMapExpression{${cebase}, keytype=${ktype}, valuetype=${vtype}}`;           
+            const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+            const elemtype = this.emitTypeSignature(exp.elemtype as TypeSignature);
+            return `BSQAssembly::ConstructorPrimaryListExpression{ ${cpee}, elemtype=${elemtype} }`;
         }
         else {
-            assert(false, "Unknown collection type -- emitCollectionConstructor");
+            assert(false, "Not implemented -- CollectionConstructor of Map");
         }
     }
 
@@ -576,9 +557,7 @@ class BSQIREmitter {
         const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
-        const ikeybase = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
-        
-        const ikey = EmitNameManager.generatedResolvedTypeKeyFromTerms(exp.terms, exp.terms.map((tt) => this.tproc(tt)), ikeybase);
+        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name, exp.terms);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -687,8 +666,7 @@ class BSQIREmitter {
         const rdecl = exp.resolvedMethod as MethodDecl;
 
         const tsig = this.emitTypeSignature(rtrgt);
-        const ikeybase = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
-        const ikey = EmitNameManager.generatedResolvedTypeKeyFromTerms(exp.terms, exp.terms.map((tt) => this.tproc(tt)), ikeybase); 
+        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name, exp.terms);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -1570,7 +1548,8 @@ class BSQIREmitter {
             return "BSQAssembly::PredicateUFBodyImplementation { }";
         }
         else if(body instanceof BuiltinBodyImplementation) {
-            return `BSQAssembly::BuiltinBodyImplementation { '${body.builtin}' }`;
+            let binds = this.mapper !== undefined ? this.mapper.computeBindingSet().map(ee => `(|'${ee[0]}', ${this.emitTypeSignature(ee[1])}|)`).join(", ") : ''
+            return `BSQAssembly::BuiltinBodyImplementation { '${body.builtin}', List<(|CString, BSQAssembly::TypeSignature|)>{${binds}} }`;
         }
         else if(body instanceof SynthesisBodyImplementation) {
             return "BSQAssembly::SynthesisBodyImplementation { }";
@@ -1718,11 +1697,8 @@ class BSQIREmitter {
         const nskey = EmitNameManager.generateNamespaceKey(ns);
 
         if(optenclosingtype !== undefined) {
-            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
-            const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
-            const typeUpdatedIKey = `${nskey}::${ikey}`;
-            let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
-            const ibase = this.emitExplicitInvokeDecl(fdecl, typeUpdatedNsKey, ikey, fmt);
+            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name, fdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
+            const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
             this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${typeUpdatedIKey}'<BSQAssembly::InvokeKey>}`);
@@ -1731,9 +1707,7 @@ class BSQIREmitter {
         else {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
             if(ftag === "function" || ftag === "predicate" || this.testEmitEnabled(fdecl as NamespaceFunctionDecl)) {
-                const resolvedTemplateTerms = EmitNameManager.generateResolvedTypeKey(optmapping, fdecl.terms);
-                const ikeybase = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
-                const ikey = `${ikeybase}${resolvedTemplateTerms}`;
+                const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name, fdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
 
                 fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
@@ -1770,21 +1744,20 @@ class BSQIREmitter {
         }
     }
 
-    private emitMethodDecl(ns: FullyQualifiedNamespace, rcvrtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
+    private emitMethodDecl(ns: FullyQualifiedNamespace, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
         const omap = this.mapper;
         if(optmapping !== undefined) {
-            this.mapper = TemplateNameMapper.tryMerge(rcvrtype[1], optmapping);
+            this.mapper = TemplateNameMapper.tryMerge(optenclosingtype[1], optmapping);
         }
 
         fmt.indentPush();
         let ret: string = "";
 
-        const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+        const ikey = EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], mdecl.name, mdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
 
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
-        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(rcvrtype[0])}`);
+        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(optenclosingtype[0])}`);
         fmt.indentPop();
 
         const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
@@ -1804,7 +1777,7 @@ class BSQIREmitter {
         return ret;
     }
 
-    private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
+    private emitMethodDecls(ns: FullyQualifiedNamespace, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
@@ -1813,12 +1786,12 @@ class BSQIREmitter {
 
             if(mii !== undefined) {
                 if(mii.binds === undefined) {
-                    const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
+                    const bsqondecl = this.emitMethodDecl(ns, optenclosingtype, mdecl, undefined, fmt);
                     decls.push(bsqondecl);
                 }
                 else {
                     for(let j = 0; j < mii.binds.length; ++j) {
-                        const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
+                        const bsqondecl = this.emitMethodDecl(ns, optenclosingtype, mdecl, mii.binds[j], fmt);
                         decls.push(bsqondecl);
                     }
                 }

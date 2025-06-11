@@ -97,6 +97,21 @@ entity ExplicitifyTransform {
         return ArgumentList{ nargs };
     }
 
+    recursive method processArgumentListConstructCollection(argl: ArgumentList, elemtype: TypeSignature, vmap: VarMapping): ArgumentList {
+        let nargs = argl.args.map[recursive]<ArgumentValue>(recursive fn(arg) => {
+            let nexp = this.processExpression[recursive](arg.exp, vmap);
+            if(arg?<SpreadArgumentValue>) {
+                return arg[exp=nexp];
+            }
+            else {
+                let pexp = this.processCoerceTypeAsNeeded(nexp, elemtype);
+                return arg[exp=pexp];
+            }
+        });
+
+        return ArgumentList{ nargs };
+    }
+
     method processAccessVariableExpression(e: AccessVariableExpression, vmap: VarMapping): Expression {
         let nname = vmap.resolveVariableAsNeeded(e.vname);
         return AccessVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
@@ -106,29 +121,34 @@ entity ExplicitifyTransform {
         let nname = vmap.resolveVariableAsNeeded(e.vname);
         return AccessCapturedVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
     }
-
     recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
         let nargs = this.processArgumentListStd(e.args, List<TypeSignature>{e.ofttype}, vmap);
 
         return e[args=nargs];
     }
 
+    recursive method processConstructorPrimaryListExpression(e: ConstructorPrimaryListExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListConstructCollection[recursive](e.args, e.elemtype, vmap);
+
+        return e[args=nargs];
+    }
+
     recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
         let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2);
-        let nargs = this.processArgumentListStd(e.args, types, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.args, types, vmap);
 
         return e[args=nargs];
     }
 
     recursive method processConstructorEListExpression(e: ConstructorEListExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd(e.args, e.etype@<EListTypeSignature>.entries, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.args, e.etype@<EListTypeSignature>.entries, vmap);
 
         return e[args=nargs];
     }
 
     recursive method processConstructorExpression(e: ConstructorExpression, vmap: VarMapping): Expression {
         match(e)@ {
-            ConstructorPrimaryListExpression => { abort; }
+            ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, vmap); }
             | ConstructorPrimaryMapExpression => { abort; }
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialOkExpression => { abort; }

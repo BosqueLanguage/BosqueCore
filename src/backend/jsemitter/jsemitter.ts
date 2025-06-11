@@ -2069,7 +2069,8 @@ class JSEmitter {
 
     private emitDebugStatement(stmt: DebugStatement): string {
         const eexp = this.emitExpression(stmt.value, true);
-        const eebsqon = `_$emitBSQON("${stmt.value.getType().tkeystr}", ${eexp})`;
+        const emittype = this.tproc(stmt.value.getType()).tkeystr;
+        const eebsqon = `_$emitBSQON("${emittype}", ${eexp})`;
         return `try { console.log("_debug>> " + ${eebsqon}); } catch { console.log("Error evaluating debug statement @ ${this.currentfile}:${stmt.sinfo.line}"); }`;
     }
 

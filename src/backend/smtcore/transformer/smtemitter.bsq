@@ -182,6 +182,7 @@ recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression, 
     
     return CString::concat('(', access, ' ', vv, ')');
 }
+
 %*
 function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
@@ -189,8 +190,9 @@ function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
+*%
 
-recursive function emitConstructorListSingletonsExpression(v: SMTAssembly::ConstructorListSingletonsExpression): CString {
+recursive function emitConstructorListSingletonExpression(v: SMTAssembly::ConstructorListSingletonExpression, eev: SMTEmitterEnv): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
 
     if(v.args.empty()) {
@@ -199,11 +201,11 @@ recursive function emitConstructorListSingletonsExpression(v: SMTAssembly::Const
     }
     else {
         if(v.args.isSingleElement()) {
-            let scons = CString::concat('(seq.unit ', emitExpression[recursive](v.args.single()), ')');
+            let scons = CString::concat('(seq.unit ', emitSafeExpression[recursive](v.args.single(), eev), ')');
             return CString::concat('(', consname, ' ', scons, ')');
         }
         else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitExpression[recursive](x), ')'));
+            let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitSafeExpression[recursive](x, eev), ')'));
             let argsl = CString::joinAll(' ', cvals);
 
             let scons = CString::concat('(seq.++ ', argsl, ')');
@@ -212,11 +214,10 @@ recursive function emitConstructorListSingletonsExpression(v: SMTAssembly::Const
     }
 }
 
-recursive function emitConstructorMapSingletonsExpression(v: SMTAssembly::ConstructorMapSingletonsExpression): CString {
+recursive function emitConstructorMapSingletonExpression(v: SMTAssembly::ConstructorMapSingletonExpression, eev: SMTEmitterEnv): CString {
     %%TODO
     abort;
 }
-*%
 
 recursive function emitConstructorPrimarySpecialConstructableExpression(v: SMTAssembly::ConstructorPrimarySpecialConstructableExpression, eev: SMTEmitterEnv): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
@@ -247,9 +248,9 @@ recursive function emitConstructorStdExpression(v: SMTAssembly::ConstructorStdEx
 
 recursive function emitConstructorPrimaryExpression(v: SMTAssembly::ConstructorPrimaryExpression, eev: SMTEmitterEnv): CString {
     match(v)@ {
-        SMTAssembly::ConstructorListSingletonsExpression => {abort; }
-        | SMTAssembly::ConstructorMapSingletonsExpression => { abort; }
-        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($v, eev); }
+        SMTAssembly::ConstructorListSingletonExpression => { return emitConstructorListSingletonExpression[recursive]($v, eev); }
+        | SMTAssembly::ConstructorMapSingletonExpression => { return emitConstructorMapSingletonExpression[recursive]($v, eev); }
+        | SMTAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression[recursive]($v, eev); }
         | SMTAssembly::ConstructorTypeDeclExpression => { return emitConstructorTypeDeclExpression[recursive]($v, eev); }
         | SMTAssembly::ConstructorStdExpression => { return emitConstructorStdExpression[recursive]($v, eev); }
     }
@@ -1099,7 +1100,22 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     if(f.specialname === 'cstring_empty') {
         body = '(= s "")';
     }
+    elif(f.specialname === 's_list_empty') {
+        body = 'NOT IMPLEMENTED';
+    }
+    elif(f.specialname === 's_list_size') {
+        body = 'NOT IMPLEMENTED';
+    }
+    elif(f.specialname === 's_list_create_empty') {
+        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
+        let scons = CString::concat('(seq.empty (Seq ', f.binds.find(pred(bb) => bb.0 === 'T').1.value, '))');
+        body = CString::concat('(', consname, ' ', scons, ')');
+    }
+    elif(f.specialname === 's_list_push_back') {
+        body = 'NOT IMPLEMENTED';
+    }
     else {
+        _debug f.specialname;
         abort; %%Missing builtin function implementation
     }
 
