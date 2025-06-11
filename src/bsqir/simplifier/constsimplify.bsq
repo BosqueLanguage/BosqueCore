@@ -902,7 +902,8 @@ entity ConstantSimplification {
 
             preconditions = typefunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
             postconditions = typefunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            fullikey = typefunc.fullikey
+            completens = typefunc.completens,
+            completeikey = typefunc.completeikey
         }; 
     }
 

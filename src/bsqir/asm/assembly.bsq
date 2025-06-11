@@ -76,7 +76,8 @@ entity NamespaceFunctionDecl provides FunctionInvokeDecl {
 }
 
 entity TypeFunctionDecl provides FunctionInvokeDecl {
-    field fullikey: List<CString>; %% For ns resolution 
+    field completens: List<CString>; %% For ns resolution, the fullns field is generally lacking 'Core'
+    field completeikey: InvokeKey; %% For easily grabbing name
 }
 
 datatype MethodDecl provides ExplicitInvokeDecl using {

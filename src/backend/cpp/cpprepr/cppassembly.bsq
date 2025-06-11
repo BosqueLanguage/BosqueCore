@@ -103,7 +103,8 @@ entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
 entity TypeFunctionDecl provides AbstractInvokeDecl {
-    field fullikey: List<CString>;
+    field completens: List<CString>;
+    field completeikey: InvokeKey;
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 

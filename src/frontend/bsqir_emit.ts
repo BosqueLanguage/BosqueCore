@@ -1720,11 +1720,12 @@ class BSQIREmitter {
         if(optenclosingtype !== undefined) {
             const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
             const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
+            const typeUpdatedIKey = `${nskey}::${ikey}`;
             let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
             const ibase = this.emitExplicitInvokeDecl(fdecl, typeUpdatedNsKey, ikey, fmt);
             this.mapper = omap;
 
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, fullikey=List<CString>{${cstrns}} }`);
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${typeUpdatedIKey}'<BSQAssembly::InvokeKey>}`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {
