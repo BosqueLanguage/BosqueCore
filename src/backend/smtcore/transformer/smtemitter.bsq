@@ -1101,18 +1101,37 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
         body = '(= s "")';
     }
     elif(f.specialname === 's_list_empty') {
-        body = 'NOT IMPLEMENTED';
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let consname = SMTNameManager::generateStructConstructorName(f.params.single().ptype);
+        body = CString::concat('(= l (', consname, ' (as seq.empty (Seq ', oftype, '))))');
     }
     elif(f.specialname === 's_list_size') {
-        body = 'NOT IMPLEMENTED';
+        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
+        body = CString::concat('(seq.len (', fname, ' l))');
+    }
+    elif(f.specialname === 's_list_front') {
+        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
+        body = CString::concat('(seq.nth (', fname, ' l), 0)');
+    }
+    elif(f.specialname === 's_list_back') {
+        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
+        body = CString::concat('(let ((lseq (', fname, 'l))) (seq.nth lseq (seq.len lseq - 1)))');
     }
     elif(f.specialname === 's_list_create_empty') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
         let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        let scons = CString::concat('(seq.empty (Seq ', f.binds.find(pred(bb) => bb.0 === 'T').1.value, '))');
+        let scons = CString::concat('(as seq.empty (Seq ', oftype, '))');
         body = CString::concat('(', consname, ' ', scons, ')');
     }
     elif(f.specialname === 's_list_push_back') {
-        body = 'NOT IMPLEMENTED';
+        let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
+        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
+        body = CString::concat('(', consname, ' (seq.++ (', fname, ' l) (seq.unit v)))');
+    }
+    elif(f.specialname === 's_list_push_front') {
+        let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
+        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
+        body = CString::concat('(', consname, ' (seq.++ (seq.unit v) (', fname, ' l)))');
     }
     else {
         _debug f.specialname;
@@ -1234,7 +1253,7 @@ function emitCollectionTypeDeclConstructor(ttype: SMTAssembly::CollectionTypeDec
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
     let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
     let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
-    return CString::concat('        (', consname, ' ', cval, ')');
+    return CString::concat('        ((', consname, ' ', cval, '))');
 }
 
 function emitCollectionTypeDecls(ttypes: List<SMTAssembly::CollectionTypeDecl>): CString, CString {

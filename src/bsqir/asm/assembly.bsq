@@ -196,7 +196,7 @@ ListTypeDecl { field oftype: TypeSignature; }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+| MapTypeDecl { field oftype: NominalTypeSignature; field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
 entity EventListTypeDecl provides InternalEntityTypeDecl {

@@ -1600,6 +1600,31 @@ entity SMTTransformer {
         }
     }
 
+    method transformCollectionDeclToSMT(decl: BSQAssembly::CollectionTypeDecl): SMTAssembly::CollectionTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+
+        match(decl)@ {
+            BSQAssembly::ListTypeDecl => { 
+                return SMTAssembly::ListTypeDecl{ tkey, this.transformStdTypeToSMT($decl.oftype) };
+            }
+            | BSQAssembly::StackTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::QueueTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::SetTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::MapTypeDecl => { 
+                let ktype = this.transformStdTypeToSMT($decl.ktype);
+                let vtype = this.transformStdTypeToSMT($decl.vtype);
+                let oftype = this.transformStdTypeToSMT($decl.oftype);
+                return SMTAssembly::MapTypeDecl{ tkey, oftype, ktype, vtype };
+            }
+        }
+    }
+
     method transformEntityDeclToSMT(decl: BSQAssembly::EntityTypeDecl): SMTAssembly::EntityTypeDecl {
         let tkey = TransformNameManager::convertTypeKey(decl.tkey);
         let termable = !decl.saturatedProvides.empty();
@@ -1711,6 +1736,10 @@ entity SMTTransformer {
             .filter(pred(tkey) => assembly.constructables.has(tkey))
             .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => transformer.transformConstructableDeclToSMT(assembly.constructables.get(tkey)));
 
+        let tcollections = assembly.allconcretetypes
+            .filter(pred(tkey) => assembly.collections.has(tkey))
+            .map<SMTAssembly::CollectionTypeDecl>(fn(tkey) => transformer.transformCollectionDeclToSMT(assembly.collections.get(tkey)));
+
         let tpconcepts = assembly.allabstracttypes
             .filter(pred(tkey) => assembly.pconcepts.has(tkey))
             .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(assembly.pconcepts.get(tkey)));
@@ -1729,7 +1758,7 @@ entity SMTTransformer {
             enums = List<SMTAssembly::EnumTypeDecl>{},
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},
             constructables = tconstructables,
-            collections = List<SMTAssembly::CollectionTypeDecl>{},
+            collections = tcollections,
 
             entities = tentities,
             datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{},

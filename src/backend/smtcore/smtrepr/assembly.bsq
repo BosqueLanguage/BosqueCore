@@ -132,7 +132,7 @@ ListTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { }
+| MapTypeDecl { field ktype: TypeKey; field vtype: TypeKey; }
 ;
 
 entity EntityTypeDecl {

@@ -557,7 +557,7 @@ class BSQIREmitter {
         const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
-        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name, exp.terms);
+        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name, exp.terms.map((t) => this.tproc(t)));
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -667,7 +667,7 @@ class BSQIREmitter {
         const rdecl = exp.resolvedMethod as MethodDecl;
 
         const tsig = this.emitTypeSignature(rtrgt);
-        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name, exp.terms);
+        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name, exp.terms.map((t) => this.tproc(t)));
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
