@@ -1041,7 +1041,10 @@ namespace ListOps {
 
         recursive function reduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
             match(t)@ {
-                Leaf<T> => { 
+                BBLeaf<T> => { 
+                    return acc; %% empty tree, return accumulator
+                }
+                | Leaf<T> => { 
                     return f[recursive?](acc, $t.v);
                 }
                 | Node<T> => {
@@ -1052,7 +1055,10 @@ namespace ListOps {
 
         recursive function lreduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
             match(t)@ {
-                Leaf<T> => { 
+                BBLeaf<T> => { 
+                    return acc; %% empty tree, return accumulator
+                }
+                | Leaf<T> => { 
                     return f[recursive?](acc, $t.v);
                 }
                 | Node<T> => {
