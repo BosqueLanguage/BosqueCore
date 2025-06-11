@@ -600,7 +600,6 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: CStri
     }
 }
 
-%% Likely will need to do some maniplation here to keep things in terms of our CoreCpp types (and typefunction call emission isnt quite supported)
 function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: CString): CString {
     switch(body.builtin) {
         's_float_power' => { return CString::concat(indent, '    ', 'return __CoreCpp::Float(powf64(a.get(), b.get()));%n;'); }
@@ -792,30 +791,34 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, fullns: List<CString>, e: CPP
     return CString::concat(vtable, indent, '};%n;');
 }
 
-recursive function emitForwardDeclarations(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
-    %% Emit namespace 
-    let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
-    let full_indent = CString::concat('    ', indent);
-    
-    let entityfwd_decls = nsdecl.entities.reduce<CString>(ns, fn(acc, tk, e) => {
-        return CString::concat(acc, emitEntityForwardDeclaration(e, ctx, full_indent));
+function emitForwardDeclarationBody(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {    
+    let entityfwd_decls = nsdecl.entities.reduce<CString>('', fn(acc, tk, e) => {
+        return CString::concat(acc, emitEntityForwardDeclaration(e, ctx, indent));
     });
 
     %% Emit our method and func fwd decls
     let nsfuncfwd_decls = nsdecl.nsfuncs.reduce<CString>(entityfwd_decls, fn(acc, ikey, decl) => {
-        return CString::concat(acc, emitFunctionForwardDeclaration(decl@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent));
+        return CString::concat(acc, emitFunctionForwardDeclaration(decl@<CPPAssembly::AbstractInvokeDecl>, ctx, indent));
     });
 
     let typefuncfwd_decls = nsdecl.typefuncs.reduce<CString>(nsfuncfwd_decls, fn(acc, ikey) => {
-        return CString::concat(acc, emitFunctionForwardDeclaration(ctx.asm.typefuncs.get(ikey), ctx, full_indent));
+        return CString::concat(acc, emitFunctionForwardDeclaration(ctx.asm.typefuncs.get(ikey), ctx, indent));
     });
 
     %% Eventually will need to modify this to allow other method types
     let methodfwd_decls = nsdecl.staticmethods.reduce<CString>(typefuncfwd_decls, fn(acc, mtkey) => {
-        return CString::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
+        return CString::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, indent));
     });
 
-    return CString::concat(methodfwd_decls, indent, '}%n;');
+    return methodfwd_decls;
+}
+
+recursive function emitForwardDeclarations(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
+    %% Emit namespace 
+    let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
+    let full_indent = CString::concat('    ', indent);
+
+    return CString::concat(ns, emitForwardDeclarationBody(nsdecl, ctx, full_indent), indent, '}%n;');
 }
 
 recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {
@@ -823,13 +826,16 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = CString::concat(indent, 'namespace ', nsdecl.nsname, ' {%n;');
     let full_indent = CString::concat('    ', indent);
 
-    %% Ensure no conflicts when accessing functions from other ns
-    let fwddecls = nsdecl.subns.reduce<CString>(ns, fn(acc, name, subns) => {
+    %% Ensure no conflicts when accessing functions from other ns (might need to recursively explore other deeper ns)
+    let subns_fwddecls = nsdecl.subns.reduce<CString>(ns, fn(acc, name, subns) => {
         return CString::concat(acc, emitForwardDeclarations(subns, ctx, full_indent));
     });
 
+    %% Fwd decls for all in current namespace
+    let curns_fwddecls = CString::concat(subns_fwddecls, emitForwardDeclarationBody(nsdecl, ctx, full_indent));
+
     %% All entities && their typeinfo
-    let entities = nsdecl.entities.reduce<CString>(fwddecls, fn(acc, tk, e) => {
+    let entities = nsdecl.entities.reduce<CString>(curns_fwddecls, fn(acc, tk, e) => {
         let typekey = tk.value;
         let entities_enum = generateEntriesEnum(e, e.fullns, full_indent);
         let vtable = generateVTable(e, e.fullns, ctx, full_indent);

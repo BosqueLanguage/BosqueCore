@@ -613,49 +613,6 @@ entity CPPTransformer {
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{ bsqasm };            
 
-        %*
-        let transformer_nsdecls_nsfuncs = bsqasm.allfuncs.reduce<Map<CString, CPPAssembly::NamespaceDecl>>( 
-            Map<CString, CPPAssembly::NamespaceDecl>{}, fn(acc, ikey) => {
-                let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
-                
-                %% May be able to take care of func lookup here
-                var funcns: List<CString>;
-                if(bsqasm.nsfuncs.has(ikey)) {
-                    funcns = bsqasm.nsfuncs.get(ikey).fullns;
-                }
-                elif (bsqasm.typefuncs.has(ikey)) {
-                    funcns = bsqasm.typefuncs.get(ikey).fullns;
-                }
-                else {
-                    abort; %% Unsupported function type
-                }
-                return CPPTransformNameManager::getNamespaceDeclMapping(funcns, acc,
-                    fn(decl) => { 
-                        var new_typefuncs: List<CPPAssembly::InvokeKey>;
-                        if(bsqasm.typefuncs.has(ikey)) {
-                            new_typefuncs = decl.typefuncs.pushBack(cppikey);
-                        }
-                        else {
-                            new_typefuncs = decl.typefuncs;
-                        }
-
-                        var new_nsfuncs: Map<CPPAssembly::InvokeKey, CPPAssembly::NamespaceFunctionDecl>;
-                        if(bsqasm.nsfuncs.has(ikey)) {
-                            let cppdecl = transformer.transformNamespaceFunctionDeclToCpp(bsqasm.nsfuncs.get(ikey));
-                            new_nsfuncs = decl.nsfuncs.insert(cppikey, cppdecl);
-                        }
-                        else {
-                            new_nsfuncs = decl.nsfuncs;
-                        }
-                        
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.entities, new_nsfuncs, new_typefuncs, 
-                            decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods };
-                    });
-        });
-        *%
-
-        %% Lets split up typefunc ikey gen and nsdecl gen to separate cases
-
         let transformer_nsdecls_nsfuncs = bsqasm.allfuncs.filter(pred(ikey) => bsqasm.nsfuncs.has(ikey)).
             reduce<Map<CString, CPPAssembly::NamespaceDecl>>( 
             Map<CString, CPPAssembly::NamespaceDecl>{}, fn(acc, ikey) => {
