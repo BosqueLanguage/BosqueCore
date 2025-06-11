@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
@@ -565,12 +565,13 @@ class BSQIREmitter {
         const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
         const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
 
-        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, callingikey='${ikeybase}', argsinfo=${arginfo} }`;
+
+        return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, argsinfo=${arginfo} }`;
     }
    
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
-        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name);
+        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name, exp.terms);
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
        
@@ -670,8 +671,7 @@ class BSQIREmitter {
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        // callingikey is used to generate correct signature in the cpp emitter
-        return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo}, callingikey='${ikeybase}' }`;
+        return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
     }
 
     private emitVirtualPostfixInvoke(exp: PostfixInvoke): string {
@@ -1701,6 +1701,10 @@ class BSQIREmitter {
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
+            const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
+            const typeUpdatedIKey = `${nskey}::${ikey}`;
+            let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
+
             this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${typeUpdatedIKey}'<BSQAssembly::InvokeKey>}`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
@@ -1756,22 +1760,20 @@ class BSQIREmitter {
         const nskey = EmitNameManager.generateNamespaceKey(ns);
         const ikey = EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], mdecl.name, mdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
 
+        const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
         const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(optenclosingtype[0])}`);
         fmt.indentPop();
 
         const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
         if(isstatic) {
-            let resolvedTemplateTermsIKey = mdecl.terms.length > 0 ? `${declaredIn}::${mdecl.name}${EmitNameManager.generateResolvedTypeKey(optmapping, mdecl.terms)}` : ikey; 
-            const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, resolvedTemplateTermsIKey, fmt);
-            ret = `'${resolvedTemplateTermsIKey}'<BSQAssembly::InvokeKey>`;
+            ret = `'${ikey}'<BSQAssembly::InvokeKey>`;
             this.allmethods.push(ret); 
-            this.staticmethods.push(`'${resolvedTemplateTermsIKey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
+            this.staticmethods.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::MethodDeclStatic{ ${ibase},${fmt.nl()}${isThisRef},${fmt.nl()}${oftype}${fmt.nl() + fmt.indent("}")}`);
         }
         else {
             assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
         }
-
         this.mapper = omap;
 
         return ret;

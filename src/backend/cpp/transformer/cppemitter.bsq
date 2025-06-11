@@ -368,18 +368,22 @@ recursive function findNamespaceDecl(decls: Map<CString, CPPAssembly::NamespaceD
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): CString { 
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, e.ns.value); 
-    let ident = e.callingikey;
+    let ident = e.ikey.value;
 
     let name: CString = if(ident.startsWithString(e.ns.value)) then ident.removePrefixString(e.ns.value) else ident;
     let resolvedName: CString = if(name.startsWithString('::')) then name.removePrefixString('::') else name;
 
-    let nsdecl = findNamespaceDecl(ctx.asm.nsdecls, e.fullns); 
-    let args = emitArgumentList(e.args, nsdecl.nsfuncs.get(e.ikey).params, ctx); 
+    let nsfunc = findNamespaceDecl(ctx.asm.nsdecls, e.fullns).nsfuncs.get(e.ikey); 
+    let args = emitArgumentList(e.args, nsfunc.params, ctx); 
+
+    %% Remove templates
+    let templates = resolvedName.removePrefixString(nsfunc.name);
+    let finalName = if(templates !== '') then resolvedName.removeSuffixString(templates) else resolvedName;
 
     if(resolvedns !== '') {
-        return CString::concat(resolvedns, '::', resolvedName,'(', args, ')');
+        return CString::concat(resolvedns, '::', finalName,'(', args, ')');
     }
-    return CString::concat(resolvedName, '(', args, ')');
+    return CString::concat(finalName, '(', args, ')');
 }
 
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): CString { 
@@ -413,12 +417,13 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CString, ctx: Context): CString {
     let ik = emitInvokeKey(op.resolvedTrgt, ctx);
-    let callingikey = emitResolvedNamespace(ctx.fullns_list, op.callingikey);
     let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;
+    var name: CString;
     if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
+        name = trgt.name;
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
     %*
@@ -433,8 +438,8 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
 
     %% Remove abstract nominal we were in
     var resolvedInvoke: CString;
-    if(callingikey.startsWithString(tk)) {
-        let tmp = callingikey.removePrefixString(tk);
+    if(ik.startsWithString(tk)) {
+        let tmp = ik.removePrefixString(tk);
         if(tmp.startsWithString('::')) {
             resolvedInvoke = tmp.removePrefixString('::');
         }
@@ -446,11 +451,14 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         resolvedInvoke = ik;
     }
 
+    let template = if(resolvedInvoke.startsWithString(name)) then resolvedInvoke.removePrefixString(name) else '';
+    let noTemplateInvoke = resolvedInvoke.removeSuffixString(template);
+
     if(args === '') {
-        return CString::concat(resolvedInvoke, '(', expr, ')');
+        return CString::concat(noTemplateInvoke, '(', expr, ')');
     }
     else {
-         return CString::concat(resolvedInvoke, '(', expr, ', ', args, ')');       
+         return CString::concat(noTemplateInvoke, '(', expr, ', ', args, ')');       
     }
 }
 

@@ -283,9 +283,9 @@ entity CPPTransformer {
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
         let args = this.transformArgumentInfo(expr.argsinfo);
         let fullns = expr.fullns; %% For looking up func we are calling
-        let callingikey = expr.callingikey; %% Typefuncs (since they get grouped with nsfuncs due to type resolution)
+        %% let callingikey = expr.callingikey; %% Typefuncs (since they get grouped with nsfuncs due to type resolution)
 
-        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, callingikey, args };
+        return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
     }
 
     method transformCallTypeFunctionExpression(expr: BSQAssembly::CallTypeFunctionExpression): CPPAssembly::CallTypeFunctionExpression {
@@ -311,9 +311,8 @@ entity CPPTransformer {
             let resolvedType = CPPAssembly::NominalTypeSignature{ CPPTransformNameManager::convertTypeKey($op.resolvedType.tkeystr) };
             let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
             let args = this.transformArgumentInfo($op.argsinfo);
-            let callingikey = $op.callingikey;
 
-            return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args, callingikey };
+            return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
         }
         abort; %% TODO: Not implemented
     }
