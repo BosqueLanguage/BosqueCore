@@ -83,12 +83,21 @@ class EmitNameManager {
         }
     }
 
-    static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string): string {
-        return `${this.generateNamespaceKey(ns)}::${name}`;
+    static generateTermPostfixForInvoke(terms: TypeSignature[]): string {
+        if(terms.length === 0) {
+            return "";
+        }
+        else {
+            return `<${terms.map((t) => t.tkeystr).join(", ")}>`;
+        }
     }
 
-    static generateTypeInvokeKey(tsig: TypeSignature, name: string): string {
-        return `${this.generateTypeKey(tsig)}::${name}`;
+    static generateNamespaceInvokeKey(ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[]): string {
+        return `${this.generateNamespaceKey(ns)}::${name}${this.generateTermPostfixForInvoke(terms)}`;
+    }
+
+    static generateTypeInvokeKey(tsig: TypeSignature, name: string, terms: TypeSignature[]): string {
+        return `${this.generateTypeKey(tsig)}::${name}${this.generateTermPostfixForInvoke(terms)}`;
     }
 }
 
@@ -543,7 +552,7 @@ class BSQIREmitter {
         const ffinv = cns.functions.find((f) => f.name === exp.name) as NamespaceFunctionDecl;
 
         const nskey = EmitNameManager.generateNamespaceKey(exp.ns);
-        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name);
+        const ikey = EmitNameManager.generateNamespaceInvokeKey(exp.ns, exp.name, exp.terms);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, ffinv.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -638,7 +647,7 @@ class BSQIREmitter {
         const rdecl = exp.resolvedMethod as MethodDecl;
 
         const tsig = this.emitTypeSignature(rtrgt);
-        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name);
+        const ikey = EmitNameManager.generateTypeInvokeKey(rtrgt, exp.name, exp.terms);
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
@@ -1643,7 +1652,7 @@ class BSQIREmitter {
 
         const nskey = EmitNameManager.generateNamespaceKey(ns);
         if(optenclosingtype !== undefined) {
-            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name);
+            const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name, fdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
@@ -1653,7 +1662,7 @@ class BSQIREmitter {
         else {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
             if(ftag === "function" || ftag === "predicate" || this.testEmitEnabled(fdecl as NamespaceFunctionDecl)) {
-                const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name);
+                const ikey = EmitNameManager.generateNamespaceInvokeKey(ns, fdecl.name, fdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
 
                 fmt.indentPush();
                 const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
@@ -1690,22 +1699,21 @@ class BSQIREmitter {
         }
     }
 
-    private emitMethodDecl(ns: FullyQualifiedNamespace, rcvrtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
+    private emitMethodDecl(ns: FullyQualifiedNamespace, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecl: MethodDecl, optmapping: TemplateNameMapper | undefined, fmt: BsqonCodeFormatter): string {
         const omap = this.mapper;
         if(optmapping !== undefined) {
-            this.mapper = TemplateNameMapper.tryMerge(rcvrtype[1], optmapping);
+            this.mapper = TemplateNameMapper.tryMerge(optenclosingtype[1], optmapping);
         }
 
         fmt.indentPush();
         let ret: string = "";
 
-        const declaredIn = rcvrtype[0].tkeystr;
         const nskey = EmitNameManager.generateNamespaceKey(ns);
-        const ikey = `${declaredIn}::${mdecl.name}`; // Avoids ns flattening
+        const ikey = EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], mdecl.name, mdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
 
         const ibase = this.emitExplicitInvokeDecl(mdecl, nskey, ikey, fmt);
         const isThisRef = fmt.indent(`isThisRef=${mdecl.isThisRef}`);
-        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(rcvrtype[0])}`);
+        const oftype = fmt.indent(`ofrcvrtype=${this.emitTypeSignature(optenclosingtype[0])}`);
         fmt.indentPop();
 
         const isstatic = mdecl.attributes.every((att) => att.name !== "abstract" && att.name !== "virtual" && att.name !== "override");
@@ -1723,7 +1731,7 @@ class BSQIREmitter {
         return ret;
      }
 
-    private emitMethodDecls(ns: FullyQualifiedNamespace, rcvr: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
+    private emitMethodDecls(ns: FullyQualifiedNamespace, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let decls: string[] = [];
 
         for(let i = 0; i < mdecls.length; ++i) {
@@ -1732,12 +1740,12 @@ class BSQIREmitter {
 
             if(mii !== undefined) {
                 if(mii.binds === undefined) {
-                    const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, undefined, fmt);
+                    const bsqondecl = this.emitMethodDecl(ns, optenclosingtype, mdecl, undefined, fmt);
                     decls.push(bsqondecl);
                 }
                 else {
                     for(let j = 0; j < mii.binds.length; ++j) {
-                        const bsqondecl = this.emitMethodDecl(ns, rcvr, mdecl, mii.binds[j], fmt);
+                        const bsqondecl = this.emitMethodDecl(ns, optenclosingtype, mdecl, mii.binds[j], fmt);
                         decls.push(bsqondecl);
                     }
                 }

@@ -15,6 +15,10 @@ describe ("SMT Exec -- NamespaceFunction", () => {
         runishMainCodeUnsat("function bar(x: Int): Int { return x + 1i; } public function main(): Int { let v: Option<Int> = none; return bar(v@some); }", "(assert (not (= @Result-err-other Main@main)))");
     });
 
+    it("should smt exec templates", function () {
+        runishMainCodeUnsat("function identity<T>(x: T): T { return x; } public function main(v: Bool): Int { return if(identity<Bool>(v)) then identity<Int>(0i) else 1i; }", "(assert (not (= 0 (Main@main true))))");
+    });
+
     it("should smt exec simple lambda", function () {
         runishMainCodeUnsat("function bar(x: Int, f: fn(Int) -> Int): Int { return f(x); } public function main(): Int { return bar(2i, fn(a) => a + 1i); }", "(assert (not (= 3 Main@main)))");
 
