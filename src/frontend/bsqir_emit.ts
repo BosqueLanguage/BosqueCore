@@ -360,7 +360,12 @@ class BSQIREmitter {
     }
     
     private emitAccessStaticFieldExpression(exp: AccessStaticFieldExpression): string {
-        assert(false, "Not implemented -- AccessStaticField");
+        const ebase = this.emitExpressionBase(exp);
+        const stype = this.emitTypeSignature(exp.stype);
+        const name = exp.name;
+        const resolvedDeclType = this.emitTypeSignature(this.tproc(exp.resolvedDeclType as TypeSignature));
+        
+        return `BSQAssembly::AccessStaticFieldExpression{ ${ebase}, stype=${stype}, name='${name}'<BSQAssembly::Identifier>, resolvedDeclType=${resolvedDeclType}}`;
     }
     
     private emitAccessEnumExpression(exp: AccessEnumExpression): string {
@@ -545,7 +550,7 @@ class BSQIREmitter {
         }
     }
 
-    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {
+    private emitCallNamespaceFunctionExpression(exp: CallNamespaceFunctionExpression): string {        
         const ebase = this.emitExpressionBase(exp);
 
         const cns = EmitNameManager.resolveNamespaceDecl(this.assembly, exp.ns);
@@ -560,17 +565,22 @@ class BSQIREmitter {
         const cstrns = exp.ns.ns.map(e => `'${e}'`).join(", ");
         const fmt_cstrns = `fullns = List<CString>{${cstrns}}`;
 
+
         return `BSQAssembly::CallNamespaceFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ns='${nskey}'<BSQAssembly::NamespaceKey>, ${fmt_cstrns}, argsinfo=${arginfo} }`;
     }
-    
+   
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
-        //const rtrgt = (this.tproc(exp.resolvedDeclType as TypeSignature) as NominalTypeSignature);
-
+        const ebase = this.emitExpressionBase(exp);
+        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name, exp.terms);
+        const ttype = this.emitTypeSignature(exp.ttype);
+        const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
+       
         if(exp.isSpecialCall) {
             assert(false, "Not implemented -- CallTypeFunction Special");
         }
         else {
-            assert(false, "Not implemented -- CallTypeFunction");
+            const argsinfo = this.emitInvokeArgumentInfo(exp.name, exp.rec, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo); 
+            return `BSQAssembly::CallTypeFunctionExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, argsinfo=${argsinfo}}`;
         }
     }
 
@@ -593,11 +603,21 @@ class BSQIREmitter {
     }
 
     private emitSafeConvertExpression(exp: SafeConvertExpression): string {
-        assert(false, "Not implemented -- SafeConvert");
+        const ebase = this.emitExpressionBase(exp);
+        const expr = this.emitExpression(exp.exp);
+        const srctype = this.emitTypeSignature(exp.srctype);
+        const trgttype = this.emitTypeSignature(exp.trgttype);
+
+        return `BSQAssembly::SafeConvertExpression{ ${ebase}, exp=${expr}, srctype=${srctype}, trgttype=${trgttype}}`;
     }
 
     private emitCreateDirectExpression(exp: CreateDirectExpression): string {
-        assert(false, "Not implemented -- CreateDirect");
+        const ebase = this.emitExpressionBase(exp);
+        const expr = this.emitExpression(exp.exp);
+        const srctype = this.emitTypeSignature(exp.srctype as NominalTypeSignature);
+        const trgttype = this.emitTypeSignature(exp.trgttype as NominalTypeSignature);
+
+        return `BSQAssembly::CreateDirectExpression{ ${ebase}, exp=${expr}, srctype=${srctype}, trgttype=${trgttype} }`
     }
 
     private emitPostfixOperationBase(exp: PostfixOperation): string {
@@ -651,7 +671,7 @@ class BSQIREmitter {
 
         const arginfo = this.emitInvokeArgumentInfo(exp.name, rdecl.recursive, exp.args, exp.shuffleinfo, exp.resttype, exp.restinfo);
 
-        return `BSQAssembly::PostfixInvokeStatic{ ${opbase}, resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
+        return `BSQAssembly::PostfixInvokeStatic{ ${opbase},  resolvedType=${tsig}, resolvedTrgt='${ikey}'<BSQAssembly::InvokeKey>, argsinfo=${arginfo} }`;
     }
 
     private emitVirtualPostfixInvoke(exp: PostfixInvoke): string {
@@ -802,7 +822,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype} lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitKeyCompareLessExpression(exp: KeyCompareLessExpression): string {
@@ -810,7 +830,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype} lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression): string {
@@ -1343,11 +1363,35 @@ class BSQIREmitter {
     }
 
     private emitSwitchStatement(stmt: SwitchStatement, fmt: BsqonCodeFormatter): string {
-        assert(false, "Not Implemented -- emitSwitchStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const sval = this.emitExpression(stmt.sval);
+        const switchflow = stmt.switchflow.slice(1).map((e) => {
+            const cond = e.lval !== undefined ? `some(${this.emitExpression(e.lval.exp)})` : "none";
+            const body = this.emitBlockStatement(e.value, fmt);
+            return `(|${cond}, ${body}|)`;
+        }).join(", ");
+        const mustExhaustive = stmt.mustExhaustive;
+        const optypes = stmt.optypes.map((op) => this.emitTypeSignature(op)).join(", ");
+
+        return [`BSQAssembly::SwitchStatement{${sbase}, sval=${sval},`, fmt.nl()+fmt.indent(""),`switchflow=List<(|Option<BSQAssembly::Expression>, BSQAssembly::BlockStatement|)>{${switchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive},`, fmt.nl()+fmt.indent(""), `optypes=List<BSQAssembly::TypeSignature>{${optypes}}}`].join("");
     }
 
     private emitMatchStatement(stmt: MatchStatement, fmt: BsqonCodeFormatter): string {
-        assert(false, "Not Implemented -- emitMatchStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const sval = this.emitExpression(stmt.sval[0]);
+        const bindInfo = (stmt.sval[1] != undefined) ? `some(${this.emitBinderInfo(stmt.sval[1])})` : "none";
+        const matchflow = stmt.matchflow.slice(1).map((e) => {
+            const cond = e.mtype !== undefined ? `some(${this.emitTypeSignature(e.mtype)})` : "none";
+            const body = this.emitBlockStatement(e.value, fmt);
+            return `(|${cond}, ${body}|)`;
+        }).join(", ");
+        const mustExhaustive = stmt.mustExhaustive;
+
+        const finalop = stmt.matchflow[stmt.matchflow.length-1];
+        const implicitfinalop = stmt.implicitFinalType !== undefined ? stmt.implicitFinalType : finalop.mtype;
+        const implicitFinalType = (implicitfinalop !== undefined) ? this.emitTypeSignature(implicitfinalop) : assert(false, "No final type signature found in match statement");
+
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {
@@ -1407,8 +1451,8 @@ class BSQIREmitter {
 
     private emitBlockStatement(stmt: BlockStatement, fmt: BsqonCodeFormatter): string {
         const sbase = this.emitStatementBase(stmt);
-        const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt);
-        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping}, statements=`, fmt.nl(), "List<BSQAssembly::Statement>{", ...stmts, "}}"].join("");
+        const stmts = this.emitStatementArray(stmt.statements.filter((stmt) => !((stmt instanceof EmptyStatement) || (stmt instanceof DebugStatement))), fmt).join(`, `);
+        return ["BSQAssembly::BlockStatement{", sbase, `,isScoping=${stmt.isScoping},`, fmt.nl()+fmt.indent(""),"statements=List<BSQAssembly::Statement>{", stmts, "}}"].join("");
     }
 
     private emitStatement(stmt: Statement, fmt: BsqonCodeFormatter): string {
@@ -1649,15 +1693,20 @@ class BSQIREmitter {
         if(optmapping !== undefined) {
             this.mapper = TemplateNameMapper.tryMerge(optenclosingtype !== undefined ? optenclosingtype[1] : undefined, optmapping);
         }
-
+    
         const nskey = EmitNameManager.generateNamespaceKey(ns);
+
         if(optenclosingtype !== undefined) {
             const ikey =  EmitNameManager.generateTypeInvokeKey(optenclosingtype[0], fdecl.name, fdecl.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.name))));
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`)
-            this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);
+            const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
+            const typeUpdatedIKey = `${nskey}::${ikey}`;
+            let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
+
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${typeUpdatedIKey}'<BSQAssembly::InvokeKey>}`);
+            this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {
             const ftag = (fdecl as NamespaceFunctionDecl).fkind;
@@ -1725,11 +1774,10 @@ class BSQIREmitter {
         else {
             assert(false, "Not Implemented -- Abstract, Virtual, and Override methods");
         }
-
         this.mapper = omap;
 
         return ret;
-     }
+    }
 
     private emitMethodDecls(ns: FullyQualifiedNamespace, optenclosingtype: [NominalTypeSignature, TemplateNameMapper | undefined], mdecls: [MethodDecl, MethodInstantiationInfo | undefined][], fmt: BsqonCodeFormatter): [string[], string[], string[], string[]] {
         let decls: string[] = [];
@@ -1812,6 +1860,9 @@ class BSQIREmitter {
         this.emitConstMemberDecls(ns, tsig, tdecl.consts);
 
         const [absmethods, virtmethods, overmethods, staticmethods] = this.emitMethodDecls(ns, [tsig, instantiation.binds], tdecl.methods.map((md) => [md, instantiation.methodbinds.get(md.name)]), fmt);
+
+        // in BSQAssembly::AbstractNominalTypeDecl there is no field for typefuncs, so we just call the emission here and let emitFunctionDecl do the insert
+        this.emitFunctionDecls(ns, [tsig, instantiation.binds], tdecl.functions.map(((f) => [f, instantiation.functionbinds.get(f.name)])), fmt);
 
         const provides = tdecl.saturatedProvides.map((sp) => this.emitTypeSignature(sp)).join(", ");
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
@@ -2307,7 +2358,7 @@ class BSQIREmitter {
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             const nsdecl = assembly.toplevelNamespaces[i];
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
-            
+
             if(nsii !== undefined) {
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
             }

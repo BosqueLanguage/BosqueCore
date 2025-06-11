@@ -15,7 +15,8 @@ const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% 
 const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}|${CPPAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]+/c;
+%% Optional '<' * '>' allows support for resolved templates on functions or methods
+const invokeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}|${CPPAssembly::nominalTypeKeyRE})'::'[_a-z][_a-zA-Z0-9$]*('<'.+'>')?/c;
 type InvokeKey = CString of CPPAssembly::invokeKeyRE;
 
 const identifierRE: CRegex = /[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside these identifiers so we can make special names
@@ -58,8 +59,11 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+
     field staticmethods: List<InvokeKey>;
-    %% Other method types too
+    field virtmethods: List<InvokeKey>;
+    field absmethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
 }
 
 enum Tag {
@@ -98,6 +102,11 @@ entity ParameterDecl {
 entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
+entity TypeFunctionDecl provides AbstractInvokeDecl {
+    field completens: List<CString>;
+    field completeikey: InvokeKey;
+}
+
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
 entity FunctionDecl provides AbstractDecl {
     field ikey: InvokeKey;
@@ -110,17 +119,26 @@ entity NamespaceDecl {
 
     field subns: Map<CString, NamespaceDecl>;
     field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
+
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
-    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Convienent for fwd decls
+    field typefuncs: List<InvokeKey>;
+
+    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
+    field virtmethods: List<(|InvokeKey, TypeKey|)>;
+    field absmethods: List<(|InvokeKey, TypeKey|)>;
+    field overmethods: List<(|InvokeKey, TypeKey|)>; 
 }
 
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
-    %% TODO: Abstract, Override, Virtual methods
+    field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
+    field absmethods: Map<InvokeKey, MethodDeclAbstract>;
+    field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;

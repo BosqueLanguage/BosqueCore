@@ -78,6 +78,14 @@ entity CallNamespaceFunctionExpression provides Expression {
     field args: ArgumentList;
 }
 
+entity CallTypeFunctionExpression provides Expression {
+    field ikey: InvokeKey;
+    field ttype: NominalTypeSignature;
+    field resolvedDeclType: NominalTypeSignature;
+
+    field args: ArgumentList;
+}
+
 entity AccessVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
@@ -176,7 +184,7 @@ datatype BodyImplementation
 of
 AbstractBodyImplementation { } %% N/A
 | PredicateUFBodyImplementation { } %% N/A
-| BuiltinBodyImplementation { field builtin: CString; } %% N/A
+| BuiltinBodyImplementation { field builtin: CString; }
 | SynthesisBodyImplementation { } %% N/A
 | ExpressionBodyImplementation { field exp: Expression; } %% N/A
 | StandardBodyImplementation { field statements: List<Statement>; } %% Is Available :)
