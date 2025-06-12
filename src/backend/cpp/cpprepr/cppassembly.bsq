@@ -118,10 +118,11 @@ entity NamespaceDecl {
     %% Will need other stuff like nsconsts, enums, typedecls, etc...
 
     field subns: Map<CString, NamespaceDecl>;
-    field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
 
-    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
+
+    field entities: List<TypeKey>;
 
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
@@ -133,12 +134,16 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;  
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
     field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
+
+    field entities: Map<TypeKey, EntityTypeDecl>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
