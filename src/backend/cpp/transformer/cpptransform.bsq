@@ -528,6 +528,20 @@ entity CPPTransformer {
         });
     }
 
+    method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
+        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
+            let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
+            if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
+                if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
+                    return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
+                }
+                return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
+            }
+            %% Primitive type 
+            return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
+        });
+    }
+
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
@@ -549,27 +563,28 @@ entity CPPTransformer {
         }
         elif(asm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
+            var fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>;
+            var tag: CPPAssembly::Tag;
+            var tkey: CPPAssembly::TypeKey;
             if(asm.entities.has(typekey)) {
-                let m_entity = asm.entities.get(typekey);
-                let fields_tinfo = m_entity.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
-                let isRef = CPPTransformNameManager::shouldBeRef(m_entity.fields, asm);
-                let tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
-
-                matchedType = fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', CPPTransformNameManager::convertTypeKey(m_entity.tkey), tag }, fn(acc, tinfo) => {
-                    let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
-                    if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
-                        if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
-                            return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
-                        }
-                        return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
-                    }
-                    %% Primitive type 
-                    return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
-                });
+                let e = asm.entities.get(typekey);
+                let isRef = CPPTransformNameManager::shouldBeRef(e.fields, asm);
+                fields_tinfo = e.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+                tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
+            }
+            elif(asm.datamembers.has(typekey)) {
+                let dm = asm.datamembers.get(typekey);
+                let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, asm);
+                fields_tinfo = dm.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+                tkey = CPPTransformNameManager::convertTypeKey(dm.tkey);
             }
             else {
                 abort; %% TODO: Type not supported for typeinfo emission!
             }
+
+            matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, tkey, tag, asm);
         }
         elif(asm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
@@ -722,11 +737,16 @@ entity CPPTransformer {
 
         let transformer_nsdecls_datamembers = transformer_datamembers.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
             transformer_nsdecls_entities, fn(acc, cpptk, cppdatamember) => {
-                 return CPPTransformNameManager::getNamespaceDeclMapping(cppdatamember.fullns, acc,
+                let cppstaticmethods = cppdatamember.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppvirtmethods = cppdatamember.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppabsmethods = cppdatamember.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppovermethods = cppdatamember.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));                
+                 
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppdatamember.fullns, acc,
                     fn(decl) => {
                         let new_datamembers = decl.datamembers.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.entities,
-                            new_datamembers, decl.datatypes, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods };
+                            new_datamembers, decl.datatypes, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods };
                     });                     
             });
 
@@ -738,11 +758,16 @@ entity CPPTransformer {
 
         let transformer_nsdecls_datatypes = transformer_datatypes.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
             transformer_nsdecls_datamembers, fn(acc, cpptk, cppdatatype) => {
+                let cppstaticmethods = cppdatatype.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppvirtmethods = cppdatatype.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppabsmethods = cppdatatype.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+                let cppovermethods = cppdatatype.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
+
                  return CPPTransformNameManager::getNamespaceDeclMapping(cppdatatype.fullns, acc,
                     fn(decl) => {
                         let new_datatypes = decl.datatypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.entities,
-                            decl.datamembers, new_datatypes, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods };
+                            decl.datamembers, new_datatypes, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods };
                     });                     
             });
 
