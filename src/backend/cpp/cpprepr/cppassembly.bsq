@@ -40,6 +40,13 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     field defaultval: Option<Expression>;
 }
 
+entity SaturatedFieldInfo {
+    field declaredInType: NominalTypeSignature;
+    field fname: Identifier;
+    field ftype: TypeSignature;
+    field hasdefault: Bool;
+}
+
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
     field name: CString;
@@ -48,7 +55,11 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field virtmethods: List<InvokeKey>;
     field absmethods: List<InvokeKey>;
     field overmethods: List<InvokeKey>;
-    %% invariants, validates, saturated, as well
+    
+    field saturatedProvides: List<NominalTypeSignature>;
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+    
+    %% invariants, validates, as well
 }
 
 concept AbstractInvokeDecl provides AbstractDecl {
@@ -64,6 +75,16 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+}
+
+entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field parentTypeDecl: NominalTypeSignature;
+}
+
+entity DatatypeTypeDecl provides AbstractNominalTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
 
 enum Tag {
@@ -123,6 +144,9 @@ entity NamespaceDecl {
     field typefuncs: List<InvokeKey>;
 
     field entities: List<TypeKey>;
+    field datamembers: List<TypeKey>;
+
+    field datatypes: List<TypeKey>;
 
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
@@ -144,6 +168,9 @@ entity Assembly {
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
     field entities: Map<TypeKey, EntityTypeDecl>;
+    field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
+
+    field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
