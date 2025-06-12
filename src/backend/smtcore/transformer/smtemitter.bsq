@@ -1115,7 +1115,7 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     }
     elif(f.specialname === 's_list_back') {
         let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
-        body = CString::concat('(let ((lseq (', fname, 'l))) (seq.nth lseq (seq.len lseq - 1)))');
+        body = CString::concat('(let ((lseq (', fname, ' l))) (seq.nth lseq (- (seq.len lseq) 1)))');
     }
     elif(f.specialname === 's_list_create_empty') {
         let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;

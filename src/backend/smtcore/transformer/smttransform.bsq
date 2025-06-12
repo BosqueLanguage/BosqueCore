@@ -1424,8 +1424,6 @@ entity SMTTransformer {
     }
 
     method transformNamespaceFunctionDeclToSMT(decl: BSQAssembly::NamespaceFunctionDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
-        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
-        
         if(lambdainvs)@none {
             let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
             let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, false)});
@@ -1466,7 +1464,6 @@ entity SMTTransformer {
     }
 
     method transformMethodDeclStaticToSMT(decl: BSQAssembly::MethodDeclStatic, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
-        let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let thisdecl = SMTAssembly::InvokeParameterDecl{'this'<SMTAssembly::Identifier>, this.transformParamTypeToSMT(decl.ofrcvrtype, false)};
         
         if(lambdainvs)@none {
@@ -1508,8 +1505,84 @@ entity SMTTransformer {
         }
     }
 
+    method transformExplicitInvokeDeclPreOrPostToSMT(cond: BSQAssembly::ConditionDecl, idecl: BSQAssembly::ExplicitInvokeDecl, optthistype: Option<BSQAssembly::TypeSignature>, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
+        if(lambdainvs)@none {
+            let ikey = TransformNameManager::convertInvokeKey(cond.ikey, List<Bool>{});
+
+            let dparams = idecl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, false)});
+            var params: List<SMTAssembly::InvokeParameterDecl> = dparams;
+
+            if(optthistype)@some {
+                params = params.pushFront(SMTAssembly::InvokeParameterDecl{'this'<SMTAssembly::Identifier>, this.transformStdTypeToSMT($optthistype)});
+            }
+
+            if(cond)@<BSQAssembly::PostConditionDecl> {
+                params = params.pushBack(SMTAssembly::InvokeParameterDecl{'$return'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(idecl.resultType)});
+            }
+        
+            let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
+            let artype = if(this.errinvokes.get(cond.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+            let ctx = SMTTransformerCtx{this.errinvokes.get(cond.ikey), Map<BSQAssembly::Identifier, Bool>{}, cond.file, some(cond.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let rctx, smtexp = this.transformExpressionToSMT(cond.exp, ctx);
+
+            let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
+            let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{resexp}, rctx.errors};
+            return List<SMTAssembly::FunctionDecl>{ SMTAssembly::FunctionDecl{ ikey, params, artype, body } }, rctx.lambdagen;
+        }
+        else {
+            let allprocs = $lambdainvs.map<(|SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
+                let ikey = TransformNameManager::convertInvokeKey(cond.ikey, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
+
+                let dparams = idecl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => {
+                    let mlp = lgi.largerrors.tryFind(pred(gg) => gg.0 === p.pname);
+                    let islerr = if(mlp)@some then $mlp.1 else false;
+
+                    return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
+                });
+
+                var params: List<SMTAssembly::InvokeParameterDecl> = dparams;
+
+                if(optthistype)@some {
+                    params = params.pushFront(SMTAssembly::InvokeParameterDecl{'this'<SMTAssembly::Identifier>, this.transformStdTypeToSMT($optthistype)});
+                }
+
+                if(cond)@<BSQAssembly::PostConditionDecl> {
+                    params = params.pushBack(SMTAssembly::InvokeParameterDecl{'$return'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(idecl.resultType)});
+                }
+
+                let mayerr = \/(this.errinvokes.get(cond.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
+                let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
+
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, cond.file, some(cond.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                let rctx, smtexp = this.transformExpressionToSMT(cond.exp, ctx);
+
+                let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
+                let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{resexp}, rctx.errors};
+                return SMTAssembly::FunctionDecl{ ikey, params, artype, body }, rctx.lambdagen;
+            });
+
+            let decls = allprocs.map<SMTAssembly::FunctionDecl>(fn(p) => p.0);
+            let lambdagen = List<LambdaGeneratorInfo>::concatAll(allprocs.map<List<LambdaGeneratorInfo>>(fn(p) => p.1));
+
+            return decls, lambdagen;
+        }
+    }
+
     method transformPreOrPostFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, foridecl: BSQAssembly::ExplicitInvokeDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
-        abort;
+        if(foridecl)@!<BSQAssembly::MethodDecl> {
+            return this.transformExplicitInvokeDeclPreOrPostToSMT(decl, foridecl, none, lambdainvs);
+        }
+        else {
+            if($mmd = $foridecl)@!<BSQAssembly::MethodDeclOverride> {
+                return this.transformExplicitInvokeDeclPreOrPostToSMT(decl, foridecl, some($mmd.ofrcvrtype), lambdainvs);
+            }
+            else {
+                return this.transformExplicitInvokeDeclPreOrPostToSMT(decl, foridecl, some($mmd.overrideintype), lambdainvs);
+            }
+        }
     }
 
     method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo> {
@@ -1526,14 +1599,8 @@ entity SMTTransformer {
         let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
         let rctx, smtexp = this.transformExpressionToSMT(decl.exp, ctx);
 
-        var body: SMTAssembly::Body;
-        if(smtexp)@<ErrorResult> {
-            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
-        }
-        else {
-            body = SMTAssembly::Body{SMTAssembly::ReturnOperation{$smtexp.exp}, rctx.errors};
-        }
-
+        let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
+        let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{resexp}, rctx.errors};
         return SMTAssembly::FunctionDecl{ ikey, params, artype, body }, rctx.lambdagen;
     }
 
@@ -1686,10 +1753,12 @@ entity SMTTransformer {
             return some(ffinfo);
         }
 
-        let bsqppdecl = this.assembly.tryGetImplicitPrePostInfo(ikey);
+        %%TODO: other methods here too
+
+        let bsqppdecl = this.assembly.tryGetImplicitPrePostConditionInfo(ikey);
         if(bsqppdecl)@some {
-            let ivs, lgens = this.transformPreOrPostFunctionDeclToSMT($bsqppdecl.0, $bsqppdecl.1);
-            return some((|List<SMTAssembly::FunctionDecl>{ivs}, lgens|));
+            let ppinfo = this.transformPreOrPostFunctionDeclToSMT($bsqppdecl.0, $bsqppdecl.1, lambdainvs);
+            return some(ppinfo);
         }
 
         let implicitinv = this.assembly.tryGetImplicitInvariantInfo(ikey);

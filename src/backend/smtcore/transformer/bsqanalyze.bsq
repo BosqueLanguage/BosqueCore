@@ -373,8 +373,8 @@ entity BSQToSMTCallGraphBuilder {
         let funcinfos = BSQCCInfo::mergeAllInfos(assembly.allfuncs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
         let minfos = BSQCCInfo::mergeAllInfos(assembly.allmethods.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
 
-        let allinfo = BSQCCInfo::mergeInfos(iivinfos, ifvinfos, funcinfos, minfos);
-        let reachable = List<BSQAssembly::InvokeKey>::concat(iivs, ifvs, assembly.allfuncs, assembly.allmethods).sortKey();
+        let allinfo = BSQCCInfo::mergeInfos(iivinfos, iippinfos, ifvinfos, funcinfos, minfos);
+        let reachable = List<BSQAssembly::InvokeKey>::concat(iivs, iipp, ifvs, assembly.allfuncs, assembly.allmethods).sortKey();
 
         return BSQInvokeInfo{allinfo.calleemap, allinfo.callermap, reachable};
     }

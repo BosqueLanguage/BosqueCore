@@ -471,36 +471,35 @@ entity Assembly {
     }
 
     method gatherPreAndPostConditions(): List<InvokeKey> {
-        let nsfpre = this.allfuncs
+        let fpre = this.allfuncs
             .map<ExplicitInvokeDecl>(fn(ikey) => this.tryLookupInvokeImplDeclaration(ikey)@some)
             .filter(pred(fdecl) => !fdecl.preconditions.empty())
             .map<List<InvokeKey>>(fn(fdecl) => fdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
-        let nsfpost = this.allfuncs
+        let fpost = this.allfuncs
             .map<ExplicitInvokeDecl>(fn(ikey) => this.tryLookupInvokeImplDeclaration(ikey)@some)
             .filter(pred(fdecl) => !fdecl.postconditions.empty())
             .map<List<InvokeKey>>(fn(fdecl) => fdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
     
-xxxxxxx;
-
-        let fpp = List<InvokeKey>::concat(List<InvokeKey>::concatAll(nsfpre), List<InvokeKey>::concatAll(nsfpost), List<InvokeKey>::concatAll(tfpre), List<InvokeKey>::concatAll(tfpost));
-    
-        let ampre = this.absmethods
+        let ampre = this.allmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
             .filter(pred(mdecl) => !mdecl.preconditions.empty())
             .map<List<InvokeKey>>(fn(mdecl) => mdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
-        let ampost = this.absmethods
+        let ampost = this.allmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
             .filter(pred(mdecl) => !mdecl.postconditions.empty())
             .map<List<InvokeKey>>(fn(mdecl) => mdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
 
-        let vmpre = this.virtmethods
+        let vmpre = this.allvmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
             .filter(pred(mdecl) => !mdecl.preconditions.empty())
             .map<List<InvokeKey>>(fn(mdecl) => mdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
-        let vmpost = this.virtmethods
+        let vmpost = this.allvmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
             .filter(pred(mdecl) => !mdecl.postconditions.empty())
             .map<List<InvokeKey>>(fn(mdecl) => mdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
         
     
-
-        return List<InvokeKey>::concat(fpp, mpp, smpp);
+        return List<InvokeKey>::concat(List<InvokeKey>::concatAll(fpre), List<InvokeKey>::concatAll(fpost), List<InvokeKey>::concatAll(ampre), List<InvokeKey>::concatAll(ampost), List<InvokeKey>::concatAll(vmpre), List<InvokeKey>::concatAll(vmpost));
     }
 
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
