@@ -38,8 +38,8 @@ describe ("CPP Emit Evaluate -- entity methods", () => {
 
 describe ("Exec -- eADT methods", () => {
     it("should exec simple eADT methods", function () {
-        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "3i"); 
-        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "4i"); 
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "3_i"); 
+        runMainCode('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "4_i"); 
     });
 
     /*

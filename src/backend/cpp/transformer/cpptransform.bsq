@@ -359,6 +359,18 @@ entity CPPTransformer {
         return CPPAssembly::ConstructorStdExpression{ etype, CPPAssembly::ArgumentList{ args }, ctype, e.fullns };
     } 
 
+    method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
+        let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
+        let texp = this.transformExpressionToCpp(exp.texp);
+        let thenexp = this.transformExpressionToCpp(exp.thenexp);
+        let elseexp = this.transformExpressionToCpp(exp.elseexp);
+
+        match(exp)@ {
+            BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
+            | _ => { abort; } %% TODO: Not Implemented (need itests)
+        }
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
@@ -373,6 +385,7 @@ entity CPPTransformer {
             | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }
             | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
             | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
+            | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
             | _ => { abort; }
         }
     }

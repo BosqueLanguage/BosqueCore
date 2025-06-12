@@ -85,8 +85,11 @@ function resolveTemplates(name: CString, base: CString): CString {
     return if(templates !== '') then base.removeSuffixString(templates) else base;
 }
 
-function tryEmitEntityName(tk: CPPAssembly::TypeKey, ctx: Context): CString {
-    return if(ctx.asm.entities.has(tk)) then ctx.asm.entities.get(tk).name else '';
+function tryEmitAbstractNominalName(tk: CPPAssembly::TypeKey, ctx: Context): CString {
+    return if(ctx.asm.entities.has(tk)) then ctx.asm.entities.get(tk).name 
+        else if(ctx.asm.datamembers.has(tk)) then ctx.asm.datamembers.get(tk).name 
+        else if(ctx.asm.datatypes.has(tk)) then ctx.asm.datatypes.get(tk).name
+        else '';
 }
 
 function emitIdentifier(ident: CPPAssembly::Identifier): CString {
@@ -412,8 +415,10 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
     let tk = emitTypeKeyBase(op.resolvedType.tkeystr, ctx);
 
     var args: CString;
+    var name: CString;
     if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
         let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
+        name = trgt.name;
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
     %*
@@ -441,11 +446,12 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         resolvedInvoke = ik;
     }
 
+    let resolvedType = resolveTemplates(name, resolvedInvoke);
     if(args === '') {
-        return CString::concat(resolvedInvoke, '(', expr, ')');
+        return CString::concat(resolvedType, '(', expr, ')');
     }
     else {
-         return CString::concat(resolvedInvoke, '(', expr, ', ', args, ')');       
+         return CString::concat(resolvedType, '(', expr, ', ', args, ')');       
     }
 }
 
@@ -495,13 +501,24 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
         }
     }));
 
-    let ename = tryEmitEntityName(exp.ctype.tkeystr, ctx);
+    let ename = tryEmitAbstractNominalName(exp.ctype.tkeystr, ctx);
     let resolved_type = resolveTemplates(ename, emitResolvedNamespace(ctx.fullns_list, exp.ctype.tkeystr.value));
 
     if(ctx.asm.typeinfos.get(exp.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) {
         return CString::concat('new ', resolved_type, '{ ', emitargs, ' }'); %% We use new solely to keep the code compiling before GC integration
     }
     return CString::concat(resolved_type, '{ ', emitargs, ' }'); 
+}
+
+function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): CString {
+    let texp = emitExpression(exp.texp, ctx);
+    let thenexp = emitExpression(exp.thenexp, ctx);
+    let elseexp = emitExpression(exp.elseexp, ctx);
+
+    match(exp) {
+        CPPAssembly::IfSimpleExpression => { return CString::concat(texp, ' ? ', thenexp, ' : ', elseexp); }
+        | _ => { abort; } %% TODO: Not Implemented
+    }
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
@@ -518,6 +535,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
+        | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
         | _ => { abort; }
     }
 }
@@ -527,7 +545,10 @@ function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitiali
     let stype = emitTypeSignatureParamFieldType(stmt.vtype, ctx);
     let exp = emitExpression(stmt.exp, ctx);
 
-    let full_indent: CString = CString::concat(indent, '    ', stype); %% List constructor size max 6
+    let ename = tryEmitAbstractNominalName(stmt.vtype.tkeystr, ctx);
+    let resolvedType = resolveTemplates(ename, stype);
+
+    let full_indent: CString = CString::concat(indent, '    ', resolvedType);
     return CString::concat(full_indent, ' ', name, ' = ', exp, ';');
 }
 
@@ -617,7 +638,7 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
         let ptype = emitTypeSignatureParamFieldType(param.ptype, ctx);
         let resolved_ptype = emitResolvedNamespace(ctx.fullns_list, ptype);
 
-        let ename = tryEmitEntityName(param.ptype.tkeystr, ctx);
+        let ename = tryEmitAbstractNominalName(param.ptype.tkeystr, ctx);
         let resolvedName = resolveTemplates(ename, resolved_ptype);
         let pident = emitIdentifier(param.pname);
         return CString::concat(resolvedName, ' ', pident);
@@ -643,7 +664,7 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let rtype = emitTypeSignatureBase(m.resultType, ctx);
     let this_type = emitThisType(declaredIn, nctx);    
 
-    let ename = tryEmitEntityName(declaredIn, ctx);
+    let ename = tryEmitAbstractNominalName(declaredIn, ctx);
     let resolvedThis: CString = resolveTemplates(ename, this_type);
     
     let pre = CString::concat(indent, 'const ', rtype, ' ', name);
@@ -722,7 +743,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
         let params = emitParameters(m.params, nctx);
         let first = CString::concat(indent, 'const ', rtype, ' ', pre, '(');
     
-        let ename = tryEmitEntityName(declaredIn, nctx);
+        let ename = tryEmitAbstractNominalName(declaredIn, nctx);
         let resolvedThis: CString = resolveTemplates(ename, this_type);
         
         if(params === '') {
