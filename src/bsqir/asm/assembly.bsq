@@ -328,7 +328,7 @@ entity Assembly {
         }
     }
 
-    method tryLookupInvokeImplDeclaration(ikey: InvokeKey): Option<AbstractInvokeDecl> {
+    method tryLookupInvokeImplDeclaration(ikey: InvokeKey): Option<ExplicitInvokeDecl> {
         if(this.nsfuncs.has(ikey)) {
             return some(this.nsfuncs.get(ikey));
         }
@@ -375,7 +375,7 @@ entity Assembly {
         });
 
         if(ac)@some {
-            let tt = this.lookupNominalTypeDeclaration(ac@some);
+            let tt = this.lookupNominalTypeDeclaration($ac);
 
             let ii = tt.invariants.tryFind(pred(ii) => ii.ikey === ikey);
             if(ii)@some {
@@ -383,6 +383,63 @@ entity Assembly {
             }
             else {
                 return some((|tt.validates.find(pred(ii) => ii.ikey === ikey), tt|));
+            }
+        }
+
+        return none;
+    }
+
+    method tryGetImplicitPrePostConditionInfo(ikey: InvokeKey): Option<(|ConditionDecl, ExplicitInvokeDecl|)> {
+        %%TODO: we may want to move this into a setup where we have a map of ikey to invariant
+
+        let ffopt = this.allfuncs.tryFind(pred(fkey) => {
+            let fdecl = this.tryLookupInvokeImplDeclaration(fkey)@some;
+            return fdecl.preconditions.someOf(pred(pdecl) => pdecl.ikey === ikey) || fdecl.postconditions.someOf(pred(pdecl) => pdecl.ikey === ikey);
+        });
+
+        if(ffopt)@some {
+            let fdecl = this.tryLookupInvokeImplDeclaration($ffopt)@some;
+
+            let ii = fdecl.preconditions.tryFind(pred(ii) => ii.ikey === ikey);
+            if(ii)@some {
+                return some((|$ii, fdecl|));
+            }
+            else {
+                return some((|fdecl.postconditions.find(pred(ii) => ii.ikey === ikey), fdecl|));
+            }
+        }
+
+        let mmopt = this.allmethods.tryFind(pred(mkey) => {
+            let mdecl = this.tryLookupInvokeImplDeclaration(mkey)@some;
+            return mdecl.preconditions.someOf(pred(pdecl) => pdecl.ikey === ikey) || mdecl.postconditions.someOf(pred(pdecl) => pdecl.ikey === ikey);
+        });
+
+        if(mmopt)@some {
+            let mdecl = this.tryLookupInvokeImplDeclaration($mmopt)@some;
+
+            let ii = mdecl.preconditions.tryFind(pred(ii) => ii.ikey === ikey);
+            if(ii)@some {
+                return some((|$ii, mdecl|));
+            }
+            else {
+                return some((|mdecl.postconditions.find(pred(ii) => ii.ikey === ikey), mdecl|));
+            }
+        }
+
+        let vmopt = this.allvmethods.tryFind(pred(mkey) => {
+            let mdecl = this.tryLookupInvokeImplDeclaration(mkey)@some;
+            return mdecl.preconditions.someOf(pred(pdecl) => pdecl.ikey === ikey) || mdecl.postconditions.someOf(pred(pdecl) => pdecl.ikey === ikey);
+        });
+    
+        if(vmopt)@some {
+            let mdecl = this.tryLookupInvokeImplDeclaration($vmopt)@some;
+
+            let ii = mdecl.preconditions.tryFind(pred(ii) => ii.ikey === ikey);
+            if(ii)@some {
+                return some((|$ii, mdecl|));
+            }
+            else {
+                return some((|mdecl.postconditions.find(pred(ii) => ii.ikey === ikey), mdecl|));
             }
         }
 
@@ -411,6 +468,38 @@ entity Assembly {
             .map<List<InvokeKey>>(fn(tdecl) => tdecl.validates.map<InvokeKey>(fn(idecl) => idecl.ikey));
 
         return List<InvokeKey>::concat(List<InvokeKey>::concatAll(cinvs), List<InvokeKey>::concatAll(cvalidates), List<InvokeKey>::concatAll(ainvs), List<InvokeKey>::concatAll(avalidates));
+    }
+
+    method gatherPreAndPostConditions(): List<InvokeKey> {
+        let fpre = this.allfuncs
+            .map<ExplicitInvokeDecl>(fn(ikey) => this.tryLookupInvokeImplDeclaration(ikey)@some)
+            .filter(pred(fdecl) => !fdecl.preconditions.empty())
+            .map<List<InvokeKey>>(fn(fdecl) => fdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+        let fpost = this.allfuncs
+            .map<ExplicitInvokeDecl>(fn(ikey) => this.tryLookupInvokeImplDeclaration(ikey)@some)
+            .filter(pred(fdecl) => !fdecl.postconditions.empty())
+            .map<List<InvokeKey>>(fn(fdecl) => fdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+    
+        let ampre = this.allmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
+            .filter(pred(mdecl) => !mdecl.preconditions.empty())
+            .map<List<InvokeKey>>(fn(mdecl) => mdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+        let ampost = this.allmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
+            .filter(pred(mdecl) => !mdecl.postconditions.empty())
+            .map<List<InvokeKey>>(fn(mdecl) => mdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+
+        let vmpre = this.allvmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
+            .filter(pred(mdecl) => !mdecl.preconditions.empty())
+            .map<List<InvokeKey>>(fn(mdecl) => mdecl.preconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+        let vmpost = this.allvmethods
+            .map<ExplicitInvokeDecl>(fn(mdecl) => this.tryLookupInvokeImplDeclaration(mdecl)@some)
+            .filter(pred(mdecl) => !mdecl.postconditions.empty())
+            .map<List<InvokeKey>>(fn(mdecl) => mdecl.postconditions.map<InvokeKey>(fn(pdecl) => pdecl.ikey));
+        
+    
+        return List<InvokeKey>::concat(List<InvokeKey>::concatAll(fpre), List<InvokeKey>::concatAll(fpost), List<InvokeKey>::concatAll(ampre), List<InvokeKey>::concatAll(ampost), List<InvokeKey>::concatAll(vmpre), List<InvokeKey>::concatAll(vmpost));
     }
 
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
