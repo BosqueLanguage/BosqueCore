@@ -259,6 +259,25 @@ entity SMTTransformer {
         }
     }
 
+    method wrapPreAndPostCondidtionsOperationResult(ctx: SMTTransformerCtx, etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>, preconds: Option<List<ConditionDecl>>, postconds: Option<List<ConditionDecl>>): SMTTransformerCtx, SMTExpTransformResult {
+        let rctx, iichecks = preconditions.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
+                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, );
+                
+                let eeid = cctx.errCtr;
+                let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size());
+                if(!this.errinvokes.get(iiv.ikey)) {
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, aargs}, eeid|);
+                }
+                else {
+                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, aargs}, eeid|);
+                }
+            });
+
+            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
+            return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+
+    }
+
     method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::LiteralNoneExpression{};
     }
