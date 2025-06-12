@@ -2398,6 +2398,9 @@ class JSEmitter {
             return this.emitBuiltinBodyImplementation(body, fmt);
         }
         else {
+            let obinds = this.bindernames;
+            this.bindernames = new Set<string>();
+
             let stmts: string[] = [];
             if(body instanceof ExpressionBodyImplementation) {
                 if(optrefreturn === undefined) {
@@ -2436,7 +2439,7 @@ class JSEmitter {
 
                 stmts = [bvars, ...stmts];
             }
-            this.bindernames.clear();
+            this.bindernames = obinds;
 
             if(initializers.length === 0 && preconds.length === 0 && refsaves.length === 0) {
                 const renamesstr = renames.join(fmt.nl());
