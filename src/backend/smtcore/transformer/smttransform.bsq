@@ -1508,6 +1508,10 @@ entity SMTTransformer {
         }
     }
 
+    method transformPreOrPostFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, foridecl: BSQAssembly::ExplicitInvokeDecl, lambdainvs: Option<List<LambdaGeneratorInfo>>): List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo> {
+        abort;
+    }
+
     method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo> {
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
 
@@ -1680,6 +1684,12 @@ entity SMTTransformer {
         if(bsqsmdecl)@some {
             let ffinfo = this.transformMethodDeclStaticToSMT($bsqsmdecl, lambdainvs);
             return some(ffinfo);
+        }
+
+        let bsqppdecl = this.assembly.tryGetImplicitPrePostInfo(ikey);
+        if(bsqppdecl)@some {
+            let ivs, lgens = this.transformPreOrPostFunctionDeclToSMT($bsqppdecl.0, $bsqppdecl.1);
+            return some((|List<SMTAssembly::FunctionDecl>{ivs}, lgens|));
         }
 
         let implicitinv = this.assembly.tryGetImplicitInvariantInfo(ikey);

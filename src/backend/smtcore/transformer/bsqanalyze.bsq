@@ -349,9 +349,13 @@ entity BSQToSMTCallGraphBuilder {
         if(iif)@some {
             return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processExpression(ikey, $iif.0.exp));
         }
-        else {
-            abort; %% an implicit field or arg initializer
+
+        let iipp = this.assembly.tryGetImplicitPrePostConditionInfo(ikey);
+        if(iipp)@some {
+            return BSQCCInfo::mergeInfos(BSQCCInfo::createInit(ikey), this.processExpression(ikey, $iipp.0.exp));
         }
+
+        abort; %% an implicit field or arg initializer
     }
 
     function constructBSQInvokeInfo(assembly: BSQAssembly::Assembly): BSQInvokeInfo {
@@ -359,6 +363,9 @@ entity BSQToSMTCallGraphBuilder {
 
         let iivs = assembly.gatherInvariantAndValidateFunctions();
         let iivinfos = BSQCCInfo::mergeAllInfos(iivs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
+
+        let iipp = assembly.gatherPreAndPostConditions();
+        let iippinfos = BSQCCInfo::mergeAllInfos(iipp.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
 
         let ifvs = List<BSQAssembly::InvokeKey>{}; %%TODO gather all of the implicit field and arg initializers
         let ifvinfos = BSQCCInfo::mergeAllInfos(ifvs.map<BSQCCInfo>(fn(ikey) => builder.processInvokeKey(ikey)));
@@ -645,9 +652,13 @@ entity MayErrorAnalysis {
         if(iif)@some {
             return this.processExpression($iif.0.exp, cerrors, Map<BSQAssembly::Identifier, Bool>{});
         }
-        else {
-            abort; %% an implicit field or arg initializer
+
+        let iipp = this.assembly.tryGetImplicitPrePostConditionInfo(ikey);
+        if(iipp)@some {
+            return this.processExpression($iipp.0.exp, cerrors, Map<BSQAssembly::Identifier, Bool>{});
         }
+
+        abort; %% an implicit field or arg initializer
     }
 
     function generateInvokeErrorInfo(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph): Map<BSQAssembly::InvokeKey, Bool> {
