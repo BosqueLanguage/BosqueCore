@@ -259,23 +259,52 @@ entity SMTTransformer {
         }
     }
 
-    method wrapPreAndPostCondidtionsOperationResult(ctx: SMTTransformerCtx, etype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>, preconds: Option<List<ConditionDecl>>, postconds: Option<List<ConditionDecl>>): SMTTransformerCtx, SMTExpTransformResult {
-        let rctx, iichecks = preconditions.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
-                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, );
+    method wrapPreConditions(ctx: SMTTransformerCtx, ttags: List<Bool>, args: List<SMTAssembly::SafeExpression>, etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, preconds: List<BSQAssembly::PreConditionDecl>): SMTTransformerCtx, SMTAssembly::Expression {
+        if(preconds.empty()) {
+            return ctx, exp;
+        }
+        else {
+            let rctx, iichecks = preconds.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(ctx, fn(cctx, iiv) => {
+                let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, ttags);
                 
                 let eeid = cctx.errCtr;
-                let aargs = orderargs.firstK(iitypedecl.saturatedBFieldInfo.size());
-                if(!this.errinvokes.get(iiv.ikey)) {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, aargs}, eeid|);
+                if(/\(ttags.allOf(pred(aa) => !aa), !this.errinvokes.get(iiv.ikey))) {
+                    return cctx.addError(iiv.exp.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, args}, eeid|);
                 }
                 else {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, aargs}, eeid|);
+                    return cctx.addError(iiv.exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, args}, eeid|);
                 }
             });
 
-            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
-            return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+            let wwexp = if(exp)@<SMTAssembly::CallFunctionSafeExpression> then SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(etype), $exp} else exp;
+            return rctx, SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(etype), iichecks, wwexp};
+        }
+    }
 
+    method wrapPostConditions(ctx: SMTTransformerCtx, ttags: List<Bool>, args: List<SMTAssembly::SafeExpression>, etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, postconds: List<BSQAssembly::PostConditionDecl>): SMTTransformerCtx, SMTAssembly::Expression {
+        if(postconds.empty()) {
+            return ctx, exp;
+        }
+        else {
+            abort; %% NOT IMPLEMENTED YET
+        }
+    }
+
+    method wrapPreAndPostCondidtionsOperationResult(ctx: SMTTransformerCtx, ttags: List<Bool>, args: List<SMTAssembly::SafeExpression>, etype: BSQAssembly::TypeSignature, exp: SMTAssembly::Expression, binds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>, preconds: List<BSQAssembly::PreConditionDecl>, postconds: List<BSQAssembly::PostConditionDecl>): SMTTransformerCtx, SMTExpTransformResult {
+        if(/\(preconds.empty(), postconds.empty())) {
+            if(exp)@<SMTAssembly::CallFunctionSafeExpression> {
+                return ctx, this.wrapOperationResult(etype, $exp, binds);
+            }
+            else {
+                return ctx, this.wrapOperationResultWErr(etype, $exp, binds);
+            }
+        }
+        else {
+            let prectx, preexp = this.wrapPreConditions(ctx, ttags, args, etype, exp, preconds);
+            let postctx, postexp = this.wrapPostConditions(prectx, ttags, args, etype, preexp, postconds);
+
+            return postctx, this.wrapOperationResultWErr(etype, postexp, binds);
+        }
     }
 
     method transformLiteralNoneExpression(exp: BSQAssembly::LiteralNoneExpression): SMTAssembly::SafeExpression {
@@ -442,15 +471,16 @@ entity SMTTransformer {
             let fctx = if(!largs.empty()) then nctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{e.ikey, largs})] else nctx;
             if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(e.ikey))) {
                 let smtikey = TransformNameManager::convertInvokeKey(e.ikey, List<Bool>{});
-
                 let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-                return fctx, this.wrapOperationResult(e.etype, callop, obinds);
+
+                return this.wrapPreAndPostCondidtionsOperationResult(fctx, List<Bool>{}, aargs, e.etype, callop, obinds, fdecl.preconditions, fdecl.postconditions);
             }
             else {
-                let smtikey = TransformNameManager::convertInvokeKey(e.ikey, largs.map<Bool>(fn(aa) => aa.1));
-
+                let ikeylmap = largs.map<Bool>(fn(aa) => aa.1);
+                let smtikey = TransformNameManager::convertInvokeKey(e.ikey, ikeylmap);
                 let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-                return fctx, this.wrapOperationResultWErr(e.etype, callop, obinds);
+
+                return this.wrapPreAndPostCondidtionsOperationResult(fctx, ikeylmap, aargs, e.etype, callop, obinds, fdecl.preconditions, fdecl.postconditions);
             }
         }
     }
@@ -665,15 +695,16 @@ entity SMTTransformer {
         let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
         if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
             let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, List<Bool>{});
-
             let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-            return smctx, this.wrapOperationResult(smdecl.resultType, callop, allobinds);
+
+            return this.wrapPreAndPostCondidtionsOperationResult(smctx, List<Bool>{}, aargs, smdecl.resultType, callop, allobinds, smdecl.preconditions, smdecl.postconditions);
         }
         else {
-            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, largs.map<Bool>(fn(aa) => aa.1));
-
+            let ikeylmap = largs.map<Bool>(fn(aa) => aa.1);
+            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, ikeylmap);
             let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
-            return smctx, this.wrapOperationResultWErr(smdecl.resultType, callop, allobinds);
+
+            return this.wrapPreAndPostCondidtionsOperationResult(smctx, ikeylmap, aargs, smdecl.resultType, callop, allobinds, smdecl.preconditions, smdecl.postconditions);
         }
     }
 
