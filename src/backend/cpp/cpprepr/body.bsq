@@ -36,7 +36,6 @@ ITestType { field ttype: TypeSignature; }
 | ITestFail { }
 ;
 
-
 datatype ArgumentValue using {
     field exp: Expression;
 }
@@ -205,6 +204,9 @@ PostfixAccessFromName {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
+}
+| PostfixIsTest {
+    field ttest: ITest;
 }
 ;
 

@@ -418,12 +418,6 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
         name = trgt.name;
         args = emitArgumentList(op.args, trgt.params, ctx);
     }
-    %*
-    elif(ctx.asm.virtmethods.has(op.resolvedTrgt)) {
-        let trgt = ctx.asm.virtmethods.get(op.resolvedTrgt);
-        args = emitArgumentList(op.args, trgt.params, ctx);
-    }
-    *%
     else {
         abort; %% TODO: Add support for Override, Abstract, and Virtual methods!
     }
@@ -452,19 +446,39 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
     }
 }
 
+%%
+%% I really feel that this is flawed...
+%%
+function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature): CString {
+    if(it.isnot) {
+        if(it.ttype.tkeystr.value === baseType.tkeystr.value) {
+            return 'true';
+        }
+        return 'false';
+    }
+    return if(it.ttype.tkeystr.value === baseType.tkeystr.value) then 'true' else 'false';
+}
+
+function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature): CString {
+    match(it)@ {
+        CPPAssembly::ITestType => { return emitITestType($it, baseType); }
+        | _ => { abort; }
+    }
+}
+
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     let rootExp = emitExpression(pop.rootExp, ctx);
     let ops = pop.ops.mapIdx<CString>(fn(op, ii) => {
-        if(op)@<CPPAssembly::PostfixAccessFromName> {
-            if (ii == 0n) {
-                return CString::concat(rootExp, emitPostfixAccessFromName($op, ctx));
+        match(op)@ {
+            CPPAssembly::PostfixAccessFromName => {
+                if (ii == 0n) {
+                    return CString::concat(rootExp, emitPostfixAccessFromName($op, ctx));
+                }
+                return emitPostfixAccessFromName($op, ctx);
             }
-            return emitPostfixAccessFromName($op, ctx);
+            | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); }
+            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType); }
         }
-        if(op)@<CPPAssembly::PostfixInvokeStatic> {
-            return emitPostfixInvokeStatic($op, rootExp, ctx);
-        }
-        abort; %% TODO: Not implemented
     });
 
     return CString::joinAll('', ops);

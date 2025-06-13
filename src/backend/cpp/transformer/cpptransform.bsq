@@ -305,23 +305,39 @@ entity CPPTransformer {
         return CPPAssembly::CallTypeFunctionExpression{ ts, ikey, ttype, resolvedDeclType, args };
     }
 
+    method transformITestType(it: BSQAssembly::ITestType, isnot: Bool): CPPAssembly::ITestType {
+        let ttype = CPPTransformNameManager::convertTypeSignature(it.ttype);
+        return CPPAssembly::ITestType{isnot, ttype};    
+    }
+
+    method transformITestAsTest(itest: BSQAssembly::ITest): CPPAssembly::ITest {
+        let isnot = itest.isnot;
+        match(itest)@ {
+            BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
+            | _ => { abort; } %% Gonna do in a sec
+        }
+    }
+
     method transformPostfixOpImpl(op: BSQAssembly::PostfixOperation): CPPAssembly::PostfixOperation {
         let baseType = CPPTransformNameManager::convertTypeSignature(op.baseType);
-        if(op)@ <BSQAssembly::PostfixAccessFromName> {
-            let name = CPPTransformNameManager::convertIdentifier($op.name);
-            let declaredInType = CPPTransformNameManager::convertNominalTypeSignature($op.declaredInType);
-            let ftype = CPPTransformNameManager::convertTypeSignature($op.ftype);
+        match(op)@ {
+            BSQAssembly::PostfixAccessFromName => {
+                let name = CPPTransformNameManager::convertIdentifier($op.name);
+                let declaredInType = CPPTransformNameManager::convertNominalTypeSignature($op.declaredInType);
+                let ftype = CPPTransformNameManager::convertTypeSignature($op.ftype);
 
-            return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
-        }
-        if(op)@<BSQAssembly::PostfixInvokeStatic> { %% Currently used for methods
-            let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
-            let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
-            let args = this.transformArgumentInfo($op.argsinfo);
+                return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
+            }
+            | BSQAssembly::PostfixInvokeStatic => {
+                let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
+                let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
+                let args = this.transformArgumentInfo($op.argsinfo);
 
-            return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
+                return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
+            }
+            | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
+            | _ => { abort; } %% TODO: Not Implemented
         }
-        abort; %% TODO: Not implemented
     }
 
     method transformPostfixOp(pop: BSQAssembly::PostfixOp): CPPAssembly::PostfixOp {
