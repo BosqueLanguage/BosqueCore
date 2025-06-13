@@ -16,14 +16,13 @@ describe ("SMT -- basic !equal", () => {
         runishMainCodeUnsat("public function main(): Bool { return +2i != 2i; }", "(assert Main@main)");
     });
 });
-/*
-describe ("Exec -- enum strict equals", () => {
-    it("should exec enum strict equals operations", function () {
-        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#f; }", "true");
-        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#f; }", "false");
 
-        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#g; }", "false");
-        runMainCode("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#g; }", "true");
+describe ("SMT Exec -- enum strict equals", () => {
+    it("should smt exec enum strict equals operations", function () {
+        runishMainCodeUnsat("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#f; }", "(assert (not Main@main))");
+        runishMainCodeUnsat("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#f; }", "(assert Main@main)");
+
+        runishMainCodeUnsat("enum Foo { f, g } public function main(): Bool { return Foo#f === Foo#g; }", "(assert Main@main)");
+        runishMainCodeUnsat("enum Foo { f, g } public function main(): Bool { return Foo#f !== Foo#g; }", "(assert (not Main@main))");
     });
 });
-*/

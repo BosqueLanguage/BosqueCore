@@ -321,8 +321,8 @@ entity ConstantSimplification {
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
             match(op)@ {
                 PostfixAccessFromName => { return $op; }
-                | PostfixProjectFromNames => { abort; }
-                | PostfixAccessFromIndex => { abort; }
+                | PostfixProjectFromNames => { return $op; }
+                | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return this.processITestAsTest($op.sinfo, $op.baseType, $op.ttest); }
                 | PostfixAsConvert => { return this.processITestAsConvert($op.sinfo, $op.baseType, $op.ttest); }
                 | PostfixAssignFields => { abort; }

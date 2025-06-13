@@ -323,6 +323,10 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringExpression{exp.value};
     }
 
+    method transformAccessEnumExpression(exp: BSQAssembly::AccessEnumExpression): SMTAssembly::SafeExpression {
+        return SMTAssembly::AccessEnumExpression{this.transformStdTypeToSMT(exp.stype), exp.name};
+    }
+
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
@@ -399,7 +403,10 @@ entity SMTTransformer {
     }
 
     recursive method transformConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        abort;
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let smttype = this.transformStdTypeToSMT(e.etype);
+
+        return nctx, this.wrapOperationResult(e.etype, SMTAssembly::ConstructorEListExpression{smttype, aargs}, obinds);
     }
 
     recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -736,6 +743,13 @@ entity SMTTransformer {
         }
     }
 
+    method transformPostfixAccessFromIndex(op: BSQAssembly::PostfixAccessFromIndex, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType), op.idx, onarg};
+
+        return nctx, this.wrapOperationResult(op.baseType, accessop, obinds);
+    }
+
     method transformPostfixBoolConstant(op: BSQAssembly::PostfixBoolConstant, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
         let constop = SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, if(op.value) then 'true' else 'false'};
@@ -785,7 +799,7 @@ entity SMTTransformer {
             match(op)@ {
                 BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
-                | BSQAssembly::PostfixAccessFromIndex => { abort; }
+                | BSQAssembly::PostfixAccessFromIndex => { return this.transformPostfixAccessFromIndex($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixIsTest => { return this.transformITestPostfixOp($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAsConvert => { return this.processITestAsConvert($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAssignFields => { abort; }
@@ -1152,6 +1166,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::LiteralStringExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformLiteralStringExpression($exp)}; 
+            }
+            | BSQAssembly::AccessEnumExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessEnumExpression($exp)}; 
             }
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 

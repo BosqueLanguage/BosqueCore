@@ -240,8 +240,8 @@ entity ExplicitifyTransform {
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
             match(op)@ {
                 PostfixAccessFromName => { return $op; }
-                | PostfixProjectFromNames => { abort; }
-                | PostfixAccessFromIndex => { abort; }
+                | PostfixProjectFromNames => { return $op; }
+                | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return $op; }
                 | PostfixAsConvert => { return $op; }
                 | PostfixAssignFields => { abort; }
