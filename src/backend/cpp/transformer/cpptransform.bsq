@@ -544,8 +544,8 @@ entity CPPTransformer {
         });
     }
 
-    method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
-        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ 7n, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
+    method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tid: Nat, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
+        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
             let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
             if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
                 if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
@@ -580,12 +580,14 @@ entity CPPTransformer {
         elif(asm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
             var fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>;
+            var tid: Nat;
             var tag: CPPAssembly::Tag;
             var tkey: CPPAssembly::TypeKey;
             if(asm.entities.has(typekey)) {
                 let e = asm.entities.get(typekey);
                 let isRef = CPPTransformNameManager::shouldBeRef(e.fields, asm);
                 fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
+                tid = 7n;
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
             }
@@ -593,6 +595,7 @@ entity CPPTransformer {
                 let dm = asm.datamembers.get(typekey);
                 let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, asm);
                 fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
+                tid = 8n;
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(dm.tkey);
             }
@@ -600,7 +603,7 @@ entity CPPTransformer {
                 abort; %% TODO: Type not supported for typeinfo emission!
             }
 
-            matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, tkey, tag, asm);
+            matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, tid, tkey, tag, asm);
         }
         elif(asm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
