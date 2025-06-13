@@ -251,23 +251,48 @@ entity ConstantSimplification {
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
         let nargs = this.processArgs(e.args);
 
-        xxxx;
-
-        return e[args=nargs];
+        let cfalse = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'false');
+        if(cfalse) {
+            return ConstantSimplification::falseExp;
+        }
+        else {
+            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
+            
+            if(sargs.empty()) {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                if(sargs.isSingleElement()) {
+                    return sargs.single();
+                }
+                else {
+                    return e[args=sargs];
+                }
+            }
+        }
     }
 
     recursive method processLogicActionOrExpression(e: LogicActionOrExpression): Expression {
         let nargs = this.processArgs(e.args);
 
-        let ctrue = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && $arg.value === 'true');
+        let ctrue = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'true');
         if(ctrue) {
             return ConstantSimplification::trueExp;
         }
         else {
-            let sargs = nargs.filter(pred(arg) => arg?<LiteralSimpleExpression> && $arg.value === 'false');
-            xxxx;
+            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
 
-            return e[args=nargs];
+            if(sargs.empty()) {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                if(sargs.isSingleElement()) {
+                    return sargs.single();
+                }
+                else {
+                    return e[args=sargs];
+                }
+            }
         }
     }
 
