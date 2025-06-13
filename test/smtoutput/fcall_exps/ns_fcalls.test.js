@@ -41,3 +41,13 @@ describe ("SMT Exec -- NamespaceFunction", () => {
         runishMainCodeUnsat("function bar(x: Int, f: fn(Int) -> Int): Int { return f(x); } public function main(): Int { return bar(0i, fn(a) => { assert a != 0i; return a + 1i; }); }", "(assert (not (= @Result-err-other Main@main)))");
     });
 });
+
+describe ("SMT Exec -- NamespaceFunction (with template)", () => {
+    it("should smt exec simple positional", function () {
+        runishMainCodeUnsat("function foo<T>(x: T): T { return x; } public function main(): Int { return foo<Int>(1i); }", "(assert (not (= 1 Main@main)))");
+    });
+
+    it("should smt exec two instantiations", function () {
+        runishMainCodeUnsat("function foo<T>(x: T): T { return x; } public function main(): Int { if(foo<Nat>(1n) > 0n) { return foo<Int>(1i); } return 0i; }", "(assert (not (= 1 Main@main)))");
+    });
+});
