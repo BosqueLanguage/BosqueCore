@@ -40,10 +40,26 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     field defaultval: Option<Expression>;
 }
 
+entity SaturatedFieldInfo {
+    field declaredInType: NominalTypeSignature;
+    field fname: Identifier;
+    field ftype: TypeSignature;
+    field hasdefault: Bool;
+}
+
 concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
- 
-    %% invariants, validates, methods, saturated, as well
+    field name: CString;
+
+    field staticmethods: List<InvokeKey>;
+    field virtmethods: List<InvokeKey>;
+    field absmethods: List<InvokeKey>;
+    field overmethods: List<InvokeKey>;
+    
+    field saturatedProvides: List<NominalTypeSignature>;
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
+    
+    %% invariants, validates, as well
 }
 
 concept AbstractInvokeDecl provides AbstractDecl {
@@ -59,11 +75,16 @@ concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
+}
 
-    field staticmethods: List<InvokeKey>;
-    field virtmethods: List<InvokeKey>;
-    field absmethods: List<InvokeKey>;
-    field overmethods: List<InvokeKey>;
+entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field parentTypeDecl: NominalTypeSignature;
+}
+
+entity DatatypeTypeDecl provides AbstractNominalTypeDecl {
+    field fields: List<MemberFieldDecl>;
+    field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
 
 enum Tag {
@@ -118,10 +139,14 @@ entity NamespaceDecl {
     %% Will need other stuff like nsconsts, enums, typedecls, etc...
 
     field subns: Map<CString, NamespaceDecl>;
-    field entities: Map<TypeKey, EntityTypeDecl>; %% Will have to do forward decls too
 
-    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;
+    field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
+
+    field entities: List<TypeKey>;
+    field datamembers: List<TypeKey>;
+
+    field datatypes: List<TypeKey>;
 
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
@@ -133,12 +158,19 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     field allfuncs: List<FunctionDecl>;
+    
+    field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;  
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
     field staticmethods: Map<InvokeKey, MethodDeclStatic>;
     field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
+
+    field entities: Map<TypeKey, EntityTypeDecl>;
+    field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
+
+    field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;

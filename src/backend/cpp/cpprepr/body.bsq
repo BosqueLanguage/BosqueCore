@@ -20,6 +20,23 @@ concept Operation {
 concept Statement {
 }
 
+entity BinderInfo { %% TODO: Not implemented
+    field srcname: VarIdentifier;
+    field refineonfollow: Bool;
+}
+
+datatype ITest using { %% TODO: Not Implemented
+    field isnot: Bool;
+}
+of
+ITestType { field ttype: TypeSignature; }
+| ITestNone { }
+| ITestSome { }
+| ITestOk { }
+| ITestFail { }
+;
+
+
 datatype ArgumentValue using {
     field exp: Expression;
 }
@@ -110,6 +127,22 @@ of
 PrefixNotOpExpression { }
 | PrefixNegateOpExpression { }
 | PrefixPlusOpExpression { }
+;
+
+datatype IfExpression provides Expression using {
+    field texp: Expression;
+    field thenexp: Expression;
+    field elseexp: Expression;
+}
+of
+IfSimpleExpression { }
+| IfTestExpression { %% TODO: Not implemented (need ITests for this to work)
+    field itest: ITest;
+}
+| IfBinderExpression { %% TODO: Not implemented 
+    field itest: ITest;
+    field binder: BinderInfo;
+}
 ;
 
 datatype BinaryArithExpression provides Expression using {
