@@ -29,6 +29,14 @@ describe ("SMT Exec -- entity methods", () => {
         runishMainCodeUnsat('entity Foo { field x: Int; method m(y: Int): Int { return this.x + y; } } public function main(): Int { let foo: Option<Foo> = some(Foo{ 3i }); return foo@some.m(2i); }', "(assert (not (= (@Result-ok 5) Main@main)))");
     });
 });
+
+describe ("SMT Exec -- entity methods (Pre/Post)", () => {
+    it("should smt exec simple entity methods", function () {
+        runishMainCodeUnsat('entity Foo { field f: Int; method foo(): Int requires this.f != 0i; { return this.f; }} public function main(a: Int): Int { return Foo{a}.foo(); }', "(assert (not (= (@Result-ok 3) (Main@main 3))))"); 
+        runishMainCodeUnsat('entity Foo { field f: Int; method foo(): Int requires this.f != 0i; { return this.f; }} public function main(a: Int): Int { return Foo{a}.foo(); }', "(assert (not (= @Result-err-other (Main@main 0))))"); 
+    });
+});
+
 /*
 describe ("Exec -- eADT methods", () => {
     it("should exec simple eADT methods", function () {
