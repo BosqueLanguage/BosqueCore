@@ -695,10 +695,18 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
     return CString::concat(pre, params_impl, ' {%n;', emitBodyImplementation(func.body, nctx, indent), indent, '}%n;');
 }
 
+%*
 function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: CString): CString {
     let name = emitIdentifier(member.name);
     let mtype = emitTypeSignatureParamFieldType(member.declaredType, ctx);
     return CString::concat(indent, mtype, ' ', name, ';%n;');
+}
+*%
+
+function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: CString): CString {
+    let ftype = emitTypeSignatureParamFieldType(sfi.ftype, ctx);
+    let fname = emitIdentifier(sfi.fname);
+    return CString::concat(indent, ftype, ' ', fname, ';%n;');
 }
 
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Context, indent: CString): CString {
@@ -706,9 +714,9 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CString, ctx: Co
     let resolved_tk = emitResolvedNamespace(nctx.fullns_list, tk);
 
     let finalName = resolveTemplates(e.name, resolved_tk);
-    let entries = e.fields.reduce<CString>(CString::concat(indent, 'struct ', finalName, '{ %n;'), 
+    let entries = e.saturatedBFieldInfo.reduce<CString>(CString::concat(indent, 'struct ', finalName, '{ %n;'), 
         fn(acc, entry) => {
-            return CString::concat(acc, emitMemberFieldDecl(entry, nctx, CString::concat('    ', indent)));
+            return CString::concat(acc, emitSaturatedFieldInfo(entry, nctx, CString::concat('    ', indent)));
     });
 
     return CString::concat(entries, indent, '};%n;');
@@ -718,10 +726,10 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     let nctx = ctx.updateCurrentNamespace(dm.declaredInNS, dm.fullns);
     let resolved_tk = emitResolvedNamespace(nctx.fullns_list, dm.tkey.value); 
     let finalName = resolveTemplates(dm.name, resolved_tk);
- 
-    let fields = dm.fields.reduce<CString>(CString::concat(indent, 'struct ', finalName, '{ %n;'), 
+
+    let fields = dm.saturatedBFieldInfo.reduce<CString>(CString::concat(indent, 'struct ', finalName, '{ %n;'), 
         fn(acc, entry) => {
-            return CString::concat(acc, emitMemberFieldDecl(entry, nctx, CString::concat('    ', indent)));
+            return CString::concat(acc, emitSaturatedFieldInfo(entry, nctx, CString::concat('    ', indent)));
     });
 
     return CString::concat(fields, indent, '};%n;');

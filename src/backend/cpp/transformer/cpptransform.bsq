@@ -523,21 +523,24 @@ entity CPPTransformer {
             CPPTransformNameManager::convertInvokeKey(decl.completeikey) };
     } 
 
-    method transformMemberFieldDecl(fields: List<BSQAssembly::MemberFieldDecl>): List<CPPAssembly::MemberFieldDecl> {
-        return fields.map<CPPAssembly::MemberFieldDecl>(fn(f) => {
-            let declaredInNS = CPPTransformNameManager::convertNamespaceKey(f.declaredInNS);
-            let name = CPPTransformNameManager::convertIdentifier(f.name);
+    method transformMemberFieldDecl(fields: List<BSQAssembly::SaturatedFieldInfo>, m: BSQAssembly::AbstractNominalTypeDecl, mfields: List<BSQAssembly::MemberFieldDecl>): List<CPPAssembly::MemberFieldDecl> {
+        return fields.mapIdx<CPPAssembly::MemberFieldDecl>(fn(f, ii) => {
+            let declaredInNS = CPPTransformNameManager::convertNamespaceKey(m.declaredInNS);
+            let name = CPPTransformNameManager::convertIdentifier(f.fname);
             let declaredInType = CPPTransformNameManager::convertNominalTypeSignature(f.declaredInType);
-            let declaredType = CPPTransformNameManager::convertTypeSignature(f.declaredType);
-            let defv = f.defaultValue;
+            let declaredType = CPPTransformNameManager::convertTypeSignature(f.ftype);
             var defaultval: Option<CPPAssembly::Expression>;
-            if(defv)@none { %% Maybe add this converstion of default val to the name manager
-                defaultval = none;
+            if(f.hasdefault && ii < mfields.size()) {
+                let tmp = mfields.get(ii).defaultValue;
+                if(tmp)@@none {
+                    abort;
+                }
+                defaultval = some(this.transformExpressionToCpp(tmp));
             }
             else {
-                defaultval = some(this.transformExpressionToCpp($defv));
+                defaultval = none;
             }
-            return CPPAssembly::MemberFieldDecl{ declaredInNS, f.fullns, name, declaredInType, declaredType, defaultval };
+            return CPPAssembly::MemberFieldDecl{ declaredInNS, m.fullns, name, declaredInType, declaredType, defaultval };
         });
     }
 
@@ -582,14 +585,14 @@ entity CPPTransformer {
             if(asm.entities.has(typekey)) {
                 let e = asm.entities.get(typekey);
                 let isRef = CPPTransformNameManager::shouldBeRef(e.fields, asm);
-                fields_tinfo = e.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
             }
             elif(asm.datamembers.has(typekey)) {
                 let dm = asm.datamembers.get(typekey);
                 let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, asm);
-                fields_tinfo = dm.fields.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.declaredType.tkeystr, tinfos, asm) );
+                fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(dm.tkey);
             }
@@ -651,7 +654,7 @@ entity CPPTransformer {
 
     method transformDatatypeMemberToCpp(dm: BSQAssembly::DatatypeMemberEntityTypeDecl): CPPAssembly::DatatypeMemberEntityTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(dm@<BSQAssembly::AbstractNominalTypeDecl>);
-        let fields = this.transformMemberFieldDecl(dm.fields);
+        let fields = this.transformMemberFieldDecl(dm.saturatedBFieldInfo, dm, dm.fields);
         let parentTypeDecl = CPPTransformNameManager::convertNominalTypeSignature(dm.parentTypeDecl);
 
         return CPPAssembly::DatatypeMemberEntityTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, fields, parentTypeDecl }; 
@@ -659,7 +662,7 @@ entity CPPTransformer {
 
     method transformDatatypeToCpp(dt: BSQAssembly::DatatypeTypeDecl): CPPAssembly::DatatypeTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(dt@<BSQAssembly::AbstractNominalTypeDecl>);
-        let fields = this.transformMemberFieldDecl(dt.fields);
+        let fields = this.transformMemberFieldDecl(dt.saturatedBFieldInfo, dt, dt.fields);
         let associatedMemberEntityDecls = dt.associatedMemberEntityDecls.map<CPPAssembly::NominalTypeSignature>(
             fn(e) => CPPTransformNameManager::convertNominalTypeSignature(e));
 
@@ -668,7 +671,7 @@ entity CPPTransformer {
 
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(e@<BSQAssembly::AbstractNominalTypeDecl>);
-        let fields = this.transformMemberFieldDecl(e.fields);
+        let fields = this.transformMemberFieldDecl(e.saturatedBFieldInfo, e, e.fields);
 
         return CPPAssembly::EntityTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, fields };
     }
