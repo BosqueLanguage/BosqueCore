@@ -248,6 +248,54 @@ entity ConstantSimplification {
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
+    recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
+        let nargs = this.processArgs(e.args);
+
+        let cfalse = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'false');
+        if(cfalse) {
+            return ConstantSimplification::falseExp;
+        }
+        else {
+            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
+            
+            if(sargs.empty()) {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                if(sargs.isSingleElement()) {
+                    return sargs.single();
+                }
+                else {
+                    return e[args=sargs];
+                }
+            }
+        }
+    }
+
+    recursive method processLogicActionOrExpression(e: LogicActionOrExpression): Expression {
+        let nargs = this.processArgs(e.args);
+
+        let ctrue = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'true');
+        if(ctrue) {
+            return ConstantSimplification::trueExp;
+        }
+        else {
+            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
+
+            if(sargs.empty()) {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                if(sargs.isSingleElement()) {
+                    return sargs.single();
+                }
+                else {
+                    return e[args=sargs];
+                }
+            }
+        }
+    }
+
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
         let nexp = this.processUnaryArg[recursive](e.exp);
         return e[exp=nexp];
@@ -561,17 +609,17 @@ entity ConstantSimplification {
             | AccessEnumExpression => { return e; }
             | AccessVariableExpression => { return e; }
             | AccessCapturedVariableExpression => { return e; }
-            | ConstructorExpression => { return this.processConstructorExpression($e); }
-            | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression($e); }
+            | ConstructorExpression => { return this.processConstructorExpression[recursive]($e); }
+            | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e); }
             | LetExpression => { abort; }
-            | LambdaInvokeExpression => { return this.processLambdaInvokeExpression($e); }
-            | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression($e); }
+            | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e); }
+            | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e); }
             | CallTypeFunctionExpression => { abort; }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
-            | LogicActionAndExpression => { abort; }
-            | LogicActionOrExpression => { abort; }
+            | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e); }
+            | LogicActionOrExpression => { return this.processLogicActionOrExpression[recursive]($e); }
             | TypeDeclPrimitiveFieldAccessExpression => { abort; }
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }

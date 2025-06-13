@@ -485,6 +485,22 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformLogicActionAndExpression(e: BSQAssembly::LogicActionAndExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
+        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
+
+        let logicop = SMTAssembly::LogicActionAndExpression{aargs};
+        return nctx, this.wrapOperationResult(e.etype, logicop, obinds);
+    }
+
+    recursive method transformLogicActionOrExpression(e: BSQAssembly::LogicActionOrExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
+        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
+
+        let logicop = SMTAssembly::LogicActionOrExpression{aargs};
+        return nctx, this.wrapOperationResult(e.etype, logicop, obinds); 
+    }
+
     recursive method transformCoerceNarrowTypeExpression(e: BSQAssembly::CoerceNarrowTypeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.processUnaryArg[recursive](e.exp, ctx);
         let narrowop = SMTAssembly::UntermifyExpression{onarg, this.transformStdTypeToSMT(e.srctype), this.transformStdTypeToSMT(e.trgttype)};
@@ -1113,6 +1129,12 @@ entity SMTTransformer {
             }
             | BSQAssembly::CallNamespaceFunctionExpression => { 
                 return this.transformCallNamespaceFunctionExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::LogicActionAndExpression => { 
+                return this.transformLogicActionAndExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::LogicActionOrExpression => { 
+                return this.transformLogicActionOrExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::CoerceNarrowTypeExpression => { 
                 return this.transformCoerceNarrowTypeExpression[recursive]($exp, ctx);

@@ -264,8 +264,8 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
-            | BSQAssembly::LogicActionAndExpression => { abort; }
-            | BSQAssembly::LogicActionOrExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { return this.processArgs[recursive](current, $e.args); }
+            | BSQAssembly::LogicActionOrExpression => { return this.processArgs[recursive](current, $e.args); }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
@@ -573,8 +573,8 @@ entity MayErrorAnalysis {
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
-            | BSQAssembly::LogicActionAndExpression => { abort; }
-            | BSQAssembly::LogicActionOrExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
+            | BSQAssembly::LogicActionOrExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
