@@ -388,7 +388,7 @@ entity SMTTransformer {
     recursive method transformConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
-        let oftype = this.transformStdTypeToSMT(e.ctype);
+        let oftype = this.transformStdTypeToSMT(e.elemtype);
 
         if(e.args.args.allOf(pred(arg) => arg?<BSQAssembly::PositionalArgumentValue>)) {
             return nctx, this.wrapOperationResult(e.ctype, SMTAssembly::ConstructorListSingletonExpression{smttype, oftype, aargs}, obinds);
