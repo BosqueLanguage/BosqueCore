@@ -139,11 +139,6 @@ entity LogicActionOrExpression provides SafeExpression {
     invariant $args.size() >= 2n;
 }
 
-entity LogicActionImpliesExpression provides SafeExpression {
-    field argl: SafeExpression;
-    field argr: SafeExpression;
-}
-
 entity UnwrapTypeDeclToPrimitiveExpression provides SafeExpression {
     field decltype: TypeKey;
     field arg: SafeExpression;

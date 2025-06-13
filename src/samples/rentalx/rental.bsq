@@ -11,14 +11,18 @@ function categorizeWinds(windSpeed: Nat): WindCategory {
     if(windSpeed < 10n) {
         return WindCategory#calm;
     }
-    elif(windSpeed < 20n) {
-        return WindCategory#high;
-    }
-    elif(windSpeed < 30n) {
-        return WindCategory#windy;
-    }
     else {
-        return WindCategory#dangerous;
+        if (windSpeed < 20n) {
+            return WindCategory#high;
+        }
+        else {
+            if(windSpeed < 30n) {
+                return WindCategory#windy;
+            }
+            else {
+                return WindCategory#dangerous;
+            }
+        }
     }
 }
 
@@ -67,7 +71,7 @@ entity RentalAvailabilityInfo {
 }
 
 enum Reason {
-    approved
+    approved,
     insufficientAvailability,
     closedDueToConditions
 }
@@ -85,19 +89,23 @@ function decide(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, requeste
     if(isClosed) {
         return (|0n, Reason#closedDueToConditions|);
     }
-    elif(requestedQuantity <= availability) {
-        return (|requestedQuantity, Reason#approved|);
-    }
-    elif(allowPartials) {
-        return (|availability, Reason#approved|);
-    }
     else {
-        return (|0n, Reason::insufficientAvailability|);
+        if(requestedQuantity <= availability) {
+            return (|requestedQuantity, Reason#approved|);
+        }
+        else {
+            if(allowPartials) {
+                return (|availability, Reason#approved|);
+            }
+            else {
+                return (|0n, Reason#insufficientAvailability|);
+            }
+        }
     }
 }
 
 public function main(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, requestedQuantity: Nat, allowPartials: Bool): (|Nat, Reason|) {
-    let windcat = categorizeWinds(forecast.windSpeed.max);
+    let windcat = categorizeWinds(forecast.winds.max);
     let decision = decide(forecast, rentalinfo, requestedQuantity, allowPartials);
 
     assert (decision.1 === Reason#approved) ==> decision.0 <= (rentalinfo.inventory + rentalinfo.returns);
