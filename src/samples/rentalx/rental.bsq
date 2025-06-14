@@ -108,7 +108,7 @@ public function main(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, req
     let windcat = categorizeWinds(forecast.winds.max);
     let decision = decide(forecast, rentalinfo, requestedQuantity, allowPartials);
 
-    assert (decision.1 === Reason#approved) ==> decision.0 <= (rentalinfo.inventory + rentalinfo.returns);
+    assert (decision.1 === Reason#approved) ==> decision.0 <= (rentalinfo.inventory + rentalinfo.returns) - rentalinfo.reservations;
     assert /\(decision.1 === Reason#approved, !allowPartials) ==> decision.0 == requestedQuantity;
 
     return decision;
