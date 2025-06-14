@@ -257,7 +257,7 @@ recursive function emitConstructorPrimaryExpression(v: SMTAssembly::ConstructorP
 }
 
 recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorEListExpression, eev: SMTEmitterEnv): CString {
-    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let consname = CString::concat('@EList-', v.args.size().toCString(), '-mk');
     if(v.args.empty()) {
         return consname;
     }
@@ -354,8 +354,7 @@ recursive function emitAccessFromNameResolvedExpression(v: SMTAssembly::AccessFr
 }
 
 recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndexExpression, eev: SMTEmitterEnv): CString {
-    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
-    return CString::concat('(', access, ' ', emitExpression(v.arg, eev), ')');
+    return CString::concat('(', v.elistkey, ' ', emitExpression(v.arg, eev), ')');
 }
 
 %*

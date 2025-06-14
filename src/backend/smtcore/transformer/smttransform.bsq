@@ -152,6 +152,10 @@ entity SMTTransformer {
         }
     }
 
+    method transformEListToBase(tsig: BSQAssembly::EListTypeSignature): CString {
+        return CString::concat('@EList-', tsig.entries.size().toCString());
+    }
+
     method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@<BSQAssembly::LambdaTypeSignature> {
             let ptypes = $tsig.params.map<CString>(fn(pt) => this.transformStdTypeToSMT(pt.ptype).value);
@@ -159,15 +163,23 @@ entity SMTTransformer {
             return SMTAssembly::TypeKey::from(CString::concat('(Array ', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
         }
         else {
-            if(tsig)@!<BSQAssembly::NominalTypeSignature> {
-                return TransformNameManager::convertTypeKey(tsig.tkeystr);
+            if(tsig)@<BSQAssembly::EListTypeSignature> {
+                let bbase = this.transformEListToBase($tsig);
+                let ttypes = $tsig.entries.map<CString>(fn(et) => this.transformStdTypeToSMT(et).value);
+
+                return SMTAssembly::TypeKey::from(CString::concat('(', bbase, ' ',CString::joinAll(' ', ttypes), ')'));
             }
             else {
-                if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
-                    return TransformNameManager::convertTypeKey($tsig.tkeystr);
+                if(tsig)@!<BSQAssembly::NominalTypeSignature> {
+                    return TransformNameManager::convertTypeKey(tsig.tkeystr);
                 }
                 else {
-                    return SMTAssembly::TypeKey::from('@Term');
+                    if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
+                        return TransformNameManager::convertTypeKey($tsig.tkeystr);
+                    }
+                    else {
+                        return SMTAssembly::TypeKey::from('@Term');
+                    }
                 }
             }
         }
@@ -404,9 +416,9 @@ entity SMTTransformer {
 
     recursive method transformConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
-        let smttype = this.transformStdTypeToSMT(e.etype);
+        let elcons = this.transformEListToBase(e.etype@<BSQAssembly::EListTypeSignature>);
 
-        return nctx, this.wrapOperationResult(e.etype, SMTAssembly::ConstructorEListExpression{smttype, aargs}, obinds);
+        return nctx, this.wrapOperationResult(e.etype, SMTAssembly::ConstructorEListExpression{elcons, aargs}, obinds);
     }
 
     recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -735,7 +747,6 @@ entity SMTTransformer {
         if(this.assembly.isNominalTypeConcrete(op.baseType.tkeystr)) {
             let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
             let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(op.declaredInType.tkeystr), op.name.value, onarg};
-
             return nctx, this.wrapOperationResult(op.ftype, accessop, obinds);
         }
         else {
@@ -745,7 +756,8 @@ entity SMTTransformer {
 
     method transformPostfixAccessFromIndex(op: BSQAssembly::PostfixAccessFromIndex, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType), op.idx, onarg};
+        let access = CString::concat(this.transformEListToBase(op.baseType@<BSQAssembly::EListTypeSignature>), '-', op.idx);
+        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType@<BSQAssembly::EListTypeSignature>), access, onarg};
 
         return nctx, this.wrapOperationResult(op.baseType, accessop, obinds);
     }

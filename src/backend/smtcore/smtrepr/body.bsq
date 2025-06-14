@@ -94,7 +94,7 @@ ConstructorListSingletonExpression {
 ;
 
 entity ConstructorEListExpression provides SafeExpression {
-    field constype: TypeKey;
+    field elcons: CString;
     field args: List<SafeExpression>;
 }
 
@@ -153,7 +153,7 @@ entity AccessFromNameResolvedExpression provides SafeExpression {
 
 entity AccessFromIndexExpression provides SafeExpression {
     field elisttype: TypeKey;
-    field idx: CString;
+    field elistkey: CString;
 
     field arg: SafeExpression;
 }
