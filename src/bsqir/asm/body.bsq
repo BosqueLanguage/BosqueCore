@@ -277,7 +277,7 @@ PostfixAccessFromName {
     field names: List<(|NominalTypeSignature, Identifier, NominalTypeSignature|)>; %%(|declaredInType, fname, ftype|)
 }
 | PostfixAccessFromIndex {
-    field idx: Nat;
+    field idx: CString;
 }
 | PostfixIsTest {
     field ttest: ITest;

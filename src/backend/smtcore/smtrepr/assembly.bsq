@@ -12,7 +12,7 @@ type NamespaceKey = CString of SMTAssembly::namespaceKeyRE;
 const basicNominalTypeKeyRE: CRegex = /(${SMTAssembly::namespaceComponentRE}'@')*[A-Z][_a-zA-Z0-9]+('<'.+'>')?/c; %%Core is implicit here
 const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''@'('Ok'|'Fail'|'Rejected'|'Failed'|'Error'|'Success')/c; %%Core is implicit here
 const nominalTypeKeyRE: CRegex = /${SMTAssembly::basicNominalTypeKeyRE}|${SMTAssembly::specialScopedTypeKeyRE}/c; %%a bit rough but helps prevent mistakes
-const elistTypeKeyRE: CRegex = /'@EList<'.*'>'/c;
+const elistTypeKeyRE: CRegex = /'(@EList-'[1-5] ' ' .*')'/c;
 
 const lambdaTypeKeyRE: CRegex = /'(Array' .* ')'/c;
 const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}|${SMTAssembly::lambdaTypeKeyRE}/c;

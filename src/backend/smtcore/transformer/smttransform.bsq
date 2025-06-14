@@ -152,6 +152,10 @@ entity SMTTransformer {
         }
     }
 
+    method transformEListToBase(tsig: BSQAssembly::EListTypeSignature): CString {
+        return CString::concat('@EList-', tsig.entries.size().toCString());
+    }
+
     method transformStdTypeToSMT(tsig: BSQAssembly::TypeSignature): SMTAssembly::TypeKey {
         if(tsig)@<BSQAssembly::LambdaTypeSignature> {
             let ptypes = $tsig.params.map<CString>(fn(pt) => this.transformStdTypeToSMT(pt.ptype).value);
@@ -159,15 +163,23 @@ entity SMTTransformer {
             return SMTAssembly::TypeKey::from(CString::concat('(Array ', CString::joinAll(' ', ptypes), ' ', rtype, ')'));
         }
         else {
-            if(tsig)@!<BSQAssembly::NominalTypeSignature> {
-                return TransformNameManager::convertTypeKey(tsig.tkeystr);
+            if(tsig)@<BSQAssembly::EListTypeSignature> {
+                let bbase = this.transformEListToBase($tsig);
+                let ttypes = $tsig.entries.map<CString>(fn(et) => this.transformStdTypeToSMT(et).value);
+
+                return SMTAssembly::TypeKey::from(CString::concat('(', bbase, ' ',CString::joinAll(' ', ttypes), ')'));
             }
             else {
-                if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
-                    return TransformNameManager::convertTypeKey($tsig.tkeystr);
+                if(tsig)@!<BSQAssembly::NominalTypeSignature> {
+                    return TransformNameManager::convertTypeKey(tsig.tkeystr);
                 }
                 else {
-                    return SMTAssembly::TypeKey::from('@Term');
+                    if(this.assembly.isNominalTypeConcrete($tsig.tkeystr)) {
+                        return TransformNameManager::convertTypeKey($tsig.tkeystr);
+                    }
+                    else {
+                        return SMTAssembly::TypeKey::from('@Term');
+                    }
                 }
             }
         }
@@ -323,6 +335,10 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringExpression{exp.value};
     }
 
+    method transformAccessEnumExpression(exp: BSQAssembly::AccessEnumExpression): SMTAssembly::SafeExpression {
+        return SMTAssembly::AccessEnumExpression{this.transformStdTypeToSMT(exp.stype), exp.name};
+    }
+
     method transformAccessVariableExpression(exp: BSQAssembly::AccessVariableExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
@@ -399,7 +415,10 @@ entity SMTTransformer {
     }
 
     recursive method transformConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        abort;
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let elcons = this.transformEListToBase(e.etype@<BSQAssembly::EListTypeSignature>);
+
+        return nctx, this.wrapOperationResult(e.etype, SMTAssembly::ConstructorEListExpression{elcons, aargs}, obinds);
     }
 
     recursive method transformConstructorExpression(e: BSQAssembly::ConstructorExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -728,12 +747,19 @@ entity SMTTransformer {
         if(this.assembly.isNominalTypeConcrete(op.baseType.tkeystr)) {
             let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
             let accessop = SMTAssembly::AccessFromNameResolvedExpression{TransformNameManager::convertTypeKey(op.declaredInType.tkeystr), op.name.value, onarg};
-
             return nctx, this.wrapOperationResult(op.ftype, accessop, obinds);
         }
         else {
             abort; %% NOT IMPLEMENTED
         }
+    }
+
+    method transformPostfixAccessFromIndex(op: BSQAssembly::PostfixAccessFromIndex, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+        let access = CString::concat(this.transformEListToBase(op.baseType@<BSQAssembly::EListTypeSignature>), '-', op.idx);
+        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType@<BSQAssembly::EListTypeSignature>), access, onarg};
+
+        return nctx, this.wrapOperationResult(op.baseType, accessop, obinds);
     }
 
     method transformPostfixBoolConstant(op: BSQAssembly::PostfixBoolConstant, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
@@ -785,7 +811,7 @@ entity SMTTransformer {
             match(op)@ {
                 BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
-                | BSQAssembly::PostfixAccessFromIndex => { abort; }
+                | BSQAssembly::PostfixAccessFromIndex => { return this.transformPostfixAccessFromIndex($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixIsTest => { return this.transformITestPostfixOp($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAsConvert => { return this.processITestAsConvert($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixAssignFields => { abort; }
@@ -984,6 +1010,47 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(exp.etype, opexp, obinds);
     }
 
+    recursive method transformBinLogicExpression(exp: BSQAssembly::BinLogicExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.lhs, ctx);
+        let rctx, rrhs = this.transformExpressionToSMT[recursive](exp.rhs, cctx);
+
+        match(exp)@ {
+            BSQAssembly::BinLogicAndExpression => {
+                if(rrhs)@<SafeResult> {
+                    let ite = SMTAssembly::IfThenElseSafeExpression{ntexp, $rrhs.exp, SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'false'}};
+                    return rctx, this.wrapOperationResult(exp.etype, ite, cobinds);
+                }
+                else {
+                    let ite = SMTAssembly::IfThenElseExpression{ntexp, $rrhs.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'false'}}};
+                    return rctx, this.wrapOperationResultWErr(exp.etype, ite, cobinds);
+                }
+            }
+            | BSQAssembly::BinLogicOrExpression => {
+                if(rrhs)@<SafeResult> {
+                    let ite = SMTAssembly::IfThenElseSafeExpression{ntexp, SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'true'}, $rrhs.exp};
+                    return rctx, this.wrapOperationResult(exp.etype, ite, cobinds);
+                }
+                else {
+                    let ite = SMTAssembly::IfThenElseExpression{ntexp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'true'}}, $rrhs.exp};
+                    return rctx, this.wrapOperationResultWErr(exp.etype, ite, cobinds);
+                }
+            }
+            | BSQAssembly::BinLogicImpliesExpression => {
+                if(rrhs)@<SafeResult> {
+                    let ite = SMTAssembly::IfThenElseSafeExpression{ntexp, $rrhs.exp, SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'true'}};
+                    return rctx, this.wrapOperationResult(exp.etype, ite, cobinds);
+                }
+                else {
+                    let ite = SMTAssembly::IfThenElseExpression{ntexp, $rrhs.exp, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.etype), SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'true'}}};
+                    return rctx, this.wrapOperationResultWErr(exp.etype, ite, cobinds);
+                }
+            }
+            | BSQAssembly::BinLogicIFFExpression => {
+                abort;
+            }
+        }
+    }
+
     recursive method transformIfSimpleExpression(exp: BSQAssembly::IfSimpleExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](exp.texp, ctx);
         
@@ -1112,6 +1179,9 @@ entity SMTTransformer {
             | BSQAssembly::LiteralStringExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformLiteralStringExpression($exp)}; 
             }
+            | BSQAssembly::AccessEnumExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessEnumExpression($exp)}; 
+            }
             | BSQAssembly::AccessVariableExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessVariableExpression($exp)}; 
             }
@@ -1159,6 +1229,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::BinaryNumericExpression => { 
                 return this.transformBinaryNumericCompareExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::BinLogicExpression => { 
+                return this.transformBinLogicExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::IfExpression => { 
                 return this.transformIfExpression[recursive]($exp, ctx);
@@ -1879,6 +1952,13 @@ entity SMTTransformer {
                     }
                 });
 
+        let tenums = assembly.allconcretetypes
+            .filter(pred(tkey) => assembly.enums.has(tkey))
+            .map<SMTAssembly::EnumTypeDecl>(fn(tkey) => {
+                let bsqenum = assembly.enums.get(tkey);
+                return SMTAssembly::EnumTypeDecl{TransformNameManager::convertTypeKey(tkey), bsqenum.members};
+            });
+
         let tentities = assembly.allconcretetypes
             .filter(pred(tkey) => assembly.entities.has(tkey))
             .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(assembly.entities.get(tkey)));
@@ -1906,7 +1986,7 @@ entity SMTTransformer {
     
             funcs = tnsfuncs,
     
-            enums = List<SMTAssembly::EnumTypeDecl>{},
+            enums = tenums,
             typedecls = List<SMTAssembly::TypedeclTypeDecl>{},
             constructables = tconstructables,
             collections = tcollections,

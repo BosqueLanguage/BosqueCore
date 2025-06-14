@@ -257,7 +257,7 @@ recursive function emitConstructorPrimaryExpression(v: SMTAssembly::ConstructorP
 }
 
 recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorEListExpression, eev: SMTEmitterEnv): CString {
-    let consname = SMTNameManager::generateStructConstructorName(v.constype);
+    let consname = CString::concat('@EList-', v.args.size().toCString(), '-mk');
     if(v.args.empty()) {
         return consname;
     }
@@ -353,12 +353,11 @@ recursive function emitAccessFromNameResolvedExpression(v: SMTAssembly::AccessFr
     return CString::concat('(', access, ' ', emitSafeExpression(v.arg, eev), ')');
 }
 
-%*
-recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndexExpression): CString {
-    let access = SMTNameManager::generateStructFieldName(v.elisttype, v.idx);
-    return CString::concat('(', access, ' ', emitExpression(v.arg), ')');
+recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndexExpression, eev: SMTEmitterEnv): CString {
+    return CString::concat('(', v.elistkey, ' ', emitExpression(v.arg, eev), ')');
 }
 
+%*
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression): CString {
     let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
     let ttchk = CString::concat('(_ is ', ccons, ')');
@@ -717,8 +716,8 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($v); }
         *%
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
+        | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
         %*
-        | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($v); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($v); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($v); }
         *%
