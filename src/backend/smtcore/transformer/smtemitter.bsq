@@ -620,11 +620,10 @@ function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterE
         let ecc = emitExpression[recursive]($cexp, eev);
         tt = CString::concat('(= ', ecc, ' (@Result-ok true))');
 
-        let errortrgtas = CString::concat('(as @Result-err-trgt (@Result ', e.etype.value', ')))';
-        let errorotheras = CString::concat('(as @Result-err-other (@Result ', e.etype.value', ')))';
-        let errorprop = CString::concat('(ite (= @failure (as @Result-err-trgt (@Result Bool))) ', errortrgtas, ' ', errorotheras, ')');
-
-        errop = CString::concat('(let ((@failure ecc)) (ite (= @failure (@Result-ok false)) ', err, ' ', errorprop, '))');
+        let fbind = CString::concat('(@failure ', ecc, ')');
+        let eprop = SMTEmitter::emitExpectedErrTypeConvertAsNeeded('@failure', 'Bool'<SMTAssembly::TypeKey>, e.etype);
+        let eaction = CString::concat('(ite (= @failure (@Result-ok false)) ', err, ' ', eprop, ')');
+        errop = CString::concat('(let (', fbind, ') ', eaction, ')');
     }
 
     let bb = CString::concat('(not ', tt, ') ', errop, ' ', exp);
@@ -634,15 +633,6 @@ function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterE
 function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEmitterEnv): CString {
     let exp = emitExpression[recursive](e.inexp, eev);
     return e.aset.lreduce<CString>(exp, fn(expcc, chk) => {
-        var tt: CString;
-        if($cexp = chk.0)@<SMTAssembly::SafeExpression> {
-            tt = emitSafeExpression[recursive]($cexp, eev);
-        }
-        else {
-            let ecc = emitExpression[recursive]($cexp, eev);
-            tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
-        }
-
         var err: CString;
         if(chk.1 == eev.errtrgt) {
             err = emitResultErrTrgtAs(e.etype);
@@ -650,8 +640,24 @@ function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEm
         else {
             err = emitResultErrOtherAs(e.etype);
         }
+        
+        var tt: CString;
+        var errop: CString;
+        if($cexp = chk.0)@<SMTAssembly::SafeExpression> {
+            tt = emitSafeExpression[recursive]($cexp, eev);
+            errop = err;
+        }
+        else {
+            let ecc = emitExpression[recursive]($cexp, eev);
+            tt = CString::concat('(= ', ecc, ' (@Result-ok true))');
 
-        let bb = CString::concat('(not ', tt, ') ', err, ' ', expcc);
+            let fbind = CString::concat('(@failure ', ecc, ')');
+            let eprop = SMTEmitter::emitExpectedErrTypeConvertAsNeeded('@failure', 'Bool'<SMTAssembly::TypeKey>, e.etype);
+            let eaction = CString::concat('(ite (= @failure (@Result-ok false)) ', err, ' ', eprop, ')');
+            errop = CString::concat('(let (', fbind, ') ', eaction, ')');
+        }
+
+        let bb = CString::concat('(not ', tt, ') ', errop, ' ', expcc);
         return CString::concat('(ite ', bb, ')');
     });
 }
@@ -840,21 +846,35 @@ function emitAbortOperation(op: SMTAssembly::AbortOperation, eev: SMTEmitterEnv)
 }
 
 recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
+    var err: CString;
+    if(e.label == eev.errtrgt) {
+        err = emitResultErrTrgtAs(eev.restype);
+    }
+    else {
+        err = emitResultErrOtherAs(eev.restype);
+    }
+    
     var tt: CString;
+    var errop: CString;
     if($cexp = e.cond)@<SMTAssembly::SafeExpression> {
         tt = emitSafeExpression[recursive]($cexp, eev);
+        errop = err;
     }
     else {
         let ecc = emitExpression[recursive]($cexp, eev);
-        tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
+        tt = CString::concat('(= ', ecc, ' (@Result-ok true))');
+
+        let fbind = CString::concat('(@failure ', ecc, ')');
+        let eprop = SMTEmitter::emitResultErrTypeConvertAsNeeded('@failure', 'Bool'<SMTAssembly::TypeKey>, eev);
+        let eaction = CString::concat('(ite (= @failure (@Result-ok false)) ', err, ' ', eprop, ')');
+        errop = CString::concat('(let (', fbind, ') ', eaction, ')');
     }
 
     let chk = CString::concat('(not ', tt, ') ');
-    let rop = if(e.label === eev.errtrgt) then emitResultErrTrgtAs(eev.restype) else emitResultErrOtherAs(eev.restype);
 
     if(indent)@none {
         let inexp = emitOperation[recursive](e.inop, eev, none);
-        let ops = CString::join(' ', chk, rop, ' ', inexp);
+        let ops = CString::join(' ', chk, errop, ' ', inexp);
         return CString::concat('(ite ', ops, ')');
     }
     else {
@@ -862,27 +882,35 @@ recursive function emitAssertOperation(e: SMTAssembly::AssertOperation, eev: SMT
         let tident = CString::concat('%n;', $indent, ')');
 
         let inexp = emitOperation[recursive](e.inop, eev, some(iident));
-        let ops = CString::concat(chk, rop, '%n;', inexp);
+        let ops = CString::concat(chk, errop, '%n;', inexp);
         return CString::concat('(ite ', ops, tident);
     }
 }
 
 recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
+    let err: CString = emitResultErrOtherAs(eev.restype);
+    
     var tt: CString;
+    var errop: CString;
     if($cexp = e.cond)@<SMTAssembly::SafeExpression> {
         tt = emitSafeExpression[recursive]($cexp, eev);
+        errop = err;
     }
     else {
         let ecc = emitExpression[recursive]($cexp, eev);
-        tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
-    }
+        tt = CString::concat('(= ', ecc, ' (@Result-ok true))');
 
+        let fbind = CString::concat('(@failure ', ecc, ')');
+        let eprop = SMTEmitter::emitResultErrTypeConvertAsNeeded('@failure', 'Bool'<SMTAssembly::TypeKey>, eev);
+        let eaction = CString::concat('(ite (= @failure (@Result-ok false)) ', err, ' ', eprop, ')');
+        errop = CString::concat('(let (', fbind, ') ', eaction, ')');
+    }
+    
     let chk = CString::concat('(not ', tt, ') ');
-    let rop = emitResultErrOtherAs(eev.restype);
 
     if(indent)@none {
         let inexp = emitOperation[recursive](e.inop, eev, none);
-        let ops = CString::join(' ', chk, rop, ' ', inexp);
+        let ops = CString::join(' ', chk, errop, ' ', inexp);
         return CString::concat('(ite ', ops, ')');
     }
     else {
@@ -890,7 +918,7 @@ recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, eev: SMT
         let tident = CString::concat('%n;', $indent, ')');
 
         let inexp = emitOperation[recursive](e.inop, eev, some(iident));
-        let ops = CString::concat(chk, rop, '%n;', inexp);
+        let ops = CString::concat(chk, errop, '%n;', inexp);
         return CString::concat('(ite ', ops, tident);
     }
 }
