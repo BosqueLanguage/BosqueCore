@@ -1289,7 +1289,8 @@ entity SMTTransformer {
             return ctx.addError(stmt.sinfo), some(aop);
         }
         else {
-            abort; %%NOT IMPLEMENTED -- I think failure in the assert is mapped to this assert failing
+            let aop = SMTAssembly::AssertOperation{$smtexp.exp, ctx.errCtr, tail};
+            return ctx.addError(stmt.sinfo), some(aop);
         }
     }
 
