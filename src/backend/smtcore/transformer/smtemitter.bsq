@@ -92,8 +92,6 @@ function emitTaggedNumericType(nstr: CString, tag: CString): CString {
     return cleanOptionalLeadingPlus(nstr.removeSuffixString(tag));
 }
 
-const resultTrueValue: CString = '(@Result-ok true)';
-
 function emitLiteralNoneExpression(): CString {
     return 'none';
 }
@@ -604,15 +602,6 @@ function emitAbortExpression(e: SMTAssembly::AbortExpression, eev: SMTEmitterEnv
 function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterEnv): CString {
     let exp = emitExpression[recursive](e.inexp, eev);
     
-    var tt: CString;
-    if($cexp = e.aexp)@<SMTAssembly::SafeExpression> {
-        tt = emitSafeExpression[recursive]($cexp, eev);
-    }
-    else {
-        let ecc = emitExpression[recursive]($cexp, eev);
-        tt = CString::concat('(= ', ecc, ' ', SMTEmitter::resultTrueValue, ')');
-    }
-
     var err: CString;
     if(e.label == eev.errtrgt) {
         err = emitResultErrTrgtAs(e.etype);
@@ -621,7 +610,24 @@ function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterE
         err = emitResultErrOtherAs(e.etype);
     }
 
-    let bb = CString::concat('(not ', tt, ') ', err, ' ', exp);
+    var tt: CString;
+    var errop: CString;
+    if($cexp = e.aexp)@<SMTAssembly::SafeExpression> {
+        tt = emitSafeExpression[recursive]($cexp, eev);
+        errop = err;
+    }
+    else {
+        let ecc = emitExpression[recursive]($cexp, eev);
+        tt = CString::concat('(= ', ecc, ' (@Result-ok true))');
+
+        let errortrgtas = CString::concat('(as @Result-err-trgt (@Result ', e.etype.value', ')))';
+        let errorotheras = CString::concat('(as @Result-err-other (@Result ', e.etype.value', ')))';
+        let errorprop = CString::concat('(ite (= @failure (as @Result-err-trgt (@Result Bool))) ', errortrgtas, ' ', errorotheras, ')');
+
+        errop = CString::concat('(let ((@failure ecc)) (ite (= @failure (@Result-ok false)) ', err, ' ', errorprop, '))');
+    }
+
+    let bb = CString::concat('(not ', tt, ') ', errop, ' ', exp);
     return CString::concat('(ite ', bb, ')');
 }
 

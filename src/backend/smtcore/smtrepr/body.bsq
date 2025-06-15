@@ -305,7 +305,7 @@ entity AbortExpression provides Expression {
 
 entity AssertExpression provides Expression {
     field etype: TypeKey;
-    field aexp: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    field aexp: Expression;
     field label: Nat;
     
     field inexp: Expression;
