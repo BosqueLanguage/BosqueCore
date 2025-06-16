@@ -398,6 +398,9 @@ public:
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
 
+class None {
+};
+
 // Useful for keeping track of path in tree iteration
 struct PathStack {
     uint64_t bits;

@@ -138,6 +138,11 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
     }
 }
 
+%% Not fully confident on this. I could see it interacting weirdly with our ITests...
+function emitLiteralNoneExpression(exp: CPPAssembly::LiteralNoneExpression): CString {
+    return '__CoreCpp::None';
+}
+
 function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression): CString {
     %% May need some work with type
     return emitVarIdentifier(exp.vname);
@@ -488,6 +493,16 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     return if(res.containsString('!false!')) then 'false' else if(res.containsString('!true!')) then 'true' else res;
 }
 
+function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): CString {
+    %%
+    %% Not 100% confident on this, but I suspect we wont need to generate a special type for Option<T>. We likely can just
+    %% do a resolution of the contained types (i.e. what the Some<T> holds or if none) and directly emit this value.
+    %% I have not tested this yet, but I suspect it could be decent.
+    %%
+    
+    abort;
+}
+
 %%
 %% TODO: Once the GC is integrated we will need to call our special GC allocate on ref type objects instead of the default
 %% constructor like we do now. Currently they call 'new'
@@ -544,11 +559,13 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
         | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
         | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }
+        | CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
         | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
+        | CPPAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($e, ctx); }
         | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
         | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
         | _ => { abort; }
