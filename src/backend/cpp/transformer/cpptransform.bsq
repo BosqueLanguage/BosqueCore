@@ -310,6 +310,7 @@ entity CPPTransformer {
         return CPPAssembly::ITestType{isnot, ttype};    
     }
 
+    %% TODO: Support for ITest as convert
     method transformITestAsTest(itest: BSQAssembly::ITest): CPPAssembly::ITest {
         let isnot = itest.isnot;
         match(itest)@ {
@@ -430,7 +431,11 @@ entity CPPTransformer {
         let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
 
-        return CPPAssembly::IfStatement{ cond, trueBlock };
+        match(stmt)@ {
+            BSQAssembly::IfSimpleStatement => { return CPPAssembly::IfSimpleStatement{ cond, trueBlock }; }
+            | BSQAssembly::IfTestStatement => { return CPPAssembly::IfTestStatement{ cond, trueBlock, this.transformITestAsTest($stmt.itest) }; }
+            | BSQAssembly::IfBinderStatement => { abort; } %% TODO: Not Implemented
+        }
     }
 
     recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement): CPPAssembly::IfElseStatement {
@@ -438,7 +443,11 @@ entity CPPTransformer {
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
         let falseBlock = this.transformBlockStatement(stmt.falseBlock);
 
-        return CPPAssembly::IfElseStatement{ cond, trueBlock, falseBlock };
+        match(stmt)@ {
+            BSQAssembly::IfElseSimpleStatement => { return CPPAssembly::IfElseSimpleStatement{ cond, trueBlock, falseBlock }; }
+            | BSQAssembly::IfElseTestStatement => { return CPPAssembly::IfElseTestStatement{ cond, trueBlock, falseBlock, this.transformITestAsTest($stmt.itest) }; }
+            | BSQAssembly::IfElseBinderStatement => { abort; } %% TODO: Not Implemented
+        }
     }
 
     recursive method transformIfElifElseStatement(stmt: BSQAssembly::IfElifElseStatement): CPPAssembly::IfElifElseStatement {

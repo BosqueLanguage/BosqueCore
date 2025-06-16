@@ -446,17 +446,14 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
     }
 }
 
+%% Emitting invalid '!true/false!' allows us to prevent naming conflicts and gives a matchable pattern that we can
+%% replace with 'true/false'
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, ctx: Context): CString {
     %% For now we only support ITests where both types are concrete
     if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr) && ctx.asm.isNominalTypeConcrete(baseType.tkeystr)) {
         let areTypesSame = ctx.asm.areTypesSame(it.ttype, baseType);
-        if(it.isnot) {
-            if(areTypesSame) {
-                return '!true!';
-            }
-            return '!false!';
-        }
-        return if(areTypesSame) then '!true!' else '!false!';
+        return if(it.isnot) then (if(!areTypesSame) then '!true!' else '!false!')
+            else if(areTypesSame) then '!true!' else '!false!';
     }
     else {
         abort; %% TODO: ITests on concepts not yet supported!
@@ -573,26 +570,70 @@ function emitBlockStatement(block: CPPAssembly::BlockStatement, ctx: Context, in
     return CString::joinAll('%n;', stmts);
 }
 
+function emitIfSimpleStatement(stmt: CPPAssembly::IfSimpleStatement, ctx: Context, indent: CString): CString {
+    let expr = emitExpression(stmt.cond, ctx);
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
+
+    let ifstmt = CString::concat(indent, 'if( ', expr, ' ) {%n;');
+    return CString::concat(ifstmt, trueBlock, indent, '}');
+}
+
+function emitIfTestStatement(stmt: CPPAssembly::IfTestStatement, ctx: Context, indent: CString): CString {
+    let itest = emitITestAsTest(stmt.itest, stmt.cond.etype, ctx);
+    let expr = if(itest === '!false!') then 'false' else 'true';
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
+
+    let ifstmt = CString::concat(indent, 'if( ', expr, ' ) {%n;');
+    return CString::concat(ifstmt, trueBlock, indent, '}');
+}
+
+function emitIfBinderStatement(stmt: CPPAssembly::IfStatement, ctx: Context, indent: CString): CString {
+    abort; %% TODO: Not Implemented!    
+}
+
 function emitIfStatement(stmt: CPPAssembly::IfStatement, ctx: Context, indent: CString): CString {
     let full_indent = CString::concat('    ', indent); 
+
+    match(stmt)@ { 
+        CPPAssembly::IfSimpleStatement => { return emitIfSimpleStatement($stmt, ctx, full_indent); }
+        | CPPAssembly::IfTestStatement => { return emitIfTestStatement($stmt, ctx, full_indent); }
+        | CPPAssembly::IfBinderStatement => { return emitIfBinderStatement($stmt, ctx, full_indent); }
+    }
+}
+
+function emitIfElseSimpleStatement(stmt: CPPAssembly::IfElseSimpleStatement, ctx: Context, indent: CString): CString {
     let expr = emitExpression(stmt.cond, ctx);
-    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, full_indent);
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
+    let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
+    let elseBlockText = CString::concat(indent, 'else {%n;', falseBlock, indent, '}%n;');
     
-    let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;');
-    return CString::concat(ifstmt, trueBlock, full_indent, '}');
+    let ifstmt = CString::concat(indent, 'if( ', expr, ' ) {%n;'); 
+    return CString::concat(ifstmt, trueBlock, indent, '}%n;', elseBlockText);
+}
+
+function emitIfElseTestStatement(stmt: CPPAssembly::IfElseTestStatement, ctx: Context, indent: CString): CString {
+    let itest = emitITestAsTest(stmt.itest, stmt.cond.etype, ctx);
+    let expr = if(itest === '!false!') then 'false' else 'true';
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
+    let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
+    let elseBlockText = CString::concat(indent, 'else {%n;', falseBlock, indent, '}%n;');
+    
+    let ifstmt = CString::concat(indent, 'if( ', expr, ' ) {%n;'); 
+    return CString::concat(ifstmt, trueBlock, indent, '}%n;', elseBlockText);
+}
+
+function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx: Context, ident: CString): CString {
+    abort; %% TODO: Not Implemented!
 }
 
 function emitIfElseStatement(stmt: CPPAssembly::IfElseStatement, ctx: Context, indent: CString): CString {
     let full_indent = CString::concat('    ', indent); 
-    let expr = emitExpression(stmt.cond, ctx);
     
-    let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, full_indent);
-    let elseBlockText = CString::concat(full_indent, 'else {%n;', falseBlock, full_indent, '}%n;');
-
-    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, full_indent);
-    let ifstmt = CString::concat(full_indent, 'if( ', expr, ' ) {%n;'); 
-
-    return CString::concat(ifstmt, trueBlock, full_indent, '}%n;', elseBlockText);
+    match(stmt)@ {
+        CPPAssembly::IfElseSimpleStatement => { return emitIfElseSimpleStatement($stmt, ctx, full_indent); }
+        | CPPAssembly::IfElseTestStatement => { return emitIfElseTestStatement($stmt, ctx, full_indent); }
+        | CPPAssembly::IfElseBinderStatement => { return emitIfElseBinderStatement($stmt, ctx, full_indent); }
+    }
 }
 
 function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Context, indent: CString): CString {
@@ -775,7 +816,9 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
         let specialThis = emitSpecialTemplate(this_type);
         let specialName = emitSpecialTemplate(pre);
-        let first = CString::concat(indent, 'const ', rtype, ' ', specialName, '(');
+
+        let first = if(rtype !== 'bool') then CString::concat(indent, 'const ', rtype, ' ', specialName, '(')
+            else CString::concat(indent, rtype, ' ', specialName, '(');
 
         if(params === '') {
             return CString::concat(first, specialThis, ' ', emitSpecialThis(), params, ') noexcept;%n;');
