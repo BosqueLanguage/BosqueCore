@@ -159,6 +159,11 @@ entity CPPTransformer {
         return CPPAssembly::BinMultExpression{ lexpr.etype, lexpr, rexpr };
     }
 
+    method transformLiteralNoneExpression(expr: BSQAssembly::LiteralNoneExpression): CPPAssembly::LiteralNoneExpression {
+        let etype = CPPTransformNameManager::convertTypeSignature(expr.etype);
+        return CPPAssembly::LiteralNoneExpression{ etype };
+    }
+
     method transformLiteralSimpleExpression(expr: BSQAssembly::LiteralSimpleExpression): CPPAssembly::LiteralSimpleExpression {
         let val = expr.value;
         let exprtype = CPPTransformNameManager::convertTypeSignature(expr.etype);
@@ -283,6 +288,11 @@ entity CPPTransformer {
         });
         return CPPAssembly::ArgumentList{ shuffled };   
     }
+    
+    %% This does not shuffle
+    method transformArgumentList(al: BSQAssembly::ArgumentList): CPPAssembly::ArgumentList {
+        return CPPAssembly::ArgumentList{ al.args.map<Option<CPPAssembly::ArgumentValue>>(fn(arg) => some(this.transformArgument(arg))) };
+    }
 
     method transformCallNamespaceFunctionExpression(expr: BSQAssembly::CallNamespaceFunctionExpression): CPPAssembly::CallNamespaceFunctionExpression {
         let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
@@ -351,29 +361,65 @@ entity CPPTransformer {
         return CPPAssembly::PostfixOp{ etype, rootExp, ops };
     }
 
-    method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
-        %% Would be good to have transformArgumentInfo eventually be able to handle different format shuffleinfo
-        let args = e.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(she, ii) => {
-            var cur_arg: CPPAssembly::ArgumentValue;
-            if(ii >= e.args.args.size()) {
-                return none;
-            }
-            else { %% Resolve shuffle value
-                let shuffle_idx = she.0;
-                if(shuffle_idx)@none {
-                    let arg = e.args.args.get(ii);
-                    return some(this.transformArgument(arg));
-                }
-                else {
-                    let arg = e.args.args.get($shuffle_idx);
-                    return some(this.transformArgument(arg));
-                }
-            }
-         });
-        let ctype = CPPTransformNameManager::convertNominalTypeSignature(e.ctype);
-        let etype = CPPTransformNameManager::convertTypeSignature(e.etype);
+    method transformConstructorPrimaryExpressionBase(cpe: BSQAssembly::ConstructorPrimaryExpression): (| CPPAssembly::TypeSignature,
+        CPPAssembly::ArgumentList, CPPAssembly::NominalTypeSignature |) {
+            let etype = CPPTransformNameManager::convertTypeSignature(cpe.etype);
+            let args = this.transformArgumentList(cpe.args);
+            let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpe.ctype);
 
-        return CPPAssembly::ConstructorStdExpression{ etype, CPPAssembly::ArgumentList{ args }, ctype, e.fullns };
+            return (| etype, args, ctype|);
+    }
+
+    method transformConstructorPrimarySpecialSomeExpression(cpsse: BSQAssembly::ConstructorPrimarySpecialSomeExpression): CPPAssembly::ConstructorPrimarySpecialSomeExpression {
+        let base = this.transformConstructorPrimaryExpressionBase(cpsse@<BSQAssembly::ConstructorPrimaryExpression>);
+        let ofttype = CPPTransformNameManager::convertTypeSignature(cpsse.ofttype);
+
+        return CPPAssembly::ConstructorPrimarySpecialSomeExpression{ base.0, base.1, base.2, ofttype };
+    }
+
+    method transformConstructorPrimarySpecialOkExpression(cpsoe: BSQAssembly::ConstructorPrimarySpecialOkExpression): CPPAssembly::ConstructorPrimarySpecialOkExpression {
+        abort; %% TODO: Not Implemented
+    }   
+
+    method transformConstructorPrimarySpecialFailExpression(cpsfe: BSQAssembly::ConstructorPrimarySpecialFailExpression): CPPAssembly::ConstructorPrimarySpecialFailExpression {
+        abort; %% TODO: Not Implemented
+    }
+
+    method transformConstructorPrimarySpecialConstructableExpression(cpsce: BSQAssembly::ConstructorPrimarySpecialConstructableExpression): CPPAssembly::ConstructorPrimarySpecialConstructableExpression {
+        match(cpsce)@ {
+            BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($cpsce); }
+            | BSQAssembly::ConstructorPrimarySpecialOkExpression => { return this.transformConstructorPrimarySpecialOkExpression($cpsce); }
+            | BSQAssembly::ConstructorPrimarySpecialFailExpression => { return this.transformConstructorPrimarySpecialFailExpression($cpsce); }
+        }
+    }
+
+    method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
+        let base = this.transformConstructorPrimaryExpressionBase(e@<BSQAssembly::ConstructorPrimaryExpression>);        
+        let shuffledargs = e.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(she, ii) => {
+                var cur_arg: CPPAssembly::ArgumentValue;
+                if(ii >= e.args.args.size()) {
+                    return none;
+                }
+                else { %% Resolve shuffle value
+                    let shuffle_idx = she.0;
+                    if(shuffle_idx)@none {
+                        let arg = base.1.args.get(ii);
+                        if(arg)@!none {
+                            return some($arg);
+                        }
+                        abort;
+                    }
+                    else {
+                        let arg = base.1.args.get($shuffle_idx);
+                        if(arg)@!none {
+                            return some($arg);
+                        }
+                        abort;
+                    }
+                }
+            });
+
+        return CPPAssembly::ConstructorStdExpression{ base.0, CPPAssembly::ArgumentList{ shuffledargs }, base.2, e.fullns };
     } 
 
     method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
@@ -392,6 +438,7 @@ entity CPPTransformer {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
+            | BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
             | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
@@ -401,6 +448,7 @@ entity CPPTransformer {
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
             | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }
             | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
+            | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($expr); }
             | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
             | _ => { abort; }
@@ -680,6 +728,15 @@ entity CPPTransformer {
             ant.name, staticmethods, virtmethods, absmethods, overmethods, saturatedProvides, saturatedBFieldInfo|);
     }
 
+    method transformAbstractConceptTypeDeclBase(act: BSQAssembly::AbstractConceptTypeDecl): (|CPPAssembly::NamespaceKey, List<CString>, CPPAssembly::TypeKey, 
+        CString, List<CPPAssembly::InvokeKey>, List<CPPAssembly::InvokeKey>, List<CPPAssembly::InvokeKey>, List<CPPAssembly::InvokeKey>, 
+        List<CPPAssembly::NominalTypeSignature>, List<CPPAssembly::SaturatedFieldInfo>, List<CPPAssembly::TypeKey>|) {
+            let base = this.transformAbstractNominalTypeDeclBase(act@<BSQAssembly::AbstractNominalTypeDecl>);
+            let subtypes = act.subtypes.map<CPPAssembly::TypeKey>(fn(tk) => CPPTransformNameManager::convertTypeKey(tk));
+    
+            return (|base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, subtypes|);
+    }
+
     method transformDatatypeMemberToCpp(dm: BSQAssembly::DatatypeMemberEntityTypeDecl): CPPAssembly::DatatypeMemberEntityTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(dm@<BSQAssembly::AbstractNominalTypeDecl>);
         let fields = this.transformMemberFieldDecl(dm.saturatedBFieldInfo, dm, dm.fields);
@@ -689,13 +746,12 @@ entity CPPTransformer {
     }
 
     method transformDatatypeToCpp(dt: BSQAssembly::DatatypeTypeDecl): CPPAssembly::DatatypeTypeDecl {
-        let base = this.transformAbstractNominalTypeDeclBase(dt@<BSQAssembly::AbstractNominalTypeDecl>);
-        let subtypes = dt.subtypes.map<CPPAssembly::TypeKey>(fn(tk) => CPPTransformNameManager::convertTypeKey(tk));
+        let base = this.transformAbstractConceptTypeDeclBase(dt@<BSQAssembly::AbstractConceptTypeDecl>);
         let fields = this.transformMemberFieldDecl(dt.saturatedBFieldInfo, dt, dt.fields);
         let associatedMemberEntityDecls = dt.associatedMemberEntityDecls.map<CPPAssembly::NominalTypeSignature>(
             fn(e) => CPPTransformNameManager::convertNominalTypeSignature(e));
 
-        return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, subtypes, fields, associatedMemberEntityDecls }; 
+        return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, fields, associatedMemberEntityDecls }; 
     }
 
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
@@ -705,11 +761,29 @@ entity CPPTransformer {
         return CPPAssembly::EntityTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, fields };
     }
 
-    %*
-    method transformNamespaceConstDecl(decl: BSQAssembly::NamespaceConstDecl): CPPAssembly::NamespaceConstDecl {
-        abort;
+    method transformOptionTypeDecl(opt: BSQAssembly::OptionTypeDecl): CPPAssembly::OptionTypeDecl {
+        let base = this.transformAbstractConceptTypeDeclBase(opt@<BSQAssembly::AbstractConceptTypeDecl>);
+        let ttype = CPPTransformNameManager::convertTypeSignature(opt.oftype);
+        let someType = CPPTransformNameManager::convertTypeSignature(opt.someType);
+
+        return CPPAssembly::OptionTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, ttype, someType };
     }
-    *%
+
+    method transformResultTypeDecl(rtd: BSQAssembly::ResultTypeDecl): CPPAssembly::ResultTypeDecl {
+        abort; %% TODO: Not Implemented
+    }
+
+    method transformAPIResultTypeDecl(apirtd: BSQAssembly::APIResultTypeDecl): CPPAssembly::APIResultTypeDecl {
+        abort; %% TODO: Not Implemented
+    }
+
+    method transformPrimitiveConceptDeclToCpp(pc: BSQAssembly::PrimitiveConceptTypeDecl): CPPAssembly::PrimitiveConceptTypeDecl {
+        match(pc)@ {
+            BSQAssembly::OptionTypeDecl => { return this.transformOptionTypeDecl($pc); }
+            | BSQAssembly::ResultTypeDecl => { return this.transformResultTypeDecl($pc); }
+            | BSQAssembly::APIResultTypeDecl => { return this.transformAPIResultTypeDecl($pc); }
+        }
+    }
 
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{ bsqasm };            
@@ -859,6 +933,12 @@ entity CPPTransformer {
                 return acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformOverrideMethodDecl(decl));
         });
 
+        let transformer_pconcepts = bsqasm.pconcepts.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveConceptTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveConceptTypeDecl>{}, fn(acc, tk, pc) => {
+                let cpppc = transformer.transformPrimitiveConceptDeclToCpp(pc);
+                return acc.insert(cpppc.tkey, cpppc);
+            });
+
         let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
@@ -877,10 +957,11 @@ entity CPPTransformer {
             virtmethods = transformer_virtmethods,
             absmethods = transformer_absmethods, %% Not fully implemented
             overmethods = transformer_overmethods, %% Not fully implemented
-            entities = transformer_entities,
             primitives = transformer_primitives,
+            entities = transformer_entities,
             datamembers = transformer_datamembers,
             datatypes = transformer_datatypes,
+            pconcepts = transformer_pconcepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
             typeinfos = generated_typeinfos
         };

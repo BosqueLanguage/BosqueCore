@@ -127,6 +127,9 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
+entity LiteralNoneExpression provides Expression {
+}
+
 entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
@@ -210,6 +213,21 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
 }
+
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
+of
+ConstructorPrimarySpecialSomeExpression {
+    field ofttype: TypeSignature;
+}
+| ConstructorPrimarySpecialOkExpression { %% TODO: Not Implemented
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+| ConstructorPrimarySpecialFailExpression { %% TODO: Not Implemented
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+;
 
 datatype PostfixOperation using {
     field baseType: TypeSignature;

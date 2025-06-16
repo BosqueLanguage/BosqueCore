@@ -89,6 +89,29 @@ concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
     field subtypes: List<TypeKey>;
 }
 
+datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
+of
+OptionTypeDecl { 
+    field oftype: TypeSignature; 
+    field someType: TypeSignature;
+}
+| ResultTypeDecl { %% TODO: Not implemented!
+    field ttype: TypeSignature; 
+    field etype: TypeSignature;
+
+    field okType: TypeSignature;
+    field failType: TypeSignature;
+}
+| APIResultTypeDecl { %% TODO: Not Implemented!
+    field ttype: TypeSignature;
+
+    field errorType: TypeSignature;
+    field failedType: TypeSignature;
+    field rejectedType: TypeSignature;
+    field successType: TypeSignature;
+}
+;
+
 entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
     field fields: List<MemberFieldDecl>;
     field associatedMemberEntityDecls: List<NominalTypeSignature>;
@@ -174,11 +197,14 @@ entity Assembly {
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
-    field entities: Map<TypeKey, EntityTypeDecl>;
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
+
+    field entities: Map<TypeKey, EntityTypeDecl>;
     field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
 
     field datatypes: Map<TypeKey, DatatypeTypeDecl>;
+
+    field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>; %% Note: Currently only supports option
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
@@ -195,6 +221,9 @@ entity Assembly {
         }
         elif(this.datatypes.has(tkey)) {
             return this.datatypes.get(tkey);
+        }
+        elif(this.pconcepts.has(tkey)) {
+            return this.pconcepts.get(tkey);
         }
         else {
             abort; %% Non suported typekey!

@@ -8,4 +8,9 @@ describe ("CPP Emit Evaluate -- If Statement", () => {
         runMainCode("public function main(): Int { if(true) { return 3i; } return 1i; }", "3_i");
         runMainCode("public function main(): Int { if(false) { return 3i; } return 1i; }", "1_i");
     });
+
+    it("should exec itest ifs", function () {
+        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)some { return 3i; } return 1i; }", "3_i");
+        runMainCode("public function main(): Int { let x: Option<Int> = none; if(x)some { return 3i; } return 1i; }", "1_i");
+    });
 });
