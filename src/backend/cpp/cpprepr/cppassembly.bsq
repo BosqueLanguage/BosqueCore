@@ -77,6 +77,12 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
 }
 
+datatype ConstructableTypeDecl provides AbstractEntityTypeDecl
+of
+SomeTypeDecl { field oftype: TypeSignature; }
+| MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+; %% TODO: Other ConstructableTypeDecls!
+
 entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
 }
 

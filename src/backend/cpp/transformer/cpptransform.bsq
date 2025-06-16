@@ -317,7 +317,11 @@ entity CPPTransformer {
 
     method transformITestType(it: BSQAssembly::ITestType, isnot: Bool): CPPAssembly::ITestType {
         let ttype = CPPTransformNameManager::convertTypeSignature(it.ttype);
-        return CPPAssembly::ITestType{isnot, ttype};    
+        return CPPAssembly::ITestType{ isnot, ttype };    
+    }
+
+    method transformITestSome(isnot: Bool): CPPAssembly::ITestSome {
+        return CPPAssembly::ITestSome{ isnot };
     }
 
     %% TODO: Support for ITest as convert
@@ -325,7 +329,8 @@ entity CPPTransformer {
         let isnot = itest.isnot;
         match(itest)@ {
             BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
-            | _ => { abort; } %% Gonna do in a sec
+            | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
+            | _ => { abort; } 
         }
     }
 
@@ -672,6 +677,17 @@ entity CPPTransformer {
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(dm.tkey);
             }
+            elif(asm.constructables.has(typekey)) { %% Not totally sure if we need to add constructables to cpp asm...
+                let cons = asm.constructables.get(typekey);
+                if(cons)@<BSQAssembly::SomeTypeDecl> { %% Only support Some<T> for now
+                    let someinfo = this.generateTypeInfo[recursive]($cons.oftype.tkeystr, tinfos, asm).0;
+                    let named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, someinfo.tag };
+
+                    %% We need to return early as all work was done in calculating someinfo
+                    return (| named_someinfo, tinfos.insert(cpptkey, named_someinfo) |);
+                }
+                abort;
+            }
             else {
                 abort; %% TODO: Type not supported for typeinfo emission!
             }
@@ -687,12 +703,25 @@ entity CPPTransformer {
                 });
             }
             elif(asm.pconcepts.has(typekey)) {
-                abort; %% TODO: Add support for primtive concepts 
+                let pc = asm.pconcepts.get(typekey);
+                if(pc)@<BSQAssembly::OptionTypeDecl> { %% is $pc.someType right here? what about oftype?
+                    let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, asm).0;
+                    let named_pcinfo = CPPAssembly::TypeInfo{ pcinfo.id, pcinfo.typesize, pcinfo.slotsize, pcinfo.ptrmask, cpptkey, pcinfo.tag };
+
+                    %% Same as calculating Some<T> typeinfo
+                    return (| named_pcinfo, tinfos.insert(cpptkey, named_pcinfo) |);
+                }
+                else {
+                    abort; %% TODO: Support for other primitive concepts! 
+                }
             }
             else {
                 abort; %% Not a concept
             }
-            
+            %%
+            %% TODO: Our concepts will all need a unique TypeId in their emission! Hardcoding them as 8n will not work.
+            %%
+
             %% ptrmask == '2' means it is storing type info
             %% To prevent dataloss we fill the rest of slots with zeros, where the number of 
             %% zeros represents the maximum number of possible fields in subtypes
@@ -943,8 +972,13 @@ entity CPPTransformer {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
 
-        let generated_typeinfos = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
+        let generated_typeinfos_concrete = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
             Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, fn(acc, tkey) => {
+                return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
+            });
+        
+        let generated_typeinfos_abstract = bsqasm.allabstracttypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
+            generated_typeinfos_concrete, fn(acc,tkey) => {
                 return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
             });
 
@@ -963,7 +997,7 @@ entity CPPTransformer {
             datatypes = transformer_datatypes,
             pconcepts = transformer_pconcepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = generated_typeinfos
+            typeinfos = generated_typeinfos_abstract
         };
     }
 }
