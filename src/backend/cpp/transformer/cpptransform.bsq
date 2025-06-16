@@ -681,11 +681,12 @@ entity CPPTransformer {
 
     method transformDatatypeToCpp(dt: BSQAssembly::DatatypeTypeDecl): CPPAssembly::DatatypeTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(dt@<BSQAssembly::AbstractNominalTypeDecl>);
+        let subtypes = dt.subtypes.map<CPPAssembly::TypeKey>(fn(tk) => CPPTransformNameManager::convertTypeKey(tk));
         let fields = this.transformMemberFieldDecl(dt.saturatedBFieldInfo, dt, dt.fields);
         let associatedMemberEntityDecls = dt.associatedMemberEntityDecls.map<CPPAssembly::NominalTypeSignature>(
             fn(e) => CPPTransformNameManager::convertNominalTypeSignature(e));
 
-        return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, fields, associatedMemberEntityDecls }; 
+        return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, subtypes, fields, associatedMemberEntityDecls }; 
     }
 
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
@@ -798,7 +799,7 @@ entity CPPTransformer {
                 let cppabsmethods = cppdatatype.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
                 let cppovermethods = cppdatatype.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
 
-                 return CPPTransformNameManager::getNamespaceDeclMapping(cppdatatype.fullns, acc,
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppdatatype.fullns, acc,
                     fn(decl) => {
                         let new_datatypes = decl.datatypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.entities,
@@ -821,6 +822,12 @@ entity CPPTransformer {
             else {
                 abort; 
             }
+        });
+
+        let transformer_primitives = bsqasm.primtives.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveEntityTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveEntityTypeDecl>{}, fn(acc, tkey, pe) => {
+                let base = transformer.transformAbstractNominalTypeDeclBase(bsqasm.primtives.get(tkey)@<BSQAssembly::AbstractNominalTypeDecl>);
+                return acc.insert(base.2, CPPAssembly::PrimitiveEntityTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9 });
         });
 
         let transformer_staticmethods = bsqasm.staticmethods.reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>>(
@@ -862,6 +869,7 @@ entity CPPTransformer {
             absmethods = transformer_absmethods, %% Not fully implemented
             overmethods = transformer_overmethods, %% Not fully implemented
             entities = transformer_entities,
+            primitives = transformer_primitives,
             datamembers = transformer_datamembers,
             datatypes = transformer_datatypes,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice

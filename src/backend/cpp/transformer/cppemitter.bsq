@@ -446,22 +446,26 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: CSt
     }
 }
 
-%%
-%% I really feel that this is flawed...
-%%
-function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature): CString {
-    if(it.isnot) {
-        if(it.ttype.tkeystr.value === baseType.tkeystr.value) {
-            return 'true';
+function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, ctx: Context): CString {
+    %% For now we only support ITests where both types are concrete
+    if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr) && ctx.asm.isNominalTypeConcrete(baseType.tkeystr)) {
+        let areTypesSame = ctx.asm.areTypesSame(it.ttype, baseType);
+        if(it.isnot) {
+            if(areTypesSame) {
+                return '!true!';
+            }
+            return '!false!';
         }
-        return 'false';
+        return if(areTypesSame) then '!true!' else '!false!';
     }
-    return if(it.ttype.tkeystr.value === baseType.tkeystr.value) then 'true' else 'false';
+    else {
+        abort; %% TODO: ITests on concepts not yet supported!
+    }
 }
 
-function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature): CString {
+function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): CString {
     match(it)@ {
-        CPPAssembly::ITestType => { return emitITestType($it, baseType); }
+        CPPAssembly::ITestType => { return emitITestType($it, baseType, ctx); }
         | _ => { abort; }
     }
 }
@@ -477,16 +481,19 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
                 return emitPostfixAccessFromName($op, ctx);
             }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); }
-            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType); }
+            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType, ctx); }
         }
     });
 
-    return CString::joinAll('', ops);
+    let res = CString::joinAll('', ops);
+
+    %% This could be a bit clunky - is there anywhere else we need to perform this substitution?
+    return if(res.containsString('!false!')) then 'false' else if(res.containsString('!true!')) then 'true' else res;
 }
 
 %%
 %% TODO: Once the GC is integrated we will need to call our special GC allocate on ref type objects instead of the default
-%% constructor like we do now. Ref type object constructors will not work as is currently.
+%% constructor like we do now. Currently they call 'new'
 %%
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): CString {
     %% Eventually might want to rework emitArgumentList to support constructors too 
@@ -674,7 +681,8 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let this_type = emitThisType(declaredIn, nctx);    
     let specialName = emitSpecialTemplate(name);
     
-    let pre = CString::concat(indent, 'const ', rtype, ' ', specialName);
+    let pre = if(rtype !== 'bool') then CString::concat(indent, 'const ', rtype, ' ', specialName)
+        else CString::concat(indent, rtype, ' ', specialName);
     let specialThis = emitSpecialTemplate(this_type);
 
     var params_impl: CString;
