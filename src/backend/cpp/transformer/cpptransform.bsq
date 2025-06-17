@@ -622,6 +622,33 @@ entity CPPTransformer {
         });
     }
 
+    %% Explore all subtypes and find largest possible field count
+    method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly): Nat {
+        return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {
+            if(bsqasm.entities.has(subtk)) {
+                let fieldssize = bsqasm.entities.get(subtk).saturatedBFieldInfo.size();
+                return if(fieldssize > acc) then fieldssize else acc;
+            }
+            elif(bsqasm.datamembers.has(subtk)) {
+                let fieldssize = bsqasm.datamembers.get(subtk).saturatedBFieldInfo.size();
+                return if(fieldssize > acc) then fieldssize else acc;
+            }
+            else {
+                var subtype: BSQAssembly::AbstractConceptTypeDecl;
+                if(bsqasm.concepts.has(subtk)){
+                    subtype = bsqasm.concepts.get(subtk);
+                }
+                elif(bsqasm.datatypes.has(subtk)) {
+                    subtype = bsqasm.datatypes.get(subtk);
+                }
+                else {
+                    abort; %% Unsupported non-concrete type!
+                }
+                return this.findMaxFieldCount[recursive](subtype, bsqasm);
+            }
+        });
+    }
+
     method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tid: Nat, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
         return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
             let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
@@ -636,51 +663,54 @@ entity CPPTransformer {
         });
     }
 
-    recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
+    recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
         var matchedType: CPPAssembly::TypeInfo;
         if(tinfos.has(cpptkey)) {
             return tinfos.get(cpptkey), tinfos;
         }
-        elif(asm.isPrimtitiveType(typekey)) {
+
+        let cur_tid = tid;
+        let next_tid = tid + 1n;
+
+        if(bsqasm.isPrimtitiveType(typekey)) {
             switch(typekey) {
-                'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 6n, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 5n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 1n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 2n, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
-                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ 4n, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{     next_tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{   next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{    next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{    next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ next_tid, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'Float'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{  next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | _ => { abort; } %% Not supported by cpp emitter yet!
             }
         }
-        elif(asm.isNominalTypeConcrete(typekey)) {
+        elif(bsqasm.isNominalTypeConcrete(typekey)) {
             %% We can't compare tkey like primtives, so check if container has our tkey
             var fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>;
-            var tid: Nat;
             var tag: CPPAssembly::Tag;
             var tkey: CPPAssembly::TypeKey;
-            if(asm.entities.has(typekey)) {
-                let e = asm.entities.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(e.fields, asm);
-                fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
-                tid = 7n;
+            if(bsqasm.entities.has(typekey)) {
+                let e = bsqasm.entities.get(typekey);
+                let isRef = CPPTransformNameManager::shouldBeRef(e.fields, bsqasm);
+                fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
+                    fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
             }
-            elif(asm.datamembers.has(typekey)) {
-                let dm = asm.datamembers.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, asm);
-                fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, asm) );
-                tid = 8n;
+            elif(bsqasm.datamembers.has(typekey)) {
+                let dm = bsqasm.datamembers.get(typekey);
+                let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, bsqasm);
+                fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
+                    fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(dm.tkey);
             }
-            elif(asm.constructables.has(typekey)) { %% Not totally sure if we need to add constructables to cpp asm...
-                let cons = asm.constructables.get(typekey);
+            elif(bsqasm.constructables.has(typekey)) { %% Not totally sure if we need to add constructables to cpp bsqasm...
+                let cons = bsqasm.constructables.get(typekey);
                 if(cons)@<BSQAssembly::SomeTypeDecl> { %% Only support Some<T> for now
-                    let someinfo = this.generateTypeInfo[recursive]($cons.oftype.tkeystr, tinfos, asm).0;
+                    let someinfo = this.generateTypeInfo[recursive]($cons.oftype.tkeystr, tinfos, cur_tid, bsqasm).0;
                     let named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, someinfo.tag };
 
                     %% We need to return early as all work was done in calculating someinfo
@@ -692,20 +722,20 @@ entity CPPTransformer {
                 abort; %% TODO: Type not supported for typeinfo emission!
             }
 
-            matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, tid, tkey, tag, asm);
+            matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, next_tid, tkey, tag, bsqasm);
         }
-        elif(asm.isNominalTypeConcept(typekey)) {
+        elif(bsqasm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
-            if(asm.concepts.has(typekey)) {
-                maxFieldCount = asm.concepts.reduce<Nat>(0n, fn(acc, c, e) => {
-                    let size = e.fields.size();
-                    return if(acc < size) then size else acc;
-                });
+            if(bsqasm.concepts.has(typekey)) {
+                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
             }
-            elif(asm.pconcepts.has(typekey)) {
-                let pc = asm.pconcepts.get(typekey);
-                if(pc)@<BSQAssembly::OptionTypeDecl> { %% is $pc.someType right here? what about oftype?
-                    let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, asm).0;
+            elif(bsqasm.datatypes.has(typekey)) { 
+                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
+            }
+            elif(bsqasm.pconcepts.has(typekey)) {
+                let pc = bsqasm.pconcepts.get(typekey);
+                if(pc)@<BSQAssembly::OptionTypeDecl> { %% I "think" sometype would be best here
+                    let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, cur_tid, bsqasm).0;
                     let named_pcinfo = CPPAssembly::TypeInfo{ pcinfo.id, pcinfo.typesize, pcinfo.slotsize, pcinfo.ptrmask, cpptkey, pcinfo.tag };
 
                     %% Same as calculating Some<T> typeinfo
@@ -718,15 +748,14 @@ entity CPPTransformer {
             else {
                 abort; %% Not a concept
             }
-            %%
-            %% TODO: Our concepts will all need a unique TypeId in their emission! Hardcoding them as 8n will not work.
-            %%
 
+            %%
             %% ptrmask == '2' means it is storing type info
             %% To prevent dataloss we fill the rest of slots with zeros, where the number of 
             %% zeros represents the maximum number of possible fields in subtypes
+            %%
             let ptr_mask = CPPTransformNameManager::repeatCString('0', maxFieldCount, '2');
-            matchedType = CPPAssembly::TypeInfo{ 8n, 8n + (maxFieldCount * 8n), maxFieldCount + 1n, ptr_mask, CPPTransformNameManager::convertTypeKey(typekey), CPPAssembly::Tag#Tagged }; 
+            matchedType = CPPAssembly::TypeInfo{ next_tid, 8n + (maxFieldCount * 8n), maxFieldCount + 1n, ptr_mask, CPPTransformNameManager::convertTypeKey(typekey), CPPAssembly::Tag#Tagged }; 
         }
         else {
             abort; %% TODO: Type not supported for generating typeinfo!
@@ -972,14 +1001,16 @@ entity CPPTransformer {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
 
-        let generated_typeinfos_concrete = bsqasm.allconcretetypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
-            Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, fn(acc, tkey) => {
-                return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
+        let generated_typeinfos_concrete = bsqasm.allconcretetypes.reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
+            (| 0n, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{} |), fn(acc, tkey) => {
+                let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
+                return (| acc.0 + 1n, gen_tinfo.1 |);
             });
         
-        let generated_typeinfos_abstract = bsqasm.allabstracttypes.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>>(
-            generated_typeinfos_concrete, fn(acc,tkey) => {
-                return transformer.generateTypeInfo(tkey, acc, bsqasm).1;
+        let generated_typeinfos_abstract = bsqasm.allabstracttypes.reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
+            generated_typeinfos_concrete, fn(acc, tkey) => {
+                let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
+                return (| acc.0 + 1n, gen_tinfo.1 |);
             });
 
         return CPPAssembly::Assembly {
@@ -997,7 +1028,7 @@ entity CPPTransformer {
             datatypes = transformer_datatypes,
             pconcepts = transformer_pconcepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = generated_typeinfos_abstract
+            typeinfos = generated_typeinfos_abstract.1
         };
     }
 }

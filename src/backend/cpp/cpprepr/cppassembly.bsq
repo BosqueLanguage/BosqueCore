@@ -12,7 +12,7 @@ type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit h
 const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9'::']+('<'.+'>')?/c;
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
 
-const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}?/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
 %% Optional '<' * '>' allows support for resolved templates on functions or methods
@@ -240,6 +240,7 @@ entity Assembly {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }
 
+    %% Let's work with type id's for the time being
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
         return t1.tkeystr === t2.tkeystr;
     }
