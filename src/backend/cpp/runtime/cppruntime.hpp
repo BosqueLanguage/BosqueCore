@@ -6,6 +6,8 @@
 #include <csetjmp>
 #include <variant>
 
+namespace __CoreCpp {
+
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
 {
@@ -24,7 +26,13 @@ struct TypeInfoBase
     const FieldOffsetInfo* vtable; // Will need to add to gc
 };
 
-namespace __CoreCpp {
+template <size_t K>
+class Boxed {
+    TypeInfoBase* typeinfo;
+    uint8_t data[K];
+};
+
+typedef uint64_t None;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
@@ -396,9 +404,6 @@ public:
     friend constexpr bool operator!=(const Float& lhs, const Float& rhs) noexcept { return !(lhs == rhs); }
     friend constexpr bool operator<=(const Float& lhs, const Float& rhs) noexcept { return !(lhs > rhs); }
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
-};
-
-class None {
 };
 
 // Useful for keeping track of path in tree iteration

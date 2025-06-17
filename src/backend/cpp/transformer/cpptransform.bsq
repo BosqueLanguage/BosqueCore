@@ -749,11 +749,7 @@ entity CPPTransformer {
                 abort; %% Not a concept
             }
 
-            %%
-            %% ptrmask == '2' means it is storing type info
-            %% To prevent dataloss we fill the rest of slots with zeros, where the number of 
-            %% zeros represents the maximum number of possible fields in subtypes
-            %%
+            %% ptrmask == 2 means we store typeinfo, fill rest with zeros so gc ignores
             let ptr_mask = CPPTransformNameManager::repeatCString('0', maxFieldCount, '2');
             matchedType = CPPAssembly::TypeInfo{ next_tid, 8n + (maxFieldCount * 8n), maxFieldCount + 1n, ptr_mask, CPPTransformNameManager::convertTypeKey(typekey), CPPAssembly::Tag#Tagged }; 
         }

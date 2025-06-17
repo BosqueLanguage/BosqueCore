@@ -70,7 +70,7 @@ function emitSpecialTemplate(name: CString): CString {
 }
 
 function emitTypeKeyBase(tk: CPPAssembly::TypeKey, ctx: Context): CString {
-    return emitResolvedNamespace(ctx.fullns_list, tk.value); 
+    return emitResolvedNamespace(ctx.fullns_list, emitSpecialTemplate(tk.value)); 
 }
 
 function emitTypeKeyParamField(tk: CPPAssembly::TypeKey, ctx: Context): CString {
@@ -138,8 +138,8 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
     }
 }
 
-%% Not fully confident on this. I could see it interacting weirdly with our ITests...
-function emitLiteralNoneExpression(exp: CPPAssembly::LiteralNoneExpression): CString {
+%% TODO: Still call the Option<T> constructor, but pass in nones typeinfo and __CoreCpp::None as data
+function emitLiteralNoneExpression(): CString {
     return '__CoreCpp::None';
 }
 
@@ -465,10 +465,15 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
     }
 }
 
+function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, ctx: Context): CString {
+    return '';
+}
+
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): CString {
     match(it)@ {
         CPPAssembly::ITestType => { return emitITestType($it, baseType, ctx); }
-        | _ => { abort; }
+        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, ctx); }
+        | _ => { abort; } %% TODO: Not Implemented!
     }
 }
 
@@ -493,15 +498,33 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     return if(res.containsString('!false!')) then 'false' else if(res.containsString('!true!')) then 'true' else res;
 }
 
-function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): CString {
-    %%
-    %% Not 100% confident on this, but I suspect we wont need to generate a special type for Option<T>. We likely can just
-    %% do a resolution of the contained types (i.e. what the Some<T> holds or if none) and directly emit this value.
-    %% I have not tested this yet, but I suspect it could be decent.
-    %%
-    
-    abort;
+%%
+%% We should try to forcefully create the constructor for Option<T> where the tinfo pointer points to Some<T>,
+%% but the actual constructor is not Some<T>{...} but rather Option<T>{&Some<T>Type, ...}
+%%
+
+%% Needs to call constructor for our Boxed<K> type, not too sure how to construct the args
+function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): CString {
+    let tkey = emitTypeKeyBase(cpsse.ctype.tkeystr, ctx);
+    let tinfoptr = CString::concat('&', tkey, 'Type');
+    return CString::concat(tkey, '{', tinfoptr, '}');
 }
+
+function emitConstructorPrimarySpecialOkExpression(cpsoe: CPPAssembly::ConstructorPrimarySpecialOkExpression, ctx: Context): CString {
+    abort; %% TODO: Not implemented!
+}
+
+function emitConstructorPrimarySpecialFailExpression(cpsfe: CPPAssembly::ConstructorPrimarySpecialFailExpression, ctx: Context): CString {
+    abort; %% TODO: Not Implemented!
+}
+
+function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): CString {    
+    match(exp)@ {
+        CPPAssembly::ConstructorPrimarySpecialSomeExpression => { return emitConstructorPrimarySpecialSomeExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimarySpecialOkExpression => { return emitConstructorPrimarySpecialOkExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimarySpecialFailExpression => { return emitConstructorPrimarySpecialFailExpression($exp, ctx); }
+    }
+ }
 
 %%
 %% TODO: Once the GC is integrated we will need to call our special GC allocate on ref type objects instead of the default
@@ -559,7 +582,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): CString {
         | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
         | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
         | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }
-        | CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e); }
+        | CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression(); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
@@ -805,7 +828,6 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     let resolved_tk = emitResolvedNamespace(nctx.fullns_list, dm.tkey.value); 
     let specialName = emitSpecialTemplate(resolved_tk);
 
-
     let fields = dm.saturatedBFieldInfo.reduce<CString>(CString::concat(indent, 'struct ', specialName, '{ %n;'), 
         fn(acc, entry) => {
             return CString::concat(acc, emitSaturatedFieldInfo(entry, nctx, CString::concat('    ', indent)));
@@ -888,7 +910,7 @@ function generateVTable(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<
     let enum_name = CString::concat(specialName, '_entries');
     let vtable_name = CString::concat(specialName, '_vtable');
 
-    let base = CString::concat('const FieldOffsetInfo ', vtable_name, '[] = ', '{%n;');
+    let base = CString::concat('const __CoreCpp::FieldOffsetInfo ', vtable_name, '[] = ', '{%n;');
     let field_names = fields.mapIdx<CString>(fn(f_entry, ii) => generateVTableEntry(f_entry, specialName, enum_name, ii, ctx, full_indent));
     return CString::concat(indent, base, CString::joinAll(',%n;', field_names), '%n;', indent, '};%n;'); 
 }
@@ -907,7 +929,7 @@ function generateEntriesEnum(ant: CPPAssembly::AbstractNominalTypeDecl, fields: 
     return CString::concat(indent, base, CString::joinAll(',%n;', field_names), '%n;', indent, '};%n;');
 }
 
-function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: CPPAssembly::AbstractNominalTypeDecl, indent: CString): CString {
+function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: CPPAssembly::AbstractNominalTypeDecl, hasfields: Bool, indent: CString): CString {
     let full_indent = CString::concat('    ', indent);
 
     let resolved_name = emitResolvedNamespace(ant.fullns, info.typekey.value);
@@ -915,13 +937,14 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: CPPAssembly::AbstractNom
 
     let tinfo_name = CString::concat(specialName, 'Type');
 
-    let base = CString::concat(indent, 'TypeInfoBase ', tinfo_name, ' = {%n;');
+    let base = CString::concat(indent, '__CoreCpp::TypeInfoBase ', tinfo_name, ' = {%n;');
     let id = CString::concat(base, full_indent, '.type_id = ', info.id.toCString(), ',%n;');
     let typesize = CString::concat(id, full_indent, '.type_size = ', info.typesize.toCString(), ', %n;');
     let slotsize = CString::concat(typesize, full_indent, '.slot_size = ', info.slotsize.toCString(), ',%n;');
     let ptrmask = CString::concat(slotsize, full_indent, '.ptr_mask = "', info.ptrmask, '",%n;');
     let typekey = CString::concat(ptrmask, full_indent, '.typekey = "', info.typekey.value, '",%n;');
-    let vtable = CString::concat(typekey, full_indent, '.vtable = ', CString::concat(specialName, '_vtable'), '%n;');
+    let vtable = if(hasfields) then CString::concat(typekey, full_indent, '.vtable = ', CString::concat(specialName, '_vtable'), '%n;')
+        else CString::concat(typekey, full_indent, '.vtable = nullptr%n;');
 
     return CString::concat(vtable, indent, '};%n;');
 }
@@ -929,12 +952,19 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: CPPAssembly::AbstractNom
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<CPPAssembly::MemberFieldDecl>, body: CString, ctx: Context, indent: CString): CString {
     let ant_enum = generateEntriesEnum(ant, fields, indent);
     let vtable = generateVTable(ant, fields, ctx, indent);
-    let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(ant.tkey), ant, indent);
+    let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(ant.tkey), ant, false, indent);
     let staticmethods = ant.staticmethods.reduce<CString>('', fn(acc, m) => { 
         return CString::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), ant.tkey, ctx, indent));
     });
     
     return CString::concat(ant_enum, vtable, tinfo, body, staticmethods);
+}
+
+function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: CString): CString {
+    let tkey = CString::concat('class ', emitTypeKeyBase(pc.tkey, ctx));
+    let k = ctx.asm.typeinfos.get(pc.tkey).slotsize;
+
+    return CString::concat(tkey, ' : public __CoreCpp::Boxed', '<', k.toCString(), '>', '{ };%n;');
 }
 
 function emitForwardDeclarationBody(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {    
@@ -1014,9 +1044,21 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return CString::concat(typefuncs, indent, '}%n;');
 }
 
+%%
+%% Might want to emit primitives typeinfo too for the sake of making handling Option<T> easier
+%%
+
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
-    let ns_emission = asm.nsdecls.reduce<CString>('', fn(acc, nsname, nsdecl) => {
+    %% Primitive Concepts dont depend on any nesting so we will emit at top of emitted file
+    let pconcept_tinfo = asm.pconcepts.reduce<CString>('', fn(acc, tk, pc) => {
+        return CString::concat(acc, emitTypeInfo(asm.typeinfos.get(tk), pc@<CPPAssembly::AbstractNominalTypeDecl>, false, ''));
+    });
+    let pconcepts_emission = asm.pconcepts.reduce<CString>(pconcept_tinfo, fn(acc, tk, pc) => {
+        return CString::concat(acc, emitPrimtiveConceptTypeDecl(pc, ctx, ''));
+    });
+
+    let ns_emission = asm.nsdecls.reduce<CString>(pconcepts_emission, fn(acc, nsname, nsdecl) => {
         return CString::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ''));
     });
 

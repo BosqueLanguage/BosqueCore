@@ -242,6 +242,9 @@ entity Assembly {
 
     %% Let's work with type id's for the time being
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
-        return t1.tkeystr === t2.tkeystr;
+        if(!this.typeinfos.has(t1.tkeystr) || ! this.typeinfos.has(t2.tkeystr)) {
+            abort; %% No typeinfo found for TypeSignature!
+        }
+        return this.typeinfos.get(t1.tkeystr).id == this.typeinfos.get(t2.tkeystr).id;
     }
 }
