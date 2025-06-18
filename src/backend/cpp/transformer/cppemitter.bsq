@@ -44,7 +44,6 @@ entity Context {
 %% Could remove these two and just call emitTypeKey... but I suspect we will eventually need to handle
 %% lambda and elist explicitly (so fornow these are fine)
 function emitTypeSignatureBase(ts: CPPAssembly::TypeSignature, ctx: Context): CString {
-    %% Core becomes implicit in the ir so we have to add it. Perhaps could modify the ir itself to avoid this? dont want to break any other stuff tho
     return if(ctx.asm.pconcepts.has(ts.tkeystr)) then emitTypeKeyBase(CPPAssembly::TypeKey::from(CString::concat('Core::', ts.tkeystr.value)), ctx) 
         else emitTypeKeyBase(ts.tkeystr, ctx);    
 }
@@ -525,12 +524,6 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): CString {
     return CString::joinAll('', ops);
 }
 
-%%
-%% We should try to forcefully create the constructor for Option<T> where the tinfo pointer points to Some<T>,
-%% but the actual constructor is not Some<T>{...} but rather Option<T>{&Some<T>Type, ...}
-%%
-
-%% Needs to call constructor for our Boxed<K> type, not too sure how to construct the args
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): CString {
     let t = getSpecialTemplates();
     let ttype = if(ctx.asm.isPrimtitiveType(cpsse.ofttype.tkeystr) && cpsse.ofttype.tkeystr.value !== 'bool') 
@@ -539,7 +532,7 @@ function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::Constru
     let widenedtype = CString::concat('Core::Option', t.0, ttype, t.2);
     let tinfoptr = CString::concat('&', ttype, 'Type, ');
 
-    %% This is quite naieve as we only support one argument and it does not map well to using the getter here
+    %% TODO: Support variable sized args! 
     if(cpsse.args.args.size() == 0n) {
         abort;
     }
@@ -1034,16 +1027,18 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
 }
 
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: CString): CString {
+    let full_indent = CString::concat('    ', indent);
     let tkey = emitTypeKeyBase(pc.tkey, ctx);
-    let def = CString::concat('class ', emitTypeKeyBase(pc.tkey, ctx));
+    let def = CString::concat(indent, 'class ', emitTypeKeyBase(pc.tkey, ctx), ' : public ');
     if(!ctx.asm.typeinfos.has(pc.tkey)) {
         abort;
     }
     let k = ctx.asm.typeinfos.get(pc.tkey).slotsize - 1n; %% Slot size includes '2' ptr to typeinfo, so we ignore
     let boxed = CString::concat('__CoreCpp::Boxed', '<', k.toCString(), '>'); 
-    
-    let constructor = CString::concat('public:%n;', indent, tkey, '(__CoreCpp::TypeInfoBase* ti, uint64_t* data) : ', boxed, '(ti, data) {}%n;');
-    return CString::concat(def, ' : public ', boxed, '{%n;', constructor, '};%n;');
+
+    let base = CString::concat(indent, 'public:%n;'); 
+    let constructor = CString::concat(base, full_indent, tkey, '(__CoreCpp::TypeInfoBase* ti, uint64_t* data) : ', boxed, '(ti, data) {}%n;');
+    return CString::concat(def, boxed, '{%n;', constructor, indent, '};%n;');
 }
 
 function emitForwardDeclarationBody(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: CString): CString {    
@@ -1136,7 +1131,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     });
 
     %%
-    %% We COULD get a bit spicy and emit pconcepts where T is a primitive here...
+    %% We could get a bit spicy and emit pconcepts where T is a primitive here...
     %%
 
     let ns_emission = asm.nsdecls.reduce<CString>(primitive_typeinfos, fn(acc, nsname, nsdecl) => {

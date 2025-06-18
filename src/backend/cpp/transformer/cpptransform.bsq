@@ -436,7 +436,7 @@ entity CPPTransformer {
 
         match(exp)@ {
             BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
-            | _ => { abort; } %% TODO: Not Implemented (need itests)
+            | _ => { abort; } %% TODO: Not Implemented 
         }
     }
 
