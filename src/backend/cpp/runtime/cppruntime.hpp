@@ -28,8 +28,14 @@ struct TypeInfoBase
 
 template <size_t K>
 class Boxed {
+public:
+    Boxed(TypeInfoBase* ti, uint64_t* data): typeinfo(ti) {
+        for(size_t i = 0; i < K; i++) {
+            this->data[i] = data[i];
+        }
+    }
     TypeInfoBase* typeinfo;
-    uint8_t data[K];
+    uint64_t data[K];
 };
 
 typedef uint64_t None;

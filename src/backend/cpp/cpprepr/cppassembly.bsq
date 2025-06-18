@@ -184,6 +184,8 @@ entity NamespaceDecl {
 
     field datatypes: List<TypeKey>;
 
+    field pconcepts: List<TypeKey>;
+
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
     field absmethods: List<(|InvokeKey, TypeKey|)>;
@@ -238,6 +240,10 @@ entity Assembly {
 
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
+    }
+
+    method isPrimtitiveType(tkey: TypeKey): Bool {
+        return this.primitives.has(tkey);
     }
 
     %% Let's work with type id's for the time being
