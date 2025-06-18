@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <cmath>
+#include <string.h> 
 #include <csetjmp>
 #include <variant>
 
@@ -29,10 +30,8 @@ struct TypeInfoBase
 template <size_t K>
 class Boxed {
 public:
-    Boxed(TypeInfoBase* ti, uint64_t* data): typeinfo(ti) {
-        for(size_t i = 0; i < K; i++) {
-            this->data[i] = data[i];
-        }
+    Boxed(TypeInfoBase* ti, uint64_t data[K]): typeinfo(ti) {
+        memcpy(this->data, data, K * sizeof(uint64_t));
     }
     TypeInfoBase* typeinfo;
     uint64_t data[K];

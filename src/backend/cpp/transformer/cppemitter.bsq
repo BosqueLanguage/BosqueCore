@@ -1036,8 +1036,8 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
     let k = ctx.asm.typeinfos.get(pc.tkey).slotsize - 1n; %% Slot size includes '2' ptr to typeinfo, so we ignore
     let boxed = CString::concat('__CoreCpp::Boxed', '<', k.toCString(), '>'); 
 
-    let base = CString::concat(indent, 'public:%n;'); 
-    let constructor = CString::concat(base, full_indent, tkey, '(__CoreCpp::TypeInfoBase* ti, uint64_t* data) : ', boxed, '(ti, data) {}%n;');
+    let base = CString::concat(indent, 'public:%n;', full_indent, tkey); 
+    let constructor = CString::concat(base, '(__CoreCpp::TypeInfoBase* ti, uint64_t data[', k.toCString() ,']) : ', boxed, '(ti, data) {}%n;');
     return CString::concat(def, boxed, '{%n;', constructor, indent, '};%n;');
 }
 
