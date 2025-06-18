@@ -12,7 +12,7 @@ namespace CPPTransformNameManager {
 
     function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
         switch(tk.value) {
-            'None' => { return CPPAssembly::TypeKey::from('None'); }
+            'None' => { return CPPAssembly::TypeKey::from('__CoreCpp::None'); }
             | 'Bool' => { return CPPAssembly::TypeKey::from('bool'); }
             | 'Nat' => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
             | 'Int' => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
@@ -665,7 +665,7 @@ entity CPPTransformer {
     }
 
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
-        let cpptkey = if(!bsqasm.isPrimitiveType(typekey)) then CPPTransformNameManager::convertTypeKey(typekey) else CPPAssembly::TypeKey::from(typekey.value);
+        let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 
         var matchedType: CPPAssembly::TypeInfo;
         if(tinfos.has(cpptkey)) {
@@ -677,7 +677,7 @@ entity CPPTransformer {
 
         if(bsqasm.isPrimitiveType(typekey)) {
             switch(typekey) {
-                'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{     next_tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{     next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{   next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Nat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{    next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Int'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{    next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
@@ -758,7 +758,7 @@ entity CPPTransformer {
             abort; %% TODO: Type not supported for generating typeinfo!
         }
 
-        return matchedType, tinfos.insert(CPPTransformNameManager::convertTypeKey(typekey), matchedType);
+        return matchedType, tinfos.insert(cpptkey, matchedType);
     }
 
     method transformSaturatedFieldInfo(sfi: BSQAssembly::SaturatedFieldInfo): CPPAssembly::SaturatedFieldInfo {
@@ -953,7 +953,7 @@ entity CPPTransformer {
 
         %% I could see name conflicts arising with emitting pconcepts at top of file, so we do in ns to be safe
         let transformer_nsdecls_pconcepts = transformer_pconcepts.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
-            transformer_nsdecls_datamembers, fn(acc, cpptk, cpppc) => {
+            transformer_nsdecls_datatypes, fn(acc, cpptk, cpppc) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cpppc.fullns, acc,
                     fn(decl) => {
                         let new_pconcepts = decl.pconcepts.pushBack(cpptk);
