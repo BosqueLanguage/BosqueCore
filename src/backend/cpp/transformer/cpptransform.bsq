@@ -737,7 +737,7 @@ entity CPPTransformer {
                 let pc = bsqasm.pconcepts.get(typekey);
                 if(pc)@<BSQAssembly::OptionTypeDecl> { %% I "think" sometype would be best here
                     let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, cur_tid, bsqasm).0;
-                    let named_pcinfo = CPPAssembly::TypeInfo{ pcinfo.id, pcinfo.typesize, pcinfo.slotsize, pcinfo.ptrmask, cpptkey, pcinfo.tag };
+                    let named_pcinfo = CPPAssembly::TypeInfo{ pcinfo.id, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, CString::concat('2', pcinfo.ptrmask), cpptkey, pcinfo.tag };
 
                     %% Same as calculating Some<T> typeinfo
                     return (| named_pcinfo, tinfos.insert(cpptkey, named_pcinfo) |);
