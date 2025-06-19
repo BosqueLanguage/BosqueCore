@@ -12,7 +12,7 @@ type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit h
 const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9'::']+('<'.+'>')?/c;
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
 
-const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}?/c;
+const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
 %% Optional '<' * '>' allows support for resolved templates on functions or methods
@@ -179,6 +179,8 @@ entity NamespaceDecl {
     field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
 
+    field constructables: List<TypeKey>;
+
     field entities: List<TypeKey>;
     field datamembers: List<TypeKey>;
 
@@ -206,6 +208,7 @@ entity Assembly {
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
+    field constructables: Map<TypeKey, ConstructableTypeDecl>;
 
     field entities: Map<TypeKey, EntityTypeDecl>;
     field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;

@@ -36,6 +36,19 @@ ITestType { field ttype: TypeSignature; }
 | ITestFail { }
 ;
 
+%% For Explicitify
+entity CoerceNarrowTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CoerceWidenTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
 datatype ArgumentValue using {
     field exp: Expression;
 }

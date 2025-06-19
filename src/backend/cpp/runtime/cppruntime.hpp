@@ -37,6 +37,23 @@ public:
     uint64_t data[K];
 };
 
+template<>
+class Boxed<0> {
+public:
+    Boxed(TypeInfoBase* ti) : typeinfo(ti) {}
+
+    TypeInfoBase* typeinfo;
+};
+
+template<>
+class Boxed<1> {
+public:
+    Boxed(TypeInfoBase* ti, uint64_t data) : typeinfo(ti), data(data) {}
+
+    TypeInfoBase* typeinfo;
+    uint64_t data;
+};
+
 typedef uint64_t None;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
