@@ -4,7 +4,9 @@
 #include <iostream>
 #include <cmath>
 #include <csetjmp>
-#include <variant>
+#include <variant> // TODO: Need to remove dependency!
+
+namespace __CoreCpp {
 
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
@@ -24,7 +26,44 @@ struct TypeInfoBase
     const FieldOffsetInfo* vtable; // Will need to add to gc
 };
 
-namespace __CoreCpp {
+void memcpy(void* dst, const void* src, size_t n);
+
+template <size_t K>
+class Boxed {
+public:
+    Boxed(TypeInfoBase* ti, const uint64_t (&data)[K]): typeinfo(ti) {
+        memcpy(this->data, data, K * sizeof(uint64_t));
+    }
+    TypeInfoBase* typeinfo;
+    uint64_t data[K];
+};
+
+template<>
+class Boxed<0> {
+public:
+    Boxed(TypeInfoBase* ti) : typeinfo(ti) {}
+
+    TypeInfoBase* typeinfo;
+};
+
+template<>
+class Boxed<1> {
+public:
+    Boxed(TypeInfoBase* ti, uint64_t data) : typeinfo(ti), data(data) {}
+
+    TypeInfoBase* typeinfo;
+    uint64_t data;
+};
+
+void memcpy(void* dst, const void* src, size_t n) {
+    const char* csrc = (const char*)src;
+    char* cdst = (char*)dst;
+    for(size_t i = 0; i < n; i++) {
+        cdst[i] = csrc[i];
+    }
+}
+
+typedef uint64_t None;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 

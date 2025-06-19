@@ -5,6 +5,10 @@ declare namespace CPPEmitter {
 
 %% Our API for emitting cpp
 public function main(asm: BSQAssembly::Assembly): String {
+    %% TODO: Once Explicitify is built up more we will just call it here 
+    %%let explicitAssembly = BSQAssembly::ExplicitifyTransform::process(asm);
+    %%let simpleAssembly = BSQAssembly::ConstantSimplification::process(explicitAssembly);
+
     let tasm = CPPEmitter::CPPTransformer::convertBsqAsmToCpp(asm);
     let cppstr = CPPEmitter::emitAssembly(tasm);
 
