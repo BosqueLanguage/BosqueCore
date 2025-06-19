@@ -455,6 +455,16 @@ entity CPPTransformer {
         return CPPAssembly::CoerceWidenTypeExpression{ etype, expr, srctype, trgttype };
     }
 
+    %% Same here
+    method transformCoerceNarrowTypeExpression(exp: BSQAssembly::CoerceNarrowTypeExpression): CPPAssembly::CoerceNarrowTypeExpression {
+        let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
+        let expr = this.transformExpressionToCpp(exp.exp);
+        let srctype = CPPTransformNameManager::convertNominalTypeSignature(exp.srctype);
+        let trgttype = CPPTransformNameManager::convertNominalTypeSignature(exp.trgttype);
+
+        return CPPAssembly::CoerceNarrowTypeExpression{ etype, expr, srctype, trgttype };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
@@ -473,12 +483,13 @@ entity CPPTransformer {
             | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.transformCoerceWidenTypeExpression($expr); }   
+            | BSQAssembly::CoerceNarrowTypeExpression => { return this.transformCoerceNarrowTypeExpression($expr); }
             | _ => { abort; }
         }
     }
 
     recursive method transformReturnSingleStatementToCpp(ret: BSQAssembly::ReturnSingleStatement): CPPAssembly::ReturnSingleStatement {
-        let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype);
+        let rtype = CPPTransformNameManager::convertTypeSignature(ret.rtype); 
         let rexp = this.transformExpressionToCpp[recursive](ret.value);
 
         return CPPAssembly::ReturnSingleStatement{rtype, rexp};

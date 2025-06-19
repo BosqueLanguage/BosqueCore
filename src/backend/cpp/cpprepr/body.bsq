@@ -49,6 +49,18 @@ entity CoerceWidenTypeExpression provides Expression {
     field trgttype: NominalTypeSignature;
 }
 
+entity SafeConvertExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CreateDirectExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
 datatype ArgumentValue using {
     field exp: Expression;
 }

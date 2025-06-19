@@ -3,9 +3,8 @@
 #include <stdint.h>
 #include <iostream>
 #include <cmath>
-#include <string.h> 
 #include <csetjmp>
-#include <variant>
+#include <variant> // TODO: Need to remove dependency!
 
 namespace __CoreCpp {
 
@@ -27,10 +26,12 @@ struct TypeInfoBase
     const FieldOffsetInfo* vtable; // Will need to add to gc
 };
 
+void memcpy(void* dst, const void* src, size_t n);
+
 template <size_t K>
 class Boxed {
 public:
-    Boxed(TypeInfoBase* ti, uint64_t data[K]): typeinfo(ti) {
+    Boxed(TypeInfoBase* ti, const uint64_t (&data)[K]): typeinfo(ti) {
         memcpy(this->data, data, K * sizeof(uint64_t));
     }
     TypeInfoBase* typeinfo;
@@ -53,6 +54,14 @@ public:
     TypeInfoBase* typeinfo;
     uint64_t data;
 };
+
+void memcpy(void* dst, const void* src, size_t n) {
+    const char* csrc = (const char*)src;
+    char* cdst = (char*)dst;
+    for(size_t i = 0; i < n; i++) {
+        cdst[i] = csrc[i];
+    }
+}
 
 typedef uint64_t None;
 
