@@ -2409,30 +2409,32 @@ class BSQIREmitter {
             this.sccVisit(next, visited, scc);
         }
 
+        scc.push(gkey);
         visited.set(gkey, true);
     }
 
     private computeTypeGraphSCCS(topo: string[]): string[][] {
         let visited = new Map<string, boolean>();
+        let sccs: string[][] = [];
 
         for(let i = 0; i < topo.length; ++i) {
-            if(acc.1.has(t)) {
-                return acc;
-            }
+            const gkey = topo[i];
 
-            let children: string[] = [...(this.typegraph.get(gkey) as string[])];
-            if(nnext.allOf(pred(v) => acc.1.tryGet(v) === true)) {
-                return acc.0, acc.1.insert(t, true);
-            }
-            else {
-                let scc, nmap = AlgorithmOps::s_scc_visit[recursive?]<T>(t, List<T>{}, acc.1, next);
-                if(!scc.empty()) {
-                    return acc.0.pushBack(scc), nmap;
+            if(!visited.has(gkey)) {
+                let children: string[] = [...(this.typegraph.get(gkey) as string[])];
+                if(children.every((v) => visited.get(v) === true)) {
+                    visited.set(gkey, true);
                 }
                 else {
-                    return acc.0, nmap;
+                    let scc: string[] = [];
+                    this.sccVisit(gkey, visited, scc);
+
+                    sccs.push(scc.filter((v) => this.allconcretetypes.includes(`'${v}'<BSQAssembly::TypeKey>`)));
                 }
             }
+        }
+
+        return sccs;
     }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[]): string {
@@ -2448,6 +2450,13 @@ class BSQIREmitter {
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
             }
         }
+
+        const topotypes = emitter.computeTypeGraphTopoOrder();
+        const sccs = emitter.computeTypeGraphSCCS(topotypes);
+        
+        const topoinfo = topotypes.map((t) => `'${t}'<BSQAssembly::TypeKey>`);
+        const sccinfo = sccs.map((scc) => `List<BSQAssembly::TypeKey>{ ${scc.map((s) => `'${s}'<BSQAssembly::TypeKey>`).join(", ")} }`);
+        const cginfo = `TypeTopology{ ctopol=List<BSQAssembly::TypeKey>{ ${topoinfo.join(", ")} }, sccs=List<List<BSQAssembly::TypeKey>>{ ${sccinfo.join(", ")} } }`;
 
         let fmt = new BsqonCodeFormatter(1);
         return "BSQAssembly::Assembly{\n" +
@@ -2480,6 +2489,7 @@ class BSQIREmitter {
             
             fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allconcretetypes, "},\n") +
             fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allabstracttypes, "}\n") +
+            fmt.indent(cginfo) + "\n" +
         "}";
     }
 }

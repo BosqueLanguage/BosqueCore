@@ -77,6 +77,8 @@ namespace Algorithm {
             }
             else {
                 let scc, nmap = AlgorithmOps::s_scc_visit[recursive?]<T>(t, List<T>{}, acc.1, next);
+
+                %%TODO: I think this check is redundant as the allof above should imply there is at least one element in the scc
                 if(!scc.empty()) {
                     return acc.0.pushBack(scc), nmap;
                 }
