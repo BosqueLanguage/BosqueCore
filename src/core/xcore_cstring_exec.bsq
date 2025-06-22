@@ -33,6 +33,8 @@ namespace CStringOps {
 
     function s_replaceUniqueStringOccurrence(s: CString, target: CString, replacement: CString): CString = cstring_replace_unique_string_occurrence;
     function s_replaceAllStringOccurrences(s: CString, target: CString, replacement: CString): CString = cstring_replace_all_string_occurrences;
+
+    function s_replaceAllRegexOccurrences(s: CString, re: CRegex, replacement: CString): CString = cregex_replace_all_string_occurences;
 }
 
 __internal entity CCharBuffer {

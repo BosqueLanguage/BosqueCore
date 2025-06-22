@@ -26,39 +26,85 @@ struct TypeInfoBase
     const FieldOffsetInfo* vtable; // Will need to add to gc
 };
 
-void memcpy(void* dst, const void* src, size_t n);
+template <size_t N>
+void memcpy(void* dst, const void* src);
+
+//
+// Instead of my idea where we just take no args as a default constructor to handle the none case, 
+// I think we will need to explicitly write the construcotr for none who takes only typeinfo
+// and doesnt assign data to anything. Needs some thought though and testing.
+//
 
 template <size_t K>
 class Boxed {
 public:
-    Boxed(TypeInfoBase* ti, const uint64_t (&data)[K]): typeinfo(ti) {
-        memcpy(this->data, data, K * sizeof(uint64_t));
-    }
-    TypeInfoBase* typeinfo;
-    uint64_t data[K];
-};
+    Boxed()=default;
+    Boxed(const Boxed& rhs) : typeinfo(rhs.typeinfo) {
+        memcpy<K>(this->data, rhs.data);
+    };
+    Boxed& operator=(const Boxed& rhs) {
+        this->typeinfo = rhs.typeinfo;
+        memcpy<K>(this->data, rhs.data);
+        return *this;
+    };
 
-template<>
-class Boxed<0> {
-public:
-    Boxed(TypeInfoBase* ti) : typeinfo(ti) {}
+    // Some constructor
+    Boxed(TypeInfoBase* ti, uint64_t (&data)[K]): typeinfo(ti) {
+        memcpy<K>(this->data, data);
+    };
 
-    TypeInfoBase* typeinfo;
+    // None constructor
+    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
+
+    //
+    // TODO: Get method for accessing data in Some<T>
+    //
+
+    TypeInfoBase* typeinfo = nullptr;
+    uint64_t data[K] = {};
 };
 
 template<>
 class Boxed<1> {
 public:
-    Boxed(TypeInfoBase* ti, uint64_t data) : typeinfo(ti), data(data) {}
+    Boxed()=default;
+    Boxed(const Boxed& boxed): typeinfo(boxed.typeinfo), data(boxed.data) {};
+    Boxed& operator=(const Boxed& rhs) { 
+        this->typeinfo = rhs.typeinfo;
+        this->data = rhs.data;
+        return *this;
+    }
 
-    TypeInfoBase* typeinfo;
-    uint64_t data;
+    // Some constructor
+    Boxed(TypeInfoBase* ti, uint64_t data): typeinfo(ti), data(data) {};
+
+    // None constructor
+    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
+
+    TypeInfoBase* typeinfo = nullptr;
+    uint64_t data = 0;
 };
 
-void memcpy(void* dst, const void* src, size_t n) {
+template<>
+class Boxed<0> {
+public:
+    Boxed()=default;
+    Boxed(const Boxed& boxed): typeinfo(boxed.typeinfo) {};
+    Boxed& operator=(const Boxed& rhs) {
+        this->typeinfo = rhs.typeinfo;
+        return *this;
+    };
+
+    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
+
+    TypeInfoBase* typeinfo = nullptr;
+};
+
+template <size_t N>
+void memcpy(void* dst, const void* src) {
     const char* csrc = (const char*)src;
     char* cdst = (char*)dst;
-    for(size_t i = 0; i < n; i++) {
+    for(size_t i = 0; i < (N * sizeof(uint64_t)); i++) {
         cdst[i] = csrc[i];
     }
 }

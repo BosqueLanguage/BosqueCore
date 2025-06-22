@@ -24,6 +24,8 @@ const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside t
 type Identifier = CString of CPPAssembly::identifierRE;
 type VarIdentifier = CString of CPPAssembly::videntifierRE;
 
+const templateMatch: CRegex = /('<'.+'>')/c;
+
 concept AbstractDecl {
     field declaredInNS: NamespaceKey;
     field fullns: List<CString>;

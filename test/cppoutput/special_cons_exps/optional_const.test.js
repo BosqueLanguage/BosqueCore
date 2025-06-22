@@ -4,10 +4,13 @@ import { runMainCode } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
 describe ("CPP Emit Evaluate -- Special Constructor infer in if-else and assign positions", () => {
+    // Will uncomment when constsimplify is running    
+    /*
     it("should exec some/none with if-else", function () {
-        //runMainCode("public function main(): Int { let x: Option<Int> = if(true) then some(3i) else none; return x@some; }", "3i");
+        runMainCode("public function main(): Int { let x: Option<Int> = if(true) then some(3i) else none; return x@some; }", "3i");
         runMainCode("public function main(): Bool { let x: Option<Int> = if(false) then some(3i) else none; return x?!some; }", "true");
     });
+    */
 
     /*
     it("should exec ok/fail with if-else", function () {
