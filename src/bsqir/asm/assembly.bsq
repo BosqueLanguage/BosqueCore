@@ -507,7 +507,7 @@ entity Assembly {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }
 
-    method isPrimitiveType(tkey: TypeKey): Bool {
+    method isPrimtitiveType(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<PrimitiveEntityTypeDecl>;
     }
 

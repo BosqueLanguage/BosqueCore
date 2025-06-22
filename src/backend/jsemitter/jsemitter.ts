@@ -2336,9 +2336,6 @@ class JSEmitter {
         else if(bname === "cstring_replace_all_string_occurrences") {
             bop = `s.replaceAll(target, replacement)`;
         }
-        else if(bname === "cregex_replace_all_string_occurences") { // Not functional as re is passed in as string, not regex expression
-            bop = `s.replaceAll(re, replacement)`;
-        }
         else if(bname === "string_from_cstring") {
             bop = `s`;
         }

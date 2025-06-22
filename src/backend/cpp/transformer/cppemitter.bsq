@@ -52,7 +52,7 @@ function getSpecialTemplates(): (|CString, CString, CString|) {
 
 %% Replaces templates '<', '>', and comma with temporary invalid characters to be replaced just before emission
 function emitSpecialTemplate(name: CString): CString {
-    let templates = name.replaceAllRegexOccurences(CPPAssembly::templateMatch, '');
+    %% let templates = name.replaceAllRegexOccurences(CPPAssembly::templateMatch, ''); %% Does not work 
     %%let ns = name.removePrefixString(templates);
 
     %% Regex replace match for <*> to get ns
@@ -60,7 +60,7 @@ function emitSpecialTemplate(name: CString): CString {
     %% replace :: in template with _
 
     let st = getSpecialTemplates();
-    let base = templates.replaceAllStringOccurrences(' ', '');
+    let base = name.replaceAllStringOccurrences(' ', '');
     let first = base.replaceAllStringOccurrences('<', st.0);
     let second = first.replaceAllStringOccurrences(',', st.1);
     let third = second.replaceAllStringOccurrences('>', st.2);

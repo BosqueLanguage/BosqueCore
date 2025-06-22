@@ -387,10 +387,6 @@ __internal __typedeclable __keycomparable entity CString {
     method replaceAllStringOccurrences(target: CString, replace: CString): CString {
         return CStringOps::s_replaceAllStringOccurrences(this, target, replace);
     }
-
-    method replaceAllRegexOccurences(re: CRegex, replacement: CString): CString {
-        return CStringOps::s_replaceAllRegexOccurrences(this, re, replacement);
-    }
 #endif %% STRIPPED_CORE
 }
 

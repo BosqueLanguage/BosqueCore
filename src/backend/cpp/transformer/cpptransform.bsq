@@ -116,7 +116,7 @@ namespace CPPTransformNameManager {
     }
 
     function shouldBeRef(fields: List<BSQAssembly::MemberFieldDecl>, asm: BSQAssembly::Assembly): Bool {
-        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimitiveType(f.declaredType.tkeystr));
+        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.declaredType.tkeystr));
         if(fields.size() > 4n || !fieldsPrimitive) {
             return true;
         }
@@ -696,7 +696,7 @@ entity CPPTransformer {
     method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tid: Nat, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
         return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
             let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
-            if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
+            if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
                 if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
                 }
@@ -718,7 +718,7 @@ entity CPPTransformer {
         let cur_tid = tid;
         let next_tid = tid + 1n;
 
-        if(bsqasm.isPrimitiveType(typekey)) {
+        if(bsqasm.isPrimtitiveType(typekey)) {
             switch(typekey) {
                 'None'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{     next_tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Bool'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{   next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
