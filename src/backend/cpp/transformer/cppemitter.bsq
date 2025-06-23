@@ -489,11 +489,8 @@ function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::Constru
         data = String::concat("(", arg, ").get()");
     }
     else {
-        let args = cpsse.args.args.reduce<String>("", fn(acc, arg) => { %% arg is just foos constructor here
-            let val = emitExpression(arg@some.exp, ctx);
-            return String::concat(acc, "(", val, ").get()");
-        });
-        data = String::concat("(uint64_t[]){ ", args," } ");
+        let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg@some.exp, ctx) );
+        data = String::joinAll(", ", args);
     }
 
     let sometype = String::concat("Core::", emitTypeKey(cpsse.ctype.tkeystr, false, ctx));
@@ -972,15 +969,19 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
     let def = String::concat(indent, "class ", tkey, " : public __CoreCpp::Boxed<", k, ">{%n;");
     let visibility = String::concat(def, indent, "public:%n;");
 
-    let defaultc = String::concat(full_indent, tkey, "()=default;%n;");
-    let assign = String::concat(full_indent, tkey, "(const ", tkey, "&)=default;%n;");
-    let copy = String::concat(full_indent, tkey, "& operator=(const ", tkey, "&)=default;%n;%n;");
+    let defaultc = String::concat(full_indent, tkey, "() noexcept = default;%n;");
+    let assign = String::concat(full_indent, tkey, "(const ", tkey, "&) noexcept = default;%n;");
+    let copy = String::concat(full_indent, tkey, "& operator=(const ", tkey, "&) noexcept = default;%n;%n;");
 
-    let somecons = String::concat(full_indent, tkey, "(__CoreCpp::TypeInfoBase* ti, uint64_t d): Boxed(ti, d) {};%n;");
-    let nonecons = String::concat(full_indent, tkey, "(__CoreCpp::TypeInfoBase* ti): Boxed(ti) {};%n;");
+    let somecons = if(k === "0") then ""
+        else if(k === "1") then String::concat(full_indent, tkey, "(__CoreCpp::TypeInfoBase* ti, const uint64_t d) noexcept : Boxed(ti, d) {};%n;")
+        else String::concat(full_indent, "template <typename T>%n;", full_indent, tkey, "(__CoreCpp::TypeInfoBase* ti, const T &d) noexcept : Boxed(ti, d) {};%n;");
+    let nonecons = String::concat(full_indent, tkey, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;");
+
+    let someaccessor = String::concat(full_indent, "template <typename T>%n;", full_indent, "T& some() { return *reinterpret_cast<T*>(this->data); }%n;");
 
     let cons = String::concat(defaultc, assign, copy, somecons, nonecons);
-    return String::concat(visibility, cons, indent, "};%n;");
+    return String::concat(visibility, cons, someaccessor, indent, "};%n;");
 }
 
 function emitForwardDeclarationBody(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {    

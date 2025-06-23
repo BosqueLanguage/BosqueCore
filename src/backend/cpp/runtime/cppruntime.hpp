@@ -29,36 +29,27 @@ struct TypeInfoBase
 template <size_t N>
 void memcpy(void* dst, const void* src);
 
-//
-// Instead of my idea where we just take no args as a default constructor to handle the none case, 
-// I think we will need to explicitly write the construcotr for none who takes only typeinfo
-// and doesnt assign data to anything. Needs some thought though and testing.
-//
-
 template <size_t K>
 class Boxed {
 public:
-    Boxed()=default;
-    Boxed(const Boxed& rhs) : typeinfo(rhs.typeinfo) {
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {
         memcpy<K>(this->data, rhs.data);
     };
-    Boxed& operator=(const Boxed& rhs) {
+    Boxed& operator=(const Boxed& rhs) noexcept {
         this->typeinfo = rhs.typeinfo;
         memcpy<K>(this->data, rhs.data);
         return *this;
     };
 
     // Some constructor
-    Boxed(TypeInfoBase* ti, uint64_t (&data)[K]): typeinfo(ti) {
-        memcpy<K>(this->data, data);
+    template <typename T>
+    Boxed(TypeInfoBase* ti, const T &d) noexcept : typeinfo(ti) {
+        memcpy<K>(this->data, &d);
     };
 
     // None constructor
-    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
-
-    //
-    // TODO: Get method for accessing data in Some<T>
-    //
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     TypeInfoBase* typeinfo = nullptr;
     uint64_t data[K] = {};
@@ -67,8 +58,8 @@ public:
 template<>
 class Boxed<1> {
 public:
-    Boxed()=default;
-    Boxed(const Boxed& boxed): typeinfo(boxed.typeinfo), data(boxed.data) {};
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo), data(rhs.data) {};
     Boxed& operator=(const Boxed& rhs) { 
         this->typeinfo = rhs.typeinfo;
         this->data = rhs.data;
@@ -76,10 +67,10 @@ public:
     }
 
     // Some constructor
-    Boxed(TypeInfoBase* ti, uint64_t data): typeinfo(ti), data(data) {};
+    Boxed(TypeInfoBase* ti, const uint64_t d) noexcept : typeinfo(ti), data(d) {};
 
     // None constructor
-    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     TypeInfoBase* typeinfo = nullptr;
     uint64_t data = 0;
@@ -88,14 +79,14 @@ public:
 template<>
 class Boxed<0> {
 public:
-    Boxed()=default;
-    Boxed(const Boxed& boxed): typeinfo(boxed.typeinfo) {};
-    Boxed& operator=(const Boxed& rhs) {
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {};
+    Boxed& operator=(const Boxed& rhs) noexcept {
         this->typeinfo = rhs.typeinfo;
         return *this;
     };
 
-    Boxed(TypeInfoBase* ti): typeinfo(ti) {};
+    Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
 
     TypeInfoBase* typeinfo = nullptr;
 };
