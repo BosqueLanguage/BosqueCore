@@ -195,6 +195,8 @@ entity NamespaceDecl {
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
     field absmethods: List<(|InvokeKey, TypeKey|)>;
     field overmethods: List<(|InvokeKey, TypeKey|)>; 
+
+    field alltypes: List<TypeKey>; %%Very useful in emission
 }
 
 %% Will need expanding
@@ -238,6 +240,9 @@ entity Assembly {
         }
         elif(this.pconcepts.has(tkey)) {
             return this.pconcepts.get(tkey);
+        }
+        elif(this.constructables.has(tkey)) {
+            return this.constructables.get(tkey);
         }
         else {
             abort; %% Non suported typekey!

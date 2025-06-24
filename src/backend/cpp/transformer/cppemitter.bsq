@@ -64,11 +64,14 @@ function emitSpecialThis(): String {
     return "tᖺis";
 }    
 
+%%
+%% TODO: We will need to do some clever prefix matching to correctly generate our typekeys. I almost wonder if I could
+%% be really sneaky and actually do this translation in the transformer? The keys are in a very raw form here, so it could
+%% be WAY easier to just convert Option<Foo::Bar> to the correct representaiton here since we dont worry about nsscoping yet
+%%
 function emitSpecialTemplate(name: String): String {
     let ns = name.replaceAllRegexOccurences(CPPAssembly::templateMatch, "");
     let templates = if(name.startsWithString(ns)) then name.removePrefixString(ns) else "";
-
-    let templatem = "<Foo::Int>"<CPPAssembly::TemplateMatch>;
 
     let base = templates.replaceAllStringOccurrences(" ", "");
     let first = base.replaceAllStringOccurrences("<", "ᐸ");
@@ -800,7 +803,12 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, tk: CPPAssembly::Typ
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     let tkey = emitTypeKey(tk, false, nctx);
 
-    let entries = e.saturatedBFieldInfo.reduce<String>(String::concat(indent, "struct ", tkey, " { %n;"), 
+    let e_enum = generateEntriesEnum(e@<CPPAssembly::AbstractNominalTypeDecl>, e.fields, ctx, indent);
+    let e_vtable = generateVTable(e@<CPPAssembly::AbstractNominalTypeDecl>, e.fields, ctx, indent);
+
+    let base = String::concat(e_enum, e_vtable);
+
+    let entries = e.saturatedBFieldInfo.reduce<String>(String::concat(base, indent, "struct ", tkey, " { %n;"), 
         fn(acc, entry) => {
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
     });
@@ -812,7 +820,12 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     let nctx = ctx.updateCurrentNamespace(dm.declaredInNS, dm.fullns);
     let tkey = emitTypeKey(dm.tkey, false, nctx); 
 
-    let fields = dm.saturatedBFieldInfo.reduce<String>(String::concat(indent, "struct ", tkey, "{ %n;"), 
+    let dm_enum = generateEntriesEnum(dm@<CPPAssembly::AbstractNominalTypeDecl>, dm.fields, ctx, indent);
+    let dm_vtable = generateVTable(dm@<CPPAssembly::AbstractNominalTypeDecl>, dm.fields, ctx, indent);
+
+    let base = String::concat(dm_enum, dm_vtable);
+
+    let fields = dm.saturatedBFieldInfo.reduce<String>(String::concat(base, indent, "struct ", tkey, "{ %n;"), 
         fn(acc, entry) => {
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
     });
@@ -909,11 +922,15 @@ function generateEntriesEnum(ant: CPPAssembly::AbstractNominalTypeDecl, fields: 
     return String::concat(indent, base, String::joinAll(",%n;", field_names), "%n;", indent, "};%n;");
 }
 
-function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::AbstractNominalTypeDecl>, hasfields: Bool, ctx: Context, indent: String): String {
+function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::AbstractNominalTypeDecl>, ctx: Context, indent: String): String {
     let nctx = if(ant)@some then ctx.updateCurrentNamespace($ant.declaredInNS, $ant.fullns) else ctx;
     let full_indent = String::concat("    ", indent);
 
     let name = removeCppPrefix(emitTypeKey(info.typekey, false, nctx));
+    
+    %% For now only entities and datatype entities have fields, thus needing a vtable
+    let hasfields = if(ant)@none then false 
+        else if($ant?<CPPAssembly::EntityTypeDecl> || $ant?<CPPAssembly::DatatypeMemberEntityTypeDecl>) then true else false;
 
     let tinfo_name = String::concat(name, "Type");
 
@@ -929,15 +946,15 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
     return String::concat(vtable, indent, "};%n;");
 }
 
-function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<CPPAssembly::MemberFieldDecl>, body: String, ctx: Context, indent: String): String {
-    let ant_enum = generateEntriesEnum(ant, fields, ctx, indent);
-    let vtable = generateVTable(ant, fields, ctx, indent);
-    let tinfo = emitTypeInfo(ctx.asm.typeinfos.tryGet(ant.tkey)@some, some(ant), false, ctx, indent);
-    let staticmethods = ant.staticmethods.reduce<String>("", fn(acc, m) => { 
-        return String::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(m), ant.tkey, ctx, indent));
-    });
-    
-    return String::concat(ant_enum, vtable, tinfo, body, staticmethods);
+function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, tk: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
+    %% The entries who need a vtable should manually do it
+    match(ant)@ {
+        CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl(ant@<CPPAssembly::EntityTypeDecl>, tk, ctx, indent); }
+        | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl(ant@<CPPAssembly::DatatypeMemberEntityTypeDecl>, ctx, indent); }
+        | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl(ant@<CPPAssembly::PrimitiveConceptTypeDecl>, ctx, indent); }
+        | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl(ant@<CPPAssembly::ConstructableTypeDecl>, ctx, indent); }
+        | _ => { abort; }
+    }
 }
 
 function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
@@ -960,6 +977,10 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
+%%
+%% TODO: Need to fix the Boxed<1> case, as it should accept the Some<Primitive> type then just extract the data
+%%
+
 %% Note: Only supports options currently
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
@@ -976,8 +997,8 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
 
     let indenttkey = String::concat(full_indent, tkey);
 
-    let somecons = if(k === "0") then ""
-        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, const uint64_t d) noexcept : Boxed(ti, d) {};%n;")
+    let somecons = if(k === "0") then "" %% Cant just call get on the value in this case...
+        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey," d) noexcept : Boxed(ti, reinterpret_cast<uint64_t>(&d.value)) {};%n;")
         else String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey ," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t(*)[", k,"]>(&d)) {};%n;");
     let nonecons = String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;");
 
@@ -1026,45 +1047,13 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
     let full_indent = String::concat("    ", indent);
 
-    let constructables = nsdecl.constructables.reduce<String>(ns, fn(acc, tk) => {
-        let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), none, false, ctx, full_indent);
-        let con = emitConstructableTypeDecl(ctx.asm.constructables.get(tk), ctx, full_indent);
-        return String::concat(acc, tinfo, con);
-    });
-
-    let pconcepts = nsdecl.pconcepts.reduce<String>(constructables, fn(acc, tk) => {
-        let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), none, false, ctx, full_indent);
-        return String::concat(acc, tinfo, emitPrimtiveConceptTypeDecl(ctx.asm.pconcepts.get(tk), ctx, full_indent));
-    });
-
-    %% Ensure no conflicts when accessing functions from other ns (might need to recursively explore other deeper ns)
-    let subns_fwddecls = nsdecl.subns.reduce<String>(pconcepts, fn(acc, name, subns) => {
-        return String::concat(acc, emitForwardDeclarations(subns, ctx, full_indent));
-    });
-
-    %% Fwd decls for all in current namespace
-    let curns_fwddecls = String::concat(subns_fwddecls, emitForwardDeclarationBody(nsdecl, ctx, full_indent));
-
     %% Emit sub-namespace declarations
-    let subns = nsdecl.subns.reduce<String>(curns_fwddecls, fn(acc, name, decl) => {
+    let subns = nsdecl.subns.reduce<String>(ns, fn(acc, name, decl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
-    %% All entities && their typeinfo
-    let entities = nsdecl.entities.reduce<String>(subns, fn(acc, tk) => {
-        let e = ctx.asm.entities.get(tk);
-        let emit_entity = emitEntityTypeDecl(e, tk, ctx, full_indent);
-        return String::concat(acc, emitAbstractNominalTypeDecl(e@<CPPAssembly::AbstractNominalTypeDecl>, e.fields, emit_entity, ctx, full_indent));
-    });
-
-    let datamembers = nsdecl.datamembers.reduce<String>(entities, fn(acc, tk) => {
-        let dm = ctx.asm.datamembers.get(tk);
-        let emit_dm = emitDatatypeMemberEntityDecl(dm, ctx, full_indent);
-        return String::concat(acc, emitAbstractNominalTypeDecl(dm@<CPPAssembly::AbstractNominalTypeDecl>, dm.fields, emit_dm, ctx, full_indent));
-    });
-
     %% Emit functions in current namespace
-    let nsfuncs = nsdecl.nsfuncs.reduce<String>(datamembers, fn(acc, ikey) => {
+    let nsfuncs = nsdecl.nsfuncs.reduce<String>(String::concat(subns, "//%n;// Emitted Functions%n;//%n;") , fn(acc, ikey) => {
         return String::concat(acc, emitFunctionDecl(ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
     });
 
@@ -1075,14 +1064,94 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     return String::concat(typefuncs, indent, "}%n;");
 }
 
+%%
+%% Emits forward decls of non-value types
+%%
+function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+
+    let subns = nsdecl.subns
+        .reduce<String>(ns, fn(acc, name, decl) => {
+            return String::concat(acc, emitNamespaceDeclFwdDecls[recursive](decl, ctx, full_indent));
+    });
+
+    let fwddecls = nsdecl.alltypes
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
+        .reduce<String>(subns, fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
+            return String::concat(acc, fwddecl);
+    });
+
+    return String::concat(fwddecls, "}%n;");
+}
+
+%%
+%% Emits all necessary types given nsdecl (their concrete definitions)
+%%
+function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+
+    let subns = nsdecl.subns
+        .reduce<String>(ns, fn(acc, name, decl) => {
+            return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
+    });
+
+    %% Value types
+    let values = nsdecl.alltypes
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value)
+        .reduce<String>(subns, fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), some(ant), ctx, full_indent);
+            let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
+            return String::concat(acc, tinfo, def);
+    });
+
+    %% Non-value types
+    let other = nsdecl.alltypes
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
+        .reduce<String>(values, fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let tinfo = emitTypeInfo(ctx.asm.typeinfos.get(tk), some(ant), ctx, full_indent);
+            let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
+            return String::concat(acc, tinfo, def);
+    });
+
+    return String::concat(other, "}%n;");
+}
+
+%%
+%% We will need to emit our datatypes, entities, whatever in this order:
+%% Primitives -> Value types (so entities with 4 or less primitive fields) -> everything else where we do forward decls
+%% Then once this is in place we can just go through and emit the namespaced functions and such wihtout worrying about 
+%% also emitting entities or whatever
+%%
+
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
-    %% We MAY want to make this just be all typeinfos 
-    let primitive_typeinfos = asm.typeinfos.reduce<String>("", fn(acc, tk, ti) => {
-        return if(asm.isPrimtitiveType(tk)) then String::concat(acc, emitTypeInfo(ti, none, false, ctx, "")) else acc;
+    %%
+    %% We need to go through each ns, then using the typeinfos present to grab the types do the correct emission of all
+    %% types where we emit Primitives -> Values -> Everything else with fwd decls.
+    %%
+
+    let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Emitted Types%n;//%n;", fn(acc, tk, ti) => {
+        return if(asm.isPrimtitiveType(tk)) then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) else acc;
     }); 
-    let ns_emission = asm.nsdecls.reduce<String>(primitive_typeinfos, fn(acc, nsname, nsdecl) => {
+
+    %% Non-value type forward decls
+    let fwddecls = asm.nsdecls.reduce<String>(primitive_typeinfos, fn(acc, nsname, nsdecl) => {
+        return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
+    });
+
+    %% We emit types separate from functions to avoid cluttering up the code that people actually care about
+    let types = asm.nsdecls.reduce<String>(fwddecls, fn(acc, nsname, nsdecl) => {
+        return String::concat(acc, emitNamespaceDeclTypes(nsdecl, ctx, ""));
+    });
+
+    let ns_emission = asm.nsdecls.reduce<String>(types, fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
     });
 
