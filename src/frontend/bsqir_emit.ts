@@ -185,6 +185,36 @@ class BSQIREmitter {
         }
     }
 
+    private static uniqueifyChildrenHelper(cl: string[]): string[] {
+        const result: string[] = [];
+
+        for(let i = 0; i < cl.length; ++i) {
+            if(!result.includes(cl[i])) {
+                result.push(cl[i]);
+            }
+        }
+
+        return result;
+    }
+
+    private emitChildrenTypes(ttype: TypeSignature): string[] {
+        const tt = this.tproc(ttype);
+
+        if(tt instanceof NominalTypeSignature) {
+            return [EmitNameManager.generateTypeKey(tt)];
+        }
+        else if(tt instanceof EListTypeSignature) {
+            return BSQIREmitter.uniqueifyChildrenHelper(tt.entries.flatMap((et) => this.emitChildrenTypes(et)));
+        }
+        else {
+            assert(false, "Unknown type signature " + ttype.tkeystr);
+        }
+    }
+
+    private emitChildrenTypesForAll(ttype: TypeSignature[]): string[] {
+        return BSQIREmitter.uniqueifyChildrenHelper(ttype.flatMap((tt) => this.emitChildrenTypes(tt)));
+    }
+
     private emitTypeSignatureBase(ttype: TypeSignature): string {
         return `sinfo=${this.emitSourceInfo(ttype.sinfo)}, tkeystr='${EmitNameManager.generateTypeKey(ttype)}'<TypeKey>`;
     }
@@ -1882,6 +1912,8 @@ class BSQIREmitter {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), []);
+
         const fields = tdecl.members.map((mname) => `'${mname}'`).join(", ");
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::EnumTypeDecl{ ${tbase}, members=List<CString>{ ${fields} } }`];
     }
@@ -1890,7 +1922,7 @@ class BSQIREmitter {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [EmitNameManager.generateTypeKey(tdecl.valuetype)]);
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tdecl.valuetype));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)} }`];
     }
@@ -1898,8 +1930,8 @@ class BSQIREmitter {
     private emitTypedeclStringOfTypeDecl(ns: FullyQualifiedNamespace, tdecl: TypedeclTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const tbase = this.emitAbstractNominalTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
-    
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [EmitNameManager.generateTypeKey(tdecl.valuetype)]);
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tdecl.valuetype));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofexp=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
     }
@@ -1912,6 +1944,8 @@ class BSQIREmitter {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), []);
+
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::PrimitiveEntityTypeDecl{ ${ibase} }`];
     }
 
@@ -1919,7 +1953,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [this.emitTypeSignature(tsig.alltermargs[0])]);
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tsig.alltermargs[0]));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::OkTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
@@ -1928,7 +1962,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T", "E"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [this.emitTypeSignature(tsig.alltermargs[1])]);
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tsig.alltermargs[1]));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::FailTypeDecl{ ${ibase}, oktype=${this.emitTypeSignature(tsig.alltermargs[0])}, failtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
@@ -1953,7 +1987,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [this.emitTypeSignature(tsig.alltermargs[0])]);
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tsig.alltermargs[0]));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::SomeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }
@@ -1966,7 +2000,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), [this.emitTypeSignature(tsig.alltermargs[0])]);
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tsig.alltermargs[0]));
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ListTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }
@@ -1994,8 +2028,8 @@ class BSQIREmitter {
     private emitEntityTypeDecl(ns: FullyQualifiedNamespace, tdecl: EntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitAbstractEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
-        
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), tdecl.saturatedBFieldInfo.map((sfi) => this.emitTypeSignature(sfi.type)));
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypesForAll(tdecl.saturatedBFieldInfo.map((sfi) => sfi.type)));
 
         const mfields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::EntityTypeDecl{ ${ibase}, fields=List<BSQAssembly::MemberFieldDecl>{ ${mfields} } }`];
@@ -2043,7 +2077,7 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitAbstractEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), tdecl.saturatedBFieldInfo.map((sfi) => this.emitTypeSignature(sfi.type)));
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypesForAll(tdecl.saturatedBFieldInfo.map((sfi) => sfi.type)));
 
         const fields = tdecl.fields.map((f) => this.emitMemberFieldDecl(ns, tsig, f)).join(", ");
         const parenttype = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl.parentTypeDecl, tsig.alltermargs);
@@ -2370,6 +2404,10 @@ class BSQIREmitter {
     }
 
     private topovisit(gkey: string, topo: string[], visited: Set<string>) {
+        if(visited.has(gkey)) {
+            return;
+        }
+
         let children: string[] = [...(this.typegraph.get(gkey) as string[])];
         visited.add(gkey);
 
@@ -2388,9 +2426,7 @@ class BSQIREmitter {
         const tgtypes = [...this.typegraph.keys()].sort();
         for(let i = 0; i < tgtypes.length; ++i) {
             const tkey = tgtypes[i];
-            if(!visited.has(tkey)) {
-                this.topovisit(tkey, topo, visited);
-            }
+            this.topovisit(tkey, topo, visited);
         }
 
         return topo.filter((t) => this.allconcretetypes.includes(`'${t}'<BSQAssembly::TypeKey>`));
@@ -2456,7 +2492,7 @@ class BSQIREmitter {
         
         const topoinfo = topotypes.map((t) => `'${t}'<BSQAssembly::TypeKey>`);
         const sccinfo = sccs.map((scc) => `List<BSQAssembly::TypeKey>{ ${scc.map((s) => `'${s}'<BSQAssembly::TypeKey>`).join(", ")} }`);
-        const cginfo = `TypeTopology{ ctopol=List<BSQAssembly::TypeKey>{ ${topoinfo.join(", ")} }, sccs=List<List<BSQAssembly::TypeKey>>{ ${sccinfo.join(", ")} } }`;
+        const cginfo = `BSQAssembly::TypeTopology{ ctopo=List<BSQAssembly::TypeKey>{ ${topoinfo.join(", ")} }, sccs=List<List<BSQAssembly::TypeKey>>{ ${sccinfo.join(", ")} } }`;
 
         let fmt = new BsqonCodeFormatter(1);
         return "BSQAssembly::Assembly{\n" +
@@ -2488,7 +2524,7 @@ class BSQIREmitter {
             fmt.formatListOf("List<BSQAssembly::InvokeKey>{", emitter.allvmethods, "},\n") +
             
             fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allconcretetypes, "},\n") +
-            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allabstracttypes, "}\n") +
+            fmt.formatListOf("List<BSQAssembly::TypeKey>{", emitter.allabstracttypes, "},\n") +
             fmt.indent(cginfo) + "\n" +
         "}";
     }

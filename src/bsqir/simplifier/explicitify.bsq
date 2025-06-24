@@ -821,7 +821,8 @@ entity ExplicitifyTransform {
             allvmethods = assembly.allvmethods,
 
             allconcretetypes = assembly.allconcretetypes,
-            allabstracttypes = assembly.allabstracttypes
+            allabstracttypes = assembly.allabstracttypes,
+            typetopo = assembly.typetopo
         };
     }
 }
