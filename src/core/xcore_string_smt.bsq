@@ -21,6 +21,8 @@ namespace StringOps {
 
     function s_replaceUniqueStringOccurrence(s: String, target: String, replacement: String): String = string_replace_unique_string_occurrence;
     function s_replaceAllStringOccurrences(s: String, target: String, replacement: String): String = string_replace_all_string_occurrences;
+
+    function s_replaceAllRegexOccurences(s: String, re: Regex, replacement: String): String = string_replace_all_regex_occurences;
 }
 #else
 #endif %% SMT_LIBS

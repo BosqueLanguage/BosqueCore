@@ -43,9 +43,9 @@ public:
     };
 
     // Some constructor
-    template <typename T>
-    Boxed(TypeInfoBase* ti, const T &d) noexcept : typeinfo(ti) {
-        memcpy<K>(this->data, &d);
+    // Instead of T do uintptr_t d[K]
+    Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
+        memcpy<K>(this->data, d);
     };
 
     // None constructor
@@ -67,7 +67,7 @@ public:
     }
 
     // Some constructor
-    Boxed(TypeInfoBase* ti, const uint64_t d) noexcept : typeinfo(ti), data(d) {};
+    Boxed(TypeInfoBase* ti, uint64_t d) noexcept : typeinfo(ti), data(d) {};
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};

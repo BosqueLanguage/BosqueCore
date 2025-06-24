@@ -251,6 +251,10 @@ __internal __typedeclable __keycomparable entity String {
     method replaceAllStringOccurrences(target: String, replace: String): String {
         return StringOps::s_replaceAllStringOccurrences(this, target, replace);
     }
+
+    method replaceAllRegexOccurences(re: Regex, replace: String): String {
+        return StringOps::s_replaceAllRegexOccurences(this, re, replace);
+    }
 #endif %% STRIPPED_CORE
 }
 
