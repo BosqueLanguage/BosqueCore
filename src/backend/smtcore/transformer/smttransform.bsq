@@ -49,8 +49,8 @@ namespace TransformNameManager {
         return CString::join('-', '@FieldDefault', TransformNameManager::resymbolCStringForSMT(tkey.value), fname);
     }
 
-    function generateNameForInvariantFunction(tkey: BSQAssembly::TypeKey, iid: CString): CString {
-        return CString::join('-', '@Invariant', TransformNameManager::resymbolCStringForSMT(tkey.value), iid);
+    function generateNameForValidatorFunction(tkey: BSQAssembly::TypeKey): CString {
+        return CString::concat('@Validate-', TransformNameManager::resymbolCStringForSMT(tkey.value));
     }
 }
 
@@ -136,6 +136,8 @@ entity SMTTransformer {
 
     const nonetype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'None'<BSQAssembly::TypeKey> };
     const booltype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<BSQAssembly::TypeKey> };
+
+    const vvariable = SMTAssembly::Identifier::from('v');
 
     function isTermSMTTypeKey(tkey: SMTAssembly::TypeKey): Bool {
         return tkey === '@Term'<SMTAssembly::TypeKey>;
@@ -1817,6 +1819,48 @@ entity SMTTransformer {
         }
     }
 
+    method transformConstructableDeclToSMT_Validator(decl: BSQAssembly::ConstructableTypeDecl): SMTAssembly::FunctionDecl {
+        let ikey = TransformNameManager::generateNameForValidatorFunction(decl.tkey);
+        let params = List<SMTAssembly::InvokeParameterDecl>{SMTAssembly::InvokeParameterDecl{SMTTransformer::vvariable, this.transformStdTypeToSMT($decl.oftype)}};
+        let rtype = SafeResult{ this.transformStdTypeToSMT(SMTTransformer::booltype) };
+
+        match(decl)@ {
+            BSQAssembly::OkTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::FailTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::APIRejectedTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::APIFailedTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APIErrorTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APISuccessTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::SomeTypeDecl => { 
+                xxxx;
+
+                let ofvcall = TransformNameManager::generateNameForValidatorFunction($decl.oftype);
+                let access = xxxx;
+                let ofcall = SMTAssembly::CallFunctionSafeExpression{ofvcall, List<SMTAssembly::SafeExpression>{SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable}}}};
+                let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{ofcall, List<SMTAssembly::ErrorInfo>{}};
+
+                return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
+            }
+            | BSQAssembly::MapEntryTypeDecl => { 
+                let ktype = this.transformStdTypeToSMT($decl.ktype);
+                let vtype = this.transformStdTypeToSMT($decl.vtype);
+                return SMTAssembly::MapEntryTypeDecl{ tkey, ktype, vtype };
+            }
+        }
+    }
+
     method transformCollectionDeclToSMT(decl: BSQAssembly::CollectionTypeDecl): SMTAssembly::CollectionTypeDecl {
         let tkey = TransformNameManager::convertTypeKey(decl.tkey);
 
@@ -1916,6 +1960,10 @@ entity SMTTransformer {
         return none;
     }
 
+    method generateValidatorFunction(tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl {
+        xxxx;
+    }
+
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
     
@@ -1977,6 +2025,10 @@ entity SMTTransformer {
             .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(assembly.pconcepts.get(tkey)));
 
         let tallfuncs = List<SMTAssembly::InvokeKey>::concat(tnsfuncsbuiltin.keyList(), tnsinvkeys);
+
+        let tvalidators = assembly.typetopo.ctopo.
+            .filter(pred(tkey) => !assembly.primitives.has(tkey))
+            .map<SMTAssembly::FunctionDecl>(fn(tkey) => transformer.generateValidatorFunction(assembly.lookupNominalTypeDeclaration(tkey)));
 
         return SMTAssembly::Assembly {
             nsconsts = tnsconstsinfo.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => nsc.0),
