@@ -2429,7 +2429,7 @@ class BSQIREmitter {
             this.topovisit(tkey, topo, visited);
         }
 
-        return topo.filter((t) => this.allconcretetypes.includes(`'${t}'<BSQAssembly::TypeKey>`));
+        return topo;
     }
 
     private sccVisit(gkey: string, visited: Map<string, boolean>, scc: string[]) {
