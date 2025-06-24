@@ -1844,8 +1844,6 @@ entity SMTTransformer {
                 abort;
             }
             | BSQAssembly::SomeTypeDecl => { 
-                xxxx;
-
                 let ofvcall = TransformNameManager::generateNameForValidatorFunction($decl.oftype);
                 let access = xxxx;
                 let ofcall = SMTAssembly::CallFunctionSafeExpression{ofvcall, List<SMTAssembly::SafeExpression>{SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable}}}};
