@@ -74,11 +74,11 @@
 (define-fun @Validate-None ((v None)) Bool true)
 (define-fun @Validate-Bool ((v Bool)) Bool true)
 (define-fun @Validate-Nat ((v Nat)) Bool (and (<= 0 v) (<= v SMV_I_RANGE)))
-(define-fun @Validate-Int ((v Int)) Bool (and (<= -SMV_I_RANGE v) (<= v SMV_I_RANGE)))
+(define-fun @Validate-Int ((v Int)) Bool (and (<= (- SMV_I_RANGE) v) (<= v SMV_I_RANGE)))
 (define-fun @Validate-BigNat ((v BigNat)) Bool (and (<= 0 v) (<= v SMV_I_RANGE)))
-(define-fun @Validate-BigInt ((v BigInt)) Bool (and (<= -SMV_I_RANGE v) (<= v SMV_I_RANGE)))
+(define-fun @Validate-BigInt ((v BigInt)) Bool (and (<= (- SMV_I_RANGE) v) (<= v SMV_I_RANGE)))
 (define-fun @Validate-Float ((v Float)) Bool (and (<= -1024.0 v) (<= v 1024.0)))
-(define-fun @Validate-CString ((v CString)) Bool (<= (str.len v) SMV_STR_LENGTH))
+(define-fun @Validate-CString ((v CString)) Bool (and (<= (str.len v) SMV_STR_LENGTH) (str.in.re v (re.* (re.union (str.to.re "\u{9}") (re.range " " "~"))))))
 (define-fun @Validate-String ((v String)) Bool (<= (str.len v) SMV_STR_LENGTH))
 
 ;;--VALIDATE_PREDICATES--;;
