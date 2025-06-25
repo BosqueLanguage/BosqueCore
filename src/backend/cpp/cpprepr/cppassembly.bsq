@@ -249,6 +249,30 @@ entity Assembly {
         }
     }
 
+    method tryLookupInvokeImplDeclaration(ikey: InvokeKey): Option<AbstractInvokeDecl> {
+        if(this.nsfuncs.has(ikey)) {
+            return some(this.nsfuncs.get(ikey));
+        }
+        elif(this.typefuncs.has(ikey)) {
+            return some(this.typefuncs.get(ikey));
+        }
+        elif(this.virtmethods.has(ikey)) {
+            return some(this.virtmethods.get(ikey));
+        }
+        elif(this.overmethods.has(ikey)) {
+            return some(this.overmethods.get(ikey));
+        }
+        elif(this.staticmethods.has(ikey)) {
+            return some(this.staticmethods.get(ikey));
+        }
+        elif(this.absmethods.has(ikey)) {
+            return some(this.staticmethods.get(ikey));
+        }
+        else {
+            return none;
+        }
+    }
+
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }

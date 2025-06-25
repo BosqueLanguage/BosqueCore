@@ -64,22 +64,25 @@ function emitSpecialThis(): String {
     return "tᖺis";
 }    
 
-%%
-%% TODO: We will need to do some clever prefix matching to correctly generate our typekeys. I almost wonder if I could
-%% be really sneaky and actually do this translation in the transformer? The keys are in a very raw form here, so it could
-%% be WAY easier to just convert Option<Foo::Bar> to the correct representaiton here since we dont worry about nsscoping yet
-%%
-function emitSpecialTemplate(name: String): String {
-    let ns = name.replaceAllRegexOccurences(CPPAssembly::templateMatch, "");
-    let templates = if(name.startsWithString(ns)) then name.removePrefixString(ns) else "";
+function removeCommonPrefix(name: String, prefix: String): String {
+    if(!name.startsWithString(prefix)) {
+        return "";
+    }
+    return name.removePrefixString(prefix);
+}
 
-    let base = templates.replaceAllStringOccurrences(" ", "");
+function emitSpecialTemplate(name: String): String {
+    if(name.startsWithString("__CoreCpp")) {
+        return name;
+    }
+    
+    let base = name.replaceAllStringOccurrences(" ", "");
     let first = base.replaceAllStringOccurrences("<", "ᐸ");
     let second = first.replaceAllStringOccurrences(",", "ᐧ");
     let third = second.replaceAllStringOccurrences(">", "ᐳ");
     let final = third.replaceAllStringOccurrences("::", "ᘏ");
 
-    return String::concat(ns, final);
+    return final;
 }
 
 %% We dont want this prefix when emitting typeinfo for primitives
@@ -87,8 +90,47 @@ function removeCppPrefix(s: String): String {
     return if(s.startsWithString("__CoreCpp::")) then s.removePrefixString("__CoreCpp::") else s;
 }
 
+function convertCStringList(l: List<CString>): List<String> {
+    return l.map<String>(fn(e) => String::fromCString(e));
+}
+
+function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPAssembly::InvokeKey>, ctx: Context): String {
+    %% Handle Type Funcs explicitly as their InvokeKey is missing the "Core::" prefix
+    let isTypeFunc = if(ik)@some then ctx.asm.typefuncs.has($ik) else false;
+    
+    var resolvedik: Option<CPPAssembly::InvokeKey>;
+    match(ik) {
+        Some<CPPAssembly::InvokeKey> => { resolvedik = if(isTypeFunc) 
+            then some(ctx.asm.typefuncs.get(ik@some).completeikey) 
+            else ik; }
+        | None => { resolvedik = ik; }
+    }
+
+    var declaredInNS: String;
+    match(tk) {
+        Some<CPPAssembly::TypeKey> => { declaredInNS = emitNamespaceKey(ctx.asm.lookupNominalTypeDeclaration(tk@some).declaredInNS); }
+        | None => { declaredInNS = emitNamespaceKey(ctx.asm.tryLookupInvokeImplDeclaration(ik@some)@some.declaredInNS); }
+    }
+    
+    %% If a typefunc we need to create the namespace key from its completens (as tfunc.declaredInNS is lacking "Core::" prefix)
+    var resolvedns: String;
+    match(ik) { 
+        Some<CPPAssembly::InvokeKey> => { resolvedns = if(isTypeFunc) 
+            then String::joinAll("::", convertCStringList(ctx.asm.typefuncs.get(ik@some).completens)) 
+            else declaredInNS; }
+        | None => { resolvedns = declaredInNS; }
+    }
+
+    let ns = String::concat(resolvedns, "::");
+    let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
+    let template = emitSpecialTemplate(removeCommonPrefix(key, ns));
+    
+    return if(template === "") then emitSpecialTemplate(key) 
+        else String::concat(ns, template);
+}
+
 function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
-    let emit = emitResolvedNamespace(ctx.fullns_list, emitSpecialTemplate(emitTypeKeyValue(tk))); 
+    let emit = emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(some(tk), none, ctx)); 
 
     if(isParamField) {
         let tinfo = ctx.asm.typeinfos.tryGet(tk)@some;
@@ -115,7 +157,7 @@ function emitVarIdentifier(vi: CPPAssembly::VarIdentifier): String {
 }
 
 function emitInvokeKey(ik: CPPAssembly::InvokeKey, ctx: Context): String {
-    return emitResolvedNamespace(ctx.fullns_list, emitSpecialTemplate(emitInvokeKeyValue(ik))); 
+    return emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(none, some(ik), ctx)); 
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
@@ -388,7 +430,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
 
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): String { 
     let typefunc = ctx.asm.typefuncs.get(e.ikey);
-    let name = emitInvokeKey(typefunc.completeikey, ctx);
+    let name = emitInvokeKey(typefunc.ikey, ctx);
     let args = emitArgumentList(e.args, typefunc.params, ctx); 
 
     return String::concat(name, "(", args, ")");
@@ -784,7 +826,7 @@ function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPA
 %% Type funcs are fully resolved before cpp emission so we can group them with nsfuncs
 function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {
     let isTypeFunc = ctx.asm.typefuncs.has(func.ikey);
-    let ikey = if(isTypeFunc) then ctx.asm.typefuncs.get(func.ikey).completeikey else func.ikey;   
+    let ikey = func.ikey;   
     let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(func.ikey).completens else func.fullns;
     let nctx = ctx.updateCurrentNamespace(func.declaredInNS, ns);
 
@@ -884,7 +926,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
 function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, ctx: Context, ident: String): String {
     let isTypeFunc = ctx.asm.typefuncs.has(decl.ikey);
-    let ikey = if(isTypeFunc) then ctx.asm.typefuncs.get(decl.ikey).completeikey else decl.ikey;   
+    let ikey = decl.ikey;   
     let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(decl.ikey).completens else decl.fullns;
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, ns);
 

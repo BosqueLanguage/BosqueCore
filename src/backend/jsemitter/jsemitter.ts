@@ -2375,10 +2375,6 @@ class JSEmitter {
         else if(bname === "string_replace_all_string_occurrences") {
             bop = `s.replaceAll(target, replacement)`;
         }
-        else if(bname == "string_replace_all_regex_occurences") {
-            preop = `const reg = new RegExp(re.slice(1,-1).replace(/\\"/g, ""), "g"); `;
-            bop = `s.replace(reg, replacement)`;
-        }
         else if(bname === "s_algo_while") {
             preop = `var state = s; while(guard(state)) { state = op(state); } `;
             bop = `state`;
