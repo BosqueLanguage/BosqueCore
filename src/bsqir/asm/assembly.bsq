@@ -291,6 +291,7 @@ entity Assembly {
 
     field allconcretetypes: List<TypeKey>;
     field allabstracttypes: List<TypeKey>;
+    field typetopo: TypeTopology;
 
     method lookupNominalTypeDeclaration(tkey: TypeKey): AbstractNominalTypeDecl {
         if(this.enums.has(tkey)) {

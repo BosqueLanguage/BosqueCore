@@ -94,7 +94,7 @@ ConstructorListSingletonExpression {
 ;
 
 entity ConstructorEListExpression provides SafeExpression {
-    field constype: TypeKey;
+    field elcons: CString;
     field args: List<SafeExpression>;
 }
 
@@ -139,11 +139,6 @@ entity LogicActionOrExpression provides SafeExpression {
     invariant $args.size() >= 2n;
 }
 
-entity LogicActionImpliesExpression provides SafeExpression {
-    field argl: SafeExpression;
-    field argr: SafeExpression;
-}
-
 entity UnwrapTypeDeclToPrimitiveExpression provides SafeExpression {
     field decltype: TypeKey;
     field arg: SafeExpression;
@@ -158,7 +153,7 @@ entity AccessFromNameResolvedExpression provides SafeExpression {
 
 entity AccessFromIndexExpression provides SafeExpression {
     field elisttype: TypeKey;
-    field idx: CString;
+    field elistkey: CString;
 
     field arg: SafeExpression;
 }
@@ -310,7 +305,7 @@ entity AbortExpression provides Expression {
 
 entity AssertExpression provides Expression {
     field etype: TypeKey;
-    field aexp: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    field aexp: Expression;
     field label: Nat;
     
     field inexp: Expression;
@@ -318,7 +313,7 @@ entity AssertExpression provides Expression {
 
 entity AssertSetExpression provides Expression {
     field etype: TypeKey;
-    field aset: List<(|Expression, Nat|)>; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    field aset: List<(|Expression, Nat|)>;
     
     field inexp: Expression;
 
@@ -373,14 +368,14 @@ entity AbortOperation provides Operation {
 }
 
 entity AssertOperation provides Operation {
-    field cond: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    field cond: Expression;
     field label: Nat;
 
     field inop: Operation;
 }
 
 entity AssumeOperation provides Operation {
-    field cond: Expression; %%TODO: we are going to treat this as if an error is a failure on this assertion -- I like that but perhaps other options are better
+    field cond: Expression;
 
     field inop: Operation;
 }

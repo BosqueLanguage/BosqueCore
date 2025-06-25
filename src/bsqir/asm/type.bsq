@@ -24,3 +24,8 @@ VoidTypeSignature { }
     field resultType: TypeSignature;
 }
 ;
+
+entity TypeTopology {
+    field ctopo: List<TypeKey>;
+    field sccs: List<List<TypeKey>>;
+}

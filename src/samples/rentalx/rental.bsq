@@ -1,0 +1,115 @@
+declare namespace Main;
+
+enum WindCategory {
+    calm,
+    windy,
+    high,
+    dangerous
+}
+
+function categorizeWinds(windSpeed: Nat): WindCategory {
+    if(windSpeed < 10n) {
+        return WindCategory#calm;
+    }
+    else {
+        if (windSpeed < 20n) {
+            return WindCategory#high;
+        }
+        else {
+            if(windSpeed < 30n) {
+                return WindCategory#windy;
+            }
+            else {
+                return WindCategory#dangerous;
+            }
+        }
+    }
+}
+
+enum WindDirection {
+    north,
+    south,
+    east,
+    west
+}
+
+enum ForecastDetail {
+    sun,
+    showers,
+    thunderstorms,
+    snow,
+    fog
+}
+
+entity TempRange {
+    field low: Int;
+    field high: Int;
+
+    invariant $low <= $high;
+}
+
+entity WindSpeedInfo {
+    field min: Nat;
+    field max: Nat;
+    field windDirection: WindDirection;
+
+    invariant $min <= $max;
+}
+
+entity Forecast {
+    field temp: TempRange;
+    field winds: WindSpeedInfo;
+    field info: ForecastDetail;
+}
+
+entity RentalAvailabilityInfo {
+    field inventory: Nat;
+    field reservations: Nat;
+    field returns: Nat;
+
+    invariant ($inventory + $returns) >= $reservations;
+}
+
+enum Reason {
+    approved,
+    insufficientAvailability,
+    closedDueToConditions
+}
+
+enum ExpertiseLevel {
+    novice,
+    intermediate,
+    expert
+}
+
+function decide(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, requestedQuantity: Nat, allowPartials: Bool): (|Nat, Reason|) {
+    let isClosed = \/(categorizeWinds(forecast.winds.max) === WindCategory#dangerous, forecast.info === ForecastDetail#thunderstorms);
+    let availability = (rentalinfo.inventory + rentalinfo.returns) - rentalinfo.reservations;
+    
+    if(isClosed) {
+        return (|0n, Reason#closedDueToConditions|);
+    }
+    else {
+        if(requestedQuantity <= availability) {
+            return (|requestedQuantity, Reason#approved|);
+        }
+        else {
+            if(allowPartials) {
+                return (|availability, Reason#approved|);
+            }
+            else {
+                return (|0n, Reason#insufficientAvailability|);
+            }
+        }
+    }
+}
+
+public function main(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, requestedQuantity: Nat, allowPartials: Bool): (|Nat, Reason|) {
+    let windcat = categorizeWinds(forecast.winds.max);
+    let decision = decide(forecast, rentalinfo, requestedQuantity, allowPartials);
+
+    assert (decision.1 === Reason#approved) ==> decision.0 <= (rentalinfo.inventory + rentalinfo.returns) - rentalinfo.reservations;
+    assert /\(decision.1 === Reason#approved, !allowPartials) ==> decision.0 == requestedQuantity;
+
+    return decision;
+}

@@ -181,15 +181,33 @@ entity ExplicitifyTransform {
     }
 
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgs(e.args, vmap);
+        let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
 
-        return e[args=nargs];
+        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        if(restype)@!<TypedeclTypeDecl> {
+            return e[args=nargs];            
+        }
+        else {
+            let nbop = e[etype=$restype.valuetype, args=nargs];
+            let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
+
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+        }
     }
 
     recursive method processLogicActionOrExpression(e: LogicActionOrExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgs(e.args, vmap);
+        let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
 
-        return e[args=nargs];
+        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        if(restype)@!<TypedeclTypeDecl> {
+            return e[args=nargs];            
+        }
+        else {
+            let nbop = e[etype=$restype.valuetype, args=nargs];
+            let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
+
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+        }
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression, vmap: VarMapping): Expression {
@@ -222,8 +240,8 @@ entity ExplicitifyTransform {
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
             match(op)@ {
                 PostfixAccessFromName => { return $op; }
-                | PostfixProjectFromNames => { abort; }
-                | PostfixAccessFromIndex => { abort; }
+                | PostfixProjectFromNames => { return $op; }
+                | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return $op; }
                 | PostfixAsConvert => { return $op; }
                 | PostfixAssignFields => { abort; }
@@ -335,6 +353,23 @@ entity ExplicitifyTransform {
         return e[lhs=nlhs, rhs=nrhs];
     }
 
+    recursive method processBinLogicExpression(e: BinLogicExpression, vmap: VarMapping): Expression {
+        var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
+        nlhs = this.processExplicitBoolConvertAsNeeded(nlhs);
+        nrhs = this.processExplicitBoolConvertAsNeeded(nrhs);
+
+        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        if(restype)@!<TypedeclTypeDecl> {
+            return e[lhs=nlhs, rhs=nrhs];            
+        }
+        else {
+            let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
+            let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
+
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+        }
+    }
+
     recursive method processIfSimpleExpression(e: IfSimpleExpression, vmap: VarMapping): Expression {
         let ntexp = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](e.texp, vmap));
 
@@ -411,7 +446,7 @@ entity ExplicitifyTransform {
             | KeyCmpEqualExpression => { abort; }
             | KeyCmpLessExpression => { abort; }
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
-            | BinLogicExpression => { abort; }
+            | BinLogicExpression => { return this.processBinLogicExpression[recursive]($e, vmap); }
             | MapEntryConstructorExpression => { abort; }
             | IfExpression => { return this.processIfExpression[recursive]($e, vmap); }
         }
@@ -786,7 +821,8 @@ entity ExplicitifyTransform {
             allvmethods = assembly.allvmethods,
 
             allconcretetypes = assembly.allconcretetypes,
-            allabstracttypes = assembly.allabstracttypes
+            allabstracttypes = assembly.allabstracttypes,
+            typetopo = assembly.typetopo
         };
     }
 }
