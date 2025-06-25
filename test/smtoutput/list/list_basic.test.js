@@ -10,9 +10,9 @@ describe ("SMT List -- construct empty and isEmpty", () => {
     });
 
     it("smt should isSingle list", function () {
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.isSingleElement(); }', "(assert Main@main)"); 
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i}.isSingleElement(); }', "(assert (not Main@main))"); 
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 2i}.isSingleElement(); }', "(assert Main@main)"); 
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.isSingle(); }', "(assert Main@main)"); 
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i}.isSingle(); }', "(assert (not Main@main))"); 
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 2i}.isSingle(); }', "(assert Main@main)"); 
     });
 });
 

@@ -38,8 +38,8 @@ describe ("Map -- access", () => {
     });
 
     it("should fail get single", function () {
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{}.single().value; }', "Error -- this.isSingleElement() @ map.bsq");
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{0i => 5i, 2i => 4i}.single().value; }', "Error -- this.isSingleElement() @ map.bsq");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{}.single().value; }', "Error -- this.isSingle() @ map.bsq");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{0i => 5i, 2i => 4i}.single().value; }', "Error -- this.isSingle() @ map.bsq");
     });
 
     it("should fail get missing", function () {

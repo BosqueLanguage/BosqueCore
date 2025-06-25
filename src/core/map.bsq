@@ -17,12 +17,12 @@ __internal entity Map<K: keytype, V> {
         return MapOps::s_map_size<K, V>(this);
     }
 
-    method isSingleElement(): Bool {
+    method isSingle(): Bool {
         return MapOps::s_map_size<K, V>(this) == 1n;
     }
 
     method single(): MapEntry<K, V>
-        requires this.isSingleElement();
+        requires this.isSingle();
     {
         return MapOps::s_map_min<K, V>(this);
     }
@@ -113,7 +113,7 @@ __internal entity Map<K: keytype, V> {
             return Map<K, V>{};
         }
         else {
-            if(maps.isSingleElement()) {
+            if(maps.isSingle()) {
                 return maps.single();
             }
             else {
@@ -127,7 +127,7 @@ __internal entity Map<K: keytype, V> {
             return Map<K, V>{};
         }
         else {
-            if(maps.isSingleElement()) {
+            if(maps.isSingle()) {
                 return maps.single();
             }
             else {
@@ -159,7 +159,7 @@ __internal entity Map<K: keytype, V> {
             return Map<K, V>{};
         }
         else {
-            if(maps.isSingleElement()) {
+            if(maps.isSingle()) {
                 return maps.single();
             }
             else {
@@ -173,7 +173,7 @@ __internal entity Map<K: keytype, V> {
             return Map<K, V>{};
         }
         else {
-            if(maps.isSingleElement()) {
+            if(maps.isSingle()) {
                 return maps.single();
             }
             else {
@@ -187,7 +187,7 @@ __internal entity Map<K: keytype, V> {
             return Map<K, V>{};
         }
         else {
-            if(maps.isSingleElement()) {
+            if(maps.isSingle()) {
                 return maps.single();
             }
             else {

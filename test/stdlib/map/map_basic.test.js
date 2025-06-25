@@ -10,9 +10,9 @@ describe ("Map -- construct empty and isEmpty", () => {
     });
 
     it("should isSingle simple map", function () {
-        runMainCode('public function main(): Bool { return Map<Int, Int>{}.isSingleElement(); }', "false"); 
-        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i}.isSingleElement(); }', "true"); 
-        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 5i => 0i}.isSingleElement(); }', "false"); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{}.isSingle(); }', "false"); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i}.isSingle(); }', "true"); 
+        runMainCode('public function main(): Bool { return Map<Int, Int>{1i => 2i, 5i => 0i}.isSingle(); }', "false"); 
     });
 });
 

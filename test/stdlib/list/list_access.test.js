@@ -32,8 +32,8 @@ describe ("List -- access", () => {
     });
 
     it("should fail get single", function () {
-        runMainCodeError('public function main(): Int { return List<Int>{}.single(); }', "Error -- this.isSingleElement() @ list.bsq");
-        runMainCodeError('public function main(): Int { return List<Int>{0i, 5i}.single(); }', "Error -- this.isSingleElement() @ list.bsq");
+        runMainCodeError('public function main(): Int { return List<Int>{}.single(); }', "Error -- this.isSingle() @ list.bsq");
+        runMainCodeError('public function main(): Int { return List<Int>{0i, 5i}.single(); }', "Error -- this.isSingle() @ list.bsq");
     });
 
     it("should fail get out-of-bounds", function () {

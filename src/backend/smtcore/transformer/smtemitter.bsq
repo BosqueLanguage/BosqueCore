@@ -198,7 +198,7 @@ recursive function emitConstructorListSingletonExpression(v: SMTAssembly::Constr
         return CString::concat('(', consname, ' ', scons, ')');
     }
     else {
-        if(v.args.isSingleElement()) {
+        if(v.args.isSingle()) {
             let scons = CString::concat('(seq.unit ', emitSafeExpression[recursive](v.args.single(), eev), ')');
             return CString::concat('(', consname, ' ', scons, ')');
         }
@@ -302,7 +302,7 @@ recursive function emitLambdaConstructor(v: SMTAssembly::LambdaConstructor, eev:
 }
 
 recursive function emitCallLambdaFunctionExpression(e: SMTAssembly::CallLambdaFunctionExpression, evv: SMTEmitterEnv): CString {
-    if(e.args.isSingleElement()) {
+    if(e.args.isSingle()) {
         return CString::concat('(', e.lambda.value, ' ', emitSafeExpression[recursive](e.args.single(), evv), ')');
     }
     else {
@@ -314,7 +314,7 @@ recursive function emitCallLambdaFunctionExpression(e: SMTAssembly::CallLambdaFu
 }
 
 recursive function emitCallLambdaFunctionSafeExpression(e: SMTAssembly::CallLambdaFunctionSafeExpression, eev: SMTEmitterEnv): CString {
-    if(e.args.isSingleElement()) {
+    if(e.args.isSingle()) {
         return CString::concat('(', e.lambda.value, ' ', emitSafeExpression[recursive](e.args.single(), eev), ')');
     }
     else {
@@ -1372,7 +1372,7 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
     if(subtypes.empty()) {
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
     }
-    elif(subtypes.isSingleElement()) {
+    elif(subtypes.isSingle()) {
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-@Term-', subtypes.single().value, '-mk tt))');
     }
     else {
