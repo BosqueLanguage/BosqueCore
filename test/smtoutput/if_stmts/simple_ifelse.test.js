@@ -11,7 +11,7 @@ describe ("SMT Exec -- IfElse Statement", () => {
         runishMainCodeUnsat("public function main(x: Int): Int { if(x == 0i) { return 3i; } else { ; } return 1i; }", "(assert (not (= 1 (Main@main 3))))");
     
         runishMainCodeUnsat("public function main(x: Int): Int { if(x == 0i) { return 3i; } else { return 1i // 0i; } }", "(assert (not (= (@Result-ok 3) (Main@main 0))))");
-        runishMainCodeUnsat("public function main(x: Int): Int { if(x == 0i) { return 3i // 0i; } else { return 1i; } }", "(assert (not (= @Result-err-other (Main@main 0))))");
+        runishMainCodeUnsat("public function main(x: Int): Int { if(x == 0i) { return 3i // 0i; } else { return 1i; } }", "(assert (not (is-@Result-err (Main@main 0))))");
     });
 
     it("should smt check simple simple", function () {

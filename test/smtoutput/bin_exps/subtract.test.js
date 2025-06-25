@@ -8,13 +8,13 @@ describe ("SMT evaluate -- Simple subtraction", () => {
         runishMainCodeUnsat("public function main(x: Int): Int { return x - 2i; }", "(declare-const b Int) (assert (= b (Main@main 3))) (assert (not (= b 1)))");
 
         runishMainCodeUnsat("public function main(x: Nat): Nat { return x - 2n; }", "(declare-const b (@Result Nat)) (assert (= b (Main@main 3))) (assert (not (= b (@Result-ok 1))))");
-        runishMainCodeUnsat("public function main(x: Nat): Nat { return x - 2n; }", "(declare-const b (@Result Nat)) (assert (= b (Main@main 1))) (assert (not (= b @Result-err-other)))");
+        runishMainCodeUnsat("public function main(x: Nat): Nat { return x - 2n; }", "(declare-const b (@Result Nat)) (assert (= b (Main@main 1))) (assert (not (is-@Result-err b)))");
     });
 });
 
 describe ("SMT check props -- Simple subtraction", () => {
     it("should smt eval simple", function () {
-        checkProperties("public function main(x: Nat): Nat { return x - 2n; }", [{ pkey: ";;--FUNCTION_DECLS--;;", expected: "(define-fun Main@main ((x Nat)) (@Result Nat) (ite (< x 2) (as @Result-err-other (@Result Nat)) (@Result-ok (- x 2))) )" }]);
+        checkProperties("public function main(x: Nat): Nat { return x - 2n; }", [{ pkey: ";;--FUNCTION_DECLS--;;", expected: "(define-fun Main@main ((x Nat)) (@Result Nat) (ite (< x 2) ((as @Result-err (@Result Nat)) @err-other) (@Result-ok (- x 2))) )" }]);
     });
 });
 

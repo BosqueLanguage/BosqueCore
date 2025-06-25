@@ -15,11 +15,11 @@ describe ("SMT evaluate -- Entity w/ Invariant Constructor", () => {
     it("should smt exec positional", function () {
         runishMainCodeUnsat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k + 1i, k}; return f.x + f.y; }', "(assert (not (= (Main@main 3) (@Result-ok 7))))");
 
-        runishMainCodeUnsat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k, k + 1i}; return f.x + f.y; }', "(assert (not (= (Main@main 3) (as @Result-err-other (@Result Int)))))");
+        runishMainCodeUnsat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k, k + 1i}; return f.x + f.y; }', "(assert (not (is-@Result-err (Main@main 3))))");
     });
 
     it("should smt exec find error", function () {
-        runishMainCodeSat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k, 3i}; return f.x + f.y; }', "(declare-const a Int) (assert (not (= (Main@main a) (as @Result-err-other (@Result Int)))))");
+        runishMainCodeSat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k, 3i}; return f.x + f.y; }', "(declare-const a Int) (assert (not (is-@Result-err (Main@main a))))");
     });
 });
 
