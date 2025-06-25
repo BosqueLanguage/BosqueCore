@@ -214,4 +214,5 @@ entity Assembly {
     field datatypes: List<DatatypeTypeDecl>;
 
     field orderedfuncs: List<InvokeKey>;
+    field validators: List<FunctionDecl>;
 }

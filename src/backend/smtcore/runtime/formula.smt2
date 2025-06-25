@@ -81,4 +81,4 @@
 (define-fun @Validate-CString ((v CString)) Bool (<= (str.len v) SMV_STR_LENGTH))
 (define-fun @Validate-String ((v String)) Bool (<= (str.len v) SMV_STR_LENGTH))
 
-;;--VALIDATE_FUNC_DECLS--;;
+;;--VALIDATE_PREDICATES--;;

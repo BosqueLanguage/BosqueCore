@@ -355,6 +355,10 @@ recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndex
     return CString::concat('(', v.elistkey, ' ', emitExpression(v.arg, eev), ')');
 }
 
+recursive function emitValidateResultIsTrueExpression(v: SMTAssembly::ValidateResultIsTrueExpression, eev: SMTEmitterEnv): CString {
+    return CString::concat('(= ', emitExpression(v.arg, eev), ' (@Result-ok true))');
+}
+
 %*
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression): CString {
     let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
@@ -729,6 +733,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         *%
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
+        | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
         %*
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($v); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($v); }
@@ -1539,5 +1544,11 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
         '#END ;;--SUBTYPE_PREDICATES--;;'
     );
 
-    return CString::join('%n;', predecl_str, CString::join('%n;', stddecls, stdcons, termcons), subchecks_str, efuncs);
+    let validates = CString::join('%n;',
+        '#BEGIN ;;--VALIDATE_PREDICATES--;;',
+        CString::joinAll('%n;', asm.validators.map<CString>(fn(vf) => emitFunctionDecl(vf, SMTEmitter::s_ignoreErrTrgt))),
+        '#END ;;--VALIDATE_PREDICATES--;;'
+    );
+
+    return CString::join('%n;', predecl_str, CString::join('%n;', stddecls, stdcons, termcons), subchecks_str, CString::join('%n;', efuncs, validates));
 }
