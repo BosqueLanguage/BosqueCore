@@ -257,7 +257,6 @@ entity Assembly {
         return this.primitives.has(tkey);
     }
 
-    %% Let's work with type id's for the time being
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
         return t1.tkeystr.value === t2.tkeystr.value;
     }
