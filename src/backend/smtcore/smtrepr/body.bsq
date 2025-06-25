@@ -158,6 +158,36 @@ entity AccessFromIndexExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 
+%** In validation check if the result is equal to true (when the expression is a Result) **%
+entity ValidateResultIsTrueExpression provides SafeExpression {
+    field arg: Expression;
+}
+
+%*
+*********************** TODO: we can use these for the validator ops to access container elements via index without needing any other setup ***********************
+
+entity ValidateAccessContainerSizeExpression provides SafeExpression {
+    field ontype: TypeKey;
+
+    field arg: SafeExpression;
+}
+
+entity ValidateAccessContainerElementSafeExpression provides SafeExpression {
+    field ontype: TypeKey;
+    field index: CString;
+    
+    field arg: SafeExpression;
+}
+
+entity ValidateCheckMapSortedExpression provides SafeExpression {
+    field maptype: TypeKey;
+    field keytype: TypeKey;
+    field valtype: TypeKey;
+
+    field arg: SafeExpression;
+}
+*%
+
 entity IsTypeTestExpression provides SafeExpression {
     field istype: TypeKey;
 

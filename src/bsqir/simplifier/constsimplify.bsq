@@ -262,7 +262,7 @@ entity ConstantSimplification {
                 return ConstantSimplification::falseExp;
             }
             else {
-                if(sargs.isSingleElement()) {
+                if(sargs.isSingle()) {
                     return sargs.single();
                 }
                 else {
@@ -286,7 +286,7 @@ entity ConstantSimplification {
                 return ConstantSimplification::falseExp;
             }
             else {
-                if(sargs.isSingleElement()) {
+                if(sargs.isSingle()) {
                     return sargs.single();
                 }
                 else {

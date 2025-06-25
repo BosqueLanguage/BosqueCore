@@ -113,7 +113,8 @@ const smtcomponenttags = [
     ";;--SPECIAL_TERM_CONSTRUCTORS--;;",
     ";;--ENTITY_TERM_CONSTRUCTORS--;;",
     ";;--DATATYPE_TERM_CONSTRUCTORS--;;",
-    ";;--SUBTYPE_PREDICATES--;;"
+    ";;--SUBTYPE_PREDICATES--;;",
+    ";;--VALIDATE_PREDICATES--;;"
 ];
 
 function generateFormulaFile(smtcomponents: string, smtop: string, outname: string): boolean {
@@ -131,6 +132,13 @@ function generateFormulaFile(smtcomponents: string, smtop: string, outname: stri
         const rterm = smtcomponenttags[i];
         formula = processSingleComponent(formula, smtcomponents, rterm);
     }
+
+    //set the constants for SMV -- right now just defaults
+    const smv_constants = [
+        "(declare-const SMV_I_RANGE Int) (assert (= SMV_I_RANGE 32))",
+        "(declare-const SMV_STR_LENGTH Int) (assert (= SMV_STR_LENGTH 16))"
+    ];
+    formula = formula.replace(";;--SMV_CONSTANTS--;;", smv_constants.join("\n"));
 
     try {
         const fname = path.join(nndir, "formula.smt2");

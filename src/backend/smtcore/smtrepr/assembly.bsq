@@ -18,7 +18,9 @@ const lambdaTypeKeyRE: CRegex = /'(Array' .* ')'/c;
 const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}|${SMTAssembly::lambdaTypeKeyRE}/c;
 type TypeKey = CString of SMTAssembly::typeKeyRE;
 
-const invokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+const stdInvokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+const validateInvokeKeyRE: CRegex = /'@Validate-'${SMTAssembly::nominalTypeKeyRE}/c;
+const invokeKeyRE: CRegex = /${SMTAssembly::stdInvokeKeyRE}|${SMTAssembly::validateInvokeKeyRE}/c;
 type InvokeKey = CString of SMTAssembly::invokeKeyRE;
 
 const identifierRE: CRegex = /[@a-zA-Z0-9_$-]*/c;
@@ -214,4 +216,5 @@ entity Assembly {
     field datatypes: List<DatatypeTypeDecl>;
 
     field orderedfuncs: List<InvokeKey>;
+    field validators: List<FunctionDecl>;
 }
