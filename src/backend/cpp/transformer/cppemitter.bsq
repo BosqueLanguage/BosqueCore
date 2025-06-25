@@ -85,7 +85,7 @@ function emitSpecialTemplate(name: String): String {
     return final;
 }
 
-%% We dont want this prefix when emitting typeinfo for primitives
+%% We dont want __CoreCpp prefix when emitting typeinfo field for primitives
 function removeCppPrefix(s: String): String {
     return if(s.startsWithString("__CoreCpp::")) then s.removePrefixString("__CoreCpp::") else s;
 }
@@ -129,7 +129,7 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         else String::concat(ns, template);
 }
 
-function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
+recursive function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
     let emit = emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(some(tk), none, ctx)); 
 
     if(isParamField) {
@@ -165,7 +165,6 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
-%% giving resolved namespace for given scope
 function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): String {
     return fullns_list.reduce<String>(fullns, fn(acc, s) => {
         let val = String::fromCString(s);
@@ -484,7 +483,9 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
 }
 
 function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
-    return if(it.isnot) then String::concat(rootExp, ".typeinfo == &NoneType") else String::concat(rootExp, ".typeinfo != &NoneType");
+    return if(it.isnot) 
+        then String::concat(rootExp, ".typeinfo == &NoneType") 
+        else String::concat(rootExp, ".typeinfo != &NoneType");
 }
 
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
@@ -518,8 +519,7 @@ function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::Constru
 
     let sometype = String::concat("Core::", emitTypeKey(cpsse.ctype.tkeystr, false, ctx));
     let data = String::concat(sometype, "{ ", String::joinAll(", ", args), " }");
-    let ttypeName = String::concat("&", sometype, "Type, ");
-    return String::concat("{ ", ttypeName, data ,"}");
+    return String::concat(sometype, "{ ", data ,"}");
 }
 
 function emitConstructorPrimarySpecialOkExpression(cpsoe: CPPAssembly::ConstructorPrimarySpecialOkExpression, ctx: Context): String {
@@ -584,6 +584,7 @@ function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String 
     }
 }
 
+%% We are only widening to options for now
 function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, ctx: Context): String {
     let fromtkey = exp.srctype.tkeystr;
     let totkey = exp.trgttype.tkeystr;
@@ -591,14 +592,14 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
 
     let fromtkey_size = String::fromCString(ctx.asm.typeinfos.tryGet(fromtkey)@some.slotsize.toCString()); %% This is T
     let name = String::concat("Core::", emitTypeKey(totkey, false, ctx));
-    if(exp.exp?<CPPAssembly::LiteralNoneExpression>) {
-        let ttype = String::concat(emitTypeKey(exp.srctype.tkeystr, false, ctx));
 
-        let ttypeName = String::concat("&", removeCppPrefix(ttype), "Type ");
-        return String::concat(name, "{ ", ttypeName ,"}");
+    let ttype = String::concat(emitTypeKey(exp.srctype.tkeystr, false, ctx), "Type");
+
+    if(exp.exp?<CPPAssembly::LiteralNoneExpression>) {
+        return String::concat(name, "{ &", removeCppPrefix(ttype) ," }");
     }
 
-    return String::concat(name, emitexp);
+    return String::concat(name, "{ &Core::", ttype, ", ", emitexp, " }");
 }
 
 %% We will need this to help us take "this.f?<Int>" to "false"
@@ -632,7 +633,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: String): String {
     let name = emitIdentifier(stmt.name);
     let stype = emitTypeKey(stmt.vtype.tkeystr, false, ctx);
-    let resolved_stype = if(stype.startsWithString("Option")) then String::concat("Core::", stype) else stype;
+    let resolved_stype = if(stype.startsWithString("Option") || stype.startsWithString("Some")) then String::concat("Core::", stype) else stype;
     let exp = emitExpression(stmt.exp, ctx);
 
     let full_indent: String = String::concat(indent, "    ", resolved_stype);
@@ -787,6 +788,7 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
 
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
+    let full_indent = String::concat("    ", indent);
 
     let name = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
     let params = emitParameters(m.params, nctx);
@@ -794,16 +796,16 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let this_type = emitThisType(declaredIn, nctx);    
     let specialName = emitSpecialTemplate(String::fromCString(name));
     
-    let pre = if(rtype !== "bool") then String::concat(indent, "const ", rtype, " ", specialName)
-        else String::concat(indent, rtype, " ", specialName);
-    let specialThis = emitSpecialTemplate(this_type);
+    let pre = if(rtype === "bool") 
+        then String::concat(rtype, " ", specialName)
+        else String::concat("const ", rtype, " ", specialName);
 
     var params_impl: String;
     if(params === "") {
-        params_impl = String::concat("(", specialThis, " ", emitSpecialThis(), ") noexcept");
+        params_impl = String::concat("(", this_type, " ", emitSpecialThis(), ") noexcept");
     }
     else {
-        let base = String::concat("(", specialThis, " ");
+        let base = String::concat("(", this_type, " ");
         params_impl = String::concat(base, emitSpecialThis(), ", ", params, ") noexcept");           
     }
 
@@ -824,7 +826,7 @@ function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPA
 }
 
 %% Type funcs are fully resolved before cpp emission so we can group them with nsfuncs
-function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {
+function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {   
     let isTypeFunc = ctx.asm.typefuncs.has(func.ikey);
     let ikey = func.ikey;   
     let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(func.ikey).completens else func.fullns;
@@ -834,19 +836,11 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
     let params = emitParameters(func.params, nctx);
     let rtype = emitTypeKey(func.resultType.tkeystr, false, ctx); 
 
-    let pre: String = String::concat(indent, rtype, " ", name );
+    let pre: String = String::concat(rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
 
     return String::concat(pre, params_impl, " {%n;", emitBodyImplementation(func.body, nctx, indent), indent, "}%n;");
 }
-
-%*
-function emitMemberFieldDecl(member: CPPAssembly::MemberFieldDecl, ctx: Context, indent: String): String {
-    let name = emitIdentifier(member.name);
-    let mtype = emitTypeKey(member.declaredType, ctx);
-    return String::concat(indent, mtype, " ", name, ";%n;");
-}
-*%
 
 function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: String): String {
     let ftype = emitTypeKey(sfi.ftype.tkeystr, true, ctx);
@@ -926,16 +920,14 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
 function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, ctx: Context, ident: String): String {
     let isTypeFunc = ctx.asm.typefuncs.has(decl.ikey);
-    let ikey = decl.ikey;   
     let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(decl.ikey).completens else decl.fullns;
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, ns);
 
-    let pre = emitInvokeKey(ikey, nctx);
+    let ikey = emitInvokeKey(decl.ikey, nctx);
     let rtype = emitTypeKey(decl.resultType.tkeystr, false, nctx); 
     let params = emitParameters(decl.params, nctx);
-    let specialName = emitSpecialTemplate(pre);
 
-    let first = String::concat(ident, rtype, " ", specialName );
+    let first = String::concat(ident, rtype, " ", ikey);
     return String::concat(first, "(", params, ") noexcept;%n;");
 }
 
@@ -1039,10 +1031,6 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
-%%
-%% TODO: Need to fix the Boxed<1> case, as it should accept the Some<Primitive> type then just extract the data
-%%
-
 %% Note: Only supports options currently
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
@@ -1061,7 +1049,7 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
 
     let indenttkey = String::concat(full_indent, tkey);
 
-    let somecons = if(k === "0") then "" %% Cant just call get on the value in this case...
+    let somecons = if(k === "0") then "" 
         else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey," d) noexcept : Boxed(ti, reinterpret_cast<uint64_t>(&d.value)) {};%n;")
         else String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey ," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t(*)[", k,"]>(&d)) {};%n;");
     let nonecons = String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;");
@@ -1123,7 +1111,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
 }
 
 %%
-%% Emits forward decls of non-value types
+%% Emits forward decls of Ref and Tagged types
 %%
 function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
@@ -1166,7 +1154,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, def);
     });
 
-    %% Non-value types
+    %% Ref and Tagged types
     let other = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
         .reduce<String>(String::concat(values, "//%n;// Ref and Tagged Type Definitions%n;//%n;"), fn(acc, tk) => {
@@ -1178,20 +1166,8 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
     return String::concat(other, indent, "}%n;");
 }
 
-%%
-%% We will need to emit our datatypes, entities, whatever in this order:
-%% Primitives -> Value types (so entities with 4 or less primitive fields) -> everything else where we do forward decls
-%% Then once this is in place we can just go through and emit the namespaced functions and such wihtout worrying about 
-%% also emitting entities or whatever
-%%
-
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
-
-    %%
-    %% We need to go through each ns, then using the typeinfos present to grab the types do the correct emission of all
-    %% types where we emit Primitives -> Values -> Everything else with fwd decls.
-    %%
 
     let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
         return if(asm.isPrimtitiveType(tk)) then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) else acc;
