@@ -137,7 +137,9 @@ entity SMTTransformer {
     const nonetype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'None'<BSQAssembly::TypeKey> };
     const booltype: BSQAssembly::TypeSignature = BSQAssembly::NominalTypeSignature{ BSQAssembly::SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<BSQAssembly::TypeKey> };
 
-    const vvariable = SMTAssembly::Identifier::from('v');
+    const vvariable: SMTAssembly::Identifier = SMTAssembly::Identifier::from('v');
+    const smtexplit_true: SMTAssembly::SafeExpression = SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'true'};
+    const smtexplit_false: SMTAssembly::SafeExpression = SMTAssembly::LiteralSimpleExpression{'Bool'<SMTAssembly::TypeKey>, 'false'};
 
     function isTermSMTTypeKey(tkey: SMTAssembly::TypeKey): Bool {
         return tkey === '@Term'<SMTAssembly::TypeKey>;
@@ -1819,46 +1821,6 @@ entity SMTTransformer {
         }
     }
 
-    method transformConstructableDeclToSMT_Validator(decl: BSQAssembly::ConstructableTypeDecl): SMTAssembly::FunctionDecl {
-        let ikey = TransformNameManager::generateNameForValidatorFunction(decl.tkey);
-        let params = List<SMTAssembly::InvokeParameterDecl>{SMTAssembly::InvokeParameterDecl{SMTTransformer::vvariable, this.transformStdTypeToSMT($decl.oftype)}};
-        let rtype = SafeResult{ this.transformStdTypeToSMT(SMTTransformer::booltype) };
-
-        match(decl)@ {
-            BSQAssembly::OkTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::FailTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::APIRejectedTypeDecl => { 
-                abort;
-            }
-            | BSQAssembly::APIFailedTypeDecl => { 
-                abort; 
-            }
-            | BSQAssembly::APIErrorTypeDecl => { 
-                abort; 
-            }
-            | BSQAssembly::APISuccessTypeDecl => { 
-                abort;
-            }
-            | BSQAssembly::SomeTypeDecl => { 
-                let ofvcall = TransformNameManager::generateNameForValidatorFunction($decl.oftype);
-                let access = xxxx;
-                let ofcall = SMTAssembly::CallFunctionSafeExpression{ofvcall, List<SMTAssembly::SafeExpression>{SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable}}}};
-                let body = SMTAssembly::Body{SMTAssembly::ReturnOperation{ofcall, List<SMTAssembly::ErrorInfo>{}};
-
-                return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
-            }
-            | BSQAssembly::MapEntryTypeDecl => { 
-                let ktype = this.transformStdTypeToSMT($decl.ktype);
-                let vtype = this.transformStdTypeToSMT($decl.vtype);
-                return SMTAssembly::MapEntryTypeDecl{ tkey, ktype, vtype };
-            }
-        }
-    }
-
     method transformCollectionDeclToSMT(decl: BSQAssembly::CollectionTypeDecl): SMTAssembly::CollectionTypeDecl {
         let tkey = TransformNameManager::convertTypeKey(decl.tkey);
 
@@ -1958,8 +1920,121 @@ entity SMTTransformer {
         return none;
     }
 
+    function buildValidateCallForTypeViaAccessorOp(oftype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression): SMTAssembly::Body {
+        return SMTAssembly::Body{
+            SMTAssembly::ReturnOperation{
+                SMTAssembly::CallFunctionSafeExpression{
+                    TransformNameManager::generateNameForValidatorFunction(oftype), 
+                    List<SMTAssembly::SafeExpression>{ exp }
+                }
+            }, 
+            List<SMTAssembly::ErrorInfo>{}
+        };
+    }
+
+    function buildValidateCallForTypeViaAccessorOpPair(oftype1: BSQAssembly::TypeSignature, exp1: SMTAssembly::SafeExpression, oftype2: BSQAssembly::TypeSignature, exp2: SMTAssembly::SafeExpression): SMTAssembly::Body {
+        let access1 = SMTAssembly::CallFunctionSafeExpression{
+                TransformNameManager::generateNameForValidatorFunction(oftype1), 
+                List<SMTAssembly::SafeExpression>{ exp1 }
+            };
+        let access2 = SMTAssembly::CallFunctionSafeExpression{
+                TransformNameManager::generateNameForValidatorFunction(oftype2), 
+                List<SMTAssembly::SafeExpression>{ exp2 }
+            };
+        
+        return SMTAssembly::Body{
+            SMTAssembly::ReturnOperation{
+                SMTAssembly::LogicActionAndExpression{
+                    List<SMTAssembly::SafeExpression>{ access1, access2 }
+                }
+            }, 
+            List<SMTAssembly::ErrorInfo>{}
+        };
+    }
+
     method generateValidatorFunction(tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl {
-        xxxx;
+        let ikey = TransformNameManager::generateNameForValidatorFunction(tdecl.tkey);
+        let smtdtype = this.transformStdTypeToSMT(tdecl.tkey);
+        let params = List<SMTAssembly::InvokeParameterDecl>{SMTAssembly::InvokeParameterDecl{SMTTransformer::vvariable, smtdtype}};
+        let rtype = SafeResult{ this.transformStdTypeToSMT(SMTTransformer::booltype) };
+
+        var body: SMTAssembly::Body;
+        match(decl)@ {
+            BSQAssembly::EnumTypeDecl => { 
+                body = SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_true}, List<SMTAssembly::ErrorInfo>{} };
+            }
+            | BSQAssembly::TypedeclTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::TypedeclStringOfTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::OkTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::FailTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::APIRejectedTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::APIFailedTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APIErrorTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::APISuccessTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::SomeTypeDecl => {
+                let access = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, 'value', SMTTransformer::vvariable}
+                body = SMTTransformer::buildValidateCallForTypeViaAccessorOp($tdecl.oftype, access);
+            }
+            | BSQAssembly::MapEntryTypeDecl => { 
+                let access1 = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, 'key', SMTTransformer::vvariable}
+                let access1 = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, 'value', SMTTransformer::vvariable}
+                body = SMTTransformer::buildValidateCallForTypeViaAccessorOpPair($decl.ktype, access1, $decl.vtype, access2);
+            }
+            | BSQAssembly::ListTypeDecl => { 
+                xxxx;
+            }
+            | BSQAssembly::StackTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::QueueTypeDecl => { 
+                abort;
+            }
+            | BSQAssembly::SetTypeDecl => { 
+                abort; 
+            }
+            | BSQAssembly::MapTypeDecl => { 
+                xxxx;
+            }
+            | BSQAssembly::EntityTypeDecl => { 
+                xxxx;
+            }
+            | BSQAssembly::OptionTypeDecl => { 
+                xxxx;
+            }
+            | BSQAssembly::ResultTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::APIResultTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::ConceptTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::DatatypeMemberEntityTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+            | BSQAssembly::DatatypeTypeDecl => { 
+                abort; %% NOT IMPLEMENTED
+            }
+        }
+
+        return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
     }
 
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
