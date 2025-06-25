@@ -2,9 +2,10 @@
 ;;Template file for building SMTLIB models of Bosque code
 ;;
 
+(declare-datatypes () ((@ErrTag @err-trgt @err-other)))
+
 (declare-datatype @Result (par (T) (
-    (@Result-err-trgt)
-    (@Result-err-other) 
+    (@Result-err (@Result-etag @ErrTag)) 
     (@Result-ok (@Result-value T))
 )))
 
