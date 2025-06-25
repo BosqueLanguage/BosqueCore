@@ -72,20 +72,12 @@ function tryGetConstOperation(op: SMTAssembly::Operation): Option<SMTAssembly::C
     return none;
 }
 
-function emitResultErrTrgtTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
-    return CString::concat('(= ', testval, ' (as @Result-err-trgt (@Result ', tkey.value, ')))');
-}
-
-function emitResultErrOtherTest(testval: CString, tkey: SMTAssembly::TypeKey): CString {
-    return CString::concat('(', testval, ' (as @Result-err-other (@Result ', tkey.value, ')))');
-}
-
 function emitResultErrTrgtAs(astype: SMTAssembly::TypeKey): CString {
-    return CString::concat('(as @Result-err-trgt (@Result ', astype.value, '))');
+    return CString::concat('((as @Result-err (@Result ', astype.value, ')) @err-trgt)');
 }
 
 function emitResultErrOtherAs(astype: SMTAssembly::TypeKey): CString {
-    return CString::concat('(as @Result-err-other (@Result ', astype.value, '))');
+    return CString::concat('((as @Result-err (@Result ', astype.value, ')) @err-other)');
 }
 
 function emitTaggedNumericType(nstr: CString, tag: CString): CString {
@@ -793,15 +785,13 @@ recursive function emitMethodInvokeStaticExpression(e: SMTAssembly::MethodInvoke
 *%
 
 function emitResultErrTypeConvert(cval: CString, tkey: SMTAssembly::TypeKey, ekey: SMTAssembly::TypeKey): CString {
-    let ttest = emitResultErrTrgtTest(cval, tkey);
-    let astrgt = emitResultErrTrgtAs(ekey);
-    let asother = emitResultErrOtherAs(ekey);
-
-    let opack = CString::join(' ', ttest, astrgt, asother);
-    return CString::concat('(ite ', opack, ')');
+    let access = CString::concat('(@Result-etag ', cval, ')');
+    return CString::concat('((as @Result-err (@Result ', ekey.value, ')) ', access, ')');
 }
 
 function emitResultErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::TypeKey, eev: SMTEmitterEnv): CString {
+    %%TODO: here is where we eventually want to do the trgt, other, any conversions too
+
     if(tkey === eev.restype) {
         return cval;
     }
@@ -811,6 +801,8 @@ function emitResultErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::Type
 }
 
 function emitExpectedErrTypeConvertAsNeeded(cval: CString, tkey: SMTAssembly::TypeKey, ekey: SMTAssembly::TypeKey): CString {
+    %%TODO: here is where we eventually want to do the trgt, other, any conversions too
+
     if(tkey === ekey) {
         return cval;
     }
@@ -843,10 +835,10 @@ function emitReturnOperation(op: SMTAssembly::ReturnOperation, eev: SMTEmitterEn
 
 function emitAbortOperation(op: SMTAssembly::AbortOperation, eev: SMTEmitterEnv): CString {
     if(op.label === eev.errtrgt) {
-        return '@Result-err-trgt';
+        return emitResultErrTrgtAs(eev.restype);
     }
     else {
-        return '@Result-err-other';
+        return emitResultErrOtherAs(eev.restype);
     }
 }
 

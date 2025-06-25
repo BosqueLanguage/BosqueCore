@@ -29,7 +29,7 @@ describe ("SMT List -- immediate and size", () => {
     });
 
     it("smt should error empty lastIndex", function () {
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.lastIndex(); }', "(assert (not (= @Result-err-other Main@main)))"); 
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.lastIndex(); }', "(assert (not (is-@Result-err Main@main)))"); 
     });
 });
 
