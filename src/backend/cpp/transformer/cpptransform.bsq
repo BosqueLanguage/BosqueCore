@@ -708,10 +708,6 @@ entity CPPTransformer {
         });
     }
 
-    %%
-    %% If 4 or less primitive only fields we make value. otherwise always ref/tagged. Need to imspect this code to ensure this invariant is held
-    %%
-
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 

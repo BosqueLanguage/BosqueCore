@@ -959,7 +959,6 @@ function generateVTable(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<
     return String::concat(indent, base, String::joinAll(",%n;", field_names), "%n;", indent, "};%n;"); 
 }
 
-%% Might need to be a bit careful with the naming here, perhaps some funny unicode magic again
 function generateEntriesEnum(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<CPPAssembly::MemberFieldDecl>, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ant.declaredInNS, ant.fullns);
     let full_indent = String::concat("    ", indent);

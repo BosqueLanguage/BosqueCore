@@ -27,40 +27,48 @@ struct TypeInfoBase
 };
 
 template <size_t N>
-void memcpy(void* dst, const void* src);
+inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
+    for(size_t i = 0; i < N; i++) {
+        dst[i] = src[i];
+    }
+}
 
 template <size_t K>
 class Boxed {
 public:
+    TypeInfoBase* typeinfo = nullptr;
+    uintptr_t data[K] = {};
+
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {
         memcpy<K>(this->data, rhs.data);
     };
     Boxed& operator=(const Boxed& rhs) noexcept {
-        this->typeinfo = rhs.typeinfo;
-        memcpy<K>(this->data, rhs.data);
+        if(this != &rhs) {
+            this->typeinfo = rhs.typeinfo;
+            memcpy<K>(this->data, rhs.data);
+        }
         return *this;
     };
 
     // Some constructor
-    // Instead of T do uintptr_t d[K]
     Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
         memcpy<K>(this->data, d);
     };
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
-
-    TypeInfoBase* typeinfo = nullptr;
-    uintptr_t data[K] = {};
 };
 
 template<>
 class Boxed<1> {
 public:
+    TypeInfoBase* typeinfo = nullptr;
+    uintptr_t data = 0;
+
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo), data(rhs.data) {};
-    Boxed& operator=(const Boxed& rhs) { 
+    Boxed& operator=(const Boxed& rhs) noexcept { 
         this->typeinfo = rhs.typeinfo;
         this->data = rhs.data;
         return *this;
@@ -71,14 +79,13 @@ public:
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
-
-    TypeInfoBase* typeinfo = nullptr;
-    uintptr_t data = 0;
 };
 
 template<>
 class Boxed<0> {
 public:
+    TypeInfoBase* typeinfo = nullptr;
+
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {};
     Boxed& operator=(const Boxed& rhs) noexcept {
@@ -87,18 +94,7 @@ public:
     };
 
     Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
-
-    TypeInfoBase* typeinfo = nullptr;
 };
-
-template <size_t N>
-void memcpy(void* dst, const void* src) {
-    const char* csrc = (const char*)src;
-    char* cdst = (char*)dst;
-    for(size_t i = 0; i < (N * sizeof(uint64_t)); i++) {
-        cdst[i] = csrc[i];
-    }
-}
 
 typedef uint64_t None;
 
