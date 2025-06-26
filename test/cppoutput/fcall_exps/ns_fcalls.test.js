@@ -37,7 +37,7 @@ describe ("CPP Emit Evaluate -- NamespaceFunction (with template)", () => {
 
 describe ("CPP Emit Evaluate -- NamespaceFunction with builtin", () => {
     it("should exec simple float builtin", function () {
-        runMainCode("function sqrt(x: Float): Float { return Float::sqrt(5.0f); } public function main(): Bool { return sqrt(5.0f) < 3.0f; }", "true");
-        runMainCode("function square(x: Float): Float { return Float::square(5.0f); } public function main(): Bool { return square(5.0f) > 20.0f; }", "true");
+        runMainCode("function sqrt(x: Float): Float { return Float::sqrt(x); } public function main(): Bool { return sqrt(5.0f) < 3.0f; }", "true");
+        runMainCode("function square(x: Float): Float { return Float::square(x); } public function main(): Bool { return square(5.0f) > 20.0f; }", "true");
     });
 });

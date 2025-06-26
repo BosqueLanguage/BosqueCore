@@ -17,7 +17,7 @@ const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs
 const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
-const cc_flags: string = "-Og -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector";
+const cc_flags: string = "-Og -Wall -Wextra -Werror -Wno-unused-parameter -Wuninitialized -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector";
 const cc: string = "/usr/bin/g++"; // Note: This will not work on all systems :(
 
 const bsq_max_int: string = "4611686018427387903";

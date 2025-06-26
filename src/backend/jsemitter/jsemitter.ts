@@ -2310,7 +2310,7 @@ class JSEmitter {
             bop = `s.endsWith(suffix)`;
         }
         else if(bname === "cstring_contains_string") {
-            bop = `s.includes(find)`;
+            bop = `s.includes(target)`;
         }
         else if(bname === "cstring_contains_string_unique") {
             bop = `[...s.matchAll(target)].length === 1`

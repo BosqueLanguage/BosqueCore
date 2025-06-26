@@ -4,7 +4,9 @@
 #include <iostream>
 #include <cmath>
 #include <csetjmp>
-#include <variant>
+#include <variant> // TODO: Need to remove dependency!
+
+namespace __CoreCpp {
 
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
@@ -24,7 +26,77 @@ struct TypeInfoBase
     const FieldOffsetInfo* vtable; // Will need to add to gc
 };
 
-namespace __CoreCpp {
+template <size_t N>
+inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
+    for(size_t i = 0; i < N; i++) {
+        dst[i] = src[i];
+    }
+}
+
+template <size_t K>
+class Boxed {
+public:
+    TypeInfoBase* typeinfo = nullptr;
+    uintptr_t data[K] = {};
+
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {
+        memcpy<K>(this->data, rhs.data);
+    };
+    Boxed& operator=(const Boxed& rhs) noexcept {
+        if(this != &rhs) {
+            this->typeinfo = rhs.typeinfo;
+            memcpy<K>(this->data, rhs.data);
+        }
+        return *this;
+    };
+
+    // Some constructor
+    Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
+        memcpy<K>(this->data, d);
+    };
+
+    // None constructor
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+};
+
+template<>
+class Boxed<1> {
+public:
+    TypeInfoBase* typeinfo = nullptr;
+    uintptr_t data = 0;
+
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo), data(rhs.data) {};
+    Boxed& operator=(const Boxed& rhs) noexcept { 
+        this->typeinfo = rhs.typeinfo;
+        this->data = rhs.data;
+        return *this;
+    }
+
+    // Some constructor
+    Boxed(TypeInfoBase* ti, uintptr_t d) noexcept : typeinfo(ti), data(d) {};
+
+    // None constructor
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+};
+
+template<>
+class Boxed<0> {
+public:
+    TypeInfoBase* typeinfo = nullptr;
+
+    Boxed() noexcept = default;
+    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {};
+    Boxed& operator=(const Boxed& rhs) noexcept {
+        this->typeinfo = rhs.typeinfo;
+        return *this;
+    };
+
+    Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
+};
+
+typedef uint64_t None;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
@@ -508,3 +580,10 @@ constexpr __CoreCpp::BigInt operator "" _I(const char* v) { return __CoreCpp::Bi
 constexpr __CoreCpp::Nat operator "" _n(unsigned long long v) { return __CoreCpp::Nat(static_cast<uint64_t>(v)); }
 constexpr __CoreCpp::BigNat operator "" _N(const char* v) { return __CoreCpp::BigNat(v); }
 constexpr __CoreCpp::Float operator "" _f(long double v) { return __CoreCpp::Float(static_cast<double>(v)); }
+
+// For debugging
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Int& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Nat& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Float& t) { return os << t.get(); }

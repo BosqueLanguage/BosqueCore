@@ -36,6 +36,30 @@ ITestType { field ttype: TypeSignature; }
 | ITestFail { }
 ;
 
+%% For Explicitify
+entity CoerceNarrowTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CoerceWidenTypeExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity SafeConvertExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
+
+entity CreateDirectExpression provides Expression {
+    field exp: Expression;
+    field srctype: NominalTypeSignature;
+    field trgttype: NominalTypeSignature;
+}
 
 datatype ArgumentValue using {
     field exp: Expression;
@@ -51,16 +75,36 @@ entity ArgumentList {
     field args: List<Option<ArgumentValue>>; %% if none get default val in emitter
 }
 
-entity IfStatement provides Statement {
+datatype IfStatement provides Statement using {
     field cond: Expression;
     field trueBlock: BlockStatement;
 }
+of
+IfSimpleStatement { }
+| IfTestStatement {
+    field itest: ITest;
+}
+| IfBinderStatement { %% TODO: Not implemented
+    field itest: ITest;
+    field binder: BinderInfo;
+}
+;
 
-entity IfElseStatement provides Statement {
+datatype IfElseStatement provides Statement using {
     field cond: Expression;
     field trueBlock: BlockStatement;
     field falseBlock: BlockStatement;
 }
+of
+IfElseSimpleStatement { }
+| IfElseTestStatement { 
+    field itest: ITest;
+}
+| IfElseBinderStatement {
+    field itest: ITest;
+    field binder: BinderInfo;
+}
+;
 
 entity IfElifElseStatement provides Statement {
     field ifcond: Expression;
@@ -106,6 +150,9 @@ entity CallTypeFunctionExpression provides Expression {
 entity AccessVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
+}
+
+entity LiteralNoneExpression provides Expression {
 }
 
 entity LiteralSimpleExpression provides Expression {
@@ -192,6 +239,21 @@ entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
 }
 
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
+of
+ConstructorPrimarySpecialSomeExpression {
+    field ofttype: TypeSignature;
+}
+| ConstructorPrimarySpecialOkExpression { %% TODO: Not Implemented
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+| ConstructorPrimarySpecialFailExpression { %% TODO: Not Implemented
+    field ofttype: TypeSignature;
+    field ofetype: TypeSignature;
+}
+;
+
 datatype PostfixOperation using {
     field baseType: TypeSignature;
 }
@@ -205,6 +267,9 @@ PostfixAccessFromName {
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
+}
+| PostfixIsTest {
+    field ttest: ITest;
 }
 ;
 

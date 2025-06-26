@@ -24,6 +24,9 @@ const videntifierRE: CRegex = /'$'?[_a-z][_a-zA-Z0-9$]*/c; %%we allow & inside t
 type Identifier = CString of CPPAssembly::identifierRE;
 type VarIdentifier = CString of CPPAssembly::videntifierRE;
 
+const templateMatch: Regex = /("<".+">")/;
+type TemplateMatch = String of templateMatch;
+
 concept AbstractDecl {
     field declaredInNS: NamespaceKey;
     field fullns: List<CString>;
@@ -77,12 +80,48 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
 }
 
+datatype ConstructableTypeDecl provides AbstractEntityTypeDecl
+of
+SomeTypeDecl { field oftype: TypeSignature; }
+| MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+; %% TODO: Other ConstructableTypeDecls!
+
+entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
+}
+
 entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
     field fields: List<MemberFieldDecl>;
     field parentTypeDecl: NominalTypeSignature;
 }
 
-entity DatatypeTypeDecl provides AbstractNominalTypeDecl {
+concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
+    field subtypes: List<TypeKey>;
+}
+
+datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
+of
+OptionTypeDecl { 
+    field oftype: TypeSignature; 
+    field someType: TypeSignature;
+}
+| ResultTypeDecl { %% TODO: Not implemented!
+    field ttype: TypeSignature; 
+    field etype: TypeSignature;
+
+    field okType: TypeSignature;
+    field failType: TypeSignature;
+}
+| APIResultTypeDecl { %% TODO: Not Implemented!
+    field ttype: TypeSignature;
+
+    field errorType: TypeSignature;
+    field failedType: TypeSignature;
+    field rejectedType: TypeSignature;
+    field successType: TypeSignature;
+}
+;
+
+entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
     field fields: List<MemberFieldDecl>;
     field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
@@ -143,15 +182,21 @@ entity NamespaceDecl {
     field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
 
+    field constructables: List<TypeKey>;
+
     field entities: List<TypeKey>;
     field datamembers: List<TypeKey>;
 
     field datatypes: List<TypeKey>;
 
+    field pconcepts: List<TypeKey>;
+
     field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
     field absmethods: List<(|InvokeKey, TypeKey|)>;
     field overmethods: List<(|InvokeKey, TypeKey|)>; 
+
+    field alltypes: List<TypeKey>; %%Very useful in emission
 }
 
 %% Will need expanding
@@ -167,11 +212,76 @@ entity Assembly {
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
+    field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
+    field constructables: Map<TypeKey, ConstructableTypeDecl>;
+
     field entities: Map<TypeKey, EntityTypeDecl>;
     field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
 
     field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
+    field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>; %% Note: Currently only supports option
+
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
+
+    method lookupNominalTypeDeclaration(tkey: TypeKey): AbstractNominalTypeDecl {
+        if(this.entities.has(tkey)) {
+            return this.entities.get(tkey);
+        }
+        elif(this.primitives.has(tkey)) {
+            return this.primitives.get(tkey);
+        }
+        elif(this.datamembers.has(tkey)) {
+            return this.datamembers.get(tkey);
+        }
+        elif(this.datatypes.has(tkey)) {
+            return this.datatypes.get(tkey);
+        }
+        elif(this.pconcepts.has(tkey)) {
+            return this.pconcepts.get(tkey);
+        }
+        elif(this.constructables.has(tkey)) {
+            return this.constructables.get(tkey);
+        }
+        else {
+            abort; %% Non suported typekey!
+        }
+    }
+
+    method tryLookupInvokeImplDeclaration(ikey: InvokeKey): Option<AbstractInvokeDecl> {
+        if(this.nsfuncs.has(ikey)) {
+            return some(this.nsfuncs.get(ikey));
+        }
+        elif(this.typefuncs.has(ikey)) {
+            return some(this.typefuncs.get(ikey));
+        }
+        elif(this.virtmethods.has(ikey)) {
+            return some(this.virtmethods.get(ikey));
+        }
+        elif(this.overmethods.has(ikey)) {
+            return some(this.overmethods.get(ikey));
+        }
+        elif(this.staticmethods.has(ikey)) {
+            return some(this.staticmethods.get(ikey));
+        }
+        elif(this.absmethods.has(ikey)) {
+            return some(this.staticmethods.get(ikey));
+        }
+        else {
+            return none;
+        }
+    }
+
+    method isNominalTypeConcrete(tkey: TypeKey): Bool {
+        return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
+    }
+
+    method isPrimtitiveType(tkey: TypeKey): Bool {
+        return this.primitives.has(tkey);
+    }
+
+    method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
+        return t1.tkeystr.value === t2.tkeystr.value;
+    }
 }

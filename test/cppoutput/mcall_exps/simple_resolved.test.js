@@ -45,13 +45,16 @@ describe ("CPP Emit Evaluate -- eADT methods", () => {
     it("should exec simple eADT methods with type template", function () {
         runMainCode('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; public function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }', "2_i"); 
     });
-    
+   
+    // Once we get explicitify supporting datatypes we this test should be good
     /*
     it("should exec simple eADT methods with template", function () {
         runMainCode('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }', "false"); 
         runMainCode('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }', "true"); 
     });
-
+    */
+    
+/*
     it("should exec simple ROOT eADT methods", function () {
         runMainCode('datatype Foo of F1 { } | F2 { } & { method foo(): Int { return if(this)<F1> then 1i else 0i; } } public function main(): Int { return F1{}.foo(); }', "1i"); 
 
