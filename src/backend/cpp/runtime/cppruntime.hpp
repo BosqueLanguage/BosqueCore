@@ -584,3 +584,10 @@ constexpr __CoreCpp::BigInt operator "" _I(const char* v) { return __CoreCpp::Bi
 constexpr __CoreCpp::Nat operator "" _n(unsigned long long v) { return __CoreCpp::Nat(static_cast<uint64_t>(v)); }
 constexpr __CoreCpp::BigNat operator "" _N(const char* v) { return __CoreCpp::BigNat(v); }
 constexpr __CoreCpp::Float operator "" _f(long double v) { return __CoreCpp::Float(static_cast<double>(v)); }
+
+// For debugging
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Int& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Nat& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, __CoreCpp::Float& t) { return os << t.get(); }

@@ -516,11 +516,9 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
     let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg@some.exp, ctx) );
-
-    %% Will also need to call gcalloc here eventually instead of new
-    let alloc = if(ctx.asm.typeinfos.get(cpsse.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) then "new " else "";
     let sometype = String::concat("Core::", emitTypeKey(cpsse.ctype.tkeystr, false, ctx));
-    return String::concat(alloc, sometype, "{ ", String::joinAll(", ", args), "}");
+
+    return String::concat(sometype, "{ ", String::joinAll(", ", args), "}");
 }
 
 function emitConstructorPrimarySpecialOkExpression(cpsoe: CPPAssembly::ConstructorPrimarySpecialOkExpression, ctx: Context): String {
@@ -1037,8 +1035,7 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
     let full_indent = String::concat("    ", indent);
     let tkey = emitTypeKey(pc.tkey, false, ctx);
     let k = String::fromCString((ctx.asm.typeinfos.get(pc.tkey).slotsize - 1n).toCString()); %% Slot size includes "2" ptr to typeinfo, so we ignore
-    let sometkeyparam = emitTypeKey(pc@<CPPAssembly::OptionTypeDecl>.someType.tkeystr, true, ctx);
-    let sometkeybase = emitTypeKey(pc@<CPPAssembly::OptionTypeDecl>.someType.tkeystr, false, ctx);
+    let sometkey = emitTypeKey(pc@<CPPAssembly::OptionTypeDecl>.someType.tkeystr, false, ctx);
 
     let pc_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(pc.tkey), some(pc), ctx, indent);
 
@@ -1051,18 +1048,12 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
 
     let indenttkey = String::concat(full_indent, tkey);
 
-    %% If some is a ref type we just pass the pointer directly to boxed constructor
-    let sometinfo = ctx.asm.typeinfos.get(pc@<CPPAssembly::OptionTypeDecl>.someType.tkeystr);
-    let data = if(sometinfo.tag === CPPAssembly::Tag#Ref) then "d" else "&d";
-    let shouldderef = if(sometinfo.tag === CPPAssembly::Tag#Ref) then "" else "*";
-
     let somecons = if(k === "0") then "" 
-        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkeyparam," d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t>(", data, ")) {};%n;")
-        else String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkeyparam ," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t(*)[", k,"]>(&d)) {};%n;");
+        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey," d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t>(&d)) {};%n;")
+        else String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey ," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t(*)[", k,"]>(&d)) {};%n;");
     let nonecons = String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;");
 
-    let tmp = String::concat(full_indent, sometkeyparam);
-    let someaccessor = String::concat(tmp, " some() noexcept { return ", shouldderef,"reinterpret_cast<", sometkeybase,"*>(this->data); }%n;");
+    let someaccessor = String::concat(full_indent, sometkey, " some() noexcept { return *reinterpret_cast<", sometkey,"*>(this->data); }%n;");
 
     let cons = String::concat(defaultc, assign, copy, somecons, nonecons);
     return String::concat(visibility, cons, someaccessor, indent, "};%n;");
