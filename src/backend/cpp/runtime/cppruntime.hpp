@@ -52,7 +52,7 @@ public:
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     TypeInfoBase* typeinfo = nullptr;
-    uint64_t data[K] = {};
+    uintptr_t data[K] = {};
 };
 
 template<>
@@ -67,13 +67,13 @@ public:
     }
 
     // Some constructor
-    Boxed(TypeInfoBase* ti, uint64_t d) noexcept : typeinfo(ti), data(d) {};
+    Boxed(TypeInfoBase* ti, uintptr_t d) noexcept : typeinfo(ti), data(d) {};
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     TypeInfoBase* typeinfo = nullptr;
-    uint64_t data = 0;
+    uintptr_t data = 0;
 };
 
 template<>

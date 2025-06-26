@@ -758,9 +758,15 @@ entity CPPTransformer {
             }
             elif(bsqasm.constructables.has(typekey)) { 
                 let cons = bsqasm.constructables.get(typekey);
-                if(cons)@<BSQAssembly::SomeTypeDecl> { %% Only support Some<T> for now (should always be values)
+                if(cons)@<BSQAssembly::SomeTypeDecl> { %% Only support Some<T> for now
                     let someinfo = this.generateTypeInfo[recursive]($cons.oftype.tkeystr, tinfos, cur_tid, bsqasm).0;
-                    let named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value };
+                    var named_someinfo: CPPAssembly::TypeInfo;
+                    if(someinfo.tag !== CPPAssembly::Tag#Ref){
+                        named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, someinfo.tag };
+                    }
+                    else {
+                        named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, 8n, 1n, '1', cpptkey, CPPAssembly::Tag#Ref };                       
+                    }
 
                     %% We need to return early as all work was done in calculating someinfo
                     return (| named_someinfo, tinfos.insert(cpptkey, named_someinfo) |);
