@@ -26,10 +26,10 @@ LiteralNoneExpression { }
     field value: CString;
 }
 | LiteralCRegexExpression {
-    field value: CString;
+    field smtlib: CString;
 }
 | LiteralRegexExpression {
-    field value: String;
+    field smtlib: CString;
 }
 ;
 

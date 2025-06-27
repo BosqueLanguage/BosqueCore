@@ -116,13 +116,11 @@ function emitLiteralStringExpression(e: SMTAssembly::LiteralStringExpression): C
 }
 
 function emitLiteralCRegexExpression(e: SMTAssembly::LiteralCRegexExpression): CString {
-    %%TODO
-    abort;
+    return e.smtlib;
 }
 
 function emitLiteralRegexExpression(e: SMTAssembly::LiteralRegexExpression): CString {
-    %%TODO
-    abort;
+    return e.smtlib;
 }
 
 function emitConstantExpression(e: SMTAssembly::ConstantExpression): CString {

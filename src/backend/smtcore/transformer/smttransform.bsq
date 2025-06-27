@@ -1227,6 +1227,12 @@ entity SMTTransformer {
             | BSQAssembly::LiteralStringExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformLiteralStringExpression($exp)}; 
             }
+            | BSQAssembly::LiteralCRegexExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), LiteralCRegexExpression{$exp.smtlib}}; 
+            }
+            | BSQAssembly::LiteralRegexExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), LiteralRegexExpression{$exp.smtlib}}; 
+            }
             | BSQAssembly::AccessEnumExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessEnumExpression($exp)}; 
             }
