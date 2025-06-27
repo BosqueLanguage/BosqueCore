@@ -579,7 +579,22 @@ entity ConstantSimplification {
     }
 
     method simplifyBinIFF(e: BinLogicExpression, nlhs: Expression, nrhs: Expression): Expression {
-        abort;
+        if(nlhs)@<LiteralSimpleExpression> {
+            if(nrhs)@<LiteralSimpleExpression> {
+                if($nlhs.value === $nrhs.value) {
+                    return ConstantSimplification::trueExp;
+                }
+                else {
+                    return e[lhs=nlhs, rhs=nrhs];
+                }
+            }
+            else {
+                return e[lhs=nlhs, rhs=nrhs];
+            }
+        }
+        else {
+            return e[lhs=nlhs, rhs=nrhs];
+        }
     }
 
     recursive method processBinLogicExpression(e: BinLogicExpression): Expression {

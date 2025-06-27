@@ -20,6 +20,9 @@ concept Operation {
 concept Statement {
 }
 
+entity EmptyStatement provides Statement {
+}
+
 entity BinderInfo { %% TODO: Not implemented
     field srcname: VarIdentifier;
     field refineonfollow: Bool;

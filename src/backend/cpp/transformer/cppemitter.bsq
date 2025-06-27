@@ -607,6 +607,14 @@ function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression
     return emitExpression(exp.exp, ctx);
 }
 
+function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx: Context): String {
+   return emitExpression(exp.exp, ctx);
+}
+
+function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ctx: Context): String {
+   return emitExpression(exp.exp, ctx); 
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
@@ -732,11 +740,14 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Co
 
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
-        CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
+        CPPAssembly::EmptyStatement => { return ""; }
+        | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
         | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, ctx, indent); }
         | CPPAssembly::IfStatement => { return emitIfStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
+        | CPPAssembly::EmptyStatement => { return ""; }
+        | CPPAssembly::BlockStatement => { return emitBlockStatement($stmt, ctx, indent); }
         | _ => { abort; }
     }
 }

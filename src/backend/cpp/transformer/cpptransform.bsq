@@ -433,11 +433,8 @@ entity CPPTransformer {
         let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
         let texp = this.transformExpressionToCpp(exp.texp);
 
-        let coerced_thenexp = this.processCoerceTypeAsNeeded(exp.thenexp, exp.etype);
-        let coerced_elseexp = this.processCoerceTypeAsNeeded(exp.elseexp, exp.etype);
-
-        let thenexp = this.transformExpressionToCpp(coerced_thenexp);
-        let elseexp = this.transformExpressionToCpp(coerced_elseexp);
+        let thenexp = this.transformExpressionToCpp(exp.thenexp);
+        let elseexp = this.transformExpressionToCpp(exp.elseexp);
 
         match(exp)@ {
             BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
@@ -445,7 +442,6 @@ entity CPPTransformer {
         }
     }
 
-    %% Will be used when we are running Explicitify
     method transformCoerceWidenTypeExpression(exp: BSQAssembly::CoerceWidenTypeExpression): CPPAssembly::CoerceWidenTypeExpression {
         let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
         let expr = this.transformExpressionToCpp(exp.exp);
@@ -455,7 +451,6 @@ entity CPPTransformer {
         return CPPAssembly::CoerceWidenTypeExpression{ etype, expr, srctype, trgttype };
     }
 
-    %% Same here
     method transformCoerceNarrowTypeExpression(exp: BSQAssembly::CoerceNarrowTypeExpression): CPPAssembly::CoerceNarrowTypeExpression {
         let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
         let expr = this.transformExpressionToCpp(exp.exp);
@@ -463,6 +458,24 @@ entity CPPTransformer {
         let trgttype = CPPTransformNameManager::convertNominalTypeSignature(exp.trgttype);
 
         return CPPAssembly::CoerceNarrowTypeExpression{ etype, expr, srctype, trgttype };
+    }
+
+    method transformSafeConvertExpression(exp: BSQAssembly::SafeConvertExpression): CPPAssembly::SafeConvertExpression {
+        let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
+        let expr = this.transformExpressionToCpp(exp.exp);
+        let srctype = CPPTransformNameManager::convertNominalTypeSignature(exp.srctype);
+        let trgttype = CPPTransformNameManager::convertNominalTypeSignature(exp.trgttype);
+
+        return CPPAssembly::SafeConvertExpression{ etype, expr, srctype, trgttype };
+    }
+
+    method transformCreateDirectExpression(exp: BSQAssembly::CreateDirectExpression): CPPAssembly::CreateDirectExpression {
+        let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
+        let expr = this.transformExpressionToCpp(exp.exp);
+        let srctype = CPPTransformNameManager::convertNominalTypeSignature(exp.srctype);
+        let trgttype = CPPTransformNameManager::convertNominalTypeSignature(exp.trgttype);
+
+        return CPPAssembly::CreateDirectExpression{ etype, expr, srctype, trgttype };
     }
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
@@ -484,6 +497,8 @@ entity CPPTransformer {
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.transformCoerceWidenTypeExpression($expr); }   
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.transformCoerceNarrowTypeExpression($expr); }
+            | BSQAssembly::SafeConvertExpression => { return this.transformSafeConvertExpression($expr); }
+            | BSQAssembly::CreateDirectExpression => { return this.transformCreateDirectExpression($expr); }
             | _ => { abort; }
         }
     }
@@ -495,26 +510,10 @@ entity CPPTransformer {
         return CPPAssembly::ReturnSingleStatement{rtype, rexp};
     }
 
-    %% Temporary
-    method processCoerceTypeAsNeeded(e: BSQAssembly::Expression, into: BSQAssembly::TypeSignature): BSQAssembly::Expression {
-        if(this.bsqasm.areTypesSame(e.etype, into)) {
-            return e;
-        }
-        else {
-            if(this.bsqasm.isSubtypeOf(e.etype, into)) {
-                return BSQAssembly::CoerceWidenTypeExpression{ e.sinfo, into, e, e.etype@<BSQAssembly::NominalTypeSignature>, into@<BSQAssembly::NominalTypeSignature> };
-            }
-            else {
-                return BSQAssembly::CoerceNarrowTypeExpression{ e.sinfo, into, e, e.etype@<BSQAssembly::NominalTypeSignature>, into@<BSQAssembly::NominalTypeSignature> };
-            }
-        }
-    }
-
     recursive method transformVariableInitializationStatementToCpp(stmt: BSQAssembly::VariableInitializationStatement): CPPAssembly::VariableInitializationStatement {
         let name = CPPTransformNameManager::convertIdentifier(stmt.name);
         let stype = CPPTransformNameManager::convertTypeSignature(stmt.vtype);
-        let coerced_expr = this.processCoerceTypeAsNeeded(stmt.exp, stmt.vtype);
-        let cppexpr = this.transformExpressionToCpp[recursive](coerced_expr);
+        let cppexpr = this.transformExpressionToCpp[recursive](stmt.exp);
 
         return CPPAssembly::VariableInitializationStatement{ name, stype, cppexpr };
     }
@@ -560,11 +559,32 @@ entity CPPTransformer {
 
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
-            BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
+            BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
+            | BSQAssembly::VariableDeclarationStatement => { abort; }
+            | BSQAssembly::VariableMultiDeclarationStatement => { abort; }
+            | BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; }
+            | BSQAssembly::VariableAssignmentStatement => { abort; }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
+            | BSQAssembly::VariableRetypeStatement => { abort; }
+            | BSQAssembly::ReturnVoidStatement => { abort; }
             | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
+            | BSQAssembly::ReturnMultiStatement => { abort; }
             | BSQAssembly::IfStatement => { return this.transformIfStatement[recursive]($stmt); }
             | BSQAssembly::IfElseStatement => { return this.transformIfElseStatement[recursive]($stmt); }
             | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }
+            | BSQAssembly::SwitchStatement => { abort; }
+            | BSQAssembly::MatchStatement => { abort; }
+            | BSQAssembly::AbortStatement => { abort; }
+            | BSQAssembly::AssertStatement => { abort; } 
+            | BSQAssembly::ValidateStatement => { abort; }
+            | BSQAssembly::DebugStatement => { abort; }
+            | BSQAssembly::VoidRefCallStatement => { abort; }
+            | BSQAssembly::UpdateDirectStatement => { abort; }
+            | BSQAssembly::UpdateIndirectStatement => { abort; }
+            | BSQAssembly::BlockStatement => { return this.transformBlockStatement($stmt); }
             | _ => { abort; }
         }
     }
