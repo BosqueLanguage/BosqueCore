@@ -6,6 +6,8 @@ import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinderInfo, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallRefVariableExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, CreateDirectExpression, DebugStatement, EmptyStatement, Expression, ExpressionBodyImplementation, ExpressionTag, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, KeyCompareEqExpression, KeyCompareLessExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralNoneExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTypeDeclValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOperation, PostfixOpTag, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnMultiStatement, ReturnSingleStatement, ReturnVoidStatement, SafeConvertExpression, SelfUpdateStatement, SpecialConstructorExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, VarUpdateStatement, VoidRefCallStatement } from "./body.js";
 
+import { getBSQIRForm, getSMTForm} from "@bosque/jsbrex";
+
 class BsqonCodeFormatter {
     private level: number | undefined;
 
@@ -112,7 +114,8 @@ class BSQIREmitter {
     //map from files with tests to the list of tests
     readonly testgroups: [string, string[]][] = [];
 
-    mapper: TemplateNameMapper | undefined;
+    currentns: NamespaceDeclaration | undefined = undefined;
+    mapper: TemplateNameMapper | undefined = undefined;
 
     //Emit state fields
     nsconsts: string[] = [];
@@ -162,6 +165,11 @@ class BSQIREmitter {
 
     private tproc(ttype: TypeSignature): TypeSignature {
         return this.mapper !== undefined ? ttype.remapTemplateBindings(this.getTemplateMapper()) : ttype;
+    }
+
+    private getCurrentINNS(): string {
+        assert(this.currentns !== undefined, "Current namespace is not set");
+        return '"' + this.currentns.fullnamespace.ns.join("::") + '"';
     }
 
     private getTemplateMapper(): TemplateNameMapper {
@@ -353,11 +361,17 @@ class BSQIREmitter {
     }
 
     private emitLiteralUnicodeRegexExpression(exp: LiteralRegexExpression): string {
-        assert(false, "Not implemented -- LiteralRegex");
+        const reir = getBSQIRForm(exp.value, this.getCurrentINNS());
+        const smtir = getSMTForm(exp.value, this.getCurrentINNS());
+
+        return `BSQAssembly::LiteralRegexExpression{ ${this.emitExpressionBase(exp)}, bsqir=${reir}, smtlib='${smtir}' }`;
     }
     
     private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
-        assert(false, "Not implemented -- LiteralCRegex");
+        const reir = getBSQIRForm(exp.value, this.getCurrentINNS());
+        const smtir = getSMTForm(exp.value, this.getCurrentINNS());
+
+        return `BSQAssembly::LiteralCRegexExpression{ ${this.emitExpressionBase(exp)}, bsqir=${reir}, smtlib='${smtir}' }`;
     }
     
     private emitLiteralCCharExpression(exp: LiteralSimpleExpression): string {
@@ -2262,7 +2276,12 @@ class BSQIREmitter {
             const nsii = aainsts.find((ai) => ai.ns.emit() === subdecl.fullnamespace.emit());
             
             if(nsii !== undefined) {
+                const cdecl = this.currentns;
+
+                this.currentns = subdecl;
                 this.emitNamespaceDeclaration(decl.subns[i], nsii, aainsts, fmt);
+
+                this.currentns = cdecl;
             }
         }
 
@@ -2483,6 +2502,7 @@ class BSQIREmitter {
             const nsii = asminstantiation.find((ai) => ai.ns.emit() === nsdecl.fullnamespace.emit());
 
             if(nsii !== undefined) {
+                emitter.currentns = nsdecl;
                 emitter.emitNamespaceDeclaration(nsdecl, nsii, asminstantiation, new BsqonCodeFormatter(2));
             }
         }

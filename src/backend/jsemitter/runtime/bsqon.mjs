@@ -1266,7 +1266,7 @@ BSQONParser.prototype.parseUnicodeRegex = function() {
  */
 BSQONParser.prototype.parseCRegex = function() {
     //TODO: We need to do better here...
-    return this.consumeExpectedAndGetData(TokenStrings.CRegex);
+    return this.consumeExpectedAndGetData(TokenStrings.Regex);
 }
 /**
  * @returns {any}

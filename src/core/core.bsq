@@ -403,11 +403,10 @@ __internal entity Regex {
 %** Primitive unicode regex value. **%
 __internal entity CRegex {
     internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
-    %*
+
     method accepts(s: CString): Bool {
         return CRegex::s_accepts(this, s);
     }
-    *%
 }
 
 %** Primitive unicode regex value. **%

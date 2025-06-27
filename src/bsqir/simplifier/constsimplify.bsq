@@ -248,6 +248,11 @@ entity ConstantSimplification {
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
+    recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression): Expression {
+        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
+        return e[argsinfo=$argsinfo[args=nargs]];
+    }
+
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
         let nargs = this.processArgs(e.args);
 
@@ -671,7 +676,7 @@ entity ConstantSimplification {
             | LetExpression => { abort; }
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e); }
-            | CallTypeFunctionExpression => { abort; }
+            | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e); }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
