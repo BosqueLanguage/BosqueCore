@@ -69,11 +69,13 @@ entity LiteralStringExpression provides Expression {
 }
 
 entity LiteralCRegexExpression provides Expression {
-    field value: CString;
+    field bsqir: CRegex;
+    field smtlib: CString;
 }
 
 entity LiteralRegexExpression provides Expression {
-    field value: CString;
+    field bsqir: Regex;
+    field smtlib: CString;
 }
 
 entity LiteralTypeDeclValueExpression provides Expression {
