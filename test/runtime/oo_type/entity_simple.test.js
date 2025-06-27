@@ -32,7 +32,7 @@ describe ("Exec -- entity decl with consts", () => {
 });
 
 describe ("Exec -- entity decl with functions", () => {
-    it("should exec entity with consts", function () {
+    it("should exec entity with functions", function () {
         runMainCode('entity Foo { function foo(): Int { return 3i; } } public function main(): Int { return Foo::foo(); }', "3i");
 
         runMainCode('entity Foo<T> { function foo(x: T): T { return x; } } public function main(): Int { return Foo<Int>::foo(3i); }', "3i");

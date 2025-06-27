@@ -177,6 +177,25 @@ entity BSQToSMTCallGraphBuilder {
         return BSQCCInfo::mergeInfos(argscalls, defaultcalls, prepostcalls, tinfo);
     }
 
+    recursive method processCallTypeFunctionExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::CallTypeFunctionExpression): BSQCCInfo {
+        let argscalls = this.processArgumentList[recursive](current, e.argsinfo.args);
+        let tfunc = this.assembly.typefuncs.get(e.ikey);
+
+        %%TODO: we need to handle implicit default params here too
+        var defaultcalls = BSQCCInfo::emptyinfo;
+
+        var prepostcalls = BSQCCInfo::emptyinfo;
+        if(\/(!tfunc.preconditions.empty(), !tfunc.postconditions.empty())) {
+            let precalls = tfunc.preconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            let postcalls = tfunc.postconditions.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+
+            prepostcalls = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>::concat(precalls, postcalls));
+        }
+
+        let tinfo = BSQCCInfo::createWCallInfo(current, e.ikey);
+        return BSQCCInfo::mergeInfos(argscalls, defaultcalls, prepostcalls, tinfo);
+    }
+
     recursive method processPostfixInvokeStatic(current: BSQAssembly::InvokeKey, op: BSQAssembly::PostfixInvokeStatic): BSQCCInfo {
         let argscalls = this.processArgumentList[recursive](current, op.argsinfo.args);
         let smethod = this.assembly.staticmethods.get(op.resolvedTrgt);
@@ -260,7 +279,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { return this.processArgumentList[recursive](current, $e.argsinfo.args); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive](current, $e); }
-            | BSQAssembly::CallTypeFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive](current, $e); }
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
@@ -474,6 +493,19 @@ entity MayErrorAnalysis {
         return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
     }
 
+    recursive method processCallTypeFunctionExpression(e: BSQAssembly::CallTypeFunctionExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        if(cerrors.tryGet(e.ikey) === true) {
+            return true; %% the called function may error
+        }
+
+        let tfunc = this.assembly.typefuncs.get(e.ikey);
+        if(\/(!tfunc.preconditions.empty(), !tfunc.postconditions.empty())) {
+            return true;
+        }
+        
+        return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
+    }
+
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         if(cerrors.tryGet(op.resolvedTrgt) === true) {
             return true; %% the called function may error
@@ -569,7 +601,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { return \/(lerrors.tryGet($e.fname) === true, this.processArgumentList[recursive]($e.argsinfo.args, cerrors, lerrors)); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, cerrors, lerrors); }
-            | BSQAssembly::CallTypeFunctionExpression => { abort; }
+            | BSQAssembly::CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }

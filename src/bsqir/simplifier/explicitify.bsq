@@ -180,6 +180,13 @@ entity ExplicitifyTransform {
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
+    recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression, vmap: VarMapping): Expression {
+        let types = e.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
+        let nargs = this.processArgumentListStd(e.argsinfo.args, types, vmap);
+
+        return e[argsinfo=$argsinfo[args=nargs]];
+    }
+
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
         let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
 
@@ -428,7 +435,7 @@ entity ExplicitifyTransform {
             | LetExpression => { abort; }
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e, vmap); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, vmap); }
-            | CallTypeFunctionExpression => { abort; }
+            | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, vmap); }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
