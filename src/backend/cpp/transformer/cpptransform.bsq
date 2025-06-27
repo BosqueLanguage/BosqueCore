@@ -302,8 +302,7 @@ entity CPPTransformer {
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
         let args = this.transformArgumentInfo(expr.argsinfo);
-        let fullns = expr.fullns; %% For looking up func we are calling
-        %% let callingikey = expr.callingikey; %% Typefuncs (since they get grouped with nsfuncs due to type resolution)
+        let fullns = expr.fullns;
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
     }
@@ -756,7 +755,7 @@ entity CPPTransformer {
                 let cons = bsqasm.constructables.get(typekey);
                 if(cons)@<BSQAssembly::SomeTypeDecl> { %% Only support Some<T> for now (are always value too)
                     let someinfo = this.generateTypeInfo[recursive]($cons.oftype.tkeystr, tinfos, cur_tid, bsqasm).0;
-                    var named_someinfo = CPPAssembly::TypeInfo{ someinfo.id, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
+                    var named_someinfo = CPPAssembly::TypeInfo{ next_tid, someinfo.typesize, someinfo.slotsize, someinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
 
                     %% We need to return early as all work was done in calculating someinfo
                     return (| named_someinfo, tinfos.insert(cpptkey, named_someinfo) |);
@@ -781,7 +780,7 @@ entity CPPTransformer {
                 let pc = bsqasm.pconcepts.get(typekey);
                 if(pc)@<BSQAssembly::OptionTypeDecl> { %% I "think" sometype would be best here
                     let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, cur_tid, bsqasm).0;
-                    let named_pcinfo = CPPAssembly::TypeInfo{ pcinfo.id, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, CString::concat('2', pcinfo.ptrmask), cpptkey, CPPAssembly::Tag#Tagged };
+                    let named_pcinfo = CPPAssembly::TypeInfo{ next_tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, CString::concat('2', pcinfo.ptrmask), cpptkey, CPPAssembly::Tag#Tagged };
 
                     %% Same as calculating Some<T> typeinfo
                     return (| named_pcinfo, tinfos.insert(cpptkey, named_pcinfo) |);

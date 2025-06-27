@@ -180,6 +180,13 @@ entity ExplicitifyTransform {
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
+    recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression, vmap: VarMapping): Expression {
+        let types = e.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
+        let nargs = this.processArgumentListStd(e.argsinfo.args, types, vmap);
+
+        return e[argsinfo=$argsinfo[args=nargs]];
+    }
+
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
         let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
 
@@ -428,7 +435,7 @@ entity ExplicitifyTransform {
             | LetExpression => { abort; }
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e, vmap); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, vmap); }
-            | CallTypeFunctionExpression => { abort; }
+            | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, vmap); }
             | CallTypeFunctionSpecialExpression => { abort; }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
@@ -525,6 +532,18 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processIfElifElseStatement(s: IfElifElseStatement, vmap: VarMapping): Statement {
+        let nifcond = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](s.ifcond, vmap));
+
+        let nifflow = this.processBlockStatement[recursive](s.ifflow, vmap);
+        let ncondflow = s.condflow
+            .map<(|Expression, BlockStatement|)>(fn(eb) %% Need new varmapping? 
+                => (|this.processExpression[recursive](eb.0, vmap), this.processBlockStatement[recursive](eb.1, vmap)|));
+        let nelseflow = this.processBlockStatement[recursive](s.elseflow, vmap);
+
+        return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
+    }
+
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
             EmptyStatement => {
@@ -577,6 +596,9 @@ entity ExplicitifyTransform {
             | IfElseStatement => {
                 return this.processIfElseStatement[recursive]($s, vmap);
             }
+            | IfElifElseStatement => {
+                return this.processIfElifElseStatement[recursive]($s, vmap);
+            }
             | AbortStatement => {
                 return s;
             }
@@ -602,7 +624,10 @@ entity ExplicitifyTransform {
             return param;
         }
         else {
-            abort;
+            let dv = this.processExpression(param.defaultval@some, VarMapping::createEmpty());
+            let dvc = this.processCoerceTypeAsNeeded(dv, param.ptype);
+            
+            return param[ptype=dvc.etype, defaultval=some(dvc)];
         }
     }
 
@@ -775,7 +800,32 @@ entity ExplicitifyTransform {
     }
 
     method processDatatypeMemberEntityTypeDecl(dmtype: DatatypeMemberEntityTypeDecl): DatatypeMemberEntityTypeDecl {
-        abort;
+        return DatatypeMemberEntityTypeDecl{
+            file=dmtype.file,
+            sinfo=dmtype.sinfo,
+            fullns = dmtype.fullns,
+            declaredInNS=dmtype.declaredInNS,
+            
+            tkey=dmtype.tkey,
+            name=dmtype.name,
+
+            invariants=dmtype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=dmtype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=dmtype.absmethods,
+            virtmethods=dmtype.virtmethods,
+            overmethods=dmtype.overmethods,
+            staticmethods=dmtype.staticmethods,
+
+            saturatedProvides=dmtype.saturatedProvides,
+            saturatedBFieldInfo=dmtype.saturatedBFieldInfo,
+
+            allInvariants=dmtype.allInvariants,
+            allValidates=dmtype.allValidates,
+
+            fields=dmtype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd)),
+            parentTypeDecl=dmtype.parentTypeDecl
+        };
     }
 
     method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
@@ -783,7 +833,34 @@ entity ExplicitifyTransform {
     }
 
     method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
-        abort;
+        return DatatypeTypeDecl {
+            file=ddatatype.file,
+            sinfo=ddatatype.sinfo,
+            fullns = ddatatype.fullns,
+            declaredInNS=ddatatype.declaredInNS,
+            
+            tkey=ddatatype.tkey,
+            name=ddatatype.name,
+
+            invariants=ddatatype.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=ddatatype.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=ddatatype.absmethods,
+            virtmethods=ddatatype.virtmethods,
+            overmethods=ddatatype.overmethods,
+            staticmethods=ddatatype.staticmethods,
+
+            saturatedProvides=ddatatype.saturatedProvides,
+            saturatedBFieldInfo=ddatatype.saturatedBFieldInfo,
+
+            allInvariants=ddatatype.allInvariants,
+            allValidates=ddatatype.allValidates,
+
+            subtypes=ddatatype.subtypes,
+
+            fields=ddatatype.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd)),
+            associatedMemberEntityDecls=ddatatype.associatedMemberEntityDecls
+        };
     }
 
     function process(assembly: Assembly): Assembly {

@@ -394,6 +394,7 @@ function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, param
     }
 }
 
+%% May want to do this resolution in the transformer
 function resolveDefaultParams(al: List<String>, params: List<CPPAssembly::ParameterDecl>): List<String> {
     return al.map<String>(fn(arg) => { 
         if(arg.startsWithString("$")) {
@@ -1048,11 +1049,11 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
     let indenttkey = String::concat(full_indent, tkey);
 
     let somecons = if(k === "0") then "" 
-        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey," d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t>(&d)) {};%n;")
+        else if(k === "1") then String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t*>(&d)) {};%n;")
         else String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti, ", sometkey ," d) noexcept : Boxed(ti, *reinterpret_cast<uintptr_t(*)[", k,"]>(&d)) {};%n;");
     let nonecons = String::concat(indenttkey, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;");
 
-    let someaccessor = String::concat(full_indent, sometkey, " some() noexcept { return *reinterpret_cast<", sometkey,"*>(this->data); }%n;");
+    let someaccessor = String::concat(full_indent, sometkey, " some() noexcept { return *reinterpret_cast<", sometkey,"*>(&this->data); }%n;");
 
     let cons = String::concat(defaultc, assign, copy, somecons, nonecons);
     return String::concat(visibility, cons, someaccessor, indent, "};%n;");
