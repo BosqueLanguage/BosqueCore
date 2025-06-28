@@ -383,11 +383,17 @@ class BSQIREmitter {
     }
 
     private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
-        return `BSQAssembly::LiteralCStringExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`;
+        //TODO -- we need to normalize the string to a representation that is all unicode escaped -- and maybe a SMT and C version too
+
+        let cstrval = exp.value;
+        return `BSQAssembly::LiteralCStringExpression{ ${this.emitExpressionBase(exp)}, value=${cstrval} }`;
     }
 
     private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
-        return `BSQAssembly::LiteralStringExpression{ ${this.emitExpressionBase(exp)}, value=${exp.value} }`;
+        //TODO -- we need to normalize the string contents to a cstring representation that is all unicode escaped -- and maybe a SMT and C version too
+
+        let cstrval = "'" + exp.value.slice(1, exp.value.length - 1) + "'";
+        return `BSQAssembly::LiteralStringExpression{ ${this.emitExpressionBase(exp)}, value=${cstrval} }`;
     }
  
     private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression): string {

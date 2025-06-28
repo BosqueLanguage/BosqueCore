@@ -109,6 +109,11 @@ concept CallFunctionConcept {
     field invokeKey: InvokeKey;
 }
 
+entity CallForceInlineExpression provides SafeExpression {
+    field iname: CString;
+    field args: List<SafeExpression>;
+}
+
 entity CallFunctionSafeExpression provides CallFunctionConcept, SafeExpression { 
     field args: List<SafeExpression>;
 } 

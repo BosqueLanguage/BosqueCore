@@ -257,6 +257,24 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
     }
 }
 
+recursive function emitCallForceInlineExpression(v: SMTAssembly::CallForceInlineExpression, eev: SMTEmitterEnv): CString {
+    if(v.iname === 'cregex_accepts') {
+        let re = emitSafeExpression[recursive](v.args.get(0n), eev);
+        let str = emitSafeExpression[recursive](v.args.get(1n), eev);
+
+        return CString::concat('(str.in.re ', str, ' ', re, ')');
+    }
+    elif(v.iname === 'regex_accepts') {
+        let re = emitSafeExpression[recursive](v.args.get(0n), eev);
+        let str = emitSafeExpression[recursive](v.args.get(1n), eev);
+
+        return CString::concat('(str.in.re ', str, ' ', re, ')');
+    }
+    else {
+        abort; %% Missing case
+    }
+}
+
 recursive function emitCallFunctionExpression(v: SMTAssembly::CallFunctionExpression, eev: SMTEmitterEnv): CString {
     if(v.args.empty()) {
         return v.invokeKey.value;
@@ -714,6 +732,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e, eev); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e, eev); }
         | SMTAssembly::LambdaConstructor => { return emitLambdaConstructor[recursive]($e, eev); }
+        | SMTAssembly::CallForceInlineExpression => { return emitCallForceInlineExpression[recursive]($e, eev); }
         | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::CallLambdaFunctionSafeExpression => { return emitCallLambdaFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, eev); }
