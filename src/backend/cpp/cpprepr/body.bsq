@@ -75,7 +75,7 @@ RefArgumentValue { } %% TODO: Not implemented
 ;
 
 entity ArgumentList {
-    field args: List<Option<ArgumentValue>>; %% if none get default val in emitter
+    field args: List<ArgumentValue>; %% if none get default val in emitter
 }
 
 datatype IfStatement provides Statement using {

@@ -579,21 +579,16 @@ entity ConstantSimplification {
     }
 
     method simplifyBinIFF(e: BinLogicExpression, nlhs: Expression, nrhs: Expression): Expression {
-        if(nlhs)@<LiteralSimpleExpression> {
-            if(nrhs)@<LiteralSimpleExpression> {
-                if($nlhs.value === $nrhs.value) {
-                    return ConstantSimplification::trueExp;
-                }
-                else {
-                    return e[lhs=nlhs, rhs=nrhs];
-                }
-            }
-            else {
-                return e[lhs=nlhs, rhs=nrhs];
-            }
+        if(nlhs?!<LiteralSimpleExpression> || nrhs?!<LiteralSimpleExpression>) {
+            return e[lhs=nlhs, rhs=nrhs];
         }
         else {
-            return e[lhs=nlhs, rhs=nrhs];
+            if(nlhs@<LiteralSimpleExpression>.value === nrhs@<LiteralSimpleExpression>.value) {
+                return ConstantSimplification::trueExp;
+            }
+            else {
+                return ConstantSimplification::falseExp;
+            }
         }
     }
 

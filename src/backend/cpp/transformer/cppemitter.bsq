@@ -373,57 +373,25 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return String::concat("(", String::joinAll(" || ", args), ")");
 }
 
-function emitArgumentValue(av: Option<CPPAssembly::ArgumentValue>, i: Nat, params: List<CPPAssembly::ParameterDecl>, ctx: Context): String {
-    if(av)@none {
-        let param = params.get(i).defaultval;
-        if(param)@none {
-            abort; %% Should be impossible
-        }
-        else {
-            return emitExpression[recursive]($param, ctx);
-        }
-    }
-    else {
-        let arg = $av;
-        let expr = emitExpression[recursive](arg.exp, ctx);
-        match(arg)@ {
-            CPPAssembly::NamedArgumentValue => { return expr; } 
-            | CPPAssembly::PositionalArgumentValue => { return expr; }
-            | _ => { abort; }
-        }
+function emitArgumentValue(av: CPPAssembly::ArgumentValue, ctx: Context): String {
+    let expr = emitExpression[recursive](av.exp, ctx);
+    match(av)@ {
+        CPPAssembly::NamedArgumentValue => { return expr; } 
+        | CPPAssembly::PositionalArgumentValue => { return expr; }
+        | _ => { abort; }
     }
 }
 
-%% May want to do this resolution in the transformer
-function resolveDefaultParams(al: List<String>, params: List<CPPAssembly::ParameterDecl>): List<String> {
-    return al.map<String>(fn(arg) => { 
-        if(arg.startsWithString("$")) {
-            let ident = arg.removePrefixString("$");
-
-            %% This is a bit hacky but works for getting default val idx
-            let idx = params.mapIdx<Nat>(fn(param, ii) => {
-                if(emitIdentifier(param.pname) === ident) {
-                    return ii;
-                }
-                return 0n;
-            }).sum();
-
-            return al.get(idx);
-        }
-        return arg; 
-    });
-}
-
-function emitArgumentList(al: CPPAssembly::ArgumentList, params: List<CPPAssembly::ParameterDecl>, ctx: Context): String {
-    let emit_al = al.args.mapIdx<String>(fn(arg, ii) => emitArgumentValue(arg, ii, params, ctx));
+function emitArgumentList(al: CPPAssembly::ArgumentList, ctx: Context): String {
+    let emit_al = al.args.mapIdx<String>(fn(arg, ii) => emitArgumentValue(arg, ctx));
     
-    return String::joinAll(", ", resolveDefaultParams[recursive](emit_al, params));
+    return String::joinAll(", ", emit_al);
 }
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): String { 
     let name = emitInvokeKey(e.ikey, ctx);
     let nsfunc = ctx.asm.nsfuncs.get(e.ikey); 
-    let args = emitArgumentList(e.args, nsfunc.params, ctx); 
+    let args = emitArgumentList(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -431,7 +399,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): String { 
     let typefunc = ctx.asm.typefuncs.get(e.ikey);
     let name = emitInvokeKey(typefunc.ikey, ctx);
-    let args = emitArgumentList(e.args, typefunc.params, ctx); 
+    let args = emitArgumentList(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -452,15 +420,8 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: Str
     let ik = String::fromCString(op.resolvedTrgt.value);
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
-    var args: String;
-    if(ctx.asm.staticmethods.has(op.resolvedTrgt)) {
-        let trgt = ctx.asm.staticmethods.get(op.resolvedTrgt);
-        args = emitArgumentList(op.args, trgt.params, ctx);
-    }
-    else {
-        abort; %% TODO: Add support for Override, Abstract, and Virtual methods!
-    }
-
+    let args = emitArgumentList(op.args, ctx);
+    
     %% Remove abstract nominal we were in
     var resolvedInvoke = emitSpecialTemplate(ik.removePrefixString(tk).removePrefixString("::"));
     if(args === "") {
@@ -489,10 +450,17 @@ function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSi
         else String::concat(rootExp, ".typeinfo != &NoneType");
 }
 
+function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
+    return if(it.isnot) 
+        then String::concat(rootExp, ".typeinfo != &NoneType") 
+        else String::concat(rootExp, ".typeinfo == &NoneType");
+}
+
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
     match(it)@ {
         CPPAssembly::ITestType => { return emitITestType($it, baseType, ctx); }
         | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, rootExp, ctx); }
+        | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, rootExp, ctx); }
         | _ => { abort; } %% TODO: Not Implemented!
     }
 }
@@ -516,7 +484,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 }
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
-    let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg@some.exp, ctx) );
+    let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg.exp, ctx) );
     let sometype = String::concat("Core::", emitTypeKey(cpsse.ctype.tkeystr, false, ctx));
 
     return String::concat(sometype, "{ ", String::joinAll(", ", args), "}");
@@ -543,29 +511,7 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
 %% constructor like we do now. Currently they call "new"
 %%
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): String {
-    %% Eventually might want to rework emitArgumentList to support constructors too 
-    let emitargs =  String::joinAll(", ", exp.args.args.mapIdx<String>(fn(av, ii) => {
-        if(av)@none {
-            let e = ctx.asm.entities.tryGet(exp.ctype.tkeystr)@some;
-            let member_defval = e.fields.get(ii).defaultval;
-            if(member_defval)@none {
-                abort; %% Default value detected in transform, yet none provided for emission
-            }
-            else {
-                return emitExpression[recursive]($member_defval, ctx);
-            }
-        }
-        else {
-            let arg = $av;
-            let argexp = emitExpression[recursive](arg.exp, ctx);
-            match(arg)@ {
-                CPPAssembly::NamedArgumentValue => { return argexp; } 
-                | CPPAssembly::PositionalArgumentValue => { return argexp; }
-                | _ => { abort; }
-            }
-        }
-    }));
-
+    let emitargs = emitArgumentList(exp.args, ctx); 
     let name = emitTypeKey(exp.ctype.tkeystr, false, ctx);
     if(ctx.asm.typeinfos.get(exp.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) {
         return String::concat("new ", name, "{ ", emitargs, " }"); %% We use new solely to keep the code compiling before GC integration

@@ -271,37 +271,16 @@ entity CPPTransformer {
         }
     }
 
-    method transformArgumentInfo(bsqargs: BSQAssembly::InvokeArgumentInfo): CPPAssembly::ArgumentList {
-        let shuffled = bsqargs.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(e, ii) => {
-            var cur_arg: CPPAssembly::ArgumentValue;
-            if(ii >= bsqargs.args.args.size()) {
-                return none;
-            }
-            else { %% Resolve shuffle value
-                let shuffle_idx = e.0;
-                if(shuffle_idx)@none {
-                    let arg = bsqargs.args.args.get(ii);
-                    return some(this.transformArgument(arg));
-                }
-                else {
-                    let arg = bsqargs.args.args.get($shuffle_idx);
-                    return some(this.transformArgument(arg));
-                }
-            }
-        });
-        return CPPAssembly::ArgumentList{ shuffled };   
-    }
-    
-    %% This does not shuffle
     method transformArgumentList(al: BSQAssembly::ArgumentList): CPPAssembly::ArgumentList {
-        return CPPAssembly::ArgumentList{ al.args.map<Option<CPPAssembly::ArgumentValue>>(fn(arg) => some(this.transformArgument(arg))) };
+        let args = al.args.map<CPPAssembly::ArgumentValue>(fn(arg) => this.transformArgument(arg));
+        return CPPAssembly::ArgumentList{ args };   
     }
 
     method transformCallNamespaceFunctionExpression(expr: BSQAssembly::CallNamespaceFunctionExpression): CPPAssembly::CallNamespaceFunctionExpression {
         let ts = CPPTransformNameManager::convertTypeSignature(expr.etype);
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
-        let args = this.transformArgumentInfo(expr.argsinfo);
+        let args = this.transformArgumentList(expr.argsinfo.args);
         let fullns = expr.fullns;
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
@@ -312,7 +291,7 @@ entity CPPTransformer {
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ttype = CPPTransformNameManager::convertNominalTypeSignature(expr.ttype);
         let resolvedDeclType = CPPTransformNameManager::convertNominalTypeSignature(expr.resolvedDeclType);
-        let args = this.transformArgumentInfo(expr.argsinfo);
+        let args = this.transformArgumentList(expr.argsinfo.args);
 
         return CPPAssembly::CallTypeFunctionExpression{ ts, ikey, ttype, resolvedDeclType, args };
     }
@@ -326,12 +305,17 @@ entity CPPTransformer {
         return CPPAssembly::ITestSome{ isnot };
     }
 
+    method transformITestNone(isnot: Bool): CPPAssembly::ITestNone {
+        return CPPAssembly::ITestNone{ isnot };
+    }
+
     %% TODO: Support for ITest as convert
     method transformITestAsTest(itest: BSQAssembly::ITest): CPPAssembly::ITest {
         let isnot = itest.isnot;
         match(itest)@ {
             BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
             | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
+            | BSQAssembly::ITestNone => { return this.transformITestNone(isnot); }
             | _ => { abort; } 
         }
     }
@@ -349,7 +333,7 @@ entity CPPTransformer {
             | BSQAssembly::PostfixInvokeStatic => {
                 let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
                 let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
-                let args = this.transformArgumentInfo($op.argsinfo);
+                let args = this.transformArgumentList($op.argsinfo.args);
 
                 return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
             }
@@ -402,31 +386,8 @@ entity CPPTransformer {
 
     method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
         let base = this.transformConstructorPrimaryExpressionBase(e@<BSQAssembly::ConstructorPrimaryExpression>);        
-        let shuffledargs = e.shuffleinfo.mapIdx<Option<CPPAssembly::ArgumentValue>>(fn(she, ii) => {
-                var cur_arg: CPPAssembly::ArgumentValue;
-                if(ii >= e.args.args.size()) {
-                    return none;
-                }
-                else { %% Resolve shuffle value
-                    let shuffle_idx = she.0;
-                    if(shuffle_idx)@none {
-                        let arg = base.1.args.get(ii);
-                        if(arg)@!none {
-                            return some($arg);
-                        }
-                        abort;
-                    }
-                    else {
-                        let arg = base.1.args.get($shuffle_idx);
-                        if(arg)@!none {
-                            return some($arg);
-                        }
-                        abort;
-                    }
-                }
-            });
-
-        return CPPAssembly::ConstructorStdExpression{ base.0, CPPAssembly::ArgumentList{ shuffledargs }, base.2, e.fullns };
+        let args = this.transformArgumentList(e.args);
+        return CPPAssembly::ConstructorStdExpression{ base.0, args, base.2, e.fullns };
     } 
 
     method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
