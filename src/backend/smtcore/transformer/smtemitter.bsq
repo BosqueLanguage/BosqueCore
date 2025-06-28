@@ -116,13 +116,11 @@ function emitLiteralStringExpression(e: SMTAssembly::LiteralStringExpression): C
 }
 
 function emitLiteralCRegexExpression(e: SMTAssembly::LiteralCRegexExpression): CString {
-    %%TODO
-    abort;
+    return e.smtlib;
 }
 
 function emitLiteralRegexExpression(e: SMTAssembly::LiteralRegexExpression): CString {
-    %%TODO
-    abort;
+    return e.smtlib;
 }
 
 function emitConstantExpression(e: SMTAssembly::ConstantExpression): CString {
@@ -256,6 +254,24 @@ recursive function emitConstructorEListExpression(v: SMTAssembly::ConstructorELi
         let argsl = CString::joinAll(' ', cvals);
 
         return CString::concat('(', consname, ' ', argsl, ')');
+    }
+}
+
+recursive function emitCallForceInlineExpression(v: SMTAssembly::CallForceInlineExpression, eev: SMTEmitterEnv): CString {
+    if(v.iname === 'cregex_accepts') {
+        let re = emitSafeExpression[recursive](v.args.get(0n), eev);
+        let str = emitSafeExpression[recursive](v.args.get(1n), eev);
+
+        return CString::concat('(str.in.re ', str, ' ', re, ')');
+    }
+    elif(v.iname === 'regex_accepts') {
+        let re = emitSafeExpression[recursive](v.args.get(0n), eev);
+        let str = emitSafeExpression[recursive](v.args.get(1n), eev);
+
+        return CString::concat('(str.in.re ', str, ' ', re, ')');
+    }
+    else {
+        abort; %% Missing case
     }
 }
 
@@ -716,6 +732,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e, eev); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e, eev); }
         | SMTAssembly::LambdaConstructor => { return emitLambdaConstructor[recursive]($e, eev); }
+        | SMTAssembly::CallForceInlineExpression => { return emitCallForceInlineExpression[recursive]($e, eev); }
         | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::CallLambdaFunctionSafeExpression => { return emitCallLambdaFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, eev); }

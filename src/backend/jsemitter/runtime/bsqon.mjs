@@ -1256,7 +1256,7 @@ BSQONParser.prototype.parseDeltaISOTimeStamp = function() {
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parseUnicodeRegex = function() {
+BSQONParser.prototype.parseRegex = function() {
     //TODO: We need to do better here...
     return this.consumeExpectedAndGetData(TokenStrings.Regex);
 }
@@ -1394,6 +1394,9 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
     }      
     else if(tkey === "UnicodeRegex") {
         return this.parseUnicodeRegex();
+    }
+    else if(tkey === "Regex") {
+        return this.parseRegex();
     }
     else if(tkey === "CRegex") {
         return this.parseCRegex();
@@ -2192,6 +2195,9 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
     }      
     else if(tkey === "UnicodeRegex") {
         return this.emitUnicodeRegex(v);
+    }
+    else if(tkey === "Regex") {
+        return this.emitRegex(v);
     }
     else if(tkey === "CRegex") {
         return this.emitCRegex(v);
