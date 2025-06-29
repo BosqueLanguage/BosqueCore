@@ -537,8 +537,8 @@ entity ExplicitifyTransform {
 
         let nifflow = this.processBlockStatement[recursive](s.ifflow, vmap);
         let ncondflow = s.condflow
-            .map<(|Expression, BlockStatement|)>(fn(eb) %% Need new varmapping? 
-                => (|this.processExpression[recursive](eb.0, vmap), this.processBlockStatement[recursive](eb.1, vmap)|));
+            .map<(|Expression, BlockStatement|)>(fn(eb) => 
+                (|this.processExpression[recursive](eb.0, vmap), this.processBlockStatement[recursive](eb.1, vmap)|));
         let nelseflow = this.processBlockStatement[recursive](s.elseflow, vmap);
 
         return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];

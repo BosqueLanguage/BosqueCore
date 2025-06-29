@@ -266,13 +266,16 @@ PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
 }
+| PostfixIsTest {
+    field ttest: ITest;
+}
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
 }
-| PostfixIsTest {
-    field ttest: ITest;
+| PostfixBoolConstant {
+    field value: Bool;
 }
 ;
 

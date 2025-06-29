@@ -330,6 +330,11 @@ entity CPPTransformer {
 
                 return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
             }
+            | BSQAssembly::PostfixProjectFromNames => { abort; }
+            | BSQAssembly::PostfixAccessFromIndex => { abort; }
+            | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
+            | BSQAssembly::PostfixAsConvert => { abort; }
+            | BSQAssembly::PostfixAssignFields => { abort; }
             | BSQAssembly::PostfixInvokeStatic => {
                 let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
                 let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
@@ -337,8 +342,14 @@ entity CPPTransformer {
 
                 return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
             }
-            | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
-            | _ => { abort; } %% TODO: Not Implemented
+            | BSQAssembly::PostfixInvokeVirtual => { abort; }
+            | BSQAssembly::PostfixLiteralKeyAccess => { abort; }
+            | BSQAssembly::PostfixBoolConstant => { return CPPAssembly::PostfixBoolConstant{ baseType, $op.value }; }
+            | BSQAssembly::PostfixNop => { abort; }
+            | BSQAssembly::PostfixAbort => { abort; }
+            | BSQAssembly::PostfixWidenConvert => { abort; }
+            | BSQAssembly::PostfixAccessSomeValue => { abort; }
+            | BSQAssembly::PostfixLiteralNoneValue => { abort; }
         }
     }
 

@@ -55,7 +55,22 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        abort; %% Not implemented
+        if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            } 
+        }
+        else {
+            if(itest.isnot) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            else {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+        }
     }
 
     method processITestNoneAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
@@ -859,24 +874,25 @@ entity ConstantSimplification {
                 => (|this.processExpression[recursive](eb.0), this.processBlockStatement(eb.1)|));
         let nelseflow = this.processBlockStatement(s.elseflow);
 
-        if(nifcond)@!<LiteralSimpleExpression> {
-            let evalcondflow = ncondflow.tryFind(pred(eb) => eb.0?<LiteralSimpleExpression> && eb.0@<LiteralSimpleExpression>.value === 'true');
-
-            if(evalcondflow)@!none {
-                return $evalcondflow.1;
-            }
-            else { 
-                return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
-            }
+        if(nifcond?<LiteralSimpleExpression> && nifcond@<LiteralSimpleExpression>.value === 'true') {
+            return nifflow;
         }
         else {
-            if($nifcond.value === 'true') {
-                return nifflow;
-            }
-            else {
-                return nelseflow;
-            }
-        } 
+            return ncondflow.lreduce<Statement>(nelseflow, fn(acc, eb) => {
+                let cur = eb.0;
+                if(cur)@!<LiteralSimpleExpression> {
+                    return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
+                }
+                else {
+                    if($cur.value === 'true') {
+                        return eb.1;
+                    }
+                    else {
+                        return acc;
+                    }
+                }
+            });
+        }
     }
 
     recursive method processStatement(s: Statement): Statement {

@@ -444,43 +444,38 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
     }
 }
 
-function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
+function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
     return if(it.isnot) 
-        then String::concat(rootExp, ".typeinfo == &NoneType") 
-        else String::concat(rootExp, ".typeinfo != &NoneType");
+        then ".typeinfo == &NoneType" 
+        else ".typeinfo != &NoneType";
 }
 
-function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
+function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
     return if(it.isnot) 
-        then String::concat(rootExp, ".typeinfo != &NoneType") 
-        else String::concat(rootExp, ".typeinfo == &NoneType");
+        then ".typeinfo != &NoneType" 
+        else ".typeinfo == &NoneType";
 }
 
-function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, rootExp: String, ctx: Context): String {
+function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
     match(it)@ {
         CPPAssembly::ITestType => { return emitITestType($it, baseType, ctx); }
-        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, rootExp, ctx); }
-        | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, rootExp, ctx); }
+        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, ctx); }
+        | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, ctx); }
         | _ => { abort; } %% TODO: Not Implemented!
     }
 }
 
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
     let rootExp = emitExpression(pop.rootExp, ctx);
-    let ops = pop.ops.mapIdx<String>(fn(op, ii) => {
+
+    return pop.ops.reduce<String>(rootExp, fn(acc, op) => {
         match(op)@ {
-            CPPAssembly::PostfixAccessFromName => {
-                if (ii == 0n) {
-                    return String::concat(rootExp, emitPostfixAccessFromName($op, ctx));
-                }
-                return emitPostfixAccessFromName($op, ctx);
-            }
-            | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); }
-            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType, rootExp, ctx); }
+            CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
+            | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
+            | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); } %% This will not chain method calls :(
+            | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
         }
     });
-
-    return String::joinAll("", ops);
 }
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
@@ -609,7 +604,7 @@ function emitIfSimpleStatement(stmt: CPPAssembly::IfSimpleStatement, ctx: Contex
 
 function emitIfTestStatement(stmt: CPPAssembly::IfTestStatement, ctx: Context, indent: String): String {
     let expr = emitExpression(stmt.cond, ctx);
-    let itest = emitITestAsTest(stmt.itest, stmt.cond.etype, expr, ctx);
+    let itest = String::concat(expr, emitITestAsTest(stmt.itest, stmt.cond.etype, ctx));
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
 
     let ifstmt = String::concat(indent, "if( ", itest, " ) {%n;");
@@ -642,7 +637,7 @@ function emitIfElseSimpleStatement(stmt: CPPAssembly::IfElseSimpleStatement, ctx
 
 function emitIfElseTestStatement(stmt: CPPAssembly::IfElseTestStatement, ctx: Context, indent: String): String {
     let expr = emitExpression(stmt.cond, ctx);
-    let itest = emitITestAsTest(stmt.itest, stmt.cond.etype, expr, ctx);
+    let itest = String::concat(expr, emitITestAsTest(stmt.itest, stmt.cond.etype, ctx));
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
     let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
     let elseBlockText = String::concat(indent, "else {%n;", falseBlock, indent, "}%n;");
@@ -735,7 +730,7 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
 
 %% Determine whether to emit this param as const this* or this
 function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
-    let resolved_type = emitTypeKey(tk, false, ctx);
+    let resolved_type = String::concat("[[maybe_unused]] ", emitTypeKey(tk, false, ctx));
 
     if(ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Ref) {
         return String::concat("const ", resolved_type, "*");
@@ -771,7 +766,7 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
 
 function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let staticmethods = ant.staticmethods
-        .reduce<String>("", fn(acc, ik) => {
+        .reduce<String>(indent, fn(acc, ik) => {
             return String::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(ik), declaredIn, ctx, indent));
     });
 
