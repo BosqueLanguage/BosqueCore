@@ -2398,7 +2398,14 @@ class BSQIREmitter {
                 this.mapper = instantiation.binds;
 
                 const tsig = this.computeTKeyForDeclAndInstantiation(tt, instantiation);
-                const sprovides= tt.saturatedProvides.map((sp) => this.tproc(sp))
+                const sprovides = tt.saturatedProvides.map((sp) => this.tproc(sp))
+
+                if(tt instanceof OptionTypeDecl) {
+                    const optkey = EmitNameManager.generateTypeKey(tsig);
+                    if(!this.subtypemap.has(optkey)) {
+                        this.subtypemap.set(optkey, ["None"]);
+                    }
+                }
 
                 for(let k = 0; k < sprovides.length; ++k) {
                     const st = sprovides[k];
