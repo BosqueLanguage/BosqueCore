@@ -55,22 +55,7 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
-            if(itest.isnot) {
-                return PostfixBoolConstant{ sinfo, srctype, false };
-            }
-            else {
-                return PostfixBoolConstant{ sinfo, srctype, true };
-            } 
-        }
-        else {
-            if(itest.isnot) {
-                return PostfixBoolConstant{ sinfo, srctype, true };
-            }
-            else {
-                return PostfixBoolConstant{ sinfo, srctype, false };
-            }
-        }
+        abort; %% Not implemented 
     }
 
     method processITestNoneAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
