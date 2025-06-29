@@ -20,6 +20,9 @@ concept Operation {
 concept Statement {
 }
 
+entity EmptyStatement provides Statement {
+}
+
 entity BinderInfo { %% TODO: Not implemented
     field srcname: VarIdentifier;
     field refineonfollow: Bool;
@@ -72,7 +75,7 @@ RefArgumentValue { } %% TODO: Not implemented
 ;
 
 entity ArgumentList {
-    field args: List<Option<ArgumentValue>>; %% if none get default val in emitter
+    field args: List<ArgumentValue>; %% if none get default val in emitter
 }
 
 datatype IfStatement provides Statement using {
@@ -263,13 +266,16 @@ PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
 }
+| PostfixIsTest {
+    field ttest: ITest;
+}
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
     field args: ArgumentList;
 }
-| PostfixIsTest {
-    field ttest: ITest;
+| PostfixBoolConstant {
+    field value: Bool;
 }
 ;
 
