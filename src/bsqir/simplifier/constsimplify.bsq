@@ -945,7 +945,7 @@ entity ConstantSimplification {
         else {
             let dv = this.processExpression(param.defaultval@some);
             
-            return param[ptype=dv.etype, defaultval=some(dv)];
+            return param[defaultval=some(dv)];
         }
     }
 

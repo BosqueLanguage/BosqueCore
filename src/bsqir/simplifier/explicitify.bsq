@@ -627,7 +627,7 @@ entity ExplicitifyTransform {
             let dv = this.processExpression(param.defaultval@some, VarMapping::createEmpty());
             let dvc = this.processCoerceTypeAsNeeded(dv, param.ptype);
             
-            return param[ptype=dvc.etype, defaultval=some(dvc)];
+            return param[defaultval=some(dvc)];
         }
     }
 
