@@ -35,9 +35,6 @@ entity Context {
     method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString>): Context {
         return Context{ this.asm, new_ns, new_nsname };
     }
-    method updateInOption(new_inoption: Option<CPPAssembly::TypeSignature>): Context {
-        return Context{ this.asm, this.fullns_key, this.fullns_list };
-    }
 }
 
 function emitEnclosedParen(s: CString): String {
@@ -135,7 +132,28 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         else String::concat(ns, template);
 }
 
-recursive function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
+%%
+%% TODO: Need to always call this if we are emitting a type signature instead of just calling emitTypeKey
+%%
+
+function emitTypeSignature(ts: CPPAssembly::TypeSignature, isParamField: Bool, ctx: Context): String {
+    if(ts)@<CPPAssembly::EListTypeSignature> {
+        let argssizes = $ts.entries.map<String>(fn(e) => {
+            let tinfo = ctx.asm.typeinfos.get(e.tkeystr);
+            return if(tinfo.tag !== CPPAssembly::Tag#Ref) then String::fromCString(tinfo.slotsize.toCString())
+                else "1";
+        });
+        let argstemplate = String::concat("<", String::joinAll(", ", argssizes), ">");
+        let n = String::fromCString($ts.entries.size().toCString());
+
+        return String::concat("__CoreCpp::Tuple", n, argstemplate);
+    }
+    else {
+        return emitTypeKey(ts.tkeystr, isParamField, ctx);
+    }
+}
+
+function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
     let emit = emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(some(tk), none, ctx)); 
 
     if(isParamField) {
@@ -421,6 +439,15 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     }
 }
 
+%% For now we assume this is only used for accessing elist fields
+function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc: String, ctx: Context): String {
+    let accesstype = op.baseType@<CPPAssembly::EListTypeSignature>.entries.get(Nat::fromCString(op.idx));
+    let accessed = emitTypeSignature(accesstype, true, ctx);
+    let idx = String::fromCString(op.idx);
+
+    return String::concat(acc, ".access<", accessed, ", ", idx, ">()");
+}
+
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: String, ctx: Context): String {
     %% We don't want to do any resolution of these keys yet
     let ik = String::fromCString(op.resolvedTrgt.value);
@@ -473,10 +500,12 @@ function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSign
 
 function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
     let rootExp = emitExpression(pop.rootExp, ctx);
+    let rootType = emitTypeSignature(pop.rootExp.etype, false, ctx);
 
     return pop.ops.reduce<String>(rootExp, fn(acc, op) => {
         match(op)@ {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
+            | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
             | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); } %% This will not chain method calls :(
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
@@ -521,17 +550,10 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
 }
 
 function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
-    let ceetype = emitTypeKey(exp.etype.tkeystr, false, ctx);
+    let ceetype = emitTypeSignature(exp.etype, false, ctx);
     let args = emitArgumentList(exp.args, ctx);    
 
-    let argssizes = exp.args.args.map<String>(fn(arg) => String::fromCString(ctx.asm.typeinfos.get(arg.exp.etype.tkeystr).slotsize.toCString()));
-    let argstemplate = String::concat("<", String::joinAll(", ", argssizes), ">");
-    let n = String::fromCString(exp.args.args.size().toCString());
-
-    let cppname = String::concat("__CoreCpp::Tuple", n, argstemplate);
-    let typedef = String::concat("typedef ", cppname, " ", ceetype, "%n;");
-
-    return String::concat(typedef, ceetype, "(", args, ")");
+    return String::concat(ceetype, "(", args, ")");
 }
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
@@ -602,7 +624,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
 
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: String): String {
     let name = emitIdentifier(stmt.name);
-    let stype = emitTypeKey(stmt.vtype.tkeystr, false, ctx);
+    let stype = emitTypeSignature(stmt.vtype, false, ctx);
     let resolved_stype = if(stype.startsWithString("Option") || stype.startsWithString("Some")) then String::concat("Core::", stype) else stype;
     let exp = emitExpression(stmt.exp, ctx);
 

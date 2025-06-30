@@ -8,6 +8,22 @@
 
 namespace __CoreCpp {
 
+class ThreadLocalInfo {
+public:
+    std::jmp_buf error_handler;
+
+    ThreadLocalInfo() {} 
+    static ThreadLocalInfo& get() {
+        thread_local ThreadLocalInfo instance;
+        return instance;
+    }
+
+    // Cannot copy or move thread local info
+    ThreadLocalInfo(const ThreadLocalInfo&) = delete;
+    ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
+};
+ThreadLocalInfo& info = ThreadLocalInfo::get();
+
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
 {
@@ -131,72 +147,102 @@ public:
     TupleEntry(uintptr_t* d) noexcept : data(*d) { }
 };
 
-template <size_t K1, size_t K2>
+template <size_t K0, size_t K1>
 class Tuple2 {
 public:
+    TupleEntry<K0> e0;
     TupleEntry<K1> e1;
-    TupleEntry<K2> e2;
     
     Tuple2() noexcept = default;
-    Tuple2(const Tuple2& rhs) noexcept : e1(rhs.e1), e2(rhs.e2) { }
+    Tuple2(const Tuple2& rhs) noexcept : e0(rhs.e0), e1(rhs.e1) { }
     Tuple2& operator=(const Tuple2& rhs) noexcept {
+        e0 = rhs.e0;
         e1 = rhs.e1;
-        e2 = rhs.e2;
 
         return *this;
     }
 
-    template<typename T1, typename T2>
-    Tuple2(T1 d1, T2 d2) noexcept 
-        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)) { }
+    template<typename T0, typename T1>
+    Tuple2(T0 d0, T1 d1) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 1);
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+        }
+    }
 };
 
-template <size_t K1, size_t K2, size_t K3>
+template <size_t K0, size_t K1, size_t K2>
 class Tuple3 {
 public:
+    TupleEntry<K0> e0;
     TupleEntry<K1> e1;
     TupleEntry<K2> e2;
-    TupleEntry<K3> e3;
     
     Tuple3() noexcept = default;
-    Tuple3(const Tuple3& rhs) noexcept : e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
+    Tuple3(const Tuple3& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2) { }
     Tuple3& operator=(const Tuple3& rhs) noexcept {
+        e0 = rhs.e0;
         e1 = rhs.e1;
         e2 = rhs.e2;
-        e3 = rhs.e3;
 
         return *this;
     }
 
-    template<typename T1, typename T2, typename T3>
-    Tuple3(T1 d1, T2 d2, T3 d3) noexcept 
-        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)),
-          e3(reinterpret_cast<uintptr_t*>(&d3)) { }
+    template<typename T0, typename T1, typename T2>
+    Tuple3(T0 d0, T1 d1, T2 d2) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
+          e2(reinterpret_cast<uintptr_t*>(&d2)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 2); 
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+            case 2: return *reinterpret_cast<T*>(&this->e2); break;
+        }
+    }
 };
 
-template <size_t K1, size_t K2, size_t K3, size_t K4>
+template <size_t K0, size_t K1, size_t K2, size_t K3>
 class Tuple4 {
 public:
+    TupleEntry<K0> e0;
     TupleEntry<K1> e1;
     TupleEntry<K2> e2;
     TupleEntry<K3> e3;
-    TupleEntry<K4> e4;
     
     Tuple4() noexcept = default;
-    Tuple4(const Tuple4& rhs) noexcept : e1(rhs.e1), e2(rhs.e2), e3(rhs.e3), e4(rhs.e4) { }
+    Tuple4(const Tuple4& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
     Tuple4& operator=(const Tuple4& rhs) noexcept {
+        e0 = rhs.e0;
         e1 = rhs.e1;
         e2 = rhs.e2;
         e3 = rhs.e3;
-        e4 = rhs.e4;
 
         return *this;
     }
 
-    template<typename T1, typename T2, typename T3, typename T4>
-    Tuple4(T1 d1, T2 d2, T3 d3, T4 d4) noexcept 
-        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)),
-          e3(reinterpret_cast<uintptr_t*>(&d3)), e4(reinterpret_cast<uintptr_t*>(&d4)) { }
+    template<typename T0, typename T1, typename T2, typename T3>
+    Tuple4(T0 d0, T1 d1, T2 d2, T3 d3) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
+          e2(reinterpret_cast<uintptr_t*>(&d2)), e3(reinterpret_cast<uintptr_t*>(&d3)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 3);  
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+            case 2: return *reinterpret_cast<T*>(&this->e2); break;
+            case 3: return *reinterpret_cast<T*>(&this->e3); break;
+        }
+    }
 };
 
 typedef uint64_t None;
@@ -244,22 +290,6 @@ do {                                            \
     this->value = res;                          \
     return *this;                               \
 } while(0)                                      \
-
-class ThreadLocalInfo {
-public:
-    std::jmp_buf error_handler;
-
-    ThreadLocalInfo() {} 
-    static ThreadLocalInfo& get() {
-        thread_local ThreadLocalInfo instance;
-        return instance;
-    }
-
-    // Cannot copy or move thread local info
-    ThreadLocalInfo(const ThreadLocalInfo&) = delete;
-    ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
-};
-ThreadLocalInfo& info = ThreadLocalInfo::get();
 
 //
 // Converts string into corresponding integer representation. Used when

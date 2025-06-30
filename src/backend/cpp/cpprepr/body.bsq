@@ -272,6 +272,9 @@ PostfixAccessFromName {
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
 }
+| PostfixAccessFromIndex {
+    field idx: CString;
+}
 | PostfixIsTest {
     field ttest: ITest;
 }

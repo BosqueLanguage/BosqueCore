@@ -5,7 +5,7 @@ import { describe, it } from "node:test";
 
 describe ("Exec -- elist decl and access", () => {
     it("should exec simple elist", function () {
-        runMainCode('public function main(): Int { return (|2i, true|).0; }', "2i"); 
+        runMainCode('public function main(): Int { return (|2i, true|).0; }', "2_i"); 
         runMainCode('public function main(): Bool { return (|2i, true|).1; }', "true"); 
 
         runMainCode('public function main(): Bool { let x = (|2i, true|); return x.1; }', "true"); 
