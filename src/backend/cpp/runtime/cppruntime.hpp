@@ -131,7 +131,6 @@ public:
     TupleEntry(uintptr_t* d) noexcept : data(*d) { }
 };
 
-// Tuple implementation
 template <size_t K1, size_t K2>
 class Tuple2 {
 public:
@@ -147,7 +146,57 @@ public:
         return *this;
     }
 
-    Tuple2(uintptr_t* d1, uintptr_t* d2) noexcept : e1(d1), e2(d2) { }
+    template<typename T1, typename T2>
+    Tuple2(T1 d1, T2 d2) noexcept 
+        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)) { }
+};
+
+template <size_t K1, size_t K2, size_t K3>
+class Tuple3 {
+public:
+    TupleEntry<K1> e1;
+    TupleEntry<K2> e2;
+    TupleEntry<K3> e3;
+    
+    Tuple3() noexcept = default;
+    Tuple3(const Tuple3& rhs) noexcept : e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
+    Tuple3& operator=(const Tuple3& rhs) noexcept {
+        e1 = rhs.e1;
+        e2 = rhs.e2;
+        e3 = rhs.e3;
+
+        return *this;
+    }
+
+    template<typename T1, typename T2, typename T3>
+    Tuple3(T1 d1, T2 d2, T3 d3) noexcept 
+        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)),
+          e3(reinterpret_cast<uintptr_t*>(&d3)) { }
+};
+
+template <size_t K1, size_t K2, size_t K3, size_t K4>
+class Tuple4 {
+public:
+    TupleEntry<K1> e1;
+    TupleEntry<K2> e2;
+    TupleEntry<K3> e3;
+    TupleEntry<K4> e4;
+    
+    Tuple4() noexcept = default;
+    Tuple4(const Tuple4& rhs) noexcept : e1(rhs.e1), e2(rhs.e2), e3(rhs.e3), e4(rhs.e4) { }
+    Tuple4& operator=(const Tuple4& rhs) noexcept {
+        e1 = rhs.e1;
+        e2 = rhs.e2;
+        e3 = rhs.e3;
+        e4 = rhs.e4;
+
+        return *this;
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    Tuple4(T1 d1, T2 d2, T3 d3, T4 d4) noexcept 
+        : e1(reinterpret_cast<uintptr_t*>(&d1)), e2(reinterpret_cast<uintptr_t*>(&d2)),
+          e3(reinterpret_cast<uintptr_t*>(&d3)), e4(reinterpret_cast<uintptr_t*>(&d4)) { }
 };
 
 typedef uint64_t None;

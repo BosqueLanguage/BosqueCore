@@ -80,7 +80,9 @@ function emitSpecialTemplate(name: String): String {
     let first = base.replaceAllStringOccurrences("<", "ᐸ");
     let second = first.replaceAllStringOccurrences(",", "ᐧ");
     let third = second.replaceAllStringOccurrences(">", "ᐳ");
-    let final = third.replaceAllStringOccurrences("::", "ᘏ");
+    let fourth = third.replaceAllStringOccurrences("(|", "ᗕ");
+    let fifth = fourth.replaceAllStringOccurrences("|)", "ᗒ");
+    let final = fifth.replaceAllStringOccurrences("::", "ᘏ");
 
     return final;
 }
@@ -519,13 +521,17 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
 }
 
 function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
-    let emitargs = emitArgumentList(exp.args, ctx);    
+    let ceetype = emitTypeKey(exp.etype.tkeystr, false, ctx);
+    let args = emitArgumentList(exp.args, ctx);    
 
-    %%
-    %% Emit builtin tuple for args.size() <= 4
-    %%
+    let argssizes = exp.args.args.map<String>(fn(arg) => String::fromCString(ctx.asm.typeinfos.get(arg.exp.etype.tkeystr).slotsize.toCString()));
+    let argstemplate = String::concat("<", String::joinAll(", ", argssizes), ">");
+    let n = String::fromCString(exp.args.args.size().toCString());
 
-    return "";
+    let cppname = String::concat("__CoreCpp::Tuple", n, argstemplate);
+    let typedef = String::concat("typedef ", cppname, " ", ceetype, "%n;");
+
+    return String::concat(typedef, ceetype, "(", args, ")");
 }
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
