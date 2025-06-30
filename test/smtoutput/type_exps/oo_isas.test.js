@@ -18,6 +18,6 @@ describe ("SMT -- entity is/as", () => {
     });
 
     it("should smt exec (fail) simple entity as", function () {
-        runishMainCodeUnsat('concept Foo { field f: Int; } concept Baz { field g: Int; } entity Bar provides Foo { } entity Goo provides Foo, Baz { } public function main(): Int { let bb: Foo = Bar{3i}; return bb@<Baz>.g; }', "(assert (not (is-@Result-err (@Result-ok 3))))");
+        runishMainCodeUnsat('concept Foo { field f: Int; } concept Baz { field g: Int; } entity Bar provides Foo { } entity Goo provides Foo, Baz { } public function main(): Int { let bb: Foo = Bar{3i}; return bb@<Baz>.g; }', "(assert (not (is-@Result-err Main@main)))");
     });
 });

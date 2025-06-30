@@ -858,7 +858,7 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
         var cases = e.cases.map[recursive]<CString>(fn(c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
             let cbody = emitOperation[recursive](c.1, eev, none);
-            return CString::concat('(is-', ttest, ' ', cbody, ')');
+            return CString::concat('(', ttest, ' ', cbody, ')');
         });
 
         if($dop = e.defaultop)@some {
@@ -871,21 +871,21 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
     }
     else {
         let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, ')');
+        let tident = CString::concat('%n;', $indent, '))');
 
         var cases = e.cases.map[recursive]<CString>(fn(c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let cbody = emitOperation[recursive](c.1, eev, some(iident));
-            return CString::concat('(is-', ttest, ' ', cbody, tident);
+            let cbody = emitOperation[recursive](c.1, eev, none);
+            return CString::concat(iident, '(', ttest, ' ', cbody, ')');
         });
 
         if($dop = e.defaultop)@some {
-            let defop = emitOperation[recursive]($dop, eev, some(iident));
-            cases = cases.pushBack(CString::concat('(_ ', defop, tident));
+            let defop = emitOperation[recursive]($dop, eev, none);
+            cases = cases.pushBack(CString::concat(iident, '(_ ', defop, ')'));
         }
 
         let casesl = CString::joinAll('%n;', cases);
-        return CString::concat(ttst, '%n;', casesl, tident);
+        return CString::concat(ttst, ' (%n;', casesl, tident);
     }
 }
 
@@ -1505,14 +1505,12 @@ function emitConceptVFieldFunctionsFor(ccpt: SMTAssembly::ConceptTypeDecl): List
                 let tcons = SMTNameManager::generateStructConstructorName(t);
                 let extract = SMTNameManager::generateStructTermFieldName(t);
                 let ssubf = SMTNameManager::generateStructFieldName(t, f.fname);
-
-                let ttest = CString::concat('(is- ', tcons, ' v)');
                 let access = CString::concat('(', ssubf, ' (', extract, ' v))');
 
-                return CString::concat('(', ttest, ' ', access, ')');
+                return CString::concat('    (', tcons, ' ', access, ')');
             });
 
-            body = CString::concat('(match v (', CString::joinAll('%n;', opts), '))');
+            body = CString::concat('(match v (%n;', CString::joinAll('%n;', opts), '%n;))');
         }
 
         let sig = CString::concat('define-fun ', vfname, ' ((v @Term)) ', f.ftype.value);
