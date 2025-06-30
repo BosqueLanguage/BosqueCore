@@ -60,6 +60,8 @@
     )
 )
 
+;;--VFIELD_ACCESS--;;
+
 ;;--SUBTYPE_PREDICATES--;;
 
 ;;--GLOBAL_DECLS--;;

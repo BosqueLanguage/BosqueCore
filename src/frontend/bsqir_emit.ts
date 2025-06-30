@@ -2400,10 +2400,13 @@ class BSQIREmitter {
                 const tsig = this.computeTKeyForDeclAndInstantiation(tt, instantiation);
                 const sprovides = tt.saturatedProvides.map((sp) => this.tproc(sp))
 
-                if(tt instanceof OptionTypeDecl) {
-                    const optkey = EmitNameManager.generateTypeKey(tsig);
-                    if(!this.subtypemap.has(optkey)) {
-                        this.subtypemap.set(optkey, ["None"]);
+                const ttkey = EmitNameManager.generateTypeKey(tsig);
+                if((tt instanceof AbstractConceptTypeDecl) && !this.subtypemap.has(ttkey)) {
+                    if(tt instanceof OptionTypeDecl) {
+                        this.subtypemap.set(ttkey, ["None"]);
+                    }
+                    else {
+                        this.subtypemap.set(ttkey, []);
                     }
                 }
 

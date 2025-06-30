@@ -150,7 +150,15 @@ entity UnwrapTypeDeclToPrimitiveExpression provides SafeExpression {
 }
 
 entity AccessFromNameResolvedExpression provides SafeExpression {
-    field ontype: TypeKey;
+    field declType: TypeKey;
+    field resolvedType: TypeKey;
+    field name: CString;
+
+    field arg: SafeExpression;
+}
+
+entity AccessFromNameVirtualExpression provides SafeExpression {
+    field declType: TypeKey;
     field name: CString;
 
     field arg: SafeExpression;
@@ -442,6 +450,14 @@ entity IfThenElseOperation provides Operation {
     field iftest: SafeExpression;
     field trueop: Operation;
     field falseop: Operation;
+}
+
+entity MatchOperation provides Operation {
+    field matchexp: SafeExpression;
+    field cases: List<(|TypeKey, Operation|)>;
+    field defaultop: Option<Operation>;
+
+    invariant $cases.size() > 1n;
 }
 
 entity Body {
