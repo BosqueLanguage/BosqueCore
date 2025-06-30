@@ -185,7 +185,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
-    constexpr int64_t get() noexcept { return value; } 
+    constexpr int64_t get() const noexcept { return value; } 
 
     // Overloaded operations on Int
     constexpr Int& operator+=(const Int& rhs) noexcept {
@@ -252,7 +252,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
-    constexpr __int128_t get() noexcept { return value; }
+    constexpr __int128_t get() const noexcept { return value; }
 
     // Overloaded operators on BigInt
     constexpr BigInt& operator+=(const BigInt& rhs) noexcept {
@@ -310,7 +310,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
-    constexpr uint64_t get() noexcept { return value; } 
+    constexpr uint64_t get() const noexcept { return value; } 
 
     // Overloaded operators on Nat
     constexpr Nat& operator+=(const Nat& rhs) noexcept {
@@ -371,7 +371,7 @@ public:
             std::longjmp(info.error_handler, true);
         }
     };
-    constexpr __uint128_t get() noexcept { return value; }
+    constexpr __uint128_t get() const noexcept { return value; }
     
     // Overloaded operators on BigInt
     constexpr BigNat& operator+=(const BigNat& rhs) noexcept {
@@ -423,7 +423,7 @@ public:
             std::longjmp(info.error_handler, true);
         } 
     }
-    constexpr double get() noexcept { return value; }
+    constexpr double get() const noexcept { return value; }
 
     static constexpr Float from_literal(double v) noexcept { return Float(v); }
 
@@ -582,8 +582,8 @@ constexpr __CoreCpp::BigNat operator "" _N(const char* v) { return __CoreCpp::Bi
 constexpr __CoreCpp::Float operator "" _f(long double v) { return __CoreCpp::Float(static_cast<double>(v)); }
 
 // For debugging
-std::ostream& operator<<(std::ostream &os, __CoreCpp::Int& t) { return os << t.get(); }
-std::ostream& operator<<(std::ostream &os, __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()); }
-std::ostream& operator<<(std::ostream &os, __CoreCpp::Nat& t) { return os << t.get(); }
-std::ostream& operator<<(std::ostream &os, __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()); }
-std::ostream& operator<<(std::ostream &os, __CoreCpp::Float& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t) { return os << t.get(); }
