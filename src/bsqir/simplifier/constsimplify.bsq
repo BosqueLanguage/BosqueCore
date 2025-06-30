@@ -143,7 +143,10 @@ entity ConstantSimplification {
 
     method processITestTypeAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
         if(itest.isnot) {
-            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+            if(this.assembly.areTypesSame(srctype, itest.ttype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            elif(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
                 return PostfixAbort{ sinfo, srctype, none };
             }
             elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
@@ -154,7 +157,10 @@ entity ConstantSimplification {
             }
         }
         else {
-            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+            if(this.assembly.areTypesSame(srctype, itest.ttype)) {
+                return PostfixNop{ sinfo, srctype };
+            }
+            elif(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
                 return PostfixWidenConvert{ sinfo, srctype, itest.ttype };
             }
             elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
