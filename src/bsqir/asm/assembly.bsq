@@ -504,6 +504,15 @@ entity Assembly {
         return List<InvokeKey>::concat(List<InvokeKey>::concatAll(fpre), List<InvokeKey>::concatAll(fpost), List<InvokeKey>::concatAll(ampre), List<InvokeKey>::concatAll(ampost), List<InvokeKey>::concatAll(vmpre), List<InvokeKey>::concatAll(vmpost));
     }
 
+    method isTypeConcrete(ttype: TypeSignature): Bool {
+        if(ttype)@!<NominalTypeSignature> {
+            return true;
+        }
+        else {
+            return this.isNominalTypeConcrete(ttype.tkeystr);
+        }
+    }
+
     method isNominalTypeConcrete(tkey: TypeKey): Bool {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }
@@ -529,13 +538,18 @@ entity Assembly {
             return true;
         }
         else {
-            if(t1.tkeystr === 'None'<TypeKey>) {
-                let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
-                return tt2?<OptionTypeDecl>;
+            if(t1?!<NominalTypeSignature> || t2?!<NominalTypeSignature>) {
+                return false;
             }
             else {
-                let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
-                return tt1.saturatedProvides.someOf(pred(st) => st.tkeystr === t2.tkeystr);
+                if(t1.tkeystr === 'None'<TypeKey>) {
+                    let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
+                    return tt2?<OptionTypeDecl>;
+                }
+                else {
+                    let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
+                    return tt1.saturatedProvides.someOf(pred(st) => st.tkeystr === t2.tkeystr);
+                }
             }
         }
     }
@@ -545,13 +559,18 @@ entity Assembly {
             return false;
         }
         else {
-            let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
-            let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
+            if(t1?!<NominalTypeSignature> || t2?!<NominalTypeSignature>) {
+                return true;
+            }
+            else {
+                let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
+                let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
 
-            let ts1 = if(tt1)@<AbstractConceptTypeDecl> then $tt1.subtypes else List<TypeKey>{t1.tkeystr};
-            let ts2 = if(tt2)@<AbstractConceptTypeDecl> then $tt2.subtypes else List<TypeKey>{t2.tkeystr};
+                let ts1 = if(tt1)@<AbstractConceptTypeDecl> then $tt1.subtypes else List<TypeKey>{t1.tkeystr};
+                let ts2 = if(tt2)@<AbstractConceptTypeDecl> then $tt2.subtypes else List<TypeKey>{t2.tkeystr};
 
-            return ts1.allOf(pred(tt) => !ts2.contains(tt));
+                return ts1.allOf(pred(tt) => !ts2.contains(tt));
+            }
         }
     }
 }

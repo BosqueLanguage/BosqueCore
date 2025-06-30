@@ -609,7 +609,17 @@ entity SMTTransformer {
     }
 
     method transformITestTypeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
-        abort; %% Not implemented
+        let tcheck: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(itest.ttype)) 
+            then SMTAssembly::IsTypeTestExpression{ this.transformStdTypeToSMT(itest.ttype), onarg }
+            else SMTAssembly::IsSubtypeTestExpression{ this.transformStdTypeToSMT(itest.ttype), onarg }
+            ;
+
+        if(!itest.isnot) {
+            return SMTAssembly::PrefixNotOpExpression{ tcheck };
+        }
+        else {
+            return tcheck;
+        }
     }
 
     method transformITestNoneAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
@@ -646,7 +656,20 @@ entity SMTTransformer {
     }
 
     method transformITestTypeAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
-        abort; %% Not implemented
+        if(!itest.isnot) {
+            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(itest.ttype)) 
+                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(itest.ttype) } 
+                else onarg
+            ;
+            return topt, onarg;
+        }
+        else {
+            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(itest.ttype)) 
+                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(itest.ttype) } 
+                else onarg
+            ;
+            return onarg, topt;
+        }
     }
 
     method transformITestNoneAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestNone, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {

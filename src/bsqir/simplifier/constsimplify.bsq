@@ -55,7 +55,28 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        abort; %% Not implemented 
+        if(itest.isnot) {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            else {
+                return PostfixIsTest { sinfo, srctype, itest };
+            }
+        }
+        else {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            else {
+                return PostfixIsTest { sinfo, srctype, itest };
+            }
+        }
     }
 
     method processITestNoneAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
@@ -121,7 +142,28 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        abort; %% Not implemented
+        if(itest.isnot) {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixNop{ sinfo, srctype };
+            }
+            else {
+                return PostfixAsConvert { sinfo, srctype, itest };
+            }
+        }
+        else {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixNop{ sinfo, srctype };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            else {
+                return PostfixAsConvert { sinfo, srctype, itest };
+            }
+        }
     }
 
     method processITestNoneAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
