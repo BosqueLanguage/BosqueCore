@@ -114,6 +114,7 @@ const smtcomponenttags = [
     ";;--ENTITY_TERM_CONSTRUCTORS--;;",
     ";;--DATATYPE_TERM_CONSTRUCTORS--;;",
     ";;--SUBTYPE_PREDICATES--;;",
+    ";;--VFIELD_ACCESS--;;",
     ";;--VALIDATE_PREDICATES--;;"
 ];
 

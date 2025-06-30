@@ -314,7 +314,7 @@ PostfixAccessFromName {
     field finaltype: Option<TypeSignature>;
 }
 | PostfixWidenConvert {
-    field trgttype: NominalTypeSignature;
+    field trgttype: TypeSignature;
 }
 | PostfixAccessSomeValue {
 }

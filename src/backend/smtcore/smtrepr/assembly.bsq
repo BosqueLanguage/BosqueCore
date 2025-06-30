@@ -166,6 +166,7 @@ OptionTypeDecl {
 entity ConceptTypeDecl {
     field tkey: TypeKey;
 
+    field absfields: List<FieldInfo>;
     field subtypes: List<TypeKey>;
 }
 
@@ -179,6 +180,7 @@ entity DatatypeMemberEntityTypeDecl {
     field tkey: TypeKey;
 
     field allfields: List<FieldInfo>;
+    field subtypes: List<TypeKey>;
 }
 
 %%
