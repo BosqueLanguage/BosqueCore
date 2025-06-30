@@ -363,13 +363,19 @@ entity CPPTransformer {
         return CPPAssembly::PostfixOp{ etype, rootExp, ops };
     }
 
+    method transformConstructorExpressionBase(ce: BSQAssembly::ConstructorExpression): (| CPPAssembly::TypeSignature, CPPAssembly::ArgumentList |) {
+        let etype = CPPTransformNameManager::convertTypeSignature(ce.etype);
+        let args = this.transformArgumentList(ce.args);
+
+        return (| etype, args |);
+    }
+
     method transformConstructorPrimaryExpressionBase(cpe: BSQAssembly::ConstructorPrimaryExpression): (| CPPAssembly::TypeSignature,
         CPPAssembly::ArgumentList, CPPAssembly::NominalTypeSignature |) {
-            let etype = CPPTransformNameManager::convertTypeSignature(cpe.etype);
-            let args = this.transformArgumentList(cpe.args);
+            let base = this.transformConstructorExpressionBase(cpe@<BSQAssembly::ConstructorExpression>);
             let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpe.ctype);
 
-            return (| etype, args, ctype|);
+            return (| base.0, base.1, ctype |);
     }
 
     method transformConstructorPrimarySpecialSomeExpression(cpsse: BSQAssembly::ConstructorPrimarySpecialSomeExpression): CPPAssembly::ConstructorPrimarySpecialSomeExpression {
@@ -400,6 +406,12 @@ entity CPPTransformer {
         let args = this.transformArgumentList(e.args);
         return CPPAssembly::ConstructorStdExpression{ base.0, args, base.2, e.fullns };
     } 
+
+    method transformConstructorEListExpression(cee: BSQAssembly::ConstructorEListExpression): CPPAssembly::ConstructorEListExpression {
+        let base = this.transformConstructorExpressionBase(cee@<BSQAssembly::ConstructorExpression>);        
+
+        return CPPAssembly::ConstructorEListExpression{ base.0, base.1 };
+    }
 
     method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
         let etype = CPPTransformNameManager::convertTypeSignature(exp.etype);
@@ -466,6 +478,7 @@ entity CPPTransformer {
             | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
             | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($expr); }
             | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
+            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($expr); }
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.transformCoerceWidenTypeExpression($expr); }   
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.transformCoerceNarrowTypeExpression($expr); }

@@ -95,6 +95,10 @@ function convertCStringList(l: List<CString>): List<String> {
 }
 
 function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPAssembly::InvokeKey>, ctx: Context): String {
+    if(tk?some && tk@some.value.startsWithString('(|')) { %% Handle elists explicitly
+        return emitSpecialTemplate(String::fromCString(tk@some.value));
+    }
+    
     %% Handle Type Funcs explicitly as their InvokeKey is missing the "Core::" prefix
     let isTypeFunc = if(ik)@some then ctx.asm.typefuncs.has($ik) else false;
     
@@ -514,6 +518,16 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
     return String::concat(name, "{ ", emitargs, " }"); 
 }
 
+function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
+    let emitargs = emitArgumentList(exp.args, ctx);    
+
+    %%
+    %% Emit builtin tuple for args.size() <= 4
+    %%
+
+    return "";
+}
+
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
     let texp = emitExpression(exp.texp, ctx);
     let thenexp = emitExpression(exp.thenexp, ctx);
@@ -572,6 +586,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($e, ctx); }
         | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
+        | CPPAssembly::ConstructorEListExpression => { return emitConstructorEListExpression($e, ctx); }
         | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
         | CPPAssembly::CoerceWidenTypeExpression => { return emitWidenedTypeExpression($e, ctx); }
         | CPPAssembly::CoerceNarrowTypeExpression => { return emitNarrowedTypeExpression($e, ctx); }

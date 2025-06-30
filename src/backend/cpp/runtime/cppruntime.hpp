@@ -42,22 +42,22 @@ public:
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {
         memcpy<K>(this->data, rhs.data);
-    };
+    }
     Boxed& operator=(const Boxed& rhs) noexcept {
         if(this != &rhs) {
             this->typeinfo = rhs.typeinfo;
             memcpy<K>(this->data, rhs.data);
         }
         return *this;
-    };
+    }
 
     // Some constructor
     Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
         memcpy<K>(this->data, d);
-    };
+    }
 
     // None constructor
-    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {}
 };
 
 template<>
@@ -91,9 +91,63 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept {
         this->typeinfo = rhs.typeinfo;
         return *this;
-    };
+    }
 
     Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
+};
+
+template <size_t K>
+class TupleEntry {
+public:
+    uintptr_t data[K] = {};
+
+    TupleEntry() noexcept = default;
+    TupleEntry(const TupleEntry& rhs) noexcept {
+        memcpy<K>(this->data, rhs->data);
+    }
+    TupleEntry& operator=(const TupleEntry& rhs) noexcept {
+        memcpy<K>(this->data, rhs->data);
+        
+        return *this;
+    }
+
+    TupleEntry(uintptr_t* d) {
+        memcpy<K>(this->data, d);
+    }
+};
+
+template <>
+class TupleEntry<1> {
+public:
+    uintptr_t data = 0;
+
+    TupleEntry() noexcept = default;
+    TupleEntry(const TupleEntry& rhs) noexcept : data(rhs.data) { }
+    TupleEntry& operator=(const TupleEntry& rhs) noexcept {        
+        data = rhs.data;
+        return *this;
+    }
+
+    TupleEntry(uintptr_t* d) noexcept : data(*d) { }
+};
+
+// Tuple implementation
+template <size_t K1, size_t K2>
+class Tuple2 {
+public:
+    TupleEntry<K1> e1;
+    TupleEntry<K2> e2;
+    
+    Tuple2() noexcept = default;
+    Tuple2(const Tuple2& rhs) noexcept : e1(rhs.e1), e2(rhs.e2) { }
+    Tuple2& operator=(const Tuple2& rhs) noexcept {
+        e1 = rhs.e1;
+        e2 = rhs.e2;
+
+        return *this;
+    }
+
+    Tuple2(uintptr_t* d1, uintptr_t* d2) noexcept : e1(d1), e2(d2) { }
 };
 
 typedef uint64_t None;

@@ -8,6 +8,9 @@ datatype TypeSignature using {
 of
 VoidTypeSignature { }
 | NominalTypeSignature { }
+| EListTypeSignature {
+    field entries: List<TypeSignature>;
+}
 ;
 
 concept Expression {
@@ -240,6 +243,9 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
+}
+
+entity ConstructorEListExpression provides ConstructorExpression {
 }
 
 datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
