@@ -2328,8 +2328,8 @@ entity SMTTransformer {
         let chkargs = List<SMTAssembly::SafeExpression>{ SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess} };
 
         let fmtchk: SMTAssembly::FormatCheckExpression = if(tdecl.ofcheck)<BSQAssembly::LiteralCRegexExpression> 
-                then SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralCRegexExpression>.smtlib, icheck }
-                else SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralRegexExpression>.smtlib, icheck }
+                then SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralCRegexExpression>.smtlib, SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess} }
+                else SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralRegexExpression>.smtlib, SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess} }
                 ;
 
         var testlist: List<SMTAssembly::SafeExpression>;
@@ -2480,11 +2480,15 @@ entity SMTTransformer {
         return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
     }
 
+    function isConstDeclARegex(tt: BSQAssembly::TypeSignature): Bool {
+        return \/(tt.tkeystr === 'Regex'<BSQAssembly::TypeKey> || tt.tkeystr === 'CRegex'<BSQAssembly::TypeKey>);
+    }
+
     function transformAssemblyToSMT(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
         let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
     
-        let tnsconstsinfo = assembly.nsconsts.map<(|SMTAssembly::NamespaceConstDecl, List<LambdaGeneratorInfo>|)>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc));
-        let ttypeconstsinfo = assembly.typeconsts.map<(|SMTAssembly::ConstMemberDecl, List<LambdaGeneratorInfo>|)>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc));
+        let tnsconstsinfo = assembly.nsconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::NamespaceConstDecl, List<LambdaGeneratorInfo>|)>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc));
+        let ttypeconstsinfo = assembly.typeconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::ConstMemberDecl, List<LambdaGeneratorInfo>|)>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc));
         let lgstate = LambdaGeneratorState{Map<BSQAssembly::InvokeKey, List<LambdaGeneratorInfo>>{}}
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(tnsconstsinfo.map<List<LambdaGeneratorInfo>>(fn(nsc) => nsc.1)))
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(ttypeconstsinfo.map<List<LambdaGeneratorInfo>>(fn(tc) => tc.1)));

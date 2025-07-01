@@ -4258,18 +4258,21 @@ class TypeChecker {
                     
                     const uretype = this.getWellKnownType("Regex") as NominalTypeSignature;
                     this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], uretype, new SimpleTypeInferContext(uretype)), tdecl.optofexp.exp, undefined);
                 }
                 else if(typevaluename === "CString") {
                     this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralCRegexExpression, `of expression must be char regex`);
 
                     const cretype = this.getWellKnownType("CRegex") as NominalTypeSignature;
                     this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], cretype, new SimpleTypeInferContext(cretype)), tdecl.optofexp.exp, undefined);
                 }
                 else if(typevaluename === "Path") {
                     this.checkError(tdecl.sinfo, checkerexp.tag !== ExpressionTag.LiteralGlobExpression, `of expression must be path glob`);
 
                     const pgretype = this.getWellKnownType("PathGlob") as NominalTypeSignature;
                     this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), checkerexp, undefined);
+                    this.checkExpression(TypeEnvironment.createInitialStdEnv([], pgretype, new SimpleTypeInferContext(pgretype)), tdecl.optofexp.exp, undefined);
                 }
                 else {
                     this.reportError(tdecl.sinfo, `can only use "of" pattern on String/SCtring/Path types`);

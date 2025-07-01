@@ -376,7 +376,7 @@ recursive function emitFormatCheckExpression(v: SMTAssembly::FormatCheckExpressi
     let re = v.smtregex;
     let arg = emitSafeExpression[recursive](v.arg, eev);
 
-    return CString::concat('(str.in.re ', re, ' ', arg, ')');
+    return CString::concat('(str.in.re ', arg, ' ', re, ')');
 }
 
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {

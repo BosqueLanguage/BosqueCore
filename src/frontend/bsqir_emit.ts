@@ -1954,7 +1954,7 @@ class BSQIREmitter {
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tdecl.valuetype));
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofexp=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofcheck=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
     }
 
     private emitInternalEntityTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: InternalEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
