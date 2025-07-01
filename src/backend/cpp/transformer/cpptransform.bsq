@@ -62,10 +62,11 @@ namespace CPPTransformNameManager {
         let virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
         let absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
         let overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
+        let enums = List<CPPAssembly::TypeKey>{};
         let alltypes = List<CPPAssembly::TypeKey>{};
 
         return CPPAssembly::NamespaceDecl{ name, subns, nsfuncs, typefuncs, constructables, entities, 
-            datamembers, datatypes, pconcepts, staticmethods, virtmethods, absmethods, overmethods, alltypes };
+            datamembers, datatypes, pconcepts, staticmethods, virtmethods, absmethods, overmethods, enums, alltypes };
     }
 
     %% If ns decl does not exist for name insert, otherwise continue recursing until fullns is empty
@@ -88,7 +89,8 @@ namespace CPPTransformNameManager {
         %% Recursively process remaining names
         let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, insertion);
         let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.nsfuncs, cur_nsdecl.typefuncs, cur_nsdecl.constructables, cur_nsdecl.entities, 
-            cur_nsdecl.datamembers, cur_nsdecl.datatypes, cur_nsdecl.pconcepts, cur_nsdecl.staticmethods, cur_nsdecl.virtmethods, cur_nsdecl.absmethods, cur_nsdecl.overmethods, cur_nsdecl.alltypes };
+            cur_nsdecl.datamembers, cur_nsdecl.datatypes, cur_nsdecl.pconcepts, cur_nsdecl.staticmethods, cur_nsdecl.virtmethods, cur_nsdecl.absmethods, 
+            cur_nsdecl.overmethods, cur_nsdecl.enums, cur_nsdecl.alltypes };
 
         if(remaining_ns_names.empty()) { %% Insert at most nested possible depth
             if(!nsdecls.has(ns_name)) {
@@ -420,6 +422,20 @@ entity CPPTransformer {
         return CPPAssembly::ConstructorEListExpression{ base.0, base.1 };
     }
 
+    method transformConstructorPrimaryExpression(cpe: BSQAssembly::ConstructorPrimaryExpression): CPPAssembly::ConstructorPrimaryExpression {
+        match(cpe)@ {
+            BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($cpe); }
+            | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($cpe); }
+        }
+    }
+
+    method transformConstructorExpression(ce: BSQAssembly::ConstructorExpression): CPPAssembly::ConstructorExpression {
+        match(ce)@ {
+            BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($ce); }
+            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($ce); }
+        }
+    }
+
     method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
         let etype = this.convertTypeSignature(exp.etype);
         let texp = this.transformExpressionToCpp(exp.texp);
@@ -469,29 +485,81 @@ entity CPPTransformer {
         return CPPAssembly::CreateDirectExpression{ etype, expr, srctype, trgttype };
     }
 
+    method transformAccessEnumExpression(exp: BSQAssembly::AccessEnumExpression): CPPAssembly::AccessEnumExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let stype = CPPTransformNameManager::convertNominalTypeSignature(exp.stype);
+
+        return CPPAssembly::AccessEnumExpression{ etype, stype, exp.name };   
+    }
+
+    method transformBinaryKeyEqExpression(exp: BSQAssembly::BinaryKeyEqExpression): CPPAssembly::BinaryKeyEqExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let opertype = this.convertTypeSignature(exp.opertype);
+        
+        match(exp)@ {
+            BSQAssembly::BinKeyEqNoneExpression => { return CPPAssembly::BinKeyEqNoneExpression{ etype, opertype, this.transformExpressionToCpp($exp.exp) }; }
+            | BSQAssembly::BinKeyNotEqNoneExpression => { return CPPAssembly::BinKeyNotEqNoneExpression{ etype, opertype, this.transformExpressionToCpp($exp.exp) }; }
+            | BSQAssembly::BinKeySomeEqExpression => { 
+                return CPPAssembly::BinKeySomeEqExpression{ 
+                    etype, opertype, this.transformExpressionToCpp($exp.eqoption), this.transformExpressionToCpp($exp.eqval) }; }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { 
+                return CPPAssembly::BinKeyNotSomeEqExpression{ 
+                    etype, opertype, this.transformExpressionToCpp($exp.neoption), this.transformExpressionToCpp($exp.neval) }; }
+            | BSQAssembly::BinKeyEqExpression => { 
+                return CPPAssembly::BinKeyEqExpression{ 
+                    etype, opertype, this.transformExpressionToCpp($exp.lhs), this.transformExpressionToCpp($exp.rhs) }; }
+            | BSQAssembly::BinKeyNotEqExpression => { 
+                return CPPAssembly::BinKeyNotEqExpression{ 
+                    etype, opertype, this.transformExpressionToCpp($exp.lhs), this.transformExpressionToCpp($exp.rhs) }; }
+        }
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
-            BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
-            | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
-            | BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
+            BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
-            | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
-            | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
-            | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
-            | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
+            | BSQAssembly::LiteralCCharExpression => { abort; }
+            | BSQAssembly::LiteralUnicodeCharExpression => { abort; }
+            | BSQAssembly::LiteralCStringExpression => { abort; }
+            | BSQAssembly::LiteralStringExpression => { abort; }
+            | BSQAssembly::LiteralCRegexExpression => { abort; }
+            | BSQAssembly::LiteralRegexExpression => { abort; }
+            | BSQAssembly::LiteralTypeDeclValueExpression => { abort; }
+            | BSQAssembly::AccessNamespaceConstantExpression => { abort; }
+            | BSQAssembly::AccessStaticFieldExpression => { abort; }
+            | BSQAssembly::AccessEnumExpression => { return this.transformAccessEnumExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
+            | BSQAssembly::AccessCapturedVariableExpression => { abort; }
+            | BSQAssembly::ConstructorExpression => { return this.transformConstructorExpression($expr); }
+            | BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($expr); }
+            | BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorLambdaExpression => { abort; }
+            | BSQAssembly::LetExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { abort; }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
             | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }
-            | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
-            | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($expr); }
-            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
-            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($expr); }
-            | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
+            | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
+            | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
+            | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
+            | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
+            | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.transformCoerceWidenTypeExpression($expr); }   
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.transformCoerceNarrowTypeExpression($expr); }
             | BSQAssembly::SafeConvertExpression => { return this.transformSafeConvertExpression($expr); }
             | BSQAssembly::CreateDirectExpression => { return this.transformCreateDirectExpression($expr); }
-            | _ => { abort; }
+            | BSQAssembly::PostfixOp => { return this.transformPostfixOp($expr); }
+            | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
+            | BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
+            | BSQAssembly::BinaryKeyEqExpression => { return this.transformBinaryKeyEqExpression($expr); }
+            | BSQAssembly::KeyCmpEqualExpression => { abort; }
+            | BSQAssembly::KeyCmpLessExpression => { abort; }
+            | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
+            | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
+            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
         }
     }
 
@@ -549,6 +617,12 @@ entity CPPTransformer {
         return CPPAssembly::IfElifElseStatement{ ifcond, ifflow, condflow, elseflow };
     }
 
+    method transformAssertStatement(stmt: BSQAssembly::AssertStatement): CPPAssembly::AssertStatement {
+        let exp = this.transformExpressionToCpp(stmt.cond);
+
+        return CPPAssembly::AssertStatement{ exp };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
@@ -570,14 +644,13 @@ entity CPPTransformer {
             | BSQAssembly::SwitchStatement => { abort; }
             | BSQAssembly::MatchStatement => { abort; }
             | BSQAssembly::AbortStatement => { abort; }
-            | BSQAssembly::AssertStatement => { abort; } 
+            | BSQAssembly::AssertStatement => { return this.transformAssertStatement($stmt); } 
             | BSQAssembly::ValidateStatement => { abort; }
             | BSQAssembly::DebugStatement => { abort; }
             | BSQAssembly::VoidRefCallStatement => { abort; }
             | BSQAssembly::UpdateDirectStatement => { abort; }
             | BSQAssembly::UpdateIndirectStatement => { abort; }
             | BSQAssembly::BlockStatement => { return this.transformBlockStatement($stmt); }
-            | _ => { abort; }
         }
     }
 
@@ -777,6 +850,10 @@ entity CPPTransformer {
                 }
                 abort;
             }
+            elif(bsqasm.enums.has(typekey)) { %% For now we will assume our enums cannot exceed 8 bytes 
+                let etdtinfo = CPPAssembly::TypeInfo{ next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value };
+                return (| etdtinfo, tinfos.insert(cpptkey, etdtinfo) |);
+            }
             else {
                 abort; %% TODO: Type not supported for typeinfo emission!
             }
@@ -937,7 +1014,7 @@ entity CPPTransformer {
                         let new_nsfuncs = decl.nsfuncs.pushBack(cppfunc.ikey);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_nsfuncs, decl.typefuncs, decl.constructables, decl.entities, 
                             decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods,
-                            decl.alltypes };
+                            decl.enums, decl.alltypes };
                     });
         });
 
@@ -955,7 +1032,7 @@ entity CPPTransformer {
                         let new_typefuncs = decl.typefuncs.pushBack(ikey);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, new_typefuncs, decl.constructables, decl.entities, 
                             decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods,
-                            decl.alltypes };
+                            decl.enums, decl.alltypes };
                     });
         });
 
@@ -979,7 +1056,7 @@ entity CPPTransformer {
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, new_entities,
                             decl.datamembers, decl.datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
-                            new_alltypes };
+                            decl.enums, new_alltypes };
                     });
         });
 
@@ -1002,7 +1079,7 @@ entity CPPTransformer {
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
                             new_datamembers, decl.datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
-                            new_alltypes };
+                            decl.enums, new_alltypes };
                     });                     
             });
 
@@ -1025,7 +1102,7 @@ entity CPPTransformer {
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
                             decl.datamembers, new_datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
-                            new_alltypes };
+                            decl.enums, new_alltypes };
                     });                     
             });
 
@@ -1044,7 +1121,7 @@ entity CPPTransformer {
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
                             decl.datamembers, decl.datatypes, new_pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods,
-                            new_alltypes };
+                            decl.enums, new_alltypes };
                     });                     
             }); 
 
@@ -1062,7 +1139,7 @@ entity CPPTransformer {
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, new_constructables, decl.entities,
                             decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods,
-                            new_alltypes };
+                            decl.enums, new_alltypes };
                     });                     
             }); 
 
@@ -1082,7 +1159,25 @@ entity CPPTransformer {
                 abort; 
             }
         });
-    
+
+        let transformer_enums = bsqasm.enums.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::EnumTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::EnumTypeDecl>{}, fn(acc, tk, etd) => {
+                let base = transformer.transformAbstractNominalTypeDeclBase(bsqasm.enums.get(tk)@<BSQAssembly::AbstractNominalTypeDecl>);
+                return acc.insert(base.2, CPPAssembly::EnumTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, etd.members });
+        });
+
+        let transformer_nsdecls_enums = transformer_enums.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            transformer_nsdecls_constructables, fn(acc, cpptk, cppetd) => {
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppetd.fullns, acc,
+                    fn(decl) => {
+                        let new_enums = decl.enums.pushBack(cpptk);
+                        let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
+                            decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, decl.overmethods,
+                            new_enums, new_alltypes };
+                    });                     
+            }); 
+
         let transformer_primitives = bsqasm.primtives.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveEntityTypeDecl>>(
             Map<CPPAssembly::TypeKey, CPPAssembly::PrimitiveEntityTypeDecl>{}, fn(acc, tkey, pe) => {
                 let base = transformer.transformAbstractNominalTypeDeclBase(bsqasm.primtives.get(tkey)@<BSQAssembly::AbstractNominalTypeDecl>);
@@ -1126,7 +1221,7 @@ entity CPPTransformer {
             });
 
         return CPPAssembly::Assembly {
-            nsdecls = transformer_nsdecls_constructables,
+            nsdecls = transformer_nsdecls_enums,
             allfuncs = transformer_allfuncs,
             nsfuncs = transformer_nsfuncs,
             typefuncs = transformer_typefuncs,
@@ -1134,6 +1229,7 @@ entity CPPTransformer {
             virtmethods = transformer_virtmethods,
             absmethods = transformer_absmethods, %% Not fully implemented
             overmethods = transformer_overmethods, %% Not fully implemented
+            enums = transformer_enums,
             primitives = transformer_primitives,
             constructables = transformer_constructables,
             entities = transformer_entities,
