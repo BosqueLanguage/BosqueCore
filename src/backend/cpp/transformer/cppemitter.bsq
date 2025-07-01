@@ -790,9 +790,10 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Co
 }
 
 function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
     let cond = emitExpression(stmt.cond, ctx);
 
-    return String::concat(indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
+    return String::concat(full_indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
 } 
 
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
