@@ -12,9 +12,9 @@ describe( "CPP Emit Evaluate --- Simple Subtraction", () => {
         runMainCode("public function main(): Bool { return (1.0f - 2.0f) < 0.0f; }", "true");
     });
     it("should subtraction error (underflow or undefined behaviour)", function () {
-        runMainCodeError(`public function main(): Nat { return 1n - 2n; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): BigNat { return 1N - 2N; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): Int { return ${bsq_min_int}i - 1i; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): BigInt { return ${bsq_min_bigint}I - 1I; }`, "Over/underflow detected!\n");
+        runMainCodeError(`public function main(): Nat { return 1n - 2n; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): BigNat { return 1N - 2N; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): Int { return ${bsq_min_int}i - 1i; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): BigInt { return ${bsq_min_bigint}I - 1I; }`, "Assertion failed! Or perhaps over/underflow?\n");
     });
 });

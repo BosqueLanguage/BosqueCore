@@ -203,6 +203,10 @@ IfSimpleExpression { }
 }
 ;
 
+entity AssertStatement provides Statement {
+    field cond: Expression;
+}
+
 datatype BinaryArithExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;

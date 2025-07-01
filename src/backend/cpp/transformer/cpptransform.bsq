@@ -617,6 +617,12 @@ entity CPPTransformer {
         return CPPAssembly::IfElifElseStatement{ ifcond, ifflow, condflow, elseflow };
     }
 
+    method transformAssertStatement(stmt: BSQAssembly::AssertStatement): CPPAssembly::AssertStatement {
+        let exp = this.transformExpressionToCpp(stmt.cond);
+
+        return CPPAssembly::AssertStatement{ exp };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
@@ -638,14 +644,13 @@ entity CPPTransformer {
             | BSQAssembly::SwitchStatement => { abort; }
             | BSQAssembly::MatchStatement => { abort; }
             | BSQAssembly::AbortStatement => { abort; }
-            | BSQAssembly::AssertStatement => { abort; } 
+            | BSQAssembly::AssertStatement => { return this.transformAssertStatement($stmt); } 
             | BSQAssembly::ValidateStatement => { abort; }
             | BSQAssembly::DebugStatement => { abort; }
             | BSQAssembly::VoidRefCallStatement => { abort; }
             | BSQAssembly::UpdateDirectStatement => { abort; }
             | BSQAssembly::UpdateIndirectStatement => { abort; }
             | BSQAssembly::BlockStatement => { return this.transformBlockStatement($stmt); }
-            | _ => { abort; }
         }
     }
 

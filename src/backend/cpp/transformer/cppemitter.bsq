@@ -58,7 +58,7 @@ function emitVarIdentifierValue(vi: CPPAssembly::VarIdentifier): String {
 }
 
 function emitSpecialThis(): String {
-    return "tᖺis";
+    return "𝐭𝐡𝐢𝐬";
 }    
 
 function removeCommonPrefix(name: String, prefix: String): String {
@@ -789,18 +789,41 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Co
     return String::concat(ifcond, ifbody, elifs, elseblock);
 }
 
+function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, indent: String): String {
+    let cond = emitExpression(stmt.cond, ctx);
+
+    return String::concat(indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
+} 
+
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
         CPPAssembly::EmptyStatement => { return ""; }
+        %%| CPPAssembly::VariableDeclarationStatement => { abort; }
+        %%| CPPAssembly::VariableMultiDeclarationStatement => { abort; }
         | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
+        %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
+        %%| CPPAssembly::VariableMultiInitializationImplicitStatement => { abort; }
+        %%| CPPAssembly::VariableAssignmentStatement => { abort; }
+        %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
+        %%| CPPAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
+        %%| CPPAssembly::VariableRetypeStatement => { abort; }
+        %%| CPPAssembly::ReturnVoidStatement => { abort; }
         | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, ctx, indent); }
+        %%| CPPAssembly::ReturnMultiStatement => { abort; }
         | CPPAssembly::IfStatement => { return emitIfStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
-        | CPPAssembly::EmptyStatement => { return ""; }
+        %%| CPPAssembly::SwitchStatement => { abort; }
+        %%| CPPAssembly::MatchStatement => { abort; }
+        %%| CPPAssembly::AbortStatement => { abort; }
+        | CPPAssembly::AssertStatement => { return emitAssertStatement($stmt, ctx, indent); }
+        %%| CPPAssembly::ValidateStatement => { abort; }
+        %%| CPPAssembly::DebugStatement => { abort; }
+        %%| CPPAssembly::VoidRefCallStatement => { abort; }
+        %%| CPPAssembly::UpdateDirectStatement => { abort; }
+        %%| CPPAssembly::UpdateIndirectStatement => { abort; }
         | CPPAssembly::BlockStatement => { return emitBlockStatement($stmt, ctx, indent); }
-        | _ => { abort; }
-    }
+     }
 }
 
 function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: String): String {
