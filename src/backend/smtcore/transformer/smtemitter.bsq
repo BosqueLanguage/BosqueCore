@@ -504,7 +504,7 @@ recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpres
     let eopt = emitSafeExpression[recursive](e.eoption, eev);
     let val = emitSafeExpression[recursive](e.val, eev);
     
-    let ubx = SMTNameManager::generateStructTermFieldName(e.optiontype);
+    let ubx = SMTNameManager::generateStructTermFieldName(e.sometype);
     let extract = SMTNameManager::generateStructFieldName(e.sometype, 'value');
 
     let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
@@ -520,7 +520,7 @@ recursive function emitBinKeyNotSomeEqExpression(e: SMTAssembly::BinKeyNotSomeEq
     let eopt = emitSafeExpression[recursive](e.eoption, eev);
     let val = emitSafeExpression[recursive](e.val, eev);
     
-    let ubx = SMTNameManager::generateStructTermFieldName(e.optiontype);
+    let ubx = SMTNameManager::generateStructTermFieldName(e.sometype);
     let extract = SMTNameManager::generateStructFieldName(e.sometype, 'value');
 
     let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
