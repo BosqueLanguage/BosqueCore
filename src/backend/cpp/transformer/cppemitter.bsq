@@ -620,14 +620,14 @@ function emitBinKeyEqExpression(exp: CPPAssembly::BinKeyEqExpression, opertype: 
     let lhs = emitExpression(exp.lhs, ctx);
     let rhs = emitExpression(exp.rhs, ctx);
 
-    return String::concat(lhs, " == ", rhs);
+    return String::concat("(", lhs, " == ", rhs, ")");
 }
 
 function emitBinKeyNotEqExpression(exp: CPPAssembly::BinKeyNotEqExpression, opertype: String, ctx: Context): String {
     let lhs = emitExpression(exp.lhs, ctx);
     let rhs = emitExpression(exp.rhs, ctx);
 
-    return String::concat(lhs, " != ", rhs);
+    return String::concat("(", lhs, " != ", rhs, ")");
 }
 
 function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx: Context): String {
@@ -980,7 +980,7 @@ function emitEnumTypeDecl(etd: CPPAssembly::EnumTypeDecl, ctx: Context, indent: 
     let entries = etd.members.map<String>(fn(e) => String::concat(full_indent, String::fromCString(e)));
     let wentries = String::concat(base, String::joinAll(",%n;", entries), "%n;", indent, "};%n;");
 
-    return wentries;
+    return String::concat(etd_tinfo, wentries);
 }
 
 function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTypeDecl, ctx: Context, indent: String): String {
