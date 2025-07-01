@@ -338,7 +338,7 @@ entity CPPTransformer {
                 return CPPAssembly::PostfixAccessFromName{ baseType, name, declaredInType, ftype };
             }
             | BSQAssembly::PostfixProjectFromNames => { abort; }
-            | BSQAssembly::PostfixAccessFromIndex => { return CPPAssembly::PostfixAccessFromIndex{ baseType, $op.idx }; }
+            | BSQAssembly::PostfixAccessFromIndex => { return CPPAssembly::PostfixAccessFromIndex{ baseType, $op.idxk }; }
             | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
             | BSQAssembly::PostfixAsConvert => { abort; }
             | BSQAssembly::PostfixAssignFields => { abort; }
