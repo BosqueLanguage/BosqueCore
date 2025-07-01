@@ -77,9 +77,7 @@ function emitSpecialTemplate(name: String): String {
     let first = base.replaceAllStringOccurrences("<", "ᐸ");
     let second = first.replaceAllStringOccurrences(",", "ᐧ");
     let third = second.replaceAllStringOccurrences(">", "ᐳ");
-    let fourth = third.replaceAllStringOccurrences("(|", "ᗕ");
-    let fifth = fourth.replaceAllStringOccurrences("|)", "ᗒ");
-    let final = fifth.replaceAllStringOccurrences("::", "ᘏ");
+    let final = third.replaceAllStringOccurrences("::", "ᘏ");
 
     return final;
 }
