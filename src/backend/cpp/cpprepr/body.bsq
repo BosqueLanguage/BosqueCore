@@ -233,8 +233,8 @@ BinKeyEqNoneExpression {
     field eqval: Expression;
 }
 | BinKeyNotSomeEqExpression {
-    field neoption: Expression;
-    field neval: Expression;
+    field eqoption: Expression;
+    field eqval: Expression;
 }
 | BinKeyEqExpression {
     field lhs: Expression;

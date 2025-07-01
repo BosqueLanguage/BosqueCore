@@ -504,7 +504,7 @@ entity CPPTransformer {
                     etype, opertype, this.transformExpressionToCpp($exp.eqoption), this.transformExpressionToCpp($exp.eqval) }; }
             | BSQAssembly::BinKeyNotSomeEqExpression => { 
                 return CPPAssembly::BinKeyNotSomeEqExpression{ 
-                    etype, opertype, this.transformExpressionToCpp($exp.neoption), this.transformExpressionToCpp($exp.neval) }; }
+                    etype, opertype, this.transformExpressionToCpp($exp.eqoption), this.transformExpressionToCpp($exp.eqval) }; }
             | BSQAssembly::BinKeyEqExpression => { 
                 return CPPAssembly::BinKeyEqExpression{ 
                     etype, opertype, this.transformExpressionToCpp($exp.lhs), this.transformExpressionToCpp($exp.rhs) }; }
