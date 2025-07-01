@@ -132,10 +132,6 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         else String::concat(ns, template);
 }
 
-%%
-%% TODO: Need to always call this if we are emitting a type signature instead of just calling emitTypeKey
-%%
-
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, isParamField: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
         let argssizes = $ts.entries.map<String>(fn(e) => {
@@ -515,7 +511,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
     let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg.exp, ctx) );
-    let sometype = String::concat("Core::", emitTypeKey(cpsse.ctype.tkeystr, false, ctx));
+    let sometype = String::concat("Core::", emitTypeSignature(cpsse.ctype, false, ctx));
 
     return String::concat(sometype, "{ ", String::joinAll(", ", args), "}");
 }
@@ -542,7 +538,7 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
 %%
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): String {
     let emitargs = emitArgumentList(exp.args, ctx); 
-    let name = emitTypeKey(exp.ctype.tkeystr, false, ctx);
+    let name = emitTypeSignature(exp.ctype, false, ctx);
     if(ctx.asm.typeinfos.get(exp.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) {
         return String::concat("new ", name, "{ ", emitargs, " }"); %% We use new solely to keep the code compiling before GC integration
     }
@@ -550,6 +546,9 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
 }
 
 function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
+    if(exp.args.args.size() > 4n) {
+        abort; %% Tuples of size > 4 not supported yet
+    }
     let ceetype = emitTypeSignature(exp.etype, false, ctx);
     let args = emitArgumentList(exp.args, ctx);    
 
@@ -570,13 +569,13 @@ function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String 
 %% We are only widening to options for now
 function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, ctx: Context): String {
     let fromtkey = exp.srctype.tkeystr;
-    let totkey = exp.trgttype.tkeystr;
+    let tottsig = exp.trgttype;
     let emitexp = emitExpression(exp.exp, ctx);
 
     let fromtkey_size = String::fromCString(ctx.asm.typeinfos.tryGet(fromtkey)@some.slotsize.toCString()); %% This is T
-    let name = String::concat("Core::", emitTypeKey(totkey, false, ctx));
+    let name = String::concat("Core::", emitTypeSignature(tottsig, false, ctx));
 
-    let ttype = String::concat(emitTypeKey(exp.srctype.tkeystr, false, ctx), "Type");
+    let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
 
     if(exp.exp?<CPPAssembly::LiteralNoneExpression>) {
         return String::concat(name, "{ &", removeCppPrefix(ttype) ," }");
@@ -762,7 +761,7 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
 
 function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context): String {
     let all_params = params.map<String>(fn(param) => {
-        let ptype = emitTypeKey(param.ptype.tkeystr, true, ctx);
+        let ptype = emitTypeSignature(param.ptype, true, ctx);
         let pident = emitIdentifier(param.pname);
 
         return String::concat(ptype, " ", pident);
@@ -787,7 +786,7 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
 
     let name = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
     let params = emitParameters(m.params, nctx);
-    let rtype = emitTypeKey(m.resultType.tkeystr, false, ctx);
+    let rtype = emitTypeSignature(m.resultType, false, ctx);
     let this_type = emitThisType(declaredIn, nctx);    
     let specialName = emitSpecialTemplate(String::fromCString(name));
     
@@ -829,7 +828,7 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 
     let name = emitInvokeKey(ikey, nctx);
     let params = emitParameters(func.params, nctx);
-    let rtype = emitTypeKey(func.resultType.tkeystr, false, ctx); 
+    let rtype = emitTypeSignature(func.resultType, false, ctx); 
 
     let pre: String = String::concat(rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
@@ -838,7 +837,7 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 }
 
 function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: String): String {
-    let ftype = emitTypeKey(sfi.ftype.tkeystr, true, ctx);
+    let ftype = emitTypeSignature(sfi.ftype, true, ctx);
     let fname = emitIdentifier(sfi.fname);
     return String::concat(indent, ftype, " ", fname, ";%n;");
 }
@@ -893,7 +892,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
-        let rtype = emitTypeKey(m.resultType.tkeystr, false, nctx);
+        let rtype = emitTypeSignature(m.resultType, false, nctx);
         let this_type = emitThisType(declaredIn, nctx);
         let params = emitParameters(m.params, nctx);
 
@@ -919,7 +918,7 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, c
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, ns);
 
     let ikey = emitInvokeKey(decl.ikey, nctx);
-    let rtype = emitTypeKey(decl.resultType.tkeystr, false, nctx); 
+    let rtype = emitTypeSignature(decl.resultType, false, nctx); 
     let params = emitParameters(decl.params, nctx);
 
     let first = String::concat(ident, rtype, " ", ikey);
@@ -1006,7 +1005,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
 function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     let sometype = emitTypeKey(std.tkey, false, ctx);
-    let ttype = emitTypeKey(std.oftype.tkeystr, true, ctx);
+    let ttype = emitTypeSignature(std.oftype, true, ctx);
 
     let std_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(std.tkey), some(std), ctx, indent);
 
@@ -1030,7 +1029,7 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
     let full_indent = String::concat("    ", indent);
     let tkey = emitTypeKey(pc.tkey, false, ctx);
     let k = String::fromCString((ctx.asm.typeinfos.get(pc.tkey).slotsize - 1n).toCString()); %% Slot size includes "2" ptr to typeinfo, so we ignore
-    let sometkey = emitTypeKey(pc@<CPPAssembly::OptionTypeDecl>.someType.tkeystr, false, ctx);
+    let sometkey = emitTypeSignature(pc@<CPPAssembly::OptionTypeDecl>.someType, false, ctx);
 
     let pc_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(pc.tkey), some(pc), ctx, indent);
 

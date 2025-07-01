@@ -719,6 +719,9 @@ entity CPPTransformer {
         });
     }
 
+    %%
+    %% TODO: will need to explicitly handle the tuple as field case
+    %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
 

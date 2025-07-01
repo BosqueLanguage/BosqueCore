@@ -132,6 +132,7 @@ public:
     }
 };
 
+// We may want to specialize K=2,3,4 as well
 template <>
 class TupleEntry<1> {
 public:
