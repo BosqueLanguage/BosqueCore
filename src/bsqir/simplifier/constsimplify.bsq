@@ -55,7 +55,28 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        abort; %% Not implemented 
+        if(itest.isnot) {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            else {
+                return PostfixIsTest { sinfo, srctype, itest };
+            }
+        }
+        else {
+            if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixBoolConstant{ sinfo, srctype, true };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixBoolConstant{ sinfo, srctype, false };
+            }
+            else {
+                return PostfixIsTest { sinfo, srctype, itest };
+            }
+        }
     }
 
     method processITestNoneAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
@@ -121,7 +142,34 @@ entity ConstantSimplification {
     }
 
     method processITestTypeAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
-        abort; %% Not implemented
+        if(itest.isnot) {
+            if(this.assembly.areTypesSame(srctype, itest.ttype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            elif(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixWidenConvert{ sinfo, srctype, itest.ttype };
+            }
+            else {
+                return PostfixAsConvert{ sinfo, srctype, itest };
+            }
+        }
+        else {
+            if(this.assembly.areTypesSame(srctype, itest.ttype)) {
+                return PostfixNop{ sinfo, srctype };
+            }
+            elif(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
+                return PostfixWidenConvert{ sinfo, srctype, itest.ttype };
+            }
+            elif(this.assembly.areDisjoint(itest.ttype, srctype)) {
+                return PostfixAbort{ sinfo, srctype, none };
+            }
+            else {
+                return PostfixAsConvert{ sinfo, srctype, itest };
+            }
+        }
     }
 
     method processITestNoneAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestNone): PostfixOperation {
@@ -1175,12 +1223,72 @@ entity ConstantSimplification {
         };
     }
 
+    method processOptionTypeDecl(oconcept: OptionTypeDecl): OptionTypeDecl {
+        return OptionTypeDecl{
+            file=oconcept.file,
+            sinfo=oconcept.sinfo,
+            fullns = oconcept.fullns,
+            declaredInNS=oconcept.declaredInNS,
+
+            tkey=oconcept.tkey,
+            name=oconcept.name,
+
+            invariants=oconcept.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=oconcept.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=oconcept.absmethods,
+            virtmethods=oconcept.virtmethods,
+            overmethods=oconcept.overmethods,
+            staticmethods=oconcept.staticmethods,
+
+            saturatedProvides=oconcept.saturatedProvides,
+            saturatedBFieldInfo=oconcept.saturatedBFieldInfo,
+
+            allInvariants=oconcept.allInvariants,
+            allValidates=oconcept.allValidates,
+
+            subtypes=oconcept.subtypes,
+            
+            oftype=oconcept.oftype,
+            someType=oconcept.someType
+        };
+    }
+
     method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
-        abort;
+        match(pconcept)@ {
+            OptionTypeDecl => { return this.processOptionTypeDecl($pconcept); }
+            | ResultTypeDecl => { abort; }
+            | APIResultTypeDecl => { abort; }
+        }
     }
 
     method processConceptTypeDecl(cconcept: ConceptTypeDecl): ConceptTypeDecl {
-        abort;
+        return ConceptTypeDecl{
+            file=cconcept.file,
+            sinfo=cconcept.sinfo,
+            fullns = cconcept.fullns,
+            declaredInNS=cconcept.declaredInNS,
+
+            tkey=cconcept.tkey,
+            name=cconcept.name,
+
+            invariants=cconcept.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=cconcept.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=cconcept.absmethods,
+            virtmethods=cconcept.virtmethods,
+            overmethods=cconcept.overmethods,
+            staticmethods=cconcept.staticmethods,
+
+            saturatedProvides=cconcept.saturatedProvides,
+            saturatedBFieldInfo=cconcept.saturatedBFieldInfo,
+
+            allInvariants=cconcept.allInvariants,
+            allValidates=cconcept.allValidates,
+
+            subtypes=cconcept.subtypes,
+            fields=cconcept.fields.map<MemberFieldDecl>(fn(fd) => this.processMemberFieldDecl(fd))
+        };
     }
 
     method processDatatypeTypeDecl(ddatatype: DatatypeTypeDecl): DatatypeTypeDecl {
@@ -1239,7 +1347,7 @@ entity ConstantSimplification {
             entities = assembly.entities.map<EntityTypeDecl>(fn(ikey, etype) => simplifier.processEntityTypeDecl(etype)),
             datamembers = assembly.datamembers.map<DatatypeMemberEntityTypeDecl>(fn(ikey, dmtype) => simplifier.processDatatypeMemberEntityTypeDecl(dmtype)),
 
-            pconcepts = assembly.pconcepts,
+            pconcepts = assembly.pconcepts.map<PrimitiveConceptTypeDecl>(fn(ikey, pconcept) => simplifier.processPrimitiveConceptTypeDecl(pconcept)),
             concepts = assembly.concepts.map<ConceptTypeDecl>(fn(ikey, cconcept) => simplifier.processConceptTypeDecl(cconcept)),
 
             datatypes = assembly.datatypes.map<DatatypeTypeDecl>(fn(ikey, ddatatype) => simplifier.processDatatypeTypeDecl(ddatatype)),

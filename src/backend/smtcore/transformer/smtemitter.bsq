@@ -29,6 +29,10 @@ namespace SMTNameManager {
         return CString::concat('@SubtypeOf-', tkey.value);
     }
 
+    function generateVirtualFieldAccessorFunctionName(tkey: SMTAssembly::TypeKey, fname: CString): CString {
+        return CString::concat('@VField-', tkey.value , '-', fname);
+    }
+
     function generateResultName(rtype: SMTAssembly::ResultType): CString {
         if(rtype)@<SMTAssembly::SafeResult> {
             return rtype.rtype.value;
@@ -355,8 +359,13 @@ recursive function emitUnwrapTypeDeclToPrimitiveExpression(v: SMTAssembly::Unwra
 *%
 
 recursive function emitAccessFromNameResolvedExpression(v: SMTAssembly::AccessFromNameResolvedExpression, eev: SMTEmitterEnv): CString {
-    let access = SMTNameManager::generateStructFieldName(v.ontype, v.name);
+    let access = SMTNameManager::generateStructFieldName(v.resolvedType, v.name);
     return CString::concat('(', access, ' ', emitSafeExpression(v.arg, eev), ')');
+}
+
+recursive function emitAccessFromNameVirtualExpression(v: SMTAssembly::AccessFromNameVirtualExpression, eev: SMTEmitterEnv): CString {
+    let vfaccess = SMTNameManager::generateVirtualFieldAccessorFunctionName(v.declType, v.name);
+    return CString::concat('(', vfaccess, ' ', emitSafeExpression(v.arg, eev), ')');
 }
 
 recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndexExpression, eev: SMTEmitterEnv): CString {
@@ -367,24 +376,20 @@ recursive function emitValidateResultIsTrueExpression(v: SMTAssembly::ValidateRe
     return CString::concat('(= ', emitExpression(v.arg, eev), ' (@Result-ok true))');
 }
 
-%*
-recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression): CString {
-    let ccons = SMTNameManager::generateStructTermConstructorName(v.istype);
-    let ttchk = CString::concat('(_ is ', ccons, ')');
-    let vv = emitExpression[recursive](v.arg);
+recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {
+    let tcons = SMTNameManager::generateStructTermConstructorName(v.istype);
+    let vv = emitExpression[recursive](v.arg, eev);
 
     %%v is always in term repr to test against term constructor
-    return CString::concat('(', ttchk, ' ', vv, ')');
+    return CString::concat('(is-', tcons, ' ', vv, ')');
 }
 
-recursive function emitIsSubtypeTestExpression(v: SMTAssembly::IsSubtypeTestExpression): CString {
+recursive function emitIsSubtypeTestExpression(v: SMTAssembly::IsSubtypeTestExpression, eev: SMTEmitterEnv): CString {
     let subchk = SMTNameManager::generateTermSubtypeFunctionName(v.oftype);
-    let vv = emitExpression[recursive](v.arg);
+    let vv = emitExpression[recursive](v.arg, eev);
 
-    %%v is always in term repr to test against term constructor
     return CString::concat('(', subchk, ' ', vv, ')');
 }
-*%
 
 recursive function emitConvertOptionToSomeTExpression(v: SMTAssembly::ConvertOptionToSomeTExpression, eev: SMTEmitterEnv): CString {
     let ubx = SMTNameManager::generateStructTermFieldName(v.sometype);
@@ -499,7 +504,7 @@ recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpres
     let eopt = emitSafeExpression[recursive](e.eoption, eev);
     let val = emitSafeExpression[recursive](e.val, eev);
     
-    let ubx = SMTNameManager::generateStructTermFieldName(e.optiontype);
+    let ubx = SMTNameManager::generateStructTermFieldName(e.sometype);
     let extract = SMTNameManager::generateStructFieldName(e.sometype, 'value');
 
     let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
@@ -515,7 +520,7 @@ recursive function emitBinKeyNotSomeEqExpression(e: SMTAssembly::BinKeyNotSomeEq
     let eopt = emitSafeExpression[recursive](e.eoption, eev);
     let val = emitSafeExpression[recursive](e.val, eev);
     
-    let ubx = SMTNameManager::generateStructTermFieldName(e.optiontype);
+    let ubx = SMTNameManager::generateStructTermFieldName(e.sometype);
     let extract = SMTNameManager::generateStructFieldName(e.sometype, 'value');
 
     let ubxop = CString::concat('(', ubx, ' ', eopt, ')');
@@ -741,12 +746,11 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($v); }
         *%
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
+        | SMTAssembly::AccessFromNameVirtualExpression => { return emitAccessFromNameVirtualExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
-        %*
-        | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($v); }
-        | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($v); }
-        *%
+        | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($e, eev); }
+        | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($e, eev); }
         %*
         | SMTAssembly::ConvertResultToOkTExpression => { return emitConvertResultToOkTExpression[recursive]($v); }
@@ -843,6 +847,45 @@ recursive function emitIfThenElseOperation(e: SMTAssembly::IfThenElseOperation, 
         let fv = emitOperation[recursive](e.falseop, eev, some(iident));
 
         return CString::concat(ttst, '%n;', tv, '%n;', fv, tident);
+    }
+}
+
+recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
+    let tst = emitSafeExpression[recursive](e.matchexp, eev);
+    let ttst = CString::concat('(match ', tst);
+
+    if(indent)@none {
+        var cases = e.cases.map[recursive]<CString>(fn(c) => {
+            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
+            let cbody = emitOperation[recursive](c.1, eev, none);
+            return CString::concat('(', ttest, ' ', cbody, ')');
+        });
+
+        if($dop = e.defaultop)@some {
+            let defop = emitOperation[recursive]($dop, eev, none);
+            cases = cases.pushBack(CString::concat('(_ ', defop, ')'));
+        }
+
+        let casesl = CString::joinAll(' ', cases);
+        return CString::concat(ttst, ' ', casesl, ')');
+    }
+    else {
+        let iident = CString::concat('    ', $indent);
+        let tident = CString::concat('%n;', $indent, '))');
+
+        var cases = e.cases.map[recursive]<CString>(fn(c) => {
+            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
+            let cbody = emitOperation[recursive](c.1, eev, none);
+            return CString::concat(iident, '(', ttest, ' ', cbody, ')');
+        });
+
+        if($dop = e.defaultop)@some {
+            let defop = emitOperation[recursive]($dop, eev, none);
+            cases = cases.pushBack(CString::concat(iident, '(_ ', defop, ')'));
+        }
+
+        let casesl = CString::joinAll('%n;', cases);
+        return CString::concat(ttst, ' (%n;', casesl, tident);
     }
 }
 
@@ -1043,6 +1086,7 @@ recursive function emitOperation(op: SMTAssembly::Operation, eev: SMTEmitterEnv,
         | SMTAssembly::LetOperation => { opstr = emitLetOperation[recursive]($op, eev, indent); }
         | SMTAssembly::LetOperationWError => { opstr = emitLetOperationWError[recursive]($op, eev, indent); }
         | SMTAssembly::LetWErrorsOperation => { opstr = emitLetWErrorsOperation[recursive]($op, eev, indent); }
+        | SMTAssembly::MatchOperation => { opstr = emitMatchOperation[recursive]($op, eev, indent); }
         | SMTAssembly::IfThenElseOperation => { opstr = emitIfThenElseOperation[recursive]($op, eev, indent); }
     }
 
@@ -1382,10 +1426,16 @@ function emitSubtypePredicate(ctype: SMTAssembly::TypeKey, subtypes: List<SMTAss
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool false)');
     }
     elif(subtypes.isSingle()) {
-        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-@Term-', subtypes.single().value, '-mk tt))');
+        let tcons = SMTNameManager::generateStructTermConstructorName(subtypes.single());
+
+        return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (is-', tcons, ' tt))');
     }
     else {
-        let tlist = subtypes.map<CString>(fn(t) => CString::concat('(is-', t.value, ' tt)'));
+        let tlist = subtypes.map<CString>(fn(t) => {
+            let tcons = SMTNameManager::generateStructTermConstructorName(t);
+            return CString::concat('(is-', tcons, ' tt)');
+        });
+    
         return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
     }
 }
@@ -1434,6 +1484,49 @@ function emitAllSubtypeChecks(pconcepts: List<SMTAssembly::PrimitiveConceptTypeD
     let dcks = emitDatatypeSubtypeChecks(dconcepts);
 
     return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
+}
+
+function emitConceptVFieldFunctionsFor(ccpt: SMTAssembly::ConceptTypeDecl): List<CString> {
+    return ccpt.absfields.map<CString>(fn(f) => {
+        let vfname = SMTNameManager::generateVirtualFieldAccessorFunctionName(ccpt.tkey, f.fname);
+        if(ccpt.subtypes.empty()) {
+            return CString::concat('(declare-fun ', vfname, ' (@Term) ', f.ftype.value, ')');
+        }
+        
+        var body: CString;
+        if(ccpt.subtypes.isSingle()) {
+            let extract = SMTNameManager::generateStructTermFieldName(ccpt.subtypes.single());
+            let ssubf = SMTNameManager::generateStructFieldName(ccpt.subtypes.single(), f.fname);
+
+            body = CString::concat('(', ssubf, ' (', extract, ' v))');
+        }
+        else {
+            let opts = ccpt.subtypes.map<CString>(fn(t) => {
+                let tcons = SMTNameManager::generateStructConstructorName(t);
+                let extract = SMTNameManager::generateStructTermFieldName(t);
+                let ssubf = SMTNameManager::generateStructFieldName(t, f.fname);
+                let access = CString::concat('(', ssubf, ' (', extract, ' v))');
+
+                return CString::concat('    (', tcons, ' ', access, ')');
+            });
+
+            body = CString::concat('(match v (%n;', CString::joinAll('%n;', opts), '%n;))');
+        }
+
+        let sig = CString::concat('define-fun ', vfname, ' ((v @Term)) ', f.ftype.value);
+        return CString::concat('(', sig, ' ', body, ')');
+    });
+}
+
+function emitDatatypeVFieldFunctionsFor(ccpt: SMTAssembly::DatatypeTypeDecl): List<CString> {
+    abort; %% Not implemented yet
+}
+
+function emitAllFieldAccessFunctions(concepts: List<SMTAssembly::ConceptTypeDecl>, dconcepts: List<SMTAssembly::DatatypeTypeDecl>): CString {
+    let cfields = List<CString>::concatAll(concepts.map<List<CString>>(fn(c) => emitConceptVFieldFunctionsFor(c)));
+    let dfields = List<CString>::concatAll(dconcepts.map<List<CString>>(fn(c) => emitDatatypeVFieldFunctionsFor(c)));
+
+    return CString::joinAll('%n;', List<CString>::concat(cfields, dfields).filter(pred(s) => !s.empty()));
 }
 
 function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
@@ -1547,10 +1640,14 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
     );
 
     let subchecks = emitAllSubtypeChecks(asm.pconcepts, asm.concepts, asm.datatypes);
+    let vfields = emitAllFieldAccessFunctions(asm.concepts, asm.datatypes);
     let subchecks_str = CString::join('%n;',
         '#BEGIN ;;--SUBTYPE_PREDICATES--;;',
         subchecks,
-        '#END ;;--SUBTYPE_PREDICATES--;;'
+        '#END ;;--SUBTYPE_PREDICATES--;;',
+        '#BEGIN ;;--VFIELD_ACCESS--;;',
+        vfields,
+        '#END ;;--VFIELD_ACCESS--;;'
     );
 
     let validates = CString::join('%n;',
