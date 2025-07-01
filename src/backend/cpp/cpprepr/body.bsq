@@ -315,6 +315,9 @@ PostfixAccessFromName {
 | PostfixIsTest {
     field ttest: ITest;
 }
+| PostfixAsConvert {
+    field ttest: ITest;
+}
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;

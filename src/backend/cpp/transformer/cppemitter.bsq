@@ -149,17 +149,30 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, isParamField: Bool, c
 
 function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
     let emit = emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(some(tk), none, ctx)); 
+    let asnominal = ctx.asm.lookupNominalTypeDeclaration(tk);
+
+    %% explicitly emit core prefix where necessary
+    var resolveddef: String;
+    if(ctx.fullns_list.get(0n) === 'Core') {
+        resolveddef = emit;
+    }
+    elif(asnominal?<CPPAssembly::OptionTypeDecl> || asnominal?<CPPAssembly::SomeTypeDecl>) {
+        resolveddef = String::concat("Core::", emit);
+    }
+    else {
+        resolveddef = emit;
+    }
 
     if(isParamField) {
         let tinfo = ctx.asm.typeinfos.tryGet(tk)@some;
 
         switch(tinfo.tag) {
-            CPPAssembly::Tag#Value => { return emit; }
-            | CPPAssembly::Tag#Ref => { return String::concat(emit, "*"); }
+            CPPAssembly::Tag#Value => { return resolveddef; }
+            | CPPAssembly::Tag#Ref => { return String::concat(resolveddef, "*"); }
             | CPPAssembly::Tag#Tagged => { abort; } %% Not fully confident on how to handle this quite yet
         }
     }
-    return emit;
+    return resolveddef;
 }
 
 function emitIdentifier(i: CPPAssembly::Identifier): String {
@@ -486,9 +499,22 @@ function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSi
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
     match(it)@ {
         CPPAssembly::ITestType => { return emitITestType($it, baseType, ctx); }
-        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, ctx); }
         | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, ctx); }
-        | _ => { abort; } %% TODO: Not Implemented!
+        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, ctx); }
+        | CPPAssembly::ITestOk => { abort; }
+        | CPPAssembly::ITestFail => { abort; }
+    }
+}
+
+function emitITestAsConvert(itc: CPPAssembly::PostfixAsConvert, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+    if(ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)?<CPPAssembly::OptionTypeDecl>) {
+        let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
+        let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
+
+        return String::concat(accessor, "some().value");
+    }
+    else {
+        abort; %% Only options are supported for now
     }
 }
 
@@ -501,6 +527,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
             | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
+            | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op, $op.baseType, ctx)); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); } %% This will not chain method calls :(
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
         }
@@ -509,7 +536,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
     let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg.exp, ctx) );
-    let sometype = String::concat("Core::", emitTypeSignature(cpsse.ctype, false, ctx));
+    let sometype = emitTypeSignature(cpsse.ctype, false, ctx);
 
     return String::concat(sometype, "{ ", String::joinAll(", ", args), "}");
 }
@@ -585,7 +612,7 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
     let emitexp = emitExpression(exp.exp, ctx);
 
     let fromtkey_size = String::fromCString(ctx.asm.typeinfos.tryGet(fromtkey)@some.slotsize.toCString()); %% This is T
-    let name = String::concat("Core::", emitTypeSignature(tottsig, false, ctx));
+    let name = emitTypeSignature(tottsig, false, ctx);
 
     let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
 
@@ -593,7 +620,7 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
         return String::concat(name, "{ &", removeCppPrefix(ttype) ," }");
     }
 
-    return String::concat(name, "{ &Core::", ttype, ", ", emitexp, " }");
+    return String::concat(name, "{ &", ttype, ", ", emitexp, " }");
 }
 
 %% We will need this to help us take "this.f?<Int>" to "false"
@@ -692,10 +719,9 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: String): String {
     let name = emitIdentifier(stmt.name);
     let stype = emitTypeSignature(stmt.vtype, false, ctx);
-    let resolved_stype = if(stype.startsWithString("Option") || stype.startsWithString("Some")) then String::concat("Core::", stype) else stype;
     let exp = emitExpression(stmt.exp, ctx);
 
-    let full_indent: String = String::concat(indent, "    ", resolved_stype);
+    let full_indent: String = String::concat(indent, "    ", stype);
     return String::concat(full_indent, " ", name, " = ", exp, ";");
 }
 
@@ -1108,11 +1134,13 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
 }
 
 function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(std.declaredInNS, std.fullns);
+    
     let full_indent = String::concat("    ", indent);
-    let sometype = emitTypeKey(std.tkey, false, ctx);
-    let ttype = emitTypeSignature(std.oftype, true, ctx);
+    let sometype = emitTypeKey(std.tkey, false, nctx);
+    let ttype = emitTypeSignature(std.oftype, true, nctx);
 
-    let std_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(std.tkey), some(std), ctx, indent);
+    let std_tinfo = emitTypeInfo(nctx.asm.typeinfos.get(std.tkey), some(std), nctx, indent);
 
     let value = String::concat(sometype, " {%n;", full_indent, ttype, " value;%n;", indent);
     return String::concat(std_tinfo, indent, "struct ", value, "};%n;");
@@ -1131,12 +1159,14 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
 
 %% Note: Only supports options currently
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(pc.declaredInNS, pc.fullns);
+    
     let full_indent = String::concat("    ", indent);
-    let tkey = emitTypeKey(pc.tkey, false, ctx);
-    let k = String::fromCString((ctx.asm.typeinfos.get(pc.tkey).slotsize - 1n).toCString()); %% Slot size includes "2" ptr to typeinfo, so we ignore
-    let sometkey = emitTypeSignature(pc@<CPPAssembly::OptionTypeDecl>.someType, false, ctx);
+    let tkey = emitTypeKey(pc.tkey, false, nctx);
+    let k = String::fromCString((nctx.asm.typeinfos.get(pc.tkey).slotsize - 1n).toCString()); %% Slot size includes "2" ptr to typeinfo, so we ignore
+    let sometkey = emitTypeSignature(pc@<CPPAssembly::OptionTypeDecl>.someType, false, nctx);
 
-    let pc_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(pc.tkey), some(pc), ctx, indent);
+    let pc_tinfo = emitTypeInfo(nctx.asm.typeinfos.get(pc.tkey), some(pc), nctx, indent);
 
     let def = String::concat(indent, "class ", tkey, " : public __CoreCpp::Boxed<", k, ">{%n;");
     let visibility = String::concat(pc_tinfo, def, indent, "public:%n;");

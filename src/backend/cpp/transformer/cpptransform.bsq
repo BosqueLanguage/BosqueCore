@@ -323,9 +323,10 @@ entity CPPTransformer {
         let isnot = itest.isnot;
         match(itest)@ {
             BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
-            | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
             | BSQAssembly::ITestNone => { return this.transformITestNone(isnot); }
-            | _ => { abort; } 
+            | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
+            | BSQAssembly::ITestOk => { abort; }
+            | BSQAssembly::ITestFail => { abort; }
         }
     }
 
@@ -342,9 +343,9 @@ entity CPPTransformer {
             | BSQAssembly::PostfixProjectFromNames => { abort; }
             | BSQAssembly::PostfixAccessFromIndex => { return CPPAssembly::PostfixAccessFromIndex{ baseType, $op.idxk }; }
             | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
-            | BSQAssembly::PostfixAsConvert => { abort; }
+            | BSQAssembly::PostfixAsConvert => { return CPPAssembly::PostfixAsConvert{ baseType, this.transformITestAsTest($op.ttest) }; }
             | BSQAssembly::PostfixAssignFields => { abort; }
-            | BSQAssembly::PostfixInvokeStatic => {
+            | BSQAssembly::PostfixInvokeStatic => { %% Maybe move to its own method
                 let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
                 let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
                 let args = this.transformArgumentList($op.argsinfo.args);
@@ -793,7 +794,9 @@ entity CPPTransformer {
     }
 
     %%
-    %% TODO: Need to explicitly handle the tuple case
+    %% When we generate the typeinfo for some<tuple> we will need to explicitly handle how we determine the field size.
+    %% this likely means we need to modify this method to support access of `entries` list or this typesig, walk the fields
+    %% recursively determining their slotsize and typesize to construct our new type. Think of it as a union.
     %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
