@@ -512,13 +512,13 @@ class BSQIREmitter {
     private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cpee = this.emitConstructorPrimaryExpressionBase(exp);
 
-        if(cdecl.valuetype.tkeystr !== "CString" && cdecl.valuetype.tkeystr !== "String") {
-            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee} }`;
+        if(cdecl.optofexp === undefined) {
+            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee}, valuetype=${this.emitTypeSignature(cdecl.valuetype)} }`;
             
         }
         else {
-            //TODO: we need to figure out how to encode regex expressions in general and Literals in particular
-            assert(false, "Not implemented -- TypeDeclConstructor");
+            const optchk = this.emitExpression(cdecl.optofexp.exp);
+            return `BSQAssembly::ConstructorTypeDeclStringExpression{ ${cpee}, valuetype=${this.emitTypeSignature(cdecl.valuetype)}, ofcheck=${optchk} }`;
         }
     }
 

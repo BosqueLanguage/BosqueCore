@@ -121,8 +121,9 @@ entity ExplicitifyTransform {
         let nname = vmap.resolveVariableAsNeeded(e.vname);
         return AccessCapturedVariableExpression{ e.sinfo, e.layouttype, nname, e.layouttype };
     }
+
     recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd(e.args, List<TypeSignature>{e.ofttype}, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.ofttype}, vmap);
 
         return e[args=nargs];
     }
@@ -131,6 +132,19 @@ entity ExplicitifyTransform {
         let nargs = this.processArgumentListConstructCollection[recursive](e.args, e.elemtype, vmap);
 
         return e[args=nargs];
+    }
+
+    recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.valuetype}, vmap);
+
+        return e[args=nargs];
+    }
+
+    recursive method processConstructorTypeDeclStringExpression(e: ConstructorTypeDeclStringExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.valuetype}, vmap);
+        
+        let noptchk = this.processExpression[recursive](e.ofcheck, vmap);
+        return e[args=nargs, ofcheck=noptchk];
     }
 
     recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
@@ -153,8 +167,8 @@ entity ExplicitifyTransform {
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialOkExpression => { abort; }
             | ConstructorPrimarySpecialFailExpression => { abort; }
-            | ConstructorTypeDeclExpression => { abort; }
-            | ConstructorTypeDeclStringExpression => { abort; }
+            | ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive]($e, vmap); }
+            | ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive]($e, vmap); }
             | ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e, vmap); }
             | ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, vmap); }
         }
@@ -217,6 +231,12 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression, vmap: VarMapping): Expression {
+        let nbase = this.processUnaryArg[recursive](e.base, vmap);
+
+        return e[base=nbase];
+    }
+
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression, vmap: VarMapping): Expression {
         let nexp = this.processUnaryArg[recursive](e.exp, vmap);
 
@@ -275,7 +295,16 @@ entity ExplicitifyTransform {
             nexp = TypeDeclPrimitiveFieldAccessExpression{ nexp.sinfo, $ntype.valuetype, nexp };
         }
 
-        return e[exp=nexp];
+        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
+        if(restype)@!<TypedeclTypeDecl> {
+            return e[exp=nexp];
+        }
+        else {
+            let nbop = e[etype=$restype.valuetype, exp=nexp];
+            let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
+
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+        }
     }
 
     recursive method processBinaryArithExpression(e: BinaryArithExpression, vmap: VarMapping): Expression {
@@ -424,7 +453,7 @@ entity ExplicitifyTransform {
             | LiteralStringExpression => { return e; }
             | LiteralCRegexExpression => { return e; }
             | LiteralRegexExpression => { return e; }
-            | LiteralTypeDeclValueExpression => { abort; }
+            | LiteralTypeDeclValueExpression => { return e; }
             | AccessNamespaceConstantExpression => { return e; }
             | AccessStaticFieldExpression => { return e; }
             | AccessEnumExpression => { return e; }
@@ -441,7 +470,7 @@ entity ExplicitifyTransform {
             | CallRefInvokeVirtualExpression => { abort; }
             | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e, vmap); }
             | LogicActionOrExpression => { return this.processLogicActionOrExpression[recursive]($e, vmap); }
-            | TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | TypeDeclPrimitiveFieldAccessExpression => { return this.processTypeDeclPrimitiveFieldAccessExpression[recursive]($e, vmap); }
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e, vmap); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e, vmap); }
             | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e, vmap); }
@@ -768,7 +797,60 @@ entity ExplicitifyTransform {
     }
 
     method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
-        abort;
+        return TypedeclTypeDecl{
+            file=typedecl.file,
+            sinfo=typedecl.sinfo,
+            fullns=typedecl.fullns,
+            declaredInNS=typedecl.declaredInNS,
+
+            tkey=typedecl.tkey,
+            name=typedecl.name,
+
+            invariants=typedecl.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=typedecl.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=typedecl.absmethods,
+            virtmethods=typedecl.virtmethods,
+            overmethods=typedecl.overmethods,
+            staticmethods=typedecl.staticmethods,
+
+            saturatedProvides=typedecl.saturatedProvides,
+            saturatedBFieldInfo=typedecl.saturatedBFieldInfo,
+
+            allInvariants=typedecl.allInvariants,
+            allValidates=typedecl.allValidates,
+
+            valueType=typedecl.valueType,
+        };
+    }
+
+    method processTypedeclStringOfTypeDecl(typedecl: TypedeclStringOfTypeDecl): TypedeclStringOfTypeDecl {
+        return TypedeclStringOfTypeDecl{
+            file=typedecl.file,
+            sinfo=typedecl.sinfo,
+            fullns=typedecl.fullns,
+            declaredInNS=typedecl.declaredInNS,
+
+            tkey=typedecl.tkey,
+            name=typedecl.name,
+
+            invariants=typedecl.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=typedecl.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=typedecl.absmethods,
+            virtmethods=typedecl.virtmethods,
+            overmethods=typedecl.overmethods,
+            staticmethods=typedecl.staticmethods,
+
+            saturatedProvides=typedecl.saturatedProvides,
+            saturatedBFieldInfo=typedecl.saturatedBFieldInfo,
+
+            allInvariants=typedecl.allInvariants,
+            allValidates=typedecl.allValidates,
+
+            valueType=typedecl.valueType,
+            ofcheck=typedecl.ofcheck
+        };
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {
@@ -944,6 +1026,7 @@ entity ExplicitifyTransform {
 
             enums = assembly.enums,
             typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclTypeDecl(typedecl)),
+            stringoftypedecls = assembly.stringoftypedecls.map<TypedeclStringOfTypeDecl>(fn(ikey, typedecl) => explicitifier.processTypedeclStringOfTypeDecl(typedecl)),
 
             primtives = assembly.primtives,
             constructables = assembly.constructables,

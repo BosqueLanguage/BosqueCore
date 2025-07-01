@@ -38,6 +38,12 @@ entity ConstantSimplification {
             | LiteralStringExpression => {
                 return some(exp);
             }
+            | LiteralCRegexExpression => {
+                return some(exp);
+            }
+            | LiteralRegexExpression => {
+                return some(exp);
+            }
             | LiteralTypeDeclValueExpression => {
                 let tdecl = this.assembly.lookupNominalTypeDeclaration($exp.constype.tkeystr);
                 
@@ -277,7 +283,19 @@ entity ConstantSimplification {
 
     recursive method processConstructorExpression(e: ConstructorExpression): Expression {
         let nargs = this.processArgumentList[recursive](e.args);
-        return e[args=nargs];
+        
+        if(e)!<ConstructorTypeDeclStringExpression> {
+            return e[args=nargs];
+        }
+        else {
+            let nofchk = this.tryResolveExpAsLiteralExpression($e.ofcheck);
+            if(nofchk)none {
+                return e[args=nargs];
+            }
+            else {
+                return e[args=nargs, ofcheck=nofchk];
+            }
+        }
     }
 
     recursive method processConstructorLambdaExpression(e: ConstructorLambdaExpression): Expression {
@@ -347,6 +365,11 @@ entity ConstantSimplification {
                 }
             }
         }
+    }
+
+    recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression): Expression {
+        let nbase = this.processUnaryArg[recursive](e.base);
+        return e[base=nbase];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
@@ -723,7 +746,7 @@ entity ConstantSimplification {
             | LiteralStringExpression => { return e; }  
             | LiteralCRegexExpression => { return e; }
             | LiteralRegexExpression => { return e; }
-            | LiteralTypeDeclValueExpression => { abort; }
+            | LiteralTypeDeclValueExpression => { return e; }
             | AccessNamespaceConstantExpression => { return this.processAccessNamespaceConstantExpression($e); }
             | AccessStaticFieldExpression => { return this.processAccessStaticFieldExpression($e); }
             | AccessEnumExpression => { return e; }
@@ -740,7 +763,7 @@ entity ConstantSimplification {
             | CallRefInvokeVirtualExpression => { abort; }
             | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e); }
             | LogicActionOrExpression => { return this.processLogicActionOrExpression[recursive]($e); }
-            | TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | TypeDeclPrimitiveFieldAccessExpression => { return this.processTypeDeclPrimitiveFieldAccessExpression[recursive]($e); }
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }
             | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e); }
@@ -1146,11 +1169,36 @@ entity ConstantSimplification {
         };
     }
 
-    method processEnumTypeDecl(enumdecl: EnumTypeDecl): EnumTypeDecl {
-        abort;
+    method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+        return TypedeclStringOfTypeDecl{
+            file=typedecl.file,
+            sinfo=typedecl.sinfo,
+            fullns=typedecl.fullns,
+            declaredInNS=typedecl.declaredInNS,
+
+            tkey=typedecl.tkey,
+            name=typedecl.name,
+
+            invariants=typedecl.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=typedecl.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=typedecl.absmethods,
+            virtmethods=typedecl.virtmethods,
+            overmethods=typedecl.overmethods,
+            staticmethods=typedecl.staticmethods,
+
+            saturatedProvides=typedecl.saturatedProvides,
+            saturatedBFieldInfo=typedecl.saturatedBFieldInfo,
+
+            allInvariants=typedecl.allInvariants,
+            allValidates=typedecl.allValidates,
+
+            valueType=typedecl.valueType,
+            ofcheck=this.tryResolveExpAsLiteralExpression(typedecl.ofcheck)@some
+        };
     }
 
-    method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+    method processTypedeclStringOfTypeDecl(typedecl: TypedeclStringOfTypeDecl): TypedeclStringOfTypeDecl {
         abort;
     }
 
@@ -1339,6 +1387,7 @@ entity ConstantSimplification {
 
             enums = assembly.enums,
             typedecls = assembly.typedecls.map<TypedeclTypeDecl>(fn(ikey, typedecl) => simplifier.processTypedeclTypeDecl(typedecl)),
+            stringoftypedecls = assembly.stringoftypedecls.map<TypedeclStringOfTypeDecl>(fn(ikey, typedecl) => simplifier.processTypedeclStringOfTypeDecl(typedecl)),
 
             primtives = assembly.primtives,
             constructables = assembly.constructables,

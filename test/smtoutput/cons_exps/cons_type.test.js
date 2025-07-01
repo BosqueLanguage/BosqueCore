@@ -3,25 +3,25 @@
 import { runishMainCodeUnsat } from "../../../bin/test/smtoutput/smtemit_nf.js";
 import { describe, it } from "node:test";
 
-/*
-describe ("Exec -- Type Alias Constructor", () => {
-    it("should exec positional", function () {
-        runMainCode('type Foo = Int; public function main(): Int { return Foo{1i}.value; }', "1i");
+
+describe ("SMT -- Type Alias Constructor", () => {
+    it("should smt exec positional", function () {
+        runishMainCodeUnsat('type Foo = Int; public function main(): Int { return Foo{1i}.value; }', "(assert (= Main@main 1))");
     });
 });
 
-describe ("Exec -- Type Alias w/ Invariant Constructor", () => {
-    it("should exec positional", function () {
-        runMainCode('type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{4i}.value; }', "4i");
+describe ("SMT -- Type Alias w/ Invariant Constructor", () => {
+    it("should smt exec positional", function () {
+        runishMainCodeUnsat('type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{4i}.value; }', "(assert (= Main@main 4))");
     });
 
-    it("should fail inv", function () {
-        runMainCodeError("type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{1i}.value; }", "Error -- failed invariant @ test.bsq:3");
+    it("should smt fail inv", function () {
+        runishMainCodeUnsat("type Foo = Int & { invariant $value > 3i; } public function main(): Int { return Foo{1i}.value; }", "(assert (not (is-@Result-err Main@main)))");
     });
 });
-*/
+
 /*
-describe ("Exec -- type decl of strings w/ stacked constraints", () => {
+describe ("SMT -- type decl of strings w/ constraints", () => {
     it("should exec string options type decl", function () {
         runMainCode('type SV2 = String of /[a-z]+ & [a-c]+/; public function main(): String { return SV2{"abc"}.value; }', '"abc"');
         runMainCode("type SV2 = CString of /[a-z]+ & [a-c]+/c; public function main(): CString { return SV2{'abc'}.value; }", "'abc'");
