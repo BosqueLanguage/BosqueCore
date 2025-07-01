@@ -422,6 +422,20 @@ entity CPPTransformer {
         return CPPAssembly::ConstructorEListExpression{ base.0, base.1 };
     }
 
+    method transformConstructorPrimaryExpression(cpe: BSQAssembly::ConstructorPrimaryExpression): CPPAssembly::ConstructorPrimaryExpression {
+        match(cpe)@ {
+            BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($cpe); }
+            | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($cpe); }
+        }
+    }
+
+    method transformConstructorExpression(ce: BSQAssembly::ConstructorExpression): CPPAssembly::ConstructorExpression {
+        match(ce)@ {
+            BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($ce); }
+            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($ce); }
+        }
+    }
+
     method transformIfExpression(exp: BSQAssembly::IfExpression): CPPAssembly::IfExpression {
         let etype = this.convertTypeSignature(exp.etype);
         let texp = this.transformExpressionToCpp(exp.texp);
@@ -516,14 +530,11 @@ entity CPPTransformer {
             | BSQAssembly::AccessEnumExpression => { return this.transformAccessEnumExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
             | BSQAssembly::AccessCapturedVariableExpression => { abort; }
-            | BSQAssembly::ConstructorExpression => { abort; }
-            | BSQAssembly::ConstructorPrimaryExpression => { abort; }
+            | BSQAssembly::ConstructorExpression => { return this.transformConstructorExpression($expr); }
+            | BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($expr); }
             | BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression => { abort; }
-            | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($expr); }
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
-            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($expr); }
-            | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($expr); }
             | BSQAssembly::ConstructorLambdaExpression => { abort; }
             | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { abort; }

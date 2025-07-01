@@ -553,6 +553,20 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
     return String::concat(ceetype, "(", args, ")");
 }
 
+function emitConstructorPrimaryExpression(exp: CPPAssembly::ConstructorPrimaryExpression, ctx: Context): String {
+    match(exp)@ {
+        CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($exp, ctx); }
+    }
+}
+
+function emitConstructorExpression(exp: CPPAssembly::ConstructorExpression, ctx: Context): String {
+    match(exp)@ {
+        CPPAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression($exp, ctx); }
+        | CPPAssembly::ConstructorEListExpression => { return emitConstructorEListExpression($exp, ctx); }
+    }
+}
+
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
     let texp = emitExpression(exp.texp, ctx);
     let thenexp = emitExpression(exp.thenexp, ctx);
@@ -595,27 +609,83 @@ function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ct
    return emitExpression(exp.exp, ctx); 
 }
 
+function emitAccessEnumExpression(exp: CPPAssembly::AccessEnumExpression, ctx: Context): String {
+    let enumtype = emitTypeSignature(exp.etype, false, ctx);
+    let name = String::fromCString(exp.name);
+
+    return String::concat(enumtype, "::", name);
+}
+
+function emitBinKeyEqExpression(exp: CPPAssembly::BinKeyEqExpression, opertype: String, ctx: Context): String {
+    let lhs = emitExpression(exp.lhs, ctx);
+    let rhs = emitExpression(exp.rhs, ctx);
+
+    return String::concat(lhs, " == ", rhs);
+}
+
+function emitBinKeyNotEqExpression(exp: CPPAssembly::BinKeyNotEqExpression, opertype: String, ctx: Context): String {
+    let lhs = emitExpression(exp.lhs, ctx);
+    let rhs = emitExpression(exp.rhs, ctx);
+
+    return String::concat(lhs, " != ", rhs);
+}
+
+function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx: Context): String {
+    let opertype = emitTypeSignature(exp.opertype, false, ctx);
+    match(exp)@ {
+        CPPAssembly::BinKeyEqNoneExpression => { abort; }
+        | CPPAssembly::BinKeyNotEqNoneExpression => { abort; }
+        | CPPAssembly::BinKeySomeEqExpression => { abort; }
+        | CPPAssembly::BinKeyEqExpression => { return emitBinKeyEqExpression($exp, opertype, ctx); }
+        | CPPAssembly::BinKeyNotEqExpression => { return emitBinKeyNotEqExpression($exp, opertype, ctx); }
+    }
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
-        CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
-        | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e, ctx); }
-        | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e, ctx); }
-        | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
-        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
-        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }
-        | CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
+        CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
+        %%| CPPAssembly::LiteralCCharExpression => { abort; }
+        %%| CPPAssembly::LiteralUnicodeCharExpression => { abort; }
+        %%| CPPAssembly::LiteralCStringExpression => { abort; }
+        %%| CPPAssembly::LiteralStringExpression => { abort; }
+        %%| CPPAssembly::LiteralCRegexExpression => { abort; }
+        %%| CPPAssembly::LiteralRegexExpression => { abort; }
+        %%| CPPAssembly::LiteralTypeDeclValueExpression => { abort; }
+        %%| CPPAssembly::AccessNamespaceConstantExpression => { abort; }
+        %%| CPPAssembly::AccessStaticFieldExpression => { abort; } 
+        | CPPAssembly::AccessEnumExpression => { return emitAccessEnumExpression($e, ctx); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
+        %%| CPPAssembly::AccessCapturedVariableExpression => { abort; }
+        | CPPAssembly::ConstructorExpression => { return emitConstructorExpression($e, ctx); }
+        | CPPAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression($e, ctx); }
+        %%| CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression => { abort; } 
+        %%| CPPAssembly::ConstructorTypeDeclExpression => { abort; }
+        %%| CPPAssembly::ConstructorTypeDeclStringExpression => { abort; } 
+        %%| CPPAssembly::ConstructorLambdaExpression => { abort; }
+        %%| CPPAssembly::LetExpression => { abort; }
+        %%| CPPAssembly::LambdaInvokeExpression => { abort; } 
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
-        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }
-        | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
-        | CPPAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($e, ctx); }
-        | CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($e, ctx); }
-        | CPPAssembly::ConstructorEListExpression => { return emitConstructorEListExpression($e, ctx); }
-        | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
+        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }      
+        %%| CPPAssembly::CallRefInvokeStaticResolveExpression => { abort; }
+        %%| CPPAssembly::CallRefInvokeVirtualExpression => { abort; } 
+        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
+        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }       
+        %%| CPPAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
         | CPPAssembly::CoerceWidenTypeExpression => { return emitWidenedTypeExpression($e, ctx); }
         | CPPAssembly::CoerceNarrowTypeExpression => { return emitNarrowedTypeExpression($e, ctx); }
-        | _ => { abort; }
+        | CPPAssembly::SafeConvertExpression => { abort; }
+        | CPPAssembly::CreateDirectExpression => { abort; }
+        | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
+        | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinaryKeyEqExpression => { return emitBinaryKeyEqExpression($e, ctx); }
+        %%| CPPAssembly::BinaryKeyCmpEqualExpression => { abort; }
+        %%| CPPAssembly::BinaryKeyCmpLessExpression => { abort; }
+        | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e, ctx); }
+        | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
+        %%| CPPAssembly::MapEntryConstructorExpression => { abort; }
+        | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
     }
 }
 
@@ -878,6 +948,18 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     return String::concat(fields, indent, "};%n;", dm_methods);
 }
 
+function emitEnumTypeDecl(etd: CPPAssembly::EnumTypeDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+
+    let etd_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(etd.tkey), some(etd), ctx, indent);
+
+    let base = String::concat(indent, "enum class ", String::fromCString(etd.name), " {%n;");
+    let entries = etd.members.map<String>(fn(e) => String::concat(full_indent, String::fromCString(e)));
+    let wentries = String::concat(base, String::joinAll(",%n;", entries), "%n;", indent, "};%n;");
+
+    return wentries;
+}
+
 function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     let tkey = emitTypeKey(e.tkey, false, nctx);
@@ -991,11 +1073,12 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     %% The entries who need a vtable should manually do it
     match(ant)@ {
-        CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl(ant@<CPPAssembly::EntityTypeDecl>, declaredIn, ctx, indent); }
-        | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl(ant@<CPPAssembly::DatatypeMemberEntityTypeDecl>, declaredIn, ctx, indent); }
-        | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl(ant@<CPPAssembly::PrimitiveConceptTypeDecl>, ctx, indent); }
-        | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl(ant@<CPPAssembly::ConstructableTypeDecl>, ctx, indent); }
+        CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl($ant, declaredIn, ctx, indent); }
+        | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
+        | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
         | CPPAssembly::DatatypeTypeDecl => { return ""; } %% Dont emit anything for datatype - the members contain what we care about
+        | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
         | _ => { abort; }
     }
 }
