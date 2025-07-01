@@ -212,7 +212,7 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, args=nargs];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.valuetype };
         }
     }
 
@@ -227,14 +227,14 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, args=nargs];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.valuetype };
         }
     }
 
     recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression, vmap: VarMapping): Expression {
-        let nbase = this.processUnaryArg[recursive](e.base, vmap);
+        let nexp = this.processUnaryArg[recursive](e.exp, vmap);
 
-        return e[base=nbase];
+        return e[exp=nexp];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression, vmap: VarMapping): Expression {
@@ -303,7 +303,7 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, exp=nexp];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.valuetype };
         }
     }
 
@@ -328,7 +328,7 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.valuetype };
         }
     }
 
@@ -402,7 +402,7 @@ entity ExplicitifyTransform {
             let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
             let nbopargs = List<ArgumentValue>{ PositionalArgumentValue{ nbop } };
 
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature> };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, ArgumentList{ nbopargs }, e.etype@<NominalTypeSignature>, $restype.valuetype };
         }
     }
 
@@ -820,7 +820,7 @@ entity ExplicitifyTransform {
             allInvariants=typedecl.allInvariants,
             allValidates=typedecl.allValidates,
 
-            valueType=typedecl.valueType,
+            valuetype=typedecl.valuetype,
         };
     }
 
@@ -848,7 +848,7 @@ entity ExplicitifyTransform {
             allInvariants=typedecl.allInvariants,
             allValidates=typedecl.allValidates,
 
-            valueType=typedecl.valueType,
+            valuetype=typedecl.valuetype,
             ofcheck=typedecl.ofcheck
         };
     }

@@ -357,17 +357,17 @@ entity SMTTransformer {
         return SMTAssembly::LiteralStringExpression{exp.value};
     }
 
-    method transformLiteralTypeDeclValueExpression(exp: BSQAssembly::LiteralTypeDeclValueExpression): SMTAssembly::SafeExpression {
-        let larg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx); 
-        let smttype = this.transformStdTypeToSMT(e.ctype);
+    method transformLiteralTypeDeclValueExpression(exp: BSQAssembly::LiteralTypeDeclValueExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let larg, nctx, obinds = this.processUnaryArg[recursive](exp.value, ctx); 
+        let smttype = this.transformStdTypeToSMT(exp.constype);
 
-        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(exp.constype.tkeystr);
         if(!tdecl.hasInvariants()) {
-            return nctx, this.wrapOperationResult(e.ctype, SMTAssembly::LiteralTypeDeclExpression{ smttype, larg }, obinds);
+            return nctx, this.wrapOperationResult(exp.constype, SMTAssembly::LiteralTypeDeclExpression{ larg@<SMTAssembly::ConstantExpression>, smttype }, obinds);
         }
         else {
             let chkargs = List<SMTAssembly::SafeExpression>{ larg };
-            let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::{smttype, chkargs}};
+            let createop = SMTAssembly::WrapIntoResultExpression{smttype, SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}};
 
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
@@ -375,15 +375,15 @@ entity SMTTransformer {
                 
                 let eeid = cctx.errCtr;
                 if(!this.errinvokes.get(iiv.ikey)) {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
                 }
                 else {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
             });
 
-            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
-            return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+            let createexp = SMTAssembly::AssertSetExpression{smttype, iichecks, createop};
+            return rctx, this.wrapOperationResultWErr(exp.constype, createexp, obinds);
         }
     }
 
@@ -399,61 +399,61 @@ entity SMTTransformer {
         return SMTAssembly::AccessVariableExpression{SMTAssembly::Identifier::from(TransformNameManager::safeifyName(exp.vname.value))};
     }
 
-    recursive method transformConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let uarg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx);
-        let smttype = this.transformStdTypeToSMT(e.ctype);
+    recursive method transformConstructorPrimarySpecialSomeExpression(exp: BSQAssembly::ConstructorPrimarySpecialSomeExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let uarg, nctx, obinds = this.processUnaryArg[recursive](exp.args.args.get(0n).exp, ctx);
+        let smttype = this.transformStdTypeToSMT(exp.ctype);
 
         let createop = SMTAssembly::ConstructorPrimarySpecialConstructableExpression{smttype, uarg};
 
-        return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
+        return nctx, this.wrapOperationResult(exp.ctype, createop, obinds);
     }
 
-    recursive method transformConstructorTypeDeclExpression(e: BSQAssembly::ConstructorTypeDeclExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let larg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx); 
-        let smttype = this.transformStdTypeToSMT(e.ctype);
+    recursive method transformConstructorTypeDeclExpression(exp: BSQAssembly::ConstructorTypeDeclExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let larg, nctx, obinds = this.processUnaryArg[recursive](exp.args.args.get(0n).exp, ctx); 
+        let smttype = this.transformStdTypeToSMT(exp.ctype);
 
-        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(exp.ctype.tkeystr);
         if(!tdecl.hasInvariants()) {
-            return nctx, this.wrapOperationResult(e.ctype, SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}, obinds);
+            return nctx, this.wrapOperationResult(exp.ctype, SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}, obinds);
         }
         else {
             let chkargs = List<SMTAssembly::SafeExpression>{ larg };
-            let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::{smttype, chkargs}};
+            let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.ctype), SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}};
 
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
                 let eeid = cctx.errCtr;
                 if(!this.errinvokes.get(iiv.ikey)) {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
                 }
                 else {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
             });
 
-            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
-            return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(exp.ctype), iichecks, createop};
+            return rctx, this.wrapOperationResultWErr(exp.ctype, createexp, obinds);
         }
     }
 
-    recursive method transformConstructorTypeDeclStringExpression(e: BSQAssembly::ConstructorTypeDeclStringExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let larg, nctx, obinds = this.processUnaryArg[recursive](e.args.args.get(0n).exp, ctx);
-        let smttype = this.transformStdTypeToSMT(e.ctype);
+    recursive method transformConstructorTypeDeclStringExpression(exp: BSQAssembly::ConstructorTypeDeclStringExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let larg, nctx, obinds = this.processUnaryArg[recursive](exp.args.args.get(0n).exp, ctx);
+        let smttype = this.transformStdTypeToSMT(exp.ctype);
 
         let chkargs = List<SMTAssembly::SafeExpression>{ larg };
-        let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::ConstructorTypeDeclStringExpression{smttype, larg}};
+        let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.ctype), SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}};
 
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(exp.ctype.tkeystr)@<BSQAssembly::TypedeclStringOfTypeDecl>;
         let feid = nctx.errCtr;
-        let xctx = nctx.addError(e.sinfo)
+        let xctx = nctx.addError(exp.sinfo);
         let fmtchk: SMTAssembly::FormatCheckExpression = if(tdecl.ofcheck)<BSQAssembly::LiteralCRegexExpression> 
             then SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralCRegexExpression>.smtlib, larg }
             else SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralRegexExpression>.smtlib, larg }
             ;
 
-        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
         if(!tdecl.hasInvariants()) {
-            return xctx, this.wrapOperationResult(e.ctype, SMTAssembly::AssertExpression{this.transformStdTypeToSMT(e.ctype), fmtchk, feid, createop}, obinds);
+            return xctx, this.wrapOperationResultWErr(exp.ctype, SMTAssembly::AssertExpression{smttype, fmtchk, feid, createop}, obinds);
         }
         else {
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(xctx, fn(cctx, iiv) => {
@@ -461,16 +461,16 @@ entity SMTTransformer {
                 
                 let eeid = cctx.errCtr;
                 if(!this.errinvokes.get(iiv.ikey)) {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, chkargs}, eeid|);
                 }
                 else {
-                    return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
+                    return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
             });
             
-            let xichecks = List<SMTAssembly::SafeExpression>::concat(List<SafeExpression>{(|fmtchk, feid|)}, iichecks);
-            let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), xichecks, createop};
-            return rctx.addError(e.sinfo), this.wrapOperationResultWErr(e.ctype, createexp, obinds);
+            let xichecks = List<(|SMTAssembly::Expression, Nat|)>::concat(List<(|SMTAssembly::Expression, Nat|)>{(|fmtchk, feid|)}, iichecks);
+            let createexp = SMTAssembly::AssertSetExpression{smttype, xichecks, createop};
+            return rctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.ctype, createexp, obinds);
         }
     }
 
@@ -2283,7 +2283,7 @@ entity SMTTransformer {
 
         var testlist: List<SMTAssembly::SafeExpression>;
         if(!tdecl.hasValidates()) {
-            testlist = List<SafeExpression>{icheck};
+            testlist = List<SMTAssembly::SafeExpression>{icheck};
         }
         else {
             let allchks = List<BSQAssembly::SaturatedInvariantInfo>::concat(tdecl.allInvariants, tdecl.allValidates);
@@ -2322,7 +2322,7 @@ entity SMTTransformer {
 
         var testlist: List<SMTAssembly::SafeExpression>;
         if(!tdecl.hasValidates()) {
-            testlist = List<SafeExpression>{icheck, fmtchk};
+            testlist = List<SMTAssembly::SafeExpression>{icheck, fmtchk};
         }
         else {
             let allchks = List<BSQAssembly::SaturatedInvariantInfo>::concat(tdecl.allInvariants, tdecl.allValidates);

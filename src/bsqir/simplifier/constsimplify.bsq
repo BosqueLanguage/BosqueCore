@@ -284,17 +284,12 @@ entity ConstantSimplification {
     recursive method processConstructorExpression(e: ConstructorExpression): Expression {
         let nargs = this.processArgumentList[recursive](e.args);
         
-        if(e)!<ConstructorTypeDeclStringExpression> {
+        if(e)@!<ConstructorTypeDeclStringExpression> {
             return e[args=nargs];
         }
         else {
             let nofchk = this.tryResolveExpAsLiteralExpression($e.ofcheck);
-            if(nofchk)none {
-                return e[args=nargs];
-            }
-            else {
-                return e[args=nargs, ofcheck=nofchk];
-            }
+            return $e[args=nargs, ofcheck=nofchk@some];
         }
     }
 
@@ -368,8 +363,8 @@ entity ConstantSimplification {
     }
 
     recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression): Expression {
-        let nbase = this.processUnaryArg[recursive](e.base);
-        return e[base=nbase];
+        let nexp = this.processUnaryArg[recursive](e.exp);
+        return e[exp=nexp];
     }
 
     recursive method processCoerceNarrowTypeExpression(e: CoerceNarrowTypeExpression): Expression {
@@ -1170,6 +1165,34 @@ entity ConstantSimplification {
     }
 
     method processTypedeclTypeDecl(typedecl: TypedeclTypeDecl): TypedeclTypeDecl {
+        return TypedeclTypeDecl{
+            file=typedecl.file,
+            sinfo=typedecl.sinfo,
+            fullns=typedecl.fullns,
+            declaredInNS=typedecl.declaredInNS,
+
+            tkey=typedecl.tkey,
+            name=typedecl.name,
+
+            invariants=typedecl.invariants.map<InvariantDecl>(fn(iiv) => this.processInvariant(iiv)),
+            validates=typedecl.validates.map<ValidateDecl>(fn(vv) => this.processValidate(vv)),
+
+            absmethods=typedecl.absmethods,
+            virtmethods=typedecl.virtmethods,
+            overmethods=typedecl.overmethods,
+            staticmethods=typedecl.staticmethods,
+
+            saturatedProvides=typedecl.saturatedProvides,
+            saturatedBFieldInfo=typedecl.saturatedBFieldInfo,
+
+            allInvariants=typedecl.allInvariants,
+            allValidates=typedecl.allValidates,
+
+            valuetype=typedecl.valuetype
+        };
+    }
+
+    method processTypedeclStringOfTypeDecl(typedecl: TypedeclStringOfTypeDecl): TypedeclStringOfTypeDecl {
         return TypedeclStringOfTypeDecl{
             file=typedecl.file,
             sinfo=typedecl.sinfo,
@@ -1193,25 +1216,13 @@ entity ConstantSimplification {
             allInvariants=typedecl.allInvariants,
             allValidates=typedecl.allValidates,
 
-            valueType=typedecl.valueType,
+            valuetype=typedecl.valuetype,
             ofcheck=this.tryResolveExpAsLiteralExpression(typedecl.ofcheck)@some
         };
     }
 
-    method processTypedeclStringOfTypeDecl(typedecl: TypedeclStringOfTypeDecl): TypedeclStringOfTypeDecl {
-        abort;
-    }
-
     method processPrimitiveEntityTypeDecl(primtype: PrimitiveEntityTypeDecl): PrimitiveEntityTypeDecl {
         return primtype;
-    }
-
-    method processConstructableTypeDecl(ctype: ConstructableTypeDecl): ConstructableTypeDecl {
-        abort;
-    }
-
-    method processCollectionTypeDecl(ctype: CollectionTypeDecl): CollectionTypeDecl {
-        abort;
     }
 
     method processEntityTypeDecl(etype: EntityTypeDecl): EntityTypeDecl {

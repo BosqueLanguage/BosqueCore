@@ -647,7 +647,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
             | BSQAssembly::LogicActionAndExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
             | BSQAssembly::LogicActionOrExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
-            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
             | BSQAssembly::SafeConvertExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }

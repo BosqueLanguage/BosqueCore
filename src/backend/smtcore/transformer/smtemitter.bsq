@@ -349,9 +349,9 @@ recursive function emitLogicActionOrExpression(v: SMTAssembly::LogicActionOrExpr
     return CString::concat('(or ', argsl, ')');
 }
 
-recursive function emitUnwrapTypeDeclToPrimitiveExpression(v: SMTAssembly::UnwrapTypeDeclToPrimitiveExpression): CString {
+recursive function emitUnwrapTypeDeclToPrimitiveExpression(v: SMTAssembly::UnwrapTypeDeclToPrimitiveExpression, eev: SMTEmitterEnv): CString {
     let access = SMTNameManager::generateStructFieldName(v.decltype, 'value');
-    return CString::concat('(', access, ' ', emitExpression(v.arg), ')');
+    return CString::concat('(', access, ' ', emitExpression(v.arg, eev), ')');
 }
 
 recursive function emitAccessFromNameResolvedExpression(v: SMTAssembly::AccessFromNameResolvedExpression, eev: SMTEmitterEnv): CString {
@@ -734,7 +734,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | SMTAssembly::TermifyExpression => { return emitTermifyExpression[recursive]($e, eev); }
         | SMTAssembly::UntermifyExpression => { return emitUntermifyExpression[recursive]($e, eev); }
-        | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($v); }
+        | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($e); }
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e, eev); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e, eev); }
         | SMTAssembly::LambdaConstructor => { return emitLambdaConstructor[recursive]($e, eev); }
@@ -743,7 +743,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::CallLambdaFunctionSafeExpression => { return emitCallLambdaFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, eev); }
-        | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($v); }
+        | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($e, eev); }
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromNameVirtualExpression => { return emitAccessFromNameVirtualExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
