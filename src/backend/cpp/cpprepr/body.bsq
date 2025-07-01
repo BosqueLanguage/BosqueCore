@@ -158,6 +158,11 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
+entity AccessEnumExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field name: CString;
+}
+
 entity LiteralNoneExpression provides Expression {
 }
 
@@ -207,6 +212,34 @@ BinAddExpression { }
 | BinSubExpression { }
 | BinDivExpression { }
 | BinMultExpression { }
+;
+
+datatype BinaryKeyEqExpression provides Expression using {
+    field opertype: TypeSignature;
+}
+of
+BinKeyEqNoneExpression { 
+    field exp: Expression;
+}
+| BinKeyNotEqNoneExpression { 
+    field exp: Expression;
+}
+| BinKeySomeEqExpression {
+    field eqoption: Expression;
+    field eqval: Expression;
+}
+| BinKeyNotSomeEqExpression {
+    field neoption: Expression;
+    field neval: Expression;
+}
+| BinKeyEqExpression {
+    field lhs: Expression;
+    field rhs: Expression;
+}
+| BinKeyNotEqExpression {
+    field lhs: Expression;
+    field rhs: Expression;
+}
 ;
 
 datatype BinaryNumericExpression provides Expression using {
