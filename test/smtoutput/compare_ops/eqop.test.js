@@ -35,15 +35,15 @@ describe ("SMT -- Option strict equals", () => {
         runishMainCodeUnsat("public function main(): Bool { let x: Option<Int> = some(3i); return x === 4i // 0i; }", "(assert (not (is-@Result-err Main@main)))");
     });
 });
-/*
+
 describe ("SMT -- type alias strict equals", () => {
     it("should smt exec type alias strict equals operations", function () {
-        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { return 1i<Foo> === 1i<Foo>; }", "true");
-        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { return 1i<Foo> !== 1i<Foo>; }", "false");
+        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { return 1i<Foo> === 1i<Foo>; }", "(assert (not Main@main))");
+        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { return 1i<Foo> !== 1i<Foo>; }", "(assert Main@main)");
 
-        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x === none; }", "false");
-        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x !== 0i<Foo>; }", "true");
-        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x !== 3i<Foo>; }", "false");
+        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x === none; }", "(assert Main@main)");
+        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x !== 0i<Foo>; }", "(assert (not Main@main))");
+        runishMainCodeUnsat("type Foo = Int; public function main(): Bool { let x: Option<Foo> = some(3i<Foo>); return x !== 3i<Foo>; }", "(assert Main@main)");
     });
 });
-*/
+

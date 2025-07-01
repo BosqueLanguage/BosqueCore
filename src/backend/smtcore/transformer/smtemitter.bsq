@@ -175,14 +175,12 @@ recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression, 
     return CString::concat('(', access, ' ', vv, ')');
 }
 
-%*
 function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let vv = emitConstantExpression(v.value);
 
     return CString::concat('(', consname, ' ', vv, ')');
 }
-*%
 
 recursive function emitConstructorListSingletonExpression(v: SMTAssembly::ConstructorListSingletonExpression, eev: SMTEmitterEnv): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
@@ -351,12 +349,10 @@ recursive function emitLogicActionOrExpression(v: SMTAssembly::LogicActionOrExpr
     return CString::concat('(or ', argsl, ')');
 }
 
-%*
-recursive function emitUnwrapTypeDeclToPrimitiveExpression(v: SMTAssembly::UnwrapTypeDeclToPrimitiveExpression): CString {
+recursive function emitUnwrapTypeDeclToPrimitiveExpression(v: SMTAssembly::UnwrapTypeDeclToPrimitiveExpression, eev: SMTEmitterEnv): CString {
     let access = SMTNameManager::generateStructFieldName(v.decltype, 'value');
-    return CString::concat('(', access, ' ', emitExpression(v.arg), ')');
+    return CString::concat('(', access, ' ', emitExpression(v.arg, eev), ')');
 }
-*%
 
 recursive function emitAccessFromNameResolvedExpression(v: SMTAssembly::AccessFromNameResolvedExpression, eev: SMTEmitterEnv): CString {
     let access = SMTNameManager::generateStructFieldName(v.resolvedType, v.name);
@@ -374,6 +370,13 @@ recursive function emitAccessFromIndexExpression(v: SMTAssembly::AccessFromIndex
 
 recursive function emitValidateResultIsTrueExpression(v: SMTAssembly::ValidateResultIsTrueExpression, eev: SMTEmitterEnv): CString {
     return CString::concat('(= ', emitExpression(v.arg, eev), ' (@Result-ok true))');
+}
+
+recursive function emitFormatCheckExpression(v: SMTAssembly::FormatCheckExpression, eev: SMTEmitterEnv): CString {
+    let re = v.smtregex;
+    let arg = emitSafeExpression[recursive](v.arg, eev);
+
+    return CString::concat('(str.in.re ', arg, ' ', re, ')');
 }
 
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {
@@ -731,9 +734,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | SMTAssembly::TermifyExpression => { return emitTermifyExpression[recursive]($e, eev); }
         | SMTAssembly::UntermifyExpression => { return emitUntermifyExpression[recursive]($e, eev); }
-        %*
-        | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($v); }
-        *%
+        | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($e); }
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e, eev); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e, eev); }
         | SMTAssembly::LambdaConstructor => { return emitLambdaConstructor[recursive]($e, eev); }
@@ -742,13 +743,12 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::CallLambdaFunctionSafeExpression => { return emitCallLambdaFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, eev); }
         | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, eev); }
-        %*
-        | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($v); }
-        *%
+        | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($e, eev); }
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromNameVirtualExpression => { return emitAccessFromNameVirtualExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
+        | SMTAssembly::FormatCheckExpression => { return emitFormatCheckExpression[recursive]($e, eev); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($e, eev); }
