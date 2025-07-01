@@ -2013,10 +2013,21 @@ entity SMTTransformer {
     method transformImplicitInvariantOrValidateFunctionDeclToSMT(decl: BSQAssembly::ConditionDecl, tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo> {
         let ikey = TransformNameManager::convertInvokeKey(decl.ikey, List<Bool>{});
 
-        let params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
+        var params: List<SMTAssembly::InvokeParameterDecl>;
+        if(tdecl?<BSQAssembly::TypedeclTypeDecl>) {
+            let vp = SMTAssembly::InvokeParameterDecl{'$value'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(tdecl@<BSQAssembly::TypedeclTypeDecl>.valuetype)};
+            params = List<SMTAssembly::InvokeParameterDecl>{vp};
+        }
+        elif(tdecl?<BSQAssembly::TypedeclStringOfTypeDecl>) {
+            let vp = SMTAssembly::InvokeParameterDecl{'$value'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(tdecl@<BSQAssembly::TypedeclStringOfTypeDecl>.valuetype)};
+            params = List<SMTAssembly::InvokeParameterDecl>{vp};
+        }
+        else {
+            params = tdecl.saturatedBFieldInfo.map<SMTAssembly::InvokeParameterDecl>(fn(f) => {
                 let pname = SMTAssembly::Identifier::from(CString::concat('$', TransformNameManager::safeifyName(f.fname.value)));
                 return SMTAssembly::InvokeParameterDecl{pname, this.transformStdTypeToSMT(f.ftype)};
             });
+        }
 
         let rtype = 'Bool'<SMTAssembly::TypeKey>;
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
@@ -2277,9 +2288,9 @@ entity SMTTransformer {
     method generateValidatorForTypedeclTypeDecl(tdecl: BSQAssembly::TypedeclTypeDecl): SMTAssembly::Body {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
-        let chkargs = List<SMTAssembly::SafeExpression>{ vvaraccess };
 
         let icheck = this.buildValidateOpForTypeAndExpr(tdecl.valuetype, SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess});
+        let chkargs = List<SMTAssembly::SafeExpression>{ SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess} };
 
         var testlist: List<SMTAssembly::SafeExpression>;
         if(!tdecl.hasValidates()) {
@@ -2312,12 +2323,13 @@ entity SMTTransformer {
     method generateValidatorForTypedeclStringOfTypeDecl(tdecl: BSQAssembly::TypedeclStringOfTypeDecl): SMTAssembly::Body {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
-        let chkargs = List<SMTAssembly::SafeExpression>{ vvaraccess };
 
         let icheck = this.buildValidateOpForTypeAndExpr(tdecl.valuetype, SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess});
+        let chkargs = List<SMTAssembly::SafeExpression>{ SMTAssembly::UnwrapTypeDeclToPrimitiveExpression{smtdtype, vvaraccess} };
+
         let fmtchk: SMTAssembly::FormatCheckExpression = if(tdecl.ofcheck)<BSQAssembly::LiteralCRegexExpression> 
-                then SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralCRegexExpression>.smtlib, vvaraccess }
-                else SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralRegexExpression>.smtlib, vvaraccess }
+                then SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralCRegexExpression>.smtlib, icheck }
+                else SMTAssembly::FormatCheckExpression{ tdecl.ofcheck@<BSQAssembly::LiteralRegexExpression>.smtlib, icheck }
                 ;
 
         var testlist: List<SMTAssembly::SafeExpression>;

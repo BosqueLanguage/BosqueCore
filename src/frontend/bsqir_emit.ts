@@ -131,6 +131,7 @@ class BSQIREmitter {
 
     enums: string[] = [];
     typedecls: string[] = [];
+    stringoftypedecls: string[] = [];
 
     primtives: string[] = [];
     constructables: string[] = [];
@@ -2154,7 +2155,7 @@ class BSQIREmitter {
                     else {
                         const [tkey, decl] = this.emitTypedeclStringOfTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                         this.allconcretetypes.push(tkey);
-                        this.typedecls.push(decl);
+                        this.stringoftypedecls.push(decl);
                     }
                 }
                 else if(tt instanceof PrimitiveEntityTypeDecl) {
@@ -2545,6 +2546,7 @@ class BSQIREmitter {
             
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{", emitter.enums, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{", emitter.typedecls, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclStringOfTypeDecl>{", emitter.stringoftypedecls, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveEntityTypeDecl>{", emitter.primtives, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConstructableTypeDecl>{", emitter.constructables, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::CollectionTypeDecl>{", emitter.collections, "},\n") +
