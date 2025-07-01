@@ -8,6 +8,9 @@ datatype TypeSignature using {
 of
 VoidTypeSignature { }
 | NominalTypeSignature { }
+| EListTypeSignature {
+    field entries: List<TypeSignature>;
+}
 ;
 
 concept Expression {
@@ -242,6 +245,9 @@ entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
 }
 
+entity ConstructorEListExpression provides ConstructorExpression {
+}
+
 datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
 of
 ConstructorPrimarySpecialSomeExpression {
@@ -265,6 +271,9 @@ PostfixAccessFromName {
     field name: Identifier;
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
+}
+| PostfixAccessFromIndex {
+    field idx: CString;
 }
 | PostfixIsTest {
     field ttest: ITest;

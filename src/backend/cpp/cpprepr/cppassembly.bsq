@@ -11,8 +11,9 @@ type NamespaceKey = CString of CPPAssembly::namespaceKeyRE; %%Core is implicit h
 %% to matching our __CoreCpp namespace
 const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-zA-Z0-9'::']+('<'.+'>')?/c;
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
+const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}/c;
+const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}|${CPPAssembly::elistTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
 %% Optional '<' * '>' allows support for resolved templates on functions or methods
@@ -224,6 +225,8 @@ entity Assembly {
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
+
+    %%field elists: Map<TypeKey, ConstructorEListExpression>;
 
     method lookupNominalTypeDeclaration(tkey: TypeKey): AbstractNominalTypeDecl {
         if(this.entities.has(tkey)) {

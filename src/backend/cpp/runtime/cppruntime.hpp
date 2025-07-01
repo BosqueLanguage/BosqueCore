@@ -8,6 +8,22 @@
 
 namespace __CoreCpp {
 
+class ThreadLocalInfo {
+public:
+    std::jmp_buf error_handler;
+
+    ThreadLocalInfo() {} 
+    static ThreadLocalInfo& get() {
+        thread_local ThreadLocalInfo instance;
+        return instance;
+    }
+
+    // Cannot copy or move thread local info
+    ThreadLocalInfo(const ThreadLocalInfo&) = delete;
+    ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
+};
+ThreadLocalInfo& info = ThreadLocalInfo::get();
+
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
 {
@@ -42,22 +58,22 @@ public:
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {
         memcpy<K>(this->data, rhs.data);
-    };
+    }
     Boxed& operator=(const Boxed& rhs) noexcept {
         if(this != &rhs) {
             this->typeinfo = rhs.typeinfo;
             memcpy<K>(this->data, rhs.data);
         }
         return *this;
-    };
+    }
 
     // Some constructor
     Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
         memcpy<K>(this->data, d);
-    };
+    }
 
     // None constructor
-    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {}
 };
 
 template<>
@@ -91,9 +107,143 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept {
         this->typeinfo = rhs.typeinfo;
         return *this;
-    };
+    }
 
     Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
+};
+
+template <size_t K>
+class TupleEntry {
+public:
+    uintptr_t data[K] = {};
+
+    TupleEntry() noexcept = default;
+    TupleEntry(const TupleEntry& rhs) noexcept {
+        memcpy<K>(this->data, rhs->data);
+    }
+    TupleEntry& operator=(const TupleEntry& rhs) noexcept {
+        memcpy<K>(this->data, rhs->data);
+        
+        return *this;
+    }
+
+    TupleEntry(uintptr_t* d) {
+        memcpy<K>(this->data, d);
+    }
+};
+
+// We may want to specialize K=2,3,4 as well
+template <>
+class TupleEntry<1> {
+public:
+    uintptr_t data = 0;
+
+    TupleEntry() noexcept = default;
+    TupleEntry(const TupleEntry& rhs) noexcept : data(rhs.data) { }
+    TupleEntry& operator=(const TupleEntry& rhs) noexcept {        
+        data = rhs.data;
+        return *this;
+    }
+
+    TupleEntry(uintptr_t* d) noexcept : data(*d) { }
+};
+
+template <size_t K0, size_t K1>
+class Tuple2 {
+public:
+    TupleEntry<K0> e0;
+    TupleEntry<K1> e1;
+    
+    Tuple2() noexcept = default;
+    Tuple2(const Tuple2& rhs) noexcept : e0(rhs.e0), e1(rhs.e1) { }
+    Tuple2& operator=(const Tuple2& rhs) noexcept {
+        e0 = rhs.e0;
+        e1 = rhs.e1;
+
+        return *this;
+    }
+
+    template<typename T0, typename T1>
+    Tuple2(T0 d0, T1 d1) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 1);
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+        }
+    }
+};
+
+template <size_t K0, size_t K1, size_t K2>
+class Tuple3 {
+public:
+    TupleEntry<K0> e0;
+    TupleEntry<K1> e1;
+    TupleEntry<K2> e2;
+    
+    Tuple3() noexcept = default;
+    Tuple3(const Tuple3& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2) { }
+    Tuple3& operator=(const Tuple3& rhs) noexcept {
+        e0 = rhs.e0;
+        e1 = rhs.e1;
+        e2 = rhs.e2;
+
+        return *this;
+    }
+
+    template<typename T0, typename T1, typename T2>
+    Tuple3(T0 d0, T1 d1, T2 d2) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
+          e2(reinterpret_cast<uintptr_t*>(&d2)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 2); 
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+            case 2: return *reinterpret_cast<T*>(&this->e2); break;
+        }
+    }
+};
+
+template <size_t K0, size_t K1, size_t K2, size_t K3>
+class Tuple4 {
+public:
+    TupleEntry<K0> e0;
+    TupleEntry<K1> e1;
+    TupleEntry<K2> e2;
+    TupleEntry<K3> e3;
+    
+    Tuple4() noexcept = default;
+    Tuple4(const Tuple4& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
+    Tuple4& operator=(const Tuple4& rhs) noexcept {
+        e0 = rhs.e0;
+        e1 = rhs.e1;
+        e2 = rhs.e2;
+        e3 = rhs.e3;
+
+        return *this;
+    }
+
+    template<typename T0, typename T1, typename T2, typename T3>
+    Tuple4(T0 d0, T1 d1, T2 d2, T3 d3) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
+          e2(reinterpret_cast<uintptr_t*>(&d2)), e3(reinterpret_cast<uintptr_t*>(&d3)) { }
+
+    template<typename T, size_t I>
+    constexpr T access() noexcept {
+        static_assert(I >= 0 && I <= 3);  
+        switch(I) {
+            case 0: return *reinterpret_cast<T*>(&this->e0); break;
+            case 1: return *reinterpret_cast<T*>(&this->e1); break;
+            case 2: return *reinterpret_cast<T*>(&this->e2); break;
+            case 3: return *reinterpret_cast<T*>(&this->e3); break;
+        }
+    }
 };
 
 typedef uint64_t None;
@@ -141,22 +291,6 @@ do {                                            \
     this->value = res;                          \
     return *this;                               \
 } while(0)                                      \
-
-class ThreadLocalInfo {
-public:
-    std::jmp_buf error_handler;
-
-    ThreadLocalInfo() {} 
-    static ThreadLocalInfo& get() {
-        thread_local ThreadLocalInfo instance;
-        return instance;
-    }
-
-    // Cannot copy or move thread local info
-    ThreadLocalInfo(const ThreadLocalInfo&) = delete;
-    ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
-};
-ThreadLocalInfo& info = ThreadLocalInfo::get();
 
 //
 // Converts string into corresponding integer representation. Used when
