@@ -690,7 +690,7 @@ class BSQIREmitter {
     private emitPostfixAccessFromIndex(exp: PostfixAccessFromIndex): string {
         const opbase = this.emitPostfixOperationBase(exp);
 
-        return `BSQAssembly::PostfixAccessFromIndex{ ${opbase}, idx='${exp.idx}' }`;
+        return `BSQAssembly::PostfixAccessFromIndex{ ${opbase}, idxv=${exp.idx}n, idxk='${exp.idx}', idxtype=${this.emitTypeSignature(exp.getType())} }`;
     }
 
     private emitPostfixIsTest(exp: PostfixIsTest): string {

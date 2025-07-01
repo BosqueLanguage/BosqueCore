@@ -877,10 +877,10 @@ entity SMTTransformer {
 
     method transformPostfixAccessFromIndex(op: BSQAssembly::PostfixAccessFromIndex, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let access = CString::concat(this.transformEListToBase(op.baseType@<BSQAssembly::EListTypeSignature>), '-', op.idx);
-        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType@<BSQAssembly::EListTypeSignature>), access, onarg};
+        let access = CString::concat(this.transformEListToBase(op.baseType@<BSQAssembly::EListTypeSignature>), '-', op.idxk);
+        let accessop = SMTAssembly::AccessFromIndexExpression{this.transformStdTypeToSMT(op.baseType), access, onarg};
 
-        return nctx, this.wrapOperationResult(op.baseType, accessop, obinds);
+        return nctx, this.wrapOperationResult(op.idxtype, accessop, obinds);
     }
 
     method transformPostfixBoolConstant(op: BSQAssembly::PostfixBoolConstant, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
@@ -2113,36 +2113,46 @@ entity SMTTransformer {
         return none;
     }
 
-    function buildValidateCallForTypeViaAccessorOp(oftype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression): SMTAssembly::Body {
-        return SMTAssembly::Body{
-            SMTAssembly::ReturnOperation{
-                SMTAssembly::CallFunctionSafeExpression{
-                    TransformNameManager::generateNameForValidatorFunction(oftype.tkeystr), 
-                    List<SMTAssembly::SafeExpression>{ exp }
-                }
-            }, 
-            List<SMTAssembly::ErrorInfo>{}
-        };
+    recursive method buildValidateOpForTypeAndExpr(oftype: BSQAssembly::TypeSignature, exp: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
+        if(oftype)@!<BSQAssembly::EListTypeSignature> {
+            return SMTAssembly::CallFunctionSafeExpression{
+                TransformNameManager::generateNameForValidatorFunction(oftype.tkeystr), 
+                List<SMTAssembly::SafeExpression>{ exp }
+            };
+        }
+        else {
+            let smteltype = this.transformStdTypeToSMT(oftype);
+            let ops = $oftype.entries.mapIdx<SMTAssembly::SafeExpression>(fn(e, ii) => {
+                let access = CString::concat(this.transformEListToBase($oftype), '-', ii.toCString());
+                let eexp = SMTAssembly::AccessFromIndexExpression{ smteltype, access, exp };
+                return this.buildValidateOpForTypeAndExpr[recursive](e, eexp);
+            });
+
+            return SMTAssembly::LogicActionAndExpression{ ops };
+        }
     }
 
-    function buildValidateCallForTypeViaAccessorOpPair(oftype1: BSQAssembly::TypeSignature, exp1: SMTAssembly::SafeExpression, oftype2: BSQAssembly::TypeSignature, exp2: SMTAssembly::SafeExpression): SMTAssembly::Body {
-        let access1 = SMTAssembly::CallFunctionSafeExpression{
-                TransformNameManager::generateNameForValidatorFunction(oftype1.tkeystr), 
-                List<SMTAssembly::SafeExpression>{ exp1 }
-            };
-        let access2 = SMTAssembly::CallFunctionSafeExpression{
-                TransformNameManager::generateNameForValidatorFunction(oftype2.tkeystr), 
-                List<SMTAssembly::SafeExpression>{ exp2 }
-            };
-        
-        return SMTAssembly::Body{
-            SMTAssembly::ReturnOperation{
-                SMTAssembly::LogicActionAndExpression{
-                    List<SMTAssembly::SafeExpression>{ access1, access2 }
-                }
-            }, 
-            List<SMTAssembly::ErrorInfo>{}
-        };
+    method generateValidatorForSomeTypeDecl(tdecl: BSQAssembly::SomeTypeDecl): SMTAssembly::Body {
+        let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
+        let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
+
+        let access = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess};
+        let chks = this.buildValidateOpForTypeAndExpr(tdecl.oftype, access);
+
+        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{chks}, List<SMTAssembly::ErrorInfo>{} };
+    }
+
+    method generateValidatorForMapEntryTypeDecl(tdecl: BSQAssembly::MapEntryTypeDecl): SMTAssembly::Body {
+        let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
+        let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
+
+        let kaccess = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'key', vvaraccess};
+        let vaccess = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess};
+
+        let chkkey = this.buildValidateOpForTypeAndExpr(tdecl.ktype, kaccess);
+        let chkval = this.buildValidateOpForTypeAndExpr(tdecl.vtype, vaccess);
+
+        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{ SMTAssembly::LogicActionAndExpression{List<SMTAssembly::SafeExpression>{chkkey, chkval}} }, List<SMTAssembly::ErrorInfo>{} };
     }
 
     method generateValidatorForListTypeDecl(tdecl: BSQAssembly::ListTypeDecl): SMTAssembly::Body {
@@ -2162,7 +2172,7 @@ entity SMTTransformer {
         let ichecks = tdecl.saturatedBFieldInfo.map<SMTAssembly::SafeExpression>(fn(f) => {
             let decltype = TransformNameManager::convertTypeKey(f.declaredInType.tkeystr);
             let access = SMTAssembly::AccessFromNameResolvedExpression{decltype, smtdtype, f.fname.value, vvaraccess};
-            return SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(f.ftype.tkeystr), List<SMTAssembly::SafeExpression>{ access } };
+            return this.buildValidateOpForTypeAndExpr(f.ftype, access);
         });
 
         var testlist: List<SMTAssembly::SafeExpression>;
@@ -2210,7 +2220,7 @@ entity SMTTransformer {
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
 
         let ntest = SMTAssembly::BinKeyNotEqNoneExpression{vvaraccess};
-        let chksome = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(tdecl.someType.tkeystr), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsometype} } };
+        let chksome = this.buildValidateOpForTypeAndExpr(tdecl.someType, SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsometype});
         let chkops = SMTAssembly::IfThenElseSafeExpression{ntest, chksome, SMTTransformer::smtexplit_true};
 
         return SMTAssembly::Body{ SMTAssembly::ReturnOperation{chkops}, List<SMTAssembly::ErrorInfo>{} };
@@ -2252,78 +2262,29 @@ entity SMTTransformer {
 
         var body: SMTAssembly::Body;
         match(tdecl)@ {
-            BSQAssembly::EnumTypeDecl => { 
-                body = SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_true}, List<SMTAssembly::ErrorInfo>{} };
-            }
-            | BSQAssembly::TypedeclTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::TypedeclStringOfTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::OkTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::FailTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::APIRejectedTypeDecl => { 
-                abort;
-            }
-            | BSQAssembly::APIFailedTypeDecl => { 
-                abort; 
-            }
-            | BSQAssembly::APIErrorTypeDecl => { 
-                abort; 
-            }
-            | BSQAssembly::APISuccessTypeDecl => { 
-                abort;
-            }
-            | BSQAssembly::SomeTypeDecl => {
-                let access = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess};
-                body = SMTTransformer::buildValidateCallForTypeViaAccessorOp($tdecl.oftype, access);
-            }
-            | BSQAssembly::MapEntryTypeDecl => { 
-                let access1 = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'key', vvaraccess};
-                let access2 = SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess};
-                body = SMTTransformer::buildValidateCallForTypeViaAccessorOpPair($tdecl.ktype, access1, $tdecl.vtype, access2);
-            }
-            | BSQAssembly::ListTypeDecl => { 
-                body = this.generateValidatorForListTypeDecl($tdecl);
-            }
-            | BSQAssembly::StackTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::QueueTypeDecl => { 
-                abort;
-            }
-            | BSQAssembly::SetTypeDecl => { 
-                abort; 
-            }
-            | BSQAssembly::MapTypeDecl => { 
-                body = this.generateValidatorForMapTypeDecl($tdecl);
-            }
-            | BSQAssembly::EntityTypeDecl => { 
-                body = this.generateValidatorEntityTypeDecl($tdecl);
-            }
-            | BSQAssembly::OptionTypeDecl => { 
-                body = this.generateValidatorForOptionTypeDecl($tdecl);
-            }
-            | BSQAssembly::ResultTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::APIResultTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::ConceptTypeDecl => { 
-                body = this.generateValidatorForConceptTypeDecl($tdecl);
-            }
-            | BSQAssembly::DatatypeMemberEntityTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
-            | BSQAssembly::DatatypeTypeDecl => { 
-                abort; %% NOT IMPLEMENTED
-            }
+            BSQAssembly::EnumTypeDecl => { body = SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_true}, List<SMTAssembly::ErrorInfo>{} }; }
+            | BSQAssembly::TypedeclTypeDecl => { abort; }
+            | BSQAssembly::TypedeclStringOfTypeDecl => { abort; }
+            | BSQAssembly::OkTypeDecl => { abort; }
+            | BSQAssembly::FailTypeDecl => { abort; }
+            | BSQAssembly::APIRejectedTypeDecl => { abort; }
+            | BSQAssembly::APIFailedTypeDecl => { abort; }
+            | BSQAssembly::APIErrorTypeDecl => { abort; }
+            | BSQAssembly::APISuccessTypeDecl => { abort; }
+            | BSQAssembly::SomeTypeDecl => { body = this.generateValidatorForSomeTypeDecl($tdecl); }
+            | BSQAssembly::MapEntryTypeDecl => { body = this.generateValidatorForMapEntryTypeDecl($tdecl);}
+            | BSQAssembly::ListTypeDecl => { body = this.generateValidatorForListTypeDecl($tdecl);}
+            | BSQAssembly::StackTypeDecl => { abort; }
+            | BSQAssembly::QueueTypeDecl => { abort; }
+            | BSQAssembly::SetTypeDecl => { abort; }
+            | BSQAssembly::MapTypeDecl => { body = this.generateValidatorForMapTypeDecl($tdecl); }
+            | BSQAssembly::EntityTypeDecl => { body = this.generateValidatorEntityTypeDecl($tdecl); }
+            | BSQAssembly::OptionTypeDecl => { body = this.generateValidatorForOptionTypeDecl($tdecl); }
+            | BSQAssembly::ResultTypeDecl => { abort; }
+            | BSQAssembly::APIResultTypeDecl => { abort; }
+            | BSQAssembly::ConceptTypeDecl => { body = this.generateValidatorForConceptTypeDecl($tdecl); }
+            | BSQAssembly::DatatypeMemberEntityTypeDecl => { abort; }
+            | BSQAssembly::DatatypeTypeDecl => { abort; }
         }
 
         return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
