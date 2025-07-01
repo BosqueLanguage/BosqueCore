@@ -90,6 +90,10 @@ SomeTypeDecl { field oftype: TypeSignature; }
 entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
+entity EnumTypeDecl provides AbstractEntityTypeDecl {
+    field members: List<CString>;
+}
+
 entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
     field fields: List<MemberFieldDecl>;
     field parentTypeDecl: NominalTypeSignature;
@@ -197,6 +201,8 @@ entity NamespaceDecl {
     field absmethods: List<(|InvokeKey, TypeKey|)>;
     field overmethods: List<(|InvokeKey, TypeKey|)>; 
 
+    field enums: List<TypeKey>;
+
     field alltypes: List<TypeKey>; %%Very useful in emission
 }
 
@@ -212,6 +218,8 @@ entity Assembly {
     field virtmethods: Map<InvokeKey, MethodDeclVirtual>;
     field absmethods: Map<InvokeKey, MethodDeclAbstract>;
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
+
+    field enums: Map<TypeKey, EnumTypeDecl>;
 
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
     field constructables: Map<TypeKey, ConstructableTypeDecl>;
@@ -246,6 +254,9 @@ entity Assembly {
         }
         elif(this.constructables.has(tkey)) {
             return this.constructables.get(tkey);
+        }
+        elif(this.enums.has(tkey)) {
+            return this.enums.get(tkey);
         }
         else {
             abort; %% Non suported typekey!

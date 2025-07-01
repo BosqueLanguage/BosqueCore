@@ -6,6 +6,8 @@
 #include <csetjmp>
 #include <variant> // TODO: Need to remove dependency!
 
+#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { std::longjmp(__CoreCpp::info.error_handler, true); }
+
 namespace __CoreCpp {
 
 class ThreadLocalInfo {

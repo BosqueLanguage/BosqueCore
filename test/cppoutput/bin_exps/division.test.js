@@ -12,10 +12,10 @@ describe( "CPP Emit Evaluate --- Simple Division", () => {
         runMainCode("public function main(): Bool { return (2.0f // 1.0f) > 1.0f; }", "true");
     });
     it("should division error (undefined behaviour)", function () {
-        runMainCodeError(`public function main(): Nat { return 2n // 0n; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): Int { return 2i // 0i; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): BigNat { return 3N // 0N; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): BigInt { return 1I // 0I; }`, "Over/underflow detected!\n");
-        runMainCodeError(`public function main(): Float { return 1.0f // 0.0f; }`, "Over/underflow detected!\n");
+        runMainCodeError(`public function main(): Nat { return 2n // 0n; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): Int { return 2i // 0i; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): BigNat { return 3N // 0N; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): BigInt { return 1I // 0I; }`, "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError(`public function main(): Float { return 1.0f // 0.0f; }`, "Assertion failed! Or perhaps over/underflow?\n");
     });
 });
