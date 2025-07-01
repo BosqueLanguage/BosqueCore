@@ -551,7 +551,7 @@ entity ConstantSimplification {
     }
 
     recursive method processBinKeyNotSomeEqExpression(e: BinKeyNotSomeEqExpression): Expression {
-        let noption, nval = this.processBinaryArgs(e.neoption, e.neval);
+        let noption, nval = this.processBinaryArgs(e.eqoption, e.eqval);
         let etype = this.assembly.lookupNominalTypeDeclaration(noption.etype.tkeystr);
 
         if(etype.tkey === 'None'<TypeKey>) {
@@ -562,7 +562,7 @@ entity ConstantSimplification {
                 abort; %%Not implemented -- explicitly unwrap and compare here
             }
             else {
-                return e[neoption=noption, neval=nval];
+                return e[eqoption=noption, eqval=nval];
             }
         }
     }

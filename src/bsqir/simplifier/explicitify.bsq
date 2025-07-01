@@ -348,8 +348,8 @@ entity ExplicitifyTransform {
     }
 
     recursive method procssBinKeyNotSomeEqExpression(e: BinKeyNotSomeEqExpression, vmap: VarMapping): Expression {
-        let noption, nval = this.processBinaryArgs[recursive](e.neoption, e.neval, vmap);
-        return e[neoption=noption, neval=nval];
+        let noption, nval = this.processBinaryArgs[recursive](e.eqoption, e.eqval, vmap);
+        return e[eqoption=noption, eqval=nval];
     }
 
     recursive method procssBinKeyEqExpression(e: BinKeyEqExpression, vmap: VarMapping): Expression {

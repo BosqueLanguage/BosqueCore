@@ -272,7 +272,7 @@ entity BSQToSMTCallGraphBuilder {
             BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
-            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.neoption, $e.neval); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
             | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
             | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
         }
@@ -612,7 +612,7 @@ entity MayErrorAnalysis {
             BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
-            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.neoption, $e.neval, cerrors, lerrors); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
             | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
         }

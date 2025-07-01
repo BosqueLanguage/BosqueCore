@@ -1156,8 +1156,8 @@ entity SMTTransformer {
     }
 
     recursive method transformBinKeyNotSomeEqExpression(exp: BSQAssembly::BinKeyNotSomeEqExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let neqoption, neqval, nctx, obinds = this.processBinaryArgs[recursive](exp.neoption, exp.neval, ctx);
-        let optiondecl = this.assembly.lookupNominalTypeDeclaration(exp.neoption.etype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
+        let neqoption, neqval, nctx, obinds = this.processBinaryArgs[recursive](exp.eqoption, exp.eqval, ctx);
+        let optiondecl = this.assembly.lookupNominalTypeDeclaration(exp.eqoption.etype.tkeystr)@<BSQAssembly::OptionTypeDecl>;
 
         let someop = SMTAssembly::BinKeyNotSomeEqExpression{ 
             TransformNameManager::convertTypeKey(optiondecl.tkey),
