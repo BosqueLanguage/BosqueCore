@@ -357,7 +357,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
             | BSQAssembly::ReturnVoidStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::ReturnSingleStatement => { return this.processExpression(current, $s.value); }
-            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive](current, $s.exps); } %% NOT IMPLEMENTED
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive](current, $s);}
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive](current, $s); }
             | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
@@ -686,7 +686,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
             | BSQAssembly::ReturnVoidStatement => { return false; }
             | BSQAssembly::ReturnSingleStatement => { return this.processExpression[recursive]($s.value, cerrors, lerrors); }
-            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive]($s.exps, cerrors, lerrors); }
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::AbortStatement => { return true; }

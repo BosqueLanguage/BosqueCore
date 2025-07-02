@@ -1349,7 +1349,12 @@ class BSQIREmitter {
     }
 
     private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
-        assert(false, "Not Implemented -- emitReturnMultiStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const rtypes = "List<BSQAssembly::TypeSignature>{" + stmt.rtypes.map((t) => this.emitTypeSignature(t)).join(", ") + "}";
+        const exps = "List<BSQAssembly::Expression>{" + stmt.value.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+
+        const elsig = this.emitTypeSignature(stmt.elsig as TypeSignature);
+        return `BSQAssembly::ReturnMultiStatement{ ${sbase}, elsig=${elsig}, rtypes=${rtypes}, exps=${exps} }`;
     }
 
     private emitIfStatement(stmt: IfStatement, fmt: BsqonCodeFormatter): string {

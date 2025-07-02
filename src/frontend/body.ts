@@ -1893,6 +1893,7 @@ class ReturnSingleStatement extends Statement {
 class ReturnMultiStatement extends Statement {
     readonly value: Expression[]; //array is implicitly converted to EList
     rtypes: TypeSignature[] = [];
+    elsig: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, value: Expression[]) {
         super(StatementTag.ReturnMultiStatement, sinfo);

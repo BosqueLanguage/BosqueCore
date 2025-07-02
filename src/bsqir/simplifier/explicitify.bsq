@@ -91,7 +91,7 @@ entity ExplicitifyTransform {
             let nexp = this.processExpression[recursive](arg.exp, vmap);
             let pexp = this.processCoerceTypeAsNeeded(nexp, expected.get(i));
 
-            return arg[exp=nexp];
+            return arg[exp=pexp];
         });
 
         return ArgumentList{ nargs };
@@ -617,7 +617,8 @@ entity ExplicitifyTransform {
                 return $s[value = nc];
             }
             | ReturnMultiStatement => {
-                abort; %% NOT IMPLEMENTED
+                let nexps = this.processArgs($s.exps, vmap).mapIdx<Expression>(fn(ee, ii) => this.processCoerceTypeAsNeeded(ee, $s.rtypes.get(ii)));
+                return $s[exps=nexps];
             }
             | IfStatement => {
                 return this.processIfStatement[recursive]($s, vmap);

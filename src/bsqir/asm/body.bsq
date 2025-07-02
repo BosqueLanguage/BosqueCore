@@ -520,9 +520,13 @@ entity ReturnSingleStatement provides Statement {
 }
 
 entity ReturnMultiStatement provides Statement {
-    field values: List<(|TypeSignature, Expression|)>;
+    field elsig: EListTypeSignature;
+    field rtypes: List<TypeSignature>;
+    field exps: List<Expression>;
 
-    invariant !$values.empty();
+    invariant !$rtypes.empty();
+    invariant !$exps.empty();
+    invariant $rtypes.size() == $exps.size();
 }
 
 datatype IfStatement provides Statement using {

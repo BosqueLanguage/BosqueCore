@@ -3173,6 +3173,7 @@ class TypeChecker {
             stmt.rtypes.push(rtype || etype);
         }
 
+        stmt.elsig = new EListTypeSignature(stmt.sinfo, stmt.rtypes);
         return env.setReturnFlow();
     }
 
