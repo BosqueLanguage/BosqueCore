@@ -103,6 +103,10 @@ concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
     field subtypes: List<TypeKey>;
 }
 
+entity ConceptTypeDecl provides AbstractConceptTypeDecl {
+    field fields: List<MemberFieldDecl>;
+}
+
 datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
 of
 OptionTypeDecl { 
@@ -230,6 +234,7 @@ entity Assembly {
     field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
     field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>; %% Note: Currently only supports option
+    field concepts: Map<TypeKey, ConceptTypeDecl>; %% We dont emit these but need to look them up
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
@@ -257,6 +262,9 @@ entity Assembly {
         }
         elif(this.enums.has(tkey)) {
             return this.enums.get(tkey);
+        }
+        elif(this.concepts.has(tkey)) {
+            return this.concepts.get(tkey);
         }
         else {
             abort; %% Non suported typekey!
@@ -297,5 +305,26 @@ entity Assembly {
 
     method areTypesSame(t1: TypeSignature, t2: TypeSignature): Bool {
         return t1.tkeystr.value === t2.tkeystr.value;
+    }
+
+    method isSubtypeOf(t1: TypeSignature, t2: TypeSignature): Bool {
+        if(t1.tkeystr === t2.tkeystr) {
+            return true;
+        }
+        else {
+            if(t1?!<NominalTypeSignature> || t2?!<NominalTypeSignature>) {
+                return false;
+            }
+            else {
+                if(t1.tkeystr === 'None'<TypeKey>) {
+                    let tt2 = this.lookupNominalTypeDeclaration(t2.tkeystr);
+                    return tt2?<OptionTypeDecl>;
+                }
+                else {
+                    let tt1 = this.lookupNominalTypeDeclaration(t1.tkeystr);
+                    return tt1.saturatedProvides.someOf(pred(st) => st.tkeystr === t2.tkeystr);
+                }
+            }
+        }
     }
 }

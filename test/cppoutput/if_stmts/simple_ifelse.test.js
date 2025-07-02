@@ -15,14 +15,14 @@ describe ("CPP Emit Evaluate -- Simple if-elif-else statements", () => {
         runMainCode("public function main(): Int { let x: Option<Int> = none; if(x)some { return 3i; } else { return 1i; } }", "1_i");
     });
     it("should exec binder itest ifs", function () {
-        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@some { return $x; } else { return 1i; } }", "3i");
-        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if($y = x)@some { return $y; } else { return 1i; } }", "3i");
+        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@some { return $x; } else { return 1i; } }", "3_i");
+        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if($y = x)@some { return $y; } else { return 1i; } }", "3_i");
 
-        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@none { return 1i; } else { return $x; } }", "3i");
-        runMainCode("public function main(): Int { let x: Option<Int> = none; if(x)@none { return 1i; } else { return $x; } }", "1i");
+        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@none { return 1i; } else { return $x; } }", "3_i");
+        runMainCode("public function main(): Int { let x: Option<Int> = none; if(x)@none { return 1i; } else { return $x; } }", "1_i");
     });
 
     it("should exec binder & reflow itest ifs", function () {
-        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }", "3i");
+        runMainCode("public function main(): Int { let x: Option<Int> = some(3i); if(x)@@!some { return 0i; } else { ; } return x; }", "3_i");
     });
 });

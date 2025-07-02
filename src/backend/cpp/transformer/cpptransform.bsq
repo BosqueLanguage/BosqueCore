@@ -113,8 +113,8 @@ namespace CPPTransformNameManager {
         }
     }
 
-    function shouldBeRef(fields: List<BSQAssembly::MemberFieldDecl>, asm: BSQAssembly::Assembly): Bool {
-        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.declaredType.tkeystr));
+    function shouldBeRef(fields: List<BSQAssembly::SaturatedFieldInfo>, asm: BSQAssembly::Assembly): Bool {
+        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.ftype.tkeystr));
         if(fields.size() > 4n || !fieldsPrimitive) {
             return true;
         }
@@ -849,15 +849,16 @@ entity CPPTransformer {
             var tkey: CPPAssembly::TypeKey;
             if(bsqasm.entities.has(typekey)) {
                 let e = bsqasm.entities.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(e.fields, bsqasm);
-                fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
-                    fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
+                let isRef = CPPTransformNameManager::shouldBeRef(e.saturatedBFieldInfo, bsqasm);
+                fields_tinfo = e.saturatedBFieldInfo
+                    .map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
+                        fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
             }
             elif(bsqasm.datamembers.has(typekey)) {
                 let dm = bsqasm.datamembers.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, bsqasm);
+                let isRef = CPPTransformNameManager::shouldBeRef(dm.saturatedBFieldInfo, bsqasm);
                 fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
                     fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
@@ -884,7 +885,7 @@ entity CPPTransformer {
 
             matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, next_tid, tkey, tag, bsqasm);
         }
-        elif(bsqasm.isNominalTypeConcept(typekey)) {
+        elif(bsqasm.isNominalTypeConcept(typekey)) { %% I believe we dont need to emit typeinfo for concepts or datatypes whatsoever...
             var maxFieldCount: Nat;
             if(bsqasm.concepts.has(typekey)) {
                 maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
@@ -894,7 +895,7 @@ entity CPPTransformer {
             }
             elif(bsqasm.pconcepts.has(typekey)) {
                 let pc = bsqasm.pconcepts.get(typekey);
-                if(pc)@<BSQAssembly::OptionTypeDecl> { %% I "think" sometype would be best here
+                if(pc)@<BSQAssembly::OptionTypeDecl> {
                     let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, cur_tid, bsqasm).0;
                     let named_pcinfo = CPPAssembly::TypeInfo{ next_tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, CString::concat('2', pcinfo.ptrmask), cpptkey, CPPAssembly::Tag#Tagged };
 
@@ -966,6 +967,13 @@ entity CPPTransformer {
             fn(e) => CPPTransformNameManager::convertNominalTypeSignature(e));
 
         return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, fields, associatedMemberEntityDecls }; 
+    }
+
+    method transformConceptTypeDeclToCpp(ctd: BSQAssembly::ConceptTypeDecl): CPPAssembly::ConceptTypeDecl {
+        let base = this.transformAbstractConceptTypeDeclBase(ctd@<BSQAssembly::AbstractConceptTypeDecl>);
+        let fields = this.transformMemberFieldDecl(ctd.saturatedBFieldInfo, ctd, ctd.fields);
+
+        return CPPAssembly::ConceptTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, fields }; 
     }
 
     method transformSomeTypeDecl(std: BSQAssembly::SomeTypeDecl): CPPAssembly::SomeTypeDecl {
@@ -1228,6 +1236,12 @@ entity CPPTransformer {
                 return acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformOverrideMethodDecl(decl));
         });
 
+        let transformer_concepts = bsqasm.concepts.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::ConceptTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::ConceptTypeDecl>{}, fn(acc, tk, ctd) => {
+                let cppctd = transformer.transformConceptTypeDeclToCpp(ctd);
+                return acc.insert(cppctd.tkey, cppctd);
+        });
+
         let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
@@ -1236,13 +1250,18 @@ entity CPPTransformer {
             (| 0n, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{} |), fn(acc, tkey) => {
                 let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
                 return (| acc.0 + 1n, gen_tinfo.1 |);
-            });
-        
-        let generated_typeinfos_abstract = bsqasm.allabstracttypes.reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
-            generated_typeinfos_concrete, fn(acc, tkey) => {
-                let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
-                return (| acc.0 + 1n, gen_tinfo.1 |);
-            });
+        });
+
+        %% This may not be right, but for now we dont emit any type info for concepts or datatypes. The types
+        %% who provide them contain all the necessary fields, so this should be unnecessary. 
+        let generated_typeinfos_abstract = bsqasm.allabstracttypes
+            .filter(pred(tkey) => !bsqasm.concepts.has(tkey) && !bsqasm.datatypes.has(tkey))
+            .reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
+                generated_typeinfos_concrete, fn(acc, tkey) => {
+
+                    let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
+                    return (| acc.0 + 1n, gen_tinfo.1 |);
+        });
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls_enums,
@@ -1260,6 +1279,7 @@ entity CPPTransformer {
             datamembers = transformer_datamembers,
             datatypes = transformer_datatypes,
             pconcepts = transformer_pconcepts,
+            concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
             typeinfos = generated_typeinfos_abstract.1
         };

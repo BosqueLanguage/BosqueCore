@@ -474,7 +474,7 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: Str
 
 %% I think we need to do the none convert somehow here
 %% If somehow somethign that is not a some gets passed in here we will see some weird output...
-function emitPostfixAccessSomeValue(isnot: Bool, op: CPPAssembly::PostfixAccessSomeValue, acc: String, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+function emitPostfixAccessSomeValue(op: CPPAssembly::PostfixAccessSomeValue, acc: String, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
     %% We should make this a method, we use it in itest convert
     let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
     let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
@@ -490,7 +490,12 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
             else if(areTypesSame) then "true" else "false";
     }
     else {
-        abort; %% TODO: ITests on concepts not yet supported!
+        if(ctx.asm.isSubtypeOf(it.ttype, baseType)) { %% This doesnt work
+            return "true";
+        }
+        else {
+            return "false";
+        }
     }
 }
 
@@ -534,7 +539,7 @@ function emitITestAsConvertSome(isnot: Bool, baseType: CPPAssembly::TypeSignatur
     
     if(ant)@<CPPAssembly::OptionTypeDecl> {
         if(isnot) {
-            return emitITestAsConvertNone(true, baseType, ctx);
+            return emitITestAsConvertNone(false, baseType, ctx);
         }
         else {
             let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
