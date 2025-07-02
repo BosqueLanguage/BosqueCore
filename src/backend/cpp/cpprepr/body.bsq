@@ -26,12 +26,12 @@ concept Statement {
 entity EmptyStatement provides Statement {
 }
 
-entity BinderInfo { %% TODO: Not implemented
+entity BinderInfo { 
     field srcname: VarIdentifier;
     field refineonfollow: Bool;
 }
 
-datatype ITest using { %% TODO: Not Implemented
+datatype ITest using { 
     field isnot: Bool;
 }
 of
@@ -78,7 +78,7 @@ RefArgumentValue { } %% TODO: Not implemented
 ;
 
 entity ArgumentList {
-    field args: List<ArgumentValue>; %% if none get default val in emitter
+    field args: List<ArgumentValue>; 
 }
 
 datatype IfStatement provides Statement using {
@@ -90,7 +90,7 @@ IfSimpleStatement { }
 | IfTestStatement {
     field itest: ITest;
 }
-| IfBinderStatement { %% TODO: Not implemented
+| IfBinderStatement { 
     field itest: ITest;
     field binder: BinderInfo;
 }

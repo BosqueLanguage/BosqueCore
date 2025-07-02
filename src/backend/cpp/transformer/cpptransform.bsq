@@ -584,6 +584,20 @@ entity CPPTransformer {
         return CPPAssembly::BlockStatement{ stmts, block.isScoping };
     }
 
+    method transformBinderInfo(binder: BSQAssembly::BinderInfo): CPPAssembly::BinderInfo {
+        let srcname = CPPTransformNameManager::convertVarIdentifier(binder.srcname);
+        let refineonfollow = binder.refineonfollow;
+
+        return CPPAssembly::BinderInfo{ srcname, refineonfollow };
+    }
+
+    method transformIfBinderStatement(stmt: BSQAssembly::IfBinderStatement, cond: CPPAssembly::Expression, tb: CPPAssembly::BlockStatement): CPPAssembly::IfBinderStatement {
+        let itest = this.transformITestAsTest(stmt.itest);
+        let binder = this.transformBinderInfo(stmt.binder);
+
+        return CPPAssembly::IfBinderStatement{ cond, tb, itest, binder };
+    }
+
     recursive method transformIfStatement(stmt: BSQAssembly::IfStatement): CPPAssembly::IfStatement {
         let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
@@ -591,7 +605,7 @@ entity CPPTransformer {
         match(stmt)@ {
             BSQAssembly::IfSimpleStatement => { return CPPAssembly::IfSimpleStatement{ cond, trueBlock }; }
             | BSQAssembly::IfTestStatement => { return CPPAssembly::IfTestStatement{ cond, trueBlock, this.transformITestAsTest($stmt.itest) }; }
-            | BSQAssembly::IfBinderStatement => { abort; } %% TODO: Not Implemented
+            | BSQAssembly::IfBinderStatement => { return this.transformIfBinderStatement($stmt, cond, trueBlock); }
         }
     }
 

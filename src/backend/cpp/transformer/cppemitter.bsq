@@ -506,12 +506,15 @@ function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSign
     }
 }
 
-function emitITestAsConvert(itc: CPPAssembly::PostfixAsConvert, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
-    if(ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)?<CPPAssembly::OptionTypeDecl>) {
+function emitITestAsConvert(itc: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): (|String, CPPAssembly::TypeSignature|) {
+    let ant = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr);
+    
+    if(ant)@<CPPAssembly::OptionTypeDecl> {
         let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
         let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
 
-        return String::concat(accessor, "some().value");
+        %% Lets also return the type we convert to
+        return (|String::concat(accessor, "some().value"), $ant.oftype|);
     }
     else {
         abort; %% Only options are supported for now
@@ -527,7 +530,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
             | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
-            | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op, $op.baseType, ctx)); }
+            | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest, $op.baseType, ctx).0); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, rootExp, ctx); } %% This will not chain method calls :(
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
         }
@@ -747,8 +750,21 @@ function emitIfTestStatement(stmt: CPPAssembly::IfTestStatement, ctx: Context, i
     return String::concat(ifstmt, trueBlock, indent, "}");
 }
 
-function emitIfBinderStatement(stmt: CPPAssembly::IfStatement, ctx: Context, indent: String): String {
-    abort; %% TODO: Not Implemented!    
+function emitIfBinderStatement(stmt: CPPAssembly::IfBinderStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    
+    let expr = emitExpression(stmt.cond, ctx);
+    let itest = String::concat(expr, emitITestAsTest(stmt.itest, stmt.cond.etype, ctx));
+    let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
+
+    let bname = emitVarIdentifier(stmt.binder.srcname);
+    let convert = emitITestAsConvert(stmt.itest, stmt.cond.etype, ctx);
+    let reasign = String::concat(bname, " = ", expr, convert.0);
+
+    let tbassign = String::concat(full_indent, emitTypeSignature(convert.1, false, ctx), " ", reasign, ";%n;");
+
+    let ifstmt = String::concat(indent, "if( ", itest, " ) {%n;");
+    return String::concat(ifstmt, tbassign, trueBlock, indent, "}%n;");
 }
 
 function emitIfStatement(stmt: CPPAssembly::IfStatement, ctx: Context, indent: String): String {
