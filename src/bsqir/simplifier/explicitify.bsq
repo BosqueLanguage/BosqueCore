@@ -588,13 +588,14 @@ entity ExplicitifyTransform {
                 let nr = this.processExpression($s.exp, vmap);
                 let nc = this.processCoerceTypeAsNeeded(nr, $s.vtype);
                 
-                return VariableInitializationStatement{ $s.sinfo, $s.name, $s.vtype, nc };
+                return $s[exp=nc];
             }
             | VariableMultiInitializationExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                let nexps = this.processArgs($s.exps, vmap).mapIdx<Expression>(fn(ee, ii) => this.processCoerceTypeAsNeeded(ee, $s.decls.get(ii).1));
+                return $s[exps=nexps];
             }
             | VariableMultiInitializationImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exp=this.processExpression($s.exp, vmap)];
             }
             | VariableAssignmentStatement => {
                 let nr = this.processExpression($s.exp, vmap);
@@ -603,10 +604,11 @@ entity ExplicitifyTransform {
                 return VariableAssignmentStatement{ $s.sinfo, $s.name, $s.vtype, nc };
             }
             | VariableMultiAssignmentExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                let nexps = this.processArgs($s.exps, vmap).mapIdx<Expression>(fn(ee, ii) => this.processCoerceTypeAsNeeded(ee, $s.vinfos.get(ii).1));
+                return $s[exps=nexps];
             }
             | VariableMultiAssignmentImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exp=this.processExpression($s.exp, vmap)];
             }
             | ReturnVoidStatement => {
                 return s;

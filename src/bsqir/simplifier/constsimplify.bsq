@@ -958,19 +958,19 @@ entity ConstantSimplification {
                 return $s[exp = this.processExpression($exp)];
             }
             | VariableMultiInitializationExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exps = this.processArgs($exps)];
             }
             | VariableMultiInitializationImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exp = this.processExpression($exp)];
             }
             | VariableAssignmentStatement => {
                 return $s[exp = this.processExpression($exp)];
             }
             | VariableMultiAssignmentExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exps = this.processArgs($exps)];
             }
             | VariableMultiAssignmentImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exp = this.processExpression($exp)];
             }
             | ReturnVoidStatement => {
                 return s;
