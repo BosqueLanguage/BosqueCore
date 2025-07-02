@@ -2501,7 +2501,7 @@ entity SMTTransformer {
         return SMTAssembly::Body{ SMTAssembly::ReturnOperation{ SMTAssembly::LogicActionAndExpression{testlist} }, List<SMTAssembly::ErrorInfo>{} }; 
     }
 
-    method generateValidatorForEntityTypeDecl(tdecl: BSQAssembly::EntityTypeDecl): SMTAssembly::Body {
+    method generateValidatorForEntityWithFields(tdecl: BSQAssembly::AbstractEntityTypeDecl): SMTAssembly::Body {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
 
@@ -2548,11 +2548,15 @@ entity SMTTransformer {
             else {
                 return SMTAssembly::Body{ SMTAssembly::ReturnOperation{ SMTAssembly::LogicActionAndExpression{testlist} }, List<SMTAssembly::ErrorInfo>{} }; 
             }
-        }   
+        }
     }
 
-    method generateValidatorForDatatypeTypeDecl(tdecl: BSQAssembly::DatatypeTypeDecl): SMTAssembly::Body {
-        xxxx;
+    method generateValidatorForEntityTypeDecl(tdecl: BSQAssembly::EntityTypeDecl): SMTAssembly::Body {
+        return this.generateValidatorForEntityWithFields(tdecl);
+    }
+
+    method generateValidatorForDatatypeMemberEntityTypeDecl(tdecl: BSQAssembly::DatatypeMemberEntityTypeDecl): SMTAssembly::Body {
+        return this.generateValidatorForEntityWithFields(tdecl);
     }
 
     method generateValidatorForOptionTypeDecl(tdecl: BSQAssembly::OptionTypeDecl, isroot: Bool): SMTAssembly::Body {
@@ -2572,21 +2576,22 @@ entity SMTTransformer {
         }
     }
 
-    method generateValidatorForConceptTypeDecl(tdecl: BSQAssembly::ConceptTypeDecl, isroot: Bool): SMTAssembly::Body {
+    method generateValidatorForConceptDispatch(tdecl: BSQAssembly::AbstractConceptTypeDecl, isroot: Bool): SMTAssembly::Body {
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
 
-        if(tdecl.subtypes.empty()) {
-            return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_true}, List<SMTAssembly::ErrorInfo>{} };
+        let nrsubtypes = if(isroot) then tdecl.subtypes else tdecl.subtypes.filter(pred(st) => !this.assembly.typetopo.isTypeInSCC(st));
+        if(nrsubtypes.empty()) {
+            return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_false}, List<SMTAssembly::ErrorInfo>{} };
         }
         else {
-            if(tdecl.subtypes.isSingle()) {
-                let smtsttype = TransformNameManager::convertTypeKey(tdecl.subtypes.single());
-                let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(tdecl.subtypes.single()), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };
+            if(nrsubtypes.isSingle()) {
+                let smtsttype = TransformNameManager::convertTypeKey(nrsubtypes.single());
+                let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(nrsubtypes.single()), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };
                 
                 return SMTAssembly::Body{ SMTAssembly::ReturnOperation{cop}, List<SMTAssembly::ErrorInfo>{} };
             }
             else {
-                let entries = tdecl.subtypes.map<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(st) => {
+                let entries = nrsubtypes.map<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(st) => {
                     let smtsttype = TransformNameManager::convertTypeKey(st);
                     let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(st), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };
             
@@ -2599,8 +2604,12 @@ entity SMTTransformer {
         }
     }
 
-    method generateValidatorForDatatypeTypeDecl(tdecl: BSQAssembly::DatatypeTypeDecl): SMTAssembly::Body {
-        xxxx;
+    method generateValidatorForConceptTypeDecl(tdecl: BSQAssembly::ConceptTypeDecl, isroot: Bool): SMTAssembly::Body {
+        return this.generateValidatorForConceptDispatch(tdecl, isroot);
+    }
+
+    method generateValidatorForDatatypeTypeDecl(tdecl: BSQAssembly::DatatypeTypeDecl, isroot: Bool): SMTAssembly::Body {
+        return this.generateValidatorForConceptDispatch(tdecl, isroot);
     }
 
     method generateValidatorFunctionGeneral(tdecl: BSQAssembly::AbstractNominalTypeDecl, isroot: Bool): SMTAssembly::FunctionDecl {
@@ -2646,16 +2655,18 @@ entity SMTTransformer {
     }
 
     method generateValidatorFunctionRootArg(tdecl: BSQAssembly::AbstractNominalTypeDecl): SMTAssembly::FunctionDecl {
-        if(tdecl)<AbstractConceptTypeDecl> {
+        if(tdecl)<BSQAssembly::AbstractConceptTypeDecl> {
             return this.generateValidatorFunctionGeneral(tdecl, true);
         }
         else {
             let ikey = TransformNameManager::generateNameForValidatorFunctionRoot(tdecl.tkey);
-            let params = List<SMTAssembly::InvokeParameterDecl>{SMTAssembly::InvokeParameterDecl{SMTTransformer::vvariable, SMTTransformer::booltype}};
+            let smtdtype = if(tdecl?<BSQAssembly::AbstractEntityTypeDecl>) then TransformNameManager::convertTypeKey(tdecl.tkey) else SMTTransformer::termtypekey;
+            let params = List<SMTAssembly::InvokeParameterDecl>{SMTAssembly::InvokeParameterDecl{SMTTransformer::vvariable, smtdtype}};
             let rtype = SMTAssembly::SafeResult{ this.transformStdTypeToSMT(SMTTransformer::booltype) };
             
             let smtsttype = TransformNameManager::convertTypeKey(tdecl.tkey);
-            let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(tdecl.tkey), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };    
+            let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
+            let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(tdecl.tkey), List<SMTAssembly::SafeExpression>{ vvaraccess } };    
             let body = SMTAssembly::Body{ SMTAssembly::ReturnOperation{cop}, List<SMTAssembly::ErrorInfo>{} };
 
             return SMTAssembly::FunctionDecl{ ikey, params, rtype, body };
@@ -2749,6 +2760,10 @@ entity SMTTransformer {
             .filter(pred(tkey) => !assembly.primtives.has(tkey))
             .map<SMTAssembly::FunctionDecl>(fn(tkey) => transformer.generateValidatorFunction(assembly.lookupNominalTypeDeclaration(tkey)));
 
+        let tvalidatorsroot = assembly.typetopo.ctopo
+            .filter(pred(tkey) => !assembly.primtives.has(tkey))
+            .map<SMTAssembly::FunctionDecl>(fn(tkey) => transformer.generateValidatorFunctionRootArg(assembly.lookupNominalTypeDeclaration(tkey)));
+
         return SMTAssembly::Assembly {
             nsconsts = tnsconstsinfo.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => nsc.0),
             typeconsts = ttypeconstsinfo.map<SMTAssembly::ConstMemberDecl>(fn(tc) => tc.0),
@@ -2772,7 +2787,7 @@ entity SMTTransformer {
             datatypes = List<SMTAssembly::DatatypeTypeDecl>{},
 
             orderedfuncs = tallfuncs,
-            validators = tvalidators
+            validators = List<SMTAssembly::FunctionDecl>::concat(tvalidators, tvalidatorsroot)
         };
     }
 }
