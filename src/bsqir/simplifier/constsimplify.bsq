@@ -979,7 +979,7 @@ entity ConstantSimplification {
                 return $s[value = this.processExpression($value)];
             }
             | ReturnMultiStatement => {
-                abort; %% NOT IMPLEMENTED
+                return $s[exps = this.processArgs($exps)];
             }
             | IfStatement => {
                 return this.processIfStatement[recursive]($s);

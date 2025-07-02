@@ -1549,6 +1549,25 @@ entity SMTTransformer {
         }
     }
 
+    method transformReturnMultiStatement(stmt: BSQAssembly::ReturnMultiStatement, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let aargs, nctx, obinds = this.processArgsInOrder(stmt.exps, ctx);
+
+        let elcons = this.transformEListToBase(stmt.elsig);
+        let elexp = this.wrapOperationResult(stmt.elsig, SMTAssembly::ConstructorEListExpression{elcons, aargs}, obinds);
+
+        if(elexp)@<ErrorResult> {
+            return nctx, some(SMTAssembly::ReturnOperation{$elexp.exp});
+        }
+        else {
+            if(!ctx.mayErrorReturn) {
+                return nctx, some(SMTAssembly::ReturnOperation{$elexp.exp});
+            }
+            else {
+                return nctx, some(SMTAssembly::ReturnOperation{SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(stmt.elsig), $elexp.exp}});
+            }
+        }
+    }
+
     recursive method transformIfSimpleStatement(stmt: BSQAssembly::IfSimpleStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.texp, ctx);
 
@@ -1713,7 +1732,7 @@ entity SMTTransformer {
                 return this.transformReturnSingleStatement($stmt, ctx);
             }
             | BSQAssembly::ReturnMultiStatement => {
-                abort; %% NOT IMPLEMENTED
+                return this.transformReturnMultiStatement($stmt, ctx);
             }
             | BSQAssembly::IfStatement => {
                 return this.transformIfStatement[recursive]($stmt, tail@some, ctx);

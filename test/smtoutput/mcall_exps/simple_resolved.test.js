@@ -69,16 +69,16 @@ describe ("Exec -- eADT methods", () => {
         runMainCode('datatype Foo<T> of F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { let x: Foo<Int> = F1<Int>{3i}; return x.foo(); }', "3i"); 
     });
 });
-
-describe ("Exec -- type alias methods", () => {
-    it("should exec simple type alias methods", function () {
-        runMainCode('type Foo = Int & { method foo(): Int { return this.value; }} public function main(): Int { return 3i<Foo>.foo(); }', "3i"); 
-        runMainCode('type Foo = Int & { method foo(x: Int): Int { return this.value + x; }} public function main(): Int { return 3i<Foo>.foo(1i); }', "4i"); 
+*/
+describe ("SMT -- type alias methods", () => {
+    it("should smt exec simple type alias methods", function () {
+        runishMainCodeUnsat('type Foo = Int & { method foo(): Int { return this.value; }} public function main(): Int { return 3i<Foo>.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('type Foo = Int & { method foo(x: Int): Int { return this.value + x; }} public function main(): Int { return 3i<Foo>.foo(1i); }', "(assert (not (= 4 Main@main)))"); 
     });
 
-    it("should exec simple type alias methods with template", function () {
-        runMainCode('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Nat>(); }', "false"); 
-        runMainCode('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Int>(); }', "true"); 
+    it("should smt exec simple type alias methods with template", function () {
+        runishMainCodeUnsat('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Nat>(); }', "(assert Main@main)"); 
+        runishMainCodeUnsat('type Foo = Int & { method foo<T>(): Bool { return this.value?<T>; }} public function main(): Bool { let x = 3i<Foo>; return x.foo<Int>(); }', "(assert (not Main@main))"); 
     });
 });
-*/
+
