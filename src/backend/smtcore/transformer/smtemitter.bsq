@@ -981,7 +981,7 @@ recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, eev: SMT
 }
 
 function doLetIndent(enext: SMTAssembly::Operation): Bool {
-    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetOperationWError>, enext?<SMTAssembly::LetWErrorsOperation>);
+    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetsOperation>, enext?<SMTAssembly::LetOperationWError>, enext?<SMTAssembly::LetWErrorsOperation>);
 }
 
 recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
@@ -1002,6 +1002,36 @@ recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitte
 
         let inexp = emitOperation[recursive](e.inop, eev, some(iident));
         return CString::concat('(let ', vbind, '%n;', inexp, tident);
+    }
+}
+
+recursive function emitLetsOperation(e: SMTAssembly::LetsOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
+    var inexp: CString;
+    if(indent)@none {
+        inexp = CString::concat(' ', emitOperation[recursive](e.inop, eev, none));
+    }
+    else {        
+        var iident = $indent;
+        var tident = '';
+
+        if(doLetIndent(e.inop)) {
+            iident = CString::concat('    ', $indent);
+            tident = CString::concat('%n;', $indent);
+        }
+
+        inexp = CString::concat('%n;', emitOperation[recursive](e.inop, eev, some(iident)), tident);
+    }
+    
+    let lbs = e.vvbind.lreduce<CString>(inexp, fn(acc, vb) => {
+        let vbind = CString::concat('((', vb.2.value, ' ', emitSafeExpression[recursive](vb.0, eev), '))');
+        return CString::concat('(let ', vbind, ' ', acc, ')');
+    });
+    
+    if(indent)@none {
+        return lbs;
+    }
+    else {
+        return CString::concat($indent, lbs);
     }
 }
 
@@ -1065,9 +1095,6 @@ recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, 
         return CString::concat('(let ', vbind, ' ', wcheck, ')');
     });
     
-    let iiexp = emitOperation[recursive](e.inop, eev, none);
-    
-
     if(indent)@none {
         return lbs;
     }
@@ -1084,6 +1111,7 @@ recursive function emitOperation(op: SMTAssembly::Operation, eev: SMTEmitterEnv,
         | SMTAssembly::AssertOperation => { opstr = emitAssertOperation($op, eev, indent); }
         | SMTAssembly::AssumeOperation => { opstr = emitAssumeOperation($op, eev, indent); }
         | SMTAssembly::LetOperation => { opstr = emitLetOperation[recursive]($op, eev, indent); }
+        | SMTAssembly::LetsOperation => { opstr = emitLetsOperation[recursive]($op, eev, indent); }
         | SMTAssembly::LetOperationWError => { opstr = emitLetOperationWError[recursive]($op, eev, indent); }
         | SMTAssembly::LetWErrorsOperation => { opstr = emitLetWErrorsOperation[recursive]($op, eev, indent); }
         | SMTAssembly::MatchOperation => { opstr = emitMatchOperation[recursive]($op, eev, indent); }

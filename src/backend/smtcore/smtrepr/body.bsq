@@ -435,6 +435,12 @@ entity LetOperation provides Operation {
     field inop: Operation;
 }
 
+entity LetsOperation provides Operation {
+    field vvbind: List<(|SafeExpression, TypeKey, Identifier|)>;
+
+    field inop: Operation;
+}
+
 entity LetOperationWError provides Operation {
     field vebind: Identifier;
     field vbind: Identifier;

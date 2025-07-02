@@ -1305,7 +1305,13 @@ class BSQIREmitter {
     }
     
     private emitVariableMultiDeclarationStatement(stmt: VariableMultiDeclarationStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiDeclarationStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const decls = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.decls.map((dd) => {
+            const vtype = this.emitTypeSignature(dd.vtype);
+            return `(|'${dd.name}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        return `BSQAssembly::VariableMultiDeclarationStatement{ ${sbase}, decls=${decls} }`;
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
@@ -1317,7 +1323,20 @@ class BSQIREmitter {
     }
     
     private emitVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiInitializationStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const decls = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.decls.map((n, ii) => {
+            const vtype = this.emitTypeSignature(stmt.actualtypes[ii] as TypeSignature);
+            return `(|'${n.name}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        if(!Array.isArray(stmt.exp)) {
+            let rhs = this.emitExpressionRHS(stmt.exp);
+            return `BSQAssembly::VariableMultiInitializationImplicitStatement{ ${sbase}, decls=${decls}, exp=${rhs} }`;
+        }
+        else {
+            let exps = "List<BSQAssembly::Expression>{" + stmt.exp.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+            return `BSQAssembly::VariableMultiInitializationExplicitStatement{ ${sbase}, decls=${decls}, exps=${exps} }`;
+        }
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
@@ -1329,7 +1348,20 @@ class BSQIREmitter {
     }
 
     private emitVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiAssignmentStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const vinfos = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.names.map((n, ii) => {
+            const vtype = this.emitTypeSignature(stmt.vtypes[ii] as TypeSignature);
+            return `(|'${n}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        if(!Array.isArray(stmt.exp)) {
+            let rhs = this.emitExpressionRHS(stmt.exp);
+            return `BSQAssembly::VariableMultiAssignmentImplicitStatement{ ${sbase}, vinfos=${vinfos}, exp=${rhs} }`;
+        }
+        else {
+            let exps = "List<BSQAssembly::Expression>{" + stmt.exp.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+            return `BSQAssembly::VariableMultiAssignmentExplicitStatement{ ${sbase}, vinfos=${vinfos}, exps=${exps} }`;
+        }
     }
 
     private emitVariableRetypeStatement(stmt: VariableRetypeStatement): string {

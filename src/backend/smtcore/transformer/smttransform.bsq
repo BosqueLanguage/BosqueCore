@@ -3,6 +3,7 @@ namespace SMTEmitter;
 
 namespace TransformNameManager {
     const c_dangerous: Map<CString, CString> = Map<CString, CString>{
+        '_' => '@_',
         'ite' => '@ite'
     };
 
@@ -1498,6 +1499,67 @@ entity SMTTransformer {
         }
     }
 
+    method transformVariableMultiInitializationExplicitStatement(stmt: BSQAssembly::VariableMultiInitializationExplicitStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let aargs, nctx, obinds = this.processArgsInOrder(stmt.exps, ctx);
+
+        if(obinds)@none {
+            let vbinds = aargs.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(arg, ii) => {
+                let decl = stmt.decls.get(ii);
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+
+                return (|arg, vtype, vname|);
+            });
+
+            return nctx, some(SMTAssembly::LetsOperation{vbinds, tail});
+        }
+        else {
+            let vbinds = aargs.mapIdx<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(arg, ii) => {
+                let decl = stmt.decls.get(ii);
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+
+                return (|arg, vtype, vname|);
+            });
+
+            return nctx, some(SMTAssembly::LetWErrorsOperation{vbinds, tail});
+        }
+    }
+
+    method transformVariableMultiInitializationImplicitStatement(stmt: BSQAssembly::VariableMultiInitializationImplicitStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+
+        let smteltype = this.transformStdTypeToSMT(stmt.exp.etype);
+        if(smtexp)@<SafeResult> {
+            let vbinds = stmt.decls.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(decl, ii) => {
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+                let access = CString::concat(this.transformEListToBase(stmt.exp.etype@<BSQAssembly::EListTypeSignature>), '-', ii.toCString());
+                let expr = SMTAssembly::AccessFromIndexExpression{smteltype, access, $smtexp.exp};
+
+                return (|expr, vtype, vname|);
+            });
+
+            return rctx, some(SMTAssembly::LetsOperation{vbinds, tail});
+        }
+        else {
+            let vebind = '@tmpe@mi'<SMTAssembly::Identifier>;
+            let vbind = '@mi@'<SMTAssembly::Identifier>;
+            
+            let vbinds = stmt.decls.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(decl, ii) => {
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+                let access = CString::concat(this.transformEListToBase(stmt.exp.etype@<BSQAssembly::EListTypeSignature>), '-', ii.toCString());
+                let expr = SMTAssembly::AccessFromIndexExpression{smteltype, access, SMTAssembly::AccessVariableExpression{vbind}};
+
+                return (|expr, vtype, vname|);
+            });
+            let stail = SMTAssembly::LetsOperation{vbinds, tail};
+
+            return rctx, some(SMTAssembly::LetOperationWError{vebind, vbind, smteltype, $smtexp.exp, stail});
+        }
+    }
+
     method transformVariableAssignmentStatement(stmt: BSQAssembly::VariableAssignmentStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
         
@@ -1512,6 +1574,67 @@ entity SMTTransformer {
             let vtype = this.transformStdTypeToSMT(stmt.vtype);
 
             return rctx, some(SMTAssembly::LetOperationWError{vebind, vbind, vtype, $smtexp.exp, tail});
+        }
+    }
+
+    method transformVariableMultiAssignmentExplicitStatement(stmt: BSQAssembly::VariableMultiAssignmentExplicitStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let aargs, nctx, obinds = this.processArgsInOrder(stmt.exps, ctx);
+
+        if(obinds)@none {
+            let vbinds = aargs.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(arg, ii) => {
+                let decl = stmt.vinfos.get(ii);
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+
+                return (|arg, vtype, vname|);
+            });
+
+            return nctx, some(SMTAssembly::LetsOperation{vbinds, tail});
+        }
+        else {
+            let vbinds = aargs.mapIdx<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(arg, ii) => {
+                let decl = stmt.vinfos.get(ii);
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+
+                return (|arg, vtype, vname|);
+            });
+
+            return nctx, some(SMTAssembly::LetWErrorsOperation{vbinds, tail});
+        }
+    }
+
+    method transformVariableMultiAssignmentImplicitStatement(stmt: BSQAssembly::VariableMultiAssignmentImplicitStatement, tail: SMTAssembly::Operation, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let rctx, smtexp = this.transformExpressionToSMT(stmt.exp, ctx);
+
+        let smteltype = this.transformStdTypeToSMT(stmt.exp.etype);
+        if(smtexp)@<SafeResult> {
+            let vbinds = stmt.vinfos.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(decl, ii) => {
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+                let access = CString::concat(this.transformEListToBase(stmt.exp.etype@<BSQAssembly::EListTypeSignature>), '-', ii.toCString());
+                let expr = SMTAssembly::AccessFromIndexExpression{smteltype, access, $smtexp.exp};
+
+                return (|expr, vtype, vname|);
+            });
+
+            return rctx, some(SMTAssembly::LetsOperation{vbinds, tail});
+        }
+        else {
+            let vebind = '@tmpe@mi'<SMTAssembly::Identifier>;
+            let vbind = '@mi@'<SMTAssembly::Identifier>;
+            
+            let vbinds = stmt.vinfos.mapIdx<(|SMTAssembly::SafeExpression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>(fn(decl, ii) => {
+                let vname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(decl.0.value));
+                let vtype = this.transformStdTypeToSMT(decl.1);
+                let access = CString::concat(this.transformEListToBase(stmt.exp.etype@<BSQAssembly::EListTypeSignature>), '-', ii.toCString());
+                let expr = SMTAssembly::AccessFromIndexExpression{smteltype, access, SMTAssembly::AccessVariableExpression{vbind}};
+
+                return (|expr, vtype, vname|);
+            });
+            let stail = SMTAssembly::LetsOperation{vbinds, tail};
+
+            return rctx, some(SMTAssembly::LetOperationWError{vebind, vbind, smteltype, $smtexp.exp, stail});
         }
     }
 
@@ -1711,19 +1834,19 @@ entity SMTTransformer {
                 return this.transformVariableInitializationStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiInitializationExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return this.transformVariableMultiInitializationExplicitStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiInitializationImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return this.transformVariableMultiInitializationImplicitStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableAssignmentStatement => {
                 return this.transformVariableAssignmentStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiAssignmentExplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return this.transformVariableMultiAssignmentExplicitStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => {
-                abort; %% NOT IMPLEMENTED
+                return this.transformVariableMultiAssignmentImplicitStatement($stmt, tail@some, ctx);
             }
             | BSQAssembly::ReturnVoidStatement => {
                 abort; %% NOT IMPLEMENTED
