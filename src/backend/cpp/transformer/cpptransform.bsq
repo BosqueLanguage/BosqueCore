@@ -358,7 +358,7 @@ entity CPPTransformer {
             | BSQAssembly::PostfixNop => { abort; }
             | BSQAssembly::PostfixAbort => { abort; }
             | BSQAssembly::PostfixWidenConvert => { abort; }
-            | BSQAssembly::PostfixAccessSomeValue => { abort; }
+            | BSQAssembly::PostfixAccessSomeValue => { return CPPAssembly::PostfixAccessSomeValue{ baseType }; }
             | BSQAssembly::PostfixLiteralNoneValue => { abort; }
         }
     }
@@ -609,6 +609,13 @@ entity CPPTransformer {
         }
     }
 
+    method transformIfElseBinderStatement(stmt: BSQAssembly::IfElseBinderStatement, cond: CPPAssembly::Expression, tb: CPPAssembly::BlockStatement, fb: CPPAssembly::BlockStatement): CPPAssembly::IfElseBinderStatement {
+        let itest = this.transformITestAsTest(stmt.itest);
+        let binder = this.transformBinderInfo(stmt.binder);       
+    
+        return CPPAssembly::IfElseBinderStatement{ cond, tb, fb, itest, binder };
+    }
+
     recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement): CPPAssembly::IfElseStatement {
         let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
@@ -617,7 +624,7 @@ entity CPPTransformer {
         match(stmt)@ {
             BSQAssembly::IfElseSimpleStatement => { return CPPAssembly::IfElseSimpleStatement{ cond, trueBlock, falseBlock }; }
             | BSQAssembly::IfElseTestStatement => { return CPPAssembly::IfElseTestStatement{ cond, trueBlock, falseBlock, this.transformITestAsTest($stmt.itest) }; }
-            | BSQAssembly::IfElseBinderStatement => { abort; } %% TODO: Not Implemented
+            | BSQAssembly::IfElseBinderStatement => { return this.transformIfElseBinderStatement($stmt, cond, trueBlock, falseBlock); } %% TODO: Not Implemented
         }
     }
 

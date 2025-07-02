@@ -326,6 +326,8 @@ PostfixAccessFromName {
 | PostfixBoolConstant {
     field value: Bool;
 }
+| PostfixAccessSomeValue {
+}
 ;
 
 entity PostfixOp provides Expression {
