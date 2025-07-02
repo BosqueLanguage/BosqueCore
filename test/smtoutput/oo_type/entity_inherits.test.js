@@ -14,14 +14,14 @@ describe ("SMT -- entity decl inherits", () => {
     });
 
     it("should smt exec simple entity inherits fields and invariants", function () {
-        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f > 0i; } entity Bar provides Foo { } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= 3 Main@main)))");
-        runishMainCodeUnsat('concept Foo { field f: Int; } entity Bar provides Foo { invariant $f > 0i; } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= 3 Main@main)))");
+        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f > 0i; } entity Bar provides Foo { } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= (@Result-ok 3) Main@main)))");
+        runishMainCodeUnsat('concept Foo { field f: Int; } entity Bar provides Foo { invariant $f > 0i; } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= (@Result-ok 3) Main@main)))");
 
-        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f != 0i; } entity Bar provides Foo { invariant $f > 0i; } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= 3 Main@main)))");
+        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f != 0i; } entity Bar provides Foo { invariant $f > 0i; } public function main(): Int { return Bar{3i}.f; }', "(assert (not (= (@Result-ok 3) Main@main)))");
     });
 
      it("should smt exec simple entity inherits fields and invariants", function () {
-        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f != 0i; } entity Bar provides Foo { invariant $f >= 0i; } public function main(): Int { return Bar{0i}.f; }', "(assert (not (= (@Result-ok 0) Main@main)))"); 
+        runishMainCodeUnsat('concept Foo { field f: Int; invariant $f != 0i; } entity Bar provides Foo { invariant $f >= 0i; } public function main(): Int { return Bar{2i}.f; }', "(assert (not (= (@Result-ok 2) Main@main)))"); 
         runishMainCodeUnsat('concept Foo { field f: Int; invariant $f != 0i; } entity Bar provides Foo { invariant $f >= 0i; } public function main(): Int { return Bar{1i}.f; }', "(assert (not (= (@Result-ok 1) Main@main)))"); 
     });
 
