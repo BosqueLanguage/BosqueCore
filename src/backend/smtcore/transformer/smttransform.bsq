@@ -480,27 +480,18 @@ entity SMTTransformer {
     }
 
     recursive method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+        let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.resolvedArgs, ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
 
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
-        
-        let needsdefault = !e.shuffleinfo.allOf(pred(arg) => arg.0?some);
-        if(!tdecl.hasInvariants() && !needsdefault) {
-            let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
+        let orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
+
+        if(!tdecl.hasInvariants()) {    
             let createop = SMTAssembly::ConstructorStdExpression{smttype, orderargs};
 
             return nctx, this.wrapOperationResult(e.ctype, createop, obinds);
         }
         else {
-            var orderargs: List<SMTAssembly::SafeExpression>;
-            if(!needsdefault) {
-                orderargs = e.shuffleinfo.map<SMTAssembly::SafeExpression>(fn(si) => aargs.get(si.0@some));
-            }
-            else {
-                abort;
-            }
-
             let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::ConstructorStdExpression{smttype, orderargs}};
 
             let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
@@ -592,7 +583,7 @@ entity SMTTransformer {
             return ctx, ErrorResult{this.transformStdTypeToSMT(e.etype), abtop};
         }
         else {
-            let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+            let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.resolvedArgs.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
 
             let fdecl = this.assembly.nsfuncs.get(e.ikey);
             let optinline = SMTTransformer::tryGetForceInlineInfo(fdecl);
@@ -602,7 +593,7 @@ entity SMTTransformer {
                     return none;
                 }
                 else {
-                    let iserr = this.erranalysis.processExpression(e.argsinfo.args.args.get(ii).exp, this.errinvokes, ctx.lambdaerr);
+                    let iserr = this.erranalysis.processExpression(e.argsinfo.resolvedArgs.get(ii), this.errinvokes, ctx.lambdaerr);
                     return some((|p.pname, iserr|));
                 }
             })
@@ -638,17 +629,19 @@ entity SMTTransformer {
             return ctx, ErrorResult{this.transformStdTypeToSMT(e.etype), abtop};
         }
         else {
-            let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
+            let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.argsinfo.resolvedArgs.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
 
             let fdecl = this.assembly.typefuncs.get(e.ikey);
             let optinline = SMTTransformer::tryGetForceInlineInfo(fdecl);
+
+            xxxx;
 
             let largs = fdecl.params.mapIdx<Option<(|BSQAssembly::Identifier, Bool|)>>(fn(p, ii) => {
                 if(p.ptype)@!<BSQAssembly::LambdaTypeSignature> {
                     return none;
                 }
                 else {
-                    let iserr = this.erranalysis.processExpression(e.argsinfo.args.args.get(ii).exp, this.errinvokes, ctx.lambdaerr);
+                    let iserr = this.erranalysis.processExpression(e.argsinfo.resolvedArgs.get(ii), this.errinvokes, ctx.lambdaerr);
                     return some((|p.pname, iserr|));
                 }
             })
@@ -919,7 +912,7 @@ entity SMTTransformer {
 
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.args.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), nctx);
+        let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.resolvedArgs.map<BSQAssembly::Expression>(fn(arg) => arg.exp), nctx);
         
         let aargs = scargs.pushFront(onarg);
         var allobinds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>;
@@ -946,7 +939,7 @@ entity SMTTransformer {
                 return none;
             }
             else {
-                let iserr = this.erranalysis.processExpression(op.argsinfo.args.args.get(ii).exp, this.errinvokes, ctx.lambdaerr);
+                let iserr = this.erranalysis.processExpression(op.argsinfo.resolvedArgs.get(ii), this.errinvokes, ctx.lambdaerr);
                 return some((|p.pname, iserr|));
             }
         })

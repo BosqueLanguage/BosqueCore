@@ -80,12 +80,73 @@ entity ExplicitifyTransform {
         return this.processExpression[recursive](lhs, vmap), this.processExpression[recursive](rhs, vmap);
     }
 
-    %%
-    %%TODO: we will want to have a simple (for strictly positional arguments) and a tail processing method too
-    %%
+    recursive method processStdConstructorArgs(sinfo: SourceInfo, finfos: List<SaturatedFieldInfo>, args: List<Expression>, shuffleinfo: List<(|Option<Nat>, Option<(|TypeSignature, Identifier|)>, TypeSignature|)>, vmap: VarMapping): List<Expression> {
+        let resolvedargs = shuffleinfo.mapIdx[recursive]<Expression>(fn(si, i) => {
+            let fi = finfos.get(i);
+
+            if($argidx = si.0)@none {
+                abort; %% Do static resolution or put in "default value expression" for the field
+            }
+            else {
+                let eexp = args.get($argidx);
+                let nexp = this.processExpression[recursive](eexp, vmap);
+
+                return this.processCoerceTypeAsNeeded(nexp, pp.ptype);
+            }
+        });
+
+        return resolvedargs;
+    }
+
+    recursive method processInvokeArgumentInfoStatic(sinfo: SourceInfo, params: List<InvokeParameterDecl>, ainfo: InvokeArgumentInfo, vmap: VarMapping): InvokeArgumentInfo {
+        var resolvedargs = ainfo.shuffleinfo.mapIdx[recursive]<Expression>(fn(si, i) => {
+            let pp = params.get(i);
+
+            if($argidx = si.0)@none {
+                let dexp = this.assembly.tryResolveExpAsLiteralExpression(pp.defaultval@some);
+                if(dexp)@some {
+                    return dexp;
+                }
+                else {
+                    abort; %% Put in "default value expression" for the parameter
+                }
+            }
+            else {
+                let eexp = ainfo.srcargs.args.get($argidx).exp;
+                let nexp = this.processExpression[recursive](eexp, vmap);
+
+                return this.processCoerceTypeAsNeeded(nexp, pp.ptype);
+            }
+        });
+
+        if($resttype = ainfo.resttype)@some {
+            let restl = ainfo.restinfo.map[recursive]<Expression>(recursive fn(rri) => {
+                let eexp = ainfo.srcargs.args.get(rri.0).exp;
+                let nexp = this.processExpression[recursive](eexp, vmap);
+
+                if(!rri[1]) {
+                    return this.processCoerceTypeAsNeeded(nexp, rri.2);
+                }
+                else {
+                    abort; %% Not implemented -- spread into rest
+                }
+            });
+
+            if($resttype?<ListTypeDecl>) {
+                let lsig = NominalTypeSignature{ sinfo, $resttype.tkeystr };
+                let argl = ArgumentList{ restl.map<ArgumentValue>(fn(arg) => PositionalArgumentValue{arg}) };
+                resolvedargs = normalizedargs.pushBack(ConstructorPrimaryListExpression{ sinfo, lsig, argl, lsig, $resttype });
+            }
+            else {
+                abort; %% Not implemented -- CallNamespaceFunction -- rest
+            }
+        }
+
+        return ainfo[resolvedArgs=some(resolvedargs)];
+    }
 
     recursive method processArgumentListStd(argl: ArgumentList, expected: List<TypeSignature>, vmap: VarMapping): ArgumentList 
-        requires argl.args.size() <= expected.size();
+        requires argl.srcargs.size() <= expected.size();
     {
         let nargs = argl.args.mapIdx[recursive]<ArgumentValue>(recursive fn(arg, i) => {
             let nexp = this.processExpression[recursive](arg.exp, vmap);
@@ -98,7 +159,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processArgumentListConstructCollection(argl: ArgumentList, elemtype: TypeSignature, vmap: VarMapping): ArgumentList {
-        let nargs = argl.args.map[recursive]<ArgumentValue>(recursive fn(arg) => {
+        let nargs = argl.srcargs.map[recursive]<ArgumentValue>(recursive fn(arg) => {
             let nexp = this.processExpression[recursive](arg.exp, vmap);
             if(arg?<SpreadArgumentValue>) {
                 return arg[exp=nexp];
@@ -123,39 +184,39 @@ entity ExplicitifyTransform {
     }
 
     recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.ofttype}, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.srcargs, List<TypeSignature>{e.ofttype}, vmap);
 
         return e[args=nargs];
     }
 
     recursive method processConstructorPrimaryListExpression(e: ConstructorPrimaryListExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListConstructCollection[recursive](e.args, e.elemtype, vmap);
+        let nargs = this.processArgumentListConstructCollection[recursive](e.srcargs, e.elemtype, vmap);
 
         return e[args=nargs];
     }
 
     recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.valuetype}, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.srcargs, List<TypeSignature>{e.valuetype}, vmap);
 
         return e[args=nargs];
     }
 
     recursive method processConstructorTypeDeclStringExpression(e: ConstructorTypeDeclStringExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd[recursive](e.args, List<TypeSignature>{e.valuetype}, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.srcargs, List<TypeSignature>{e.valuetype}, vmap);
         
         let noptchk = this.processExpression[recursive](e.ofcheck, vmap);
         return e[args=nargs, ofcheck=noptchk];
     }
 
     recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
-        let types = e.shuffleinfo.map<TypeSignature>(fn(si) => si.2);
-        let nargs = this.processArgumentListStd[recursive](e.args, types, vmap);
+        let finfos = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr).saturatedFields;
+        let nargs = this.processStdConstructorArgs[recursive](e.sinfo, finfos: List<SaturatedFieldInfo>, e.srcargs.args, e.shuffleinfo: vmap);
 
-        return e[args=nargs];
+        return e[resolvedArgs=some(nargs)];
     }
 
     recursive method processConstructorEListExpression(e: ConstructorEListExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgumentListStd[recursive](e.args, e.etype@<EListTypeSignature>.entries, vmap);
+        let nargs = this.processArgumentListStd[recursive](e.srcargs, e.etype@<EListTypeSignature>.entries, vmap);
 
         return e[args=nargs];
     }
@@ -182,23 +243,23 @@ entity ExplicitifyTransform {
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression, vmap: VarMapping): Expression {
         let etypes = e.lambda.params.map<TypeSignature>(fn(param) => param.ptype);
-        let nargs = this.processArgumentListStd(e.argsinfo.args, etypes, vmap);
+        let nargs = this.processArgumentListStd(e.argsinfo.srcargs, etypes, vmap);
 
         return e[argsinfo=$argsinfo[args=nargs]];
     }
 
     recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression, vmap: VarMapping): Expression {
-        let types = e.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
-        let nargs = this.processArgumentListStd(e.argsinfo.args, types, vmap);
+        let params = this.assembly.nsfuncs.get(e.ikey).params;
+        let nargs = this.processInvokeArgumentInfoStatic[recursive](e.sinfo, params, e.argsinfo, vmap);
 
-        return e[argsinfo=$argsinfo[args=nargs]];
+        return e[argsinfo=nargs];
     }
 
     recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression, vmap: VarMapping): Expression {
-        let types = e.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
-        let nargs = this.processArgumentListStd(e.argsinfo.args, types, vmap);
+        let params = this.assembly.typefuncs.get(e.ikey).params;
+        let nargs = this.processInvokeArgumentInfoStatic[recursive](e.sinfo, params, e.argsinfo, vmap);
 
-        return e[argsinfo=$argsinfo[args=nargs]];
+        return e[argsinfo=nargs];
     }
 
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
@@ -256,10 +317,10 @@ entity ExplicitifyTransform {
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
-        let types = op.argsinfo.shuffleinfo.map<TypeSignature>(fn(si) => si.1); 
-        let nargs = this.processArgumentListStd(op.argsinfo.args, types, vmap);
+        let params = this.assembly.staticmethods.get(op.ikey).params;
+        let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, params, op.argsinfo, vmap);
 
-        return op[argsinfo=$argsinfo[args=nargs]];
+        return op[argsinfo=nargs];
     }
 
     recursive method processPostfixOp(e: PostfixOp, vmap: VarMapping): Expression {

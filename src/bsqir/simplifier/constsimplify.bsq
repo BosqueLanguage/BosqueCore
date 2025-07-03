@@ -13,53 +13,6 @@ entity ConstantSimplification {
         return \/(stmt?<ReturnVoidStatement>, stmt?<ReturnSingleStatement>, stmt?<ReturnMultiStatement>, stmt?<AbortStatement>);
     }
 
-    recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
-        match(exp)@ {
-            AccessNamespaceConstantExpression => {
-                let cc = this.assembly.nsconsts.find(pred(nsconst) => /\(nsconst.name === $exp.name, nsconst.declaredInNS === $exp.ns));
-                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
-            }
-            | AccessStaticFieldExpression => {
-                let cc = this.assembly.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr));
-                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
-            }
-            | AccessEnumExpression => {
-                return some(exp);
-            }
-            | LiteralNoneExpression => {
-                return some(exp);
-            }
-            | LiteralSimpleExpression => {
-                return some(exp);
-            }
-            | LiteralCStringExpression => {
-                return some(exp);
-            }
-            | LiteralStringExpression => {
-                return some(exp);
-            }
-            | LiteralCRegexExpression => {
-                return some(exp);
-            }
-            | LiteralRegexExpression => {
-                return some(exp);
-            }
-            | LiteralTypeDeclValueExpression => {
-                let tdecl = this.assembly.lookupNominalTypeDeclaration($exp.constype.tkeystr);
-                
-                if(!tdecl.allInvariants.empty()) {
-                    return none;
-                }
-                else {
-                    return some(exp);
-                }
-            }
-            | _ => {
-                return none;
-            }
-        }
-    }
-
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
         if(itest.isnot) {
             if(this.assembly.isSubtypeOf(srctype, itest.ttype)) {
@@ -252,7 +205,16 @@ entity ConstantSimplification {
         return this.processExpression[recursive](lhs), this.processExpression[recursive](rhs);
     }
 
-    recursive method processArgumentList(argl: ArgumentList): ArgumentList {
+    recursive method processInvokeArgumentInfo(arginfo: InvokeArgumentInfo): InvokeArgumentInfo {
+        var rargs: Option<List<Expression>> = none;
+        if(arginfo.resolvedArgs)@some {
+            rargs = some(arginfo.resolvedArgs.map[recursive](fn(arg) => this.processExpression[recursive](arg)));
+        }
+
+        return arginfo[resolvedArgs=rargs];
+    }
+
+    recursive method processArgumentListSimple(argl: ArgumentList): ArgumentList {
         let nargs = argl.args.map[recursive]<ArgumentValue>(recursive fn(arg) => {
             let nexp = this.processExpression[recursive](arg.exp);
             return arg[exp=nexp];
@@ -262,7 +224,7 @@ entity ConstantSimplification {
     }
 
     method processAccessNamespaceConstantExpression(e: AccessNamespaceConstantExpression): Expression {
-        let sexp = this.tryResolveExpAsLiteralExpression(e);
+        let sexp = this.assembly.tryResolveExpAsLiteralExpression(e);
         if(sexp)@none {
             return e;
         }
@@ -272,7 +234,7 @@ entity ConstantSimplification {
     }
 
     method processAccessStaticFieldExpression(e: AccessStaticFieldExpression): Expression {
-        let sexp = this.tryResolveExpAsLiteralExpression(e);
+        let sexp = this.assembly.tryResolveExpAsLiteralExpression(e);
         if(sexp)@none {
             return e;
         }
@@ -288,7 +250,7 @@ entity ConstantSimplification {
             return e[args=nargs];
         }
         else {
-            let nofchk = this.tryResolveExpAsLiteralExpression($e.ofcheck);
+            let nofchk = this.assembly.tryResolveExpAsLiteralExpression($e.ofcheck);
             return $e[args=nargs, ofcheck=nofchk@some];
         }
     }
@@ -1217,7 +1179,7 @@ entity ConstantSimplification {
             allValidates=typedecl.allValidates,
 
             valuetype=typedecl.valuetype,
-            ofcheck=this.tryResolveExpAsLiteralExpression(typedecl.ofcheck)@some
+            ofcheck=this.assembly.tryResolveExpAsLiteralExpression(typedecl.ofcheck)@some
         };
     }
 

@@ -577,4 +577,51 @@ entity Assembly {
             }
         }
     }
+
+    recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
+        match(exp)@ {
+            AccessNamespaceConstantExpression => {
+                let cc = this.nsconsts.find(pred(nsconst) => /\(nsconst.name === $exp.name, nsconst.declaredInNS === $exp.ns));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessStaticFieldExpression => {
+                let cc = this.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessEnumExpression => {
+                return some(exp);
+            }
+            | LiteralNoneExpression => {
+                return some(exp);
+            }
+            | LiteralSimpleExpression => {
+                return some(exp);
+            }
+            | LiteralCStringExpression => {
+                return some(exp);
+            }
+            | LiteralStringExpression => {
+                return some(exp);
+            }
+            | LiteralCRegexExpression => {
+                return some(exp);
+            }
+            | LiteralRegexExpression => {
+                return some(exp);
+            }
+            | LiteralTypeDeclValueExpression => {
+                let tdecl = this.lookupNominalTypeDeclaration($exp.constype.tkeystr);
+                
+                if(!tdecl.allInvariants.empty()) {
+                    return none;
+                }
+                else {
+                    return some(exp);
+                }
+            }
+            | _ => {
+                return none;
+            }
+        }
+    }
 }

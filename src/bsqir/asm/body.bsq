@@ -26,18 +26,19 @@ RefArgumentValue { }
 | SpreadArgumentValue { }
 ;
 
-entity ArgumentList {
-    field args: List<ArgumentValue>;
-}
-
 entity InvokeArgumentInfo {
     field name: Identifier;
     field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field srcargs: List<ArgumentValue>;
 
     field shuffleinfo: List<(|Option<Nat>, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Nat, Bool, TypeSignature|)>;
+
+    field resolvedargs: Option<List<Expression>>;
+}
+
+entity ConstructorArgumentInfo {
 }
 
 concept Expression {
@@ -111,7 +112,6 @@ entity AccessCapturedVariableExpression provides Expression {
 }
 
 concept ConstructorExpression provides Expression {
-    field args: ArgumentList;
 }
 
 concept ConstructorPrimaryExpression provides ConstructorExpression {
@@ -120,6 +120,7 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 
 datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
     field elemtype: TypeSignature;
+    field args: List<Expression>;
 }
 of
 ConstructorPrimaryListExpression { }
@@ -154,8 +155,10 @@ entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression
 }
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
-    field shuffleinfo: List<(|Option<Nat>, Identifier, TypeSignature|)>;
+    field shuffleinfo: List<(|Option<Nat>, Option<(|TypeSignature, Identifier|)>, TypeSignature|)>;
     field fullns: List<CString>;
+
+    field resolvedArgs: Option<List<Expression>>;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {

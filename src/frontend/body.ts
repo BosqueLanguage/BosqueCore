@@ -511,7 +511,7 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
     readonly ctype: NominalTypeSignature;
 
     elemtype: TypeSignature | undefined = undefined;
-    shuffleinfo: [number, string, TypeSignature][] = [];
+    shuffleinfo: [number, TypeSignature | undefined, string, TypeSignature][] = [];
     
     constructor(sinfo: SourceInfo, ctype: NominalTypeSignature, args: ArgumentList) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
