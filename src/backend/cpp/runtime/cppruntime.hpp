@@ -166,9 +166,13 @@ public:
     DataEntry(uintptr_t* d) noexcept : data(*d) { }
 };
 
+//
+// This is redundant, we should juts use boxed<K> instead
+//
+
 // K is maximum possible size for datatype (deduced from member entities)
 template <size_t K> 
-class DataType { // May be able to make this more generic and use it to represent concepts too
+class DataType { 
 public:
     TypeInfoBase* typeinfo = nullptr;
     DataEntry<K> d;
