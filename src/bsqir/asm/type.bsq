@@ -28,4 +28,8 @@ VoidTypeSignature { }
 entity TypeTopology {
     field ctopo: List<TypeKey>;
     field sccs: List<List<TypeKey>>;
+
+    method isTypeInSCC(tkey: TypeKey): Bool {
+        return this.sccs.someOf(pred(scc) => scc.contains(tkey));
+    }
 }

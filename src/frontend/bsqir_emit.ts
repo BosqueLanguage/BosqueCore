@@ -623,7 +623,7 @@ class BSQIREmitter {
    
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
-        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name, exp.terms);
+        const ikey = EmitNameManager.generateTypeInvokeKey(this.tproc(exp.resolvedDeclType as TypeSignature), exp.name, exp.terms);
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
        
@@ -2448,16 +2448,18 @@ class BSQIREmitter {
                     }
                 }
 
-                for(let k = 0; k < sprovides.length; ++k) {
-                    const st = sprovides[k];
-                    const tkey = EmitNameManager.generateTypeKey(st);
+                if(tt instanceof AbstractEntityTypeDecl) {
+                    for(let k = 0; k < sprovides.length; ++k) {
+                        const st = sprovides[k];
+                        const tkey = EmitNameManager.generateTypeKey(st);
 
-                    if(!this.subtypemap.has(tkey)) {
-                        this.subtypemap.set(tkey, []);
-                    }
+                        if(!this.subtypemap.has(tkey)) {
+                            this.subtypemap.set(tkey, []);
+                        }
                     
-                    let ste = this.subtypemap.get(tkey) as string[];
-                    ste.push(EmitNameManager.generateTypeKey(tsig));
+                        let ste = this.subtypemap.get(tkey) as string[];
+                        ste.push(EmitNameManager.generateTypeKey(tsig));
+                    }
                 }
 
                 this.mapper = undefined;

@@ -20,7 +20,7 @@ entity ConstantSimplification {
                 return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
             }
             | AccessStaticFieldExpression => {
-                let cc = this.assembly.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.stype.tkeystr));
+                let cc = this.assembly.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr));
                 return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
             }
             | AccessEnumExpression => {
