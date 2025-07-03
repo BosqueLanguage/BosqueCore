@@ -1514,40 +1514,42 @@ function emitAllSubtypeChecks(pconcepts: List<SMTAssembly::PrimitiveConceptTypeD
     return CString::joinAll('%n;', List<CString>{pcks, ccks, dcks}.filter(pred(s) => !s.empty()));
 }
 
-function emitConceptVFieldFunctionsFor(ccpt: SMTAssembly::ConceptTypeDecl): List<CString> {
-    return ccpt.absfields.map<CString>(fn(f) => {
-        let vfname = SMTNameManager::generateVirtualFieldAccessorFunctionName(ccpt.tkey, f.fname);
-        if(ccpt.subtypes.empty()) {
-            return CString::concat('(declare-fun ', vfname, ' (@Term) ', f.ftype.value, ')');
-        }
+function emitVFieldFunctionDeclFor(ccptkey: SMTAssembly::TypeKey, fi: SMTAssembly::FieldInfo, subtypes: List<SMTAssembly::TypeKey>): CString {
+    let vfname = SMTNameManager::generateVirtualFieldAccessorFunctionName(ccptkey, fi.fname);
+    if(subtypes.empty()) {
+        return CString::concat('(declare-fun ', vfname, ' (@Term) ', fi.ftype.value, ')');
+    }
         
-        var body: CString;
-        if(ccpt.subtypes.isSingle()) {
-            let extract = SMTNameManager::generateStructTermFieldName(ccpt.subtypes.single());
-            let ssubf = SMTNameManager::generateStructFieldName(ccpt.subtypes.single(), f.fname);
+    var body: CString;
+    if(subtypes.isSingle()) {
+        let extract = SMTNameManager::generateStructTermFieldName(subtypes.single());
+        let ssubf = SMTNameManager::generateStructFieldName(subtypes.single(), fi.fname);
 
-            body = CString::concat('(', ssubf, ' (', extract, ' v))');
-        }
-        else {
-            let opts = ccpt.subtypes.map<CString>(fn(t) => {
-                let tcons = SMTNameManager::generateStructConstructorName(t);
-                let extract = SMTNameManager::generateStructTermFieldName(t);
-                let ssubf = SMTNameManager::generateStructFieldName(t, f.fname);
-                let access = CString::concat('(', ssubf, ' (', extract, ' v))');
+        body = CString::concat('(', ssubf, ' (', extract, ' v))');
+    }
+    else {
+        let opts = subtypes.map<CString>(fn(t) => {
+            let tcons = SMTNameManager::generateStructConstructorName(t);
+            let extract = SMTNameManager::generateStructTermFieldName(t);
+            let ssubf = SMTNameManager::generateStructFieldName(t, fi.fname);
+            let access = CString::concat('(', ssubf, ' (', extract, ' v))');
 
-                return CString::concat('    (', tcons, ' ', access, ')');
-            });
+            return CString::concat('    (', tcons, ' ', access, ')');
+        });
 
-            body = CString::concat('(match v (%n;', CString::joinAll('%n;', opts), '%n;))');
-        }
+        body = CString::concat('(match v (%n;', CString::joinAll('%n;', opts), '%n;))');
+    }
 
-        let sig = CString::concat('define-fun ', vfname, ' ((v @Term)) ', f.ftype.value);
-        return CString::concat('(', sig, ' ', body, ')');
-    });
+    let sig = CString::concat('define-fun ', vfname, ' ((v @Term)) ', fi.ftype.value);
+    return CString::concat('(', sig, ' ', body, ')');
 }
 
-function emitDatatypeVFieldFunctionsFor(ccpt: SMTAssembly::DatatypeTypeDecl): List<CString> {
-    abort; %% Not implemented yet
+function emitConceptVFieldFunctionsFor(ccpt: SMTAssembly::ConceptTypeDecl): List<CString> {
+    return ccpt.absfields.map<CString>(fn(f) => emitVFieldFunctionDeclFor(ccpt.tkey, f, ccpt.subtypes));
+}
+
+function emitDatatypeVFieldFunctionsFor(ddt: SMTAssembly::DatatypeTypeDecl): List<CString> {
+    return ddt.absfields.map<CString>(fn(f) => emitVFieldFunctionDeclFor(ddt.tkey, f, ddt.subtypes));
 }
 
 function emitAllFieldAccessFunctions(concepts: List<SMTAssembly::ConceptTypeDecl>, dconcepts: List<SMTAssembly::DatatypeTypeDecl>): CString {

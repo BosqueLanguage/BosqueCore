@@ -2290,12 +2290,27 @@ entity SMTTransformer {
         return SMTAssembly::EntityTypeDecl{ tkey, termable, finfo };
     }
 
+    method transformDatatypeMemberEntityTypeDeclToSMT(decl: BSQAssembly::DatatypeMemberEntityTypeDecl): SMTAssembly::DatatypeMemberEntityTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+        let finfo = decl.saturatedBFieldInfo.map<SMTAssembly::FieldInfo>(fn(f) => this.transformFieldInfoToSMT(f));
+
+        return SMTAssembly::DatatypeMemberEntityTypeDecl{ tkey, finfo };
+    }
+
     method transformConceptDeclToSMT(decl: BSQAssembly::ConceptTypeDecl): SMTAssembly::ConceptTypeDecl {
         let tkey = TransformNameManager::convertTypeKey(decl.tkey);
         let absfields = decl.fields.map<SMTAssembly::FieldInfo>(fn(f) => this.transformAbsFieldInfoToSMT(f));
         let subtypes = decl.subtypes.map<SMTAssembly::TypeKey>(fn(s) => TransformNameManager::convertTypeKey(s));
 
         return SMTAssembly::ConceptTypeDecl{ tkey, absfields, subtypes };
+    }
+
+    method transformDatatypeTypeDeclToSMT(decl: BSQAssembly::DatatypeTypeDecl): SMTAssembly::DatatypeTypeDecl {
+        let tkey = TransformNameManager::convertTypeKey(decl.tkey);
+        let absfields = decl.fields.map<SMTAssembly::FieldInfo>(fn(f) => this.transformAbsFieldInfoToSMT(f));
+        let subtypes = decl.subtypes.map<SMTAssembly::TypeKey>(fn(s) => TransformNameManager::convertTypeKey(s));
+
+        return SMTAssembly::DatatypeTypeDecl{ tkey, absfields, subtypes };
     }
 
     method transformPrimitiveConceptDeclToSMT(decl: BSQAssembly::PrimitiveConceptTypeDecl): SMTAssembly::PrimitiveConceptTypeDecl {
@@ -2738,6 +2753,10 @@ entity SMTTransformer {
             .filter(pred(tkey) => assembly.entities.has(tkey))
             .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(assembly.entities.get(tkey)));
 
+        let tdmtypes = assembly.allconcretetypes
+            .filter(pred(tkey) => assembly.datamembers.has(tkey))
+            .map<SMTAssembly::DatatypeMemberEntityTypeDecl>(fn(tkey) => transformer.transformDatatypeMemberEntityTypeDeclToSMT(assembly.datamembers.get(tkey)));
+
         let tconstructables = assembly.allconcretetypes
             .filter(pred(tkey) => assembly.constructables.has(tkey))
             .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => transformer.transformConstructableDeclToSMT(assembly.constructables.get(tkey)));
@@ -2753,6 +2772,10 @@ entity SMTTransformer {
         let tcconcepts = assembly.allabstracttypes
             .filter(pred(tkey) => assembly.concepts.has(tkey))
             .map<SMTAssembly::ConceptTypeDecl>(fn(tkey) => transformer.transformConceptDeclToSMT(assembly.concepts.get(tkey)));
+
+        let tddtypes = assembly.allabstracttypes
+            .filter(pred(tkey) => assembly.datatypes.has(tkey))
+            .map<SMTAssembly::DatatypeTypeDecl>(fn(tkey) => transformer.transformDatatypeTypeDeclToSMT(assembly.datatypes.get(tkey)));
 
         let tallfuncs = List<SMTAssembly::InvokeKey>::concat(tnsfuncsbuiltin.keyList(), tnsinvkeys);
 
@@ -2779,12 +2802,12 @@ entity SMTTransformer {
             collections = tcollections,
 
             entities = tentities,
-            datamembers = List<SMTAssembly::DatatypeMemberEntityTypeDecl>{},
+            datamembers = tdmtypes,
 
             pconcepts = tpconcepts,
             concepts = tcconcepts,
 
-            datatypes = List<SMTAssembly::DatatypeTypeDecl>{},
+            datatypes = tddtypes,
 
             orderedfuncs = tallfuncs,
             validators = List<SMTAssembly::FunctionDecl>::concat(tvalidators, tvalidatorsroot)
