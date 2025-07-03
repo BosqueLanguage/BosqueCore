@@ -194,10 +194,10 @@ datatype IfExpression provides Expression using {
 }
 of
 IfSimpleExpression { }
-| IfTestExpression { %% TODO: Not implemented (need ITests for this to work)
+| IfTestExpression { 
     field itest: ITest;
 }
-| IfBinderExpression { %% TODO: Not implemented 
+| IfBinderExpression {
     field itest: ITest;
     field binder: BinderInfo;
 }

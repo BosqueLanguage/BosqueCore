@@ -446,7 +446,7 @@ entity CPPTransformer {
 
         match(exp)@ {
             BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
-            | _ => { abort; } %% TODO: Not Implemented 
+            | BSQAssembly::IfTestExpression => { return CPPAssembly::IfTestExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest) }; } %% TODO: Not Implemented 
         }
     }
 
@@ -1252,10 +1252,7 @@ entity CPPTransformer {
                 return (| acc.0 + 1n, gen_tinfo.1 |);
         });
 
-        %% This may not be right, but for now we dont emit any type info for concepts or datatypes. The types
-        %% who provide them contain all the necessary fields, so this should be unnecessary. 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
-            .filter(pred(tkey) => !bsqasm.concepts.has(tkey) && !bsqasm.datatypes.has(tkey))
             .reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
                 generated_typeinfos_concrete, fn(acc, tkey) => {
 

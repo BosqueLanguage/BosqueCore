@@ -115,52 +115,93 @@ public:
 };
 
 template <size_t K>
-class TupleEntry {
+class DataEntry {
 public:
     uintptr_t data[K] = {};
 
-    TupleEntry() noexcept = default;
-    TupleEntry(const TupleEntry& rhs) noexcept {
+    DataEntry() noexcept = default;
+    DataEntry(const DataEntry& rhs) noexcept {
         memcpy<K>(this->data, rhs->data);
     }
-    TupleEntry& operator=(const TupleEntry& rhs) noexcept {
+    DataEntry& operator=(const DataEntry& rhs) noexcept {
         memcpy<K>(this->data, rhs->data);
         
         return *this;
     }
 
-    TupleEntry(uintptr_t* d) {
+    DataEntry(uintptr_t* d) {
         memcpy<K>(this->data, d);
     }
 };
 
-// We may want to specialize K=2,3,4 as well
+// Maybe we combine K = 1 and K = 0 cases together
 template <>
-class TupleEntry<1> {
+class DataEntry<0> {
 public:
     uintptr_t data = 0;
 
-    TupleEntry() noexcept = default;
-    TupleEntry(const TupleEntry& rhs) noexcept : data(rhs.data) { }
-    TupleEntry& operator=(const TupleEntry& rhs) noexcept {        
-        data = rhs.data;
+    DataEntry() noexcept = default;
+    DataEntry(const DataEntry& rhs) noexcept : data(rhs.data) { }
+    DataEntry& operator=(const DataEntry& rhs) noexcept {        
+        this->data = rhs.data;
         return *this;
     }
 
-    TupleEntry(uintptr_t* d) noexcept : data(*d) { }
+    DataEntry(uintptr_t* d) noexcept : data(*d) { }
+};
+
+// We may want to specialize K=2,3,4 as well
+template <>
+class DataEntry<1> {
+public:
+    uintptr_t data = 0;
+
+    DataEntry() noexcept = default;
+    DataEntry(const DataEntry& rhs) noexcept : data(rhs.data) { }
+    DataEntry& operator=(const DataEntry& rhs) noexcept {        
+        this->data = rhs.data;
+        return *this;
+    }
+
+    DataEntry(uintptr_t* d) noexcept : data(*d) { }
+};
+
+// K is maximum possible size for datatype (deduced from member entities)
+template <size_t K> 
+class DataType { // May be able to make this more generic and use it to represent concepts too
+public:
+    TypeInfoBase* typeinfo = nullptr;
+    DataEntry<K> d;
+
+    DataType() noexcept = delete;
+    DataType(const DataType& rhs) noexcept : typeinfo(rhs.typeinfo), d(rhs.d) { }
+    DataType& operator=(const DataType& rhs) noexcept {
+        this->typeinfo = rhs.typeinfo;
+        this->d = rhs.d;
+
+        return *this;
+    }
+
+    DataType(TypeInfoBase* ti, uintptr_t* data): typeinfo(ti), d(data) {};
+
+    template<typename T>
+    constexpr T access() noexcept {
+        static_assert(sizeof(T) == sizeof(this->d));
+        return *reinterpret_cast<T*>(&this->d);
+    } 
 };
 
 template <size_t K0, size_t K1>
 class Tuple2 {
 public:
-    TupleEntry<K0> e0;
-    TupleEntry<K1> e1;
+    DataEntry<K0> e0;
+    DataEntry<K1> e1;
     
     Tuple2() noexcept = default;
     Tuple2(const Tuple2& rhs) noexcept : e0(rhs.e0), e1(rhs.e1) { }
     Tuple2& operator=(const Tuple2& rhs) noexcept {
-        e0 = rhs.e0;
-        e1 = rhs.e1;
+        this->e0 = rhs.e0;
+        this->e1 = rhs.e1;
 
         return *this;
     }
@@ -182,16 +223,16 @@ public:
 template <size_t K0, size_t K1, size_t K2>
 class Tuple3 {
 public:
-    TupleEntry<K0> e0;
-    TupleEntry<K1> e1;
-    TupleEntry<K2> e2;
+    DataEntry<K0> e0;
+    DataEntry<K1> e1;
+    DataEntry<K2> e2;
     
     Tuple3() noexcept = default;
     Tuple3(const Tuple3& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2) { }
     Tuple3& operator=(const Tuple3& rhs) noexcept {
-        e0 = rhs.e0;
-        e1 = rhs.e1;
-        e2 = rhs.e2;
+        this->e0 = rhs.e0;
+        this->e1 = rhs.e1;
+        this->e2 = rhs.e2;
 
         return *this;
     }
@@ -215,18 +256,18 @@ public:
 template <size_t K0, size_t K1, size_t K2, size_t K3>
 class Tuple4 {
 public:
-    TupleEntry<K0> e0;
-    TupleEntry<K1> e1;
-    TupleEntry<K2> e2;
-    TupleEntry<K3> e3;
+    DataEntry<K0> e0;
+    DataEntry<K1> e1;
+    DataEntry<K2> e2;
+    DataEntry<K3> e3;
     
     Tuple4() noexcept = default;
     Tuple4(const Tuple4& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
     Tuple4& operator=(const Tuple4& rhs) noexcept {
-        e0 = rhs.e0;
-        e1 = rhs.e1;
-        e2 = rhs.e2;
-        e3 = rhs.e3;
+        this->e0 = rhs.e0;
+        this->e1 = rhs.e1;
+        this->e2 = rhs.e2;
+        this->e3 = rhs.e3;
 
         return *this;
     }

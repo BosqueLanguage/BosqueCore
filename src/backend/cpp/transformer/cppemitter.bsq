@@ -1080,6 +1080,25 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     return String::concat(fields, indent, "};%n;", dm_methods);
 }
 
+function emitDatatypeTypeDecl(dm: CPPAssembly::DatatypeTypeDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+
+    let tinfo = ctx.asm.typeinfos.get(dm.tkey);
+    let datasize = String::fromCString((tinfo.slotsize - 1n).toCString()); %% Ignore typeinfo pointer
+
+    let name = String::fromCString(dm.name);
+
+    let base = String::concat(indent, "class ", name, " : public __CoreCpp::DataType<", datasize, "> {%n;");
+    let def = String::concat(indent, "public:%n;", full_indent, name, "() noexcept = default;%n;");
+    let assign = String::concat(full_indent, name, "(const ", name, "& rhs) noexcept = default;%n;");
+    let copy = String::concat(full_indent, name, "& operator=(const ", name, "& rhs) noexcept = default;%n;");
+
+    let cons = String::concat(full_indent, "template<typename T>%n;", full_indent, name, "(__CoreCpp::TypeInfoBase* ti, T d) noexcept : DataType(ti, reinterpret_cast<uintptr_t*>(&d)) {};%n;");
+    let allcons = String::concat(def, assign, copy, cons);
+
+    return String::concat(base, allcons, indent, "};%n;");
+}
+
 function emitEnumTypeDecl(etd: CPPAssembly::EnumTypeDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
 
@@ -1096,7 +1115,9 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     let tkey = emitTypeKey(e.tkey, false, nctx);
 
-    return String::concat(indent, "struct ", tkey, ";%n;");
+    let dtype = if(e?<CPPAssembly::DatatypeTypeDecl> || e?<CPPAssembly::ConceptTypeDecl>) then "class " else "struct ";
+
+    return String::concat(indent, dtype, tkey, ";%n;");
 }
 
 function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1209,7 +1230,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::DatatypeTypeDecl => { return ""; } %% Dont emit anything for datatype - the members contain what we care about
+        | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
         | _ => { abort; }
     }
