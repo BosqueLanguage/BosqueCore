@@ -38,7 +38,22 @@ entity InvokeArgumentInfo {
     field resolvedargs: Option<List<Expression>>;
 }
 
+entity LambdaInvokeArgumentInfo {
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field srcargs: List<ArgumentValue>;
+
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Nat, Bool, TypeSignature|)>;
+
+    field resolvedargs: Option<List<Expression>>;
+}
+
 entity ConstructorArgumentInfo {
+    field srgargs: List<ArgumentValue>;
+    field shuffleinfo: List<(|Option<Nat>, Option<(|TypeSignature, Identifier|)>, TypeSignature|)>;
+
+    field resolvedArgs: Option<List<Expression>>;
 }
 
 concept Expression {
@@ -130,7 +145,9 @@ ConstructorPrimaryListExpression { }
 %%TODO: 1) constructor collection expression that are all union/append operations
 %%      2) constructor collection expression that are mixed single and union/append operations
 
-datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression using {
+    field value: Expression;
+}
 of
 ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
@@ -146,22 +163,24 @@ ConstructorPrimarySpecialSomeExpression {
 ;
 
 entity ConstructorTypeDeclExpression provides ConstructorPrimaryExpression {
+    field value: TypeSignature;
     field valuetype: TypeSignature;
 }
 
 entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression {
+    field value: TypeSignature;
     field valuetype: TypeSignature;
     field ofcheck: Expression;
 }
 
-entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
-    field shuffleinfo: List<(|Option<Nat>, Option<(|TypeSignature, Identifier|)>, TypeSignature|)>;
+entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
 
-    field resolvedArgs: Option<List<Expression>>;
+    field argsinfo: ConstructorArgumentInfo;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {
+    field args: List<Expression>;
 }
 
 entity ConstructorLambdaExpression provides Expression {
@@ -180,7 +199,7 @@ entity LambdaInvokeExpression provides Expression {
     field lambda: LambdaTypeSignature;
 
     field fname: Identifier;
-    field argsinfo: InvokeArgumentInfo;
+    field argsinfo: LambdaInvokeArgumentInfo;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
