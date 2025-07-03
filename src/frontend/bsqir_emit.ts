@@ -2448,16 +2448,18 @@ class BSQIREmitter {
                     }
                 }
 
-                for(let k = 0; k < sprovides.length; ++k) {
-                    const st = sprovides[k];
-                    const tkey = EmitNameManager.generateTypeKey(st);
+                if(tt instanceof AbstractEntityTypeDecl) {
+                    for(let k = 0; k < sprovides.length; ++k) {
+                        const st = sprovides[k];
+                        const tkey = EmitNameManager.generateTypeKey(st);
 
-                    if(!this.subtypemap.has(tkey)) {
-                        this.subtypemap.set(tkey, []);
-                    }
+                        if(!this.subtypemap.has(tkey)) {
+                            this.subtypemap.set(tkey, []);
+                        }
                     
-                    let ste = this.subtypemap.get(tkey) as string[];
-                    ste.push(EmitNameManager.generateTypeKey(tsig));
+                        let ste = this.subtypemap.get(tkey) as string[];
+                        ste.push(EmitNameManager.generateTypeKey(tsig));
+                    }
                 }
 
                 this.mapper = undefined;
