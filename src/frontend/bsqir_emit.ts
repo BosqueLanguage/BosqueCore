@@ -131,6 +131,7 @@ class BSQIREmitter {
 
     enums: string[] = [];
     typedecls: string[] = [];
+    stringoftypedecls: string[] = [];
 
     primtives: string[] = [];
     constructables: string[] = [];
@@ -512,13 +513,13 @@ class BSQIREmitter {
     private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cpee = this.emitConstructorPrimaryExpressionBase(exp);
 
-        if(cdecl.valuetype.tkeystr !== "CString" && cdecl.valuetype.tkeystr !== "String") {
-            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee} }`;
+        if(cdecl.optofexp === undefined) {
+            return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee}, valuetype=${this.emitTypeSignature(cdecl.valuetype)} }`;
             
         }
         else {
-            //TODO: we need to figure out how to encode regex expressions in general and Literals in particular
-            assert(false, "Not implemented -- TypeDeclConstructor");
+            const optchk = this.emitExpression(cdecl.optofexp.exp);
+            return `BSQAssembly::ConstructorTypeDeclStringExpression{ ${cpee}, valuetype=${this.emitTypeSignature(cdecl.valuetype)}, ofcheck=${optchk} }`;
         }
     }
 
@@ -622,7 +623,7 @@ class BSQIREmitter {
    
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
-        const ikey = EmitNameManager.generateTypeInvokeKey(exp.ttype, exp.name, exp.terms);
+        const ikey = EmitNameManager.generateTypeInvokeKey(this.tproc(exp.resolvedDeclType as TypeSignature), exp.name, exp.terms);
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
        
@@ -678,7 +679,7 @@ class BSQIREmitter {
     private emitPostfixAccessFromName(exp: PostfixAccessFromName): string {
         const opbase = this.emitPostfixOperationBase(exp);
         const declaredInType = this.emitTypeSignature(exp.declaredInType as TypeSignature);
-        const ftype = this.emitTypeSignature((exp.fieldDecl as MemberFieldDecl).declaredType);
+        const ftype = this.emitTypeSignature(exp.getType());
 
         return `BSQAssembly::PostfixAccessFromName{ ${opbase}, declaredInType=${declaredInType}, name='${exp.name}'<BSQAssembly::Identifier>, ftype=${ftype} }`;
     }
@@ -1304,7 +1305,13 @@ class BSQIREmitter {
     }
     
     private emitVariableMultiDeclarationStatement(stmt: VariableMultiDeclarationStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiDeclarationStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const decls = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.decls.map((dd) => {
+            const vtype = this.emitTypeSignature(dd.vtype);
+            return `(|'${dd.name}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        return `BSQAssembly::VariableMultiDeclarationStatement{ ${sbase}, decls=${decls} }`;
     }
     
     private emitVariableInitializationStatement(stmt: VariableInitializationStatement): string {
@@ -1316,7 +1323,20 @@ class BSQIREmitter {
     }
     
     private emitVariableMultiInitializationStatement(stmt: VariableMultiInitializationStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiInitializationStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const decls = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.decls.map((n, ii) => {
+            const vtype = this.emitTypeSignature(stmt.actualtypes[ii] as TypeSignature);
+            return `(|'${n.name}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        if(!Array.isArray(stmt.exp)) {
+            let rhs = this.emitExpressionRHS(stmt.exp);
+            return `BSQAssembly::VariableMultiInitializationImplicitStatement{ ${sbase}, decls=${decls}, exp=${rhs} }`;
+        }
+        else {
+            let exps = "List<BSQAssembly::Expression>{" + stmt.exp.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+            return `BSQAssembly::VariableMultiInitializationExplicitStatement{ ${sbase}, decls=${decls}, exps=${exps} }`;
+        }
     }
 
     private emitVariableAssignmentStatement(stmt: VariableAssignmentStatement): string {
@@ -1328,7 +1348,20 @@ class BSQIREmitter {
     }
 
     private emitVariableMultiAssignmentStatement(stmt: VariableMultiAssignmentStatement): string {
-        assert(false, "Not Implemented -- emitVariableMultiAssignmentStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const vinfos = "List<(|BSQAssembly::Identifier, BSQAssembly::TypeSignature|)>{" + stmt.names.map((n, ii) => {
+            const vtype = this.emitTypeSignature(stmt.vtypes[ii] as TypeSignature);
+            return `(|'${n}'<BSQAssembly::Identifier>, ${vtype}|)`;
+        }).join(", ") + "}";
+
+        if(!Array.isArray(stmt.exp)) {
+            let rhs = this.emitExpressionRHS(stmt.exp);
+            return `BSQAssembly::VariableMultiAssignmentImplicitStatement{ ${sbase}, vinfos=${vinfos}, exp=${rhs} }`;
+        }
+        else {
+            let exps = "List<BSQAssembly::Expression>{" + stmt.exp.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+            return `BSQAssembly::VariableMultiAssignmentExplicitStatement{ ${sbase}, vinfos=${vinfos}, exps=${exps} }`;
+        }
     }
 
     private emitVariableRetypeStatement(stmt: VariableRetypeStatement): string {
@@ -1348,7 +1381,12 @@ class BSQIREmitter {
     }
 
     private emitReturnMultiStatement(stmt: ReturnMultiStatement): string {
-        assert(false, "Not Implemented -- emitReturnMultiStatement");
+        const sbase = this.emitStatementBase(stmt);
+        const rtypes = "List<BSQAssembly::TypeSignature>{" + stmt.rtypes.map((t) => this.emitTypeSignature(t)).join(", ") + "}";
+        const exps = "List<BSQAssembly::Expression>{" + stmt.value.map((e) => this.emitExpressionRHS(e)).join(", ") + "}";
+
+        const elsig = this.emitTypeSignature(stmt.elsig as TypeSignature);
+        return `BSQAssembly::ReturnMultiStatement{ ${sbase}, elsig=${elsig}, rtypes=${rtypes}, exps=${exps} }`;
     }
 
     private emitIfStatement(stmt: IfStatement, fmt: BsqonCodeFormatter): string {
@@ -1953,7 +1991,7 @@ class BSQIREmitter {
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tdecl.valuetype));
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofexp=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::TypedeclStringOfTypeDecl{ ${tbase}, valuetype=${this.emitTypeSignature(tdecl.valuetype)}, ofcheck=${this.emitExpression((tdecl.optofexp as LiteralExpressionValue).exp)} }`];
     }
 
     private emitInternalEntityTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: InternalEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
@@ -2154,7 +2192,7 @@ class BSQIREmitter {
                     else {
                         const [tkey, decl] = this.emitTypedeclStringOfTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                         this.allconcretetypes.push(tkey);
-                        this.typedecls.push(decl);
+                        this.stringoftypedecls.push(decl);
                     }
                 }
                 else if(tt instanceof PrimitiveEntityTypeDecl) {
@@ -2410,16 +2448,18 @@ class BSQIREmitter {
                     }
                 }
 
-                for(let k = 0; k < sprovides.length; ++k) {
-                    const st = sprovides[k];
-                    const tkey = EmitNameManager.generateTypeKey(st);
+                if(tt instanceof AbstractEntityTypeDecl) {
+                    for(let k = 0; k < sprovides.length; ++k) {
+                        const st = sprovides[k];
+                        const tkey = EmitNameManager.generateTypeKey(st);
 
-                    if(!this.subtypemap.has(tkey)) {
-                        this.subtypemap.set(tkey, []);
-                    }
+                        if(!this.subtypemap.has(tkey)) {
+                            this.subtypemap.set(tkey, []);
+                        }
                     
-                    let ste = this.subtypemap.get(tkey) as string[];
-                    ste.push(EmitNameManager.generateTypeKey(tsig));
+                        let ste = this.subtypemap.get(tkey) as string[];
+                        ste.push(EmitNameManager.generateTypeKey(tsig));
+                    }
                 }
 
                 this.mapper = undefined;
@@ -2545,6 +2585,7 @@ class BSQIREmitter {
             
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::EnumTypeDecl>{", emitter.enums, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclTypeDecl>{", emitter.typedecls, "},\n") +
+            fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::TypedeclStringOfTypeDecl>{", emitter.stringoftypedecls, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::PrimitiveEntityTypeDecl>{", emitter.primtives, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::ConstructableTypeDecl>{", emitter.constructables, "},\n") +
             fmt.formatListOf("Map<BSQAssembly::TypeKey, BSQAssembly::CollectionTypeDecl>{", emitter.collections, "},\n") +

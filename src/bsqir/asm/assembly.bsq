@@ -170,7 +170,7 @@ entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
 
 entity TypedeclStringOfTypeDecl provides AbstractEntityTypeDecl {
     field valuetype: NominalTypeSignature;
-    field ofexp: Expression;
+    field ofcheck: Expression;
 }
 
 concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
@@ -272,6 +272,7 @@ entity Assembly {
 
     field enums: Map<TypeKey, EnumTypeDecl>;
     field typedecls: Map<TypeKey, TypedeclTypeDecl>;
+    field stringoftypedecls: Map<TypeKey, TypedeclStringOfTypeDecl>;
 
     field primtives: Map<TypeKey, PrimitiveEntityTypeDecl>;
     field constructables: Map<TypeKey, ConstructableTypeDecl>;
@@ -299,6 +300,9 @@ entity Assembly {
         }
         elif(this.typedecls.has(tkey)) {
             return this.typedecls.get(tkey);
+        }
+        elif(this.stringoftypedecls.has(tkey)) {
+            return this.stringoftypedecls.get(tkey);
         }
         elif(this.primtives.has(tkey)) {
             return this.primtives.get(tkey);
@@ -371,7 +375,7 @@ entity Assembly {
             }
         }
 
-        let ac = this.allconcretetypes.tryFind(pred(tkey) => {
+        let ac = this.allabstracttypes.tryFind(pred(tkey) => {
             let tt = this.lookupNominalTypeDeclaration(tkey);
             return tt.invariants.someOf(pred(ii) => ii.ikey === ikey) || tt.validates.someOf(pred(ii) => ii.ikey === ikey);
         });

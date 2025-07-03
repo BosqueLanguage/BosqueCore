@@ -126,6 +126,32 @@ entity BSQToSMTCallGraphBuilder {
         return this.processArgumentList[recursive](current, e.args);
     }
 
+    recursive method processConstructorTypeDeclExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorTypeDeclExpression): BSQCCInfo {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
+        let argscalls = this.processArgumentList[recursive](current, e.args);
+        if(tdecl.allInvariants.empty()) {
+            return argscalls;
+        }
+        else {
+            let implicitinvs = tdecl.allInvariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            return BSQCCInfo::mergeInfos(argscalls, BSQCCInfo::createWAllCallInfo(current, implicitinvs));
+        }
+    }
+
+    recursive method processConstructorTypeDeclStringExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorTypeDeclStringExpression): BSQCCInfo {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
+        let argscalls = this.processArgumentList[recursive](current, e.args);
+        if(tdecl.allInvariants.empty()) {
+            return argscalls;
+        }
+        else {
+            let implicitinvs = tdecl.allInvariants.map<BSQAssembly::InvokeKey>(fn(idecl) => idecl.ikey);
+            return BSQCCInfo::mergeInfos(argscalls, BSQCCInfo::createWAllCallInfo(current, implicitinvs));
+        }
+    }
+
     recursive method processConstructorStdExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorStdExpression): BSQCCInfo {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
 
@@ -146,8 +172,8 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
-            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
-            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression[recursive](current, $e); }
         }
@@ -246,7 +272,7 @@ entity BSQToSMTCallGraphBuilder {
             BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
-            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.neoption, $e.neval); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
             | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
             | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive](current, $e.lhs, $e.rhs); }
         }
@@ -285,7 +311,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
             | BSQAssembly::LogicActionAndExpression => { return this.processArgs[recursive](current, $e.args); }
             | BSQAssembly::LogicActionOrExpression => { return this.processArgs[recursive](current, $e.args); }
-            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::SafeConvertExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
@@ -323,15 +349,15 @@ entity BSQToSMTCallGraphBuilder {
             BSQAssembly::EmptyStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::VariableDeclarationStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::VariableMultiDeclarationStatement => { return BSQCCInfo::emptyinfo; }
-            | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive](current, $s.exp,); }
-            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; } %% NOT IMPLEMENTED
-            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive](current, $s.exp); }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { return this.processArgs[recursive](current, $s.exps); }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { return this.processExpression[recursive](current, $s.exp); }
             | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive](current, $s.exp); }
-            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; } %% NOT IMPLEMENTED
-            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { return this.processArgs[recursive](current, $s.exps); }
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { return this.processExpression[recursive](current, $s.exp); }
             | BSQAssembly::ReturnVoidStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::ReturnSingleStatement => { return this.processExpression(current, $s.value); }
-            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive](current, $s.exps); }
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive](current, $s);}
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive](current, $s); }
             | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
@@ -446,6 +472,20 @@ entity MayErrorAnalysis {
         return this.processArgumentList[recursive](e.args, cerrors, lerrors);
     }
 
+    recursive method processConstructorTypeDeclExpression(e: BSQAssembly::ConstructorTypeDeclExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+        if(!tdecl.allInvariants.empty()) {
+            return true;
+        }
+        else {
+            return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+        }
+    }
+
+    recursive method processConstructorTypeDeclStringExpression(e: BSQAssembly::ConstructorTypeDeclStringExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return true; %% the regex can always fail to match
+    }
+
     recursive method processConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
         if(!tdecl.allInvariants.empty()) {
@@ -468,8 +508,8 @@ entity MayErrorAnalysis {
             | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
-            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
-            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e, cerrors, lerrors); }
         }
@@ -572,7 +612,7 @@ entity MayErrorAnalysis {
             BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
-            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.neoption, $e.neval, cerrors, lerrors); }
+            | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
             | BSQAssembly::BinKeyEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotEqExpression => { return this.processBinaryArgs[recursive]($e.lhs, $e.rhs, cerrors, lerrors); }
         }
@@ -607,7 +647,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
             | BSQAssembly::LogicActionAndExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
             | BSQAssembly::LogicActionOrExpression => { return this.processArgs[recursive]($e.args, cerrors, lerrors); }
-            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
+            | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
             | BSQAssembly::SafeConvertExpression => { return this.processUnaryArg($e.exp, cerrors, lerrors); }
@@ -639,14 +679,14 @@ entity MayErrorAnalysis {
             | BSQAssembly::VariableDeclarationStatement => { return false; }
             | BSQAssembly::VariableMultiDeclarationStatement => { return false; }
             | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
-            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; } %% NOT IMPLEMENTED
-            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { return this.processArgs[recursive]($s.exps, cerrors, lerrors); }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
             | BSQAssembly::VariableAssignmentStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
-            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; } %% NOT IMPLEMENTED
-            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { return this.processArgs[recursive]($s.exps, cerrors, lerrors); }
+            | BSQAssembly::VariableMultiAssignmentImplicitStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
             | BSQAssembly::ReturnVoidStatement => { return false; }
             | BSQAssembly::ReturnSingleStatement => { return this.processExpression[recursive]($s.value, cerrors, lerrors); }
-            | BSQAssembly::ReturnMultiStatement => { abort; } %% NOT IMPLEMENTED
+            | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive]($s.exps, cerrors, lerrors); }
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::AbortStatement => { return true; }

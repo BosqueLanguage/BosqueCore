@@ -145,10 +145,12 @@ ConstructorPrimarySpecialSomeExpression {
 ;
 
 entity ConstructorTypeDeclExpression provides ConstructorPrimaryExpression {
+    field valuetype: TypeSignature;
 }
 
 entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression {
-    field ofcheck: Option<Expression>;
+    field valuetype: TypeSignature;
+    field ofcheck: Expression;
 }
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
@@ -366,8 +368,8 @@ BinKeyEqNoneExpression {
     field eqval: Expression;
 }
 | BinKeyNotSomeEqExpression {
-    field neoption: Expression;
-    field neval: Expression;
+    field eqoption: Expression;
+    field eqval: Expression;
 }
 | BinKeyEqExpression {
     field lhs: Expression;
@@ -518,9 +520,13 @@ entity ReturnSingleStatement provides Statement {
 }
 
 entity ReturnMultiStatement provides Statement {
-    field values: List<(|TypeSignature, Expression|)>;
+    field elsig: EListTypeSignature;
+    field rtypes: List<TypeSignature>;
+    field exps: List<Expression>;
 
-    invariant !$values.empty();
+    invariant !$rtypes.empty();
+    invariant !$exps.empty();
+    invariant $rtypes.size() == $exps.size();
 }
 
 datatype IfStatement provides Statement using {

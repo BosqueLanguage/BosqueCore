@@ -176,6 +176,11 @@ entity ValidateResultIsTrueExpression provides SafeExpression {
     field arg: Expression;
 }
 
+entity FormatCheckExpression provides SafeExpression {
+    field smtregex: CString;
+    field arg: SafeExpression;
+}
+
 %*
 *********************** TODO: we can use these for the validator ops to access container elements via index without needing any other setup ***********************
 
@@ -426,6 +431,12 @@ entity AssumeOperation provides Operation {
 entity LetOperation provides Operation {
     field vbind: Identifier;
     field value: SafeExpression;
+
+    field inop: Operation;
+}
+
+entity LetsOperation provides Operation {
+    field vvbind: List<(|SafeExpression, TypeKey, Identifier|)>;
 
     field inop: Operation;
 }
