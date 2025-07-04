@@ -100,7 +100,7 @@ entity ExplicitifyTransform {
             }
         });
 
-        return ainfo[resolvedArgs=some(resolvedargs)];
+        return ainfo[resolvedargs=some(resolvedargs)];
     }
 
     recursive method processInvokeArgumentInfoStatic(sinfo: SourceInfo, params: List<InvokeParameterDecl>, ainfo: InvokeArgumentInfo, vmap: VarMapping): InvokeArgumentInfo {
@@ -110,7 +110,7 @@ entity ExplicitifyTransform {
             if($argidx = si.0)@none {
                 let dexp = this.assembly.tryResolveExpAsLiteralExpression(pp.defaultval@some);
                 if(dexp)@some {
-                    return dexp;
+                    return $dexp;
                 }
                 else {
                     abort; %% Put in "default value expression" for the parameter
@@ -125,67 +125,71 @@ entity ExplicitifyTransform {
         });
 
         if($resttype = ainfo.resttype)@some {
-            let restl = ainfo.restinfo.map[recursive]<Expression>(recursive fn(rri) => {
+            let resttypedecl = this.assembly.lookupNominalTypeDeclaration($resttype.tkeystr)@<CollectionTypeDecl>;
+            let restelemtype = resttypedecl.oftype;
+
+            let restl = ainfo.restinfo.map[recursive]<ArgumentValue>(recursive fn(rri) => {
                 let eexp = ainfo.srcargs.get(rri.0).exp;
                 let nexp = this.processExpression[recursive](eexp, vmap);
 
                 if(!rri.1) {
-                    return this.processCoerceTypeAsNeeded(nexp, rri.2);
+                    return PositionalArgumentValue{ this.processCoerceTypeAsNeeded(nexp, restelemtype) };
                 }
                 else {
                     abort; %% Not implemented -- spread into rest
                 }
             });
 
-            if($resttype?<ListTypeDecl>) {
-                let lsig = NominalTypeSignature{ sinfo, $resttype.tkeystr };
-                resolvedargs = resolvedargs.pushBack(ConstructorPrimaryListExpression{ sinfo, lsig, restl, lsig, $resttype });
+            if(resttypedecl)@<ListTypeDecl> {
+                resolvedargs = resolvedargs.pushBack(ConstructorPrimaryListExpression{ sinfo, $resttype, $resttype@<NominalTypeSignature>, restelemtype, restl });
             }
             else {
-                abort; %% Not implemented -- CallNamespaceFunction -- rest
-            }
-        }
-
-        return ainfo[resolvedArgs=some(resolvedargs)];
-    }
-
-    recursive method processLambdaInvokeArgumentInfoStatic(sinfo: SourceInfo, ptypes: List<TypeSignature>, ainfo: LambdaInvokeArgumentInfo, vmap: VarMapping): InvokeArgumentInfo {
-        var resolvedargs = ainfo.stdargs.mapIdx[recursive]<Expression>(fn(si, i) => {
-            let pp = ptypes.get(i);
-            let eexp = ainfo.srcargs.get($argidx).exp;
-                
-            let nexp = this.processExpression[recursive](eexp, vmap);
-            return this.processCoerceTypeAsNeeded(nexp, pp);
-        });
-
-        if($resttype = ainfo.resttype)@some {
-            let restl = ainfo.restinfo.map[recursive]<Expression>(recursive fn(rri) => {
-                let eexp = ainfo.srcargs.get(rri.0).exp;
-                let nexp = this.processExpression[recursive](eexp, vmap);
-
-                if(!rri.1) {
-                    return this.processCoerceTypeAsNeeded(nexp, rri.2);
-                }
-                else {
-                    abort; %% Not implemented -- spread into rest
-                }
-            });
-
-            if($resttype?<ListTypeDecl>) {
-                let lsig = NominalTypeSignature{ sinfo, $resttype.tkeystr };
-                resolvedargs = resolvedargs.pushBack(ConstructorPrimaryListExpression{ sinfo, lsig, restl, lsig, $resttype });
-            }
-            else {
-                abort; %% Not implemented -- CallNamespaceFunction -- rest
+                abort; %% Not implemented -- CallNamespaceFunction -- map
             }
         }
 
         return ainfo[resolvedargs=some(resolvedargs)];
     }
 
-    recursive method processArgumentListConstructCollection(argl: List<Expression>, elemtype: TypeSignature, vmap: VarMapping): List<ArgumentValue> {
+    recursive method processLambdaInvokeArgumentInfoStatic(sinfo: SourceInfo, ptypes: List<TypeSignature>, ainfo: LambdaInvokeArgumentInfo, vmap: VarMapping): LambdaInvokeArgumentInfo {
+        var resolvedargs = ainfo.stdargs.mapIdx[recursive]<Expression>(fn(si, i) => {
+            let pp = ptypes.get(i);
+            let eexp = ainfo.srcargs.get(i).exp;
+                
+            let nexp = this.processExpression[recursive](eexp, vmap);
+            return this.processCoerceTypeAsNeeded(nexp, pp);
+        });
+
+        if($resttype = ainfo.resttype)@some {
+            let resttypedecl = this.assembly.lookupNominalTypeDeclaration($resttype.tkeystr)@<CollectionTypeDecl>;
+            let restelemtype = resttypedecl.oftype;
+
+            let restl = ainfo.restinfo.map[recursive]<ArgumentValue>(recursive fn(rri) => {
+                let eexp = ainfo.srcargs.get(rri.0).exp;
+                let nexp = this.processExpression[recursive](eexp, vmap);
+
+                if(!rri.1) {
+                    return PositionalArgumentValue{ this.processCoerceTypeAsNeeded(nexp, restelemtype) };
+                }
+                else {
+                    abort; %% Not implemented -- spread into rest
+                }
+            });
+
+            if(resttypedecl?<ListTypeDecl>) {
+                resolvedargs = resolvedargs.pushBack(ConstructorPrimaryListExpression{ sinfo, $resttype, $resttype@<NominalTypeSignature>, restelemtype, restl });
+            }
+            else {
+                abort; %% Not implemented -- CallNamespaceFunction -- map
+            }
+        }
+
+        return ainfo[resolvedargs=some(resolvedargs)];
+    }
+
+    recursive method processArgumentListConstructCollection(argl: List<ArgumentValue>, elemtype: TypeSignature, vmap: VarMapping): List<ArgumentValue> {
         let nargs = argl.map[recursive]<ArgumentValue>(recursive fn(arg) => {
-            let nexp = this.processExpression[recursive](arg, vmap);
+            let nexp = this.processExpression[recursive](arg.exp, vmap);
             if(arg?<SpreadArgumentValue>) {
                 return arg[exp=nexp];
             }
@@ -222,40 +226,36 @@ entity ExplicitifyTransform {
     }
 
     recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression, vmap: VarMapping): Expression {
-        let nargs = this.processUnaryConstructorArg[recursive](e.value, e.ofttype, vmap);
-
-        return e[args=nargs];
+        let nval = this.processUnaryConstructorArg[recursive](e.value, e.ofttype, vmap);
+        return e[value=nval];
     }
 
     recursive method processConstructorPrimaryListExpression(e: ConstructorPrimaryListExpression, vmap: VarMapping): Expression {
         let nargs = this.processArgumentListConstructCollection[recursive](e.args, e.elemtype, vmap);
-
         return e[args=nargs];
     }
 
     recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression, vmap: VarMapping): Expression {
-        let nargs = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
-
-        return e[args=nargs];
+        let nval = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
+        return e[value=nval];
     }
 
     recursive method processConstructorTypeDeclStringExpression(e: ConstructorTypeDeclStringExpression, vmap: VarMapping): Expression {
-        let nargs = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
-        
-        let nofchk = this.assembly.tryResolveExpAsLiteralExpression($e.ofcheck);
-        return e[args=nargs, ofcheck=nofchk@some];
+        let nval = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
+        let nofchk = this.assembly.tryResolveExpAsLiteralExpression(e.ofcheck);
+
+        return e[value=nval, ofcheck=nofchk@some];
     }
 
     recursive method processConstructorStdExpression(e: ConstructorStdExpression, vmap: VarMapping): Expression {
-        let finfos = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr).saturatedFields;
+        let finfos = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr).saturatedBFieldInfo;
         let ninfo = this.processStdConstructorArgs[recursive](e.sinfo, finfos, e.argsinfo, vmap);
 
         return e[argsinfo=ninfo];
     }
 
     recursive method processConstructorEListExpression(e: ConstructorEListExpression, vmap: VarMapping): Expression {
-        let nargs = this.processSimpleArguments[recursive](e.srcargs, e.etype@<EListTypeSignature>.entries, vmap);
-
+        let nargs = this.processSimpleArguments[recursive](e.args, e.etype@<EListTypeSignature>.entries, vmap);
         return e[args=nargs];
     }
 
@@ -281,7 +281,7 @@ entity ExplicitifyTransform {
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression, vmap: VarMapping): Expression {
         let etypes = e.lambda.params.map<TypeSignature>(fn(param) => param.ptype);
-        let ninfo = this.processLambdaInvokeArgumentInfo(e.sinfo, etypes, e.argsinfo, vmap);
+        let ninfo = this.processLambdaInvokeArgumentInfoStatic(e.sinfo, etypes, e.argsinfo, vmap);
 
         return e[argsinfo=ninfo];
     }
@@ -309,7 +309,7 @@ entity ExplicitifyTransform {
         }
         else {
             let nbop = e[etype=$restype.valuetype, args=nargs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, nbop, e.etype@<NominalTypeSignature>, $restype.valuetype };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
         }
     }
 
@@ -322,7 +322,7 @@ entity ExplicitifyTransform {
         }
         else {
             let nbop = e[etype=$restype.valuetype, args=nargs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, nbop, e.etype@<NominalTypeSignature>, $restype.valuetype };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
         }
     }
 
@@ -351,7 +351,7 @@ entity ExplicitifyTransform {
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
-        let params = this.assembly.staticmethods.get(op.ikey).params;
+        let params = this.assembly.staticmethods.get(op.resolvedTrgt).params;
         let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, params, op.argsinfo, vmap);
 
         return op[argsinfo=nargs];
@@ -396,7 +396,7 @@ entity ExplicitifyTransform {
         }
         else {
             let nbop = e[etype=$restype.valuetype, exp=nexp];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, nbop, e.etype@<NominalTypeSignature>, $restype.valuetype };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
         }
     }
 
@@ -419,7 +419,7 @@ entity ExplicitifyTransform {
         }
         else {
             let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, nbop, e.etype@<NominalTypeSignature>, $restype.valuetype };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
         }
     }
 
@@ -491,7 +491,7 @@ entity ExplicitifyTransform {
         }
         else {
             let nbop = e[etype=$restype.valuetype, lhs=nlhs, rhs=nrhs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, nbop, e.etype@<NominalTypeSignature>, $restype.valuetype };
+            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
         }
     }
 

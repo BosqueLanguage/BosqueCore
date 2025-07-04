@@ -191,13 +191,15 @@ OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
-datatype CollectionTypeDecl provides InternalEntityTypeDecl 
+datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
+    field oftype: TypeSignature;
+}
 of
-ListTypeDecl { field oftype: TypeSignature; }
+ListTypeDecl {  }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { field oftype: NominalTypeSignature; field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
 entity EventListTypeDecl provides InternalEntityTypeDecl {

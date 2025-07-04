@@ -206,18 +206,18 @@ entity ConstantSimplification {
     }
 
     recursive method processStdConstructorArgs(ainfo: ConstructorArgumentInfo): ConstructorArgumentInfo {
-        let nresolved = ainfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
-        return ainfo[resolvedArgs=some(nresolved)];
+        let nresolved = ainfo.resolvedargs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+        return ainfo[resolvedargs=some(nresolved)];
     }
 
     recursive method processInvokeArgumentInfoStatic(arginfo: InvokeArgumentInfo): InvokeArgumentInfo {
-        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
-        return arginfo[resolvedArgs=some(nresolved)];
+        let nresolved = arginfo.resolvedargs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+        return arginfo[resolvedargs=some(nresolved)];
     }
 
     recursive method processLambdaInvokeArgumentInfo(arginfo: LambdaInvokeArgumentInfo): LambdaInvokeArgumentInfo {
-        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
-        return arginfo[resolvedArgs=some(nresolved)];
+        let nresolved = arginfo.resolvedargs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+        return arginfo[resolvedargs=some(nresolved)];
     }
 
     recursive method processArgumentListSimple(argl: List<ArgumentValue>): List<ArgumentValue> {
@@ -260,12 +260,12 @@ entity ConstantSimplification {
     }
 
     recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression): Expression {
-        let nval = this.processUnaryConstructorArg[recursive](e.value);
+        let nval = this.processUnaryArg[recursive](e.value);
         return e[value=nval];
     }
 
     recursive method processConstructorTypeDeclStringExpression(e: ConstructorTypeDeclStringExpression): Expression {
-        let nval = this.processUnaryConstructorArg[recursive](e.value);
+        let nval = this.processUnaryArg[recursive](e.value);
         return e[value=nval];
     }
 
