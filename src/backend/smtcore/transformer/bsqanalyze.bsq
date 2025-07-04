@@ -96,22 +96,22 @@ entity BSQToSMTCallGraphBuilder {
         return BSQCCInfo::mergeInfos(this.processExpression[recursive](current, lhs), this.processExpression[recursive](current, rhs));
     }
 
-    recursive method processStdConstructorArgs(current: BSQAssembly::InvokeKey, arginfo: ConstructorArgumentInfo): BSQCCInfo {
+    recursive method processStdConstructorArgs(current: BSQAssembly::InvokeKey, arginfo: BSQAssembly::ConstructorArgumentInfo): BSQCCInfo {
         let infos = arginfo.resolvedArgs@some.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg));
         return BSQCCInfo::mergeAllInfos(infos);
     }
 
-    recursive method processInvokeArgumentInfoStatic(current: BSQAssembly::InvokeKey, arginfo: InvokeArgumentInfo): BSQCCInfo {
+    recursive method processInvokeArgumentInfoStatic(current: BSQAssembly::InvokeKey, arginfo: BSQAssembly::InvokeArgumentInfo): BSQCCInfo {
         let infos = arginfo.resolvedArgs@some.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg));
         return BSQCCInfo::mergeAllInfos(infos);
     }
 
-    recursive method processLambdaInvokeArgumentInfo(current: BSQAssembly::InvokeKey, arginfo: LambdaInvokeArgumentInfo): BSQCCInfo {
+    recursive method processLambdaInvokeArgumentInfo(current: BSQAssembly::InvokeKey, arginfo: BSQAssembly::LambdaInvokeArgumentInfo): BSQCCInfo {
         let infos = arginfo.resolvedArgs@some.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg));
         return BSQCCInfo::mergeAllInfos(infos);
     }
 
-    recursive method processArgumentListSimple(current: BSQAssembly::InvokeKey, argl: List<ArgumentValue>): BSQCCInfo {
+    recursive method processArgumentListSimple(current: BSQAssembly::InvokeKey, argl: List<BSQAssembly::ArgumentValue>): BSQCCInfo {
         let infos = argl.map[recursive]<BSQCCInfo>(recursive fn(arg) => this.processExpression[recursive](current, arg.exp));
         return BSQCCInfo::mergeAllInfos(infos);
     }
@@ -127,15 +127,15 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    recursive method processConstructorPrimarySpecialSomeExpression(current: BSQAssembly::InvokeKey, e: ConstructorPrimarySpecialSomeExpression): BSQCCInfo {
+    recursive method processConstructorPrimarySpecialSomeExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimarySpecialSomeExpression): BSQCCInfo {
         return this.processUnaryArg[recursive](current, e.value);
     }
 
-    recursive method processConstructorPrimaryListExpression(current: BSQAssembly::InvokeKey, e: ConstructorPrimaryListExpression): BSQCCInfo {
+    recursive method processConstructorPrimaryListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimaryListExpression): BSQCCInfo {
         return this.processArgumentListSimple[recursive](current, e.args);
     }
 
-    recursive method processConstructorTypeDeclExpression(current: BSQAssembly::InvokeKey, e: ConstructorTypeDeclExpression): BSQCCInfo {
+    recursive method processConstructorTypeDeclExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorTypeDeclExpression): BSQCCInfo {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
 
         let argscalls = this.processUnaryArg[recursive](current, e.value);
@@ -148,7 +148,7 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    recursive method processConstructorTypeDeclStringExpression(current: BSQAssembly::InvokeKey, e: ConstructorTypeDeclStringExpression): BSQCCInfo {
+    recursive method processConstructorTypeDeclStringExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorTypeDeclStringExpression): BSQCCInfo {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
 
         let argscalls = this.processUnaryArg[recursive](current, e.value);
@@ -161,7 +161,7 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    recursive method processConstructorStdExpression(current: BSQAssembly::InvokeKey, e: ConstructorStdExpression): BSQCCInfo {
+    recursive method processConstructorStdExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorStdExpression): BSQCCInfo {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
 
         let argscalls = this.processStdConstructorArgs[recursive](current, e.argsinfo);
@@ -174,21 +174,21 @@ entity BSQToSMTCallGraphBuilder {
         }
     }
 
-    recursive method processConstructorEListExpression(current: BSQAssembly::InvokeKey, e: ConstructorEListExpression): BSQCCInfo {
+    recursive method processConstructorEListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorEListExpression): BSQCCInfo {
         return this.processArgs[recursive](current, e.args);
     }
 
-    recursive method processConstructorExpression(current: BSQAssembly::InvokeKey, e: ConstructorExpression): BSQCCInfo {
+    recursive method processConstructorExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorExpression): BSQCCInfo {
         match(e)@ {
-            ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive](current, $e); }
-            | ConstructorPrimaryMapExpression => { abort; }
-            | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive](current, $e); }
-            | ConstructorPrimarySpecialOkExpression => { abort; }
-            | ConstructorPrimarySpecialFailExpression => { abort; }
-            | ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive](current, $e); }
-            | ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive](current, $e); }
-            | ConstructorStdExpression => { return this.processConstructorStdExpression[recursive](current, $e); }
-            | ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
+            BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
+            | BSQAssembly::ConstructorPrimarySpecialFailExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorStdExpression => { return this.processConstructorStdExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorEListExpression => { return this.processConstructorEListExpression[recursive](current, $e); }
         }
     }
 
@@ -464,19 +464,19 @@ entity MayErrorAnalysis {
         return \/(this.processExpression(lhs, cerrors, lerrors), this.processExpression(rhs, cerrors, lerrors));
     }
 
-    recursive method processStdConstructorArgs(arginfo: ConstructorArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        return arginfo.resolvedArgs@someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
+    recursive method processStdConstructorArgs(arginfo: BSQAssembly::ConstructorArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return arginfo.resolvedArgs@some.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
     }
 
-    recursive method processInvokeArgumentInfoStatic(arginfo: InvokeArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        return arginfo.resolvedArgs@someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
+    recursive method processInvokeArgumentInfoStatic(arginfo: BSQAssembly::InvokeArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return arginfo.resolvedArgs@some.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
     }
 
-    recursive method processLambdaInvokeArgumentInfo(arginfo: LambdaInvokeArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        return arginfo.resolvedArgs@someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
+    recursive method processLambdaInvokeArgumentInfo(arginfo: BSQAssembly::LambdaInvokeArgumentInfo, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return arginfo.resolvedArgs@some.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg, cerrors, lerrors));
     }
 
-    recursive method processArgumentListSimple(argl: List<ArgumentValue>, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+    recursive method processArgumentListSimple(argl: List<BSQAssembly::ArgumentValue>, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         return argl.someOf[recursive](recursive pred(arg) => this.processExpression[recursive](arg.exp, cerrors, lerrors));
     }
 
@@ -485,25 +485,22 @@ entity MayErrorAnalysis {
         return !tdecl.allInvariants.empty();
     }
 
-    recursive method processConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        xxxx; return this.processArgumentList[recursive](e.args, cerrors, lerrors);
-    }
-
-    recursive method processConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        xxxx; return this.processArgumentList[recursive](e.args, cerrors, lerrors);
-    }
-
     recursive method processConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
-        xxxx; return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+        return this.processUnaryArg[recursive](e.value, cerrors, lerrors);
+    }
+
+    recursive method processConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processArgumentListSimple[recursive](e.args, cerrors, lerrors);
     }
 
     recursive method processConstructorTypeDeclExpression(e: BSQAssembly::ConstructorTypeDeclExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         let tdecl = this.assembly.lookupNominalTypeDeclaration(e.ctype.tkeystr);
+
         if(!tdecl.allInvariants.empty()) {
             return true;
         }
         else {
-            return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+            return this.processUnaryArg[recursive](e.value, cerrors, lerrors);
         }
     }
 
@@ -521,9 +518,13 @@ entity MayErrorAnalysis {
                 return true;
             }
             else {
-                return this.processArgumentList[recursive](e.args, cerrors, lerrors);
+                return this.processStdConstructorArgs[recursive](e.args, cerrors, lerrors);
             }
         }
+    }
+
+    recursive method processConstructorEListExpression(e: BSQAssembly::ConstructorEListExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return this.processArgs[recursive](e.args, cerrors, lerrors);
     }
 
     recursive method processConstructorExpression(e: BSQAssembly::ConstructorExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
@@ -555,7 +556,7 @@ entity MayErrorAnalysis {
             return true;
         }
         
-        return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
+        return this.processInvokeArgumentInfoStatic[recursive](e.argsinfo, cerrors, lerrors);
     }
 
     recursive method processCallTypeFunctionExpression(e: BSQAssembly::CallTypeFunctionExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
@@ -568,7 +569,7 @@ entity MayErrorAnalysis {
             return true;
         }
         
-        return this.processArgumentList[recursive](e.argsinfo.args, cerrors, lerrors);
+        return this.processInvokeArgumentInfoStatic[recursive](e.argsinfo, cerrors, lerrors);
     }
 
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
@@ -580,8 +581,8 @@ entity MayErrorAnalysis {
         if(\/(!smethod.preconditions.empty(), !smethod.postconditions.empty())) {
             return true;
         }
-        
-        return this.processArgumentList[recursive](op.argsinfo.args, cerrors, lerrors);
+
+        return this.processInvokeArgumentInfoStatic[recursive](op.argsinfo, cerrors, lerrors);
     }
 
     recursive method processPostfixOp(e: BSQAssembly::PostfixOp, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
