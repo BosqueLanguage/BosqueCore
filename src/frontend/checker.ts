@@ -818,7 +818,7 @@ class TypeChecker {
         return { arginfo: arginfo, resttype: resttype, restinfo: restinfo };
     }
 
-    private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
+    private checkConstructorArgumentListStd(sinfo: SourceInfo, env: TypeEnvironment, args: ArgumentValue[], bnames: {name: string, type: TypeSignature, hasdefault: boolean, containingtype: NominalTypeSignature}[], imapper: TemplateNameMapper): [number, TypeSignature, string, TypeSignature][] {
         let argsuffle: (ArgumentValue | undefined)[] = [];
         let argsuffleidx: number[] = [];
         for(let i = 0; i < bnames.length; ++i) {
@@ -883,7 +883,7 @@ class TypeChecker {
             return [];
         }
 
-        return argsuffleidx.map((idx, i) => [idx, bnames[i].type, bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);
+        return argsuffleidx.map((idx, i) => [idx, bnames[i].containingtype.remapTemplateBindings(imapper), bnames[i].name, bnames[i].type.remapTemplateBindings(imapper)]);
     }
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeSignature {

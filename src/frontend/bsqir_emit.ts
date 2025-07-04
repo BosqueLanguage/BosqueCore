@@ -312,7 +312,7 @@ class BSQIREmitter {
     private emitStdConstructorArgumentInfo(args: ArgumentValue[], shuffleinfo: [number, TypeSignature | undefined, string, TypeSignature][]): string {
         const sinfocc = shuffleinfo.map((si) => {
             const iidx = si[0] !== -1 ? `some(${si[0]}n)` : "none";
-            const dfct = si[0] !== -1 ? `some((|${this.emitTypeSignature(si[1] as TypeSignature)}, '${si[2]}'<BSQAssembly::Identifier>|))` : "none";
+            const dfct = si[0] === -1 ? `some((|${this.emitTypeSignature(si[1] as TypeSignature)}, '${si[2]}'<BSQAssembly::Identifier>|))` : "none";
             return `(|${iidx}, ${dfct}, ${this.emitTypeSignature(si[3])}|)`;
         }).join(", ");
 
