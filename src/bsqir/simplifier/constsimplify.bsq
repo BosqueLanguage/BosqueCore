@@ -205,22 +205,31 @@ entity ConstantSimplification {
         return this.processExpression[recursive](lhs), this.processExpression[recursive](rhs);
     }
 
-    recursive method processInvokeArgumentInfo(arginfo: InvokeArgumentInfo): InvokeArgumentInfo {
-        var rargs: Option<List<Expression>> = none;
-        if(arginfo.resolvedArgs)@some {
-            rargs = some(arginfo.resolvedArgs.map[recursive](fn(arg) => this.processExpression[recursive](arg)));
-        }
+    recursive method processStdConstructorArgs(ainfo: ConstructorArgumentInfo): ConstructorArgumentInfo {
+        let nresolved = ainfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
 
-        return arginfo[resolvedArgs=rargs];
+        return ainfo[resolvedArgs=some(nresolved)];
     }
 
-    recursive method processArgumentListSimple(argl: ArgumentList): ArgumentList {
-        let nargs = argl.args.map[recursive]<ArgumentValue>(recursive fn(arg) => {
+    recursive method processInvokeArgumentInfoStatic(arginfo: InvokeArgumentInfo): InvokeArgumentInfo {
+        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
+
+        return arginfo[resolvedArgs=nresolved];
+    }
+
+    recursive method processLambdaInvokeArgumentInfo(arginfo: LambdaInvokeArgumentInfo): LambdaInvokeArgumentInfo {
+        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
+
+        return arginfo[resolvedArgs=nresolved];
+    }
+
+    recursive method processArgumentListSimple(argl: List<ArgumentValue>): List<ArgumentValue> {
+        let nargs = argl.map[recursive]<ArgumentValue>(recursive fn(arg) => {
             let nexp = this.processExpression[recursive](arg.exp);
             return arg[exp=nexp];
         });
 
-        return ArgumentList{ nargs };
+        return nargs;
     }
 
     method processAccessNamespaceConstantExpression(e: AccessNamespaceConstantExpression): Expression {
@@ -243,15 +252,48 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processConstructorPrimarySpecialSomeExpression(e: ConstructorPrimarySpecialSomeExpression): Expression {
+        let nval = this.processUnaryArg[recursive](e.value);
+        return e[value=nval];
+    }
+
+    recursive method processConstructorPrimaryListExpression(e: ConstructorPrimaryListExpression): Expression {
+        let nargs = this.processArgumentListSimple[recursive](e.args);
+        return e[args=nargs];
+    }
+
+    recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression): Expression {
+        let nval = this.processUnaryConstructorArg[recursive](e.value);
+        return e[value=nval];
+    }
+
+    recursive method processConstructorTypeDeclStringExpression(e: ConstructorTypeDeclStringExpression): Expression {
+        let nval = this.processUnaryConstructorArg[recursive](e.value);
+        return e[value=nval];
+    }
+
+    recursive method processConstructorStdExpression(e: ConstructorStdExpression): Expression {
+        let ninfo = this.processStdConstructorArgs[recursive](e.argsinfo);
+        return e[argsinfo=ninfo];
+    }
+
+    recursive method processConstructorEListExpression(e: ConstructorEListExpression): Expression {
+        let nargs = this.processArgs[recursive](e.args);
+
+        return e[args=nargs];
+    }
+
     recursive method processConstructorExpression(e: ConstructorExpression): Expression {
-        let nargs = this.processArgumentList[recursive](e.args);
-        
-        if(e)@!<ConstructorTypeDeclStringExpression> {
-            return e[args=nargs];
-        }
-        else {
-            let nofchk = this.assembly.tryResolveExpAsLiteralExpression($e.ofcheck);
-            return $e[args=nargs, ofcheck=nofchk@some];
+        match(e)@ {
+            ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e); }
+            | ConstructorPrimaryMapExpression => { abort; }
+            | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e); }
+            | ConstructorPrimarySpecialOkExpression => { abort; }
+            | ConstructorPrimarySpecialFailExpression => { abort; }
+            | ConstructorTypeDeclExpression => { return this.processConstructorTypeDeclExpression[recursive]($e); }
+            | ConstructorTypeDeclStringExpression => { return this.processConstructorTypeDeclStringExpression[recursive]($e); }
+            | ConstructorStdExpression => { return this.processConstructorStdExpression[recursive]($e); }
+            | ConstructorEListExpression => { return this.processConstructorEListExpression[recursive]($e); }
         }
     }
 
@@ -262,18 +304,18 @@ entity ConstantSimplification {
     }
 
     recursive method processLambdaInvokeExpression(e: LambdaInvokeExpression): Expression {
-        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
-        return e[argsinfo=$argsinfo[args=nargs]];
+        let ninfo = this.processLambdaInvokeArgumentInfo[recursive](e.argsinfo);
+        return e[argsinfo=ninfo];
     }
 
     recursive method processCallNamespaceFunctionExpression(e: CallNamespaceFunctionExpression): Expression {
-        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
-        return e[argsinfo=$argsinfo[args=nargs]];
+        let ninfo = this.processInvokeArgumentInfoStatic[recursive](e.argsinfo);
+        return e[argsinfo=ninfo];
     }
 
     recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression): Expression {
-        let nargs = this.processArgumentList[recursive](e.argsinfo.args);
-        return e[argsinfo=$argsinfo[args=nargs]];
+        let ninfo = this.processInvokeArgumentInfoStatic[recursive](e.argsinfo);
+        return e[argsinfo=ninfo];
     }
 
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
@@ -345,8 +387,8 @@ entity ConstantSimplification {
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic): PostfixInvokeStatic {
-        let nargs = this.processArgumentList[recursive](op.argsinfo.args);
-        return op[argsinfo=$argsinfo[args=nargs]];
+        let ninfo = this.processInvokeArgumentInfoStatic[recursive](op.argsinfo);
+        return op[argsinfo=ninfo];
     }
 
     recursive method processPostfixOp(e: PostfixOp): Expression {

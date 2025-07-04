@@ -296,7 +296,9 @@ class BSQIREmitter {
         return `BSQAssembly::InvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, srcargs=${arglist}, shuffleinfo=List<(|Option<Nat>, BSQAssembly::TypeSignature|)>{${sinfocc}}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, BSQAssembly::TypeSignature|)>{${restinfocc}}, resolvedArgs=none }`;
     }
 
-    private emitLambdaInvokeArgumentInfo(name: string, rec: RecursiveAnnotation, args: ArgumentValue[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined): string {
+    private emitLambdaInvokeArgumentInfo(name: string, rec: RecursiveAnnotation, args: ArgumentValue[], stdargs: TypeSignature[], resttype: TypeSignature | undefined, restinfo: [number, boolean, TypeSignature][] | undefined): string {
+        const stdargscc = `List<BSQAssembly::TypeSignature>{${stdargs.map((si) => this.emitTypeSignature(si)).join(", ")}}`;
+
         const restinfocc = (restinfo || []).map((ri) => {
             return `(|${ri[0]}n, ${ri[1]}, ${this.emitTypeSignature(ri[2])}|)`
         }).join(", ");
@@ -304,7 +306,7 @@ class BSQIREmitter {
         const resttypecc = resttype !== undefined ? `some(${this.emitTypeSignature(resttype)})` : "none"
         const arglist = 'List<BSQAssembly::ArgumentValue>{' + args.map((arg) => this.emitArgumentValue(arg)).join(", ") + '}';
 
-        return `BSQAssembly::LambdaInvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, srcargs=${arglist}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, BSQAssembly::TypeSignature|)>{${restinfocc}}, resolvedArgs=none }`;
+        return `BSQAssembly::LambdaInvokeArgumentInfo{ name='${name}'<BSQAssembly::Identifier>, rec=${this.emitRecInfo(rec)}, srcargs=${arglist}, stdargs=${stdargscc}, resttype=${resttypecc}, restinfo=List<(|Nat, Bool, BSQAssembly::TypeSignature|)>{${restinfocc}}, resolvedArgs=none }`;
     }
 
     private emitStdConstructorArgumentInfo(args: ArgumentValue[], shuffleinfo: [number, TypeSignature | undefined, string, TypeSignature][]): string {
@@ -317,6 +319,10 @@ class BSQIREmitter {
 
         return `srcargs=${arglist}, shuffleinfo=List<(|Option<Nat>, (|BSQAssembly::TypeSignature, BSQAssembly::Identifier|), BSQAssembly::TypeSignature|)>{${sinfocc}}`;
     }   
+
+    private emitCollectionArguments(args: ArgumentValue[]): string {
+        return 'List<BSQAssembly::ArgumentValue>{' + args.map((arg) => this.emitArgumentValue(arg)).join(", ") + '}';
+    }
 
     private emitSimpleArguments(args: ArgumentValue[]): string {
         return 'List<BSQAssembly::Expression>{' + args.map((arg) => this.emitExpression(arg.exp)).join(", ") + '}';
@@ -521,7 +527,7 @@ class BSQIREmitter {
     }
 
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
-        const args = this.emitSimpleArguments(exp.args.args);
+        const args = this.emitCollectionArguments(exp.args.args);
 
         if(cdecl instanceof ListTypeDecl) {
             const cpee = this.emitConstructorPrimaryExpressionBase(exp);
@@ -616,7 +622,7 @@ class BSQIREmitter {
         const ebase = this.emitExpressionBase(exp);
 
         const lambda = exp.lambda as LambdaTypeSignature;
-        const argsinfo = this.emitLambdaInvokeArgumentInfo(exp.name, lambda.recursive, exp.args.args, exp.resttype, exp.restinfo);
+        const argsinfo = this.emitLambdaInvokeArgumentInfo(exp.name, lambda.recursive, exp.args.args, exp.arginfo, exp.resttype, exp.restinfo);
 
         return `BSQAssembly::LambdaInvokeExpression{ ${ebase}, isCapturedLambda=${exp.isCapturedLambda}, lambda=${this.emitTypeSignature(exp.lambda as TypeSignature)}, fname='${exp.name}'<BSQAssembly::Identifier>, argsinfo=${argsinfo} }`;
     }

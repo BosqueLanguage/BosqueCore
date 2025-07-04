@@ -43,6 +43,7 @@ entity LambdaInvokeArgumentInfo {
     field rec: RecursiveAnnotation;
     field srcargs: List<ArgumentValue>;
 
+    field stdargs: List<TypeSignature>;
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Nat, Bool, TypeSignature|)>;
 
@@ -135,7 +136,7 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 
 datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
     field elemtype: TypeSignature;
-    field args: List<Expression>;
+    field args: List<ArgumentValue>;
 }
 of
 ConstructorPrimaryListExpression { }
