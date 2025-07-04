@@ -19,7 +19,7 @@
         "typescript": "5.6.2"
     },
     "scripts": {
-        "build": "node ./build/build_all.js && node ./build/build_smtemit.js",
+        "build": "node ./build/build_all.js && node ./build/build_smtemit.js && node ./build/build_cppemit.js",
         "build-core": "node ./build/build_core.js",
         "test": "node ./build/build_all.js && node ./build/build_smtemit.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test test/*/*/*.test.js",
         "test-coverage": "node ./build/build_all.js && node --test-concurrency=4 --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=bin/test/*/*_nf.js --test-coverage-exclude=/tmp/** --test test/*/*/*.test.js",
