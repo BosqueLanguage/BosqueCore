@@ -206,21 +206,18 @@ entity ConstantSimplification {
     }
 
     recursive method processStdConstructorArgs(ainfo: ConstructorArgumentInfo): ConstructorArgumentInfo {
-        let nresolved = ainfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
-
+        let nresolved = ainfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
         return ainfo[resolvedArgs=some(nresolved)];
     }
 
     recursive method processInvokeArgumentInfoStatic(arginfo: InvokeArgumentInfo): InvokeArgumentInfo {
-        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
-
-        return arginfo[resolvedArgs=nresolved];
+        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+        return arginfo[resolvedArgs=some(nresolved)];
     }
 
     recursive method processLambdaInvokeArgumentInfo(arginfo: LambdaInvokeArgumentInfo): LambdaInvokeArgumentInfo {
-        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(fn(arg) => this.processExpression[recursive](arg));
-
-        return arginfo[resolvedArgs=nresolved];
+        let nresolved = arginfo.resolvedArgs@some.map[recursive]<Expression>(recursive fn(arg) => this.processExpression[recursive](arg));
+        return arginfo[resolvedArgs=some(nresolved)];
     }
 
     recursive method processArgumentListSimple(argl: List<ArgumentValue>): List<ArgumentValue> {
