@@ -26,18 +26,35 @@ RefArgumentValue { }
 | SpreadArgumentValue { }
 ;
 
-entity ArgumentList {
-    field args: List<ArgumentValue>;
-}
-
 entity InvokeArgumentInfo {
     field name: Identifier;
     field rec: RecursiveAnnotation;
-    field args: ArgumentList;
+    field srcargs: List<ArgumentValue>;
 
     field shuffleinfo: List<(|Option<Nat>, TypeSignature|)>;
     field resttype: Option<TypeSignature>;
     field restinfo: List<(|Nat, Bool, TypeSignature|)>;
+
+    field resolvedargs: Option<List<Expression>>;
+}
+
+entity LambdaInvokeArgumentInfo {
+    field name: Identifier;
+    field rec: RecursiveAnnotation;
+    field srcargs: List<ArgumentValue>;
+
+    field stdargs: List<TypeSignature>;
+    field resttype: Option<TypeSignature>;
+    field restinfo: List<(|Nat, Bool, TypeSignature|)>;
+
+    field resolvedargs: Option<List<Expression>>;
+}
+
+entity ConstructorArgumentInfo {
+    field srcargs: List<ArgumentValue>;
+    field shuffleinfo: List<(|Option<Nat>, Option<(|TypeSignature, Identifier|)>, TypeSignature|)>;
+
+    field resolvedargs: Option<List<Expression>>;
 }
 
 concept Expression {
@@ -111,7 +128,6 @@ entity AccessCapturedVariableExpression provides Expression {
 }
 
 concept ConstructorExpression provides Expression {
-    field args: ArgumentList;
 }
 
 concept ConstructorPrimaryExpression provides ConstructorExpression {
@@ -120,6 +136,7 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 
 datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
     field elemtype: TypeSignature;
+    field args: List<ArgumentValue>;
 }
 of
 ConstructorPrimaryListExpression { }
@@ -129,7 +146,9 @@ ConstructorPrimaryListExpression { }
 %%TODO: 1) constructor collection expression that are all union/append operations
 %%      2) constructor collection expression that are mixed single and union/append operations
 
-datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression using {
+    field value: Expression;
+}
 of
 ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
@@ -145,20 +164,24 @@ ConstructorPrimarySpecialSomeExpression {
 ;
 
 entity ConstructorTypeDeclExpression provides ConstructorPrimaryExpression {
+    field value: Expression;
     field valuetype: TypeSignature;
 }
 
 entity ConstructorTypeDeclStringExpression provides ConstructorPrimaryExpression {
+    field value: Expression;
     field valuetype: TypeSignature;
     field ofcheck: Expression;
 }
 
-entity ConstructorStdExpression provides ConstructorPrimaryExpression { 
-    field shuffleinfo: List<(|Option<Nat>, Identifier, TypeSignature|)>;
+entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
+
+    field argsinfo: ConstructorArgumentInfo;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {
+    field args: List<Expression>;
 }
 
 entity ConstructorLambdaExpression provides Expression {
@@ -177,7 +200,7 @@ entity LambdaInvokeExpression provides Expression {
     field lambda: LambdaTypeSignature;
 
     field fname: Identifier;
-    field argsinfo: InvokeArgumentInfo;
+    field argsinfo: LambdaInvokeArgumentInfo;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {

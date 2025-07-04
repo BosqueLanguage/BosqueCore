@@ -191,13 +191,15 @@ OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
-datatype CollectionTypeDecl provides InternalEntityTypeDecl 
+datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
+    field oftype: TypeSignature;
+}
 of
-ListTypeDecl { field oftype: TypeSignature; }
+ListTypeDecl {  }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
-| MapTypeDecl { field oftype: NominalTypeSignature; field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
 entity EventListTypeDecl provides InternalEntityTypeDecl {
@@ -574,6 +576,53 @@ entity Assembly {
                 let ts2 = if(tt2)@<AbstractConceptTypeDecl> then $tt2.subtypes else List<TypeKey>{t2.tkeystr};
 
                 return ts1.allOf(pred(tt) => !ts2.contains(tt));
+            }
+        }
+    }
+
+    recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
+        match(exp)@ {
+            AccessNamespaceConstantExpression => {
+                let cc = this.nsconsts.find(pred(nsconst) => /\(nsconst.name === $exp.name, nsconst.declaredInNS === $exp.ns));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessStaticFieldExpression => {
+                let cc = this.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr));
+                return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
+            }
+            | AccessEnumExpression => {
+                return some(exp);
+            }
+            | LiteralNoneExpression => {
+                return some(exp);
+            }
+            | LiteralSimpleExpression => {
+                return some(exp);
+            }
+            | LiteralCStringExpression => {
+                return some(exp);
+            }
+            | LiteralStringExpression => {
+                return some(exp);
+            }
+            | LiteralCRegexExpression => {
+                return some(exp);
+            }
+            | LiteralRegexExpression => {
+                return some(exp);
+            }
+            | LiteralTypeDeclValueExpression => {
+                let tdecl = this.lookupNominalTypeDeclaration($exp.constype.tkeystr);
+                
+                if(!tdecl.allInvariants.empty()) {
+                    return none;
+                }
+                else {
+                    return some(exp);
+                }
+            }
+            | _ => {
+                return none;
             }
         }
     }
