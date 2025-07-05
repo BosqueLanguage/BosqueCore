@@ -547,7 +547,7 @@ class BSQIREmitter {
         if(cdecl instanceof SomeTypeDecl) {
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
 
-            return `BSQAssembly::ConstructorPrimarySomeExpression{ ${cbase}, value=${vexp}, oftype=${oftype} }`;
+            return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
         else {
             assert(false, "Not implemented -- SpecialConstructableConstructor");
