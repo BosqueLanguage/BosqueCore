@@ -33,5 +33,12 @@ describe ("SMT evaluate -- Entity w/ Invariant Constructor", () => {
     it("should smt exec find error", function () {
         runishMainCodeSat('entity Foo { field x: Int; field y: Int; invariant $x >= $y; } public function main(k: Int): Int { let f = Foo{k, 3i}; return f.x + f.y; }', "(declare-const a Int) (assert (not (is-@Result-err (Main@main a))))");
     });
+
+    it("should exec default", function () {
+        runishMainCodeUnsat('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Int { return Foo{5i}.f; }', "(assert (not (= (@Result-ok 5) Main@main)))");
+        runishMainCodeUnsat('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Int { return Foo{}.f; }', "(assert (not (= (@Result-ok 0) Main@main)))");
+
+        runishMainCodeUnsat('entity Foo { field f: Int = 0i; invariant $f != 3i; } public function main(): Int { return Foo{3i}.f; }', "(assert (not (is-@Result-err Main@main)))");
+    });
 });
 
