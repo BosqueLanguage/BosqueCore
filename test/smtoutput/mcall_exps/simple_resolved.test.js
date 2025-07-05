@@ -29,12 +29,10 @@ describe ("SMT Exec -- entity methods", () => {
         runishMainCodeUnsat('entity Foo { field x: Int; method m(y: Int): Int { return this.x + y; } } public function main(): Int { let foo: Option<Foo> = some(Foo{ 3i }); return foo@some.m(2i); }', "(assert (not (= (@Result-ok 5) Main@main)))");
     });
 
-    /*
-    it("should exec simple entity methods with both template and more", function () {
-        runMainCode('entity Foo<T> { field f: T; method foo<U>(u: U): U { return if (this.f)@<U> then $_ else u; }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "3n"); 
-        runMainCode('entity Foo<T> { field f: T; method foo<U>(t: T): T { return if (t)<U> then t else this.f; }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', "3i"); 
+    it("should smt exec simple entity methods with both template and more", function () {
+        runishMainCodeUnsat('entity Foo<T> { field f: T; method foo<U>(u: U): U { return if (this.f)@<U> then $_ else u; }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('entity Foo<T> { field f: T; method foo<U>(t: T): T { return if (t)<U> then t else this.f; }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', "(assert (not (= 3 Main@main)))");
     });
-    */
 });
 
 describe ("SMT Exec -- entity methods (Pre/Post)", () => {
