@@ -391,14 +391,9 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return String::concat("(", String::joinAll(" || ", args), ")");
 }
 
-function emitArguments(al: Option<List<CPPAssembly::Expression>>, ctx: Context): String {
-    if(al)@none {
-        return "";
-    }
-    else {
-        let emit_al = $al.map<String>(fn(arg) => emitExpression(arg, ctx));
-        return String::joinAll(", ", emit_al);
-    }
+function emitArguments(al: List<CPPAssembly::Expression>, ctx: Context): String {
+    let emit_al = al.map<String>(fn(arg) => emitExpression(arg, ctx));
+    return String::joinAll(", ", emit_al);
 }
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): String { 

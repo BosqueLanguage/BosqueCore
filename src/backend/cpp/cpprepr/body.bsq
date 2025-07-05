@@ -128,7 +128,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field fullns: List<CString>;
 
-    field args: Option<List<Expression>>;
+    field args: List<Expression>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
@@ -136,7 +136,7 @@ entity CallTypeFunctionExpression provides Expression {
     field ttype: NominalTypeSignature;
     field resolvedDeclType: NominalTypeSignature;
 
-    field args: Option<List<Expression>>;
+    field args: List<Expression>;
 }
 
 entity AccessVariableExpression provides Expression {
@@ -266,7 +266,7 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
 
-    field args: Option<List<Expression>>;
+    field args: List<Expression>;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {
@@ -308,7 +308,7 @@ PostfixAccessFromName {
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
-    field args: Option<List<Expression>>;
+    field args: List<Expression>;
 }
 | PostfixBoolConstant {
     field value: Bool;

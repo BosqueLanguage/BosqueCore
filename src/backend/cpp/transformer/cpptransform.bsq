@@ -269,13 +269,13 @@ entity CPPTransformer {
         return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
-    method transformArguments(al: Option<List<BSQAssembly::Expression>>): Option<List<CPPAssembly::Expression>> {
+    method transformArguments(al: Option<List<BSQAssembly::Expression>>): List<CPPAssembly::Expression> { 
         if(al)@none {
-            return none;
+            return List<CPPAssembly::Expression>{};
         }
         else {
             let args = $al.map<CPPAssembly::Expression>(fn(arg) => this.transformExpressionToCpp(arg));
-            return some(args);
+            return args;
         }
     }
 
