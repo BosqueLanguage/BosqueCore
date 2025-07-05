@@ -391,16 +391,7 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return String::concat("(", String::joinAll(" || ", args), ")");
 }
 
-function emitArgumentValue(av: CPPAssembly::ArgumentValue, ctx: Context): String {
-    let expr = emitExpression[recursive](av.exp, ctx);
-    match(av)@ {
-        CPPAssembly::NamedArgumentValue => { return expr; } 
-        | CPPAssembly::PositionalArgumentValue => { return expr; }
-        | _ => { abort; }
-    }
-}
-
-function emitArgumentList(al: Option<List<CPPAssembly::Expression>>, ctx: Context): String {
+function emitArguments(al: Option<List<CPPAssembly::Expression>>, ctx: Context): String {
     if(al)@none {
         return "";
     }
@@ -413,7 +404,7 @@ function emitArgumentList(al: Option<List<CPPAssembly::Expression>>, ctx: Contex
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): String { 
     let name = emitInvokeKey(e.ikey, ctx);
     let nsfunc = ctx.asm.nsfuncs.get(e.ikey); 
-    let args = emitArgumentList(e.args, ctx); 
+    let args = emitArguments(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -421,7 +412,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): String { 
     let typefunc = ctx.asm.typefuncs.get(e.ikey);
     let name = emitInvokeKey(typefunc.ikey, ctx);
-    let args = emitArgumentList(e.args, ctx); 
+    let args = emitArguments(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -451,7 +442,7 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, expr: Str
     let ik = String::fromCString(op.resolvedTrgt.value);
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
-    let args = emitArgumentList(op.args, ctx);
+    let args = emitArguments(op.args, ctx);
     
     %% Remove abstract nominal we were in
     var resolvedInvoke = emitSpecialTemplate(ik.removePrefixString(tk).removePrefixString("::"));
@@ -539,7 +530,7 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
 %% constructor like we do now. Currently they call "new"
 %%
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): String {
-    let emitargs = emitArgumentList(exp.args, ctx); 
+    let emitargs = emitArguments(exp.args, ctx); 
     let name = emitTypeSignature(exp.ctype, false, ctx);
     if(ctx.asm.typeinfos.get(exp.ctype.tkeystr).tag === CPPAssembly::Tag#Ref) {
         return String::concat("new ", name, "{ ", emitargs, " }"); %% We use new solely to keep the code compiling before GC integration

@@ -67,16 +67,6 @@ entity CreateDirectExpression provides Expression {
     field trgttype: NominalTypeSignature;
 }
 
-datatype ArgumentValue using {
-    field exp: Expression;
-}
-of
-RefArgumentValue { } %% TODO: Not implemented
-| PositionalArgumentValue { } 
-| NamedArgumentValue { field name: VarIdentifier; }
-| SpreadArgumentValue { } %% TODO: Not implemented
-;
-
 datatype IfStatement provides Statement using {
     field cond: Expression;
     field trueBlock: BlockStatement;

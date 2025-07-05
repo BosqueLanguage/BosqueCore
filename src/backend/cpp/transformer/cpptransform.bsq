@@ -269,22 +269,7 @@ entity CPPTransformer {
         return CPPAssembly::LogicActionOrExpression{cpptype, args};
     }
 
-    %%
-    %% This may be dead code now 
-    %%
-
-    method transformArgument(arg: BSQAssembly::ArgumentValue): CPPAssembly::ArgumentValue {
-        let exp = this.transformExpressionToCpp[recursive](arg.exp);
-
-        match(arg)@ {
-            BSQAssembly::NamedArgumentValue => { return CPPAssembly::NamedArgumentValue{ 
-                exp, CPPTransformNameManager::convertVarIdentifier($arg.name) }; }
-            | BSQAssembly::PositionalArgumentValue => { return CPPAssembly::PositionalArgumentValue{ exp }; }
-            | _ => { abort; } %% TODO: Not implemented
-        }
-    }
-
-    method transformArgumentList(al: Option<List<BSQAssembly::Expression>>): Option<List<CPPAssembly::Expression>> {
+    method transformArguments(al: Option<List<BSQAssembly::Expression>>): Option<List<CPPAssembly::Expression>> {
         if(al)@none {
             return none;
         }
@@ -298,7 +283,7 @@ entity CPPTransformer {
         let ts = this.convertTypeSignature(expr.etype);
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ns = CPPTransformNameManager::convertNamespaceKey(expr.ns);
-        let args = this.transformArgumentList(expr.argsinfo.resolvedargs);
+        let args = this.transformArguments(expr.argsinfo.resolvedargs);
         let fullns = expr.fullns;
 
         return CPPAssembly::CallNamespaceFunctionExpression{ ts, ikey, ns, fullns, args };
@@ -309,7 +294,7 @@ entity CPPTransformer {
         let ikey = CPPTransformNameManager::convertInvokeKey(expr.ikey);
         let ttype = CPPTransformNameManager::convertNominalTypeSignature(expr.ttype);
         let resolvedDeclType = CPPTransformNameManager::convertNominalTypeSignature(expr.resolvedDeclType);
-        let args = this.transformArgumentList(expr.argsinfo.resolvedargs);
+        let args = this.transformArguments(expr.argsinfo.resolvedargs);
 
         return CPPAssembly::CallTypeFunctionExpression{ ts, ikey, ttype, resolvedDeclType, args };
     }
@@ -356,7 +341,7 @@ entity CPPTransformer {
             | BSQAssembly::PostfixInvokeStatic => {
                 let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
                 let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
-                let args = this.transformArgumentList($op.argsinfo.resolvedargs);
+                let args = this.transformArguments($op.argsinfo.resolvedargs);
 
                 return CPPAssembly::PostfixInvokeStatic{ baseType, resolvedType, resolvedTrgt, args };
             }
@@ -409,7 +394,7 @@ entity CPPTransformer {
     method transformConstructorStdExpression(e: BSQAssembly::ConstructorStdExpression): CPPAssembly::ConstructorStdExpression {
         let etype = this.convertTypeSignature(e.etype);
         let ctype = CPPTransformNameManager::convertNominalTypeSignature(e.ctype); 
-        let args = this.transformArgumentList(e.argsinfo.resolvedargs);
+        let args = this.transformArguments(e.argsinfo.resolvedargs);
         return CPPAssembly::ConstructorStdExpression{ etype, ctype, e.fullns, args };
     } 
 
