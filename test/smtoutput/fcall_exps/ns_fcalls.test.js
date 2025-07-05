@@ -15,6 +15,28 @@ describe ("SMT Exec -- NamespaceFunction", () => {
         runishMainCodeUnsat("function bar(x: Int): Int { return x + 1i; } public function main(): Int { let v: Option<Int> = none; return bar(v@some); }", "(assert (not (is-@Result-err Main@main)))");
     });
 
+    it("should smt exec simple named", function () {
+        runishMainCodeUnsat("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(x=1i, y=true); }", "(assert (not (= 1 Main@main)))");
+        runishMainCodeUnsat("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(y=true, x=1i); }", "(assert (not (= 1 Main@main)))");
+    });
+
+    it("should smt exec simple mixed", function () {
+        runishMainCodeUnsat("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(1i, y=true); }", "(assert (not (= 1 Main@main)))");
+        runishMainCodeUnsat("function foo(x: Int, y: Bool): Int { return x; } public function main(): Int { return foo(y=true, x=1i); }", "(assert (not (= 1 Main@main)))");
+    });
+
+    it("should smt exec simple default", function () {
+        runishMainCodeUnsat("function foo(x: Int, y: Int = 1i): Int { return x + y; } public function main(): Int { return foo(1i, 2i); }", "(assert (not (= 3 Main@main)))");
+        runishMainCodeUnsat("function foo(x: Int, y: Int = 1i): Int { return x + y; } public function main(): Int { return foo(1i); }", "(assert (not (= 2 Main@main)))");
+    });
+
+    /*
+    it("should smt exec dep default", function () {
+        runMainCode("function foo(x: Int, y: Int = $x): Int { return x + y; } public function main(): Int { return foo(1i, 2i); }", "3i");
+        runMainCode("function foo(x: Int, y: Int = $x): Int { return x + y; } public function main(): Int { return foo(1i); }", "2i");
+    });
+    */
+
     it("should smt exec templates", function () {
         runishMainCodeUnsat("function identity<T>(x: T): T { return x; } public function main(v: Bool): Int { return if(identity<Bool>(v)) then identity<Int>(0i) else 1i; }", "(assert (not (= 0 (Main@main true))))");
     });
