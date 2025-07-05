@@ -180,8 +180,6 @@ entity FunctionDecl provides AbstractDecl {
 entity NamespaceDecl {
     field nsname: CString;
 
-    %% Will need other stuff like nsconsts, enums, typedecls, etc...
-
     field subns: Map<CString, NamespaceDecl>;
 
     field nsfuncs: List<InvokeKey>;
@@ -233,8 +231,6 @@ entity Assembly {
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;
-
-    %%field elists: Map<TypeKey, ConstructorEListExpression>;
 
     method lookupNominalTypeDeclaration(tkey: TypeKey): AbstractNominalTypeDecl {
         if(this.entities.has(tkey)) {
