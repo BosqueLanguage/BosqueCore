@@ -85,12 +85,37 @@ entity ExplicitifyTransform {
         return this.processCoerceTypeAsNeeded(nexp, vtype);
     }
 
+    method processFieldDefaultValue(tsig: TypeSignature, name: Identifier): Expression {
+        var ff: MemberFieldDecl;
+        if(this.assembly.entities.has(tsig.tkeystr)) {
+            ff = this.assembly.entities.get(tsig.tkeystr).fields.find(pred(f) => f.name === name);
+        }
+        elif(this.assembly.concepts.has(tsig.tkeystr)) {
+            ff = this.assembly.concepts.get(tsig.tkeystr).fields.find(pred(f) => f.name === name);
+        }
+        elif(this.assembly.datamembers.has(tsig.tkeystr)) {
+            ff = this.assembly.datamembers.get(tsig.tkeystr).fields.find(pred(f) => f.name === name);
+        }
+        else {
+            ff = this.assembly.datatypes.get(tsig.tkeystr).fields.find(pred(f) => f.name === name);
+        }
+
+        let cv = this.assembly.tryResolveExpAsLiteralExpression(ff.defaultValue@some);
+        if(cv)@some {
+            return $cv;
+        }
+        else {
+            abort; %% Not implemented -- put in default value expression for the field
+        }
+    }
+
     recursive method processStdConstructorArgs(sinfo: SourceInfo, finfos: List<SaturatedFieldInfo>, ainfo: ConstructorArgumentInfo, vmap: VarMapping): ConstructorArgumentInfo {
         let resolvedargs = ainfo.shuffleinfo.mapIdx[recursive]<Expression>(fn(si, i) => {
             let fi = finfos.get(i);
 
             if($argidx = si.0)@none {
-                abort; %% Do static resolution or put in "default value expression" for the field
+                let resinfo = si.1@some;
+                return this.processFieldDefaultValue(resinfo.0, resinfo.1);
             }
             else {
                 let eexp = ainfo.srcargs.get($argidx).exp;
@@ -351,8 +376,8 @@ entity ExplicitifyTransform {
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
-        let params = this.assembly.staticmethods.get(op.resolvedTrgt).params;
-        let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, params, op.argsinfo, vmap);
+        let smdecl = this.assembly.staticmethods.get(op.resolvedTrgt);
+        let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, smdecl.params, op.argsinfo, vmap);
 
         return op[argsinfo=nargs];
     }
