@@ -948,8 +948,9 @@ entity ConstantSimplification {
     }
 
     recursive method processMatchStatement(s: MatchStatement): Statement {
-        let nsv = this.processExpression[recursive](s.sval, vmap);
-        let nflow = this.matchflow.reduce[recursive]<(|Bool, List<(|Option<TypeSignature>, BlockStatement|)>|)>((|true, List<(|Option<TypeSignature>, BlockStatement|)>|), fn(mb, acc) => {
+        let nsv = this.processExpression[recursive](s.sval);
+
+        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|Option<TypeSignature>, BlockStatement|)>|)>((|true, List<(|Option<TypeSignature>, BlockStatement|)>{}|), recursive fn(acc, mb) => {
             if(!acc.0) {
                 return acc;
             }
@@ -958,20 +959,20 @@ entity ConstantSimplification {
                     return (|true, acc.1.pushBack((|none, this.processBlockStatement[recursive](mb.1)|))|);
                 }
                 else {
-                    if(this.assembly.isSubtypeOf(mb.0, nsv.etype)) {
-                        return (|false, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1, vmap)|))|);
+                    if(this.assembly.isSubtypeOf($tt, nsv.etype)) {
+                        return (|false, acc.1.pushBack((|some($tt), this.processBlockStatement[recursive](mb.1)|))|);
                     }
-                    elif(this.assembly.areDisjointTypes(mb.0, nsv.etype)) {
-                        return (|true, acc|);
+                    elif(this.assembly.areDisjoint($tt, nsv.etype)) {
+                        return (|true, acc.1|);
                     }
                     else {
-                        return (|true, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1, vmap)|))|);
+                        return (|true, acc.1.pushBack((|some($tt), this.processBlockStatement[recursive](mb.1)|))|);
                     }
                 }
             }
         });
 
-        if(nflow.empty()) {
+        if(nflow.1.empty()) {
             return AbortStatement{ s.sinfo };
         }
         else {

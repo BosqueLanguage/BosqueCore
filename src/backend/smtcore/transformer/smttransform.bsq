@@ -1860,29 +1860,31 @@ entity SMTTransformer {
     recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
 
-        var cases: List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>;
+        var cases: List<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>;
         var defaultop: Option<BSQAssembly::BlockStatement>;
 
         if(stmt.matchflow.back().0)@none {
-            cases = stmt.matchflow.popBack();
-            defaultop = stmt.matchflow.back().1;
+            cases = stmt.matchflow.deleteBack().map<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>(fn(op) => {
+                return (|op.0@some, op.1|);
+            });
+            defaultop = some(stmt.matchflow.back().1);
         }
         else {
             cases = stmt.matchflow.map<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>(fn(op) => {
-                return (|op.ttype@some, op.block|);
+                return (|op.0@some, op.1|);
             });
             defaultop = none;
         }
 
-        let ops = cases.reduce<(|SMTTransformerCtx, List<(|TypeKey, Operation|)>|)>(recursive fn(acc, op) => {
+        let ops = cases.reduce<(|SMTTransformerCtx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {
             let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
-            return cctx, (|this.transformStdTypeToSMT(op.0), nblock|);
+            return cctx, acc.1.pushBack((|this.transformStdTypeToSMT(op.0), nblock@some|));
         });
 
         var fctx: SMTTransformerCtx = ops.0;
         var smtdefault: Option<SMTAssembly::Operation> = none;
         if(defaultop)@some {
-            fctx, smtdefault = this.processBlockStatement[recursive]($defaultop, tail, ops.0);
+            fctx, smtdefault = this.transformBlockStatement[recursive]($defaultop, tail, ops.0);
         }
 
         let mop = SMTAssembly::MatchOperation{ ntexp, ops.1, smtdefault };
