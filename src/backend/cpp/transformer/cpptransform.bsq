@@ -429,7 +429,8 @@ entity CPPTransformer {
 
         match(exp)@ {
             BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
-            | BSQAssembly::IfTestExpression => { return CPPAssembly::IfTestExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest) }; } %% TODO: Not Implemented 
+            | BSQAssembly::IfTestExpression => { return CPPAssembly::IfTestExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest) }; }
+            | BSQAssembly::IfBinderExpression => { return CPPAssembly::IfBinderExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest), this.transformBinderInfo($exp.binder) };}
         }
     }
 

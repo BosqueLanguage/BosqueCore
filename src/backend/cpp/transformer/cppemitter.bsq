@@ -463,7 +463,23 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
     let args = emitArguments(op.args, ctx);
-    
+    let exp = emitExpression(rootexp, ctx);
+
+    %% The "this" arguemnt does not exist in explicitify so we handle the coersion here (we manually added it for cpp emission)
+    var thisarg: String;
+    if(!ctx.asm.areTypesSame(rootexp.etype, op.resolvedType)) {
+        let rootexptype = emitTypeSignature(rootexp.etype, false, ctx);
+        let roottinfo = ctx.asm.typeinfos.get(rootexp.etype.tkeystr);
+        let targettype = emitTypeKey(op.resolvedType.tkeystr, false, ctx);
+
+        let slotsize = if(roottinfo.tag === CPPAssembly::Tag#Tagged) then roottinfo.slotsize - 1n else roottinfo.slotsize;
+        thisarg = if(slotsize == 0n) then String::concat(targettype, "{ &", rootexptype, "Type }")
+            else String::concat(targettype, "{ &", rootexptype, "Type, ", exp, " }"); 
+    }
+    else {
+        thisarg = exp;
+    } 
+
     %% Remove abstract nominal we were in
     var resolvedInvoke = emitSpecialTemplate(ik.removePrefixString(tk).removePrefixString("::"));
     if(args === "") {
@@ -474,10 +490,7 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
     }
 }
 
-%% I think we need to do the none convert somehow here
-%% If somehow somethign that is not a some gets passed in here we will see some weird output...
 function emitPostfixAccessSomeValue(op: CPPAssembly::PostfixAccessSomeValue, acc: String, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
-    %% We should make this a method, we use it in itest convert
     let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
     let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
 
@@ -586,7 +599,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
     let value = emitExpression(cpsse.value, ctx);
-    let sometype = String::concat("Core::", emitTypeSignature(cpsse.ctype, false, ctx));
+    let sometype = emitTypeSignature(cpsse.ctype, false, ctx);
 
     return String::concat(sometype, "{ ", value, "}");
 }
@@ -619,19 +632,6 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
     let cons = String::concat(name, "{ ", emitargs, " }");
     if(tinfo.tag === CPPAssembly::Tag#Ref) {
         return String::concat("new ", cons); %% We use new solely to keep the code compiling before GC integration
-    }
-    elif(ctx.asm.datatypes.has(exp.ctype.tkeystr)) { 
-        %* TODO: This is wrong...
-        let pts = emitTypeSignature(exp.ctype, false, ctx);
-        let dmts = emitTypeKey(exp.ctype.tkey, false, ctx);
-
-        return if(dm.saturatedBFieldInfo.size() === 0n) then String::concat(pts, "{ &", dmts, "Type }")
-            else String::concat(pts, "{ &", dmts, "Type, ", cons, " }");
-        *%
-        abort;
-    }
-    elif(ctx.asm.concepts.has(exp.ctype.tkeystr)) {
-        abort; %% TODO: Concept constructors!
     }
     else {
         return cons;
@@ -668,6 +668,11 @@ function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: 
     return String::concat(itest, " ? ", t, " : ", e);
 }
 
+function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String, t: String, e: String, ctx: Context): String {
+    let itest = emitITestAsTest(exp.itest, exp.texp.etype, ctx);
+
+    return String::concat(itest, " ? ", t, " : ", e);
+}
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
     let texp = emitExpression(exp.texp, ctx);
@@ -677,7 +682,7 @@ function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String 
     match(exp)@ {
         CPPAssembly::IfSimpleExpression => { return String::concat(texp, " ? ", thenexp, " : ", elseexp); }
         | CPPAssembly::IfTestExpression => { return emitIfTestExpression($exp, texp, thenexp, elseexp, ctx); }
-        | CPPAssembly::IfBinderExpression => { abort; }
+        | CPPAssembly::IfBinderExpression => { return emitIfBinderExpression($exp, texp, thenexp, elseexp, ctx); }
     }
 }
 
