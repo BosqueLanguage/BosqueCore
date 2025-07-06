@@ -416,25 +416,15 @@ recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpr
     return String::concat("(", String::joinAll(" || ", args), ")");
 }
 
-function emitArgumentValue(av: CPPAssembly::ArgumentValue, ctx: Context): String {
-    let expr = emitExpression[recursive](av.exp, ctx);
-    match(av)@ {
-        CPPAssembly::NamedArgumentValue => { return expr; } 
-        | CPPAssembly::PositionalArgumentValue => { return expr; }
-        | _ => { abort; }
-    }
-}
-
-function emitArgumentList(al: CPPAssembly::ArgumentList, ctx: Context): String {
-    let emit_al = al.args.mapIdx<String>(fn(arg, ii) => emitArgumentValue(arg, ctx));
-    
+function emitArguments(al: List<CPPAssembly::Expression>, ctx: Context): String {
+    let emit_al = al.map<String>(fn(arg) => emitExpression(arg, ctx));
     return String::joinAll(", ", emit_al);
 }
 
 function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFunctionExpression, ctx: Context): String { 
     let name = emitInvokeKey(e.ikey, ctx);
     let nsfunc = ctx.asm.nsfuncs.get(e.ikey); 
-    let args = emitArgumentList(e.args, ctx); 
+    let args = emitArguments(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -442,7 +432,7 @@ function emitCallNamespaceFunctionExpression(e: CPPAssembly::CallNamespaceFuncti
 function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpression, ctx: Context): String { 
     let typefunc = ctx.asm.typefuncs.get(e.ikey);
     let name = emitInvokeKey(typefunc.ikey, ctx);
-    let args = emitArgumentList(e.args, ctx); 
+    let args = emitArguments(e.args, ctx); 
 
     return String::concat(name, "(", args, ")");
 }
@@ -472,23 +462,8 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
     let ik = String::fromCString(op.resolvedTrgt.value);
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
-    let args = emitArgumentList(op.args, ctx);
-    let exp = emitExpression(rootexp, ctx);
-
-    %% Case where rootexps type provides some concept, and the method we call is declared in the concept not rootexp
-    var thisarg: String;
-    if(!ctx.asm.areTypesSame(rootexp.etype, op.resolvedType)) {
-        let rootexptype = emitTypeSignature(rootexp.etype, false, ctx);
-        let rootdef = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
-        let coerceroottype = emitTypeKey(rootdef.tkey, false, ctx);
+    let args = emitArguments(op.args, ctx);
     
-        thisarg = if(rootdef.saturatedBFieldInfo.size() === 0n) then String::concat(coerceroottype, "{ &", rootexptype, "Type }")
-            else String::concat(coerceroottype, "{ &", rootexptype, "Type, ", exp, " }"); 
-    }
-    else {
-        thisarg = exp;
-    }
-
     %% Remove abstract nominal we were in
     var resolvedInvoke = emitSpecialTemplate(ik.removePrefixString(tk).removePrefixString("::"));
     if(args === "") {
@@ -610,10 +585,10 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
 }
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
-    let args = cpsse.args.args.map<String>(fn(arg) => emitExpression(arg.exp, ctx) );
-    let sometype = emitTypeSignature(cpsse.ctype, false, ctx);
+    let value = emitExpression(cpsse.value, ctx);
+    let sometype = String::concat("Core::", emitTypeSignature(cpsse.ctype, false, ctx));
 
-    return String::concat(sometype, "{ ", String::joinAll(", ", args), "}");
+    return String::concat(sometype, "{ ", value, "}");
 }
 
 function emitConstructorPrimarySpecialOkExpression(cpsoe: CPPAssembly::ConstructorPrimarySpecialOkExpression, ctx: Context): String {
@@ -637,7 +612,7 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
 %% constructor like we do now. Currently they call "new"
 %%
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): String {
-    let emitargs = emitArgumentList(exp.args, ctx); 
+    let emitargs = emitArguments(exp.args, ctx); 
     let name = emitTypeSignature(exp.ctype, false, ctx);
     let tinfo = ctx.asm.typeinfos.get(exp.ctype.tkeystr);
 
@@ -664,11 +639,11 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
 }
 
 function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
-    if(exp.args.args.size() > 4n) {
+    if(exp.args.size() > 4n) {
         abort; %% Tuples of size > 4 not supported yet
     }
     let ceetype = emitTypeSignature(exp.etype, false, ctx);
-    let args = emitArgumentList(exp.args, ctx);    
+    let args = String::joinAll(", ", exp.args.map<String>(fn(e) => emitExpression(e, ctx))); 
 
     return String::concat(ceetype, "(", args, ")");
 }

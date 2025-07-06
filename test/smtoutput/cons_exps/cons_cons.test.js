@@ -2,13 +2,13 @@
 
 import { runishMainCodeUnsat } from "../../../bin/test/smtoutput/smtemit_nf.js";
 import { describe, it } from "node:test";
-/*
+
 describe ("SMT -- Constructable Constructor (Option)", () => {
     it("should smt exec option constructors", function () {
-        runishMainCodeUnsat("public function main(): Int { return Some<Int>{2i}.value; }", "2i");
+        runishMainCodeUnsat("public function main(): Int { return Some<Int>{2i}.value; }", "(assert (not (= 2 Main@main)))");
     });
 });
-*/
+
 /*
 describe ("Exec -- Constructable Constructor (Result)", () => {
     it("should exec result constructors", function () {

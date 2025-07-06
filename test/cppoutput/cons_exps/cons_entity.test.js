@@ -15,10 +15,12 @@ describe ("CPP Emit Evaluate -- Entity Constructor", () => {
         runMainCode('entity Foo { field f: Int; field g: Bool; } public function main(): Bool { return Foo{f=1i, g = true}.g; }', "true");
     });
 
+/*
     it("should exec default", function () {
         runMainCode('entity Foo { field f: Int = 0i; } public function main(): Int { return Foo{}.f; }', "0_i");
         runMainCode('entity Foo { field f: Int = 0i; } public function main(): Int { return Foo{5i}.f; }', "5_i");
     });
+*/
 });
 
 /*

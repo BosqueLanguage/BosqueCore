@@ -67,20 +67,6 @@ entity CreateDirectExpression provides Expression {
     field trgttype: NominalTypeSignature;
 }
 
-datatype ArgumentValue using {
-    field exp: Expression;
-}
-of
-RefArgumentValue { } %% TODO: Not implemented
-| PositionalArgumentValue { } 
-| NamedArgumentValue { field name: VarIdentifier; }
-| SpreadArgumentValue { } %% TODO: Not implemented
-;
-
-entity ArgumentList {
-    field args: List<ArgumentValue>; 
-}
-
 datatype IfStatement provides Statement using {
     field cond: Expression;
     field trueBlock: BlockStatement;
@@ -142,7 +128,7 @@ entity CallNamespaceFunctionExpression provides Expression {
     field ns: NamespaceKey;
     field fullns: List<CString>;
 
-    field args: ArgumentList;
+    field args: List<Expression>;
 }
 
 entity CallTypeFunctionExpression provides Expression {
@@ -150,7 +136,7 @@ entity CallTypeFunctionExpression provides Expression {
     field ttype: NominalTypeSignature;
     field resolvedDeclType: NominalTypeSignature;
 
-    field args: ArgumentList;
+    field args: List<Expression>;
 }
 
 entity AccessVariableExpression provides Expression {
@@ -271,7 +257,6 @@ BinLogicAndExpression { }
 ;
 
 concept ConstructorExpression provides Expression {
-    field args: ArgumentList;
 }
 
 concept ConstructorPrimaryExpression provides ConstructorExpression {
@@ -280,12 +265,17 @@ concept ConstructorPrimaryExpression provides ConstructorExpression {
 
 entity ConstructorStdExpression provides ConstructorPrimaryExpression {
     field fullns: List<CString>;
+
+    field args: List<Expression>;
 }
 
 entity ConstructorEListExpression provides ConstructorExpression {
+    field args: List<Expression>;
 }
 
-datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression 
+datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression using {
+    field value: Expression;
+}
 of
 ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
@@ -321,7 +311,7 @@ PostfixAccessFromName {
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
-    field args: ArgumentList;
+    field args: List<Expression>;
 }
 | PostfixBoolConstant {
     field value: Bool;
