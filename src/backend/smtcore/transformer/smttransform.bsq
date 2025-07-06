@@ -1857,6 +1857,43 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
+
+        var cases: List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>;
+        var defaultop: Option<BSQAssembly::BlockStatement>;
+
+        if(stmt.matchflow.back().0)@none {
+            cases = stmt.matchflow.popBack();
+            defaultop = stmt.matchflow.back().1;
+        }
+        else {
+            cases = stmt.matchflow.map<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>(fn(op) => {
+                return (|op.ttype@some, op.block|);
+            });
+            defaultop = none;
+        }
+
+        let ops = cases.reduce<(|SMTTransformerCtx, List<(|TypeKey, Operation|)>|)>(recursive fn(acc, op) => {
+            let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
+            return cctx, (|this.transformStdTypeToSMT(op.0), nblock|);
+        });
+
+        var fctx: SMTTransformerCtx = ops.0;
+        var smtdefault: Option<SMTAssembly::Operation> = none;
+        if(defaultop)@some {
+            fctx, smtdefault = this.processBlockStatement[recursive]($defaultop, tail, ops.0);
+        }
+
+        let mop = SMTAssembly::MatchOperation{ ntexp, ops.1, smtdefault };
+        if(cobinds)@none {
+            return fctx, some(mop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, mop});
+        }
+    }
+
     recursive method transformStatement(stmt: BSQAssembly::Statement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => {
@@ -1900,6 +1937,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::IfElseStatement => {
                 return this.transformIfElseStatement[recursive]($stmt, tail, ctx);
+            }
+            | BSQAssembly::MatchStatement => {
+                return this.transformMatchStatement[recursive]($stmt, tail, ctx);
             }
             | BSQAssembly::AbortStatement => {
                 return this.transformAbortStatement($stmt, ctx);

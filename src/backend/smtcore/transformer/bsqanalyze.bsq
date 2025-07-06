@@ -357,6 +357,12 @@ entity BSQToSMTCallGraphBuilder {
         return BSQCCInfo::mergeInfos(infotest, infotrue, infofalse);
     }
 
+    recursive method processMatchStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::MatchStatement): BSQCCInfo {
+        let csval = this.processExpression[recursive](current, s.expr);
+        let copts = s.matchflow.map[recursive]<BSQCCInfo>(recursive fn(mopt) => this.processBlockStatement[recursive](current, mopt.1));
+        return BSQCCInfo::mergeInfos(csval, ...copts);
+    }
+
     recursive method processStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::Statement): BSQCCInfo {
         match(s)@ {
             BSQAssembly::EmptyStatement => { return BSQCCInfo::emptyinfo; }
@@ -373,6 +379,7 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive](current, $s.exps); }
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive](current, $s);}
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive](current, $s); }
+            | BSQAssembly::MatchStatement => { return this.processMatchStatement[recursive](current, $s); }
             | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::AssertStatement => { return this.processExpression[recursive](current, $s.cond); }
             | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive](current, $s); }
@@ -699,6 +706,12 @@ entity MayErrorAnalysis {
         return \/(this.processExpression[recursive](s.texp, cerrors, lerrors), this.processBlockStatement[recursive](s.trueBlock, cerrors, lerrors), this.processBlockStatement[recursive](s.falseBlock, cerrors, lerrors));
     }
 
+    recursive method processMatchStatement(s: BSQAssembly::MatchStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        let matcherr = this.processExpression[recursive](s.expr, cerrors, lerrors);
+        let opterr = s.matchflow.someOf[recursive](recursive pred(mopt) =>this.processBlockStatement[recursive](mopt.1, cerrors, lerrors));
+        return \/(matcherr, opterr);
+    }
+
     recursive method processStatement(s: BSQAssembly::Statement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(s)@ {
             BSQAssembly::EmptyStatement => { return false; }
@@ -715,6 +728,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::ReturnMultiStatement => { return this.processArgs[recursive]($s.exps, cerrors, lerrors); }
             | BSQAssembly::IfStatement => { return this.processIfStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::IfElseStatement => { return this.processIfElseStatement[recursive]($s, cerrors, lerrors); }
+            | BSQAssembly::MatchStatement => { return this.processMatchStatement[recursive]($s, cerrors, lerrors); }
             | BSQAssembly::AbortStatement => { return true; }
             | BSQAssembly::AssertStatement => { return true; }
             | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive]($s, cerrors, lerrors); }

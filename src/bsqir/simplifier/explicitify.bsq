@@ -687,6 +687,15 @@ entity ExplicitifyTransform {
         return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
     }
 
+    recursive method processMatchStatement(s: MatchStatement, vmap: VarMapping): Statement {
+        let nsv = this.processExpression[recursive](s.sval, vmap);
+        let nflow = this.matchflow.map[recursive]<(|Option<TypeSignature>, BlockStatement|)>(fn(mb) => {
+            return (|mb.0, this.processBlockStatement[recursive](mb.1, vmap)|);
+        });
+
+        return s[sval=nsv, matchflow=nflow];
+    }
+
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
             EmptyStatement => {
@@ -744,6 +753,9 @@ entity ExplicitifyTransform {
             }
             | IfElifElseStatement => {
                 return this.processIfElifElseStatement[recursive]($s, vmap);
+            }
+            | MatchStatement => {
+                return this.processMatchStatement[recursive]($s, vmap);
             }
             | AbortStatement => {
                 return s;
