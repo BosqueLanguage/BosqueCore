@@ -238,7 +238,8 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
     %% Will need to do something similar for concepts
     if(ctx.asm.datatypes.has(etype.tkeystr)) {
         let emitetype = emitTypeKey(etype.tkeystr, false, ctx);
-        return String::concat(access, ".access<", emitetype, ">()");
+        return if(ctx.asm.areTypesSame(exp.etype, etype)) then access %% No need to call access for the same type
+            else String::concat(access, ".access<", emitetype, ">()");
     }
 
     return access;
@@ -505,12 +506,15 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
             else if(areTypesSame) then "true" else "false";
     }
     else {
-        if(ctx.asm.isSubtypeOf(it.ttype, baseType)) { %% This doesnt work
-            return "true";
+        %% T-type is concrete case
+        if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
+            let ttype = emitTypeSignature(it.ttype, false, ctx);
+            return if(it.isnot) then String::concat(".typeinfo != &", ttype, "Type")
+                else String::concat(".typeinfo == &", ttype, "Type");
         }
-        else {
-            return "false";
-        }
+
+        %% Handle case where both are abstract (vtable lookup)
+        abort;
     }
 }
 
@@ -536,32 +540,31 @@ function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSign
     }
 }
 
-function emitITestAsConvertNone(isnot: Bool, baseType: CPPAssembly::TypeSignature, ctx: Context): (|String, CPPAssembly::TypeSignature|) {
+function emitITestAsConvertNone(isnot: Bool, baseType: CPPAssembly::TypeKey, ctx: Context): (|String, CPPAssembly::TypeKey|) {
     if(isnot) {
         return emitITestAsConvertSome(false, baseType, ctx);
     }
     else {
-        let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
+        let tinfo = ctx.asm.typeinfos.get(baseType);
         let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
 
         %% No clue if this is the best way to fabricate our none type
-        return (|String::concat(accessor, "none()"), CPPAssembly::NominalTypeSignature{ CPPAssembly::TypeKey::from('__CoreCpp::None') }|);
+        return (|String::concat(accessor, "none()"), CPPAssembly::TypeKey::from('__CoreCpp::None') |);
     }
 }
 
-function emitITestAsConvertSome(isnot: Bool, baseType: CPPAssembly::TypeSignature, ctx: Context): (|String, CPPAssembly::TypeSignature|) {
-    let ant = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr);
+function emitITestAsConvertSome(isnot: Bool, baseType: CPPAssembly::TypeKey, ctx: Context): (|String, CPPAssembly::TypeKey|) {
+    let ant = ctx.asm.lookupNominalTypeDeclaration(baseType);
     
     if(ant)@<CPPAssembly::OptionTypeDecl> {
         if(isnot) {
             return emitITestAsConvertNone(false, baseType, ctx);
         }
         else {
-            let tinfo = ctx.asm.typeinfos.get(baseType.tkeystr);
+            let tinfo = ctx.asm.typeinfos.get(baseType);
             let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
 
-            %% Lets also return the type we convert to
-            return (|String::concat(accessor, "some().value"), $ant.oftype|);
+            return (|String::concat(accessor, "some().value"), $ant.oftype.tkeystr|);
         }
     }
     else {
@@ -569,10 +572,22 @@ function emitITestAsConvertSome(isnot: Bool, baseType: CPPAssembly::TypeSignatur
     }
 }
 
+function emitITestAsConvertType(fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, isnot: Bool, ctx: Context): (|String, CPPAssembly::TypeKey|) { 
+    if(ctx.asm.isNominalTypeConcept(fromtype)) {
+        let ttype = emitTypeKey(totype, false, ctx);
+        let tinfo = ctx.asm.typeinfos.get(fromtype);
+        let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
 
-function emitITestAsConvert(isnot: Bool, itc: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): (|String, CPPAssembly::TypeSignature|) {
+        return (|String::concat(accessor, "access<", ttype,">()"), totype|);
+    }
+    else {
+        abort;
+    }
+}
+
+function emitITestAsConvert(isnot: Bool, itc: CPPAssembly::ITest, baseType: CPPAssembly::TypeKey, ctx: Context): (|String, CPPAssembly::TypeKey|) {
     match(itc)@ {
-        CPPAssembly::ITestType => { abort; }
+        CPPAssembly::ITestType => { return emitITestAsConvertType(baseType, $itc.ttype.tkeystr, isnot, ctx); }
         | CPPAssembly::ITestNone => { return emitITestAsConvertNone(isnot, baseType, ctx); }
         | CPPAssembly::ITestSome => { return emitITestAsConvertSome(isnot, baseType, ctx); }
         | CPPAssembly::ITestOk => { abort; }
@@ -589,7 +604,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
             | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
-            | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType, ctx).0); }
+            | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType.tkeystr, ctx).0); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, pop.rootExp, ctx); } %% This will not chain method calls :(
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
             | CPPAssembly::PostfixAccessSomeValue => { return emitPostfixAccessSomeValue($op, acc, pop.rootExp.etype, ctx); }
@@ -663,15 +678,13 @@ function emitConstructorExpression(exp: CPPAssembly::ConstructorExpression, ctx:
 }
 
 function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: String, e: String, ctx: Context): String {
-    let itest = emitITestAsTest(exp.itest, exp.texp.etype, ctx);
+    let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, ctx)); %% Likely doesnt work if the itest is just bool
 
     return String::concat(itest, " ? ", t, " : ", e);
 }
 
 function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String, t: String, e: String, ctx: Context): String {
-    let itest = emitITestAsTest(exp.itest, exp.texp.etype, ctx);
-
-    return String::concat(itest, " ? ", t, " : ", e);
+    abort; %% TODO: Not Implemented
 }
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
@@ -836,10 +849,10 @@ function emitIfBinderStatement(stmt: CPPAssembly::IfBinderStatement, ctx: Contex
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
 
     let bname = emitVarIdentifier(stmt.binder.srcname);
-    let convert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype, ctx);
+    let convert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, ctx);
     let reasign = String::concat(bname, " = ", expr, convert.0);
 
-    let tbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeSignature(convert.1, false, ctx), " ", reasign, ";%n;");
+    let tbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeKey(convert.1, false, ctx), " ", reasign, ";%n;");
 
     let ifstmt = String::concat(indent, "if( ", itest, " ) {%n;");
     return String::concat(ifstmt, tbassign, trueBlock, indent, "}%n;");
@@ -885,13 +898,42 @@ function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx
     let itest = String::concat(expr, emitITestAsTest(stmt.itest, stmt.cond.etype, ctx));
 
     let bname = emitVarIdentifier(stmt.binder.srcname); 
-    let tconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype, ctx); 
+    let tconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, ctx); 
     let treasign = String::concat(bname, " = ", expr, tconvert.0);
-    let tbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeSignature(tconvert.1, false, ctx), " ", treasign, ";%n;");
+    let tbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeKey(tconvert.1, false, ctx), " ", treasign, ";%n;");
 
-    let fconvert = emitITestAsConvert(!stmt.itest.isnot, stmt.itest, stmt.cond.etype, ctx); 
-    let freasign = String::concat(bname, " = ", expr, fconvert.0);
-    let fbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeSignature(fconvert.1, false, ctx), " ", freasign, ";%n;");
+    %% Need to handle case where we are a datatype with only two member entities. Type should be infered to be the other entity in else case
+
+    var n: Nat;
+    let concretetype = ctx.asm.lookupNominalTypeDeclaration(stmt.cond.etype.tkeystr);
+    if(concretetype)@<CPPAssembly::DatatypeTypeDecl> {
+        n = $concretetype.associatedMemberEntityDecls.size();
+    }
+    else {
+        n = 0n;
+    }
+
+    %%
+    %% I believe this breaks none and some converts...
+    %%
+
+    var fbassign: String;
+    if(n == 2n) { %% If only two member entities implicitly convert to entity we are not
+        let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
+            .associatedMemberEntityDecls.find(pred(ets) => !ctx.asm.areTypesSame(ets, stmt.itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
+        
+        %%
+        %% We will need some way to pass in the from type here, which is othermember in thiscase (perhaps option in constructor?)
+        %%
+
+        let fconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, ctx); 
+        let freasign = String::concat(bname, " = ", expr, fconvert.0);
+        fbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeKey(fconvert.1, false, ctx), " ", freasign, ";%n;");
+    }
+    else {
+        let freasign = String::concat(bname, " = ", emitSpecialThis());
+        fbassign = String::concat(full_indent, "[[maybe_unused]] ", emitTypeKey(stmt.cond.etype.tkeystr, false, ctx), " ", freasign, ";%n;");
+    }
 
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
     let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
@@ -1127,9 +1169,9 @@ function emitDatatypeTypeDecl(dt: CPPAssembly::DatatypeTypeDecl, ctx: Context, i
 
     let template = String::concat(full_indent, "template<typename T>%n;");
 
-    let cons = if(datasize === "0") then String::concat(full_indent, name, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;")
-        else if(datasize === "1") then String::concat(template, full_indent, name, "(__CoreCpp::TypeInfoBase* ti, T d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t*>(&d)) {};%n;")
-        else String::concat(template, full_indent, name, "(__CoreCpp::TypeInfoBase* ti, T d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t(*)[", datasize, "]>(&d)) {};%n;");
+    let cons = if(datasize === "0") then String::concat(full_indent, name, "(__CoreCpp::TypeInfoBase* ti) noexcept : Boxed(ti) {};%n;%n;")
+        else if(datasize === "1") then String::concat(template, full_indent, name, "(__CoreCpp::TypeInfoBase* ti, T d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t*>(&d)) {};%n;%n;")
+        else String::concat(template, full_indent, name, "(__CoreCpp::TypeInfoBase* ti, T d) noexcept : Boxed(ti, reinterpret_cast<uintptr_t(*)[", datasize, "]>(&d)) {};%n;%n;");
     let allcons = String::concat(def, assign, copy, cons);
 
     let access = if(datasize === "0") then String::concat(template, full_indent, "constexpr T access() noexcept { return T{}; }%n;")

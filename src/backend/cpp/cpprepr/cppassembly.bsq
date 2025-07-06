@@ -295,6 +295,10 @@ entity Assembly {
         return this.lookupNominalTypeDeclaration(tkey)?<AbstractEntityTypeDecl>;
     }
 
+    method isNominalTypeConcept(tkey: TypeKey): Bool {
+        return this.lookupNominalTypeDeclaration(tkey)?<AbstractConceptTypeDecl>;
+    }
+
     method isPrimtitiveType(tkey: TypeKey): Bool {
         return this.primitives.has(tkey);
     }
