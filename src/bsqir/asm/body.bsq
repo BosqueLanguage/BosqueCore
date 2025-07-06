@@ -608,7 +608,7 @@ entity MatchStatement provides Statement {
     field matchflow: List<(|Option<TypeSignature>, BlockStatement|)>;
 
     field mustExhaustive: Bool;
-    field implicitFinalType: TypeSignature;
+    field implicitFinalType: Option<TypeSignature>;
 
     invariant !$matchflow.empty();
 }
