@@ -376,8 +376,8 @@ entity ExplicitifyTransform {
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
-        let params = this.assembly.staticmethods.get(op.resolvedTrgt).params;
-        let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, params, op.argsinfo, vmap);
+        let smdecl = this.assembly.staticmethods.get(op.resolvedTrgt);
+        let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, smdecl.params, op.argsinfo, vmap);
 
         return op[argsinfo=nargs];
     }

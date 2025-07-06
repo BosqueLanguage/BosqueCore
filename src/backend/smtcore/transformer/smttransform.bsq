@@ -752,20 +752,48 @@ entity SMTTransformer {
         return nctx, this.wrapOperationResult(SMTTransformer::booltype, testop, obinds);
     }
 
-    method transformITestTypeAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
-        if(!itest.isnot) {
-            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(itest.ttype)) 
-                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(itest.ttype) } 
+    method transformITestTypeAsSafeConvertOptionsStd(srctype: BSQAssembly::TypeSignature, isnot: Bool, ttype: BSQAssembly::TypeSignature, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        if(!isnot) {
+            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(ttype)) 
+                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(ttype) } 
                 else onarg
             ;
             return topt, onarg;
         }
         else {
-            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(itest.ttype)) 
-                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(itest.ttype) } 
+            let topt: SMTAssembly::SafeExpression = if(this.assembly.isTypeConcrete(ttype)) 
+                then SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(ttype) } 
                 else onarg
             ;
             return onarg, topt;
+        }
+    }
+
+    method transformITestTypeAsSafeConvertOptionsDatatype2Split(srctype: BSQAssembly::TypeSignature, isnot: Bool, tmatch: BSQAssembly::TypeSignature, mtypes: List<BSQAssembly::NominalTypeSignature>, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        let otype = mtypes.find(pred(mtype) => mtype.tkeystr !== tmatch.tkeystr);
+        let topt = SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(tmatch) };
+        let fopt = SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(otype) };
+            
+        if(!isnot) {
+            return topt, fopt;
+        }
+        else {
+            return fopt, topt;
+        }
+    }
+
+    method transformITestTypeAsSafeConvertOptions(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression, SMTAssembly::SafeExpression {
+        if(!this.assembly.datatypes.has(srctype.tkeystr)) {
+            return this.transformITestTypeAsSafeConvertOptionsStd(srctype, itest.isnot, itest.ttype, onarg);
+        }
+        else {
+            let dtdecl = this.assembly.datatypes.get(srctype.tkeystr);
+            if(dtdecl.associatedMemberEntityDecls.size() != 2n || !this.assembly.isTypeConcrete(itest.ttype)) {
+                return this.transformITestTypeAsSafeConvertOptionsStd(srctype, itest.isnot, itest.ttype, onarg);
+            }
+            else {   
+                return this.transformITestTypeAsSafeConvertOptionsDatatype2Split(srctype, itest.isnot, itest.ttype, dtdecl.associatedMemberEntityDecls, onarg);
+            }
         }
     }
 
@@ -906,11 +934,28 @@ entity SMTTransformer {
         }
     }
 
+    method coerceDynamicRcvrExpAsNeeded(bexp: SMTAssembly::SafeExpression, btype: BSQAssembly::TypeSignature, rcvrtype: BSQAssembly::TypeSignature): SMTAssembly::SafeExpression {
+        let isbtypeConcrete = this.assembly.isNominalTypeConcrete(btype.tkeystr);
+        let isrcvrtypeConcrete = this.assembly.isNominalTypeConcrete(rcvrtype.tkeystr);
+        
+        if(isbtypeConcrete === isrcvrtypeConcrete) {
+            return bexp;
+        }
+        else {
+            if(isbtypeConcrete) {
+                return SMTAssembly::TermifyExpression{bexp, this.transformStdTypeToSMT(btype), this.transformStdTypeToSMT(rcvrtype)};
+            }
+            else {
+                return SMTAssembly::UntermifyExpression{bexp, this.transformStdTypeToSMT(btype), this.transformStdTypeToSMT(rcvrtype)};
+            }
+        }
+    }
+
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
         let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.resolvedargs@some, nctx);
         
-        let aargs = scargs.pushFront(onarg);
+        let aargs = scargs.pushFront(this.coerceDynamicRcvrExpAsNeeded(onarg, op.baseType, op.resolvedType));
         var allobinds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>;
         if(obinds)@some {
             if(scobinds)@some {
