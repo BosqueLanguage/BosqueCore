@@ -874,29 +874,26 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
     }
 
     if(indent)@none {
-        var cases = e.cases.map[recursive]<CString>(fn(c) => {
+        return e.cases.lreduce[recursive]<CString>(derr, fn(acc, c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
+            let top = CString::concat('(is-', ttest, ' ', tst, ')');
             let cbody = emitOperation[recursive](c.1, eev, none);
-            return CString::concat('(', ttest, ' ', cbody, ')');
-        });
-        cases = cases.pushBack(CString::concat('(_ ', derr, ')'));
 
-        let casesl = CString::joinAll(' ', cases);
-        return CString::concat(ttst, ' ', casesl, ')');
+            let opts = CString::concat(' ', cbody, ' ', acc);
+            return CString::concat('(ite ', top, opts, ')');
+        });
     }
     else {
-        let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, '))');
+        let acci = CString::concat($indent, derr, '%n;', $indent);
 
-        var cases = e.cases.map[recursive]<CString>(fn(c) => {
+        return e.cases.lreduce[recursive]<CString>(acci, fn(acc, c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let cbody = emitOperation[recursive](c.1, eev, none);
-            return CString::concat(iident, '(', ttest, ' ', cbody, ')');
-        });
-        cases = cases.pushBack(CString::concat(iident, '(_ ', derr, ')'));
+            let top = CString::concat('(is-', ttest, ' ', tst, ')');
+            let cbody = emitOperation[recursive](c.1, eev, indent);
 
-        let casesl = CString::joinAll('%n;', cases);
-        return CString::concat(ttst, ' (%n;', casesl, tident);
+            let opts = CString::concat('%n;', $indent, cbody, '%n;', $indent, acc);
+            return CString::concat('(ite ', top, opts, ')');
+        });
     }
 }
 
