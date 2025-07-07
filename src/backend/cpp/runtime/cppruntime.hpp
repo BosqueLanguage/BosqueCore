@@ -718,8 +718,8 @@ constexpr __CoreCpp::BigNat operator "" _N(const char* v) { return __CoreCpp::Bi
 constexpr __CoreCpp::Float operator "" _f(long double v) { return __CoreCpp::Float(static_cast<double>(v)); }
 
 // For debugging
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t) { return os << t.get(); }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()); }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t) { return os << t.get(); }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()); }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t) { return os << t.get(); }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t) { return os << t.get() << "_i"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()) << "_I"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t) { return os << t.get() << "_n"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()) << "_N"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t) { return os << t.get() << "_f"; }
