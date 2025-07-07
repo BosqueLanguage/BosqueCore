@@ -2523,8 +2523,20 @@ entity SMTTransformer {
     }
 
     method generateValidatorForListTypeDecl(tdecl: BSQAssembly::ListTypeDecl): SMTAssembly::Body {
-        %% NOT IMPLEMENTED
-        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_true}, List<SMTAssembly::ErrorInfo>{} };
+        let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
+
+        let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
+        let vinvoke = TransformNameManager::generateNameForValidatorFunction(tdecl.oftype.tkeystr);
+
+        %%TODO: assume list is of at most 3 elements for now!!!
+        let csize = SMTAssembly::ValidateAccessContainerSizeExpression{smtdtype, vvaraccess};
+        let cvalidates = List<SMTAssembly::SafeExpression>{
+            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '0', vvaraccess },
+            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '1', vvaraccess },
+            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '2', vvaraccess }
+        };
+
+        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTAssembly::LogicActionAndExpression{cvalidates.pushFront(csize)}}, List<SMTAssembly::ErrorInfo>{} };
     }
 
     method generateValidatorForMapTypeDecl(tdecl: BSQAssembly::MapTypeDecl): SMTAssembly::Body {

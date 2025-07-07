@@ -103,7 +103,8 @@ function generateFormulaFile(smtcomponents: string, outname: string) {
     //set the constants for SMV -- right now just defaults
     const smv_constants = [
         "(declare-const SMV_I_RANGE Int) (assert (= SMV_I_RANGE 32))",
-        "(declare-const SMV_STR_LENGTH Int) (assert (= SMV_STR_LENGTH 16))"
+        "(declare-const SMV_STR_LENGTH Int) (assert (= SMV_STR_LENGTH 16))",
+        "(declare-const SMV_LIST_SIZE_MAX Int) (assert (<= SMV_LIST_SIZE_MAX 3))"
     ];
     formula = formula.replace(";;--SMV_CONSTANTS--;;", smv_constants.join("\n"));
 
