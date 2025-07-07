@@ -869,7 +869,7 @@ entity CPPTransformer {
 
             matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, next_tid, tkey, tag, bsqasm);
         }
-        elif(bsqasm.isNominalTypeConcept(typekey)) { %% I believe we dont need to emit typeinfo for concepts or datatypes whatsoever...
+        elif(bsqasm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
             if(bsqasm.concepts.has(typekey)) {
                 maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
@@ -1093,8 +1093,14 @@ entity CPPTransformer {
                     fn(decl) => {
                         let new_datamembers = decl.datamembers.pushBack(cpptk);
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        
+                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
+                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
+                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
+                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
-                            new_datamembers, decl.datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
+                            new_datamembers, decl.datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, new_overmethods,
                             decl.enums, new_alltypes };
                     });                     
             });
@@ -1116,8 +1122,14 @@ entity CPPTransformer {
                     fn(decl) => {
                         let new_datatypes = decl.datatypes.pushBack(cpptk);
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        
+                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
+                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
+                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
+                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+                        
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
-                            decl.datamembers, new_datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
+                            decl.datamembers, new_datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, new_overmethods,
                             decl.enums, new_alltypes };
                     });                     
             });
