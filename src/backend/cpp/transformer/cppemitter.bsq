@@ -244,13 +244,10 @@ function emitAccessVariableExpression(exp: CPPAssembly::AccessVariableExpression
     let access = emitVarIdentifier(exp.vname);
     let etype = exp.layouttype;
 
-    if(ctx.asm.datatypes.has(etype.tkeystr)) {
+    if(etype?!<CPPAssembly::EListTypeSignature> && ctx.asm.isNominalTypeConcept(etype.tkeystr)) {
         let emitetype = emitTypeKey(etype.tkeystr, false, ctx);
         return if(ctx.asm.areTypesSame(etype, exp.etype)) then access 
             else String::concat(access, ".access<", emitetype, ">()");
-    }
-    elif(ctx.asm.concepts.has(etype.tkeystr)) {
-        abort; %% TODO: Do something similar to datatypes for concepts
     }
     else {
         return access;
@@ -594,26 +591,10 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
 function emitITestAsConvertType(isnot: Bool, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context): (|String, String|) { 
     let tinfo = ctx.asm.typeinfos.get(fromtype);
     let accessor = if(tinfo.tag === CPPAssembly::Tag#Ref) then "->" else ".";
-    var ttype: String;
+    let ttype = emitTypeKey(totype, false, ctx);
 
-    if(fromtype.value === totype.value) {
-        let e = ctx.asm.lookupNominalTypeDeclaration(totype);
-        if(e)@!<CPPAssembly::DatatypeTypeDecl> {
-            abort; %% TODO: Concept support
-        }
-        else {
-            ttype = emitTypeKey(totype, false, ctx); 
-
-        }
-    }
-    elif(ctx.asm.isNominalTypeConcept(fromtype)) {
-        ttype = emitTypeKey(totype, false, ctx);
-    }
-    else {
-        abort;
-    }
-
-    return (|String::concat(accessor, "access<", ttype,">()"), ttype|);
+    return if(fromtype.value === totype.value) then (|"", ttype|) 
+        else (|String::concat(accessor, "access<", ttype,">()"), ttype|);
 }
 
 function emitITestAsConvert(isnot: Bool, itc: CPPAssembly::ITest, fromtype: CPPAssembly::TypeKey, totype: Option<CPPAssembly::TypeKey>, ctx: Context): (|String, String|) { %% Convert, Emitted type
@@ -718,7 +699,7 @@ function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: 
 }
 
 function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String, t: String, e: String, ctx: Context): String {
-    abort; %% TODO: Not Implemented
+    abort; %% TODO: Not Implemented (need to put bindings in a lambda in emission)
 }
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
@@ -924,7 +905,6 @@ function emitIfElseTestStatement(stmt: CPPAssembly::IfElseTestStatement, ctx: Co
     return String::concat(ifstmt, trueBlock, indent, "}%n;", elseBlockText);
 }
 
-%% Looks like we will need also to handle else bind case
 function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     
@@ -947,7 +927,7 @@ function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx
     }
 
     var fbassign: String;
-    if(n == 2n) { %% If only two member entities implicitly convert to entity we are not
+    if(n == 2n) { %% If only two member entities implicitly convert to entity that we are not
         let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
             .associatedMemberEntityDecls.find(pred(ets) => !ctx.asm.areTypesSame(ets, stmt.itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
 

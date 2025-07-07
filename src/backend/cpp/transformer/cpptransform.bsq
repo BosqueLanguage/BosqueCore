@@ -799,9 +799,9 @@ entity CPPTransformer {
     }
 
     %%
-    %% When we generate the typeinfo for some<tuple> we will need to explicitly handle how we determine the field size.
+    %% When we generate the typeinfo for tuple as a field or some(tuple) we will need to explicitly handle how we determine the field size.
     %% this likely means we need to modify this method to support access of `entries` list or this typesig, walk the fields
-    %% recursively determining their slotsize and typesize to construct our new type. Think of it as a union.
+    %% recursively determining their slotsize and typesize to construct our new type. 
     %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
