@@ -947,6 +947,40 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processMatchStatement(s: MatchStatement): Statement {
+        let nsv = this.processExpression[recursive](s.sval);
+
+        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|TypeSignature, BlockStatement|)>|)>((|true, List<(|TypeSignature, BlockStatement|)>{}|), recursive fn(acc, mb) => {
+            if(!acc.0) {
+                return acc;
+            }
+            else {
+                if(this.assembly.isSubtypeOf(nsv.etype, mb.0)) {
+                    return (|false, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1)|))|);
+                }
+                elif(this.assembly.areDisjoint(nsv.etype, mb.0)) {
+                    return (|true, acc.1|);
+                }
+                else {
+                    return (|true, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1)|))|);
+                }
+            }
+        });
+
+        if(nflow.1.empty()) {
+            return AbortStatement{ s.sinfo };
+        }
+        else {
+            if(nflow.0) {
+                return s[sval=nsv, matchflow=nflow.1];
+            }
+            %%TODO: maybe we want to add a single option case too
+            else {
+                return s[sval=nsv, matchflow=nflow.1, mustExhaustive=true];
+            }
+        }
+    }
+
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
             VariableDeclarationStatement => {
@@ -990,6 +1024,9 @@ entity ConstantSimplification {
             }
             | IfElifElseStatement => {
                 return this.processIfElifElseStatement[recursive]($s);
+            }
+            | MatchStatement => {
+                return this.processMatchStatement[recursive]($s);
             }
             | AbortStatement => {
                 return s;

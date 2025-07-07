@@ -466,9 +466,9 @@ entity IfThenElseOperation provides Operation {
 entity MatchOperation provides Operation {
     field matchexp: SafeExpression;
     field cases: List<(|TypeKey, Operation|)>;
-    field defaultop: Option<Operation>;
+    field exhaustiveErrLabel: Nat;
 
-    invariant $cases.size() > 1n;
+    invariant !$cases.empty();
 }
 
 entity Body {

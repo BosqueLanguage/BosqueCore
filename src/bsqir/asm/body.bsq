@@ -605,10 +605,8 @@ entity SwitchStatement provides Statement {
 entity MatchStatement provides Statement {
     field sval: Expression;
     field bindInfo: Option<BinderInfo>;
-    field matchflow: List<(|Option<TypeSignature>, BlockStatement|)>;
-
+    field matchflow: List<(|TypeSignature, BlockStatement|)>;
     field mustExhaustive: Bool;
-    field implicitFinalType: TypeSignature;
 
     invariant !$matchflow.empty();
 }

@@ -1510,18 +1510,14 @@ class BSQIREmitter {
         const sbase = this.emitStatementBase(stmt);
         const sval = this.emitExpression(stmt.sval[0]);
         const bindInfo = (stmt.sval[1] != undefined) ? `some(${this.emitBinderInfo(stmt.sval[1])})` : "none";
-        const matchflow = stmt.matchflow.slice(1).map((e) => {
-            const cond = e.mtype !== undefined ? `some(${this.emitTypeSignature(e.mtype)})` : "none";
+        const matchflow = stmt.matchflow.map((e) => {
+            const cond = this.emitTypeSignature((e.mtype || stmt.implicitFinalType) as TypeSignature);
             const body = this.emitBlockStatement(e.value, fmt);
             return `(|${cond}, ${body}|)`;
         }).join(", ");
         const mustExhaustive = stmt.mustExhaustive;
 
-        const finalop = stmt.matchflow[stmt.matchflow.length-1];
-        const implicitfinalop = stmt.implicitFinalType !== undefined ? stmt.implicitFinalType : finalop.mtype;
-        const implicitFinalType = (implicitfinalop !== undefined) ? this.emitTypeSignature(implicitfinalop) : assert(false, "No final type signature found in match statement");
-
-        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {

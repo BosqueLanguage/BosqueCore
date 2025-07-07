@@ -1857,6 +1857,55 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
+        
+        if(this.assembly.isTypeConcrete(stmt.sval.etype)) {
+            abort; %% This can only be a single branch and binder is just direct assignment (would be when match was a T instantiated with a concrete type)
+        }
+        else {
+            let ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {
+                let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
+
+                let tests = if(this.assembly.isTypeConcrete(op.0)) 
+                    then List<BSQAssembly::TypeKey>{op.0.tkeystr} 
+                    else this.assembly.lookupNominalTypeDeclaration(op.0.tkeystr)@<BSQAssembly::AbstractConceptTypeDecl>.subtypes
+                    ;
+
+                let options = tests.map<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(ttype) => {
+                    let smtmtype = TransformNameManager::convertTypeKey(ttype);
+
+                    if($bi = stmt.bindInfo)@none {
+                        return smtmtype, nblock@some;
+                    }
+                    else {
+                        let bname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName($bi.srcname.value));
+                        let bop = SMTAssembly::UntermifyExpression{ ntexp, this.transformStdTypeToSMT(stmt.sval.etype), this.transformStdTypeToSMT(op.0) };
+                        
+                        return smtmtype, SMTAssembly::LetOperation{bname, bop, nblock@some};
+                    }
+                });
+
+                return cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>::concat(acc.1, options);
+            });
+
+            var merr = SMTEmitter::s_invalidErrTrgt;
+            var fctx = ops.0;
+            if(!stmt.mustExhaustive) {
+                merr = ops.0.errCtr;
+                fctx = ops.0.addError(stmt.sinfo);
+            }
+
+            let mop = SMTAssembly::MatchOperation{ ntexp, ops.1, merr };
+            if(cobinds)@none {
+                return fctx, some(mop);
+            }
+            else {
+                return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, mop});
+            }
+        }
+    }
+
     recursive method transformStatement(stmt: BSQAssembly::Statement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => {
@@ -1900,6 +1949,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::IfElseStatement => {
                 return this.transformIfElseStatement[recursive]($stmt, tail, ctx);
+            }
+            | BSQAssembly::MatchStatement => {
+                return this.transformMatchStatement[recursive]($stmt, tail, ctx);
             }
             | BSQAssembly::AbortStatement => {
                 return this.transformAbortStatement($stmt, ctx);
@@ -2646,7 +2698,7 @@ entity SMTTransformer {
             
                     return (|smtsttype, SMTAssembly::ReturnOperation{cop}|);
                 });
-                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries, none };
+                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries, SMTEmitter::s_ignoreErrTrgt };
 
                 return SMTAssembly::Body{ matchop, List<SMTAssembly::ErrorInfo>{} };
             }

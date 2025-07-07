@@ -158,7 +158,7 @@ function emitAccessVariableExpression(e: SMTAssembly::AccessVariableExpression):
 
 recursive function emitTermifyExpression(e: SMTAssembly::TermifyExpression, eev: SMTEmitterEnv): CString {
     if(e.fromtype === 'None'<SMTAssembly::TypeKey>) {
-        return '@Term-mk-None';
+        return '@Term-None-mk';
     }
     else {
         let consname = SMTNameManager::generateStructTermConstructorName(e.fromtype);
@@ -169,10 +169,15 @@ recursive function emitTermifyExpression(e: SMTAssembly::TermifyExpression, eev:
 }
 
 recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression, eev: SMTEmitterEnv): CString {
-    let access = SMTNameManager::generateStructTermFieldName(e.intotype);
-    let vv = emitSafeExpression[recursive](e.value, eev);
+    if(e.intotype === 'None'<SMTAssembly::TypeKey>) {
+        return 'none';
+    }
+    else {
+        let access = SMTNameManager::generateStructTermFieldName(e.intotype);
+        let vv = emitSafeExpression[recursive](e.value, eev);
     
-    return CString::concat('(', access, ' ', vv, ')');
+        return CString::concat('(', access, ' ', vv, ')');
+    }
 }
 
 function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression): CString {
@@ -495,12 +500,12 @@ recursive function emitBinaryArithExpression(e: SMTAssembly::BinaryArithExpressi
 
 recursive function emitBinKeyEqNoneExpression(e: SMTAssembly::BinKeyEqNoneExpression, eev: SMTEmitterEnv): CString {
     let vv = emitSafeExpression[recursive](e.exp, eev);
-    return CString::concat('(= ', vv, ' @Term-mk-None)');
+    return CString::concat('(= ', vv, ' @Term-None-mk)');
 }
 
 recursive function emitBinKeyNotEqNoneExpression(e: SMTAssembly::BinKeyNotEqNoneExpression, eev: SMTEmitterEnv): CString {
     let vv = emitSafeExpression[recursive](e.exp, eev);
-    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+    return CString::concat('(not (= ', vv, ' @Term-None-mk))');
 }
 
 recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpression, eev: SMTEmitterEnv): CString {
@@ -514,7 +519,7 @@ recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpres
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
     let eqop = CString::concat('(= ', extractop, ' ', val, ')');
 
-    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-mk-None))');
+    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-None-mk))');
 
     return CString::concat('(and ', notnoneop, ' ', eqop, ')');
 }
@@ -530,7 +535,7 @@ recursive function emitBinKeyNotSomeEqExpression(e: SMTAssembly::BinKeyNotSomeEq
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
     let neqop = CString::concat('(not (= ', extractop, ' ', val, '))');
 
-    let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
+    let noneop = CString::concat('(= ', eopt, ' @Term-None-mk)');
 
     return CString::concat('(or ', noneop, ' ', neqop, ')');
 }
@@ -854,38 +859,41 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
     let tst = emitSafeExpression[recursive](e.matchexp, eev);
     let ttst = CString::concat('(match ', tst);
 
-    if(indent)@none {
-        var cases = e.cases.map[recursive]<CString>(fn(c) => {
-            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let cbody = emitOperation[recursive](c.1, eev, none);
-            return CString::concat('(', ttest, ' ', cbody, ')');
-        });
-
-        if($dop = e.defaultop)@some {
-            let defop = emitOperation[recursive]($dop, eev, none);
-            cases = cases.pushBack(CString::concat('(_ ', defop, ')'));
-        }
-
-        let casesl = CString::joinAll(' ', cases);
-        return CString::concat(ttst, ' ', casesl, ')');
+    var derr: CString;
+    if(e.exhaustiveErrLabel === SMTEmitter::s_ignoreErrTrgt) {
+        %%special case for emit in validator
+        derr = 'false';
     }
     else {
-        let iident = CString::concat('    ', $indent);
-        let tident = CString::concat('%n;', $indent, '))');
-
-        var cases = e.cases.map[recursive]<CString>(fn(c) => {
-            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let cbody = emitOperation[recursive](c.1, eev, none);
-            return CString::concat(iident, '(', ttest, ' ', cbody, ')');
-        });
-
-        if($dop = e.defaultop)@some {
-            let defop = emitOperation[recursive]($dop, eev, none);
-            cases = cases.pushBack(CString::concat(iident, '(_ ', defop, ')'));
+        if(e.exhaustiveErrLabel == eev.errtrgt) {
+            derr = emitResultErrTrgtAs(eev.restype);
         }
+        else {
+            derr = emitResultErrOtherAs(eev.restype);
+        }
+    }
 
-        let casesl = CString::joinAll('%n;', cases);
-        return CString::concat(ttst, ' (%n;', casesl, tident);
+    if(indent)@none {
+        return e.cases.lreduce[recursive]<CString>(derr, fn(acc, c) => {
+            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
+            let top = CString::concat('(is-', ttest, ' ', tst, ')');
+            let cbody = emitOperation[recursive](c.1, eev, none);
+
+            let opts = CString::concat(' ', cbody, ' ', acc);
+            return CString::concat('(ite ', top, opts, ')');
+        });
+    }
+    else {
+        let acci = CString::concat($indent, derr, '%n;', $indent);
+
+        return e.cases.lreduce[recursive]<CString>(acci, fn(acc, c) => {
+            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
+            let top = CString::concat('(is-', ttest, ' ', tst, ')');
+            let cbody = emitOperation[recursive](c.1, eev, indent);
+
+            let opts = CString::concat('%n;', $indent, cbody, '%n;', $indent, acc);
+            return CString::concat('(ite ', top, opts, ')');
+        });
     }
 }
 
@@ -1472,7 +1480,7 @@ function emitSpecialOptionSubtypePredicate(otype: SMTAssembly::OptionTypeDecl): 
     let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
     let tlist = List<CString>{
         CString::concat('(is-@Term-', otype.someType.value, '-mk tt)'),
-        CString::concat('(= tt @Term-mk-None)'),
+        CString::concat('(= tt @Term-None-mk)'),
     };
 
     return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');
