@@ -379,6 +379,27 @@ recursive function emitFormatCheckExpression(v: SMTAssembly::FormatCheckExpressi
     return CString::concat('(str.in.re ', arg, ' ', re, ')');
 }
 
+recursive function emitValidateAccessContainerSizeExpression(v: SMTAssembly::ValidateAccessContainerSizeExpression, eev: SMTEmitterEnv): CString {
+    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
+    let arg = emitSafeExpression[recursive](v.arg, eev);
+    let vv = CString::concat('(', gseq, ' ', arg, ')');
+
+    return CString::concat('(<= (seq.len ', vv, ') SMV_LIST_SIZE_MAX)');
+}
+
+recursive function emitValidateAccessContainerElementSafeExpression(v: SMTAssembly::ValidateAccessContainerElementSafeExpression, eev: SMTEmitterEnv): CString {
+    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
+    let arg = emitSafeExpression[recursive](v.arg, eev);
+    let vv = CString::concat('(', gseq, ' ', arg, ')');
+    
+    let bcheck = CString::concat('(< ', v.index, ' (seq.len ', vv, '))');
+
+    let access = CString::concat('(seq.nth ', vv, ' ', v.index, ')');
+    let call = CString::concat('(', v.validateinvoke.value, ' ', access, ')');
+
+    return CString::concat('(and ', bcheck, ' ', call, ')');
+}
+
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {
     let tcons = SMTNameManager::generateStructTermConstructorName(v.istype);
     let vv = emitExpression[recursive](v.arg, eev);
@@ -749,6 +770,8 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
         | SMTAssembly::FormatCheckExpression => { return emitFormatCheckExpression[recursive]($e, eev); }
+        | SMTAssembly::ValidateAccessContainerSizeExpression => { return emitValidateAccessContainerSizeExpression[recursive]($e, eev); }
+        | SMTAssembly::ValidateAccessContainerElementSafeExpression => { return emitValidateAccessContainerElementSafeExpression[recursive]($e, eev); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($e, eev); }
@@ -1254,6 +1277,42 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
         let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
         let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
         body = CString::concat('(', consname, ' (seq.++ (seq.unit v) (', fname, ' l)))');
+    }
+    elif(f.specialname === 's_list_allof') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+
+        if(f.resultType)<SMTAssembly::SafeResult> {
+            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (p vv)))');
+            body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
+        }
+        else {
+            body = 'NOT IMPLEMENTED';
+        }
+    }
+    elif(f.specialname === 's_list_noneof') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+
+        if(f.resultType)<SMTAssembly::SafeResult> {
+            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (not (p vv))))');
+            body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
+        }
+        else {
+            body = 'NOT IMPLEMENTED';
+        }
+    }
+    elif(f.specialname === 's_list_someof') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+
+        if(f.resultType)<SMTAssembly::SafeResult> {
+            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (or acc (p vv)))');
+            body = CString::concat('(seq.fold_left ', rpred, ' false ', lseq, ')');
+        }
+        else {
+            body = 'NOT IMPLEMENTED';
+        }
     }
     else {
         _debug f.specialname;
