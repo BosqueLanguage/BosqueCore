@@ -18,7 +18,7 @@ const lambdaTypeKeyRE: CRegex = /'(Array' .* ')'/c;
 const typeKeyRE: CRegex = /'@Term'|${SMTAssembly::elistTypeKeyRE}|${SMTAssembly::nominalTypeKeyRE}|${SMTAssembly::lambdaTypeKeyRE}/c;
 type TypeKey = CString of SMTAssembly::typeKeyRE;
 
-const stdInvokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+('<'.+'>')?/c;
+const stdInvokeKeyRE: CRegex = /(${SMTAssembly::namespaceKeyRE}|${SMTAssembly::nominalTypeKeyRE})'@'[_a-zA-Z0-9$-]+('<'.+'>')?('$$'('T' | 'F')+)?/c;
 const specialElistInvokeKeyRE: CRegex = /'@EList'('<'.+'>')/c;
 const validateInvokeKeyRE: CRegex = /('@Validate-'|'@ValidateRoot-')(${SMTAssembly::nominalTypeKeyRE}|${SMTAssembly::specialElistInvokeKeyRE})/c;
 const invokeKeyRE: CRegex = /${SMTAssembly::stdInvokeKeyRE}|${SMTAssembly::validateInvokeKeyRE}/c;

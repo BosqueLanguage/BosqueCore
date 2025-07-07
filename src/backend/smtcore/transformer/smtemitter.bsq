@@ -1287,7 +1287,9 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
             body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
         }
         else {
-            body = 'NOT IMPLEMENTED';
+            let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (@Result-value vvres))))))';
+            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
+            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok true) ', lseq, ')');
         }
     }
     elif(f.specialname === 's_list_noneof') {
@@ -1299,7 +1301,9 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
             body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
         }
         else {
-            body = 'NOT IMPLEMENTED';
+            let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (not (@Result-value vvres)))))))';
+            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
+            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok true) ', lseq, ')');
         }
     }
     elif(f.specialname === 's_list_someof') {
@@ -1311,7 +1315,9 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
             body = CString::concat('(seq.fold_left ', rpred, ' false ', lseq, ')');
         }
         else {
-            body = 'NOT IMPLEMENTED';
+            let bop = '(ite (not (= (@Result-ok false) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (or (@Result-value acc) (@Result-value vvres))))))';
+            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
+            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok false) ', lseq, ')');
         }
     }
     else {

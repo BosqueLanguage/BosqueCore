@@ -11,6 +11,14 @@ describe ("SMT List -- allof basic", () => {
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{-2i}.allOf(pred(x) => x >= 0i); }', "(assert Main@main)");
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, -1i}.allOf(pred(x) => x >= 0i); }', "(assert Main@main)");
     });
+
+    it("should smt do simple allof w/err", function () {
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 2i}.allOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-2i, 1i}.allOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok false) Main@main)))");
+
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.allOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (is-@Result-err Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, 0i, 3i}.allOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok false) Main@main)))");
+    });
 });
 
 describe ("SMT List -- noneof basic", () => {
@@ -21,6 +29,14 @@ describe ("SMT List -- noneof basic", () => {
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{2i}.noneOf(pred(x) => x >= 0i); }', "(assert Main@main)");
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, -1i}.noneOf(pred(x) => x >= 0i); }', "(assert Main@main)");
     });
+
+    it("should smt do simple noneof w/err", function () {
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, -2i}.noneOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, -1i}.noneOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok false) Main@main)))");
+
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, 0i, 3i}.noneOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (is-@Result-err Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.noneOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok false) Main@main)))");
+    });
 });
 
 describe ("SMT List -- someof basic", () => {
@@ -30,5 +46,13 @@ describe ("SMT List -- someof basic", () => {
 
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{-2i}.someOf(pred(x) => x >= 0i); }', "(assert Main@main)");
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, -1i}.someOf(pred(x) => x >= 0i); }', "(assert Main@main)");
+    });
+
+    it("should smt do simple someof w/err", function () {
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, 2i}.someOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, -1i}.someOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok false) Main@main)))");
+
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{-1i, 0i, 3i}.someOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (is-@Result-err Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.someOf(pred(x) => { assert x != 0i; return x >= 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
     });
 });

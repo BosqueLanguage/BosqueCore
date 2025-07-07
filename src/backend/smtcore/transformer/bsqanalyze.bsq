@@ -485,6 +485,15 @@ entity MayErrorAnalysis {
         return !tdecl.allInvariants.empty();
     }
 
+    method processAccessVariableExpression(e: BSQAssembly::AccessVariableExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        if(e.etype)!<BSQAssembly::LambdaTypeSignature> {
+            return false;
+        } 
+        else {
+            return lerrors.tryGet(BSQAssembly::Identifier::from(e.vname)) === true;
+        }
+    }
+
     recursive method processConstructorPrimarySpecialSomeExpression(e: BSQAssembly::ConstructorPrimarySpecialSomeExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         return this.processUnaryArg[recursive](e.value, cerrors, lerrors);
     }
@@ -660,7 +669,7 @@ entity MayErrorAnalysis {
             | BSQAssembly::AccessNamespaceConstantExpression => { return false; }
             | BSQAssembly::AccessStaticFieldExpression => { return false; }
             | BSQAssembly::AccessEnumExpression => { return false; }
-            | BSQAssembly::AccessVariableExpression => { return false; }
+            | BSQAssembly::AccessVariableExpression => { return this.processAccessVariableExpression($e, cerrors, lerrors); }
             | BSQAssembly::AccessCapturedVariableExpression => { return false; }
             | BSQAssembly::ConstructorExpression => { return this.processConstructorExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e, cerrors, lerrors); }
