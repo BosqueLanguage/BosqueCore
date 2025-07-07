@@ -158,7 +158,7 @@ function emitAccessVariableExpression(e: SMTAssembly::AccessVariableExpression):
 
 recursive function emitTermifyExpression(e: SMTAssembly::TermifyExpression, eev: SMTEmitterEnv): CString {
     if(e.fromtype === 'None'<SMTAssembly::TypeKey>) {
-        return '@Term-mk-None';
+        return '@Term-None-mk';
     }
     else {
         let consname = SMTNameManager::generateStructTermConstructorName(e.fromtype);
@@ -495,12 +495,12 @@ recursive function emitBinaryArithExpression(e: SMTAssembly::BinaryArithExpressi
 
 recursive function emitBinKeyEqNoneExpression(e: SMTAssembly::BinKeyEqNoneExpression, eev: SMTEmitterEnv): CString {
     let vv = emitSafeExpression[recursive](e.exp, eev);
-    return CString::concat('(= ', vv, ' @Term-mk-None)');
+    return CString::concat('(= ', vv, ' @Term-None-mk)');
 }
 
 recursive function emitBinKeyNotEqNoneExpression(e: SMTAssembly::BinKeyNotEqNoneExpression, eev: SMTEmitterEnv): CString {
     let vv = emitSafeExpression[recursive](e.exp, eev);
-    return CString::concat('(not (= ', vv, ' @Term-mk-None))');
+    return CString::concat('(not (= ', vv, ' @Term-None-mk))');
 }
 
 recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpression, eev: SMTEmitterEnv): CString {
@@ -514,7 +514,7 @@ recursive function emitBinKeySomeEqExpression(e: SMTAssembly::BinKeySomeEqExpres
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
     let eqop = CString::concat('(= ', extractop, ' ', val, ')');
 
-    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-mk-None))');
+    let notnoneop = CString::concat('(not (= ', eopt, ' @Term-None-mk))');
 
     return CString::concat('(and ', notnoneop, ' ', eqop, ')');
 }
@@ -530,7 +530,7 @@ recursive function emitBinKeyNotSomeEqExpression(e: SMTAssembly::BinKeyNotSomeEq
     let extractop = CString::concat('(', extract, ' ', ubxop, ')');
     let neqop = CString::concat('(not (= ', extractop, ' ', val, '))');
 
-    let noneop = CString::concat('(= ', eopt, ' @Term-mk-None)');
+    let noneop = CString::concat('(= ', eopt, ' @Term-None-mk)');
 
     return CString::concat('(or ', noneop, ' ', neqop, ')');
 }
@@ -1478,7 +1478,7 @@ function emitSpecialOptionSubtypePredicate(otype: SMTAssembly::OptionTypeDecl): 
     let tname = SMTNameManager::generateTermSubtypeFunctionName(otype.tkey);
     let tlist = List<CString>{
         CString::concat('(is-@Term-', otype.someType.value, '-mk tt)'),
-        CString::concat('(= tt @Term-mk-None)'),
+        CString::concat('(= tt @Term-None-mk)'),
     };
 
     return CString::concat('(define-fun ', tname, '((tt @Term)) Bool (or ', CString::joinAll(' ', tlist), '))');

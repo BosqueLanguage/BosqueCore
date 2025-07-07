@@ -51,7 +51,7 @@
         ;;--ENTITY_CONSTRUCTORS--;;
         ;;--DATATYPE_CONSTRUCTORS--;;
         (
-            (@Term-mk-None)
+            (@Term-None-mk)
             ;;--TYPEDECL_TERM_CONSTRUCTORS--;;
             ;;--SPECIAL_TERM_CONSTRUCTORS--;;
             ;;--ENTITY_TERM_CONSTRUCTORS--;;
