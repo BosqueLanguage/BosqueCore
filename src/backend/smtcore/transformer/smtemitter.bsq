@@ -169,10 +169,15 @@ recursive function emitTermifyExpression(e: SMTAssembly::TermifyExpression, eev:
 }
 
 recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression, eev: SMTEmitterEnv): CString {
-    let access = SMTNameManager::generateStructTermFieldName(e.intotype);
-    let vv = emitSafeExpression[recursive](e.value, eev);
+    if(e.intotype === 'None'<SMTAssembly::TypeKey>) {
+        return 'none';
+    }
+    else {
+        let access = SMTNameManager::generateStructTermFieldName(e.intotype);
+        let vv = emitSafeExpression[recursive](e.value, eev);
     
-    return CString::concat('(', access, ' ', vv, ')');
+        return CString::concat('(', access, ' ', vv, ')');
+    }
 }
 
 function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression): CString {
