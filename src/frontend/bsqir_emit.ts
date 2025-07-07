@@ -1511,15 +1511,13 @@ class BSQIREmitter {
         const sval = this.emitExpression(stmt.sval[0]);
         const bindInfo = (stmt.sval[1] != undefined) ? `some(${this.emitBinderInfo(stmt.sval[1])})` : "none";
         const matchflow = stmt.matchflow.map((e) => {
-            const cond = e.mtype !== undefined ? `some(${this.emitTypeSignature(e.mtype)})` : "none";
+            const cond = this.emitTypeSignature((e.mtype || stmt.implicitFinalType) as TypeSignature);
             const body = this.emitBlockStatement(e.value, fmt);
             return `(|${cond}, ${body}|)`;
         }).join(", ");
         const mustExhaustive = stmt.mustExhaustive;
 
-        const implicitFinalType = (stmt.implicitFinalType !== undefined) ? `some(${this.emitTypeSignature(stmt.implicitFinalType)})` : 'none';
-
-        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|Option<BSQAssembly::TypeSignature>, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}, implicitFinalType=${implicitFinalType}}`].join("");
+        return [`BSQAssembly::MatchStatement{${sbase}, sval=${sval}, bindInfo=${bindInfo},`, fmt.nl()+fmt.indent(""), `matchflow=List<(|BSQAssembly::TypeSignature, BSQAssembly::BlockStatement|)>{${matchflow}},`, fmt.nl()+fmt.indent(""), `mustExhaustive=${mustExhaustive}}`].join("");
     }
 
     private emitAbortStatement(stmt: AbortStatement): string {

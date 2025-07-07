@@ -709,7 +709,7 @@ entity MayErrorAnalysis {
     recursive method processMatchStatement(s: BSQAssembly::MatchStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         let matcherr = this.processExpression[recursive](s.sval, cerrors, lerrors);
         let opterr = s.matchflow.someOf[recursive](recursive pred(mopt) => this.processBlockStatement[recursive](mopt.1, cerrors, lerrors));
-        return \/(matcherr, opterr);
+        return \/(matcherr, opterr, true); %% Seems like this should be !exhaustive -- but we have a totality check and it can always abort
     }
 
     recursive method processStatement(s: BSQAssembly::Statement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {

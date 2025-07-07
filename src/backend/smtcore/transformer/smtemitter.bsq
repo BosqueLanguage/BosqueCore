@@ -854,17 +854,27 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
     let tst = emitSafeExpression[recursive](e.matchexp, eev);
     let ttst = CString::concat('(match ', tst);
 
+    var derr: CString;
+    if(e.exhaustiveErrLabel === SMTEmitter::s_ignoreErrTrgt) {
+        %%special case for emit in validator
+        derr = 'false';
+    }
+    else {
+        if(e.exhaustiveErrLabel == eev.errtrgt) {
+            derr = emitResultErrTrgtAs(eev.restype);
+        }
+        else {
+            derr = emitResultErrOtherAs(eev.restype);
+        }
+    }
+
     if(indent)@none {
         var cases = e.cases.map[recursive]<CString>(fn(c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
             let cbody = emitOperation[recursive](c.1, eev, none);
             return CString::concat('(', ttest, ' ', cbody, ')');
         });
-
-        if($dop = e.defaultop)@some {
-            let defop = emitOperation[recursive]($dop, eev, none);
-            cases = cases.pushBack(CString::concat('(_ ', defop, ')'));
-        }
+        cases = cases.pushBack(CString::concat('(_ ', derr, ')'));
 
         let casesl = CString::joinAll(' ', cases);
         return CString::concat(ttst, ' ', casesl, ')');
@@ -878,11 +888,7 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
             let cbody = emitOperation[recursive](c.1, eev, none);
             return CString::concat(iident, '(', ttest, ' ', cbody, ')');
         });
-
-        if($dop = e.defaultop)@some {
-            let defop = emitOperation[recursive]($dop, eev, none);
-            cases = cases.pushBack(CString::concat(iident, '(_ ', defop, ')'));
-        }
+        cases = cases.pushBack(CString::concat(iident, '(_ ', derr, ')'));
 
         let casesl = CString::joinAll('%n;', cases);
         return CString::concat(ttst, ' (%n;', casesl, tident);

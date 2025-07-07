@@ -950,24 +950,19 @@ entity ConstantSimplification {
     recursive method processMatchStatement(s: MatchStatement): Statement {
         let nsv = this.processExpression[recursive](s.sval);
 
-        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|Option<TypeSignature>, BlockStatement|)>|)>((|true, List<(|Option<TypeSignature>, BlockStatement|)>{}|), recursive fn(acc, mb) => {
+        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|TypeSignature, BlockStatement|)>|)>((|true, List<(|TypeSignature, BlockStatement|)>{}|), recursive fn(acc, mb) => {
             if(!acc.0) {
                 return acc;
             }
             else {
-                if($tt = mb.0)@none {
-                    return (|true, acc.1.pushBack((|none, this.processBlockStatement[recursive](mb.1)|))|);
+                if(this.assembly.isSubtypeOf(nsv.etype, mb.0)) {
+                    return (|false, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1)|))|);
+                }
+                elif(this.assembly.areDisjoint(nsv.etype, mb.0)) {
+                    return (|true, acc.1|);
                 }
                 else {
-                    if(this.assembly.isSubtypeOf($tt, nsv.etype)) {
-                        return (|false, acc.1.pushBack((|some($tt), this.processBlockStatement[recursive](mb.1)|))|);
-                    }
-                    elif(this.assembly.areDisjoint($tt, nsv.etype)) {
-                        return (|true, acc.1|);
-                    }
-                    else {
-                        return (|true, acc.1.pushBack((|some($tt), this.processBlockStatement[recursive](mb.1)|))|);
-                    }
+                    return (|true, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1)|))|);
                 }
             }
         });
@@ -981,8 +976,7 @@ entity ConstantSimplification {
             }
             %%TODO: maybe we want to add a single option case too
             else {
-                let lbb = nflow.1.back();
-                return s[sval=nsv, matchflow=nflow.1, mustExhaustive=true, implicitFinalType=lbb.0@some];
+                return s[sval=nsv, matchflow=nflow.1, mustExhaustive=true];
             }
         }
     }

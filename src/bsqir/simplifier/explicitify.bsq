@@ -689,7 +689,7 @@ entity ExplicitifyTransform {
 
     recursive method processMatchStatement(s: MatchStatement, vmap: VarMapping): Statement {
         let nsv = this.processExpression[recursive](s.sval, vmap);
-        let nflow = s.matchflow.map[recursive]<(|Option<TypeSignature>, BlockStatement|)>(fn(mb) => {
+        let nflow = s.matchflow.map[recursive]<(|TypeSignature, BlockStatement|)>(fn(mb) => {
             return (|mb.0, this.processBlockStatement[recursive](mb.1, vmap)|);
         });
 
