@@ -758,14 +758,17 @@ entity CPPTransformer {
     }
 
     %% Explore all subtypes and find largest possible field count
-    method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly): Nat {
-        return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {
+    method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>): Nat {
+        return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {            
+           let cpptkey = CPPTransformNameManager::convertTypeKey(subtk);
             if(bsqasm.entities.has(subtk)) {
-                let fieldssize = bsqasm.entities.get(subtk).saturatedBFieldInfo.size();
+                let fieldssize = if(tinfos.get(cpptkey).tag === CPPAssembly::Tag#Ref) then 1n 
+                    else bsqasm.entities.get(subtk).saturatedBFieldInfo.size();
                 return if(fieldssize > acc) then fieldssize else acc;
             }
             elif(bsqasm.datamembers.has(subtk)) {
-                let fieldssize = bsqasm.datamembers.get(subtk).saturatedBFieldInfo.size();
+                let fieldssize =  if(tinfos.get(cpptkey).tag === CPPAssembly::Tag#Ref) then 1n
+                    else bsqasm.datamembers.get(subtk).saturatedBFieldInfo.size();
                 return if(fieldssize > acc) then fieldssize else acc;
             }
             else {
@@ -779,20 +782,22 @@ entity CPPTransformer {
                 else {
                     abort; %% Unsupported non-concrete type!
                 }
-                return this.findMaxFieldCount[recursive](subtype, bsqasm);
+                return this.findMaxFieldCount[recursive](subtype, bsqasm, tinfos);
             }
         });
     }
 
     method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tid: Nat, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
-        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
+        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {  
             let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
             if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
                 if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
                 }
+
                 return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
             }
+            
             %% Primitive type 
             return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
         });
@@ -872,10 +877,10 @@ entity CPPTransformer {
         elif(bsqasm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
             if(bsqasm.concepts.has(typekey)) {
-                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
+                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
             elif(bsqasm.datatypes.has(typekey)) { 
-                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
+                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
             elif(bsqasm.pconcepts.has(typekey)) {
                 let pc = bsqasm.pconcepts.get(typekey);

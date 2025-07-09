@@ -26,6 +26,13 @@ public:
 };
 ThreadLocalInfo& info = ThreadLocalInfo::get();
 
+enum Tag 
+{
+    Value,
+    Ref,
+    Tagged
+};
+
 // Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
 struct FieldOffsetInfo 
 {
@@ -34,14 +41,16 @@ struct FieldOffsetInfo
     uint32_t byteoffset;
 };
 
+// Will need to add tag and vtable to gc
 struct TypeInfoBase 
 {
     uint32_t type_id;
     uint32_t type_size;
     uint32_t slot_size;
+    Tag tag; 
     const char* ptr_mask;
     const char* typekey;
-    const FieldOffsetInfo* vtable; // Will need to add to gc
+    const FieldOffsetInfo* vtable; 
 };
 
 template <size_t N>
@@ -69,13 +78,40 @@ public:
         return *this;
     }
 
-    // Some constructor
-    Boxed(TypeInfoBase* ti, uintptr_t d[K]) noexcept : typeinfo(ti) {
-        memcpy<K>(this->data, d);
-    }
+    template<typename T>
+    Boxed(__CoreCpp::TypeInfoBase* ti, T d) noexcept : typeinfo(ti) {
+        memcpy<K>(this->data, reinterpret_cast<uintptr_t*>(&d));
+    };
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {}
+
+    template<typename T, uintptr_t I=0>
+    constexpr T* access_ref() noexcept {
+        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + I);   
+    }
+
+    template<typename T, uintptr_t I=0>
+    constexpr T access() noexcept { 
+        if(this->typeinfo->tag == Tag::Ref) {
+            return *access_ref<T, I>();
+        }
+        else {
+            return *reinterpret_cast<T*>(&this->data[I]);
+        }
+    }
+
+    constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
+
+    template<typename T, uintptr_t E>
+    T vlookup(const __CoreCpp::FieldOffsetInfo* vtable) noexcept {
+        if(this->typeinfo->tag == Tag::Ref) {
+            return *reinterpret_cast<T*>(this->data[static_cast<uintptr_t>(vtable[E].byteoffset)]);
+        }
+        else {
+            return *reinterpret_cast<T*>(this->data + static_cast<uintptr_t>(vtable[E].byteoffset));
+        }
+    }
 };
 
 template<>
@@ -85,18 +121,31 @@ public:
     uintptr_t data = 0;
 
     Boxed() noexcept = default;
-    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo), data(rhs.data) {};
-    Boxed& operator=(const Boxed& rhs) noexcept { 
-        this->typeinfo = rhs.typeinfo;
-        this->data = rhs.data;
-        return *this;
-    }
+    Boxed(const Boxed& rhs) noexcept = default;
+    Boxed& operator=(const Boxed& rhs) noexcept = default;
 
-    // Some constructor
-    Boxed(TypeInfoBase* ti, uintptr_t d) noexcept : typeinfo(ti), data(d) {};
+    template<typename T>
+    Boxed(TypeInfoBase* ti, T d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+    
+    template<typename T, uintptr_t I=0>
+    constexpr T* access_ref() noexcept {
+        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   
+    }
+
+    template<typename T, uintptr_t I=0>
+    constexpr T access() noexcept { 
+        if (this->typeinfo->tag == Tag::Ref) {
+            return *access_ref<T, I>();
+        }
+        else {
+            return *reinterpret_cast<T*>(&this->data);
+        }
+    }
+    
+    constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
 };
 
 template<>
@@ -105,11 +154,8 @@ public:
     TypeInfoBase* typeinfo = nullptr;
 
     Boxed() noexcept = default;
-    Boxed(const Boxed& rhs) noexcept : typeinfo(rhs.typeinfo) {};
-    Boxed& operator=(const Boxed& rhs) noexcept {
-        this->typeinfo = rhs.typeinfo;
-        return *this;
-    }
+    Boxed(const Boxed& rhs) noexcept = default;
+    Boxed& operator=(const Boxed& rhs) noexcept = default;        
 
     Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
 };
@@ -141,11 +187,8 @@ public:
     uintptr_t data = 0;
 
     TupleEntry() noexcept = default;
-    TupleEntry(const TupleEntry& rhs) noexcept : data(rhs.data) { }
-    TupleEntry& operator=(const TupleEntry& rhs) noexcept {        
-        this->data = rhs.data;
-        return *this;
-    }
+    TupleEntry(const TupleEntry& rhs) noexcept = default;
+    TupleEntry& operator=(const TupleEntry& rhs) noexcept = default; 
 
     TupleEntry(uintptr_t* d) noexcept : data(*d) { }
 };
@@ -157,13 +200,8 @@ public:
     TupleEntry<K1> e1;
     
     Tuple2() noexcept = default;
-    Tuple2(const Tuple2& rhs) noexcept : e0(rhs.e0), e1(rhs.e1) { }
-    Tuple2& operator=(const Tuple2& rhs) noexcept {
-        this->e0 = rhs.e0;
-        this->e1 = rhs.e1;
-
-        return *this;
-    }
+    Tuple2(const Tuple2& rhs) noexcept = default; 
+    Tuple2& operator=(const Tuple2& rhs) noexcept = default;
 
     template<typename T0, typename T1>
     Tuple2(T0 d0, T1 d1) noexcept 
@@ -187,14 +225,8 @@ public:
     TupleEntry<K2> e2;
     
     Tuple3() noexcept = default;
-    Tuple3(const Tuple3& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2) { }
-    Tuple3& operator=(const Tuple3& rhs) noexcept {
-        this->e0 = rhs.e0;
-        this->e1 = rhs.e1;
-        this->e2 = rhs.e2;
-
-        return *this;
-    }
+    Tuple3(const Tuple3& rhs) noexcept = default;
+    Tuple3& operator=(const Tuple3& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2>
     Tuple3(T0 d0, T1 d1, T2 d2) noexcept 
@@ -221,15 +253,8 @@ public:
     TupleEntry<K3> e3;
     
     Tuple4() noexcept = default;
-    Tuple4(const Tuple4& rhs) noexcept : e0(rhs.e0), e1(rhs.e1), e2(rhs.e2), e3(rhs.e3) { }
-    Tuple4& operator=(const Tuple4& rhs) noexcept {
-        this->e0 = rhs.e0;
-        this->e1 = rhs.e1;
-        this->e2 = rhs.e2;
-        this->e3 = rhs.e3;
-
-        return *this;
-    }
+    Tuple4(const Tuple4& rhs) noexcept = default; 
+    Tuple4& operator=(const Tuple4& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2, typename T3>
     Tuple4(T0 d0, T1 d1, T2 d2, T3 d3) noexcept 
