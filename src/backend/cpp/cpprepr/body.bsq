@@ -26,12 +26,12 @@ concept Statement {
 entity EmptyStatement provides Statement {
 }
 
-entity BinderInfo { %% TODO: Not implemented
+entity BinderInfo { 
     field srcname: VarIdentifier;
     field refineonfollow: Bool;
 }
 
-datatype ITest using { %% TODO: Not Implemented
+datatype ITest using { 
     field isnot: Bool;
 }
 of
@@ -76,7 +76,7 @@ IfSimpleStatement { }
 | IfTestStatement {
     field itest: ITest;
 }
-| IfBinderStatement { %% TODO: Not implemented
+| IfBinderStatement { 
     field itest: ITest;
     field binder: BinderInfo;
 }
@@ -180,10 +180,10 @@ datatype IfExpression provides Expression using {
 }
 of
 IfSimpleExpression { }
-| IfTestExpression { %% TODO: Not implemented (need ITests for this to work)
+| IfTestExpression { 
     field itest: ITest;
 }
-| IfBinderExpression { %% TODO: Not implemented 
+| IfBinderExpression {
     field itest: ITest;
     field binder: BinderInfo;
 }
@@ -305,6 +305,9 @@ PostfixAccessFromName {
 | PostfixIsTest {
     field ttest: ITest;
 }
+| PostfixAsConvert {
+    field ttest: ITest;
+}
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;
     field resolvedTrgt: InvokeKey;
@@ -312,6 +315,8 @@ PostfixAccessFromName {
 }
 | PostfixBoolConstant {
     field value: Bool;
+}
+| PostfixAccessSomeValue {
 }
 ;
 

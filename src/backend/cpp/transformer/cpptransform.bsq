@@ -113,8 +113,8 @@ namespace CPPTransformNameManager {
         }
     }
 
-    function shouldBeRef(fields: List<BSQAssembly::MemberFieldDecl>, asm: BSQAssembly::Assembly): Bool {
-        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.declaredType.tkeystr));
+    function shouldBeRef(fields: List<BSQAssembly::SaturatedFieldInfo>, asm: BSQAssembly::Assembly): Bool {
+        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.ftype.tkeystr));
         if(fields.size() > 4n || !fieldsPrimitive) {
             return true;
         }
@@ -317,9 +317,10 @@ entity CPPTransformer {
         let isnot = itest.isnot;
         match(itest)@ {
             BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
-            | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
             | BSQAssembly::ITestNone => { return this.transformITestNone(isnot); }
-            | _ => { abort; } 
+            | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
+            | BSQAssembly::ITestOk => { abort; }
+            | BSQAssembly::ITestFail => { abort; }
         }
     }
 
@@ -336,9 +337,9 @@ entity CPPTransformer {
             | BSQAssembly::PostfixProjectFromNames => { abort; }
             | BSQAssembly::PostfixAccessFromIndex => { return CPPAssembly::PostfixAccessFromIndex{ baseType, $op.idxk }; }
             | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
-            | BSQAssembly::PostfixAsConvert => { abort; }
+            | BSQAssembly::PostfixAsConvert => { return CPPAssembly::PostfixAsConvert{ baseType, this.transformITestAsTest($op.ttest) }; }
             | BSQAssembly::PostfixAssignFields => { abort; }
-            | BSQAssembly::PostfixInvokeStatic => {
+            | BSQAssembly::PostfixInvokeStatic => { %% Maybe move to its own method
                 let resolvedType = CPPTransformNameManager::convertNominalTypeSignature($op.resolvedType);
                 let resolvedTrgt = CPPTransformNameManager::convertInvokeKey($op.resolvedTrgt);
                 let args = this.transformArguments($op.argsinfo.resolvedargs);
@@ -351,7 +352,7 @@ entity CPPTransformer {
             | BSQAssembly::PostfixNop => { abort; }
             | BSQAssembly::PostfixAbort => { abort; }
             | BSQAssembly::PostfixWidenConvert => { abort; }
-            | BSQAssembly::PostfixAccessSomeValue => { abort; }
+            | BSQAssembly::PostfixAccessSomeValue => { return CPPAssembly::PostfixAccessSomeValue{ baseType }; }
             | BSQAssembly::PostfixLiteralNoneValue => { abort; }
         }
     }
@@ -428,7 +429,8 @@ entity CPPTransformer {
 
         match(exp)@ {
             BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
-            | _ => { abort; } %% TODO: Not Implemented 
+            | BSQAssembly::IfTestExpression => { return CPPAssembly::IfTestExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest) }; }
+            | BSQAssembly::IfBinderExpression => { return CPPAssembly::IfBinderExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest), this.transformBinderInfo($exp.binder) };}
         }
     }
 
@@ -566,6 +568,20 @@ entity CPPTransformer {
         return CPPAssembly::BlockStatement{ stmts, block.isScoping };
     }
 
+    method transformBinderInfo(binder: BSQAssembly::BinderInfo): CPPAssembly::BinderInfo {
+        let srcname = CPPTransformNameManager::convertVarIdentifier(binder.srcname);
+        let refineonfollow = binder.refineonfollow;
+
+        return CPPAssembly::BinderInfo{ srcname, refineonfollow };
+    }
+
+    method transformIfBinderStatement(stmt: BSQAssembly::IfBinderStatement, cond: CPPAssembly::Expression, tb: CPPAssembly::BlockStatement): CPPAssembly::IfBinderStatement {
+        let itest = this.transformITestAsTest(stmt.itest);
+        let binder = this.transformBinderInfo(stmt.binder);
+
+        return CPPAssembly::IfBinderStatement{ cond, tb, itest, binder };
+    }
+
     recursive method transformIfStatement(stmt: BSQAssembly::IfStatement): CPPAssembly::IfStatement {
         let cond = this.transformExpressionToCpp[recursive](stmt.texp);
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
@@ -573,8 +589,15 @@ entity CPPTransformer {
         match(stmt)@ {
             BSQAssembly::IfSimpleStatement => { return CPPAssembly::IfSimpleStatement{ cond, trueBlock }; }
             | BSQAssembly::IfTestStatement => { return CPPAssembly::IfTestStatement{ cond, trueBlock, this.transformITestAsTest($stmt.itest) }; }
-            | BSQAssembly::IfBinderStatement => { abort; } %% TODO: Not Implemented
+            | BSQAssembly::IfBinderStatement => { return this.transformIfBinderStatement($stmt, cond, trueBlock); }
         }
+    }
+
+    method transformIfElseBinderStatement(stmt: BSQAssembly::IfElseBinderStatement, cond: CPPAssembly::Expression, tb: CPPAssembly::BlockStatement, fb: CPPAssembly::BlockStatement): CPPAssembly::IfElseBinderStatement {
+        let itest = this.transformITestAsTest(stmt.itest);
+        let binder = this.transformBinderInfo(stmt.binder);       
+    
+        return CPPAssembly::IfElseBinderStatement{ cond, tb, fb, itest, binder };
     }
 
     recursive method transformIfElseStatement(stmt: BSQAssembly::IfElseStatement): CPPAssembly::IfElseStatement {
@@ -585,7 +608,7 @@ entity CPPTransformer {
         match(stmt)@ {
             BSQAssembly::IfElseSimpleStatement => { return CPPAssembly::IfElseSimpleStatement{ cond, trueBlock, falseBlock }; }
             | BSQAssembly::IfElseTestStatement => { return CPPAssembly::IfElseTestStatement{ cond, trueBlock, falseBlock, this.transformITestAsTest($stmt.itest) }; }
-            | BSQAssembly::IfElseBinderStatement => { abort; } %% TODO: Not Implemented
+            | BSQAssembly::IfElseBinderStatement => { return this.transformIfElseBinderStatement($stmt, cond, trueBlock, falseBlock); } %% TODO: Not Implemented
         }
     }
 
@@ -735,14 +758,17 @@ entity CPPTransformer {
     }
 
     %% Explore all subtypes and find largest possible field count
-    method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly): Nat {
-        return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {
+    method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>): Nat {
+        return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {            
+           let cpptkey = CPPTransformNameManager::convertTypeKey(subtk);
             if(bsqasm.entities.has(subtk)) {
-                let fieldssize = bsqasm.entities.get(subtk).saturatedBFieldInfo.size();
+                let fieldssize = if(tinfos.get(cpptkey).tag === CPPAssembly::Tag#Ref) then 1n 
+                    else bsqasm.entities.get(subtk).saturatedBFieldInfo.size();
                 return if(fieldssize > acc) then fieldssize else acc;
             }
             elif(bsqasm.datamembers.has(subtk)) {
-                let fieldssize = bsqasm.datamembers.get(subtk).saturatedBFieldInfo.size();
+                let fieldssize =  if(tinfos.get(cpptkey).tag === CPPAssembly::Tag#Ref) then 1n
+                    else bsqasm.datamembers.get(subtk).saturatedBFieldInfo.size();
                 return if(fieldssize > acc) then fieldssize else acc;
             }
             else {
@@ -756,27 +782,31 @@ entity CPPTransformer {
                 else {
                     abort; %% Unsupported non-concrete type!
                 }
-                return this.findMaxFieldCount[recursive](subtype, bsqasm);
+                return this.findMaxFieldCount[recursive](subtype, bsqasm, tinfos);
             }
         });
     }
 
     method generateNominalConcreteTypeInfo(fields_tinfo: List<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>, tid: Nat, tkey: CPPAssembly::TypeKey, tag: CPPAssembly::Tag, asm: BSQAssembly::Assembly): CPPAssembly::TypeInfo {
-        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {
+        return fields_tinfo.reduce<CPPAssembly::TypeInfo>(CPPAssembly::TypeInfo{ tid, 0n, 0n, '', tkey, tag }, fn(acc, tinfo) => {  
             let bsqtkey = CPPTransformNameManager::revertTypeKey(tinfo.0.typekey);
             if(asm.isNominalTypeConcrete(bsqtkey) && !asm.isPrimtitiveType(bsqtkey)) { %% Pointer to other Concrete Nominal (non primitive) type
                 if(tinfo.0.tag === CPPAssembly::Tag#Ref) {
                     return CPPAssembly::TypeInfo{ acc.id, acc.typesize + 8n, acc.slotsize + 1n, CString::concat(acc.ptrmask, '1'), acc.typekey, acc.tag };
                 }
+
                 return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
             }
+            
             %% Primitive type 
             return CPPAssembly::TypeInfo{ acc.id, acc.typesize + tinfo.0.typesize, acc.slotsize + tinfo.0.slotsize, CString::concat(acc.ptrmask, tinfo.0.ptrmask), acc.typekey, acc.tag };
         });
     }
 
     %%
-    %% TODO: Need to explicitly handle the tuple case
+    %% When we generate the typeinfo for tuple as a field or some(tuple) we will need to explicitly handle how we determine the field size.
+    %% this likely means we need to modify this method to support access of `entries` list or this typesig, walk the fields
+    %% recursively determining their slotsize and typesize to construct our new type. 
     %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { 
         let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
@@ -808,15 +838,16 @@ entity CPPTransformer {
             var tkey: CPPAssembly::TypeKey;
             if(bsqasm.entities.has(typekey)) {
                 let e = bsqasm.entities.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(e.fields, bsqasm);
-                fields_tinfo = e.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
-                    fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
+                let isRef = CPPTransformNameManager::shouldBeRef(e.saturatedBFieldInfo, bsqasm);
+                fields_tinfo = e.saturatedBFieldInfo
+                    .map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
+                        fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                 tkey = CPPTransformNameManager::convertTypeKey(e.tkey);
             }
             elif(bsqasm.datamembers.has(typekey)) {
                 let dm = bsqasm.datamembers.get(typekey);
-                let isRef = CPPTransformNameManager::shouldBeRef(dm.fields, bsqasm);
+                let isRef = CPPTransformNameManager::shouldBeRef(dm.saturatedBFieldInfo, bsqasm);
                 fields_tinfo = dm.saturatedBFieldInfo.map<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
                     fn(f_tkey) => this.generateTypeInfo[recursive](f_tkey.ftype.tkeystr, tinfos, cur_tid, bsqasm) );
                 tag = if(isRef) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
@@ -846,14 +877,14 @@ entity CPPTransformer {
         elif(bsqasm.isNominalTypeConcept(typekey)) {
             var maxFieldCount: Nat;
             if(bsqasm.concepts.has(typekey)) {
-                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
+                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
             elif(bsqasm.datatypes.has(typekey)) { 
-                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm);
+                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
             elif(bsqasm.pconcepts.has(typekey)) {
                 let pc = bsqasm.pconcepts.get(typekey);
-                if(pc)@<BSQAssembly::OptionTypeDecl> { %% I "think" sometype would be best here
+                if(pc)@<BSQAssembly::OptionTypeDecl> {
                     let pcinfo = this.generateTypeInfo[recursive]($pc.someType.tkeystr, tinfos, cur_tid, bsqasm).0;
                     let named_pcinfo = CPPAssembly::TypeInfo{ next_tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, CString::concat('2', pcinfo.ptrmask), cpptkey, CPPAssembly::Tag#Tagged };
 
@@ -925,6 +956,13 @@ entity CPPTransformer {
             fn(e) => CPPTransformNameManager::convertNominalTypeSignature(e));
 
         return CPPAssembly::DatatypeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, fields, associatedMemberEntityDecls }; 
+    }
+
+    method transformConceptTypeDeclToCpp(ctd: BSQAssembly::ConceptTypeDecl): CPPAssembly::ConceptTypeDecl {
+        let base = this.transformAbstractConceptTypeDeclBase(ctd@<BSQAssembly::AbstractConceptTypeDecl>);
+        let fields = this.transformMemberFieldDecl(ctd.saturatedBFieldInfo, ctd, ctd.fields);
+
+        return CPPAssembly::ConceptTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, base.10, fields }; 
     }
 
     method transformSomeTypeDecl(std: BSQAssembly::SomeTypeDecl): CPPAssembly::SomeTypeDecl {
@@ -1060,8 +1098,14 @@ entity CPPTransformer {
                     fn(decl) => {
                         let new_datamembers = decl.datamembers.pushBack(cpptk);
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        
+                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
+                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
+                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
+                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
-                            new_datamembers, decl.datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
+                            new_datamembers, decl.datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, new_overmethods,
                             decl.enums, new_alltypes };
                     });                     
             });
@@ -1083,8 +1127,14 @@ entity CPPTransformer {
                     fn(decl) => {
                         let new_datatypes = decl.datatypes.pushBack(cpptk);
                         let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        
+                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
+                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
+                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
+                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+                        
                         return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.nsfuncs, decl.typefuncs, decl.constructables, decl.entities,
-                            decl.datamembers, new_datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
+                            decl.datamembers, new_datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, new_overmethods,
                             decl.enums, new_alltypes };
                     });                     
             });
@@ -1187,6 +1237,12 @@ entity CPPTransformer {
                 return acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformOverrideMethodDecl(decl));
         });
 
+        let transformer_concepts = bsqasm.concepts.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::ConceptTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::ConceptTypeDecl>{}, fn(acc, tk, ctd) => {
+                let cppctd = transformer.transformConceptTypeDeclToCpp(ctd);
+                return acc.insert(cppctd.tkey, cppctd);
+        });
+
         let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
@@ -1195,13 +1251,15 @@ entity CPPTransformer {
             (| 0n, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{} |), fn(acc, tkey) => {
                 let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
                 return (| acc.0 + 1n, gen_tinfo.1 |);
-            });
-        
-        let generated_typeinfos_abstract = bsqasm.allabstracttypes.reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
-            generated_typeinfos_concrete, fn(acc, tkey) => {
-                let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
-                return (| acc.0 + 1n, gen_tinfo.1 |);
-            });
+        });
+
+        let generated_typeinfos_abstract = bsqasm.allabstracttypes
+            .reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
+                generated_typeinfos_concrete, fn(acc, tkey) => {
+
+                    let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
+                    return (| acc.0 + 1n, gen_tinfo.1 |);
+        });
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls_enums,
@@ -1219,6 +1277,7 @@ entity CPPTransformer {
             datamembers = transformer_datamembers,
             datatypes = transformer_datatypes,
             pconcepts = transformer_pconcepts,
+            concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
             typeinfos = generated_typeinfos_abstract.1
         };

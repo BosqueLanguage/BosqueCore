@@ -13,7 +13,7 @@ describe ("Exec -- simple abort", () => {
 });
 */
 
-describe ("Cpp Emit Evaluate -- simple assert", () => {
+describe ("CPP Emit Evaluate -- simple assert", () => {
     it("should exec simple assert", function () {
         runMainCode("public function main(): Int { assert true; return 1i; }", "1_i");
         // runMainCode("public function main(): Int { assert debug false; return 1i; }", "1i");
