@@ -1294,12 +1294,12 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
 
         if(f.resultType)<SMTAssembly::SafeResult> {
             let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (p vv)))');
-            body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' true ', lseq, ')');
         }
         else {
             let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (@Result-value vvres))))))';
             let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok true) ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok true) ', lseq, ')');
         }
     }
     elif(f.specialname === 's_list_noneof') {
@@ -1308,12 +1308,12 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
 
         if(f.resultType)<SMTAssembly::SafeResult> {
             let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (not (p vv))))');
-            body = CString::concat('(seq.fold_left ', rpred, ' true ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' true ', lseq, ')');
         }
         else {
             let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (not (@Result-value vvres)))))))';
             let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok true) ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok true) ', lseq, ')');
         }
     }
     elif(f.specialname === 's_list_someof') {
@@ -1322,12 +1322,12 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
 
         if(f.resultType)<SMTAssembly::SafeResult> {
             let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (or acc (p vv)))');
-            body = CString::concat('(seq.fold_left ', rpred, ' false ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' false ', lseq, ')');
         }
         else {
             let bop = '(ite (not (= (@Result-ok false) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (or (@Result-value acc) (@Result-value vvres))))))';
             let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.fold_left ', rpred, ' (@Result-ok false) ', lseq, ')');
+            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok false) ', lseq, ')');
         }
     }
     elif(f.specialname === 's_list_map') {
@@ -1348,7 +1348,34 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
             let lparams = CString::concat('((acc (@Result (Seq ', utype, '))) (vv ', oftype, '))');
             let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
             let decl = CString::concat(sop, ' ', '(@Result-ok (as seq.empty (Seq ', utype, ')))');
-            let reduceop = CString::concat('(seq.fold_left ', decl, ' ', lseq, ')');
+            let reduceop = CString::concat('(seq.foldl ', decl, ' ', lseq, ')');
+
+            let converr = CString::concat('((as @Result-err (@Result ', f.resultType.rtype.value, ')) (@Result-etag seqval))');
+            let wwrap = CString::concat('let ((seqval ', reduceop, '))');
+            let dispatch = CString::concat('(ite (is-@Result-err seqval) ', converr, ' (@Result-ok (', lmk, ' (@Result-value seqval))))');
+
+            body = CString::concat('(', wwrap, ' ', dispatch, ')');
+        }
+    }
+    elif(f.specialname === 's_list_mapidx') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+        let lmk = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
+
+        if(f.resultType)<SMTAssembly::SafeResult> {
+            let mfn = CString::concat('(lambda ((i Nat) (vv ', oftype, ')) (select f vv i))');
+            let sop = CString::concat('(seq.mapi ', mfn, ' 0 ', lseq, ')');
+            body = CString::concat('(', lmk, ' ', sop, ')');
+        }
+        else {
+            let utype = f.binds.find(pred(bb) => bb.0 === 'U').1.value;
+            let vresconv = CString::concat('((as @Result-err (@Result (Seq ', utype, '))) (@Result-etag vvres))');
+
+            let bop = CString::concat('(ite (is-@Result-err acc) acc (let ((vvres (select f vv i))) (ite (is-@Result-err vvres) ', vresconv,' (@Result-ok (seq.++ (@Result-value acc) (seq.unit (@Result-value vvres)))))))');
+            let lparams = CString::concat('((i Nat) (acc (@Result (Seq ', utype, '))) (vv ', oftype, '))');
+            let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
+            let decl = CString::concat(sop, ' 0 ', '(@Result-ok (as seq.empty (Seq ', utype, ')))');
+            let reduceop = CString::concat('(seq.foldli ', decl, ' ', lseq, ')');
 
             let converr = CString::concat('((as @Result-err (@Result ', f.resultType.rtype.value, ')) (@Result-etag seqval))');
             let wwrap = CString::concat('let ((seqval ', reduceop, '))');

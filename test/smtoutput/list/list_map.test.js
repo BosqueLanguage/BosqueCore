@@ -18,15 +18,23 @@ describe ("SMT List -- map basic", () => {
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, -1i}.map<Bool>(fn(x) => { assert x != 0i; return x >= 0i; }).back(); }', "(assert (not (is-@Result-err Main@main)))");
     });
 });
-/*
+
 describe ("SMT List -- map index basic", () => {
     it("should do simple maps index", function () {
-        runMainCode('public function main(): Nat { return List<Nat>{}.mapIdx<Bool>(fn(x, i) => x >= i).size(); }', "0n");
+        runishMainCodeUnsat('public function main(): Nat { return List<Nat>{}.mapIdx<Bool>(fn(x, i) => x >= i).size(); }', "(assert (not (= 0 Main@main)))");
 
-        runMainCode('public function main(): Bool { return List<Nat>{1n}.mapIdx<Bool>(fn(x, i) => x >= i).front(); }', "true");
-        runMainCode('public function main(): Bool { return List<Nat>{1n, 0n}.mapIdx<Bool>(fn(x, i) => x >= i).back(); }', "false");
+        runishMainCodeUnsat('public function main(): Bool { return List<Nat>{1n}.mapIdx<Bool>(fn(x, i) => x >= i).front(); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Nat>{1n, 0n}.mapIdx<Bool>(fn(x, i) => x >= i).back(); }', "(assert (not (= (@Result-ok false) Main@main)))");
 
-        runMainCode('public function main(): Nat { return List<Int>{1i, -1i, 3i}.mapIdx<Nat>(fn(x, i) => i).back(); }', "2n");
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, -1i, 3i}.mapIdx<Nat>(fn(x, i) => i).back(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
+    });
+
+    it("should do simple maps index w/err", function () {
+        runishMainCodeUnsat('public function main(): Nat { return List<Nat>{}.mapIdx<Bool>(fn(x, i) => { assert x != 0n; return x >= i; }).size(); }', "(assert (not (= (@Result-ok 0) Main@main)))");
+
+        runishMainCodeUnsat('public function main(): Bool { return List<Nat>{1n}.mapIdx<Bool>(fn(x, i) => { assert x != 0n; return x >= i; }).front(); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Nat>{1n, 0n}.mapIdx<Bool>(fn(x, i) => { assert x != 0n; return x >= i; }).back(); }', "(assert (not (is-@Result-err Main@main)))");
+
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, -1i, 3i}.mapIdx<Nat>(fn(x, i) => { assert x != 0i; return i; }).back(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
     });
 });
-*/
