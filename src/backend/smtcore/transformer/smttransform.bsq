@@ -392,6 +392,16 @@ entity SMTTransformer {
         }
     }
 
+    method transformAccessNamespaceConstantExpression(exp: BSQAssembly::AccessNamespaceConstantExpression): SMTAssembly::SafeExpression {
+        let nskey = TransformNameManager::convertNamespaceKey(exp.ns);
+        return SMTAssembly::AccessNamespaceConstantExpression{nskey, exp.name.value};
+    }
+
+    method transformAccessStaticFieldExpression(exp: BSQAssembly::AccessStaticFieldExpression): SMTAssembly::SafeExpression {
+        let tkey = TransformNameManager::convertTypeKey(exp.stype.tkeystr);
+        return SMTAssembly::AccessStaticFieldExpression{tkey, exp.name.value};
+    }
+
     method transformAccessEnumExpression(exp: BSQAssembly::AccessEnumExpression): SMTAssembly::SafeExpression {
         return SMTAssembly::AccessEnumExpression{this.transformStdTypeToSMT(exp.stype), exp.name};
     }
@@ -1450,6 +1460,12 @@ entity SMTTransformer {
             }
             | BSQAssembly::LiteralTypeDeclValueExpression => {
                 return this.transformLiteralTypeDeclValueExpression($exp, ctx);
+            }
+            | BSQAssembly::AccessNamespaceConstantExpression => { 
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessNamespaceConstantExpression($exp)}; 
+            }
+            | BSQAssembly::AccessStaticFieldExpression => {
+                return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessStaticFieldExpression($exp)}; 
             }
             | BSQAssembly::AccessEnumExpression => { 
                 return ctx, SafeResult{this.transformStdTypeToSMT(exp.etype), this.transformAccessEnumExpression($exp)}; 
