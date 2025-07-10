@@ -86,6 +86,12 @@ function emitSpecialTemplate(name: String): String {
     return final;
 }
 
+function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, converttype: String, exp: String): String { 
+    let name = emitVarIdentifier(bname); 
+    let tbindtype = String::concat("[[maybe_unused]] ", converttype, " ");
+    return String::concat(tbindtype, name, " = ", exp, convert, "; ");
+}
+
 function findFieldOffset(tk: CPPAssembly::TypeKey, fname: CPPAssembly::Identifier, ctx: Context): Nat {
     return ctx.asm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo
         .reduce<(|Nat, Bool|)>((|0n, false|), fn(acc, f) => {
@@ -730,22 +736,45 @@ function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: 
     return String::concat("( ", ite, " )");
 }
 
-%% We do this whole generating binding name fiasco quite a lot, would be good to move to general function
+function getSubtypeCount(tk: CPPAssembly::TypeKey, ctx: Context): Nat, CPPAssembly::AbstractNominalTypeDecl {
+    let concretetype = ctx.asm.lookupNominalTypeDeclaration(tk);
+    if(concretetype)@<CPPAssembly::DatatypeTypeDecl> {
+        return $concretetype.associatedMemberEntityDecls.size(), concretetype;
+    }
+    else {
+        return 0n, concretetype;
+    }
+}
+
+%% Handles special case convert where we have two member entities (this is the false case as well)
+function doConvertMaybeSpecialCase(tk: CPPAssembly::TypeKey, ctx: Context): (|String, String|) {
+    let n, concretetype = getSubtypeCount(tk, ctx);
+
+    if(n == 2n) {
+        let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
+            .associatedMemberEntityDecls.find(
+                pred(ets) => !ctx.asm.areTypesSame(ets, itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
+
+        return emitITestAsConvert(itest.isnot, itest, tk, some(othermember), ctx);         
+    }
+    else {
+        return emitITestAsConvert(!itest.isnot, itest, tk, some(tk), ctx); 
+    }
+}
+
+%% TODO: We should format this a bit better as these expressions get quite long
 function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String, t: String, e: String, ctx: Context): String {
     let capture = String::concat("[&]() -> ", emitTypeKey(exp.etype.tkeystr, false, ctx), " { ");
     let etype = exp.texp.etype; 
-    let bname = emitVarIdentifier(exp.binder.srcname);
 
     let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, ctx));
 
     let tconvert = emitITestAsConvert(exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
-    let tbindtype = String::concat("[[maybe_unused]] ", tconvert.1, " ");
-    let treassign = String::concat(tbindtype, bname, " = ", i, tconvert.0, "; ");
+    let treassign = emitBindVar(exp.binder.srcname, tconvert.0, tconvert.1, i);
     let texp = String::concat(capture, treassign, "return ", t, "; }() ");
 
-    let fconvert = emitITestAsConvert(!exp.itest.isnot, exp.itest, etype.tkeystr, some(etype.tkeystr), ctx); 
-    let fbindtype = String::concat("[[maybe_unused]] ", fconvert.1, " ");
-    let freassign = String::concat(fbindtype, bname, " = ", i, fconvert.0, "; ");
+    let fconvert = doConvertMaybeSpecialCase(etype.tkeystr, exp.itest, ctx);
+    let freassign = emitBindVar(exp.binder.srcname, fconvert.0, fconvert.1, i);
     let fexp = String::concat(capture, freassign, "return ", e, "; }() ");
 
     let ibe = String::concat( itest, " ? (", texp, ") : (", fexp, ")");
@@ -966,41 +995,18 @@ function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx
     let etype = stmt.cond.etype;
     let itest = String::concat(expr, emitITestAsTest(stmt.itest, etype, ctx));
 
-    let bname = emitVarIdentifier(stmt.binder.srcname); 
     let tconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx); 
-    let treasign = String::concat(bname, " = ", expr, tconvert.0);
-    let tbassign = String::concat(full_indent, "[[maybe_unused]] ", tconvert.1, " ", treasign, ";%n;");
+    let treassign = emitBindVar(stmt.binder.srcname, tconvert.0, tconvert.1, expr);
 
-    var n: Nat;
-    let concretetype = ctx.asm.lookupNominalTypeDeclaration(etype.tkeystr);
-    if(concretetype)@<CPPAssembly::DatatypeTypeDecl> {
-        n = $concretetype.associatedMemberEntityDecls.size();
-    }
-    else {
-        n = 0n;
-    }
-
-    var fbassign: String;
-    if(n == 2n) { %% If only two member entities implicitly convert to entity that we are not
-        let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
-            .associatedMemberEntityDecls.find(pred(ets) => !ctx.asm.areTypesSame(ets, stmt.itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
-
-        let fconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, etype.tkeystr, some(othermember), ctx); 
-        let freasign = String::concat(bname, " = ", expr, fconvert.0);
-        fbassign = String::concat(full_indent, "[[maybe_unused]] ", fconvert.1, " ", freasign, ";%n;");
-    }
-    else {
-        let fconvert = emitITestAsConvert(!stmt.itest.isnot, stmt.itest, etype.tkeystr, some(etype.tkeystr), ctx); 
-        let freasign = String::concat(bname, " = ", expr, fconvert.0);
-        fbassign = String::concat(full_indent, "[[maybe_unused]] ", fconvert.1, " ", freasign, ";%n;");
-    }
+    let fconvert = doConvertMaybeSpecialCase(etype.tkeystr, stmt.itest, ctx);
+    let freassign = emitBindVar(stmt.binder.srcname, fconvert.0, fconvert.1, expr);
 
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
     let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
-    let elseBlockText = String::concat(indent, "else {%n;", fbassign, falseBlock, indent, "}%n;");
+    let elseBlockText = String::concat(indent, "else {%n;", freassign, falseBlock, indent, "}%n;");
     
     let ifstmt = String::concat(indent, "if( ", itest, " ) {%n;"); 
-    return String::concat(ifstmt, tbassign, trueBlock, indent, "}%n;", elseBlockText);
+    return String::concat(ifstmt, treassign, trueBlock, indent, "}%n;", elseBlockText);
 }
 
 function emitIfElseStatement(stmt: CPPAssembly::IfElseStatement, ctx: Context, indent: String): String {
@@ -1039,7 +1045,6 @@ function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, i
     return String::concat(full_indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
 } 
 
-%% Wouldnt be awful idea to have this be more generic (not just binding type, but none and some too)
 function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     if(bind)@none {
