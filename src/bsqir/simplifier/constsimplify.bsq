@@ -383,6 +383,11 @@ entity ConstantSimplification {
         return e[exp=nexp];
     }
 
+    recursive method processCreateDirectExpression(e: CreateDirectExpression): Expression {
+        let nexp = this.processUnaryArg[recursive](e.exp);
+        return e[exp=nexp];
+    }
+
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic): PostfixInvokeStatic {
         let ninfo = this.processInvokeArgumentInfoStatic[recursive](op.argsinfo);
         return op[argsinfo=ninfo];
@@ -763,7 +768,7 @@ entity ConstantSimplification {
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }
             | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e); }
-            | CreateDirectExpression => { abort; }
+            | CreateDirectExpression => { return this.processCreateDirectExpression[recursive]($e); }
             | PostfixOp => { return this.processPostfixOp[recursive]($e); }
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
@@ -981,9 +986,24 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processSwitchStatement(s: SwitchStatement): Statement {
+        let nsv = this.processExpression[recursive](s.sval);
+
+        let nflow = s.switchflow.map<(|Option<Expression>, BlockStatement|)>(fn(mb) => {
+            let ne = if(mb.0)none then none else some(this.processExpression[recursive](mb.0@some));
+            let nb = this.processBlockStatement[recursive](mb.1);
+            return (|ne, nb|);
+        });
+            
+        return s[sval=nsv, switchflow=nflow];
+    }
+
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
-            VariableDeclarationStatement => {
+            EmptyStatement => { 
+                return s; 
+            }
+            | VariableDeclarationStatement => {
                 return s;
             }
             | VariableMultiDeclarationStatement => {
@@ -1007,6 +1027,7 @@ entity ConstantSimplification {
             | VariableMultiAssignmentImplicitStatement => {
                 return $s[exp = this.processExpression($exp)];
             }
+            | VariableRetypeStatement => { abort; }
             | ReturnVoidStatement => {
                 return s;
             }
@@ -1024,6 +1045,9 @@ entity ConstantSimplification {
             }
             | IfElifElseStatement => {
                 return this.processIfElifElseStatement[recursive]($s);
+            }
+            | SwitchStatement => { 
+                return this.processSwitchStatement[recursive]($s);
             }
             | MatchStatement => {
                 return this.processMatchStatement[recursive]($s);

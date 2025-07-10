@@ -629,6 +629,30 @@ entity CPPTransformer {
         return CPPAssembly::AssertStatement{ exp };
     }
 
+    method transformMatchStatement(stmt: BSQAssembly::MatchStatement): CPPAssembly::MatchStatement {
+        let sval = this.transformExpressionToCpp(stmt.sval);
+        let bindinfo = if(stmt.bindInfo)none then none 
+            else some(this.transformBinderInfo(stmt.bindInfo@some));
+        let matchflow = stmt.matchflow.map<(|CPPAssembly::TypeSignature, CPPAssembly::BlockStatement|)>( fn(mf) => {
+            return (|this.convertTypeSignature(mf.0), this.transformBlockStatement(mf.1)|);
+        });
+        
+        return CPPAssembly::MatchStatement { sval, bindinfo, matchflow, stmt.mustExhaustive };
+    }
+
+    method transformSwitchStatement(stmt: BSQAssembly::SwitchStatement): CPPAssembly::SwitchStatement {
+        let sval = this.transformExpressionToCpp(stmt.sval);
+        let switchflow = stmt.switchflow.map<(|Option<CPPAssembly::Expression>, CPPAssembly::BlockStatement|)>( fn(sf) => {
+            return (|if(sf.0)none then none else some(this.transformExpressionToCpp(sf.0@some)), 
+                this.transformBlockStatement(sf.1)|);
+        });
+        
+        %% Not sure if this is needed for emission 
+        let optypes = stmt.optypes.map<CPPAssembly::TypeSignature>(fn(t) => this.convertTypeSignature(t));
+
+        return CPPAssembly::SwitchStatement { sval, switchflow, stmt.mustExhaustive, optypes };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
@@ -647,8 +671,8 @@ entity CPPTransformer {
             | BSQAssembly::IfStatement => { return this.transformIfStatement[recursive]($stmt); }
             | BSQAssembly::IfElseStatement => { return this.transformIfElseStatement[recursive]($stmt); }
             | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }
-            | BSQAssembly::SwitchStatement => { abort; }
-            | BSQAssembly::MatchStatement => { abort; }
+            | BSQAssembly::SwitchStatement => { return this.transformSwitchStatement($stmt); }
+            | BSQAssembly::MatchStatement => { return this.transformMatchStatement($stmt); }
             | BSQAssembly::AbortStatement => { abort; }
             | BSQAssembly::AssertStatement => { return this.transformAssertStatement($stmt); } 
             | BSQAssembly::ValidateStatement => { abort; }

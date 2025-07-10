@@ -1495,7 +1495,7 @@ class BSQIREmitter {
     private emitSwitchStatement(stmt: SwitchStatement, fmt: BsqonCodeFormatter): string {
         const sbase = this.emitStatementBase(stmt);
         const sval = this.emitExpression(stmt.sval);
-        const switchflow = stmt.switchflow.slice(1).map((e) => {
+        const switchflow = stmt.switchflow.map((e) => {
             const cond = e.lval !== undefined ? `some(${this.emitExpression(e.lval.exp)})` : "none";
             const body = this.emitBlockStatement(e.value, fmt);
             return `(|${cond}, ${body}|)`;
