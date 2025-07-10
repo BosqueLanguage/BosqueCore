@@ -6,7 +6,8 @@
 #include <csetjmp>
 #include <variant> // TODO: Need to remove dependency!
 
-#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { std::longjmp(__CoreCpp::info.error_handler, true); }
+#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
+#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
 
 namespace __CoreCpp {
 
@@ -158,6 +159,11 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept = default;        
 
     Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
+
+    template<typename T>
+    constexpr T access() noexcept { 
+        return T{};
+    }
 };
 
 template <size_t K>

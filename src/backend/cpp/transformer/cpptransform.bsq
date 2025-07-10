@@ -629,6 +629,17 @@ entity CPPTransformer {
         return CPPAssembly::AssertStatement{ exp };
     }
 
+    method transformMatchStatement(stmt: BSQAssembly::MatchStatement): CPPAssembly::MatchStatement {
+        let sval = this.transformExpressionToCpp(stmt.sval);
+        let bindinfo = if(stmt.bindInfo)none then none 
+            else some(this.transformBinderInfo(stmt.bindInfo@some));
+        let matchflow = stmt.matchflow.map<(|CPPAssembly::TypeSignature, CPPAssembly::BlockStatement|)>( fn(mf) => {
+            return (|this.convertTypeSignature(mf.0), this.transformBlockStatement(mf.1)|);
+        });
+        
+        return CPPAssembly::MatchStatement { sval, bindinfo, matchflow, stmt.mustExhaustive };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
@@ -648,7 +659,7 @@ entity CPPTransformer {
             | BSQAssembly::IfElseStatement => { return this.transformIfElseStatement[recursive]($stmt); }
             | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }
             | BSQAssembly::SwitchStatement => { abort; }
-            | BSQAssembly::MatchStatement => { abort; }
+            | BSQAssembly::MatchStatement => { return this.transformMatchStatement($stmt); }
             | BSQAssembly::AbortStatement => { abort; }
             | BSQAssembly::AssertStatement => { return this.transformAssertStatement($stmt); } 
             | BSQAssembly::ValidateStatement => { abort; }

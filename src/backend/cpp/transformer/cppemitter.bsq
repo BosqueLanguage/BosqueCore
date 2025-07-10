@@ -676,8 +676,21 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
     let emitargs = emitArguments(exp.args, ctx); 
     let name = emitTypeSignature(exp.ctype, false, ctx);
     let tinfo = ctx.asm.typeinfos.get(exp.ctype.tkeystr);
+    let ant = ctx.asm.lookupNominalTypeDeclaration(exp.ctype.tkeystr);
 
-    let cons = String::concat(name, "{ ", emitargs, " }");
+    var cons: String;
+    if(ant)@<CPPAssembly::DatatypeMemberEntityTypeDecl> { 
+        if($ant.saturatedBFieldInfo.size() == 0n) { %% Boxed<0> case
+            cons = "";   
+        }
+        else {
+            cons = String::concat(name, "{ ", emitargs, " }");
+        }
+    }
+    else {
+        cons = String::concat(name, "{ ", emitargs, " }");
+    }
+
     if(tinfo.tag === CPPAssembly::Tag#Ref) {
         return String::concat("new ", cons); %% We use new solely to keep the code compiling before GC integration
     }
@@ -747,7 +760,8 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
         return String::concat(name, "{ &", removeCppPrefix(ttype) ," }");
     }
 
-    return String::concat(name, "{ &", ttype, ", ", emitexp, " }");
+    return if(emitexp === "") then String::concat(name, "{ &", ttype, " }")
+        else String::concat(name, "{ &", ttype, ", ", emitexp, " }");
 }
 
 %% We will need this to help us take "this.f?<Int>" to "false"
@@ -1003,6 +1017,47 @@ function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, i
     return String::concat(full_indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
 } 
 
+function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    if(bind)@none {
+        return "";
+    }
+    else {
+        let bname = emitVarIdentifier($bind.srcname);
+        let convert = emitITestAsConvertType(true, fromtype, totype, ctx); 
+        let bindtype = String::concat("[[maybe_unused]] ", convert.1, " ");
+        let reassign = String::concat(bindtype, bname, " = ", expr, convert.0, ";%n;");
+
+        return String::concat(full_indent, reassign);
+    }
+}
+
+function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent); 
+    let fullfull_indent = String::concat("    ", full_indent);
+
+    let expr = emitExpression(stmt.sval, ctx);
+    let sval = String::concat(expr, ".typeinfo == &");
+    var bind: String;
+
+    let matchflow = stmt.matchflow.mapIdx<String>(fn(mf, ii) => {
+        let bind = tryGenerateBindType(stmt.bindInfo, expr, stmt.sval.etype.tkeystr, mf.0.tkeystr, ctx, full_indent);
+        let block = String::concat(bind, emitBlockStatement(mf.1, ctx, full_indent), full_indent, "}%n;");
+        let ts = removeCppPrefix(emitTypeSignature(mf.0, false, ctx));
+
+        if(ii == 0n) {
+            return String::concat(full_indent, "if(", sval, ts, "Type) {%n;", block);
+        }
+        else {
+            return String::concat(full_indent, "else if(", sval, ts, "Type) {%n;", block);
+        }
+    });
+
+    let matches = String::joinAll("", matchflow);
+    let failure = String::concat(full_indent, "else {%n;", fullfull_indent, "𝐚𝐛𝐨𝐫𝐭;%n;", full_indent, "%n;}%n;");
+    return String::concat(matches, failure);
+}
+
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
         CPPAssembly::EmptyStatement => { return ""; }
@@ -1022,7 +1077,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
         | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
         %%| CPPAssembly::SwitchStatement => { abort; }
-        %%| CPPAssembly::MatchStatement => { abort; }
+        | CPPAssembly::MatchStatement => { return emitMatchStatement($stmt, ctx, indent); }
         %%| CPPAssembly::AbortStatement => { abort; }
         | CPPAssembly::AssertStatement => { return emitAssertStatement($stmt, ctx, indent); }
         %%| CPPAssembly::ValidateStatement => { abort; }

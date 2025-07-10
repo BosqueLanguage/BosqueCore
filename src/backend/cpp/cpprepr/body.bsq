@@ -107,6 +107,13 @@ entity IfElifElseStatement provides Statement {
     invariant !$condflow.empty();
 }
 
+entity MatchStatement provides Statement {
+    field sval: Expression;
+    field bindInfo: Option<BinderInfo>;
+    field matchflow: List<(|TypeSignature, BlockStatement|)>;
+    field mustExhaustive: Bool;
+}
+
 entity VariableInitializationStatement provides Statement {
     field name: Identifier; 
     field vtype: TypeSignature;
