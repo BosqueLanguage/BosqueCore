@@ -1251,6 +1251,15 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     if(f.specialname === 'cstring_empty') {
         body = '(= s "")';
     }
+    elif(f.specialname === 'cstring_size') {
+        body = '(str.len s)';
+    }
+    elif(f.specialname === 's_float_power') {
+        body = '(^ a b)';
+    }
+    elif(f.specialname === 's_float_sqrt') {
+        body = '(^ a 0.5)';
+    }
     elif(f.specialname === 's_list_empty') {
         let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
         let consname = SMTNameManager::generateStructConstructorName(f.params.single().ptype);
