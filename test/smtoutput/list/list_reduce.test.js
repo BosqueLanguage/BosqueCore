@@ -24,7 +24,7 @@ describe ("SMT List -- reduce simple", () => {
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 3i}.reduce<Bool>(true, fn(acc, x) => { assert x != 0i; return acc && x > 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
         runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.reduce<Bool>(true, fn(acc, x) => { assert x != 0i; return acc && x > 0i; }); }', "(assert (not (is-@Result-err Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 3i}.reduce<Int>(0i, fn(acc, x) => { assert x != 0i; return acc + x; }); }', "(assert (not (= 1 Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 3i}.reduce<Int>(0i, fn(acc, x) => { assert x != 0i; return acc + x; }); }', "(assert (not (= (@Result-ok 1) Main@main)))");
         runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 0i, 3i}.reduce<Int>(0i, fn(acc, x) => { assert x != 0i; return acc + x; }); }', "(assert (not (is-@Result-err Main@main)))");
     });
 

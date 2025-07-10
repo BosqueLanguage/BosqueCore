@@ -1384,6 +1384,35 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
             body = CString::concat('(', wwrap, ' ', dispatch, ')');
         }
     }
+    elif(f.specialname === 's_list_reduce') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let utype = f.binds.find(pred(bb) => bb.0 === 'U').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+
+        if(f.resultType)<SMTAssembly::SafeResult> {
+            let mfn = CString::concat('(lambda ((acc ', utype, ') (vv ', oftype, ')) (select f acc vv))');
+            body = CString::concat('(seq.foldl ', mfn, ' init ', lseq, ')');
+        }
+        else {
+            let bop = CString::concat('(ite (is-@Result-err acc) acc (select f (@Result-value acc) vv))');
+            let lparams = CString::concat('((acc (@Result ', utype, ')) (vv ', oftype, '))');
+            let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
+            body = CString::concat('(seq.foldl ', sop, ' (@Result-ok init) ', lseq, ')');
+        }
+    }
+    elif(f.specialname === 's_list_sum') {
+        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
+        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
+
+        %%TODO: handle typdecl types??
+        let mfn = CString::concat('(lambda ((acc ', oftype, ') (vv ', oftype, ')) (+ acc vv))');
+        if(\/(oftype === 'Nat', oftype === 'Int', oftype === 'BigNat', oftype === 'BigInt')) {
+            body = CString::concat('(seq.foldl ', mfn, ' 0 ', lseq, ')');
+        }
+        else {
+            body = CString::concat('(seq.foldl ', mfn, ' 0.0 ', lseq, ')');
+        }
+    }
     else {
         _debug f.specialname;
         abort; %%Missing builtin function implementation
