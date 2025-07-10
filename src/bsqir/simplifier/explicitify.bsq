@@ -375,6 +375,12 @@ entity ExplicitifyTransform {
         return e[exp=nexp];
     }
 
+    recursive method processCreateDirectExpression(e: CreateDirectExpression, vmap: VarMapping): Expression {
+        let nexp = this.processUnaryArg[recursive](e.exp, vmap);
+
+        return e[exp=nexp];
+    }
+
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
         let smdecl = this.assembly.staticmethods.get(op.resolvedTrgt);
         let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, smdecl.params, op.argsinfo, vmap);
@@ -588,7 +594,7 @@ entity ExplicitifyTransform {
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e, vmap); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e, vmap); }
             | SafeConvertExpression => { return this.processSafeConvertExpression[recursive]($e, vmap); }
-            | CreateDirectExpression => { abort; }
+            | CreateDirectExpression => { return this.processCreateDirectExpression[recursive]($e, vmap); }
             | PostfixOp => { return this.processPostfixOp[recursive]($e, vmap); }
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e, vmap); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
@@ -696,6 +702,16 @@ entity ExplicitifyTransform {
         return s[sval=nsv, matchflow=nflow];
     }
 
+    recursive method processSwitchStatement(s: SwitchStatement, vmap: VarMapping): Statement {
+        let nsv = this.processExpression[recursive](s.sval, vmap);
+        let nflow = s.switchflow.map[recursive]<(|Option<Expression>, BlockStatement|)>(fn(mb) => {
+            return (|if(mb.0)none then none else some(this.processExpression[recursive](mb.0@some, vmap)), 
+                this.processBlockStatement[recursive](mb.1, vmap)|);
+        });
+
+        return s[sval=nsv, switchflow=nflow];
+    }
+
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
             EmptyStatement => {
@@ -733,6 +749,7 @@ entity ExplicitifyTransform {
             | VariableMultiAssignmentImplicitStatement => {
                 return $s[exp=this.processExpression($s.exp, vmap)];
             }
+            | VariableRetypeStatement => { abort; }
             | ReturnVoidStatement => {
                 return s;
             }
@@ -754,6 +771,9 @@ entity ExplicitifyTransform {
             | IfElifElseStatement => {
                 return this.processIfElifElseStatement[recursive]($s, vmap);
             }
+            | SwitchStatement => { 
+                return this.processSwitchStatement[recursive]($s, vmap); 
+            }
             | MatchStatement => {
                 return this.processMatchStatement[recursive]($s, vmap);
             }
@@ -765,6 +785,10 @@ entity ExplicitifyTransform {
                 let nc = this.processExplicitBoolConvertAsNeeded(nr);
                 return $s[cond = nc];
             }
+            | ValidateStatement => { abort; }
+            | DebugStatement => { abort; }
+            | UpdateDirectStatement => { abort; }
+            | UpdateIndirectStatement => { abort; }
             | BlockStatement => {
                 return this.processBlockStatement[recursive]($s, vmap);
             }

@@ -114,6 +114,14 @@ entity MatchStatement provides Statement {
     field mustExhaustive: Bool;
 }
 
+entity SwitchStatement provides Statement {
+    field sval: Expression;
+    field switchflow: List<(|Option<Expression>, BlockStatement|)>;
+
+    field mustExhaustive: Bool;
+    field optypes: List<TypeSignature>;
+}
+
 entity VariableInitializationStatement provides Statement {
     field name: Identifier; 
     field vtype: TypeSignature;

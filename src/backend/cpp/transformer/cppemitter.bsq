@@ -1077,7 +1077,30 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
     });
 
     let matches = String::joinAll("", matchflow);
-    let failure = String::concat(full_indent, "else {%n;", fullfull_indent, "𝐚𝐛𝐨𝐫𝐭;%n;", full_indent, "%n;}%n;");
+    let failure = String::concat(full_indent, "else {%n;", fullfull_indent, "𝐚𝐛𝐨𝐫𝐭;%n;", full_indent, "}%n;");
+    return String::concat(matches, failure);
+}
+
+function emitSwitchStatement(stmt: CPPAssembly::SwitchStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent); 
+    let fullfull_indent = String::concat("    ", full_indent);
+
+    let sval = emitExpression(stmt.sval, ctx);
+
+    let switchflow = stmt.switchflow.mapIdx<String>(fn(sf, ii) => {
+        let block = String::concat(emitBlockStatement(sf.1, ctx, full_indent), full_indent, "}%n;");
+        let exp = if(sf.0)none then "true" else String::concat(sval, " == ", emitExpression(sf.0@some, ctx)); 
+
+        if(ii == 0n) {
+            return String::concat(full_indent, "if( ", exp, " ) {%n;", block);
+        }
+        else {
+            return String::concat(full_indent, "else if( ", exp, " ) {%n;", block);
+        }
+    });
+
+    let matches = String::joinAll("", switchflow);
+    let failure = String::concat(full_indent, "else {%n;", fullfull_indent, "𝐚𝐛𝐨𝐫𝐭;%n;", full_indent, "}%n;");
     return String::concat(matches, failure);
 }
 
@@ -1099,7 +1122,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
         | CPPAssembly::IfStatement => { return emitIfStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
-        %%| CPPAssembly::SwitchStatement => { abort; }
+        | CPPAssembly::SwitchStatement => { return emitSwitchStatement($stmt, ctx, indent); }
         | CPPAssembly::MatchStatement => { return emitMatchStatement($stmt, ctx, indent); }
         %%| CPPAssembly::AbortStatement => { abort; }
         | CPPAssembly::AssertStatement => { return emitAssertStatement($stmt, ctx, indent); }
