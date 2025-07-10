@@ -736,6 +736,7 @@ function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: 
     return String::concat("( ", ite, " )");
 }
 
+%% TODO: Both this and convert maybe special case will need to handle abstract concepts
 function getSubtypeCount(tk: CPPAssembly::TypeKey, ctx: Context): Nat, CPPAssembly::AbstractNominalTypeDecl {
     let concretetype = ctx.asm.lookupNominalTypeDeclaration(tk);
     if(concretetype)@<CPPAssembly::DatatypeTypeDecl> {
@@ -747,7 +748,7 @@ function getSubtypeCount(tk: CPPAssembly::TypeKey, ctx: Context): Nat, CPPAssemb
 }
 
 %% Handles special case convert where we have two member entities (this is the false case as well)
-function doConvertMaybeSpecialCase(tk: CPPAssembly::TypeKey, ctx: Context): (|String, String|) {
+function doConvertMaybeSpecialCase(tk: CPPAssembly::TypeKey, itest: CPPAssembly::ITest, ctx: Context): (|String, String|) {
     let n, concretetype = getSubtypeCount(tk, ctx);
 
     if(n == 2n) {
