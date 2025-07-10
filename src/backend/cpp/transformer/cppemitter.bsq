@@ -726,11 +726,30 @@ function emitConstructorExpression(exp: CPPAssembly::ConstructorExpression, ctx:
 function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: String, e: String, ctx: Context): String {
     let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, ctx)); %% Likely doesnt work if the itest is just bool
 
-    return String::concat(itest, " ? ", t, " : ", e);
+    let ite = String::concat(itest, " ? (", t, ") : (", e, ")");
+    return String::concat("( ", ite, " )");
 }
 
+%% We do this whole generating binding name fiasco quite a lot, would be good to move to general function
 function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String, t: String, e: String, ctx: Context): String {
-    abort; %% TODO: Not Implemented (need to put bindings in a lambda in emission)
+    let capture = String::concat("[&]() -> ", emitTypeKey(exp.etype.tkeystr, false, ctx), " { ");
+    let etype = exp.texp.etype; 
+    let bname = emitVarIdentifier(exp.binder.srcname);
+
+    let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, ctx));
+
+    let tconvert = emitITestAsConvert(exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
+    let tbindtype = String::concat("[[maybe_unused]] ", tconvert.1, " ");
+    let treassign = String::concat(tbindtype, bname, " = ", i, tconvert.0, "; ");
+    let texp = String::concat(capture, treassign, "return ", t, "; }() ");
+
+    let fconvert = emitITestAsConvert(!exp.itest.isnot, exp.itest, etype.tkeystr, some(etype.tkeystr), ctx); 
+    let fbindtype = String::concat("[[maybe_unused]] ", fconvert.1, " ");
+    let freassign = String::concat(fbindtype, bname, " = ", i, fconvert.0, "; ");
+    let fexp = String::concat(capture, freassign, "return ", e, "; }() ");
+
+    let ibe = String::concat( itest, " ? (", texp, ") : (", fexp, ")");
+    return String::concat( "( ", ibe, " )");
 }
 
 function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String {
@@ -739,7 +758,10 @@ function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String 
     let elseexp = emitExpression(exp.elseexp, ctx);
 
     match(exp)@ {
-        CPPAssembly::IfSimpleExpression => { return String::concat(texp, " ? ", thenexp, " : ", elseexp); }
+        CPPAssembly::IfSimpleExpression => { 
+            let ise = String::concat(texp, " ? (", thenexp, ") : (", elseexp, ")");
+            return String::concat("( ", ise, " )");
+        }
         | CPPAssembly::IfTestExpression => { return emitIfTestExpression($exp, texp, thenexp, elseexp, ctx); }
         | CPPAssembly::IfBinderExpression => { return emitIfBinderExpression($exp, texp, thenexp, elseexp, ctx); }
     }
@@ -1017,6 +1039,7 @@ function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, i
     return String::concat(full_indent, "𝐚𝐬𝐬𝐞𝐫𝐭(", cond, ");");
 } 
 
+%% Wouldnt be awful idea to have this be more generic (not just binding type, but none and some too)
 function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     if(bind)@none {
