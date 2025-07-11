@@ -962,55 +962,66 @@ entity SMTTransformer {
     }
 
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
-        let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
-        let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.resolvedargs@some, nctx);
+        var sccerr = false;
+        if($cinv = ctx.currentInvoke)@some {
+            sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(op.resolvedTrgt)));
+        }
         
-        let aargs = scargs.pushFront(this.coerceDynamicRcvrExpAsNeeded(onarg, op.baseType, op.resolvedType));
-        var allobinds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>;
-        if(obinds)@some {
-            if(scobinds)@some {
-                allobinds = some($obinds.append($scobinds));
-            }
-            else {
-                allobinds = obinds;
-            }
-        }
-        else {
-            if(scobinds)@some {
-                allobinds = scobinds;
-            }
-            else {
-                allobinds = none;
-            }
-        }
-
         let smdecl = this.assembly.tryLookupInvokeImplDeclaration(op.resolvedTrgt)@some;
-        let largs = smdecl.params.mapIdx<Option<(|BSQAssembly::Identifier, Bool|)>>(fn(p, ii) => {
-            if(p.ptype)@!<BSQAssembly::LambdaTypeSignature> {
-                return none;
-            }
-            else {
-                let iserr = this.erranalysis.processExpression(op.argsinfo.resolvedargs@some.get(ii), this.errinvokes, ctx.lambdaerr);
-                return some((|p.pname, iserr|));
-            }
-        })
-        %%TODO: make this filterSome<(|BSQAssembly::Identifier, Bool|)>(); when that works
-        .filter(pred(aa) => aa?some)
-        .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
-        
-        let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
-        if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
-            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, List<Bool>{});
-            let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
-
-            return this.wrapPreAndPostCondidtionsOperationResult(smctx, List<Bool>{}, aargs, smdecl.resultType, callop, allobinds, none, smdecl.preconditions, smdecl.postconditions);
+        if(sccerr) {
+            let abtop = SMTAssembly::AbortExpression{this.transformStdTypeToSMT(smdecl.resultType), SMTEmitter::s_invalidErrTrgt};
+            return ctx, ErrorResult{this.transformStdTypeToSMT(smdecl.resultType), abtop};
         }
         else {
-            let ikeylmap = largs.map<Bool>(fn(aa) => aa.1);
-            let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, ikeylmap);
-            let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
+            let onarg, nctx, obinds = this.unpackSingleResultErrors(bexp, ctx);
+            let scargs, scnctx, scobinds = this.processArgsInOrder[recursive](op.argsinfo.resolvedargs@some, nctx);
+        
+            let aargs = scargs.pushFront(this.coerceDynamicRcvrExpAsNeeded(onarg, op.baseType, op.resolvedType));
+            var allobinds: Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>>;
+            if(obinds)@some {
+                if(scobinds)@some {
+                    allobinds = some($obinds.append($scobinds));
+                }
+                else {
+                    allobinds = obinds;
+                }
+            }
+            else {
+                if(scobinds)@some {
+                    allobinds = scobinds;
+                }
+                else {
+                    allobinds = none;
+                }
+            }
 
-            return this.wrapPreAndPostCondidtionsOperationResult(smctx, ikeylmap, aargs, smdecl.resultType, callop, allobinds, none, smdecl.preconditions, smdecl.postconditions);
+            let largs = smdecl.params.mapIdx<Option<(|BSQAssembly::Identifier, Bool|)>>(fn(p, ii) => {
+                if(p.ptype)@!<BSQAssembly::LambdaTypeSignature> {
+                    return none;
+                }
+                else {
+                    let iserr = this.erranalysis.processExpression(op.argsinfo.resolvedargs@some.get(ii), this.errinvokes, ctx.lambdaerr);
+                    return some((|p.pname, iserr|));
+                }
+            })
+            %%TODO: make this filterSome<(|BSQAssembly::Identifier, Bool|)>(); when that works
+            .filter(pred(aa) => aa?some)
+            .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
+        
+            let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
+            if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
+                let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, List<Bool>{});
+                let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
+
+                return this.wrapPreAndPostCondidtionsOperationResult(smctx, List<Bool>{}, aargs, smdecl.resultType, callop, allobinds, none, smdecl.preconditions, smdecl.postconditions);
+            }
+            else {
+                let ikeylmap = largs.map<Bool>(fn(aa) => aa.1);
+                let smtikey = TransformNameManager::convertInvokeKey(op.resolvedTrgt, ikeylmap);
+                let callop = SMTAssembly::CallFunctionExpression{smtikey, aargs};
+
+                return this.wrapPreAndPostCondidtionsOperationResult(smctx, ikeylmap, aargs, smdecl.resultType, callop, allobinds, none, smdecl.preconditions, smdecl.postconditions);
+            }
         }
     }
 
@@ -2546,11 +2557,11 @@ entity SMTTransformer {
 
         %%TODO: assume list is of at most 3 elements for now!!!
         let csize = SMTAssembly::ValidateAccessContainerSizeExpression{smtdtype, vvaraccess};
-        let cvalidates = List<SMTAssembly::SafeExpression>{
-            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '0', vvaraccess },
-            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '1', vvaraccess },
-            SMTAssembly::ValidateAccessContainerElementSafeExpression{ smtdtype, vinvoke, '2', vvaraccess }
-        };
+
+        let chk1 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '0', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '0', vvaraccess})};
+        let chk2 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '1', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '1', vvaraccess})};
+        let chk3 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '2', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '2', vvaraccess})};
+        let cvalidates = List<SMTAssembly::SafeExpression>{chk1, chk2, chk3};
 
         return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTAssembly::LogicActionAndExpression{cvalidates.pushFront(csize)}}, List<SMTAssembly::ErrorInfo>{} };
     }
@@ -2715,7 +2726,10 @@ entity SMTTransformer {
         else {
             if(nrsubtypes.isSingle()) {
                 let smtsttype = TransformNameManager::convertTypeKey(nrsubtypes.single());
-                let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(nrsubtypes.single()), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };
+                let cop = SMTAssembly::LogicActionAndExpression{ List<SMTAssembly::SafeExpression>{ 
+                    SMTAssembly::IsTypeTestExpression{smtsttype, vvaraccess},
+                    SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(nrsubtypes.single()), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } }
+                }};
                 
                 return SMTAssembly::Body{ SMTAssembly::ReturnOperation{cop}, List<SMTAssembly::ErrorInfo>{} };
             }
