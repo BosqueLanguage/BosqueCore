@@ -1,0 +1,302 @@
+declare namespace Main;
+
+const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.1}, Color{1.0f, 1.0f, 1.0f}, 0.5f, 150.0f};
+
+const shiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.5f, 0.5f, 0.5f}, 0.7f, 250.0f};
+
+const matteShiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.25f, 0.25f, 0.25f}, 0.7f, 250.f};
+
+entity RayTracer{
+	const maxDepth: Int = 5i;
+
+	function createDefaultScene(): Scene {
+		let things = List<SceneObject>{
+		    Sphere{Vector{-0.5f, 1.0f, 1.5f}, 0.5f, Main::matteShiny},
+		    Sphere{Vector{0.0f, 1.0f, -0.25f}, 1.0f, Main::shiny},
+		    Plane{Vector{0.0f, 1.0f, 0.0f}, 0.0f, Main::checkerBoard}
+        };
+
+		let lights = List<Light>{
+			Light{Vector{-2.0f, 2.5f, 0.0f}, Color{0.5f, 0.45f, 0.41f}},
+			Light{Vector{2.0f, 4.5f, 2.0f}, Color{0.99f, 0.95f, 0.8f}}
+		};
+
+		let camera = Camera::create(Vector{2.75f, 2.0f, 3.75f}, Vector{-0.6f, 0.5f, 0.0f});
+
+		return Scene{things, lights, camera};
+	}
+
+	method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
+		return scene.things.reduce<Option<ISect>>(none, fn(min, obj) => {
+            let isect = obj.intersect(ray);
+            if(isect)@none {
+                return min;
+            }
+            else {
+                if(min)@none {
+                    return isect;
+                }
+                else {
+                    if($min.dist > $isect.dist) {
+                        return isect;
+                    }
+                    else {
+                        return min;
+                    }
+                }
+            }
+        });
+	}
+
+	method testRay(ray: Ray, scene: Scene): Float {
+		let isect = this.minIntersection(ray, scene);
+		if(isect)@none {
+			return 0.0f;
+        }
+        else {
+		    return $isect.dist;
+        }
+	}
+
+	method traceRay(ray: Ray, scene: Scene, depth: Int): Color {
+		let isect = this.minIntersection(ray, scene);
+		if(isect)@none {
+			return Color::background;
+		}
+        else {
+		    return this.shade($isect, scene, depth);
+        }
+	}
+
+	method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
+		return scene.lights.reduce<Color>(Color{0, 0, 0}, fn(ret, light) => {
+            let ldis = Vector::minus(light.pos, pos);
+			let livec = Vector::norm(ldis);
+			let neatIsect = this.testRay(Ray{pos, livec}, scene);
+			let isInShadow = !((neatIsect > Vector::mag(ldis)) || (neatIsect == 0.0f));
+			if(isInShadow) {
+                return ret;
+            }
+            else {
+				let illum = Vector::dot(livec, norm);
+				let lcolor = illum > 0.0f ? Color::times(illum, light.color) : Color{0.0f, 0.0f, 0.0f};
+				let specular = Vector::dot(livec, Vector::norm(rd));
+				let scolor = specular > 0.0f ? Color::times(Math.Pow(specular, thing.Surface.Roughness), light.Color) : new Color(0, 0, 0);
+				return Color.Plus(ret, Color.Plus(Color.Times(thing.Surface.Diffuse, lcolor), Color.Times(thing.Surface.Specular, scolor)));
+			}
+        });
+	}
+
+	method getReflectionColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene, depth: Int): Color {
+		return Color::times(thing.surface.reflect, this.traceRay(Ray{pos, rd}, scene, depth + 1));
+	}
+
+	method shade(isect: ISect, scene: Scene, depth: Int): Color {
+		Vector d = isect.Ray.Dir;
+		Vector pos = Vector.Plus(Vector.Times(isect.Dist, isect.Ray.Dir), isect.Ray.Start);
+		Vector normal = isect.Thing.Normal(pos);
+		Vector reflectDir = Vector.Minus(d, Vector.Times(2 * Vector.Dot(normal, d), normal));
+		Color ret = Color.DefaultColor;
+		ret = Color.Plus(ret, GetNaturalColor(isect.Thing, pos, normal, reflectDir, scene));
+		if(depth >= MaxDepth)
+		{
+			return Color.Plus(ret, new Color(.5, .5, .5));
+		}
+		return Color.Plus(ret, GetReflectionColor(isect.Thing, Vector.Plus(pos, Vector.Times(.001, reflectDir)), normal, reflectDir, scene, depth));
+	}
+
+	private double RecenterX(double x)
+	{
+		return (x - (screenWidth / 2.0)) / (2.0 * screenWidth);
+	}
+	
+	private double RecenterY(double y)
+	{
+		return -(y - (screenHeight / 2.0)) / (2.0 * screenHeight);
+	}
+
+	private Vector GetPoint(double x, double y, Camera camera)
+	{
+		return Vector.Norm(Vector.Plus(camera.Forward, Vector.Plus(Vector.Times(RecenterX(x), camera.Right), Vector.Times(RecenterY(y), camera.Up))));
+	}
+}
+
+entity Vector {
+	field x: Float;
+	field y: Float;
+	field z: Float;
+	
+	function times(n Float, v: Vector): Vector {
+		return Vector{v.x * n, v.y * n, v.z * n};
+	}
+	
+	function minus(v1: Vector, v2: Vector): Vector {
+		return Vector{v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
+	}
+	
+	function plus(v1: Vector, v2: Vector): Vector {
+		return Vector{v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
+	}
+	
+	function dot(v1: Vector, v2: Vector): Float {
+		return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);
+	}
+	
+	function mag(v: Vector): Float { 
+        return Float::sqrt(Vector::dot(v, v)); 
+    }
+	
+	function norm(v: Vector): Vector {
+		Float mag = Vector::mag(v);
+		Float div = mag == 0.0f ? 1000000000.0f : 1.0f / mag;
+		return Vector::times(div, v);
+	}
+
+	function cross(v1: Vector, v2: Vector): Vector {
+		return Vector{ ((v1.y * v2.z) - (v1.z * v2.y)), ((v1.z * v2.x) - (v1.x * v2.z)), ((v1.x * v2.y) - (v1.y * v2.x)) };
+	}
+
+	function equals(v1: Vector, v2: Vector): Bool {
+		return (v1.x == v2.x) && (v1.y == v2.y) && (v1.z == v2.z);
+	}
+}
+
+entity Color
+{
+	field r: Float;
+	field g: Float;
+	field b: Float;
+
+	function times(n: Float, v: Color): Color {
+		return Color{n * v.r, n * v.g, n * v.b};
+	}
+
+	function ctimes(v1: Color, v2: Color): Color {
+		return Color{v1.r * v2.r, v1.g * v2.g, v1.b * v2.b};
+	}
+
+	function plus(v1: Color, v2: Color): Color {
+		return Color{v1.r + v2.r, v1.g + v2.g, v1.b + v2.b};
+	}
+
+	function minus(v1: Color, v2: Color): Color {
+		return Color{v1.r - v2.r, v1.g - v2.g, v1.b - v2.b};
+	}
+
+	const background: Color = Color{0, 0, 0};
+	const defaultColor: Color = Color{0, 0, 0};
+
+	function legalize(d: Float): Float {
+		return if(d > 1.0f) then 1.0f else d;
+	}
+}
+
+entity Ray {
+	field start: Vector;
+	field dir: Vector;
+}
+
+entity ISect {
+	field thing: SceneObject;
+	field ray: Ray;
+	field dist: Float;
+}
+
+entity Surface {
+	field diffuse: Color;
+	field specular: Color;
+	field reflect: Float;
+	field roughness: Float;
+}
+
+entity Camera {
+	field pos: Vector;
+	field forward: Vector;
+	field up: Vector;
+	field right: Vector;
+
+	function create(pos: Vector, lookAt: Vector): Camera {
+		let forward = Vector::norm(Vector::minus(lookAt, pos));
+		let down = Vector{0, -1, 0};
+		let right = Vector::times(1.5f, Vector::norm(Vector::cross(forward, down)));
+		let up = Vector::times(1.5f, Vector::norm(Vector::cross(forward, right)));
+
+		return Camera{pos, forward, up, right};
+	}
+}
+
+entity Light {
+	field pos: Vector;
+	field color: Color;
+}
+
+concept SceneObject {
+	field surface: Surface;
+	
+    method intersect(ray: Ray): Option<ISect> {
+        if(this)@<Sphere> {
+            return $this.intersectSphere(ray);
+        }
+        else {
+            return this@<Plane>.intersectPlane(ray);
+        }
+    }
+
+	method normal(pos: Vector): Vector {
+        if(this)@<Sphere> {
+            return Vector::norm(Vector::minus($this.pos, $this.center));
+        }
+        else {
+            return this@<Plane>.norm;
+        }
+    }
+}
+
+entity Sphere provides SceneObject {
+	field center: Vector;
+	field radius: Float;
+
+	method ISect Intersect(Ray ray)
+	{
+		Vector eo = Vector.Minus(Center, ray.Start);
+		double v = Vector.Dot(eo, ray.Dir);
+		double dist;
+		
+		if(v < 0)
+		{
+			dist = 0;
+		}
+		else
+		{
+			double disc = Math.Pow(Radius, 2) - (Vector.Dot(eo, eo) - Math.Pow(v, 2));
+			dist = disc < 0 ? 0 : v - Math.Sqrt(disc);
+		}
+
+		if(dist == 0) 
+			return ISect.Null;
+		
+		return new ISect(this, ray, dist);
+	}
+}
+
+entity Plane provides SceneObject {
+	field norm: Vector;
+	field offset: Float;
+
+	method intersectPlane(ray: Ray): Option<ISect>
+	{
+		let denom = Vector::dot(this.norm, ray.dir);
+
+		if(denom > 0)
+			return none;
+
+		return some(ISect{this, ray, (Vector::dot(this.norm, ray.start) + this.offset) // (-denom)});
+	}
+}
+
+entity Scene {
+	field things: List<SceneObject>;
+	field lights: List<Light>;
+	field camera: Camera;
+}
+

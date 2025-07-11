@@ -16,7 +16,7 @@ const specialScopedTypeKeyRE: CRegex = /('Result'|'APIResult')'<'.+'>''::'('Ok'|
 const nominalTypeKeyRE: CRegex = /(${BSQAssembly::basicNominalTypeKeyRE}|${BSQAssembly::specialScopedTypeKeyRE})/c; %%a bit rough but helps prevent mistakes
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' ${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE})/c;
 const typeKeyRE: CRegex = /${BSQAssembly::nominalTypeKeyRE}|${BSQAssembly::elistTypeKeyRE}|${BSQAssembly::lambdaTypeKeyRE}/c; 
 type TypeKey = CString of BSQAssembly::typeKeyRE;
 

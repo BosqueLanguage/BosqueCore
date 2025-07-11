@@ -923,7 +923,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpLessExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression): string {
