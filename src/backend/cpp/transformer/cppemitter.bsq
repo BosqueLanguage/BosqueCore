@@ -687,7 +687,7 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
     var cons: String;
     if(ant)@<CPPAssembly::DatatypeMemberEntityTypeDecl> { 
         if($ant.saturatedBFieldInfo.size() == 0n) { %% Boxed<0> case
-            cons = "";   
+            cons = "";
         }
         else {
             cons = String::concat(name, "{ ", emitargs, " }");
@@ -836,6 +836,13 @@ function emitAccessEnumExpression(exp: CPPAssembly::AccessEnumExpression, ctx: C
     return String::concat(enumtype, "::", name);
 }
 
+function emitAccessStaticFieldExpression(exp: CPPAssembly::AccessStaticFieldExpression, ctx: Context): String {
+    let typeconst = ctx.asm.typeconsts.get(exp.resolvedname);
+    let ns = emitTypeSignature(typeconst.declaredInType, false, ctx);
+
+    return String::concat(ns, "ᘏ", emitIdentifier(typeconst.name));
+}
+
 function emitBinKeyEqExpression(exp: CPPAssembly::BinKeyEqExpression, opertype: String, ctx: Context): String {
     let lhs = emitExpression(exp.lhs, ctx);
     let rhs = emitExpression(exp.rhs, ctx);
@@ -873,7 +880,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::LiteralRegexExpression => { abort; }
         %%| CPPAssembly::LiteralTypeDeclValueExpression => { abort; }
         %%| CPPAssembly::AccessNamespaceConstantExpression => { abort; }
-        %%| CPPAssembly::AccessStaticFieldExpression => { abort; } 
+        | CPPAssembly::AccessStaticFieldExpression => { return emitAccessStaticFieldExpression($e, ctx); } 
         | CPPAssembly::AccessEnumExpression => { return emitAccessEnumExpression($e, ctx); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e, ctx); }
         %%| CPPAssembly::AccessCapturedVariableExpression => { abort; }
@@ -1452,6 +1459,19 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
     }
 }
 
+function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);
+    
+    let exp = emitExpression(cmd.value, nctx);
+    let rtype = emitTypeSignature(cmd.declaredType, true, nctx);
+
+    %% Not 100% about removing previx, fixes bug for emitting "one" and "zero" constmember decls
+    let name = removeCppPrefix(String::concat(rtype, "ᘏ", emitIdentifier(cmd.name)));
+
+    let pre = String::concat(indent, "const ", rtype, " ", name, " = ");
+    return String::concat(pre, exp, ";%n;");
+}
+
 function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(std.declaredInNS, std.fullns);
     
@@ -1579,9 +1599,16 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, def);
     });
 
+    %% Will ns nsdecl consts too, this is just ConstMemberDecls 
+    let types = nsdecl.typeconsts.reduce<String>(other, fn(acc, s) => {
+        let tc = ctx.asm.typeconsts.get(s);
+        let def = emitConstMemberDecl(tc, ctx, full_indent);
+        return String::concat(acc, def);
+    });
+
     %% Only support static methods for now
     let method_fwddecls = nsdecl.staticmethods
-        .reduce<String>(String::concat(other, "//%n;// All Methods%n;//%n;"), fn(acc, mtkey) => {
+        .reduce<String>(String::concat(types, "//%n;// All Methods%n;//%n;"), fn(acc, mtkey) => {
             return String::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
 

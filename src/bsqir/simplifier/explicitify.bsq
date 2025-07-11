@@ -852,7 +852,8 @@ entity ExplicitifyTransform {
 
     method processConstMemberDecl(typeconst: ConstMemberDecl): ConstMemberDecl {
         let evalue = this.processExpression(typeconst.value, VarMapping::createEmpty());
-        return typeconst[value=evalue];
+        let nevalue = this.processCoerceTypeAsNeeded(evalue, typeconst.declaredType);
+        return typeconst[value=nevalue];
     }
 
     method processMemberFieldDecl(fd: MemberFieldDecl): MemberFieldDecl {
