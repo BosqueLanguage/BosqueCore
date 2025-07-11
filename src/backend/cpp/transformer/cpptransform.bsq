@@ -407,10 +407,24 @@ entity CPPTransformer {
         return CPPAssembly::ConstructorEListExpression{ etype, args };
     }
 
+    method transformConstructorPrimaryListExpression(cple: BSQAssembly::ConstructorPrimaryListExpression): CPPAssembly::ConstructorPrimaryListExpression {
+        abort;
+    }
+
+    method transformConstructorPrimaryCollectionSingletonsExpression(cpcse: BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression): CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression {
+        match(cpcse)@ {
+            BSQAssembly::ConstructorPrimaryListExpression => { return this.transformConstructorPrimaryListExpression($cpcse); }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+        }
+    }
+
     method transformConstructorPrimaryExpression(cpe: BSQAssembly::ConstructorPrimaryExpression): CPPAssembly::ConstructorPrimaryExpression {
         match(cpe)@ {
             BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($cpe); }
             | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($cpe); }
+            | BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression => { return this.transformConstructorPrimaryCollectionSingletonsExpression($cpe); }
+            | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
+            | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
         }
     }
 

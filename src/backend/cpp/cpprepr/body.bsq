@@ -292,6 +292,15 @@ entity ConstructorEListExpression provides ConstructorExpression {
     field args: List<Expression>;
 }
 
+datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
+    field elemtype: TypeSignature;
+    field args: List<Expression>;
+}
+of
+ConstructorPrimaryListExpression { }
+| ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
+;
+
 datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression using {
     field value: Expression;
 }
