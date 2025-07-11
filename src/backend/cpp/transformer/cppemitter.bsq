@@ -715,10 +715,22 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
     return String::concat(ceetype, "(", args, ")");
 }
 
+function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
+    return "";
+}
+
+function emitConstructorPrimaryCollectionSingletonExpression(exp: CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression, ctx: Context): String {
+    match(exp)@ {
+        CPPAssembly::ConstructorPrimaryListExpression => { return emitConstructorPrimaryListExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimaryMapExpression => { abort; }
+    }
+}
+
 function emitConstructorPrimaryExpression(exp: CPPAssembly::ConstructorPrimaryExpression, ctx: Context): String {
     match(exp)@ {
         CPPAssembly::ConstructorStdExpression => { return emitConstructorStdExpression($exp, ctx); }
         | CPPAssembly::ConstructorPrimarySpecialConstructableExpression => { return emitConstructorPrimarySpecialConstructableExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression => { return emitConstructorPrimaryCollectionSingletonExpression($exp, ctx); }
     }
 }
 

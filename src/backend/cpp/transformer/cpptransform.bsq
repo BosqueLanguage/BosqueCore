@@ -408,7 +408,12 @@ entity CPPTransformer {
     }
 
     method transformConstructorPrimaryListExpression(cple: BSQAssembly::ConstructorPrimaryListExpression): CPPAssembly::ConstructorPrimaryListExpression {
-        abort;
+        let etype = this.convertTypeSignature(cple.etype);
+        let ctype = CPPTransformNameManager::convertNominalTypeSignature(cple.ctype);
+        let elemtype = this.convertTypeSignature(cple.elemtype);
+        let args = cple.args.map<CPPAssembly::Expression>(fn(arg) => this.transformExpressionToCpp(arg.exp));
+
+        return CPPAssembly::ConstructorPrimaryListExpression{ etype, ctype, elemtype, args };
     }
 
     method transformConstructorPrimaryCollectionSingletonsExpression(cpcse: BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression): CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression {
@@ -818,6 +823,20 @@ entity CPPTransformer {
         });
     }
 
+    %% TODO: Before we try to call findMaxFieldCount ensure that we have generated all subtype info
+    method genSubtypeTypeInfo(ctd: BSQAssembly::ConceptTypeDecl, ): Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> { %% Grrr im too tired to think of a clean way to write this...
+        return ctd.subtypes
+            .reduce<Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>(tinfos, fn(acc, subtk) => {
+                    let cpptk = CPPTransformNameManager::convertTypeKey(subtk);
+                    if(!tinfos.has(cpptk)) {
+                        return acc.insert(cpptk, generateTypeInfo)
+                    }
+                    else {
+                        return acc;
+                    }
+                });
+    }
+
     %% Explore all subtypes and find largest possible field count
     method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>): Nat {
         return cur.subtypes.reduce<Nat>(0n, fn(acc, subtk) => {            
@@ -925,6 +944,12 @@ entity CPPTransformer {
                 }
                 abort;
             }
+            elif(bsqasm.collections.has(typekey)) {
+                abort;
+            }
+            elif(bsqasm.stringoftypedecls.has(typekey)) {
+                abort;
+            }
             elif(bsqasm.enums.has(typekey)) { %% For now we will assume our enums cannot exceed 8 bytes 
                 let etdtinfo = CPPAssembly::TypeInfo{ next_tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value };
                 return (| etdtinfo, tinfos.insert(cpptkey, etdtinfo) |);
@@ -935,13 +960,19 @@ entity CPPTransformer {
 
             matchedType = this.generateNominalConcreteTypeInfo(fields_tinfo, next_tid, tkey, tag, bsqasm);
         }
+        %% My method for finding max field count is currently flawed as it does not allow for generation of subtypes typeinfo on demand.
+        %% Could use a bit of thought
         elif(bsqasm.isNominalTypeConcept(typekey)) {
+            var ntinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>; 
             var maxFieldCount: Nat;
             if(bsqasm.concepts.has(typekey)) {
-                maxFieldCount = this.findMaxFieldCount(bsqasm.concepts.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
+                let ctd = bsqasm.concepts.get(typekey);
+                ntinfos = genSubtypeTypeInfo(); 
+                maxFieldCount = this.findMaxFieldCount(@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
-            elif(bsqasm.datatypes.has(typekey)) { 
-                maxFieldCount = this.findMaxFieldCount(bsqasm.datatypes.get(typekey)@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
+            elif(bsqasm.datatypes.has(typekey)) {
+                let dt = bsqasm.datatypes.get(typekey);
+                maxFieldCount = this.findMaxFieldCount(dt@<BSQAssembly::AbstractConceptTypeDecl>, bsqasm, tinfos);
             }
             elif(bsqasm.pconcepts.has(typekey)) {
                 let pc = bsqasm.pconcepts.get(typekey);
@@ -1120,8 +1151,7 @@ entity CPPTransformer {
         let transformer_typefuncs = bsqasm.typefuncs.reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::TypeFunctionDecl>>(
             Map<CPPAssembly::InvokeKey, CPPAssembly::TypeFunctionDecl>{}, fn(acc, ikey, tf) => {
                 let cpptypefunc = transformer.transformTypeFunctionDeclToCpp(bsqasm.typefuncs.get(ikey));
-                let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
-                return acc.insert(cppikey, cpptypefunc);
+                return acc.insert(cpptypefunc.ikey, cpptypefunc);
             });
 
         let transformer_nsdecls_typefuncs = transformer_typefuncs.reduce<Map<CString, CPPAssembly::NamespaceDecl>>( 
@@ -1137,9 +1167,8 @@ entity CPPTransformer {
 
         let transformer_entities = bsqasm.entities.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>>(
             Map<CPPAssembly::TypeKey, CPPAssembly::EntityTypeDecl>{}, fn(acc, tk, e) => {
-                let cpptk = CPPTransformNameManager::convertTypeKey(tk);
                 let cppentity = transformer.transformEntityDeclToCpp(e);
-                return acc.insert(cpptk, cppentity);
+                return acc.insert(cppentity.tkey, cppentity);
             });
 
         let transformer_nsdecls_entities = transformer_entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(

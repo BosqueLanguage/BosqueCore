@@ -1830,12 +1830,11 @@ class BSQIREmitter {
             const nsParts = nskey.split('::');
             const iParts = ikey.split('::');
             
-            let matchingParts = 0;
-            const minLength = Math.min(nsParts.length, iParts.length);
-            while (matchingParts < minLength && nsParts[matchingParts] === iParts[matchingParts]) {
-                matchingParts++;
-            } 
-            const combinedParts = [...nsParts, ...iParts.slice(matchingParts)];
+            let i = 0;
+            while(i < nsParts.length && nsParts[i] !== iParts[0]) {
+                i++;
+            }
+            const combinedParts = i == 0 ? iParts : nsParts.slice(0, i).concat(iParts);
 
             const updatedIKey = combinedParts.join("::");
             const updatedNsKey = `${updatedIKey.split("::").slice(0,-2).join("::")}`; // Does not include type declared in or name
