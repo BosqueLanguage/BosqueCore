@@ -392,17 +392,21 @@ recursive function emitValidateAccessContainerSizeExpression(v: SMTAssembly::Val
     return CString::concat('(<= (seq.len ', vv, ') SMV_LIST_SIZE_MAX)');
 }
 
+recursive function emitValidateIndexInboundsAndExpression(v: SMTAssembly::ValidateIndexInboundsAndExpression, eev: SMTEmitterEnv): CString {
+    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
+    let arg = emitSafeExpression[recursive](v.arg, eev);
+    let access = CString::concat('(', gseq, ' ', arg, ')');
+    let chk = CString::concat('(< ', v.index, ' (seq.len ', access, '))');
+
+    return CString::concat('(and ', chk, ' ', emitSafeExpression[recursive](v.andop, eev), ')');
+}
+
 recursive function emitValidateAccessContainerElementSafeExpression(v: SMTAssembly::ValidateAccessContainerElementSafeExpression, eev: SMTEmitterEnv): CString {
     let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
     let arg = emitSafeExpression[recursive](v.arg, eev);
     let vv = CString::concat('(', gseq, ' ', arg, ')');
-    
-    let bcheck = CString::concat('(< ', v.index, ' (seq.len ', vv, '))');
 
-    let access = CString::concat('(seq.nth ', vv, ' ', v.index, ')');
-    let call = CString::concat('(', v.validateinvoke.value, ' ', access, ')');
-
-    return CString::concat('(and ', bcheck, ' ', call, ')');
+    return CString::concat('(seq.nth ', vv, ' ', v.index, ')');
 }
 
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {
@@ -776,6 +780,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
         | SMTAssembly::FormatCheckExpression => { return emitFormatCheckExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateAccessContainerSizeExpression => { return emitValidateAccessContainerSizeExpression[recursive]($e, eev); }
+        | SMTAssembly::ValidateIndexInboundsAndExpression => { return emitValidateIndexInboundsAndExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateAccessContainerElementSafeExpression => { return emitValidateAccessContainerElementSafeExpression[recursive]($e, eev); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($e, eev); }

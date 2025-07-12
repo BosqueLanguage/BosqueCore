@@ -187,10 +187,16 @@ entity ValidateAccessContainerSizeExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 
+entity ValidateIndexInboundsAndExpression provides SafeExpression {
+    field ontype: TypeKey;
+    field index: CString;
+
+    field arg: SafeExpression;
+    field andop: SafeExpression;
+}
+
 entity ValidateAccessContainerElementSafeExpression provides SafeExpression {
     field ontype: TypeKey;
-
-    field validateinvoke: InvokeKey;
     field index: CString;
     
     field arg: SafeExpression;

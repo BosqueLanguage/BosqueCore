@@ -2515,25 +2515,37 @@ class BSQIREmitter {
         }
     }
 
-    private topovisit(gkey: string, topo: string[], visited: Set<string>) {
-        if(visited.has(gkey)) {
+    private getTypeGraphChildren(tkey: string): string[] {
+        let ftypes = this.typegraph.get(tkey) as string[];
+        return ftypes.flatMap((ft) => {
+            if(!this.subtypemap.has(ft)) {
+                return [ft];
+            }
+            else {
+                return [ft, ...this.subtypemap.get(ft) as string[]];
+            }
+        });
+    }
+
+    private topovisit(gkey: string, topo: string[], vmap: Map<string, boolean>) {
+        if(vmap.has(gkey)) {
             return;
         }
 
-        let children: string[] = [...(this.typegraph.get(gkey) as string[])];
-        visited.add(gkey);
-
-        while(children.length > 0) {
-            const next = children.pop() as string;
-            this.topovisit(next, topo, visited);
+        vmap.set(gkey, false);
+        let nexts = this.getTypeGraphChildren(gkey);
+        while(nexts.length > 0) {
+            const next = nexts.pop() as string;
+            this.topovisit(next, topo, vmap);
         }
-        topo.push(gkey);
-    }
 
+        topo.push(gkey);
+        vmap.set(gkey, true);
+    }
 
     private computeTypeGraphTopoOrder(): string[] {
         let topo: string[] = [];
-        let visited = new Set<string>();
+        let visited = new Map<string, boolean>();
 
         const tgtypes = [...this.typegraph.keys()].sort();
         for(let i = 0; i < tgtypes.length; ++i) {
@@ -2551,7 +2563,7 @@ class BSQIREmitter {
 
         visited.set(gkey, false);
         
-        let children: string[] = [...(this.typegraph.get(gkey) as string[])];
+        let children = this.getTypeGraphChildren(gkey);
         while(children.length > 0) {
             const next = children.pop() as string;
             this.sccVisit(next, visited, scc);
@@ -2569,7 +2581,7 @@ class BSQIREmitter {
             const gkey = topo[i];
 
             if(!visited.has(gkey)) {
-                let children: string[] = [...(this.typegraph.get(gkey) as string[])];
+                let children = this.getTypeGraphChildren(gkey);
                 if(children.every((v) => visited.get(v) === true)) {
                     visited.set(gkey, true);
                 }
@@ -2577,7 +2589,7 @@ class BSQIREmitter {
                     let scc: string[] = [];
                     this.sccVisit(gkey, visited, scc);
 
-                    sccs.push(scc.filter((v) => this.allconcretetypes.includes(`'${v}'<BSQAssembly::TypeKey>`)));
+                    sccs.push(scc);
                 }
             }
         }
