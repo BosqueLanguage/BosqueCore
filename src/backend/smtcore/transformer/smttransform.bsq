@@ -125,7 +125,7 @@ entity SMTTransformerCtx {
 
     method addError(bsqsinfo: BSQAssembly::SourceInfo): SMTTransformerCtx {
         let smtsinfo = SMTAssembly::SourceInfo{bsqsinfo.line, bsqsinfo.column};
-        let iiv = if ($ci = this.currentInvoke)@some then some($ci.value) else none; 
+        let iiv = if($ci = this.currentInvoke)@some then some($ci.value) else none; 
         let errinfo = SMTAssembly::ErrorInfo{this.errCtr, this.currentFile, smtsinfo, iiv};
 
         return this[errors = $errors.pushBack(errinfo), errCtr = $errCtr + 1n];
