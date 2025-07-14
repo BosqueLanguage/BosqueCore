@@ -1903,7 +1903,15 @@ entity SMTTransformer {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
         
         if(this.assembly.isTypeConcrete(stmt.sval.etype)) {
-            abort; %% This can only be a single branch and binder is just direct assignment (would be when match was a T instantiated with a concrete type)
+            if($bi = stmt.bindInfo)@none {
+                return cctx, nblock@some;
+            }
+                    else {
+                        let bname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName($bi.srcname.value));
+                        let bop = SMTAssembly::UntermifyExpression{ ntexp, this.transformStdTypeToSMT(stmt.sval.etype), this.transformStdTypeToSMT(op.0) };
+                        
+                        return smtmtype, SMTAssembly::LetOperation{bname, bop, nblock@some};
+                    }
         }
         else {
             let ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {

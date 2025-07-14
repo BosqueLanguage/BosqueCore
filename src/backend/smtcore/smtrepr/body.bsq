@@ -473,8 +473,10 @@ entity IfThenElseOperation provides Operation {
 
 entity MatchOperation provides Operation {
     field matchexp: SafeExpression;
-    field cases: List<(|TypeKey, Operation|)>;
-    field exhaustiveErrLabel: Nat;
+    field ismexpTerm: Bool;
+    
+    field cases: List<(|Bool, TypeKey, Operation|)>;
+    field default: Operation;
 
     invariant !$cases.empty();
 }

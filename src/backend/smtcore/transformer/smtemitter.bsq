@@ -883,26 +883,16 @@ recursive function emitIfThenElseOperation(e: SMTAssembly::IfThenElseOperation, 
     }
 }
 
+function emitMatchTest(isSubtypeTest: Bool, isMatchExpTerm: Bool, )
+
 recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
     let tst = emitSafeExpression[recursive](e.matchexp, eev);
     let ttst = CString::concat('(match ', tst);
 
-    var derr: CString;
-    if(e.exhaustiveErrLabel === SMTEmitter::s_ignoreErrTrgt) {
-        %%special case for emit in validator
-        derr = 'false';
-    }
-    else {
-        if(e.exhaustiveErrLabel == eev.errtrgt) {
-            derr = emitResultErrTrgtAs(eev.restype);
-        }
-        else {
-            derr = emitResultErrOtherAs(eev.restype);
-        }
-    }
-
     if(indent)@none {
-        return e.cases.lreduce[recursive]<CString>(derr, fn(acc, c) => {
+        let dflt = emitOperation[recursive](e.defaultop, eev, none);
+
+        return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
             let top = CString::concat('(is-', ttest, ' ', tst, ')');
             let cbody = emitOperation[recursive](c.1, eev, none);
@@ -912,9 +902,9 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
         });
     }
     else {
-        let acci = CString::concat($indent, derr, '%n;', $indent);
+        let dflt = emitOperation[recursive](e.defaultop, eev, indent);
 
-        return e.cases.lreduce[recursive]<CString>(acci, fn(acc, c) => {
+        return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
             let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
             let top = CString::concat('(is-', ttest, ' ', tst, ')');
             let cbody = emitOperation[recursive](c.1, eev, indent);
