@@ -879,8 +879,7 @@ entity CPPTransformer {
 
     %%
     %% TODO: Handle elist as field special case!
-    %%
-    %% I think it is also possible for there to be large jumps (or lack of) in our tid, so we likelyt will need to return it or maybe get a bit clever with how we do it
+    %% TODO: I think it is also possible for there to be repeated tids currently, so we likely need to return the tid of the tinfo we just generated/fetched
     %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): 
         (|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|) { 
