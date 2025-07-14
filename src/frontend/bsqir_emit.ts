@@ -1827,11 +1827,20 @@ class BSQIREmitter {
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
-            const typeUpdatedNsKey = `${nskey}::${ikey.split("::").slice(0,-1).join("::")}`;
-            const typeUpdatedIKey = `${nskey}::${ikey}`;
-            let cstrns = typeUpdatedNsKey.split('::').map(e => `'${e}'`);
+            const nsParts = nskey.split('::');
+            const iParts = ikey.split('::');
+            
+            let i = 0;
+            while(i < nsParts.length && nsParts[i] !== iParts[0]) {
+                i++;
+            }
+            const combinedParts = i == 0 ? iParts : nsParts.slice(0, i).concat(iParts);
 
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${typeUpdatedIKey}'<BSQAssembly::InvokeKey>}`);
+            const updatedIKey = combinedParts.join("::");
+            const updatedNsKey = `${updatedIKey.split("::").slice(0,-2).join("::")}`; // Does not include type declared in or name
+            let cstrns = updatedNsKey.split('::').map(e => `'${e}'`);
+
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${updatedIKey}'<BSQAssembly::InvokeKey>}`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {

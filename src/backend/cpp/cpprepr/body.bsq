@@ -1,6 +1,5 @@
 namespace CPPAssembly;
 
-%% Bosque TypeSignatures are void, nominal, elist, and lamda (current is fine for tdd)
 datatype TypeSignature using {
     %% Source info would be good
     field tkeystr: TypeKey;
@@ -159,6 +158,11 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
+entity AccessStaticFieldExpression provides Expression {
+    field stype: NominalTypeSignature;
+    field resolvedname: String; 
+}
+
 entity AccessEnumExpression provides Expression {
     field stype: NominalTypeSignature;
     field name: CString;
@@ -287,6 +291,15 @@ entity ConstructorStdExpression provides ConstructorPrimaryExpression {
 entity ConstructorEListExpression provides ConstructorExpression {
     field args: List<Expression>;
 }
+
+datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
+    field elemtype: TypeSignature;
+    field args: List<Expression>;
+}
+of
+ConstructorPrimaryListExpression { }
+| ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
+;
 
 datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPrimaryExpression using {
     field value: Expression;

@@ -44,6 +44,14 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     field defaultval: Option<Expression>;
 }
 
+entity ConstMemberDecl provides AbstractCoreDecl {
+    field resolvedname: String;
+    field declaredInType: NominalTypeSignature;
+
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
 entity SaturatedFieldInfo {
     field declaredInType: NominalTypeSignature;
     field fname: Identifier;
@@ -86,6 +94,17 @@ of
 SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ; %% TODO: Other ConstructableTypeDecls!
+
+datatype CollectionTypeDecl provides AbstractEntityTypeDecl using {
+    field oftype: TypeSignature;
+}
+of
+ListTypeDecl {  }
+| StackTypeDecl { }
+| QueueTypeDecl { }
+| SetTypeDecl { }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+;
 
 entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
 }
@@ -183,13 +202,15 @@ entity FunctionDecl provides AbstractDecl {
 
 entity NamespaceDecl {
     field nsname: CString;
-
     field subns: Map<CString, NamespaceDecl>;
+
+    field typeconsts: List<String>;
 
     field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
 
     field constructables: List<TypeKey>;
+    field collections: List<TypeKey>;
 
     field entities: List<TypeKey>;
     field datamembers: List<TypeKey>;
@@ -211,8 +232,10 @@ entity NamespaceDecl {
 %% Will need expanding
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
-    field allfuncs: List<FunctionDecl>;
     
+    field typeconsts: Map<String, ConstMemberDecl>;
+
+    field allfuncs: List<FunctionDecl>;
     field nsfuncs: Map<InvokeKey, NamespaceFunctionDecl>;  
     field typefuncs: Map<InvokeKey, TypeFunctionDecl>;
 
@@ -225,6 +248,7 @@ entity Assembly {
 
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
     field constructables: Map<TypeKey, ConstructableTypeDecl>;
+    field collections: Map<TypeKey, CollectionTypeDecl>;
 
     field entities: Map<TypeKey, EntityTypeDecl>;
     field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
@@ -255,6 +279,9 @@ entity Assembly {
         }
         elif(this.constructables.has(tkey)) {
             return this.constructables.get(tkey);
+        }
+        elif(this.collections.has(tkey)) {
+            return this.collections.get(tkey);
         }
         elif(this.enums.has(tkey)) {
             return this.enums.get(tkey);
