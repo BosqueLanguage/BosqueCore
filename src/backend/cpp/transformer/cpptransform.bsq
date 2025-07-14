@@ -50,24 +50,25 @@ namespace CPPTransformNameManager {
     }
 
     function createNamespaceDecl(name: CString): CPPAssembly::NamespaceDecl {
-        let subns = Map<CString, CPPAssembly::NamespaceDecl>{};
-        let typeconsts = List<String>{};
-        let nsfuncs = List<CPPAssembly::InvokeKey>{};
-        let typefuncs = List<CPPAssembly::InvokeKey>{};
+        let subns =          Map<CString, CPPAssembly::NamespaceDecl>{};
+        let typeconsts =     List<String>{};
+        let nsfuncs =        List<CPPAssembly::InvokeKey>{};
+        let typefuncs =      List<CPPAssembly::InvokeKey>{};
         let constructables = List<CPPAssembly::TypeKey>{};
-        let entities = List<CPPAssembly::TypeKey>{};
-        let datamembers = List<CPPAssembly::TypeKey>{};
-        let datatypes = List<CPPAssembly::TypeKey>{};
-        let pconcepts = List<CPPAssembly::TypeKey>{};
-        let staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
-        let virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
-        let absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
-        let overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
-        let enums = List<CPPAssembly::TypeKey>{};
-        let alltypes = List<CPPAssembly::TypeKey>{};
+        let collections =    List<CPPAssembly::TypeKey>{};
+        let entities =       List<CPPAssembly::TypeKey>{};
+        let datamembers =    List<CPPAssembly::TypeKey>{};
+        let datatypes =      List<CPPAssembly::TypeKey>{};
+        let pconcepts =      List<CPPAssembly::TypeKey>{};
+        let staticmethods =  List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
+        let virtmethods =    List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
+        let absmethods =     List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
+        let overmethods =    List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>{};
+        let enums =          List<CPPAssembly::TypeKey>{};
+        let alltypes =       List<CPPAssembly::TypeKey>{};
 
-        return CPPAssembly::NamespaceDecl{ name, subns, typeconsts, nsfuncs, typefuncs, constructables, entities, 
-            datamembers, datatypes, pconcepts, staticmethods, virtmethods, absmethods, overmethods, enums, alltypes };
+        return CPPAssembly::NamespaceDecl{ name, subns, typeconsts, nsfuncs, typefuncs, constructables, collections, 
+            entities, datamembers, datatypes, pconcepts, staticmethods, virtmethods, absmethods, overmethods, enums, alltypes };
     }
 
     %% If ns decl does not exist for name insert, otherwise continue recursing until fullns is empty
@@ -89,9 +90,7 @@ namespace CPPTransformNameManager {
 
         %% Recursively process remaining names
         let subns = getNamespaceDeclMapping[recursive](remaining_ns_names, cur_nsdecl.subns, insertion);
-        let updated_nsdecl = CPPAssembly::NamespaceDecl { ns_name, subns, cur_nsdecl.typeconsts, cur_nsdecl.nsfuncs, cur_nsdecl.typefuncs, cur_nsdecl.constructables, cur_nsdecl.entities, 
-            cur_nsdecl.datamembers, cur_nsdecl.datatypes, cur_nsdecl.pconcepts, cur_nsdecl.staticmethods, cur_nsdecl.virtmethods, cur_nsdecl.absmethods, 
-            cur_nsdecl.overmethods, cur_nsdecl.enums, cur_nsdecl.alltypes };
+        let updated_nsdecl = cur_nsdecl[nsname=ns_name, subns=subns];
 
         if(remaining_ns_names.empty()) { %% Insert at most nested possible depth
             if(!nsdecls.has(ns_name)) {
@@ -922,8 +921,9 @@ entity CPPTransformer {
                         abort;
                     }
                 }
-                elif(bsqasm.collections.has(typekey)) {
-                    abort;
+                elif(bsqasm.collections.has(typekey)) { %% Temporary typeinfo while I figure out a good representation (or if one is even needed) 
+                    let tmplisttinfo = CPPAssembly::TypeInfo{ next_tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
+                    return (| tmplisttinfo, tinfos.insert(cpptkey, tmplisttinfo) |);
                 }
                 elif(bsqasm.stringoftypedecls.has(typekey)) {
                     abort;
@@ -1039,6 +1039,48 @@ entity CPPTransformer {
         }
     }
 
+    method transformListTypeDecl(ltd: BSQAssembly::ListTypeDecl): CPPAssembly::ListTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(ltd@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(ltd.oftype);
+        return CPPAssembly::ListTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype };
+    }
+
+    method transformStackTypeDecl(std: BSQAssembly::StackTypeDecl): CPPAssembly::StackTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(std@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(std.oftype);
+        return CPPAssembly::StackTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype };
+    }
+
+    method transformQueueTypeDecl(qtd: BSQAssembly::QueueTypeDecl): CPPAssembly::QueueTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(qtd@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(qtd.oftype);
+        return CPPAssembly::QueueTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype };
+    }
+
+    method transformSetTypeDecl(std: BSQAssembly::SetTypeDecl): CPPAssembly::SetTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(std@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(std.oftype);
+        return CPPAssembly::SetTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype };
+    }
+
+    method transformMapTypeDecl(mtd: BSQAssembly::MapTypeDecl): CPPAssembly::MapTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(mtd@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(mtd.oftype);
+        let ktype = CPPTransformNameManager::convertNominalTypeSignature(mtd.ktype);
+        let vtype = this.convertTypeSignature(mtd.vtype);
+        return CPPAssembly::MapTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype, ktype, vtype };
+    }
+
+    method transformCollectionTypeDecl(ctd: BSQAssembly::CollectionTypeDecl): CPPAssembly::CollectionTypeDecl {
+        match(ctd)@ {
+            BSQAssembly::ListTypeDecl =>    { return this.transformListTypeDecl($ctd); }
+            | BSQAssembly::StackTypeDecl => { return this.transformStackTypeDecl($ctd); }
+            | BSQAssembly::QueueTypeDecl => { return this.transformQueueTypeDecl($ctd); }
+            | BSQAssembly::SetTypeDecl =>   { return this.transformSetTypeDecl($ctd); }
+            | BSQAssembly::MapTypeDecl =>   { return this.transformMapTypeDecl($ctd); }
+        }
+    }
+
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {
         let base = this.transformAbstractNominalTypeDeclBase(e@<BSQAssembly::AbstractNominalTypeDecl>);
         let fields = this.transformMemberFieldDecl(e.saturatedBFieldInfo, e, e.fields);
@@ -1064,19 +1106,28 @@ entity CPPTransformer {
 
     method transformPrimitiveConceptDeclToCpp(pc: BSQAssembly::PrimitiveConceptTypeDecl): CPPAssembly::PrimitiveConceptTypeDecl {
         match(pc)@ {
-            BSQAssembly::OptionTypeDecl => { return this.transformOptionTypeDecl($pc); }
-            | BSQAssembly::ResultTypeDecl => { return this.transformResultTypeDecl($pc); }
+            BSQAssembly::OptionTypeDecl =>      { return this.transformOptionTypeDecl($pc); }
+            | BSQAssembly::ResultTypeDecl =>    { return this.transformResultTypeDecl($pc); }
             | BSQAssembly::APIResultTypeDecl => { return this.transformAPIResultTypeDecl($pc); }
         }
     }
 
+    method updateNSMethods(decl: CPPAssembly::NamespaceDecl, e: CPPAssembly::AbstractNominalTypeDecl): CPPAssembly::NamespaceDecl {
+        let cppstaticmethods = e.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, e.tkey|));
+        let cppvirtmethods =   e.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, e.tkey|));
+        let cppabsmethods =    e.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, e.tkey|));
+        let cppovermethods =   e.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, e.tkey|));
+    
+        let nstaticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
+        let nvirtmethods =   List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
+        let nabsmethods =    List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
+        let novermethods =   List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+    
+        return decl[staticmethods=nstaticmethods, virtmethods=nvirtmethods, absmethods=nabsmethods, overmethods=novermethods];
+    }
+
     function convertBsqAsmToCpp(bsqasm: BSQAssembly::Assembly): CPPAssembly::Assembly {
         let transformer = CPPTransformer{ bsqasm };            
-
-        %%
-        %% Wouldnt be a bad idea to try and group some of this ns decl insertion logic into a method,
-        %% as some of this code is getting a tad too repetitive
-        %%
 
         let transformer_typeconsts = bsqasm.typeconsts.reduce<Map<String, CPPAssembly::ConstMemberDecl>>(
             Map<String, CPPAssembly::ConstMemberDecl>{}, fn(acc, cmd) => {
@@ -1088,10 +1139,8 @@ entity CPPTransformer {
             Map<CString, CPPAssembly::NamespaceDecl>{}, fn(acc, name, cppcmd) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppcmd.fullns, acc,
                     fn(decl) => { 
-                        let new_typeconsts = decl.typeconsts.pushBack(name);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, new_typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, decl.enums, decl.alltypes };
+                        let ntypeconsts = decl.typeconsts.pushBack(name);
+                        return decl[typeconsts=ntypeconsts];
                     });
         });
 
@@ -1105,10 +1154,8 @@ entity CPPTransformer {
             transformer_nsdecls_typeconsts, fn(acc, cppikey, cppfunc) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.fullns, acc,
                     fn(decl) => { 
-                        let new_nsfuncs = decl.nsfuncs.pushBack(cppfunc.ikey);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, new_nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, decl.enums, decl.alltypes };
+                        let nnsfuncs = decl.nsfuncs.pushBack(cppfunc.ikey);
+                        return decl[nsfuncs=nnsfuncs];
                     });
         });
 
@@ -1122,10 +1169,8 @@ entity CPPTransformer {
             transformer_nsdecls_nsfuncs, fn(acc, ikey, cppfunc) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.completens, acc,
                     fn(decl) => { 
-                        let new_typefuncs = decl.typefuncs.pushBack(ikey);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, new_typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, decl.enums, decl.alltypes };
+                        let ntypefuncs = decl.typefuncs.pushBack(ikey);
+                        return decl[typefuncs=ntypefuncs];
                     });
         });
 
@@ -1137,18 +1182,13 @@ entity CPPTransformer {
 
         let transformer_nsdecls_entities = transformer_entities.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
             transformer_nsdecls_typefuncs, fn(acc, cpptk, cppe) => {
-                let cppstaticmethods = cppe.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppvirtmethods = cppe.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppabsmethods = cppe.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppovermethods = cppe.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppe.fullns, acc,
                     fn(decl) => {
-                        let new_entities = decl.entities.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            new_entities, decl.datamembers, decl.datatypes, decl.pconcepts, cppstaticmethods, cppvirtmethods, cppabsmethods, cppovermethods,
-                            decl.enums, new_alltypes };
+                        let nentities = decl.entities.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        let ndecl = transformer.updateNSMethods(decl, cppe@<CPPAssembly::AbstractNominalTypeDecl>);
+                        
+                        return ndecl[entities=nentities, alltypes=nalltypes];
                     });
         });
 
@@ -1159,25 +1199,14 @@ entity CPPTransformer {
             });
 
         let transformer_nsdecls_datamembers = transformer_datamembers.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
-            transformer_nsdecls_entities, fn(acc, cpptk, cppdatamember) => {
-                let cppstaticmethods = cppdatamember.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppvirtmethods = cppdatamember.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppabsmethods = cppdatamember.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppovermethods = cppdatamember.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));                
-                 
+            transformer_nsdecls_entities, fn(acc, cpptk, cppdatamember) => {                 
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppdatamember.fullns, acc,
                     fn(decl) => {
-                        let new_datamembers = decl.datamembers.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
-                        
-                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
-                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
-                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
-                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
+                        let ndatamembers = decl.datamembers.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        let ndecl = transformer.updateNSMethods(decl, cppdatamember@<CPPAssembly::AbstractNominalTypeDecl>);
 
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, new_datamembers, decl.datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, new_overmethods,
-                            decl.enums, new_alltypes };
+                        return ndecl[datamembers=ndatamembers, alltypes=nalltypes];
                     });                     
             });
 
@@ -1189,24 +1218,13 @@ entity CPPTransformer {
 
         let transformer_nsdecls_datatypes = transformer_datatypes.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
             transformer_nsdecls_datamembers, fn(acc, cpptk, cppdatatype) => {
-                let cppstaticmethods = cppdatatype.staticmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppvirtmethods = cppdatatype.virtmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppabsmethods = cppdatatype.absmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-                let cppovermethods = cppdatatype.overmethods.map<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>(fn(m) => (|m, cpptk|));
-
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppdatatype.fullns, acc,
                     fn(decl) => {
-                        let new_datatypes = decl.datatypes.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
+                        let ndatatypes = decl.datatypes.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        let ndecl = transformer.updateNSMethods(decl, cppdatatype@<CPPAssembly::AbstractNominalTypeDecl>);
                         
-                        let new_staticmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.staticmethods, cppstaticmethods);
-                        let new_virtmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.virtmethods, cppvirtmethods);
-                        let new_absmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.absmethods, cppabsmethods);
-                        let new_overmethods = List<(|CPPAssembly::InvokeKey, CPPAssembly::TypeKey|)>::concat(decl.overmethods, cppovermethods);
-                        
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, new_datatypes, decl.pconcepts, new_staticmethods, new_virtmethods, new_absmethods, 
-                            new_overmethods, decl.enums, new_alltypes };
+                        return ndecl[datatypes=ndatatypes, alltypes=nalltypes];
                     });                     
             });
 
@@ -1221,11 +1239,9 @@ entity CPPTransformer {
             transformer_nsdecls_datatypes, fn(acc, cpptk, cpppc) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cpppc.fullns, acc,
                     fn(decl) => {
-                        let new_pconcepts = decl.pconcepts.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, new_pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, decl.enums, new_alltypes };
+                        let npconcepts = decl.pconcepts.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        return decl[pconcepts=npconcepts, alltypes=nalltypes];
                     });                     
             }); 
 
@@ -1239,13 +1255,27 @@ entity CPPTransformer {
             transformer_nsdecls_pconcepts, fn(acc, cpptk, cppctd) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppctd.fullns, acc,
                     fn(decl) => {
-                        let new_constructables = decl.constructables.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, new_constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, decl.enums, new_alltypes };
+                        let nconstructables = decl.constructables.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        return decl[constructables=nconstructables, alltypes=nalltypes];
                     });                     
-            }); 
+            });
+
+        let transformer_collections = bsqasm.collections.reduce<Map<CPPAssembly::TypeKey, CPPAssembly::CollectionTypeDecl>>(
+            Map<CPPAssembly::TypeKey, CPPAssembly::CollectionTypeDecl>{}, fn(acc, tk, ctd) => { 
+                let cppctd = transformer.transformCollectionTypeDecl(ctd);
+                return acc.insert(cppctd.tkey, cppctd);
+            });
+
+        let transformer_nsdecls_collections = transformer_collections.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            transformer_nsdecls_constructables, fn(acc, cpptk, cppctd) => {
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppctd.fullns, acc,
+                    fn(decl) => {
+                        let ncollections = decl.collections.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        return decl[collections=ncollections, alltypes=nalltypes];
+                    });                     
+            });
 
         let transformer_allfuncs = bsqasm.allfuncs.map<CPPAssembly::FunctionDecl>(fn(ikey) => {
             let cppikey = CPPTransformNameManager::convertInvokeKey(ikey);
@@ -1271,14 +1301,12 @@ entity CPPTransformer {
         });
 
         let transformer_nsdecls_enums = transformer_enums.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
-            transformer_nsdecls_constructables, fn(acc, cpptk, cppetd) => {
+            transformer_nsdecls_collections, fn(acc, cpptk, cppetd) => {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppetd.fullns, acc,
                     fn(decl) => {
-                        let new_enums = decl.enums.pushBack(cpptk);
-                        let new_alltypes = decl.alltypes.pushBack(cpptk);
-                        return CPPAssembly::NamespaceDecl{ decl.nsname, decl.subns, decl.typeconsts, decl.nsfuncs, decl.typefuncs, decl.constructables, 
-                            decl.entities, decl.datamembers, decl.datatypes, decl.pconcepts, decl.staticmethods, decl.virtmethods, decl.absmethods, 
-                            decl.overmethods, new_enums, new_alltypes };
+                        let nenums = decl.enums.pushBack(cpptk);
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        return decl[enums=nenums, alltypes=nalltypes];
                     });                     
             }); 
 
@@ -1318,16 +1346,16 @@ entity CPPTransformer {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
 
-        let generated_typeinfos_concrete = bsqasm.allconcretetypes.reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
-            (| 0n, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{} |), fn(acc, tkey) => {
-                let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
-                return (| acc.0 + 1n, gen_tinfo.1 |);
+        let generated_typeinfos_concrete = bsqasm.allconcretetypes
+            .reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
+                (| 0n, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{} |), fn(acc, tkey) => {
+                    let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
+                    return (| acc.0 + 1n, gen_tinfo.1 |);
         });
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
             .reduce<(| Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> |)>(
                 generated_typeinfos_concrete, fn(acc, tkey) => {
-
                     let gen_tinfo = transformer.generateTypeInfo(tkey, acc.1, acc.0, bsqasm);
                     return (| acc.0 + 1n, gen_tinfo.1 |);
         });
@@ -1345,6 +1373,7 @@ entity CPPTransformer {
             enums = transformer_enums,
             primitives = transformer_primitives,
             constructables = transformer_constructables,
+            collections = transformer_collections,
             entities = transformer_entities,
             datamembers = transformer_datamembers,
             datatypes = transformer_datatypes,

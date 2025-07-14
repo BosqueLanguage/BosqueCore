@@ -1480,7 +1480,7 @@ function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, in
     %% Not 100% about removing previx, fixes bug for emitting "one" and "zero" constmember decls
     let name = removeCppPrefix(String::concat(rtype, "ᘏ", emitIdentifier(cmd.name)));
 
-    let pre = String::concat(indent, "const ", rtype, " ", name, " = ");
+    let pre = String::concat(indent, rtype, " ", name, " = ");
     return String::concat(pre, exp, ";%n;");
 }
 

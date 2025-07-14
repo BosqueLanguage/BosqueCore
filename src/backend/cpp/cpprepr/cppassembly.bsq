@@ -95,6 +95,17 @@ SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ; %% TODO: Other ConstructableTypeDecls!
 
+datatype CollectionTypeDecl provides AbstractEntityTypeDecl using {
+    field oftype: TypeSignature;
+}
+of
+ListTypeDecl {  }
+| StackTypeDecl { }
+| QueueTypeDecl { }
+| SetTypeDecl { }
+| MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+;
+
 entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
 }
 
@@ -199,6 +210,7 @@ entity NamespaceDecl {
     field typefuncs: List<InvokeKey>;
 
     field constructables: List<TypeKey>;
+    field collections: List<TypeKey>;
 
     field entities: List<TypeKey>;
     field datamembers: List<TypeKey>;
@@ -236,6 +248,7 @@ entity Assembly {
 
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
     field constructables: Map<TypeKey, ConstructableTypeDecl>;
+    field collections: Map<TypeKey, CollectionTypeDecl>;
 
     field entities: Map<TypeKey, EntityTypeDecl>;
     field datamembers: Map<TypeKey, DatatypeMemberEntityTypeDecl>;
@@ -266,6 +279,9 @@ entity Assembly {
         }
         elif(this.constructables.has(tkey)) {
             return this.constructables.get(tkey);
+        }
+        elif(this.collections.has(tkey)) {
+            return this.collections.get(tkey);
         }
         elif(this.enums.has(tkey)) {
             return this.enums.get(tkey);
