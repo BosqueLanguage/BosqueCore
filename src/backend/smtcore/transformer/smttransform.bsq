@@ -2108,7 +2108,7 @@ entity SMTTransformer {
             }
         }
         else {
-            let allprocs = $lambdainvs.map<(|SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
+            let allprocs = $lambdainvs.map<(|List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
                 let ikey = TransformNameManager::convertInvokeKey(decl.ikey, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
                 let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => {
                     let mlp = lgi.largerrors.tryFind(pred(gg) => gg.0 === p.pname);
@@ -2126,7 +2126,7 @@ entity SMTTransformer {
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
-                    return SMTAssembly::FunctionDecl{ ikey, params, artype, body }, rctx.lambdagen;
+                    return List<SMTAssembly::FunctionDecl>{ SMTAssembly::FunctionDecl{ ikey, params, artype, body } }, rctx.lambdagen;
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
@@ -2140,7 +2140,7 @@ entity SMTTransformer {
                 }
             });
 
-            let decls = allprocs.map<SMTAssembly::FunctionDecl>(fn(p) => p.0);
+            let decls = List<SMTAssembly::FunctionDecl>::concatAll(allprocs.map<List<SMTAssembly::FunctionDecl>>(fn(p) => p.0));
             let lambdagen = List<LambdaGeneratorInfo>::concatAll(allprocs.map<List<LambdaGeneratorInfo>>(fn(p) => p.1));
 
             return decls, lambdagen;
@@ -2173,7 +2173,7 @@ entity SMTTransformer {
             }
         }
         else {
-            let allprocs = $lambdainvs.map<(|SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
+            let allprocs = $lambdainvs.map<(|List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
                 let ikey = TransformNameManager::convertInvokeKey(decl.ikey, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
                 let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => {
                     let mlp = lgi.largerrors.tryFind(pred(gg) => gg.0 === p.pname);
@@ -2191,7 +2191,7 @@ entity SMTTransformer {
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
-                    return SMTAssembly::FunctionDecl{ ikey, params, artype, body }, rctx.lambdagen;
+                    return List<SMTAssembly::FunctionDecl>{SMTAssembly::FunctionDecl{ ikey, params, artype, body }}, rctx.lambdagen;
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
@@ -2205,7 +2205,7 @@ entity SMTTransformer {
                 }
             });
 
-            let decls = allprocs.map<SMTAssembly::FunctionDecl>(fn(p) => p.0);
+            let decls = List<SMTAssembly::FunctionDecl>::concatAll(allprocs.map<List<SMTAssembly::FunctionDecl>>(fn(p) => p.0));
             let lambdagen = List<LambdaGeneratorInfo>::concatAll(allprocs.map<List<LambdaGeneratorInfo>>(fn(p) => p.1));
 
             return decls, lambdagen;
@@ -2240,7 +2240,7 @@ entity SMTTransformer {
             }
         }
         else {
-            let allprocs = $lambdainvs.map<(|SMTAssembly::FunctionDecl, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
+            let allprocs = $lambdainvs.map<(|List<SMTAssembly::FunctionDecl>, List<LambdaGeneratorInfo>|)>(fn(lgi) => {
                 let ikey = TransformNameManager::convertInvokeKey(decl.ikey, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
                 let params = decl.params.map<SMTAssembly::InvokeParameterDecl>(fn(p) => {
                     let mlp = lgi.largerrors.tryFind(pred(gg) => gg.0 === p.pname);
@@ -2258,7 +2258,7 @@ entity SMTTransformer {
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
-                    return SMTAssembly::FunctionDecl{ ikey, List<SMTAssembly::InvokeParameterDecl>{thisdecl}.append(params), artype, body }, rctx.lambdagen; 
+                    return List<SMTAssembly::FunctionDecl>{SMTAssembly::FunctionDecl{ ikey, List<SMTAssembly::InvokeParameterDecl>{thisdecl}.append(params), artype, body }}, rctx.lambdagen; 
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
@@ -2272,7 +2272,7 @@ entity SMTTransformer {
                 }
             });
 
-            let decls = allprocs.map<SMTAssembly::FunctionDecl>(fn(p) => p.0);
+            let decls = List<SMTAssembly::FunctionDecl>::concatAll(allprocs.map<List<SMTAssembly::FunctionDecl>>(fn(p) => p.0));
             let lambdagen = List<LambdaGeneratorInfo>::concatAll(allprocs.map<List<LambdaGeneratorInfo>>(fn(p) => p.1));
 
             return decls, lambdagen;
