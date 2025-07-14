@@ -716,13 +716,17 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
-    return "";
+    abort;
+}
+
+function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimaryMapExpression, ctx: Context): String {
+    abort;
 }
 
 function emitConstructorPrimaryCollectionSingletonExpression(exp: CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression, ctx: Context): String {
     match(exp)@ {
         CPPAssembly::ConstructorPrimaryListExpression => { return emitConstructorPrimaryListExpression($exp, ctx); }
-        | CPPAssembly::ConstructorPrimaryMapExpression => { abort; }
+        | CPPAssembly::ConstructorPrimaryMapExpression => { return emitConstructorPrimaryMapExpression($exp, ctx); }
     }
 }
 
