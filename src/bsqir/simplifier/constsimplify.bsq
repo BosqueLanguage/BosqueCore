@@ -723,14 +723,16 @@ entity ConstantSimplification {
         }
         else {
             %%TODO: we need to turn this into a Let (but that isn't all implemented yet)
-            assert $op.bindInfo?none; 
+            abort; 
 
+%*
             if($op.value) {
                 return nthen;
             }
             else {
                 return nelse;
             }
+*%
         }
     }
 
@@ -846,7 +848,7 @@ entity ConstantSimplification {
         }
         else {
             if($op.value) {
-                return BinderBlockStatement{ s.sinfo, s.binder, s.itest, ntexp, List<Statement>{ntb}, true };
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{ntb}, true };
             }
             else {
                 return EmptyStatement{ s.sinfo };
@@ -910,10 +912,10 @@ entity ConstantSimplification {
         }
         else {
             if($op.value) {
-                return BinderBlockStatement{ s.sinfo, s.binder, s.itest, ntexp, List<Statement>{ntb}, true };
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{ntb}, true };
             }
             else {
-                return BinderBlockStatement{ s.sinfo, s.binder, s.itest, ntexp, List<Statement>{nfb}, true };
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{nfb}, true };
             }
         }
     }
@@ -990,7 +992,7 @@ entity ConstantSimplification {
                     }
                     else {
                         let ttest = ITestType{ false, mb.0 };
-                        return BinderBlockStatement{ s.sinfo, $binfo, ttest, nsv, List<Statement>{mb.1}, true };
+                        return BinderBlockStatement{ s.sinfo, $binfo, nsv, ttest, List<Statement>{mb.1}, true };
                     }
                 }
                 else {
@@ -1093,7 +1095,7 @@ entity ConstantSimplification {
         let nbexp = this.processExpression[recursive](s.bexp);
         let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
 
-        return $s[bexp=nbexp, statements=nstmts];
+        return s[bexp=nbexp, statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

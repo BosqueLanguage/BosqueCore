@@ -475,7 +475,7 @@ entity MatchOperation provides Operation {
     field matchexp: SafeExpression;
     
     field cases: List<(|Bool, TypeKey, Operation|)>;
-    field default: Operation;
+    field defaultop: Operation;
 
     invariant !$cases.empty();
 }

@@ -685,9 +685,7 @@ entity ExplicitifyTransform {
         let nifcond = this.processExplicitBoolConvertAsNeeded(this.processExpression[recursive](s.ifcond, vmap));
 
         let nifflow = this.processBlockStatement[recursive](s.ifflow, vmap);
-        let ncondflow = s.condflow
-            .map<(|Expression, BlockStatement|)>(fn(eb) => 
-                (|this.processExpression[recursive](eb.0, vmap), this.processBlockStatement[recursive](eb.1, vmap)|));
+        let ncondflow = s.condflow.map<(|Expression, BlockStatement|)>(fn(eb) => (|this.processExpression[recursive](eb.0, vmap), this.processBlockStatement[recursive](eb.1, vmap)|));
         let nelseflow = this.processBlockStatement[recursive](s.elseflow, vmap);
 
         return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
@@ -813,10 +811,10 @@ entity ExplicitifyTransform {
     }
 
     recursive method processBinderBlockStatement(s: BinderBlockStatement, vmap: VarMapping): BinderBlockStatement {
-        let nbexp = this.processExpression[recursive](s.bexp);
+        let nbexp = this.processExpression[recursive](s.bexp, vmap);
         let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt, vmap));
 
-        return $s[bexp=nbexp, statements=nstmts];
+        return s[bexp=nbexp, statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

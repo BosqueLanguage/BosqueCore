@@ -883,12 +883,14 @@ recursive function emitIfThenElseOperation(e: SMTAssembly::IfThenElseOperation, 
     }
 }
 
-function emitMatchTestTestableType(isSubtypeTest: Bool, oftype: SMTAssembly::TypeKey): CString {
-    if(isSubtypeTest) {
-        xxxx;
+function emitMatchTestTestableType(isSubtypeTest: Bool, oftype: SMTAssembly::TypeKey, expr: CString): CString {
+    if(!isSubtypeTest) {
+        let tcons = SMTNameManager::generateStructTermConstructorName(oftype);
+        return CString::concat('(is-', tcons, ' ', expr, ')');
     }
     else {
-        xxxx;
+        let subchk = SMTNameManager::generateTermSubtypeFunctionName(oftype);
+        return CString::concat('(', subchk, ' ', expr, ')');
     }
 }
 
@@ -900,24 +902,22 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
         let dflt = emitOperation[recursive](e.defaultop, eev, none);
 
         return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
-            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let top = CString::concat('(is-', ttest, ' ', tst, ')');
-            let cbody = emitOperation[recursive](c.1, eev, none);
+            let ttest = emitMatchTestTestableType(c.0, c.1, tst);
+            let cbody = emitOperation[recursive](c.2, eev, none);
 
             let opts = CString::concat(' ', cbody, ' ', acc);
-            return CString::concat('(ite ', top, opts, ')');
+            return CString::concat('(ite ', ttest, opts, ')');
         });
     }
     else {
         let dflt = emitOperation[recursive](e.defaultop, eev, indent);
 
         return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
-            let ttest = SMTNameManager::generateStructTermConstructorName(c.0);
-            let top = CString::concat('(is-', ttest, ' ', tst, ')');
-            let cbody = emitOperation[recursive](c.1, eev, indent);
+            let ttest = emitMatchTestTestableType(c.0, c.1, tst);
+            let cbody = emitOperation[recursive](c.2, eev, indent);
 
             let opts = CString::concat('%n;', $indent, cbody, '%n;', $indent, acc);
-            return CString::concat('(ite ', top, opts, ')');
+            return CString::concat('(ite ', ttest, opts, ')');
         });
     }
 }
