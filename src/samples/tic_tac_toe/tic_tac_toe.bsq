@@ -114,15 +114,14 @@ function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> 
 }
 *%
 
-%% While we wait on BSQON stuff we just have a simple main
-public function main(): Bool {
+public function main(a: Nat, b: Nat): Bool {
     var bb = Board::initialBoard;
 
     bb = bb.setCell(0n, 0n, PlayerMark#x);
     bb = bb.setCell(1n, 1n, PlayerMark#o);
     bb = bb.setCell(0n, 1n, PlayerMark#x);
     bb = bb.setCell(1n, 0n, PlayerMark#o);
-    bb = bb.setCell(0n, 2n, PlayerMark#x);
+    bb = bb.setCell(a, b, PlayerMark#x);
 
     let winner = bb.checkAnyWinner();
     return winner === PlayerMark#x;

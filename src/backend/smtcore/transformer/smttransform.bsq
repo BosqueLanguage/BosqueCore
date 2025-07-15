@@ -1899,6 +1899,34 @@ entity SMTTransformer {
         }
     }
 
+    recursive method transformIfElifElseStatement(stmt: BSQAssembly::IfElifElseStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let ectx, elseop = this.transformBlockStatement[recursive](stmt.elseflow, tail, ctx);
+
+        let octx, conds = stmt.condflow.reduce<(|SMTTransformerCtx, SMTAssembly::Operation|)>((|ectx, elseop@some|), recursive fn(acc, flow) => {
+            let ntexp, cctx, cobinds = this.processUnaryArg[recursive](flow.0, acc.0);
+            let nctx, nblock = this.transformBlockStatement[recursive](flow.1, tail, cctx);
+
+            let ifop = SMTAssembly::IfThenElseOperation{ntexp, nblock@some, acc.1};
+            if(cobinds)@none {
+                return nctx, ifop;
+            }
+            else {
+                return nctx, SMTAssembly::LetWErrorsOperation{$cobinds, ifop};
+            }
+        });
+
+        let itexp, ictx, iobinds = this.processUnaryArg[recursive](stmt.ifcond, octx);
+        let inctx, inblock = this.transformBlockStatement[recursive](stmt.ifflow, tail, ictx);
+
+        let fifop = SMTAssembly::IfThenElseOperation{itexp, inblock@some, conds};
+        if(iobinds)@none {
+            return inctx, some(fifop);
+        }
+        else {
+            return inctx, some(SMTAssembly::LetWErrorsOperation{$iobinds, fifop});
+        }
+    }
+
     recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
         
@@ -1978,6 +2006,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::IfElseStatement => {
                 return this.transformIfElseStatement[recursive]($stmt, tail, ctx);
+            }
+            | BSQAssembly::IfElifElseStatement => {
+                return this.transformIfElifElseStatement[recursive]($stmt, tail, ctx);
             }
             | BSQAssembly::MatchStatement => {
                 return this.transformMatchStatement[recursive]($stmt, tail, ctx);
