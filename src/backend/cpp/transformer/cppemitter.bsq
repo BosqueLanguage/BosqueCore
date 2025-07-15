@@ -839,7 +839,15 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
 
 %% We will need this to help us take "this.f?<Int>" to "false"
 function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression, ctx: Context): String {
-    return emitExpression(exp.exp, ctx);
+    let tottype = emitTypeSignature(exp.trgttype, false, ctx);
+    let emitexp = emitExpression(exp.exp, ctx);   
+
+    if(ctx.asm.isNominalTypeConcept(exp.srctype.tkeystr)) {
+        return String::concat(emitexp, getAccessor(exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
+    }
+    else {
+        return emitexp;
+    }
 }
 
 function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx: Context): String {
