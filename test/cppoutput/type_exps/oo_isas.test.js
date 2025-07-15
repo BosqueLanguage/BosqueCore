@@ -3,7 +3,7 @@
 import { runMainCode } from "../../../bin/test/runtime/runtime_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Exec -- entity is/as", () => {
+describe ("CPP Emit Evaluate -- entity is/as", () => {
 
     //
     // TODO: Concepts are lacking the necessary backend for emission so we ignore

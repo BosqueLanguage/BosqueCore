@@ -3,7 +3,7 @@
 import { runMainCode, runMainCodeError } from "../../../bin/test/cppoutput/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Exec -- match Statement", () => {
+describe ("CPP Emit Evaluate -- match Statement", () => {
     it("should exec simple match", function () {
         runMainCode("public function main(): Int { let x: Option<Int> = some(3i); match(x) { None => { return 0i; } | _ => { return 1i; } } }", "1_i");
         runMainCode("public function main(): Int { let x: Option<Int> = none; match(x) { None => { return 0i; } | _ => { return 1i; } } }", "0_i");

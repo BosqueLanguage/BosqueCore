@@ -17,7 +17,7 @@ describe ("CPP Emit Evaluate -- Special Constructor infer in if-else and assign 
     */
 });
 
-describe ("Exec -- Special Constructor Optional", () => {
+describe ("CPP Emit Evaluate -- Special Constructor Optional", () => {
     it("should exec none with simple infer", function () {
         runMainCode("public function main(): Int { let x: Some<Int> = some(3i); return x.value; }", "3_i");
         runMainCode("public function main(): Int { let x: Option<Int> = some(3i); return x@some; }", "3_i");
