@@ -477,6 +477,10 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     let base_tinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
     let ident = emitIdentifier(op.name);
 
+    %% We dont want to try to access value on a collection (they just emit as the underlying datastructure)
+    if(ctx.asm.collections.has(op.baseType.tkeystr)) {
+        return "";
+    }
     if(ctx.asm.isNominalTypeConcept(op.baseType.tkeystr)) {
         let e = ctx.asm.lookupNominalTypeDeclaration(op.baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
         let canresolve, offset = canUseDirectFieldAccess(e, op.name, ctx);
