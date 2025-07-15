@@ -548,7 +548,7 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
 }
 
 function emitPostfixAccessSomeValue(op: CPPAssembly::PostfixAccessSomeValue, acc: String, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
-    return String::concat(acc, getAccessor(baseType.tkeystr, ctx), "<", emitTypeSignature(op.baseType, false, ctx),">().value"); 
+    return String::concat(acc, ".value"); 
 }
 
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
@@ -1268,7 +1268,7 @@ function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPA
 }
 
 %% Type funcs are fully resolved before cpp emission so we can group them with nsfuncs
-function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {   
+function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {
     let isTypeFunc = ctx.asm.typefuncs.has(func.ikey);
     let ikey = func.ikey;   
     let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(func.ikey).completens else func.fullns;
@@ -1276,7 +1276,7 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 
     let name = emitInvokeKey(ikey, nctx);
     let params = emitParameters(func.params, nctx);
-    let rtype = emitTypeSignature(func.resultType, true, ctx); 
+    let rtype = emitTypeSignature(func.resultType, true, nctx); 
 
     let pre: String = String::concat(indent, rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
