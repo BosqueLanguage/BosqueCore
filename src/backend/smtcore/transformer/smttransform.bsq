@@ -2806,9 +2806,10 @@ entity SMTTransformer {
             return SMTAssembly::Body{ SMTAssembly::ReturnOperation{ntest}, List<SMTAssembly::ErrorInfo>{} };
         }
         else {
-            let ntest = SMTAssembly::BinKeyNotEqNoneExpression{vvaraccess};
+            let sometest = SMTAssembly::IsTypeTestExpression{smtsometype, vvaraccess};
+            let chknone = SMTAssembly::BinKeyEqNoneExpression{vvaraccess};
             let chksome = this.buildValidateOpForTypeAndExpr(tdecl.someType, SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsometype});
-            let chkops = SMTAssembly::IfThenElseSafeExpression{ntest, chksome, SMTTransformer::smtexplit_true};
+            let chkops = SMTAssembly::IfThenElseSafeExpression{sometest, chksome, chknone};
 
             return SMTAssembly::Body{ SMTAssembly::ReturnOperation{chkops}, List<SMTAssembly::ErrorInfo>{} };
         }
@@ -2838,7 +2839,7 @@ entity SMTTransformer {
             
                     return (|false, smtsttype, SMTAssembly::ReturnOperation{cop}|);
                 });
-                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries.deleteBack(), entries.back().2 };
+                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries, SMTAssembly::ReturnOperation{SMTTransformer::smtexplit_false} };
 
                 return SMTAssembly::Body{ matchop, List<SMTAssembly::ErrorInfo>{} };
             }
