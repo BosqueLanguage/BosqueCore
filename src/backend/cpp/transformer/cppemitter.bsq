@@ -159,15 +159,24 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         | None => { resolvedns = declaredInNS; }
     }
 
-    let ns = String::concat(resolvedns, "::");
     let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
-    let template = emitSpecialTemplate(removeCommonPrefix(key, ns));
-    
-    return if(template === "") then emitSpecialTemplate(key) 
-        else String::concat(ns, template);
+    if(key.startsWithString("__CoreCpp") || key === "bool") { %% Bools are not builtins
+        return key;
+    }
+    else { 
+        let ns = String::concat(resolvedns, "::");
+        let resolvedkey = if(ns.startsWithString("Core") && !key.startsWithString("Core")) 
+            then String::concat("Core::", key)
+            else key;
+        let noprekey = removeCommonPrefix(resolvedkey, ns);
+        let template = emitSpecialTemplate(noprekey);
+        
+        return if(template === "") then String::concat(ns, noprekey) 
+            else String::concat(ns, template);
+    }
 }
 
-function emitTypeSignature(ts: CPPAssembly::TypeSignature, isParamField: Bool, ctx: Context): String {
+function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
         let argssizes = $ts.entries.map<String>(fn(e) => {
             let tinfo = ctx.asm.typeinfos.get(e.tkeystr);
@@ -180,14 +189,14 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, isParamField: Bool, c
         return String::concat("__CoreCpp::Tuple", n, argstemplate);
     }
     else {
-        return emitTypeKey(ts.tkeystr, isParamField, ctx);
+        return emitTypeKey(ts.tkeystr, shouldCheckTag, ctx);
     }
 }
 
-function emitTypeKeyBase(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
+function emitTypeKey(tk: CPPAssembly::TypeKey, shouldCheckTag: Bool, ctx: Context): String {
     let emit = emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(some(tk), none, ctx)); 
 
-    if(isParamField) {
+    if(shouldCheckTag) {
         let tinfo = ctx.asm.typeinfos.tryGet(tk)@some;
 
         switch(tinfo.tag) {
@@ -197,22 +206,6 @@ function emitTypeKeyBase(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Cont
         }
     }
     return emit;
-}
-
-function emitTypeKey(tk: CPPAssembly::TypeKey, isParamField: Bool, ctx: Context): String {
-    let asnominal = ctx.asm.lookupNominalTypeDeclaration(tk);
-    let emit = emitTypeKeyBase(tk, isParamField, ctx);
-
-    %% explicitly emit core prefix where necessary
-    if(ctx.fullns_list.get(0n) === 'Core') {
-        return emit;
-    }
-    elif(asnominal?<CPPAssembly::OptionTypeDecl> || asnominal?<CPPAssembly::SomeTypeDecl>) {
-        return String::concat("Core::", emit);
-    }
-    else {
-        return emit;
-    }
 }
 
 function emitIdentifier(i: CPPAssembly::Identifier): String {
@@ -249,9 +242,18 @@ function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): Stri
             if(nopre.startsWithString("::")) {
                 return nopre.removePrefixString("::");
             }
-            return nopre;
+            %*
+            elif(nopre.startsWithString("ᘏ")) {
+                return nopre.removePrefixString("ᘏ");
+            }
+            *%
+            else {
+                return nopre;
+            }
         }
-        return acc;
+        else {
+            return acc;
+        }
     });
 }
 
@@ -604,8 +606,8 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
             return emitITestAsConvertNone(false, fromtype, ctx);
         }
         else {
-            return (|String::concat(getAccessor($ant.someType.tkeystr, ctx), "<", emitTypeSignature($ant.someType, true, ctx), ">().value")
-                , emitTypeKey($ant.oftype.tkeystr, false, ctx)|);
+            return (|String::concat(getAccessor($ant.someType.tkeystr, ctx), "<", emitTypeSignature($ant.someType, true, ctx), ">().value"),
+                emitTypeKey($ant.oftype.tkeystr, true, ctx)|);
         }
     }
     else {
@@ -614,11 +616,12 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
 }
 
 function emitITestAsConvertType(isnot: Bool, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context): (|String, String|) { 
-    let ttype = emitTypeKey(totype, false, ctx);
+    let ttype = if(isnot) then fromtype else totype;
+    let emittotype = emitTypeKey(ttype, false, ctx);
 
-    %% We want to make sure we return the totype as a possible field here 
-    return if(fromtype.value === totype.value) then (|"", ttype|) 
-        else (|String::concat(getAccessor(totype, ctx), "<", ttype, ">()"), emitTypeKey(totype, true, ctx)|);
+    %% We want to make sure we return the totype as a possible field here(our access method handles ref case)
+    return if(fromtype.value === ttype.value) then (|"", emittotype|) 
+        else (|String::concat(getAccessor(ttype, ctx), "<", emittotype, ">()"), emitTypeKey(ttype, true, ctx)|);
 }
 
 function emitITestAsConvert(isnot: Bool, itc: CPPAssembly::ITest, fromtype: CPPAssembly::TypeKey, totype: Option<CPPAssembly::TypeKey>, ctx: Context): (|String, String|) { %% Convert, Emitted type
@@ -716,7 +719,7 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
-    abort;
+    return "";
 }
 
 function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimaryMapExpression, ctx: Context): String {
@@ -763,20 +766,22 @@ function getSubtypeCount(tk: CPPAssembly::TypeKey, ctx: Context): Nat, CPPAssemb
     }
 }
 
-%% Handles special case convert where we have two member entities (this is the false case as well)
-function doConvertMaybeSpecialCase(tk: CPPAssembly::TypeKey, itest: CPPAssembly::ITest, ctx: Context): (|String, String|) {
-    let n, concretetype = getSubtypeCount(tk, ctx);
+%% Handles special case convert where we have two member entities 
+function doConvertMaybeSpecialCase(isnot: Bool, itest: CPPAssembly::ITest, fromtype: CPPAssembly::TypeKey, totype: Option<CPPAssembly::TypeKey>, 
+    ctx: Context): (|String, String|) {
+        let n, concretetype = getSubtypeCount(fromtype, ctx);
 
-    if(n == 2n) {
-        let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
-            .associatedMemberEntityDecls.find(
-                pred(ets) => !ctx.asm.areTypesSame(ets, itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
+        if(n == 2n) {
+            let othermember = concretetype@<CPPAssembly::DatatypeTypeDecl>
+                .associatedMemberEntityDecls.find(
+                    pred(ets) => !ctx.asm.areTypesSame(ets, itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
 
-        return emitITestAsConvert(itest.isnot, itest, tk, some(othermember), ctx);         
-    }
-    else {
-        return emitITestAsConvert(!itest.isnot, itest, tk, some(tk), ctx); 
-    }
+            return if(isnot === true) then emitITestAsConvert(false, itest, fromtype, some(othermember), ctx)
+                else emitITestAsConvert(isnot, itest, fromtype, totype, ctx);         
+        }
+        else {
+            return emitITestAsConvert(isnot, itest, fromtype, totype, ctx); 
+        }
 }
 
 %% TODO: We should format this a bit better as these expressions get quite long
@@ -786,11 +791,11 @@ function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String,
 
     let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, ctx));
 
-    let tconvert = emitITestAsConvert(exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
+    let tconvert = doConvertMaybeSpecialCase(exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
     let treassign = emitBindVar(exp.binder.srcname, tconvert.0, tconvert.1, i);
     let texp = String::concat(capture, treassign, "return ", t, "; }() ");
 
-    let fconvert = doConvertMaybeSpecialCase(etype.tkeystr, exp.itest, ctx);
+    let fconvert = doConvertMaybeSpecialCase(!exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
     let freassign = emitBindVar(exp.binder.srcname, fconvert.0, fconvert.1, i);
     let fexp = String::concat(capture, freassign, "return ", e, "; }() ");
 
@@ -918,7 +923,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::CoerceWidenTypeExpression => { return emitWidenedTypeExpression($e, ctx); }
         | CPPAssembly::CoerceNarrowTypeExpression => { return emitNarrowedTypeExpression($e, ctx); }
         | CPPAssembly::SafeConvertExpression => { abort; }
-        | CPPAssembly::CreateDirectExpression => { abort; }
+        | CPPAssembly::CreateDirectExpression => { return emitCreateDirectExpression($e, ctx); }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e, ctx); }
         | CPPAssembly::BinaryArithExpression => { return emitBinaryArithExpression[recursive]($e, ctx); }
@@ -934,7 +939,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
 
 function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitializationStatement, ctx: Context, indent: String): String {
     let name = emitIdentifier(stmt.name);
-    let stype = emitTypeSignature(stmt.vtype, false, ctx);
+    let stype = emitTypeSignature(stmt.vtype, true, ctx);
     let exp = emitExpression(stmt.exp, ctx);
 
     let full_indent: String = String::concat(indent, "    ", stype);
@@ -963,6 +968,7 @@ function emitIfTestStatement(stmt: CPPAssembly::IfTestStatement, ctx: Context, i
     return String::concat(ifstmt, trueBlock, indent, "}");
 }
 
+%% TODO: This is lacking proper redefine for "@@*" itest!
 function emitIfBinderStatement(stmt: CPPAssembly::IfBinderStatement, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     
@@ -971,7 +977,7 @@ function emitIfBinderStatement(stmt: CPPAssembly::IfBinderStatement, ctx: Contex
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
 
     let bname = emitVarIdentifier(stmt.binder.srcname);
-    let convert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx);
+    let convert = doConvertMaybeSpecialCase(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx);
     let reasign = String::concat(bname, " = ", expr, convert.0);
 
     let tbassign = String::concat(full_indent, "[[maybe_unused]] ", convert.1, " ", reasign, ";%n;");
@@ -1012,6 +1018,7 @@ function emitIfElseTestStatement(stmt: CPPAssembly::IfElseTestStatement, ctx: Co
     return String::concat(ifstmt, trueBlock, indent, "}%n;", elseBlockText);
 }
 
+%% This does not work if we do something like if(...)@!type, the else block should bind to the type
 function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     
@@ -1019,11 +1026,11 @@ function emitIfElseBinderStatement(stmt: CPPAssembly::IfElseBinderStatement, ctx
     let etype = stmt.cond.etype;
     let itest = String::concat(expr, emitITestAsTest(stmt.itest, etype, ctx));
 
-    let tconvert = emitITestAsConvert(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx); 
-    let treassign = emitBindVar(stmt.binder.srcname, tconvert.0, tconvert.1, expr);
+    let tconvert = doConvertMaybeSpecialCase(stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx); 
+    let treassign = String::concat(full_indent, emitBindVar(stmt.binder.srcname, tconvert.0, tconvert.1, expr), "%n;");
 
-    let fconvert = doConvertMaybeSpecialCase(etype.tkeystr, stmt.itest, ctx);
-    let freassign = emitBindVar(stmt.binder.srcname, fconvert.0, fconvert.1, expr);
+    let fconvert = doConvertMaybeSpecialCase(!stmt.itest.isnot, stmt.itest, stmt.cond.etype.tkeystr, none, ctx);
+    let freassign = String::concat(full_indent, emitBindVar(stmt.binder.srcname, fconvert.0, fconvert.1, expr), "%n;");
 
     let trueBlock = emitBlockStatement(stmt.trueBlock, ctx, indent);
     let falseBlock = emitBlockStatement(stmt.falseBlock, ctx, indent);
@@ -1076,7 +1083,7 @@ function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String
     }
     else {
         let bname = emitVarIdentifier($bind.srcname);
-        let convert = emitITestAsConvertType(true, fromtype, totype, ctx); 
+        let convert = emitITestAsConvertType(false, fromtype, totype, ctx); 
         let bindtype = String::concat("[[maybe_unused]] ", convert.1, " ");
         let reassign = String::concat(bindtype, bname, " = ", expr, convert.0, ";%n;");
 
@@ -1257,7 +1264,7 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 
     let name = emitInvokeKey(ikey, nctx);
     let params = emitParameters(func.params, nctx);
-    let rtype = emitTypeSignature(func.resultType, false, ctx); 
+    let rtype = emitTypeSignature(func.resultType, true, ctx); 
 
     let pre: String = String::concat(indent, rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
@@ -1344,7 +1351,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let pre = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
-        let rtype = emitTypeSignature(m.resultType, false, nctx);
+        let rtype = emitTypeSignature(m.resultType, true, nctx);
         let this_type = emitThisType(declaredIn, nctx);
         let params = emitParameters(m.params, nctx);
 
@@ -1372,7 +1379,7 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, c
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, ns);
 
     let ikey = emitInvokeKey(decl.ikey, nctx);
-    let rtype = emitTypeSignature(decl.resultType, false, nctx); 
+    let rtype = emitTypeSignature(decl.resultType, true, nctx); 
     let params = emitParameters(decl.params, nctx);
 
     let first = String::concat(ident, rtype, " ", ikey);
@@ -1462,6 +1469,25 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
     return String::concat(vtable, indent, "};%n;");
 }
 
+function emitMapEntryTypeDecl(mtd: CPPAssembly::MapEntryTypeDecl, ctx: Context, indent: String): String {
+    abort; %% TODO: Not Implemented!   
+}
+
+function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
+    match(ctd)@ {
+        CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
+    }
+}
+
+function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
+    let ttype = emitTypeSignature(ctd.oftype, false, nctx);
+    let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) then ttype.removePrefixString("__CoreCpp::") 
+        else ttype;
+    return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+}
+
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     %% The entries who need a vtable should manually do it
     match(ant)@ {
@@ -1469,9 +1495,9 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::CollectionTypeDecl => { return emitCollectionTypeDecl($ant, ctx, indent); }
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
-        | _ => { abort; }
     }
 }
 
@@ -1499,17 +1525,6 @@ function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: 
 
     let value = String::concat(sometype, " {%n;", full_indent, ttype, " value;%n;", indent);
     return String::concat(std_tinfo, indent, "struct ", value, "};%n;");
-}
-
-function emitMapEntryTypeDecl(mtd: CPPAssembly::MapEntryTypeDecl, ctx: Context, indent: String): String {
-    abort; %% TODO: Not Implemented!   
-}
-
-function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
-    match(ctd)@ {
-        CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
-    }
 }
 
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: String): String {
@@ -1597,10 +1612,19 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
     });
 
+    %% Emit enums first as they are just integers
+    let enums = nsdecl.alltypes
+        .filter(pred(tk) => ctx.asm.enums.has(tk))
+        .reduce<String>(String::concat(subns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
+            return String::concat(acc, def);
+    });
+
     %% Value types
     let values = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value)
-        .reduce<String>(String::concat(subns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk))
+        .reduce<String>(enums, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
             return String::concat(acc, def);

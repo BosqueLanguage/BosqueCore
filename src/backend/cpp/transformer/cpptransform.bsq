@@ -137,7 +137,8 @@ entity CPPTransformer {
     }
 
     method shouldBeRef(fields: List<BSQAssembly::SaturatedFieldInfo>, asm: BSQAssembly::Assembly): Bool {
-        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc && asm.isPrimtitiveType(f.ftype.tkeystr));
+        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc 
+            && (asm.isPrimtitiveType(f.ftype.tkeystr) || asm.enums.has(f.ftype.tkeystr)));
         if(fields.size() > 4n || !fieldsPrimitive) {
             return true;
         }
