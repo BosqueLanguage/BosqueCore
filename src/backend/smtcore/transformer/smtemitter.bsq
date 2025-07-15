@@ -883,7 +883,14 @@ recursive function emitIfThenElseOperation(e: SMTAssembly::IfThenElseOperation, 
     }
 }
 
-function emitMatchTest(isSubtypeTest: Bool, isMatchExpTerm: Bool, )
+function emitMatchTestTestableType(isSubtypeTest: Bool, oftype: SMTAssembly::TypeKey): CString {
+    if(isSubtypeTest) {
+        xxxx;
+    }
+    else {
+        xxxx;
+    }
+}
 
 recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
     let tst = emitSafeExpression[recursive](e.matchexp, eev);
