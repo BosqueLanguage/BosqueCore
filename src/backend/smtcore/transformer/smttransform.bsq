@@ -1902,49 +1902,36 @@ entity SMTTransformer {
     recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
         
-        if(this.assembly.isTypeConcrete(stmt.sval.etype)) {
-            abort; %% This can only be a single branch and binder is just direct assignment (would be when match was a T instantiated with a concrete type)
+        var fctx, ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {
+            let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
+
+            var fblock: SMTAssembly::Operation = nblock@some;
+            if($binder = stmt.bindInfo)@some {
+                let bindname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName($binder.srcname.value));
+                let topt, _ = this.transformITestAsSafeConvertOptions(stmt.sval.etype, BSQAssembly::ITestType{false, op.0}, ntexp);
+                fblock = SMTAssembly::LetOperation{bindname, topt, fblock};
+            }
+
+            let iscct = this.assembly.isTypeConcrete(op.0);
+            return cctx, acc.1.pushBack((|!iscct, this.transformStdTypeToSMT(op.0), fblock|));
+        });
+
+        var mop: SMTAssembly::MatchOperation;
+        if(stmt.mustExhaustive) {
+            mop = SMTAssembly::MatchOperation{ ntexp, ops.deleteBack(), ops.back().2 };
         }
         else {
-            let ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {
-                let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
+            let exchk = SMTAssembly::AbortOperation{fctx.errCtr};
 
-                let tests = if(this.assembly.isTypeConcrete(op.0)) 
-                    then List<BSQAssembly::TypeKey>{op.0.tkeystr} 
-                    else this.assembly.lookupNominalTypeDeclaration(op.0.tkeystr)@<BSQAssembly::AbstractConceptTypeDecl>.subtypes
-                    ;
+            fctx = fctx.addError(stmt.sinfo);
+            mop = SMTAssembly::MatchOperation{ ntexp, ops, exchk };
+        }
 
-                let options = tests.map<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(ttype) => {
-                    let smtmtype = TransformNameManager::convertTypeKey(ttype);
-
-                    if($bi = stmt.bindInfo)@none {
-                        return smtmtype, nblock@some;
-                    }
-                    else {
-                        let bname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName($bi.srcname.value));
-                        let bop = SMTAssembly::UntermifyExpression{ ntexp, this.transformStdTypeToSMT(stmt.sval.etype), this.transformStdTypeToSMT(op.0) };
-                        
-                        return smtmtype, SMTAssembly::LetOperation{bname, bop, nblock@some};
-                    }
-                });
-
-                return cctx, List<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>::concat(acc.1, options);
-            });
-
-            var merr = SMTEmitter::s_invalidErrTrgt;
-            var fctx = ops.0;
-            if(!stmt.mustExhaustive) {
-                merr = ops.0.errCtr;
-                fctx = ops.0.addError(stmt.sinfo);
-            }
-
-            let mop = SMTAssembly::MatchOperation{ ntexp, ops.1, merr };
-            if(cobinds)@none {
-                return fctx, some(mop);
-            }
-            else {
-                return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, mop});
-            }
+        if(cobinds)@none {
+            return fctx, some(mop);
+        }
+        else {
+            return fctx, some(SMTAssembly::LetWErrorsOperation{$cobinds, mop});
         }
     }
 
@@ -2004,6 +1991,9 @@ entity SMTTransformer {
             | BSQAssembly::BlockStatement => {
                 return this.transformBlockStatement($stmt, tail, ctx);
             }
+            | BSQAssembly::BinderBlockStatement => {
+                return this.transformBinderBlockStatement[recursive]($stmt, tail, ctx);
+            }
         }
     }
 
@@ -2011,6 +2001,24 @@ entity SMTTransformer {
         return stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, tail|), recursive fn(acc, s) => {
             return this.transformStatement[recursive](s, acc.1, acc.0);
         });
+    }
+
+    recursive method transformBinderBlockStatement(stmt: BSQAssembly::BinderBlockStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
+        let onarg, cctx, cobinds = this.processUnaryArg[recursive](stmt.bexp, ctx);
+        let topt, _ = this.transformITestAsSafeConvertOptions(stmt.bexp.etype, stmt.itest, onarg);
+        
+        let octx, ops = stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|cctx, tail|), recursive fn(acc, s) => {
+            return this.transformStatement[recursive](s, acc.1, acc.0);
+        });
+
+        let bindname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.binder.srcname.value));
+        let bindop = SMTAssembly::LetOperation{bindname, topt, ops@some};
+        if(cobinds)@none {
+            return octx, some(bindop);
+        }
+        else {
+            return octx, some(SMTAssembly::LetWErrorsOperation{$cobinds, bindop});
+        }
     }
 
     method transformBodyToSMTOperation(impl: BSQAssembly::BodyImplementation, ctx: SMTTransformerCtx, ttype: BSQAssembly::TypeSignature): SMTTransformerCtx, SMTAssembly::Operation {
@@ -2824,13 +2832,13 @@ entity SMTTransformer {
                 return SMTAssembly::Body{ SMTAssembly::ReturnOperation{cop}, List<SMTAssembly::ErrorInfo>{} };
             }
             else {
-                let entries = nrsubtypes.map<(|SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(st) => {
+                let entries = nrsubtypes.map<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>(fn(st) => {
                     let smtsttype = TransformNameManager::convertTypeKey(st);
                     let cop = SMTAssembly::CallFunctionSafeExpression{ TransformNameManager::generateNameForValidatorFunction(st), List<SMTAssembly::SafeExpression>{ SMTAssembly::UntermifyExpression{vvaraccess, SMTTransformer::termtypekey, smtsttype} } };
             
-                    return (|smtsttype, SMTAssembly::ReturnOperation{cop}|);
+                    return (|false, smtsttype, SMTAssembly::ReturnOperation{cop}|);
                 });
-                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries, SMTEmitter::s_ignoreErrTrgt };
+                let matchop = SMTAssembly::MatchOperation{ vvaraccess, entries.deleteBack(), entries.back().2 };
 
                 return SMTAssembly::Body{ matchop, List<SMTAssembly::ErrorInfo>{} };
             }

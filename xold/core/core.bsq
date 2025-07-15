@@ -79,10 +79,6 @@ __internal __typedeclable __typebase __numeric entity Float provides Some {
     method ceiling(): Float { return NumericOps::s_floatCeil(this); }
     method truncate(): Float { return NumericOps::s_floatTruncate(this); }
 
-    method pow(x: Float): Float {
-        return NumericOps::s_floatPower(this, x);
-    }
-
     method square(): Float {
         return this * this;
     }
