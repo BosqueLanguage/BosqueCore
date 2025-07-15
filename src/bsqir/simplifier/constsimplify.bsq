@@ -722,12 +722,17 @@ entity ConstantSimplification {
             return e[texp=ntexp, thenexp=nthen, elseexp=nelse];
         }
         else {
+            %%TODO: we need to turn this into a Let (but that isn't all implemented yet)
+            abort; 
+
+%*
             if($op.value) {
                 return nthen;
             }
             else {
                 return nelse;
             }
+*%
         }
     }
 
@@ -843,7 +848,7 @@ entity ConstantSimplification {
         }
         else {
             if($op.value) {
-                return ntb;
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{ntb}, true };
             }
             else {
                 return EmptyStatement{ s.sinfo };
@@ -907,10 +912,10 @@ entity ConstantSimplification {
         }
         else {
             if($op.value) {
-                return ntb;
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{ntb}, true };
             }
             else {
-                return nfb;
+                return BinderBlockStatement{ s.sinfo, s.binder, ntexp, s.itest, List<Statement>{nfb}, true };
             }
         }
     }
@@ -979,9 +984,20 @@ entity ConstantSimplification {
             if(nflow.0) {
                 return s[sval=nsv, matchflow=nflow.1];
             }
-            %%TODO: maybe we want to add a single option case too
             else {
-                return s[sval=nsv, matchflow=nflow.1, mustExhaustive=true];
+                if(nflow.1.isSingle()) {
+                    let mb = nflow.1.single();
+                    if($binfo = s.bindInfo)@none {
+                        return mb.1;
+                    }
+                    else {
+                        let ttest = ITestType{ false, mb.0 };
+                        return BinderBlockStatement{ s.sinfo, $binfo, nsv, ttest, List<Statement>{mb.1}, true };
+                    }
+                }
+                else {
+                    return s[sval=nsv, matchflow=nflow.1, mustExhaustive=true];
+                }
             }
         }
     }
@@ -1027,7 +1043,9 @@ entity ConstantSimplification {
             | VariableMultiAssignmentImplicitStatement => {
                 return $s[exp = this.processExpression($exp)];
             }
-            | VariableRetypeStatement => { abort; }
+            | VariableRetypeStatement => { 
+                abort; 
+            }
             | ReturnVoidStatement => {
                 return s;
             }
@@ -1058,6 +1076,12 @@ entity ConstantSimplification {
             | AssertStatement => {
                 return this.processAssertStatement($s);
             }
+            | BlockStatement => {
+                return this.processBlockStatement[recursive]($s);
+            }
+            | BinderBlockStatement => {
+                return this.processBinderBlockStatement[recursive]($s);
+            }
         }
     }
 
@@ -1065,6 +1089,13 @@ entity ConstantSimplification {
         let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
 
         return s[statements=nstmts];
+    }
+
+    recursive method processBinderBlockStatement(s: BinderBlockStatement): BinderBlockStatement {
+        let nbexp = this.processExpression[recursive](s.bexp);
+        let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt));
+
+        return s[bexp=nbexp, statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

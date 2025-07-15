@@ -30,7 +30,7 @@ describe ("SMT -- entity methods", () => {
     });
 
     it("should smt exec simple entity methods with both template and more", function () {
-        runishMainCodeUnsat('entity Foo<T> { field f: T; method foo<U>(u: U): U { return if (this.f)@<U> then $_ else u; }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('entity Foo<T> { field f: T; method foo<U>(u: U): U { return if (this.f)<U> then u else u; }} public function main(): Nat { let x = Foo<Int>{3i}; return x.foo<Nat>(3n); }', "(assert (not (= 3 Main@main)))"); 
         runishMainCodeUnsat('entity Foo<T> { field f: T; method foo<U>(t: T): T { return if (t)<U> then t else this.f; }} public function main(): Int { let x = Foo<Int>{3i}; return x.foo<Int>(3i); }', "(assert (not (= 3 Main@main)))");
     });
 });

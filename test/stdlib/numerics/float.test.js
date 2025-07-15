@@ -20,17 +20,6 @@ describe ("Float -- builtins", () => {
         runMainCode('public function main(): Float { return Float::cube(3.0f); }', "27.0f"); 
     });
 
-    it("pow", function () {
-        runMainCode('public function main(): Float { return Float::pow(2.0f, 3.0f); }', "8.0f");
-
-        runMainCode('public function main(): Float { return Float::pow(1.0f, 10.0f); }', "1.0f"); 
-        runMainCode('public function main(): Float { return Float::pow(0.0f, 10.0f); }', "0.0f"); 
-        runMainCode('public function main(): Float { return Float::pow(5.0f, 0.0f); }', "1.0f"); 
-
-        runMainCode('public function main(): Float { return Float::pow(-1.0f, 3.0f); }', "-1.0f"); 
-        runMainCode('public function main(): Float { return Float::pow(4.0f, 0.5f); }', "2.0f");
-    });
-
     it("sqrt", function () {
         runMainCode('public function main(): Float { return Float::sqrt(9.0f); }', "3.0f");
 

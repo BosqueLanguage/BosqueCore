@@ -10,7 +10,6 @@ namespace NumericOps {
     function s_intToCString(v: Int): CString = s_int_to_cstring;
     function s_intFromCString(str: CString): Int = s_int_from_cstring;
     
-    function s_floatPower(a: Float, b: Float): Float = s_float_power;
     function s_floatSqrt(a: Float): Float = s_float_sqrt;
 }
 #else
