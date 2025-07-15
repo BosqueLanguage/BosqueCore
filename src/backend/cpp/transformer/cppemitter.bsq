@@ -160,7 +160,7 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     }
 
     let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
-    if(key.startsWithString("__CoreCpp") || key === "bool") { %% Bools are not builtins
+    if(key.startsWithString("__CoreCpp") || key === "bool") { %% No backend impl for bools 
         return key;
     }
     else { 
@@ -242,11 +242,6 @@ function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): Stri
             if(nopre.startsWithString("::")) {
                 return nopre.removePrefixString("::");
             }
-            %*
-            elif(nopre.startsWithString("ᘏ")) {
-                return nopre.removePrefixString("ᘏ");
-            }
-            *%
             else {
                 return nopre;
             }
