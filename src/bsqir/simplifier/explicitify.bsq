@@ -785,12 +785,23 @@ entity ExplicitifyTransform {
                 let nc = this.processExplicitBoolConvertAsNeeded(nr);
                 return $s[cond = nc];
             }
-            | ValidateStatement => { abort; }
-            | DebugStatement => { abort; }
-            | UpdateDirectStatement => { abort; }
-            | UpdateIndirectStatement => { abort; }
+            | ValidateStatement => { 
+                abort;
+            }
+            | DebugStatement => { 
+                abort; 
+            }
+            | UpdateDirectStatement => { 
+                abort; 
+            }
+            | UpdateIndirectStatement => { 
+                abort; 
+            }
             | BlockStatement => {
                 return this.processBlockStatement[recursive]($s, vmap);
+            }
+            | BinderBlockStatement => {
+                return this.processBinderBlockStatement[recursive]($s, vmap);
             }
         }
     }
@@ -799,6 +810,13 @@ entity ExplicitifyTransform {
         let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt, vmap));
 
         return s[statements=nstmts];
+    }
+
+    recursive method processBinderBlockStatement(s: BinderBlockStatement, vmap: VarMapping): BinderBlockStatement {
+        let nbexp = this.processExpression[recursive](s.bexp);
+        let nstmts = s.statements.map[recursive]<Statement>(recursive fn(stmt) => this.processStatement[recursive](stmt, vmap));
+
+        return $s[bexp=nbexp, statements=nstmts];
     }
 
     method processInvokeParameter(param: InvokeParameterDecl): InvokeParameterDecl {

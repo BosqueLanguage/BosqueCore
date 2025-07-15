@@ -383,12 +383,19 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::AbortStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::AssertStatement => { return this.processExpression[recursive](current, $s.cond); }
             | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive](current, $s); }
+            | BSQAssembly::BinderBlockStatement => { return this.processBinderBlockStatement[recursive](current, $s); }
         }
     }
 
     recursive method processBlockStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::BlockStatement): BSQCCInfo {
         let infos = s.statements.map[recursive]<BSQCCInfo>(recursive fn(stmt) => this.processStatement[recursive](current, stmt));
         return BSQCCInfo::mergeAllInfos(infos);
+    }
+
+    recursive method processBinderBlockStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::BinderBlockStatement): BSQCCInfo {
+        let expinfos = this.processExpression[recursive](current, s.bexp);
+        let infos = s.statements.map[recursive]<BSQCCInfo>(recursive fn(stmt) => this.processStatement[recursive](current, stmt));
+        return BSQCCInfo::mergeInfos(expinfos, BSQCCInfo::mergeAllInfos(infos));
     }
 
     recursive method processBodyStatementList(current: BSQAssembly::InvokeKey, stmts: List<BSQAssembly::Statement>): BSQCCInfo {
@@ -741,10 +748,20 @@ entity MayErrorAnalysis {
             | BSQAssembly::AbortStatement => { return true; }
             | BSQAssembly::AssertStatement => { return true; }
             | BSQAssembly::BlockStatement => { return this.processBlockStatement[recursive]($s, cerrors, lerrors); }
+            | BSQAssembly::BinderBlockStatement => { return this.processBinderBlockStatement[recursive]($s, cerrors, lerrors); }
         }
     }
 
     recursive method processBlockStatement(s: BSQAssembly::BlockStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        return s.statements.someOf[recursive](recursive pred(stmt) => this.processStatement[recursive](stmt, cerrors, lerrors));
+    }
+
+    recursive method processBinderBlockStatement(s: BSQAssembly::BinderBlockStatement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
+        let experr = this.processExpression[recursive](s.bexp, cerrors, lerrors);
+        if(experr) {
+            return true; %% the binder expression may error
+        }
+
         return s.statements.someOf[recursive](recursive pred(stmt) => this.processStatement[recursive](stmt, cerrors, lerrors));
     }
 
