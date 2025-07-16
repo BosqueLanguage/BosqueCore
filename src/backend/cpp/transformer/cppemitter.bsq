@@ -1564,11 +1564,8 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
     let full_indent = String::concat("    ", indent);
 
-    %% Fwd decls for all funcs in current namespace
-    let fwddecls = String::concat(ns, emitFuncForwardDeclarations(nsdecl, ctx, full_indent));
-
     %% Emit sub-namespace declarations
-    let subns = nsdecl.subns.reduce<String>(fwddecls, fn(acc, name, decl) => {
+    let subns = nsdecl.subns.reduce<String>(ns, fn(acc, name, decl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
@@ -1689,13 +1686,18 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
         return String::concat(acc, emitNamespaceDeclTypes(nsdecl, ctx, ""));
     });
 
-    let ns_emission = asm.nsdecls.reduce<String>(String::concat(types, "//%n;// Emitted Functions%n;//%n;"), fn(acc, nsname, nsdecl) => {
+    %% Function forward decls
+    let funcfwddecls = asm.nsdecls
+        .reduce<String>(String::concat(types, "//%n;// Namespace/Type Function Forward Declarations%n;//%n;"), fn(acc, nsname, nsdecl) => {
+            let ns = String::concat("", "namespace ", String::fromCString(nsname), " {%n;");
+            return String::concat(acc, ns, emitFuncForwardDeclarations(nsdecl, ctx, "    "), "}%n;");
+        });
+
+
+    let ns_emission = asm.nsdecls.reduce<String>("//%n;// Emitted Functions%n;//%n;", fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
     });
 
-    %% TODO: Other non namespace functions
-
-    %% For CCharBuf and Unicode... will need to emit builtin functions explicitly
-
-    return String::join("%n;", ns_emission, "%n;");
+    %% We use this bold src so we can split our header and src files into two strings in analyzecpp
+    return String::concat(funcfwddecls, "𝐬𝐫𝐜", ns_emission);
 }
