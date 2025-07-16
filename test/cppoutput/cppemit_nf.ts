@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bosque_dir: string = path.join(__dirname, "../../../");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
 const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
-const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
+const cpp_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
 const cc_flags: string = "-Og -Wall -Wextra -Werror -Wno-unused-parameter -Wuninitialized -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector";
 const cc: string = "/usr/bin/g++"; // Note: This will not work on all systems :(
@@ -31,7 +31,7 @@ import { tmpdir } from 'node:os';
 import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
 import { validateStringLiteral } from "@bosque/jsbrex";
 
-function buildMainCode(assembly: Assembly, outname: string): string | undefined {
+function buildMainCode(assembly: Assembly, outname: string): [string, string] | undefined{
     const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
     const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
 
@@ -45,37 +45,54 @@ function buildMainCode(assembly: Assembly, outname: string): string | undefined 
         return undefined;
     }
 
-    let res = "";
+    let res = ["", ""];
     try {
-        res = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
+        const fname = path.join(nndir, "bsqir.bsqon");
+        let exec = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
+        const boldstr = "𝐬𝐫𝐜";
+        const boldidx = exec.indexOf(boldstr);
+        
+        res[0] = exec.substring(0, boldidx);
+        res[1] = exec.substring(boldidx + boldstr.length);
     }
     catch(e) {      
         return undefined;
     }
 
-    return validateStringLiteral(res.slice(1, -2));
+    return [validateStringLiteral(res[0].slice(1)), validateStringLiteral(res[1].slice(0, -2))];
 }
 
-function generateCPPFile(cpp: string, outdir: string): boolean {    
+function generateCPPFiles(header: string, src: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
 
-    let contents: string = "";
+    let srcbase: string = "";
     try {
-        contents = fs.readFileSync(cpp_runtime_code_path).toString() + `\n\n`;
-    }
-    catch(e) {
-        return false
-    }
-    const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
-    const new_contents: string = runtime_header.concat( cpp, contents );   
-
-    try {
-        const fname = path.join(dir, "emit.cpp");
-        fs.writeFileSync(fname, new_contents);
+        srcbase = fs.readFileSync(cpp_runtime_src_path).toString() + `\n\n`;
     }
     catch(e) {
         return false;
-    }    
+    }
+    const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
+    const src_header: string = `#include "emit.hpp"\n\n`;
+    const nheader_contents: string = runtime_header.concat( header ); 
+    const nsrc_contents: string = src_header.concat(src, srcbase);
+
+    try {
+        const headername = path.join(dir, "emit.hpp");
+        fs.writeFileSync(headername, nheader_contents);
+    }
+    catch(e) {
+        return false;
+    }
+
+    try {
+        const srcname = path.join(dir, "emit.cpp");
+        fs.writeFileSync(srcname, nsrc_contents);
+    }
+    catch(e) {
+        return false;
+    }
+
     return true;
 }
 
@@ -101,13 +118,14 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
             return `[FAILED TO BUILD CPP ASSEMBLY] \n\n ${cppasm}`;
         }
         else {
-            const cpp = buildMainCode(cppasm, nndir);
-            if(cpp === undefined) {
+            const build = buildMainCode(cppasm, nndir);
+            if(build === undefined) {
                 return `[FAILED TO BUILD MAIN CODE] \n\n ${cppasm}`;
             }
             else {
-                if(!generateCPPFile(cpp, nndir)) {
-                    return `[FAILED TO GENERATE CPP FILE] \n\n ${cpp}`;
+                const [header, src] = build;
+                if(!generateCPPFiles(header, src, nndir)) {
+                    return `[FAILED TO GENERATE CPP FILE] \n\n ${header} ${src}`;
                 }
                 else {
                     const emit_cpp_path = path.join(nndir, "emit.cpp");
@@ -117,7 +135,7 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                         execSync(`${cc} ${cc_flags} ${emit_cpp_path} -o ${executable_path}`);
                     }
                     catch {
-                        return `[CPP COMPILATION ERROR] \n\n${cpp}`
+                        return `[CPP COMPILATION ERROR] \n\n ${header} ${src} `
                     }
 
                     try {
@@ -128,7 +146,7 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                             result = (e as any).stdout.toString();
                         }
                         else {
-                            return `[C++ RUNTIME ERROR] \n\n${cpp}`;
+                            return `[C++ RUNTIME ERROR] \n\n ${header} ${src}`;
                         }
                     }
                 } 
