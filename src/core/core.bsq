@@ -83,6 +83,10 @@ __internal __typedeclable __numeric entity Float {
     function min(a: Float, b: Float): Float { return if(a < b) then a else b; }
     function max(a: Float, b: Float): Float { return if(a > b) then a else b; }
 
+    function pow(a: Float, b: Float): Float {
+        return NumericOps::s_floatPow(a, b);
+    }
+
     function square(x: Float): Float {
         return x * x;
     }

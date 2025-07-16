@@ -4,7 +4,7 @@ const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.1}, Color{1.0f, 1.0f,
 
 const shiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.5f, 0.5f, 0.5f}, 0.7f, 250.0f};
 
-const matteShiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.25f, 0.25f, 0.25f}, 0.7f, 250.f};
+const matteShiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.25f, 0.25f, 0.25f}, 0.7f, 250.0f};
 
 entity RayTracer{
     const maxDepth: Int = 5i;
@@ -69,7 +69,7 @@ entity RayTracer{
     }
 
     method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
-        return scene.lights.reduce<Color>(Color{0, 0, 0}, fn(ret, light) => {
+        return scene.lights.reduce[recursive]<Color>(Color{0, 0, 0}, fn[recursive](ret, light) => {
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
             let neatIsect = this.testRay(Ray{pos, livec}, scene);
@@ -79,10 +79,10 @@ entity RayTracer{
             }
             else {
                 let illum = Vector::dot(livec, norm);
-                let lcolor = illum > 0.0f ? Color::times(illum, light.color) : Color{0.0f, 0.0f, 0.0f};
+                let lcolor = if(illum > 0.0f) then Color::times(illum, light.color) else Color{0.0f, 0.0f, 0.0f};
                 let specular = Vector::dot(livec, Vector::norm(rd));
-                let scolor = specular > 0.0f ? Color::times(Math.Pow(specular, thing.Surface.Roughness), light.Color) : new Color(0, 0, 0);
-                return Color.Plus(ret, Color.Plus(Color.Times(thing.Surface.Diffuse, lcolor), Color.Times(thing.Surface.Specular, scolor)));
+                let scolor = if(specular > 0.0f) then Color::times(Math.Pow(specular, thing.surface.roughness), light.color) else Color{0.0f, 0.0f, 0.0f};
+                return Color::plus(ret, Color::plus(Color::times(thing.surface.diffuse, lcolor), Color::times(thing.surface.specular, scolor)));
             }
         });
     }
@@ -103,21 +103,6 @@ entity RayTracer{
             return Color.Plus(ret, new Color(.5, .5, .5));
         }
         return Color.Plus(ret, GetReflectionColor(isect.Thing, Vector.Plus(pos, Vector.Times(.001, reflectDir)), normal, reflectDir, scene, depth));
-    }
-
-    private double RecenterX(double x)
-    {
-        return (x - (screenWidth / 2.0)) / (2.0 * screenWidth);
-    }
-    
-    private double RecenterY(double y)
-    {
-        return -(y - (screenHeight / 2.0)) / (2.0 * screenHeight);
-    }
-
-    private Vector GetPoint(double x, double y, Camera camera)
-    {
-        return Vector.Norm(Vector.Plus(camera.Forward, Vector.Plus(Vector.Times(RecenterX(x), camera.Right), Vector.Times(RecenterY(y), camera.Up))));
     }
 }
 
