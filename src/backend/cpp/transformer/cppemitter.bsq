@@ -233,8 +233,14 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
     return String::fromCString(nsk.value);
 }
 
-function generateAccessorForSpecialTypeConstructor(): String {
-    return "";
+%% For constructing concepts
+function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
+    eexp: String, ctx: Context): String {
+        let econstype = emitTypeSignature(constype, false, ctx);
+        let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
+
+        return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
+            else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
@@ -519,21 +525,19 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
     let args = emitArguments(op.args, ctx);
-    let exp = emitExpression(rootexp, ctx);
+    let erootexp = emitExpression(rootexp, ctx);
 
     %% The "this" arguemnt does not exist in explicitify so we handle the coersion here (we manually added it for cpp emission)
     var thisarg: String;
     if(!ctx.asm.areTypesSame(rootexp.etype, op.resolvedType)) {
-        let rootexptype = emitTypeSignature(rootexp.etype, false, ctx);
         let roottinfo = ctx.asm.typeinfos.get(rootexp.etype.tkeystr);
-        let targettype = emitTypeKey(op.resolvedType.tkeystr, false, ctx);
-
         let slotsize = if(roottinfo.tag === CPPAssembly::Tag#Tagged) then roottinfo.slotsize - 1n else roottinfo.slotsize;
-        thisarg = if(slotsize == 0n) then String::concat(targettype, "{ &", rootexptype, "Type }")
-            else String::concat(targettype, "{ &", rootexptype, "Type, ", exp, " }"); 
+        let eexp = if(slotsize == 0n) then "" else erootexp;
+
+        thisarg = generateAccessorForSpecialTypeConstructor(op.resolvedType, rootexp.etype, eexp, ctx);
     }
     else {
-        thisarg = exp;
+        thisarg = erootexp;
     } 
 
     let resolvedtype = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
@@ -542,16 +546,16 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
         then String::concat(ns, "::")
         else ns;
     
-    let name = String::concat(resolvedns, removeCommonPrefix(ik, tk));
+    let name = removeCommonPrefix(ik, tk);
     let resolvedname = if(name.startsWithString("::")) 
-        then emitSpecialTemplate(name.removePrefixString("::")) 
-        else emitSpecialTemplate(name);
+        then String::concat(resolvedns, emitSpecialTemplate(name.removePrefixString("::")))
+        else String::concat(resolvedns, emitSpecialTemplate(name));
 
     if(args === "") {
         return String::concat(resolvedname, "(", thisarg, ")");
     }
     else {
-         return String::concat(resolvedname, "(", thisarg, ", ", args, ")");       
+        return String::concat(resolvedname, "(", thisarg, ", ", args, ")");       
     }
 }
 
@@ -842,22 +846,11 @@ function emitIfExpression(exp: CPPAssembly::IfExpression, ctx: Context): String 
     }
 }
 
-%% We are only widening to options for now
 function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, ctx: Context): String {
-    let fromtkey = exp.srctype.tkeystr;
-    let tottsig = exp.trgttype;
-    let emitexp = emitExpression(exp.exp, ctx);
+    let eexp = if(exp.exp?<CPPAssembly::LiteralNoneExpression>) then "" 
+        else emitExpression(exp.exp, ctx);
 
-    let name = emitTypeSignature(tottsig, false, ctx);
-
-    let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
-
-    if(exp.exp?<CPPAssembly::LiteralNoneExpression>) {
-        return String::concat(name, "{ &", removeCppPrefix(ttype) ," }");
-    }
-
-    return if(emitexp === "") then String::concat(name, "{ &", ttype, " }")
-        else String::concat(name, "{ &", ttype, ", ", emitexp, " }");
+    return generateAccessorForSpecialTypeConstructor(exp.trgttype, exp.srctype, eexp, ctx);
 }
 
 %% We will need this to help us take "this.f?<Int>" to "false"
@@ -873,7 +866,6 @@ function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression
     }
 }
 
-%% I believe this is always a call to access<T>()?
 function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx: Context): String {
     let tottype = emitTypeSignature(exp.trgttype, false, ctx);
 
@@ -881,12 +873,9 @@ function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx:
 }
 
 function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ctx: Context): String {
-    let eexp = emitExpression(exp.exp, ctx); 
-    let name = emitTypeSignature(exp.trgttype, false, ctx);
-    let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
+    let eexp = emitExpression(exp.exp, ctx);
 
-    return if(eexp === "") then String::concat(name, "{ &", ttype, " }")
-        else String::concat(name, "{ &", ttype, ", ", eexp, " }");
+    return generateAccessorForSpecialTypeConstructor(exp.trgttype, exp.srctype, eexp, ctx);
 }
 
 function emitAccessEnumExpression(exp: CPPAssembly::AccessEnumExpression, ctx: Context): String {
