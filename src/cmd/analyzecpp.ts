@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bosque_dir: string = path.join(__dirname, "../../../");
 const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
-const cpp_runtime_code_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
+const cpp_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
 
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
@@ -42,46 +42,63 @@ function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
-function generateCPPFile(cpp: string, outdir: string) {
+function generateCPPFiles(header: string, src: string, outdir: string) {
     Status.output("Processing existing contents of emit.cpp...\n");
     const dir = path.normalize(outdir);
 
     Status.output("    Reading Contents of Base emit.cpp File...\n");
-    let contents: string = "";
+    let srcbase: string = "";
     try {
-        contents = fs.readFileSync(cpp_runtime_code_path).toString() + `\n\n`;
+        srcbase = fs.readFileSync(cpp_runtime_src_path).toString() + `\n\n`;
     }
     catch(e) {
-        Status.error("Failed to read base emit.cpp file!\n");
+        Status.error("Failed to Read Base emit.cpp File!\n");
     }
     const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
-    const new_contents: string = runtime_header.concat( cpp, contents );   
+    const src_header: string = `#include "emit.hpp"\n\n`;
+    const nheader_contents: string = runtime_header.concat( header ); 
+    const nsrc_contents: string = src_header.concat(src, srcbase);
+
+    Status.output("    Writing to emit.hpp...\n");
+    try {
+        const headername = path.join(dir, "emit.hpp");
+        fs.writeFileSync(headername, nheader_contents);
+    }
+    catch(e) {
+        Status.error("Failed to write to emit.hpp!\n");
+    }
 
     Status.output("    Writing to emit.cpp...\n");
     try {
-        const fname = path.join(dir, "emit.cpp");
-        fs.writeFileSync(fname, new_contents);
+        const srcname = path.join(dir, "emit.cpp");
+        fs.writeFileSync(srcname, nsrc_contents);
     }
     catch(e) {
         Status.error("Failed to write to emit.cpp!\n");
     }
+
     Status.output(`    CPP emission successful -- emitted to ${dir}\n\n`);
 }
 
-function runCPPEmit(outname: string): string {
+function runCPPEmit(outname: string): [string, string] {
     Status.output("Processing IR into CPP Code...\n");
    
     const nndir = path.normalize(outname);
-    let res = ``;
+    let res = ["", ""];
     try {
         const fname = path.join(nndir, "bsqir.bsqon");
-        res = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
+        let exec = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
+        const boldstr = "𝐬𝐫𝐜";
+        const boldidx = exec.indexOf(boldstr);
+        
+        res[0] = exec.substring(0, boldidx);
+        res[1] = exec.substring(boldidx + boldstr.length);
     }
     catch(e) {      
         Status.error("Failed to write bsqir info file!\n");
     }
 
-    return validateStringLiteral(res.slice(1, -2));
+    return [validateStringLiteral(res[0].slice(1)), validateStringLiteral(res[1].slice(0, -2))];
 }
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
@@ -154,4 +171,4 @@ fs.mkdirSync(outdir);
 buildBSQONAssembly(asm, mainns, outdir);
 
 const cpp = runCPPEmit(outdir);
-generateCPPFile(cpp, outdir);
+generateCPPFiles(cpp[0], cpp[1], outdir);
