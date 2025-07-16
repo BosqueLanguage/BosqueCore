@@ -233,6 +233,10 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
     return String::fromCString(nsk.value);
 }
 
+function generateAccessorForSpecialTypeConstructor(): String {
+    return "";
+}
+
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
 function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): String {
     return fullns_list.reduce<String>(fullns, fn(acc, s) => {
@@ -532,13 +536,22 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
         thisarg = exp;
     } 
 
-    %% Remove abstract nominal we were in
-    var resolvedInvoke = emitSpecialTemplate(ik.removePrefixString(tk).removePrefixString("::"));
+    let resolvedtype = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
+    let ns = emitResolvedNamespace(ctx.fullns_list, emitNamespaceKey(resolvedtype.declaredInNS));
+    let resolvedns = if(ns !== "" && !ns.endsWithString("::")) 
+        then String::concat(ns, "::")
+        else ns;
+    
+    let name = String::concat(resolvedns, removeCommonPrefix(ik, tk));
+    let resolvedname = if(name.startsWithString("::")) 
+        then emitSpecialTemplate(name.removePrefixString("::")) 
+        else emitSpecialTemplate(name);
+
     if(args === "") {
-        return String::concat(resolvedInvoke, "(", thisarg, ")");
+        return String::concat(resolvedname, "(", thisarg, ")");
     }
     else {
-         return String::concat(resolvedInvoke, "(", thisarg, ", ", args, ")");       
+         return String::concat(resolvedname, "(", thisarg, ", ", args, ")");       
     }
 }
 
@@ -718,7 +731,19 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
-    return "";
+    let args = emitArguments(exp.args, ctx);
+    let ns = "Core::ListOps::"; %% This will always be the case 
+    let ofttype = String::concat("ᐸ", removeCppPrefix(emitTypeSignature(exp.elemtype, true, ctx)), "ᐳ");
+    switch(exp.args.size()) {
+        0n => { return String::concat(ns, "s_list_create_empty", ofttype, "()"); }
+        | 1n => { return String::concat(ns, "s_list_create_1", ofttype, "(", args, ")"); }
+        | 2n => { return String::concat(ns, "s_list_create_2", ofttype, "(", args, ")"); }
+        | 3n => { return String::concat(ns, "s_list_create_3", ofttype, "(", args, ")"); }
+        | 4n => { return String::concat(ns, "s_list_create_4", ofttype, "(", args, ")"); }
+        | 5n => { return String::concat(ns, "s_list_create_5", ofttype, "(", args, ")"); }
+        | 6n => { return String::concat(ns, "s_list_create_6", ofttype, "(", args, ")"); }
+        | _ =>  { abort; }
+    }
 }
 
 function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimaryMapExpression, ctx: Context): String {
@@ -823,7 +848,6 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
     let tottsig = exp.trgttype;
     let emitexp = emitExpression(exp.exp, ctx);
 
-    let fromtkey_size = String::fromCString(ctx.asm.typeinfos.tryGet(fromtkey)@some.slotsize.toCString()); %% This is T
     let name = emitTypeSignature(tottsig, false, ctx);
 
     let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
@@ -849,12 +873,20 @@ function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression
     }
 }
 
+%% I believe this is always a call to access<T>()?
 function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx: Context): String {
-   return emitExpression(exp.exp, ctx);
+    let tottype = emitTypeSignature(exp.trgttype, false, ctx);
+
+   return String::concat(emitExpression(exp.exp, ctx), getAccessor(exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
 }
 
 function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ctx: Context): String {
-   return emitExpression(exp.exp, ctx); 
+    let eexp = emitExpression(exp.exp, ctx); 
+    let name = emitTypeSignature(exp.trgttype, false, ctx);
+    let ttype = String::concat(emitTypeSignature(exp.srctype, false, ctx), "Type");
+
+    return if(eexp === "") then String::concat(name, "{ &", ttype, " }")
+        else String::concat(name, "{ &", ttype, ", ", eexp, " }");
 }
 
 function emitAccessEnumExpression(exp: CPPAssembly::AccessEnumExpression, ctx: Context): String {
@@ -929,7 +961,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
         | CPPAssembly::CoerceWidenTypeExpression => { return emitWidenedTypeExpression($e, ctx); }
         | CPPAssembly::CoerceNarrowTypeExpression => { return emitNarrowedTypeExpression($e, ctx); }
-        | CPPAssembly::SafeConvertExpression => { abort; }
+        | CPPAssembly::SafeConvertExpression => { return emitSafeConvertExpression($e, ctx); }
         | CPPAssembly::CreateDirectExpression => { return emitCreateDirectExpression($e, ctx); }
         | CPPAssembly::PostfixOp => { return emitPostfixOp($e, ctx); }
         | CPPAssembly::UnaryExpression => { return emitUnaryExpression[recursive]($e, ctx); }
@@ -1569,8 +1601,16 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
+    %% Emit methods after all type defintions to prevent types not being fully defined but used
+    let methods = nsdecl.alltypes
+        .reduce<String>(subns, fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let func = emitMethods(ant, tk, ctx, full_indent);
+            return String::concat(acc, func);
+    });
+
     %% Emit functions in current namespace
-    let nsfuncs = nsdecl.nsfuncs.reduce<String>(subns , fn(acc, ikey) => {
+    let nsfuncs = nsdecl.nsfuncs.reduce<String>(methods , fn(acc, ikey) => {
         return String::concat(acc, emitFunctionDecl(ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
     });
 
@@ -1656,15 +1696,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
 
-    %% Emit methods after all type defintions to prevent types not being fully defined but used
-    let methods = nsdecl.alltypes
-        .reduce<String>(method_fwddecls, fn(acc, tk) => {
-            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
-            let func = emitMethods(ant, tk, ctx, full_indent);
-            return String::concat(acc, func);
-    });
-
-    return String::concat(methods, indent, "}%n;");
+    return String::concat(method_fwddecls, indent, "}%n;");
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
@@ -1694,7 +1726,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
         });
 
 
-    let ns_emission = asm.nsdecls.reduce<String>("//%n;// Emitted Functions%n;//%n;", fn(acc, nsname, nsdecl) => {
+    let ns_emission = asm.nsdecls.reduce<String>("//%n;// Emitted Functions/Methods%n;//%n;", fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
     });
 
