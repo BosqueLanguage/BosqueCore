@@ -237,12 +237,12 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
-        let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
 
         if(ctx.asm.isNominalTypeConcept(ttype.tkeystr)) {
             return String::concat(econstype, "{ ", eexp, " }");
         }
         else {
+            let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
             return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
                 else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
         }
