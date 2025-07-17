@@ -130,7 +130,7 @@ public:
 
     // None constructor
     Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
-    
+
     template<typename T, uintptr_t I=0>
     constexpr T* access_ref() noexcept {
         return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   

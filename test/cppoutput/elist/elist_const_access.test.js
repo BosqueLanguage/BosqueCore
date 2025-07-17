@@ -3,7 +3,7 @@
 import { runMainCode } from "../../../bin/test/cppoutput/cppemit_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Exec -- elist decl and access", () => {
+describe ("CPP Emit Evaluate -- elist decl and access", () => {
     it("should exec simple elist", function () {
         runMainCode('public function main(): Int { return (|2i, true|).0; }', "2_i"); 
         runMainCode('public function main(): Bool { return (|2i, true|).1; }', "true"); 
