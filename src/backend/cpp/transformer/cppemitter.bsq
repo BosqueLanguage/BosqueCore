@@ -176,6 +176,15 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     }
 }
 
+%% This is 100% not a good way to handle this
+function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: Context): String {
+    let resolved = emitResolvedNamespace(ctx.fullns_list, emitTypeKeyValue(lts.tkeystr));
+    
+    let first = resolved.replaceAllStringOccurrences("(", "$");
+    let second = first.replaceAllStringOccurrences(")", "$");
+    return second.replaceAllStringOccurrences("->", "$");
+}
+
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
         let argssizes = $ts.entries.map<String>(fn(e) => {
@@ -187,6 +196,10 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool,
         let n = String::fromCString($ts.entries.size().toCString());
 
         return String::concat("__CoreCpp::Tuple", n, argstemplate);
+    }
+    if(ts)@<CPPAssembly::LambdaTypeSignature> {
+        %% Need to investigate whether templated lambdas are possible
+        return convertLambdaTypeSignature($ts, ctx);
     }
     else {
         return emitTypeKey(ts.tkeystr, shouldCheckTag, ctx);
@@ -920,6 +933,35 @@ function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx:
     }
 }
 
+function emitLambdaParameters(p: List<CPPAssembly::LambdaParameterSignature>, ctx: Context): String {
+    let params = p.map<String>(fn(param) => {
+        let pname = emitIdentifier(param.pname);
+        let ptype = emitTypeSignature(param.ptype, true, ctx);
+
+        return String::concat(ptype, " ", pname);
+    }); 
+
+    return String::joinAll(", ", params);
+}
+
+function emitConstructorLambdaExpression(exp: CPPAssembly::ConstructorLambdaExpression, ctx: Context): String {
+    let body = String::concat("{ ", emitBodyImplementation(exp.body, ctx, ""), " }");
+    let lambda = exp.etype@<CPPAssembly::LambdaTypeSignature>;
+    let params = emitLambdaParameters(lambda.params, ctx);
+    let rtype = emitTypeSignature(lambda.resultType, true, ctx);
+    %% Likely need to do some explicit handling of isPredLambda case
+
+    return String::concat("[&](", params, ") -> ", rtype, body);
+}
+
+function emitLambdaInvokeExpression(exp: CPPAssembly::LambdaInvokeExpression, ctx: Context): String {
+    let args = emitArguments(exp.argsinfo.args, ctx);
+    let name = emitIdentifier(exp.fname);
+
+    %% Probably will need to construct a namespace specifier here (likely from exp.lambda)
+    return String::concat(name, "( ", args, " )");
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
@@ -935,15 +977,15 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::AccessStaticFieldExpression => { return emitAccessStaticFieldExpression($e, ctx); } 
         | CPPAssembly::AccessEnumExpression => { return emitAccessEnumExpression($e, ctx); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e, ctx); }
-        %%| CPPAssembly::AccessCapturedVariableExpression => { abort; }
+        | CPPAssembly::AccessCapturedVariableExpression => { return emitVarIdentifier($e.vname); }
         | CPPAssembly::ConstructorExpression => { return emitConstructorExpression($e, ctx); }
         | CPPAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression($e, ctx); }
         %%| CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression => { abort; } 
         %%| CPPAssembly::ConstructorTypeDeclExpression => { abort; }
         %%| CPPAssembly::ConstructorTypeDeclStringExpression => { abort; } 
-        %%| CPPAssembly::ConstructorLambdaExpression => { abort; }
+        | CPPAssembly::ConstructorLambdaExpression => { return emitConstructorLambdaExpression($e, ctx); }
         %%| CPPAssembly::LetExpression => { abort; }
-        %%| CPPAssembly::LambdaInvokeExpression => { abort; } 
+        | CPPAssembly::LambdaInvokeExpression => { return emitLambdaInvokeExpression($e, ctx); } 
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
         | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }      
         %%| CPPAssembly::CallRefInvokeStaticResolveExpression => { abort; }
@@ -1220,21 +1262,37 @@ function emitBodyImplementation(body: CPPAssembly::BodyImplementation, ctx: Cont
         %% | CPPAssembly::PredicateUFBodyImplementation => { abort; }
         CPPAssembly::BuiltinBodyImplementation => { return emitBuiltinBodyImplementation($body, ctx, indent); }
         %% | CPPAssembly::SynthesisBodyImplementation => { abort; }
-        %% | CPPAssembly::ExpressionBodyImplementation => { abort; }
+        | CPPAssembly::ExpressionBodyImplementation => { 
+            return String::concat("return ", emitExpression($body.exp, ctx), ";"); 
+        }
         | CPPAssembly::StandardBodyImplementation => { return emitStandardBodyImplementation($body, ctx, indent); }
         | _ => { abort; }
     }
 }
 
-function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context): String {
+%% If we detect lambda parameters we need to return their signature and emit as a template type
+function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context): String, String {
     let all_params = params.map<String>(fn(param) => {
         let ptype = emitTypeSignature(param.ptype, true, ctx);
         let pident = emitIdentifier(param.pname);
+        let needsRValueRef = if(param.ptype)<CPPAssembly::LambdaTypeSignature> then "&&" else "";
 
-        return String::concat(ptype, " ", pident);
+        return String::concat(ptype, needsRValueRef, " ", pident);
     });
 
-    return String::joinAll(", ", all_params);
+    let lambdatypes = params
+        .filter(pred(p) => p.ptype?<CPPAssembly::LambdaTypeSignature>)
+        .reduce<List<String>>(List<String>{}, fn(acc, param) => {
+            return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx)));
+    });
+
+    return String::joinAll(", ", all_params), String::joinAll(", ", lambdatypes);
+}
+
+function genLambdaTemplate(templates: String, indent: String): String {
+    return if(templates !== "")
+        then String::concat(indent, "template <", templates, ">%n;") 
+        else "";
 }
 
 %% Determine whether to emit this param as const this* or this
@@ -1252,14 +1310,15 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let full_indent = String::concat("    ", indent);
 
     let name = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
-    let params = emitParameters(m.params, nctx);
+    let params, templates = emitParameters(m.params, nctx);
     let rtype = emitTypeSignature(m.resultType, false, ctx);
     let this_type = emitThisType(declaredIn, nctx);    
     let specialName = emitSpecialTemplate(String::fromCString(name));
-    
+
+    let template = genLambdaTemplate(templates, indent); 
     let pre = if(rtype === "bool") 
-        then String::concat(indent, rtype, " ", specialName)
-        else String::concat(indent, "const ", rtype, " ", specialName);
+        then String::concat(template, indent, rtype, " ", specialName)
+        else String::concat(template, indent, "const ", rtype, " ", specialName);
 
     var params_impl: String;
     if(params === "") {
@@ -1294,10 +1353,11 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
     let nctx = ctx.updateCurrentNamespace(func.declaredInNS, ns);
 
     let name = emitInvokeKey(ikey, nctx);
-    let params = emitParameters(func.params, nctx);
+    let params, templates = emitParameters(func.params, nctx);
     let rtype = emitTypeSignature(func.resultType, true, nctx); 
 
-    let pre: String = String::concat(indent, rtype, " ", name );
+    let template = genLambdaTemplate(templates, indent);
+    let pre: String = String::concat(template, indent, rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
 
     return String::concat(pre, params_impl, " {%n;", emitBodyImplementation(func.body, nctx, indent), indent, "}%n;");
@@ -1384,7 +1444,8 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
         let pre = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
         let rtype = emitTypeSignature(m.resultType, true, nctx);
         let this_type = emitThisType(declaredIn, nctx);
-        let params = emitParameters(m.params, nctx);
+        let params, templates = emitParameters(m.params, nctx);
+        let template = genLambdaTemplate(templates, indent);
 
         let specialName = emitSpecialTemplate(String::fromCString(pre));
 
@@ -1392,11 +1453,12 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
             else String::concat(indent, rtype, " ", specialName, "(");
 
         if(params === "") {
-            return String::concat(first, this_type, " ", emitSpecialThis(), params, ") noexcept;%n;");
+            let tmp = String::concat(template, first);
+            return String::concat(tmp, this_type, " ", emitSpecialThis(), params, ") noexcept;%n;");
         }
         else {
             let base = String::concat(first, this_type, " ");
-            return String::concat(base, emitSpecialThis(), ", ", params, ") noexcept;%n;");           
+            return String::concat(template, base, emitSpecialThis(), ", ", params, ") noexcept;%n;");           
         }
     }
     else {
@@ -1411,9 +1473,10 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, c
 
     let ikey = emitInvokeKey(decl.ikey, nctx);
     let rtype = emitTypeSignature(decl.resultType, true, nctx); 
-    let params = emitParameters(decl.params, nctx);
+    let params, templates = emitParameters(decl.params, nctx);
 
-    let first = String::concat(ident, rtype, " ", ikey);
+    let template = genLambdaTemplate(templates, ident);
+    let first = String::concat(template, ident, rtype, " ", ikey);
     return String::concat(first, "(", params, ") noexcept;%n;");
 }
 
