@@ -77,13 +77,12 @@ function emitSpecialTemplate(name: String): String {
         return name;
     }
     
-    let base = name.replaceAllStringOccurrences(" ", "");
-    let first = base.replaceAllStringOccurrences("<", "ᐸ");
-    let second = first.replaceAllStringOccurrences(",", "ᐧ");
-    let third = second.replaceAllStringOccurrences(">", "ᐳ");
-    let final = third.replaceAllStringOccurrences("::", "ᘏ");
-
-    return final;
+    return name
+        .replaceAllStringOccurrences(" ", "")
+        .replaceAllStringOccurrences("<", "ᐸ")
+        .replaceAllStringOccurrences(",", "ᐧ")
+        .replaceAllStringOccurrences(">", "ᐳ")
+        .replaceAllStringOccurrences("::", "ᘏ");
 }
 
 function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, converttype: String, exp: String): String { 
@@ -176,14 +175,17 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     }
 }
 
-%% This is 100% not a good way to handle this
 function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: Context): String {
     let resolved = emitResolvedNamespace(ctx.fullns_list, emitTypeKeyValue(lts.tkeystr));
 
-    let first = resolved.replaceAllStringOccurrences("(", "ᒥ");
-    let second = first.replaceAllStringOccurrences(")", "ᒧ");
-    let third = second.replaceAllStringOccurrences("->", "᐀ᐅ");
-    return third.replaceAllStringOccurrences(",", "ᐧ");
+    let replace = resolved
+        .removePrefixString("fn")
+        .replaceAllStringOccurrences("(", "")
+        .replaceAllStringOccurrences(")", "")
+        .replaceAllStringOccurrences("->", "$")
+        .replaceAllStringOccurrences(",", "_");
+
+    return String::concat("λ_", replace);
 }
 
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
@@ -199,7 +201,6 @@ function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool,
         return String::concat("__CoreCpp::Tuple", n, argstemplate);
     }
     if(ts)@<CPPAssembly::LambdaTypeSignature> {
-        %% Need to investigate whether templated lambdas are possible
         return convertLambdaTypeSignature($ts, ctx);
     }
     else {
@@ -945,6 +946,9 @@ function emitLambdaParameters(p: List<CPPAssembly::LambdaParameterSignature>, ct
     return String::joinAll(", ", params);
 }
 
+%%
+%% TODO: body is not going to be formatted correctly - still functionally correct but ugly
+%%
 function emitConstructorLambdaExpression(exp: CPPAssembly::ConstructorLambdaExpression, ctx: Context): String {
     let body = String::concat("{ ", emitBodyImplementation(exp.body, ctx, ""), " }");
     let lambda = exp.etype@<CPPAssembly::LambdaTypeSignature>;
@@ -1277,7 +1281,7 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
         let ptype = emitTypeSignature(param.ptype, true, ctx);
         let pident = emitIdentifier(param.pname);
         let needsRValueRef = if(param.ptype)<CPPAssembly::LambdaTypeSignature> 
-            then String::concat("ᘏ", pident, "&&") else "";
+            then String::concat("_", pident, "&&") else "";
 
         return String::concat(ptype, needsRValueRef, " ", pident);
     });
@@ -1286,7 +1290,7 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
         .filter(pred(p) => p.ptype?<CPPAssembly::LambdaTypeSignature>)
         .reduce<List<String>>(List<String>{}, fn(acc, param) => {
             let name = emitIdentifier(param.pname);
-            return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx), "ᘏ", name));
+            return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx), "_", name));
     });
 
     return String::joinAll(", ", all_params), String::joinAll(", ", lambdatypes);
