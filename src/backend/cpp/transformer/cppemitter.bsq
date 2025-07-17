@@ -179,10 +179,11 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
 %% This is 100% not a good way to handle this
 function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: Context): String {
     let resolved = emitResolvedNamespace(ctx.fullns_list, emitTypeKeyValue(lts.tkeystr));
-    
-    let first = resolved.replaceAllStringOccurrences("(", "$");
-    let second = first.replaceAllStringOccurrences(")", "$");
-    return second.replaceAllStringOccurrences("->", "$");
+
+    let first = resolved.replaceAllStringOccurrences("(", "ᒥ");
+    let second = first.replaceAllStringOccurrences(")", "ᒧ");
+    let third = second.replaceAllStringOccurrences("->", "᐀ᐅ");
+    return third.replaceAllStringOccurrences(",", "ᐧ");
 }
 
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
@@ -1275,7 +1276,8 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     let all_params = params.map<String>(fn(param) => {
         let ptype = emitTypeSignature(param.ptype, true, ctx);
         let pident = emitIdentifier(param.pname);
-        let needsRValueRef = if(param.ptype)<CPPAssembly::LambdaTypeSignature> then "&&" else "";
+        let needsRValueRef = if(param.ptype)<CPPAssembly::LambdaTypeSignature> 
+            then String::concat("ᘏ", pident, "&&") else "";
 
         return String::concat(ptype, needsRValueRef, " ", pident);
     });
@@ -1283,7 +1285,8 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
     let lambdatypes = params
         .filter(pred(p) => p.ptype?<CPPAssembly::LambdaTypeSignature>)
         .reduce<List<String>>(List<String>{}, fn(acc, param) => {
-            return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx)));
+            let name = emitIdentifier(param.pname);
+            return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx), "ᘏ", name));
     });
 
     return String::joinAll(", ", all_params), String::joinAll(", ", lambdatypes);
