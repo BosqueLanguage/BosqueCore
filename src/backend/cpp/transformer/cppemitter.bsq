@@ -239,8 +239,13 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         let econstype = emitTypeSignature(constype, false, ctx);
         let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
 
-        return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
-            else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+        if(ctx.asm.isNominalTypeConcept(ttype.tkeystr)) {
+            return String::concat(econstype, "{ ", eexp, " }");
+        }
+        else {
+            return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
+                else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+        }
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
@@ -519,25 +524,24 @@ function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc
     return String::concat(acc, ".access<", accessed, ", ", idx, ">()");
 }
 
-function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: CPPAssembly::Expression, ctx: Context): String {
+function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: String, ctx: Context): String {
     %% We don't want to do any resolution of these keys yet
     let ik = String::fromCString(op.resolvedTrgt.value);
     let tk = String::fromCString(op.resolvedType.tkeystr.value);
 
     let args = emitArguments(op.args, ctx);
-    let erootexp = emitExpression(rootexp, ctx);
 
     %% The "this" arguemnt does not exist in explicitify so we handle the coersion here (we manually added it for cpp emission)
     var thisarg: String;
-    if(!ctx.asm.areTypesSame(rootexp.etype, op.resolvedType)) {
-        let roottinfo = ctx.asm.typeinfos.get(rootexp.etype.tkeystr);
+    if(!ctx.asm.areTypesSame(op.baseType, op.resolvedType)) {
+        let roottinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
         let slotsize = if(roottinfo.tag === CPPAssembly::Tag#Tagged) then roottinfo.slotsize - 1n else roottinfo.slotsize;
-        let eexp = if(slotsize == 0n) then "" else erootexp;
+        let eexp = if(slotsize == 0n) then "" else rootexp;
 
-        thisarg = generateAccessorForSpecialTypeConstructor(op.resolvedType, rootexp.etype, eexp, ctx);
+        thisarg = generateAccessorForSpecialTypeConstructor(op.resolvedType, op.baseType, eexp, ctx);
     }
     else {
-        thisarg = erootexp;
+        thisarg = rootexp;
     } 
 
     let resolvedtype = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
@@ -663,7 +667,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
             | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
             | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType.tkeystr, none, ctx).0); }
-            | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, pop.rootExp, ctx); } %% This will not chain method calls :(
+            | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, acc, ctx); } 
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
             | CPPAssembly::PostfixAccessSomeValue => { return emitPostfixAccessSomeValue($op, acc, pop.rootExp.etype, ctx); }
         }
@@ -853,7 +857,6 @@ function emitWidenedTypeExpression(exp: CPPAssembly::CoerceWidenTypeExpression, 
     return generateAccessorForSpecialTypeConstructor(exp.trgttype, exp.srctype, eexp, ctx);
 }
 
-%% We will need this to help us take "this.f?<Int>" to "false"
 function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression, ctx: Context): String {
     let tottype = emitTypeSignature(exp.trgttype, false, ctx);
     let emitexp = emitExpression(exp.exp, ctx);   
@@ -873,9 +876,9 @@ function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx:
 }
 
 function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ctx: Context): String {
-    let eexp = emitExpression(exp.exp, ctx);
+    let eexp = emitExpression(exp.exp, ctx); 
 
-    return generateAccessorForSpecialTypeConstructor(exp.trgttype, exp.srctype, eexp, ctx);
+    return generateAccessorForSpecialTypeConstructor(exp.trgttype, exp.exp.etype, eexp, ctx);
 }
 
 function emitAccessEnumExpression(exp: CPPAssembly::AccessEnumExpression, ctx: Context): String {
