@@ -1256,7 +1256,7 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     elif(f.specialname === 'cstring_size') {
         body = '(str.len s)';
     }
-    elif(f.specialname === 's_float_power') {
+    elif(f.specialname === 's_float_pow') {
         body = '(^ a b)';
     }
     elif(f.specialname === 's_float_sqrt') {
