@@ -4,8 +4,20 @@ namespace Core;
 #else
 #if SMT_LIBS
 namespace ListOps {
-    function s_list_empty<T>(l: List<T>): Bool = s_list_empty;
-    function s_list_size<T>(l: List<T>): Nat = s_list_size;
+    function s_list_empty<T>(l: List<T>): Bool {
+        return l.value?<Vector0<T>>;
+    }
+
+    function s_list_size<T>(l: List<T>): Nat {
+        let ll = l.value;
+        match(ll) {
+            | Vector0 => { return 0; }
+            | Vector1 => { return 1; }
+            | Vector2 => { return 2; }
+            | Vector3 => { return 3; }
+            | _ { assume false; }
+        }
+    }
 
     function s_list_front<T>(l: List<T>): T = s_list_front;
     function s_list_back<T>(l: List<T>): T = s_list_back;
@@ -57,6 +69,14 @@ namespace ListOps {
     function s_sort_key<T: keytype>(l: List<T>): List<T> = s_sort_key_uniqueify;
     function s_sorted_key_merge_unique<T: keytype>(l1: List<T>, l2: List<T>): List<T> = s_sorted_key_merge;
     function s_sort_key_uniqueify<T: keytype>(l: List<T>): List<T> = s_sort_key_uniqueify;
+
+    datatype Vector<T>
+    of
+    | Vector0 { }
+    | Vector1 { field i0: T }
+    | Vector2 { field i0: T; field i1: T }
+    | Vector3 { field i0: T; field i1: T; field i2: T }
+    ;
 }
 #else
 #endif %% SMT_LIBS
