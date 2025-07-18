@@ -1,5 +1,10 @@
 namespace CPPAssembly;
 
+entity LambdaParameterSignature {
+    field pname: Identifier;
+    field ptype: TypeSignature;
+}
+
 datatype TypeSignature using {
     %% Source info would be good
     field tkeystr: TypeKey;
@@ -7,6 +12,11 @@ datatype TypeSignature using {
 of
 VoidTypeSignature { }
 | NominalTypeSignature { }
+| LambdaTypeSignature {
+    field isPredLambda: Bool;
+    field params: List<LambdaParameterSignature>;
+    field resultType: TypeSignature;
+}
 | EListTypeSignature {
     field entries: List<TypeSignature>;
 }
@@ -158,6 +168,10 @@ entity AccessVariableExpression provides Expression {
     field layouttype: TypeSignature;
 }
 
+entity AccessCapturedVariableExpression provides Expression {
+    field vname: VarIdentifier;
+}
+
 entity AccessStaticFieldExpression provides Expression {
     field stype: NominalTypeSignature;
     field resolvedname: String; 
@@ -275,6 +289,19 @@ BinLogicAndExpression { }
 | BinLogicIFFExpression { }
 ;
 
+entity LambdaInvokeArgumentInfo {
+    field name: Identifier;
+    field args: List<Expression>;
+}
+
+entity LambdaInvokeExpression provides Expression {
+    field isCapturedLambda: Bool; %% Necessary?
+    field lambda: LambdaTypeSignature;
+
+    field fname: Identifier;
+    field argsinfo: LambdaInvokeArgumentInfo;
+}
+
 concept ConstructorExpression provides Expression {
 }
 
@@ -290,6 +317,12 @@ entity ConstructorStdExpression provides ConstructorPrimaryExpression {
 
 entity ConstructorEListExpression provides ConstructorExpression {
     field args: List<Expression>;
+}
+
+entity ConstructorLambdaExpression provides Expression {
+    %%most of the info is in the etype field (which is a LambdaTypeSignature)
+
+    field body: BodyImplementation;
 }
 
 datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPrimaryExpression using {
