@@ -878,7 +878,7 @@ entity SMTTransformer {
             else {
                 let accessop = SMTAssembly::UntermifyExpression{ onarg, this.transformStdTypeToSMT(srctype), this.transformStdTypeToSMT(itest.ttype) };
                 let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(itest.ttype), chkexp, nctx.errCtr, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(itest.ttype), accessop}};
-                return nctx.addError(sinfo), this.wrapOperationResultWErr(srctype, chkedop, obinds);
+                return nctx.addError(sinfo), this.wrapOperationResultWErr(itest.ttype, chkedop, obinds);
             }
         }
         else {
@@ -891,7 +891,7 @@ entity SMTTransformer {
             }
             else {
                 let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(itest.ttype), chkexp, nctx.errCtr, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(itest.ttype), onarg}};
-                return nctx.addError(sinfo), this.wrapOperationResultWErr(srctype, chkedop, obinds);
+                return nctx.addError(sinfo), this.wrapOperationResultWErr(itest.ttype, chkedop, obinds);
             }
         }
     }
@@ -1021,7 +1021,6 @@ entity SMTTransformer {
             .filter(pred(aa) => aa?some)
             .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
         
-
             let specialrec = /\(sccerr, !ctx.isSCCInternal);
             let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
             if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
