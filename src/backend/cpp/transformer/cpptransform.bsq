@@ -131,6 +131,16 @@ entity CPPTransformer {
             let args = $tsig.entries.map<CPPAssembly::TypeSignature>(fn(ts) => this.convertTypeSignature[recursive](ts));
             return CPPAssembly::EListTypeSignature{ tk, args };
         }
+        if(tsig)@<BSQAssembly::LambdaTypeSignature> {
+            let params = $tsig.params.map<CPPAssembly::LambdaParameterSignature>(fn(lps) => 
+                CPPAssembly::LambdaParameterSignature { 
+                    CPPTransformNameManager::convertIdentifier(lps.pname), this.convertTypeSignature[recursive](lps.ptype)
+                }
+            );
+            let resultType = this.convertTypeSignature[recursive]($tsig.resultType);
+
+            return CPPAssembly::LambdaTypeSignature{ tk, $tsig.isPredLambda, params, resultType };
+        }
         else {
             return CPPAssembly::NominalTypeSignature{ tk };
         }
@@ -529,6 +539,36 @@ entity CPPTransformer {
         }
     }
 
+    method transformConstructorLambdaExpression(exp: BSQAssembly::ConstructorLambdaExpression): CPPAssembly::ConstructorLambdaExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let body = this.transformBodyToCpp(exp.body);
+
+        return CPPAssembly::ConstructorLambdaExpression{ etype, body };
+    }
+
+    method transformLambdaInvokeArgumentInfo(lia: BSQAssembly::LambdaInvokeArgumentInfo): CPPAssembly::LambdaInvokeArgumentInfo {
+        let name = CPPTransformNameManager::convertIdentifier(lia.name);
+        let args = lia.resolvedargs@some.map<CPPAssembly::Expression>(fn(arg) => this.transformExpressionToCpp(arg));
+
+        return CPPAssembly::LambdaInvokeArgumentInfo{ name, args };
+    }
+
+    method transformLambdaInvokeExpression(exp: BSQAssembly::LambdaInvokeExpression): CPPAssembly::LambdaInvokeExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let lambda = this.convertTypeSignature(exp.lambda);
+        let fname = CPPTransformNameManager::convertIdentifier(exp.fname);
+        let argsinfo = this.transformLambdaInvokeArgumentInfo(exp.argsinfo);
+
+        return CPPAssembly::LambdaInvokeExpression{ etype, exp.isCapturedLambda, lambda@<CPPAssembly::LambdaTypeSignature>, fname, argsinfo };
+    }
+
+    method transformAccessCapturedVariableExpression(exp: BSQAssembly::AccessCapturedVariableExpression): CPPAssembly::AccessCapturedVariableExpression {
+        let etype = this.convertTypeSignature(exp.etype);       
+        let vname = CPPTransformNameManager::convertVarIdentifier(exp.vname);
+
+        return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
@@ -544,15 +584,15 @@ entity CPPTransformer {
             | BSQAssembly::AccessStaticFieldExpression => { return this.transformAccessStaticFieldExpression($expr); }
             | BSQAssembly::AccessEnumExpression => { return this.transformAccessEnumExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }
-            | BSQAssembly::AccessCapturedVariableExpression => { abort; }
+            | BSQAssembly::AccessCapturedVariableExpression => { return this.transformAccessCapturedVariableExpression($expr); }
             | BSQAssembly::ConstructorExpression => { return this.transformConstructorExpression($expr); }
             | BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($expr); }
             | BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
-            | BSQAssembly::ConstructorLambdaExpression => { abort; }
+            | BSQAssembly::ConstructorLambdaExpression => { return this.transformConstructorLambdaExpression($expr); }
             | BSQAssembly::LetExpression => { abort; }
-            | BSQAssembly::LambdaInvokeExpression => { abort; }
+            | BSQAssembly::LambdaInvokeExpression => { return this.transformLambdaInvokeExpression($expr); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
             | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }
             | BSQAssembly::CallTypeFunctionSpecialExpression => { abort; }
@@ -741,12 +781,17 @@ entity CPPTransformer {
 
     method transformBodyToCpp(body: BSQAssembly::BodyImplementation): CPPAssembly::BodyImplementation {
         match(body)@ {
-            BSQAssembly::StandardBodyImplementation => { 
+            BSQAssembly::AbstractBodyImplementation => { abort; }
+            | BSQAssembly::PredicateUFBodyImplementation => { abort; }
+            | BSQAssembly::BuiltinBodyImplementation => { return CPPAssembly::BuiltinBodyImplementation{ $body.builtin }; }
+            | BSQAssembly::SynthesisBodyImplementation => { abort; } 
+            | BSQAssembly::ExpressionBodyImplementation => { 
+                return CPPAssembly::ExpressionBodyImplementation{ this.transformExpressionToCpp($body.exp) }; 
+            } 
+            | BSQAssembly::StandardBodyImplementation => { 
                 let cppstmts = this.transformStatementListToCpp($body.statements);
                 return CPPAssembly::StandardBodyImplementation{ cppstmts };
             }
-            | BSQAssembly::BuiltinBodyImplementation => { return CPPAssembly::BuiltinBodyImplementation{ $body.builtin }; }
-            | _ => { abort; }
         }
     }
 

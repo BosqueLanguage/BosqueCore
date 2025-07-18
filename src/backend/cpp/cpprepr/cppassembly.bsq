@@ -13,7 +13,8 @@ const basicNominalTypeKeyRE: CRegex = /(${CPPAssembly::namespaceKeyRE}'::')?[_a-
 const nominalTypeKeyRE: CRegex = /(${CPPAssembly::basicNominalTypeKeyRE})/c; %% Will need to handle special scoped type key?
 const elistTypeKeyRE: CRegex = /'(|'.*'|)'/c;
 
-const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}|${CPPAssembly::elistTypeKeyRE}/c;
+const lambdaTypeKeyRE: CRegex = /('fn'|'pred') '('.*')' '->' (${CPPAssembly::nominalTypeKeyRE}|${CPPAssembly::elistTypeKeyRE})/c;
+const typeKeyRE: CRegex = /${CPPAssembly::nominalTypeKeyRE}|${CPPAssembly::elistTypeKeyRE}|${CPPAssembly::lambdaTypeKeyRE}/c;
 type TypeKey = CString of CPPAssembly::typeKeyRE;
 
 %% Optional '<' * '>' allows support for resolved templates on functions or methods
