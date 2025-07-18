@@ -759,9 +759,14 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
+    let ttype = ctx.asm.lookupNominalTypeDeclaration(exp.elemtype.tkeystr);
+    let nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
+
     let args = emitArguments(exp.args, ctx);
-    let ns = "Core::ListOps::"; %% This will always be the case 
-    let ofttype = String::concat("ᐸ", removeCppPrefix(emitTypeSignature(exp.elemtype, true, ctx)), "ᐳ");
+    let ns = "Core::ListOps::"; %% So long as lists impl stays in Core::ListOps this will hold 
+
+    let name = removeCppPrefix(emitTypeSignature(exp.elemtype, true, nctx));
+    let ofttype = String::concat("ᐸ", name, "ᐳ");
     switch(exp.args.size()) {
         0n => { return String::concat(ns, "s_list_create_empty", ofttype, "()"); }
         | 1n => { return String::concat(ns, "s_list_create_1", ofttype, "(", args, ")"); }

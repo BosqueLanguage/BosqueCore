@@ -23,7 +23,7 @@ describe ("CPP Emit Evaluate List -- append/concat", () => {
         runMainCode('public function main(): Nat { return List<Int>{1i, 2i}.prepend(List<Int>{}).size(); }', "2_n");
         runMainCode('public function main(): Int { return List<Int>{1i, 2i}.prepend(List<Int>{}).back(); }', "2_i");
         runMainCode('public function main(): Nat { return List<Int>{}.prepend(List<Int>{1i, 2i}).size(); }', "2_n"); 
-        runMainCode('public function main(): Int { return List<Int>{}.prepend(List<Int>{1i, 2i}).front(); }', "1_o");
+        runMainCode('public function main(): Int { return List<Int>{}.prepend(List<Int>{1i, 2i}).front(); }', "1_i");
 
         runMainCode('public function main(): Nat { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).size(); }', "3_n"); 
         runMainCode('public function main(): Int { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).back(); }', "1_i"); 
