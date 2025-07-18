@@ -102,7 +102,6 @@ namespace CPPTransformNameManager {
             }            
         }
 
-        %% I THINK this is unreachable
         %% We need to always update the nsdecls map as sub namespaces may change (this handles multiple nsdecls at same depth)
         if(!nsdecls.has(ns_name)) {
             return nsdecls.insert(ns_name, updated_nsdecl);

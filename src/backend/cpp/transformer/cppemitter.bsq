@@ -185,7 +185,9 @@ function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: 
         .replaceAllStringOccurrences("(", "")
         .replaceAllStringOccurrences(")", "")
         .replaceAllStringOccurrences("->", "$")
-        .replaceAllStringOccurrences(",", "_")
+        .replaceAllStringOccurrences(">", "ᐳ")
+        .replaceAllStringOccurrences("<", "ᐸ")
+        .replaceAllStringOccurrences(",", "ᐧ")
         .replaceAllStringOccurrences(" ", "");
 
     return String::concat("λ_", replace);
@@ -1706,7 +1708,15 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
             return String::concat(acc, fwddecl);
     });
 
-    return String::concat(subns_fwddecls, ant_fwddecls, indent, "}%n;");
+    let collections = nsdecl.alltypes
+        .filter(pred(tk) => ctx.asm.collections.has(tk))
+        .reduce<String>(ant_fwddecls, fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let fwddecl = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent); 
+            return String::concat(acc, fwddecl);
+    });
+
+    return String::concat(subns_fwddecls, collections, indent, "}%n;");
 }
 
 %%
@@ -1721,7 +1731,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
     });
 
-    %% Emit enums first as they are just integers
+    %% Emit enums and collections first
     let enums = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.enums.has(tk))
         .reduce<String>(String::concat(subns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
@@ -1732,7 +1742,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 
     %% Value types
     let values = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk))
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk))
         .reduce<String>(enums, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
@@ -1741,7 +1751,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 
     %% Ref and Tagged types
     let other = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value && !ctx.asm.collections.has(tk))
         .reduce<String>(String::concat(values, "//%n;// Ref and Tagged Type Definitions%n;//%n;"), fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
@@ -1773,7 +1783,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     %% Non-value type forward decls
     let fwddecls = asm.nsdecls
-        .reduce<String>(String::concat(primitive_typeinfos, "//%n;// Ref and Tagged Type Forward Declarations%n;//%n;"),
+        .reduce<String>(String::concat(primitive_typeinfos, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
         fn(acc, nsname, nsdecl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
     });
