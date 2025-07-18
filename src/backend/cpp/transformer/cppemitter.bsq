@@ -159,7 +159,7 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     }
 
     let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
-    if(key.startsWithString("__CoreCpp") || key === "bool") { %% No backend impl for bools 
+    if(key.startsWithString("__CoreCpp")) {  
         return key;
     }
     else { 
@@ -268,6 +268,14 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         }
 }
 
+function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
+    let mdecl = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
+    let mdeclname = emitTypeKey(declaredIn, false, ctx);
+    let basename = String::fromCString(m.value.removePrefixString(declaredIn.value).removePrefixString('::'));
+
+    return String::concat(mdeclname, "ᘏ", emitSpecialTemplate(basename));
+}
+
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
 function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): String {
     return fullns_list.reduce<String>(fullns, fn(acc, s) => {
@@ -296,7 +304,7 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
         | "__CoreCpp::Nat" => { return String::concat(val, "_n"); }
         | "__CoreCpp::BigNat" => { return String::concat(val, "_N"); }
         | "__CoreCpp::Float" => { return String::concat(val, "_f"); }
-        | "bool" => { return val; }
+        | "__CoreCpp::Bool" => { return val; }
         | _ => { abort; }
     }
 }
@@ -570,16 +578,12 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
         then String::concat(ns, "::")
         else ns;
     
-    let name = removeCommonPrefix(ik, tk);
-    let resolvedname = if(name.startsWithString("::")) 
-        then String::concat(resolvedns, emitSpecialTemplate(name.removePrefixString("::")))
-        else String::concat(resolvedns, emitSpecialTemplate(name));
-
+    let name = generateMethodName(op.resolvedTrgt, op.resolvedType.tkeystr, ctx);
     if(args === "") {
-        return String::concat(resolvedname, "(", thisarg, ")");
+        return String::concat(name, "(", thisarg, ")");
     }
     else {
-        return String::concat(resolvedname, "(", thisarg, ", ", args, ")");       
+        return String::concat(name, "(", thisarg, ", ", args, ")");       
     }
 }
 
@@ -1326,14 +1330,14 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     let full_indent = String::concat("    ", indent);
 
-    let name = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
+    let name = generateMethodName(m.ikey, declaredIn, nctx);
     let params, templates = emitParameters(m.params, nctx);
     let rtype = emitTypeSignature(m.resultType, false, ctx);
     let this_type = emitThisType(declaredIn, nctx);    
-    let specialName = emitSpecialTemplate(String::fromCString(name));
+    let specialName = emitSpecialTemplate(name);
 
     let template = genLambdaTemplate(templates, indent); 
-    let pre = if(rtype === "bool") 
+    let pre = if(rtype === "__CoreCpp::Bool") 
         then String::concat(template, indent, rtype, " ", specialName)
         else String::concat(template, indent, "const ", rtype, " ", specialName);
 
@@ -1458,16 +1462,14 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
 
     if(m)@<CPPAssembly::MethodDeclStatic> {
-        let pre = m.ikey.value.removePrefixString(declaredIn.value).removePrefixString('::');
+        let name = generateMethodName(m.ikey, declaredIn, nctx);
         let rtype = emitTypeSignature(m.resultType, true, nctx);
         let this_type = emitThisType(declaredIn, nctx);
         let params, templates = emitParameters(m.params, nctx);
         let template = genLambdaTemplate(templates, indent);
 
-        let specialName = emitSpecialTemplate(String::fromCString(pre));
-
-        let first = if(rtype !== "bool") then String::concat(indent, "const ", rtype, " ", specialName, "(")
-            else String::concat(indent, rtype, " ", specialName, "(");
+        let first = if(rtype !== "__CoreCpp::Bool") then String::concat(indent, "const ", rtype, " ", name, "(")
+            else String::concat(indent, rtype, " ", name, "(");
 
         if(params === "") {
             let tmp = String::concat(template, first);

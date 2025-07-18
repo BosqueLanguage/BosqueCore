@@ -13,7 +13,7 @@ namespace CPPTransformNameManager {
     function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
         switch(tk.value) {
             'None' => { return CPPAssembly::TypeKey::from('__CoreCpp::None'); }
-            | 'Bool' => { return CPPAssembly::TypeKey::from('bool'); }
+            | 'Bool' => { return CPPAssembly::TypeKey::from('__CoreCpp::Bool'); }
             | 'Nat' => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
             | 'Int' => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
             | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
@@ -27,7 +27,7 @@ namespace CPPTransformNameManager {
     function revertTypeKey(tk: CPPAssembly::TypeKey): BSQAssembly::TypeKey {
         switch(tk.value) {
             'None' => { return BSQAssembly::TypeKey::from('None'); }
-            | 'bool' => { return BSQAssembly::TypeKey::from('Bool'); }
+            | '__CoreCpp::Bool' => { return BSQAssembly::TypeKey::from('Bool'); }
             | '__CoreCpp::Nat' => { return BSQAssembly::TypeKey::from('Nat'); }
             | '__CoreCpp::Int' => { return BSQAssembly::TypeKey::from('Int'); }
             | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }

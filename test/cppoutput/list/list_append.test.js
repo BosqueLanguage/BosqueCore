@@ -39,7 +39,7 @@ describe ("CPP Emit Evaluate List -- append/concat", () => {
         runMainCode('public function main(): Int { return List<Int>::concat(List<Int>{}, List<Int>{1i, 2i}).front(); }', "1_i");
 
         runMainCode('public function main(): Nat { return List<Int>::concat(List<Int>{1i}, List<Int>{3i, 2i}).size(); }', "3_n"); 
-        runMainCode('public function main(): Int { return List<Int>::concat(List<Int>{1i}, List<Int>{3i, 2i}).back(); }', "3_i"); 
+        runMainCode('public function main(): Int { return List<Int>::concat(List<Int>{1i}, List<Int>{3i, 2i}).back(); }', "2_i"); 
         runMainCode('public function main(): Int { return List<Int>::concat(List<Int>{1i}, List<Int>{3i, 2i}).front(); }', "1_i"); 
     });
 
