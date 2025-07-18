@@ -1,6 +1,6 @@
 declare namespace Main;
 
-const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.1}, Color{1.0f, 1.0f, 1.0f}, 0.5f, 150.0f};
+const checkerBoard: Surface = Surface{Color{0.02f, 0.0f, 0.1f}, Color{1.0f, 1.0f, 1.0f}, 0.5f, 150.0f};
 
 const shiny: Surface = Surface{Color{1.0f, 1.0f, 1.0f}, Color{0.5f, 0.5f, 0.5f}, 0.7f, 250.0f};
 
@@ -11,9 +11,9 @@ entity RayTracer{
 
     function createDefaultScene(): Scene {
         let things = List<SceneObject>{
-            Sphere{Vector{-0.5f, 1.0f, 1.5f}, 0.5f, Main::matteShiny},
-            Sphere{Vector{0.0f, 1.0f, -0.25f}, 1.0f, Main::shiny},
-            Plane{Vector{0.0f, 1.0f, 0.0f}, 0.0f, Main::checkerBoard}
+            Sphere{Main::matteShiny, Vector{-0.5f, 1.0f, 1.5f}, 0.5f},
+            Sphere{Main::shiny, Vector{0.0f, 1.0f, -0.25f}, 1.0f},
+            Plane{Main::checkerBoard, Vector{0.0f, 1.0f, 0.0f}, 0.0f}
         };
 
         let lights = List<Light>{
@@ -69,7 +69,7 @@ entity RayTracer{
     }
 
     method getNaturalColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene): Color {
-        return scene.lights.reduce[recursive]<Color>(Color{0, 0, 0}, fn[recursive](ret, light) => {
+        return scene.lights.reduce[recursive]<Color>(Color{0.0f, 0.0f, 0.0f}, recursive fn(ret, light) => {
             let ldis = Vector::minus(light.pos, pos);
             let livec = Vector::norm(ldis);
             let neatIsect = this.testRay(Ray{pos, livec}, scene);
@@ -81,28 +81,28 @@ entity RayTracer{
                 let illum = Vector::dot(livec, norm);
                 let lcolor = if(illum > 0.0f) then Color::times(illum, light.color) else Color{0.0f, 0.0f, 0.0f};
                 let specular = Vector::dot(livec, Vector::norm(rd));
-                let scolor = if(specular > 0.0f) then Color::times(Math.Pow(specular, thing.surface.roughness), light.color) else Color{0.0f, 0.0f, 0.0f};
-                return Color::plus(ret, Color::plus(Color::times(thing.surface.diffuse, lcolor), Color::times(thing.surface.specular, scolor)));
+                let scolor = if(specular > 0.0f) then Color::times(Float::pow(specular, thing.surface.roughness), light.color) else Color{0.0f, 0.0f, 0.0f};
+                return Color::plus(ret, Color::plus(Color::ctimes(thing.surface.diffuse, lcolor), Color::ctimes(thing.surface.specular, scolor)));
             }
         });
     }
 
     method getReflectionColor(thing: SceneObject, pos: Vector, norm: Vector, rd: Vector, scene: Scene, depth: Int): Color {
-        return Color::times(thing.surface.reflect, this.traceRay(Ray{pos, rd}, scene, depth + 1));
+        return Color::times(thing.surface.reflect, this.traceRay(Ray{pos, rd}, scene, depth + 1i));
     }
 
     method shade(isect: ISect, scene: Scene, depth: Int): Color {
-        Vector d = isect.Ray.Dir;
-        Vector pos = Vector.Plus(Vector.Times(isect.Dist, isect.Ray.Dir), isect.Ray.Start);
-        Vector normal = isect.Thing.Normal(pos);
-        Vector reflectDir = Vector.Minus(d, Vector.Times(2 * Vector.Dot(normal, d), normal));
-        Color ret = Color.DefaultColor;
-        ret = Color.Plus(ret, GetNaturalColor(isect.Thing, pos, normal, reflectDir, scene));
-        if(depth >= MaxDepth)
-        {
-            return Color.Plus(ret, new Color(.5, .5, .5));
+        let d = isect.ray.dir;
+        let pos = Vector::plus(Vector::times(isect.dist, isect.ray.dir), isect.ray.start);
+        let normal = isect.thing.normal(pos);
+        let reflectDir = Vector::minus(d, Vector::times(2.0f * Vector::dot(normal, d), normal));
+        let ret = Color::plus(Color::defaultColor, this.getNaturalColor(isect.thing, pos, normal, reflectDir, scene));
+
+        if(depth >= RayTracer::maxDepth){
+            return Color::plus(ret, Color{0.5f, 0.5f, 0.5f});
         }
-        return Color.Plus(ret, GetReflectionColor(isect.Thing, Vector.Plus(pos, Vector.Times(.001, reflectDir)), normal, reflectDir, scene, depth));
+
+        return Color::plus(ret, this.getReflectionColor(isect.thing, Vector::plus(pos, Vector::times(0.001f, reflectDir)), normal, reflectDir, scene, depth));
     }
 }
 
@@ -228,7 +228,7 @@ concept SceneObject {
 
     method normal(pos: Vector): Vector {
         if(this)@<Sphere> {
-            return Vector::norm(Vector::minus($this.pos, $this.center));
+            return Vector::norm(Vector::minus(pos, $this.center));
         }
         else {
             return this@<Plane>.norm;
@@ -286,3 +286,8 @@ entity Scene {
     field camera: Camera;
 }
 
+public function render1(): Color {
+    let sc = RayTracer::createDefaultScene();
+
+    return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
+}
