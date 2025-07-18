@@ -178,12 +178,15 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
 function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: Context): String {
     let resolved = emitResolvedNamespace(ctx.fullns_list, emitTypeKeyValue(lts.tkeystr));
 
-    let replace = resolved
-        .removePrefixString("fn")
+    let base = if(resolved.startsWithString("fn")) 
+        then resolved.removePrefixString("fn") 
+        else resolved.removePrefixString("pred");
+    let replace = base
         .replaceAllStringOccurrences("(", "")
         .replaceAllStringOccurrences(")", "")
         .replaceAllStringOccurrences("->", "$")
-        .replaceAllStringOccurrences(",", "_");
+        .replaceAllStringOccurrences(",", "_")
+        .replaceAllStringOccurrences(" ", "");
 
     return String::concat("λ_", replace);
 }
