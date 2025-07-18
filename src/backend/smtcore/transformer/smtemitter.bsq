@@ -180,6 +180,12 @@ recursive function emitUntermifyExpression(e: SMTAssembly::UntermifyExpression, 
     }
 }
 
+recursive function emitCreateDirectExpression(e: SMTAssembly::CreateDirectExpression, eev: SMTEmitterEnv): CString {
+    let consname = SMTNameManager::generateStructConstructorName(e.ctype);
+
+    return CString::concat('(', consname, ' ', emitSafeExpression[recursive](e.exp, eev), ')');
+}
+
 function emitLiteralTypeDeclExpression(v: SMTAssembly::LiteralTypeDeclExpression): CString {
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
     let vv = emitConstantExpression(v.value);
@@ -191,8 +197,8 @@ recursive function emitConstructorListSingletonExpression(v: SMTAssembly::Constr
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
 
     if(v.args.empty()) {
-        let scons = CString::concat('(as seq.empty (Seq ', v.oftype.value, '))');
-        return CString::concat('(', consname, ' ', scons, ')');
+        let vcons = CString::concat('ListOps@s_list_create_empty<', v.oftype.value, '>');
+        return vcons;
     }
     else {
         if(v.args.isSingle()) {
@@ -764,6 +770,7 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e); }
         | SMTAssembly::TermifyExpression => { return emitTermifyExpression[recursive]($e, eev); }
         | SMTAssembly::UntermifyExpression => { return emitUntermifyExpression[recursive]($e, eev); }
+        | SMTAssembly::CreateDirectExpression => { return emitCreateDirectExpression[recursive]($e, eev); }
         | SMTAssembly::LiteralTypeDeclExpression => { return emitLiteralTypeDeclExpression($e); }
         | SMTAssembly::ConstructorPrimaryExpression => { return emitConstructorPrimaryExpression[recursive]($e, eev); }
         | SMTAssembly::ConstructorEListExpression => { return emitConstructorEListExpression[recursive]($e, eev); }
@@ -1243,8 +1250,6 @@ function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CStri
 }
 
 function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: Nat): CString {
-    let eev = SMTEmitterEnv{trgterr, f.resultType.rtype};
-
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -1262,210 +1267,8 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     elif(f.specialname === 's_float_sqrt') {
         body = '(^ a 0.5)';
     }
-    elif(f.specialname === 's_list_empty') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let consname = SMTNameManager::generateStructConstructorName(f.params.single().ptype);
-        body = CString::concat('(= l (', consname, ' (as seq.empty (Seq ', oftype, '))))');
-    }
-    elif(f.specialname === 's_list_size') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
-        body = CString::concat('(seq.len (', fname, ' l))');
-    }
-    elif(f.specialname === 's_list_front') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
-        body = CString::concat('(seq.nth (', fname, ' l) 0)');
-    }
-    elif(f.specialname === 's_list_back') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.single().ptype, 'value');
-        body = CString::concat('(let ((lseq (', fname, ' l))) (seq.nth lseq (- (seq.len lseq) 1)))');
-    }
-    elif(f.specialname === 's_list_get') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value');
-        body = CString::concat('(seq.nth (', fname, ' l) ', 'idx)');
-    }
-    elif(f.specialname === 's_list_set_front') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        let sseq = CString::concat('(', fname, ' l)');
-
-        let nval = CString::concat('(seq.unit v)');
-        let sfx = CString::concat('(seq.extract ', sseq, ' 1 (- (seq.len ', sseq, ') 1))');
-        let elems = CString::concat(nval, ' ', sfx);
-
-        body = CString::concat('(', consname, ' (seq.++ ', elems, '))');
-    }
-    elif(f.specialname === 's_list_set_back') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        let sseq = CString::concat('(', fname, ' l)');
-
-        let pfx = CString::concat('(seq.extract ', sseq, ' 0 (- (seq.len ', sseq, ') 1))');
-        let nval = CString::concat('(seq.unit v)');
-        let elems = CString::concat(pfx, ' ', nval);
-
-        body = CString::concat('(', consname, ' (seq.++ ', elems, '))');
-    }
-    elif(f.specialname === 's_list_set') {
-        let fname = SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        let sseq = CString::concat('(', fname, ' l)');
-
-        let pfx = CString::concat('(seq.extract ', sseq, ' 0 idx)');
-        let nval = CString::concat('(seq.unit v)');
-        let sfx = CString::concat('(seq.extract ', sseq, ' (+ idx 1) (- (seq.len ', sseq, ') idx))');
-        let elems = CString::concat(pfx, ' ', nval, ' ', sfx);
-
-        body = CString::concat('(', consname, ' (seq.++ ', elems, '))');
-    }
-    elif(f.specialname === 's_list_create_empty') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        let scons = CString::concat('(as seq.empty (Seq ', oftype, '))');
-        body = CString::concat('(', consname, ' ', scons, ')');
-    }
-    elif(f.specialname === 's_list_concat2') {
-        let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-
-        let seq1 = CString::concat('(', fname, ' l1)');
-        let seq2 = CString::concat('(', fname, ' l2)');
-        let seqapp = CString::concat('(seq.++ ', seq1, ' ', seq2, ')');
-        body = CString::concat('(', consname, ' ', seqapp, ')');
-    }
-    elif(f.specialname === 's_list_push_back') {
-        let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        body = CString::concat('(', consname, ' (seq.++ (', fname, ' l) (seq.unit v)))');
-    }
-    elif(f.specialname === 's_list_push_front') {
-        let fname = SMTNameManager::generateStructFieldName(f.resultType.rtype, 'value');
-        let consname = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-        body = CString::concat('(', consname, ' (seq.++ (seq.unit v) (', fname, ' l)))');
-    }
-    elif(f.specialname === 's_list_allof') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (p vv)))');
-            body = CString::concat('(seq.foldl ', rpred, ' true ', lseq, ')');
-        }
-        else {
-            let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (@Result-value vvres))))))';
-            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok true) ', lseq, ')');
-        }
-    }
-    elif(f.specialname === 's_list_noneof') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (and acc (not (p vv))))');
-            body = CString::concat('(seq.foldl ', rpred, ' true ', lseq, ')');
-        }
-        else {
-            let bop = '(ite (not (= (@Result-ok true) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (and (@Result-value acc) (not (@Result-value vvres)))))))';
-            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok true) ', lseq, ')');
-        }
-    }
-    elif(f.specialname === 's_list_someof') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let rpred = CString::concat('(lambda ((acc Bool) (vv ', oftype, ')) (or acc (p vv)))');
-            body = CString::concat('(seq.foldl ', rpred, ' false ', lseq, ')');
-        }
-        else {
-            let bop = '(ite (not (= (@Result-ok false) acc)) acc (let ((vvres (p vv))) (ite (is-@Result-err vvres) vvres (@Result-ok (or (@Result-value acc) (@Result-value vvres))))))';
-            let rpred = CString::concat('(lambda ((acc (@Result Bool)) (vv ', oftype, ')) ', bop, ')');
-            body = CString::concat('(seq.foldl ', rpred, ' (@Result-ok false) ', lseq, ')');
-        }
-    }
-    elif(f.specialname === 's_list_map') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-        let lmk = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let mfn = CString::concat('(lambda ((vv ', oftype, ')) (f vv))');
-            let sop = CString::concat('(seq.map ', mfn, ' ', lseq, ')');
-            body = CString::concat('(', lmk, ' ', sop, ')');
-        }
-        else {
-            let utype = f.binds.find(pred(bb) => bb.0 === 'U').1.value;
-            let vresconv = CString::concat('((as @Result-err (@Result (Seq ', utype, '))) (@Result-etag vvres))');
-
-            let bop = CString::concat('(ite (is-@Result-err acc) acc (let ((vvres (f vv))) (ite (is-@Result-err vvres) ', vresconv,' (@Result-ok (seq.++ (@Result-value acc) (seq.unit (@Result-value vvres)))))))');
-            let lparams = CString::concat('((acc (@Result (Seq ', utype, '))) (vv ', oftype, '))');
-            let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
-            let decl = CString::concat(sop, ' ', '(@Result-ok (as seq.empty (Seq ', utype, ')))');
-            let reduceop = CString::concat('(seq.foldl ', decl, ' ', lseq, ')');
-
-            let converr = CString::concat('((as @Result-err (@Result ', f.resultType.rtype.value, ')) (@Result-etag seqval))');
-            let wwrap = CString::concat('let ((seqval ', reduceop, '))');
-            let dispatch = CString::concat('(ite (is-@Result-err seqval) ', converr, ' (@Result-ok (', lmk, ' (@Result-value seqval))))');
-
-            body = CString::concat('(', wwrap, ' ', dispatch, ')');
-        }
-    }
-    elif(f.specialname === 's_list_mapidx') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-        let lmk = SMTNameManager::generateStructConstructorName(f.resultType.rtype);
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let mfn = CString::concat('(lambda ((i Nat) (vv ', oftype, ')) (select f vv i))');
-            let sop = CString::concat('(seq.mapi ', mfn, ' 0 ', lseq, ')');
-            body = CString::concat('(', lmk, ' ', sop, ')');
-        }
-        else {
-            let utype = f.binds.find(pred(bb) => bb.0 === 'U').1.value;
-            let vresconv = CString::concat('((as @Result-err (@Result (Seq ', utype, '))) (@Result-etag vvres))');
-
-            let bop = CString::concat('(ite (is-@Result-err acc) acc (let ((vvres (select f vv i))) (ite (is-@Result-err vvres) ', vresconv,' (@Result-ok (seq.++ (@Result-value acc) (seq.unit (@Result-value vvres)))))))');
-            let lparams = CString::concat('((i Nat) (acc (@Result (Seq ', utype, '))) (vv ', oftype, '))');
-            let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
-            let decl = CString::concat(sop, ' 0 ', '(@Result-ok (as seq.empty (Seq ', utype, ')))');
-            let reduceop = CString::concat('(seq.foldli ', decl, ' ', lseq, ')');
-
-            let converr = CString::concat('((as @Result-err (@Result ', f.resultType.rtype.value, ')) (@Result-etag seqval))');
-            let wwrap = CString::concat('let ((seqval ', reduceop, '))');
-            let dispatch = CString::concat('(ite (is-@Result-err seqval) ', converr, ' (@Result-ok (', lmk, ' (@Result-value seqval))))');
-
-            body = CString::concat('(', wwrap, ' ', dispatch, ')');
-        }
-    }
-    elif(f.specialname === 's_list_reduce') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let utype = f.binds.find(pred(bb) => bb.0 === 'U').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-
-        if(f.resultType)<SMTAssembly::SafeResult> {
-            let mfn = CString::concat('(lambda ((acc ', utype, ') (vv ', oftype, ')) (select f acc vv))');
-            body = CString::concat('(seq.foldl ', mfn, ' init ', lseq, ')');
-        }
-        else {
-            let bop = CString::concat('(ite (is-@Result-err acc) acc (select f (@Result-value acc) vv))');
-            let lparams = CString::concat('((acc (@Result ', utype, ')) (vv ', oftype, '))');
-            let sop = CString::concat('(lambda ', lparams, ' ', bop, ')');
-            body = CString::concat('(seq.foldl ', sop, ' (@Result-ok init) ', lseq, ')');
-        }
-    }
-    elif(f.specialname === 's_list_sum') {
-        let oftype = f.binds.find(pred(bb) => bb.0 === 'T').1.value;
-        let lseq = CString::concat('(', SMTNameManager::generateStructFieldName(f.params.front().ptype, 'value'), ' l)');
-
-        %%TODO: handle typdecl types??
-        let mfn = CString::concat('(lambda ((acc ', oftype, ') (vv ', oftype, ')) (+ acc vv))');
-        if(\/(oftype === 'Nat', oftype === 'Int', oftype === 'BigNat', oftype === 'BigInt')) {
-            body = CString::concat('(seq.foldl ', mfn, ' 0 ', lseq, ')');
-        }
-        else {
-            body = CString::concat('(seq.foldl ', mfn, ' 0.0 ', lseq, ')');
-        }
+    elif(f.specialname === 's_blockingfailure') {
+        body = emitResultErrOtherAs(f.resultType.rtype);
     }
     else {
         _debug f.specialname;

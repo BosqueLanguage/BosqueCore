@@ -132,6 +132,13 @@ entity BSQToSMTCallGraphBuilder {
     }
 
     recursive method processConstructorPrimaryListExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorPrimaryListExpression): BSQCCInfo {
+        let lccops = BSQCCInfo::createWAllCallInfo(current, List<BSQAssembly::InvokeKey>{
+            BSQAssembly::InvokeKey::from(CString::concat('ListOps::s_list_create_empty<', e.elemtype.tkeystr.value, '>')),
+            BSQAssembly::InvokeKey::from(CString::concat('ListOps::s_list_create_1<', e.elemtype.tkeystr.value, '>')),
+            BSQAssembly::InvokeKey::from(CString::concat('ListOps::s_list_create_2<', e.elemtype.tkeystr.value, '>')),
+            BSQAssembly::InvokeKey::from(CString::concat('ListOps::s_list_create_3<', e.elemtype.tkeystr.value, '>'))
+        });
+
         return this.processArgumentListSimple[recursive](current, e.args);
     }
 

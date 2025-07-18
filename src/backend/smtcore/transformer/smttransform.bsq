@@ -724,8 +724,16 @@ entity SMTTransformer {
 
     recursive method transformSafeConvertExpression(e: BSQAssembly::SafeConvertExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.processUnaryArg[recursive](e.exp, ctx);
+        let narrowop = SMTAssembly::UntermifyExpression{onarg, this.transformStdTypeToSMT(e.srctype), this.transformStdTypeToSMT(e.trgttype)};
 
-        return nctx, this.wrapOperationResult(e.trgttype, onarg, obinds);
+        return nctx, this.wrapOperationResult(e.trgttype, narrowop, obinds);
+    }
+
+    recursive method transformCreateDirectExpression(e: BSQAssembly::CreateDirectExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.processUnaryArg[recursive](e.exp, ctx);
+        let createop = SMTAssembly::CreateDirectExpression{ this.transformStdTypeToSMT(e.trgttype), onarg };
+
+        return nctx, this.wrapOperationResult(e.trgttype, createop, obinds);
     }
 
     method transformITestTypeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
@@ -1533,6 +1541,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::SafeConvertExpression => {
                 return this.transformSafeConvertExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::CreateDirectExpression => {
+                return this.transformCreateDirectExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::PostfixOp => { 
                 return this.transformPostfixOp[recursive]($exp, ctx);

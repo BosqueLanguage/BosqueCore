@@ -64,6 +64,11 @@ entity UntermifyExpression provides SafeExpression {
     field intotype: TypeKey;
 }
 
+entity CreateDirectExpression provides SafeExpression {
+    field ctype: TypeKey;
+    field exp: SafeExpression;
+}
+
 entity LiteralTypeDeclExpression provides SafeExpression {
     field value: ConstantExpression;
     field constype: TypeKey;
