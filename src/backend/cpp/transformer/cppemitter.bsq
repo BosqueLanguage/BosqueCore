@@ -1334,12 +1334,11 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let params, templates = emitParameters(m.params, nctx);
     let rtype = emitTypeSignature(m.resultType, false, ctx);
     let this_type = emitThisType(declaredIn, nctx);    
-    let specialName = emitSpecialTemplate(name);
 
     let template = genLambdaTemplate(templates, indent); 
     let pre = if(rtype === "__CoreCpp::Bool") 
-        then String::concat(template, indent, rtype, " ", specialName)
-        else String::concat(template, indent, "const ", rtype, " ", specialName);
+        then String::concat(template, indent, rtype, " ", name)
+        else String::concat(template, indent, "const ", rtype, " ", name);
 
     var params_impl: String;
     if(params === "") {
