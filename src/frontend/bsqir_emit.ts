@@ -664,7 +664,7 @@ class BSQIREmitter {
    
     private emitCallTypeFunctionExpression(exp: CallTypeFunctionExpression): string {
         const ebase = this.emitExpressionBase(exp);
-        const ikey = EmitNameManager.generateTypeInvokeKey(this.tproc(exp.resolvedDeclType as TypeSignature), exp.name, exp.terms);
+        const ikey = EmitNameManager.generateTypeInvokeKey(this.tproc(exp.resolvedDeclType as TypeSignature), exp.name, exp.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.tkeystr))) );
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
        

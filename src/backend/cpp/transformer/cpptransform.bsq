@@ -751,6 +751,7 @@ entity CPPTransformer {
             | BSQAssembly::UpdateDirectStatement => { abort; }
             | BSQAssembly::UpdateIndirectStatement => { abort; }
             | BSQAssembly::BlockStatement => { return this.transformBlockStatement($stmt); }
+            | BSQAssembly::BinderBlockStatement => { abort; }
         }
     }
 

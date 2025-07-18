@@ -142,6 +142,15 @@ entity BlockStatement provides Statement {
     field isScoping: Bool;
 }
 
+entity BinderBlockStatement provides Statement {
+    field binder: BinderInfo;
+    field bexp: Expression;
+    field itest: ITest;
+    
+    field statements: List<Statement>;
+    field isScoping: Bool;
+}
+
 entity ReturnSingleStatement provides Statement {
     field rtype: TypeSignature;
     field value: Expression;
