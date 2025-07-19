@@ -186,27 +186,6 @@ entity FormatCheckExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 
-entity ValidateAccessContainerSizeExpression provides SafeExpression {
-    field ontype: TypeKey;
-
-    field arg: SafeExpression;
-}
-
-entity ValidateIndexInboundsAndExpression provides SafeExpression {
-    field ontype: TypeKey;
-    field index: CString;
-
-    field arg: SafeExpression;
-    field andop: SafeExpression;
-}
-
-entity ValidateAccessContainerElementSafeExpression provides SafeExpression {
-    field ontype: TypeKey;
-    field index: CString;
-    
-    field arg: SafeExpression;
-}
-
 %*
 *********************** TODO: we can use these for the validator ops to access container elements via index without needing any other setup ***********************
 

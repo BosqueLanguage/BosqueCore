@@ -197,20 +197,28 @@ recursive function emitConstructorListSingletonExpression(v: SMTAssembly::Constr
     let consname = SMTNameManager::generateStructConstructorName(v.constype);
 
     if(v.args.empty()) {
-        let vcons = CString::concat('ListOps@s_list_create_empty<', v.oftype.value, '>');
+        let vcons = CString::concat('Core@ListOps@s_list_create_empty<', v.oftype.value, '>');
         return vcons;
     }
     else {
         if(v.args.isSingle()) {
-            let scons = CString::concat('(seq.unit ', emitSafeExpression[recursive](v.args.single(), eev), ')');
-            return CString::concat('(', consname, ' ', scons, ')');
+            let vcons = CString::concat('Core@ListOps@s_list_create_1<', v.oftype.value, '>');
+            return CString::concat('(', vcons, ' ', emitSafeExpression[recursive](v.args.single(), eev), ')');
         }
         else {
-            let cvals = v.args.map[recursive]<CString>(fn(x) => CString::concat('(seq.unit ', emitSafeExpression[recursive](x, eev), ')'));
-            let argsl = CString::joinAll(' ', cvals);
+            let argsl = CString::joinAll(' ', v.args.map[recursive]<CString>(fn(x) => emitSafeExpression[recursive](x, eev)));
 
-            let scons = CString::concat('(seq.++ ', argsl, ')');
-            return CString::concat('(', consname, ' ', scons, ')');
+            if(v.args.size() === 2n) {
+                let vcons = CString::concat('Core@ListOps@s_list_create_2<', v.oftype.value, '>');
+                return CString::concat('(', vcons, ' ', argsl, ')');
+            }
+            elif(v.args.size() === 3n) {
+                let vcons = CString::concat('Core@ListOps@s_list_create_3<', v.oftype.value, '>');
+                return CString::concat('(', vcons, ' ', argsl, ')');
+            }
+            else {
+                abort; %% should put limit thing here and also update error compute to check this condition for opcode
+            }
         }
     }
 }
@@ -388,31 +396,6 @@ recursive function emitFormatCheckExpression(v: SMTAssembly::FormatCheckExpressi
     let arg = emitSafeExpression[recursive](v.arg, eev);
 
     return CString::concat('(str.in.re ', arg, ' ', re, ')');
-}
-
-recursive function emitValidateAccessContainerSizeExpression(v: SMTAssembly::ValidateAccessContainerSizeExpression, eev: SMTEmitterEnv): CString {
-    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
-    let arg = emitSafeExpression[recursive](v.arg, eev);
-    let vv = CString::concat('(', gseq, ' ', arg, ')');
-
-    return CString::concat('(<= (seq.len ', vv, ') SMV_LIST_SIZE_MAX)');
-}
-
-recursive function emitValidateIndexInboundsAndExpression(v: SMTAssembly::ValidateIndexInboundsAndExpression, eev: SMTEmitterEnv): CString {
-    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
-    let arg = emitSafeExpression[recursive](v.arg, eev);
-    let access = CString::concat('(', gseq, ' ', arg, ')');
-    let chk = CString::concat('(< ', v.index, ' (seq.len ', access, '))');
-
-    return CString::concat('(and ', chk, ' ', emitSafeExpression[recursive](v.andop, eev), ')');
-}
-
-recursive function emitValidateAccessContainerElementSafeExpression(v: SMTAssembly::ValidateAccessContainerElementSafeExpression, eev: SMTEmitterEnv): CString {
-    let gseq = SMTNameManager::generateStructFieldName(v.ontype, 'value');
-    let arg = emitSafeExpression[recursive](v.arg, eev);
-    let vv = CString::concat('(', gseq, ' ', arg, ')');
-
-    return CString::concat('(seq.nth ', vv, ' ', v.index, ')');
 }
 
 recursive function emitIsTypeTestExpression(v: SMTAssembly::IsTypeTestExpression, eev: SMTEmitterEnv): CString {
@@ -786,9 +769,6 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::AccessFromIndexExpression => { return emitAccessFromIndexExpression[recursive]($e, eev); }
         | SMTAssembly::ValidateResultIsTrueExpression => { return emitValidateResultIsTrueExpression[recursive]($e, eev); }
         | SMTAssembly::FormatCheckExpression => { return emitFormatCheckExpression[recursive]($e, eev); }
-        | SMTAssembly::ValidateAccessContainerSizeExpression => { return emitValidateAccessContainerSizeExpression[recursive]($e, eev); }
-        | SMTAssembly::ValidateIndexInboundsAndExpression => { return emitValidateIndexInboundsAndExpression[recursive]($e, eev); }
-        | SMTAssembly::ValidateAccessContainerElementSafeExpression => { return emitValidateAccessContainerElementSafeExpression[recursive]($e, eev); }
         | SMTAssembly::IsTypeTestExpression => { return emitIsTypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::IsSubtypeTestExpression => { return emitIsSubtypeTestExpression[recursive]($e, eev); }
         | SMTAssembly::ConvertOptionToSomeTExpression => { return emitConvertOptionToSomeTExpression[recursive]($e, eev); }
@@ -1389,7 +1369,7 @@ function emitCollectionTypeDeclDeclaration(ttype: SMTAssembly::CollectionTypeDec
 function emitCollectionTypeDeclConstructor(ttype: SMTAssembly::CollectionTypeDecl): CString {
     let consname = SMTNameManager::generateStructConstructorName(ttype.tkey);
     let consfield = SMTNameManager::generateStructFieldName(ttype.tkey, 'value');
-    let cval = CString::concat('(', consfield, ' (Seq ', ttype.oftype.value, '))');
+    let cval = CString::concat('(', consfield, ' @Term)');
     return CString::concat('        ((', consname, ' ', cval, '))');
 }
 

@@ -2692,17 +2692,15 @@ entity SMTTransformer {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
 
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
-        let vinvoke = TransformNameManager::generateNameForValidatorFunction(tdecl.oftype.tkeystr);
+        let vectname = BSQAssembly::TypeKey::from(CString::concat('ListOps@Vector<', tdecl.oftype.tkeystr.value, '>'));
+        let vinvoke = TransformNameManager::generateNameForValidatorFunction(vectname);
 
-        %%TODO: assume list is of at most 3 elements for now!!!
-        let csize = SMTAssembly::ValidateAccessContainerSizeExpression{smtdtype, vvaraccess};
+        let chk = SMTAssembly::CallFunctionSafeExpression{
+            TransformNameManager::generateNameForValidatorFunction(vectname), 
+            List<SMTAssembly::SafeExpression>{ SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess} }
+        };
 
-        let chk1 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '0', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '0', vvaraccess})};
-        let chk2 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '1', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '1', vvaraccess})};
-        let chk3 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '2', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '2', vvaraccess})};
-        let cvalidates = List<SMTAssembly::SafeExpression>{chk1, chk2, chk3};
-
-        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTAssembly::LogicActionAndExpression{cvalidates.pushFront(csize)}}, List<SMTAssembly::ErrorInfo>{} };
+        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{chk}, List<SMTAssembly::ErrorInfo>{} };
     }
 
     method generateValidatorForMapTypeDecl(tdecl: BSQAssembly::MapTypeDecl): SMTAssembly::Body {
