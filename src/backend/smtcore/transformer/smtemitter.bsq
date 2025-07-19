@@ -883,7 +883,6 @@ function emitMatchTestTestableType(isSubtypeTest: Bool, oftype: SMTAssembly::Typ
 
 recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
     let tst = emitSafeExpression[recursive](e.matchexp, eev);
-    let ttst = CString::concat('(match ', tst);
 
     if(indent)@none {
         let dflt = emitOperation[recursive](e.defaultop, eev, none);
@@ -903,7 +902,7 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
             let ttest = emitMatchTestTestableType(c.0, c.1, tst);
             let cbody = emitOperation[recursive](c.2, eev, indent);
 
-            let opts = CString::concat('%n;', $indent, cbody, '%n;', $indent, acc);
+            let opts = CString::concat('%n;', cbody, '%n;', $indent, acc);
             return CString::concat('(ite ', ttest, opts, ')');
         });
     }

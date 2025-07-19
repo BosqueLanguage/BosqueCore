@@ -2692,7 +2692,7 @@ entity SMTTransformer {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
 
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
-        let vectname = BSQAssembly::TypeKey::from(CString::concat('ListOps@Vector<', tdecl.oftype.tkeystr.value, '>'));
+        let vectname = BSQAssembly::TypeKey::from(CString::concat('ListOps::Vector<', tdecl.oftype.tkeystr.value, '>'));
         let vinvoke = TransformNameManager::generateNameForValidatorFunction(vectname);
 
         let chk = SMTAssembly::CallFunctionSafeExpression{
