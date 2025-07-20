@@ -99,7 +99,7 @@ function emitLiteralSimpleExpression(e: SMTAssembly::LiteralSimpleExpression): C
         | 'Int'<SMTAssembly::TypeKey>    => { return emitTaggedNumericType(e.value, 'i'); }
         | 'BigNat'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(e.value, 'N'); }
         | 'BigInt'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(e.value, 'I'); }
-        | 'Float'<SMTAssembly::TypeKey>  => { return emitTaggedNumericType(e.value, 'f'); }
+        | 'Float'<SMTAssembly::TypeKey>  => { return CString::concat('(@AbsReal-create "', emitTaggedNumericType(e.value, 'f'), '")'); }
     }
 }
 
@@ -462,7 +462,13 @@ recursive function emitPrefixNotOpExpression(v: SMTAssembly::PrefixNotOpExpressi
 
 recursive function emitPrefixNegateOpExpression(v: SMTAssembly::PrefixNegateOpExpression, eev: SMTEmitterEnv): CString {
     let vv = emitSafeExpression[recursive](v.exp, eev);
-    return CString::concat('(- ', vv, ')');
+
+    if(!v.usefp) {
+        return CString::concat('(- ', vv, ')');
+    }
+    else {
+        return CString::concat('(@AbsReal-negate ', vv, ')');
+    }
 }
 
 recursive function emitPrefixPlusOpExpression(v: SMTAssembly::PrefixPlusOpExpression, eev: SMTEmitterEnv): CString {
@@ -480,27 +486,49 @@ recursive function emitUnaryExpression(v: SMTAssembly::UnaryExpression, eev: SMT
 recursive function emitBinAddExpression(e: SMTAssembly::BinAddExpression, eev: SMTEmitterEnv): CString {
     let lhs = emitSafeExpression[recursive](e.lhs, eev);
     let rhs = emitSafeExpression[recursive](e.rhs, eev);
-    return CString::concat('(+ ', lhs, ' ', rhs, ')');
+
+    if(!e.usefp) {
+        return CString::concat('(+ ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(@AbsReal-add ', lhs, ' ', rhs, ')');
+    }
 }
 
 recursive function emitBinSubExpression(e: SMTAssembly::BinSubExpression, eev: SMTEmitterEnv): CString {
     let lhs = emitSafeExpression[recursive](e.lhs, eev);
     let rhs = emitSafeExpression[recursive](e.rhs, eev);
-    return CString::concat('(- ', lhs, ' ', rhs, ')');
+
+    if(!e.usefp) {
+        return CString::concat('(- ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(@AbsReal-sub ', lhs, ' ', rhs, ')');
+    }
 }
 
 recursive function emitBinMultExpression(e: SMTAssembly::BinMultExpression, eev: SMTEmitterEnv): CString {
     let lhs = emitSafeExpression[recursive](e.lhs, eev);
     let rhs = emitSafeExpression[recursive](e.rhs, eev);
 
-    return CString::concat('(* ', lhs, ' ', rhs, ')');
+    if(!e.usefp) {
+        return CString::concat('(* ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(@AbsReal-mult ', lhs, ' ', rhs, ')');
+    }
 }
 
 recursive function emitBinDivExpression(e: SMTAssembly::BinDivExpression, eev: SMTEmitterEnv): CString {
     let lhs = emitSafeExpression[recursive](e.lhs, eev);
     let rhs = emitSafeExpression[recursive](e.rhs, eev);
-    
-    return CString::concat('(/ ', lhs, ' ', rhs, ')');
+
+    if(!e.usefp) {
+        return CString::concat('(/ ', lhs, ' ', rhs, ')');
+    }
+    else {
+        return CString::concat('(@AbsReal-div ', lhs, ' ', rhs, ')');
+    }
 }
 
 recursive function emitBinaryArithExpression(e: SMTAssembly::BinaryArithExpression, eev: SMTEmitterEnv): CString {
@@ -595,13 +623,25 @@ recursive function emitBinaryNumericCompareExpression(e: SMTAssembly::BinaryNume
     let lhs = emitSafeExpression[recursive](e.lhs, eev);
     let rhs = emitSafeExpression[recursive](e.rhs, eev);
 
-    match(e)@ {
-        SMTAssembly::NumericEqExpression => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
-        | SMTAssembly::NumericNeqExpression => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
-        | SMTAssembly::NumericLessExpression => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
-        | SMTAssembly::NumericLessEqExpression => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
-        | SMTAssembly::NumericGreaterExpression => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
-        | SMTAssembly::NumericGreaterEqExpression => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
+    if(!e.usefp) {
+        match(e)@ {
+            SMTAssembly::NumericEqExpression => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericNeqExpression => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
+            | SMTAssembly::NumericLessExpression => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericLessEqExpression => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterExpression => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterEqExpression => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
+        }
+    }
+    else {
+        match(e)@ {
+            SMTAssembly::NumericEqExpression => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericNeqExpression => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
+            | SMTAssembly::NumericLessExpression => { return CString::concat('(@AbsReal-less ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericLessEqExpression => { return CString::concat('(@AbsReal-lessequal ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterExpression => { return CString::concat('(@AbsReal-greater ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterEqExpression => { return CString::concat('(@AbsReal-greaterequal ', lhs, ' ', rhs, ')'); }
+        }
     }
 }
 
@@ -1241,10 +1281,10 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
         body = '(str.len s)';
     }
     elif(f.specialname === 's_float_pow') {
-        body = '(^ a b)';
+        body = '(@AbsReal-pow a b)';
     }
     elif(f.specialname === 's_float_sqrt') {
-        body = '(^ a 0.5)';
+        body = '(@AbsReal-sqrt a)';
     }
     elif(f.specialname === 's_blockingfailure') {
         body = emitResultErrOtherAs(f.resultType.rtype);

@@ -240,6 +240,7 @@ entity MethodInvokeStaticExpression provides Expression {
 
 datatype UnaryExpression provides SafeExpression using {
     field exp: SafeExpression;
+    field usefp: Bool;
 }
 of
 PrefixNotOpExpression { }
@@ -250,6 +251,7 @@ PrefixNotOpExpression { }
 datatype BinaryArithExpression provides SafeExpression using {
     field lhs: SafeExpression;
     field rhs: SafeExpression;
+    field usefp: Bool;
 }
 of
 BinAddExpression { }
@@ -309,6 +311,7 @@ entity KeyLessExpression provides SafeExpression {
 datatype BinaryNumericCompareExpression provides SafeExpression using {
     field lhs: SafeExpression;
     field rhs: SafeExpression;
+    field usefp: Bool;
 }
 of
 NumericEqExpression { }
