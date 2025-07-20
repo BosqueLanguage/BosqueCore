@@ -553,10 +553,6 @@ function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc
 }
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: String, ctx: Context): String {
-    %% We don't want to do any resolution of these keys yet
-    let ik = String::fromCString(op.resolvedTrgt.value);
-    let tk = String::fromCString(op.resolvedType.tkeystr.value);
-
     let args = emitArguments(op.args, ctx);
 
     %% The "this" arguemnt does not exist in explicitify so we handle the coersion here (we manually added it for cpp emission)
@@ -572,12 +568,6 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
         thisarg = rootexp;
     } 
 
-    let resolvedtype = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
-    let ns = emitResolvedNamespace(ctx.fullns_list, emitNamespaceKey(resolvedtype.declaredInNS));
-    let resolvedns = if(ns !== "" && !ns.endsWithString("::")) 
-        then String::concat(ns, "::")
-        else ns;
-    
     let name = generateMethodName(op.resolvedTrgt, op.resolvedType.tkeystr, ctx);
     if(args === "") {
         return String::concat(name, "(", thisarg, ")");
@@ -763,9 +753,16 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
-    let ttype = ctx.asm.lookupNominalTypeDeclaration(exp.elemtype.tkeystr);
-    let nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
+    var nctx: Context;
+    if(exp.elemtype)<CPPAssembly::EListTypeSignature> {
+        nctx = ctx;
+    }
+    else { 
+        let ttype = ctx.asm.lookupNominalTypeDeclaration(exp.elemtype.tkeystr);
+        nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
+    }
 
+    %% This is the line that causes us to abort, somethjing with our arguments not emitting
     let args = emitArguments(exp.args, ctx);
     let ns = "Core::ListOps::"; %% So long as lists impl stays in Core::ListOps this will hold 
 
@@ -1038,6 +1035,13 @@ function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitiali
     return String::concat(full_indent, " ", name, " = ", exp, ";");
 }
 
+function emitVariableAssignmentStatement(stmt: CPPAssembly::VariableAssignmentStatement, ctx: Context, indent: String): String {
+    let name = emitIdentifier(stmt.name);
+    let exp = emitExpression(stmt.exp, ctx);
+
+    return String::concat(indent, "    ", name, " = ", exp, ";");
+}
+
 function emitBlockStatement(block: CPPAssembly::BlockStatement, ctx: Context, indent: String): String {
     let stmts = block.statements.map<String>(fn(stmt) => emitStatement(stmt, ctx, indent));
     return String::joinAll("%n;", stmts);
@@ -1240,7 +1244,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
         | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
         %%| CPPAssembly::VariableMultiInitializationImplicitStatement => { abort; }
-        %%| CPPAssembly::VariableAssignmentStatement => { abort; }
+        | CPPAssembly::VariableAssignmentStatement => { return emitVariableAssignmentStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
         %%| CPPAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
         %%| CPPAssembly::VariableRetypeStatement => { abort; }
@@ -1504,9 +1508,17 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, c
 %%
 
 function generateVTableEntry(entry: CPPAssembly::MemberFieldDecl, resolved_name: String, enum_name: String, idx: Nat, ctx: Context, indent: String): String {
-    let tinfo = ctx.asm.typeinfos.tryGet(entry.declaredType.tkeystr)@some;
+    let tinfo = ctx.asm.typeinfos.tryGet(entry.declaredType.tkeystr);
 
-    let id = String::fromCString(tinfo.id.toCString());
+    var id: String;
+    if(tinfo)@none { %% elist case
+        %% Since elists are our special case we should likely reserve a specific id for all elists (say 0n)
+        id = String::fromCString(0n.toCString()); 
+    }
+    else {
+        id = String::fromCString($tinfo.id.toCString());
+    }
+
     let entrytype = String::concat(enum_name, "::", resolved_name, "_", emitIdentifier(entry.name));
     let byteoffset = String::fromCString((idx * 8n).toCString()); %% Woudlnt be a bad idea to make these 8 byte alignment a const
 
