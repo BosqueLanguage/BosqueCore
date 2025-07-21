@@ -163,6 +163,11 @@ entity SMTTransformer {
         return tkey === '@Term'<SMTAssembly::TypeKey>;
     }
 
+    function useFPSemanticsForOperator(tt: BSQAssembly::TypeSignature): Bool {
+        let tks = tt.tkeystr;
+        return tks === 'Float'<BSQAssembly::TypeKey> || tks === 'Rational'<BSQAssembly::TypeKey> || tks === 'Decimal'<BSQAssembly::TypeKey>;
+    }
+
     function tryGetForceInlineInfo(decl: BSQAssembly::AbstractInvokeDecl): Option<CString> {
         let isinline = decl.attributes.someOf(pred(a) => a.name === '__inline'<BSQAssembly::Identifier>);
         if(!isinline) {
@@ -535,7 +540,7 @@ entity SMTTransformer {
     recursive method transformConstructorPrimaryListExpression(e: BSQAssembly::ConstructorPrimaryListExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let aargs, nctx, obinds = this.processArgsInOrder[recursive](e.args.map<BSQAssembly::Expression>(fn(arg) => arg.exp), ctx);
         let smttype = this.transformStdTypeToSMT(e.ctype);
-        let oftype = this.transformStdTypeToSMT(e.elemtype);
+        let oftype = TransformNameManager::convertTypeKey(e.elemtype.tkeystr);
 
         if(e.args.allOf(pred(arg) => arg?<BSQAssembly::PositionalArgumentValue>)) {
             return nctx, this.wrapOperationResult(e.ctype, SMTAssembly::ConstructorListSingletonExpression{smttype, oftype, aargs}, obinds);
@@ -724,8 +729,16 @@ entity SMTTransformer {
 
     recursive method transformSafeConvertExpression(e: BSQAssembly::SafeConvertExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let onarg, nctx, obinds = this.processUnaryArg[recursive](e.exp, ctx);
+        let narrowop = SMTAssembly::UntermifyExpression{onarg, this.transformStdTypeToSMT(e.srctype), this.transformStdTypeToSMT(e.trgttype)};
 
-        return nctx, this.wrapOperationResult(e.trgttype, onarg, obinds);
+        return nctx, this.wrapOperationResult(e.trgttype, narrowop, obinds);
+    }
+
+    recursive method transformCreateDirectExpression(e: BSQAssembly::CreateDirectExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
+        let onarg, nctx, obinds = this.processUnaryArg[recursive](e.exp, ctx);
+        let createop = SMTAssembly::CreateDirectExpression{ this.transformStdTypeToSMT(e.trgttype), onarg };
+
+        return nctx, this.wrapOperationResult(e.trgttype, createop, obinds);
     }
 
     method transformITestTypeAsTest(srctype: BSQAssembly::TypeSignature, itest: BSQAssembly::ITestType, onarg: SMTAssembly::SafeExpression): SMTAssembly::SafeExpression {
@@ -738,7 +751,7 @@ entity SMTTransformer {
             return tcheck;
         }
         else {
-            return SMTAssembly::PrefixNotOpExpression{ tcheck };
+            return SMTAssembly::PrefixNotOpExpression{ tcheck, false };
         }
     }
 
@@ -871,7 +884,7 @@ entity SMTTransformer {
             let chkexp = SMTAssembly::IsTypeTestExpression{ TransformNameManager::convertTypeKey(itest.ttype.tkeystr), onarg };
 
             if(itest.isnot) {
-                let ncheck = SMTAssembly::PrefixNotOpExpression{ chkexp };
+                let ncheck = SMTAssembly::PrefixNotOpExpression{ chkexp, false };
                 let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(srctype), ncheck, nctx.errCtr, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(srctype), onarg}};
                 return nctx.addError(sinfo), this.wrapOperationResultWErr(srctype, chkedop, obinds);    
             }
@@ -885,7 +898,7 @@ entity SMTTransformer {
             let chkexp = SMTAssembly::IsSubtypeTestExpression{ TransformNameManager::convertTypeKey(itest.ttype.tkeystr), onarg };
             
             if(itest.isnot) {
-                let ncheck = SMTAssembly::PrefixNotOpExpression{ chkexp };
+                let ncheck = SMTAssembly::PrefixNotOpExpression{ chkexp, false };
                 let chkedop = SMTAssembly::AssertExpression{this.transformStdTypeToSMT(srctype), ncheck, nctx.errCtr, SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(srctype), onarg}};
                 return nctx.addError(sinfo), this.wrapOperationResultWErr(srctype, chkedop, obinds);    
             }
@@ -1131,11 +1144,12 @@ entity SMTTransformer {
     recursive method transformUnaryExpression(exp: BSQAssembly::UnaryExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let nexp, nctx, obinds = this.processUnaryArg[recursive](exp.exp, ctx);
 
+        let usefp = SMTTransformer::useFPSemanticsForOperator(exp.opertype);
         var unaryop: SMTAssembly::UnaryExpression;
         match(exp)@ {
-            BSQAssembly::PrefixNotOpExpression => { unaryop = SMTAssembly::PrefixNotOpExpression{nexp}; }
-            | BSQAssembly::PrefixNegateOpExpression => { unaryop = SMTAssembly::PrefixNegateOpExpression{nexp}; }
-            | BSQAssembly::PrefixPlusOpExpression => { unaryop = SMTAssembly::PrefixPlusOpExpression{nexp}; }
+            BSQAssembly::PrefixNotOpExpression => { unaryop = SMTAssembly::PrefixNotOpExpression{nexp, usefp}; }
+            | BSQAssembly::PrefixNegateOpExpression => { unaryop = SMTAssembly::PrefixNegateOpExpression{nexp, usefp}; }
+            | BSQAssembly::PrefixPlusOpExpression => { unaryop = SMTAssembly::PrefixPlusOpExpression{nexp, usefp}; }
         }
 
         return nctx, this.wrapOperationResult(exp.etype, unaryop, obinds);
@@ -1143,7 +1157,7 @@ entity SMTTransformer {
 
     recursive method transformBinAddExpression(exp: BSQAssembly::BinAddExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let addop = SMTAssembly::BinAddExpression{lexp, rexp};
+        let addop = SMTAssembly::BinAddExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
 
         return nctx, this.wrapOperationResult(exp.etype, addop, obinds);
     }
@@ -1152,13 +1166,13 @@ entity SMTTransformer {
         let smtetype = this.transformStdTypeToSMT(exp.etype);
 
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let subop = SMTAssembly::BinSubExpression{lexp, rexp};
+        let subop = SMTAssembly::BinSubExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
 
         if(exp.etype.tkeystr !== 'Nat'<BSQAssembly::TypeKey> && exp.etype.tkeystr !== 'BigNat'<BSQAssembly::TypeKey>) {
             return nctx, this.wrapOperationResult(exp.etype, subop, obinds);
         }
         else {
-            let lesstest = SMTAssembly::NumericLessExpression{lexp, rexp};
+            let lesstest = SMTAssembly::NumericLessExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
             let chekd = SMTAssembly::IfThenElseExpression{lesstest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, subop}};
             
             return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, chekd, obinds);
@@ -1167,7 +1181,7 @@ entity SMTTransformer {
 
     recursive method transformBinMultExpression(exp: BSQAssembly::BinMultExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let multop = SMTAssembly::BinMultExpression{lexp, rexp};
+        let multop = SMTAssembly::BinMultExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
 
         return nctx, this.wrapOperationResult(exp.etype, multop, obinds);
     }
@@ -1176,9 +1190,9 @@ entity SMTTransformer {
         let smtetype = this.transformStdTypeToSMT(exp.etype);
 
         let lexp, rexp, nctx, obinds = this.processBinaryArgs[recursive](exp.lhs, exp.rhs, ctx);
-        let divop = SMTAssembly::BinDivExpression{lexp, rexp};
+        let divop = SMTAssembly::BinDivExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
 
-        let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}};
+        let ztest = SMTAssembly::NumericEqExpression{rexp, SMTAssembly::AccessStaticFieldExpression{smtetype, 'zero'}, SMTTransformer::useFPSemanticsForOperator(exp.opertype)};
         let chekd = SMTAssembly::IfThenElseExpression{ztest, SMTAssembly::AbortExpression{smtetype, nctx.errCtr}, SMTAssembly::WrapIntoResultExpression{smtetype, divop}};
         
         return nctx.addError(exp.sinfo), this.wrapOperationResultWErr(exp.etype, chekd, obinds);
@@ -1286,22 +1300,22 @@ entity SMTTransformer {
         var opexp: SMTAssembly::SafeExpression;
         match(exp)@ {
             BSQAssembly::NumericEqExpression => { 
-                opexp = SMTAssembly::NumericEqExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericEqExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
             | BSQAssembly::NumericNeqExpression => { 
-                opexp = SMTAssembly::NumericNeqExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericNeqExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
             | BSQAssembly::NumericLessExpression => { 
-                opexp = SMTAssembly::NumericLessExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericLessExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
             | BSQAssembly::NumericLessEqExpression => { 
-                opexp = SMTAssembly::NumericLessEqExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericLessEqExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
             | BSQAssembly::NumericGreaterExpression => { 
-                opexp = SMTAssembly::NumericGreaterExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericGreaterExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
             | BSQAssembly::NumericGreaterEqExpression => { 
-                opexp = SMTAssembly::NumericGreaterEqExpression{lexp, rexp}; 
+                opexp = SMTAssembly::NumericGreaterEqExpression{lexp, rexp, SMTTransformer::useFPSemanticsForOperator(exp.opertype)}; 
             }
         }
 
@@ -1533,6 +1547,9 @@ entity SMTTransformer {
             }
             | BSQAssembly::SafeConvertExpression => {
                 return this.transformSafeConvertExpression[recursive]($exp, ctx);
+            }
+            | BSQAssembly::CreateDirectExpression => {
+                return this.transformCreateDirectExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::PostfixOp => { 
                 return this.transformPostfixOp[recursive]($exp, ctx);
@@ -2681,17 +2698,15 @@ entity SMTTransformer {
         let smtdtype = TransformNameManager::convertTypeKey(tdecl.tkey);
 
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
-        let vinvoke = TransformNameManager::generateNameForValidatorFunction(tdecl.oftype.tkeystr);
+        let vectname = BSQAssembly::TypeKey::from(CString::concat('ListOps::Vector<', tdecl.oftype.tkeystr.value, '>'));
+        let vinvoke = TransformNameManager::generateNameForValidatorFunction(vectname);
 
-        %%TODO: assume list is of at most 3 elements for now!!!
-        let csize = SMTAssembly::ValidateAccessContainerSizeExpression{smtdtype, vvaraccess};
+        let chk = SMTAssembly::CallFunctionSafeExpression{
+            TransformNameManager::generateNameForValidatorFunction(vectname), 
+            List<SMTAssembly::SafeExpression>{ SMTAssembly::AccessFromNameResolvedExpression{smtdtype, smtdtype, 'value', vvaraccess} }
+        };
 
-        let chk1 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '0', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '0', vvaraccess})};
-        let chk2 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '1', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '1', vvaraccess})};
-        let chk3 = SMTAssembly::ValidateIndexInboundsAndExpression{smtdtype, '2', vvaraccess, this.buildValidateOpForTypeAndExpr(tdecl.oftype, SMTAssembly::ValidateAccessContainerElementSafeExpression{smtdtype, '2', vvaraccess})};
-        let cvalidates = List<SMTAssembly::SafeExpression>{chk1, chk2, chk3};
-
-        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{SMTAssembly::LogicActionAndExpression{cvalidates.pushFront(csize)}}, List<SMTAssembly::ErrorInfo>{} };
+        return SMTAssembly::Body{ SMTAssembly::ReturnOperation{chk}, List<SMTAssembly::ErrorInfo>{} };
     }
 
     method generateValidatorForMapTypeDecl(tdecl: BSQAssembly::MapTypeDecl): SMTAssembly::Body {

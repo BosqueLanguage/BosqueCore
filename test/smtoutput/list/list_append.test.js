@@ -5,27 +5,27 @@ import { describe, it } from "node:test";
 
 describe ("SMT List -- append/concat", () => {
     it("should append smt", function () {
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.append(List<Int>{}).empty(); }', "(assert (not Main@main))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.append(List<Int>{}).empty(); }', "(assert (not (= (@Result-ok true) Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, 2i}.append(List<Int>{}).size(); }', "(assert (not (= 2 Main@main)))");
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, 2i}.append(List<Int>{}).size(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i, 2i}.append(List<Int>{}).back(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.append(List<Int>{1i, 2i}).size(); }', "(assert (not (= 2 Main@main)))"); 
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.append(List<Int>{1i, 2i}).size(); }', "(assert (not (= (@Result-ok 2) Main@main)))"); 
         runishMainCodeUnsat('public function main(): Int { return List<Int>{}.append(List<Int>{1i, 2i}).front(); }', "(assert (not (= (@Result-ok 1) Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i}.append(List<Int>{3i, 2i}).size(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i}.append(List<Int>{3i, 2i}).size(); }', "(assert (not (= (@Result-ok 3) Main@main)))"); 
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i}.append(List<Int>{3i, 2i}).back(); }', "(assert (not (= (@Result-ok 2) Main@main)))"); 
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i}.append(List<Int>{3i, 2i}).front(); }', "(assert (not (= (@Result-ok 1) Main@main)))"); 
     });
 
     it("should prepend smt", function () {
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.prepend(List<Int>{}).empty(); }', "(assert (not Main@main))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.prepend(List<Int>{}).empty(); }', "(assert (not (= (@Result-ok true) Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, 2i}.prepend(List<Int>{}).size(); }', "(assert (not (= 2 Main@main)))");
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i, 2i}.prepend(List<Int>{}).size(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i, 2i}.prepend(List<Int>{}).back(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.prepend(List<Int>{1i, 2i}).size(); }', "(assert (not (= 2 Main@main)))"); 
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{}.prepend(List<Int>{1i, 2i}).size(); }', "(assert (not (= (@Result-ok 2) Main@main)))");
         runishMainCodeUnsat('public function main(): Int { return List<Int>{}.prepend(List<Int>{1i, 2i}).front(); }', "(assert (not (= (@Result-ok 1) Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).size(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('public function main(): Nat { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).size(); }', "(assert (not (= (@Result-ok 3) Main@main)))"); 
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).back(); }', "(assert (not (= (@Result-ok 1) Main@main)))"); 
         runishMainCodeUnsat('public function main(): Int { return List<Int>{1i}.prepend(List<Int>{3i, 2i}).front(); }', "(assert (not (= (@Result-ok 3) Main@main)))"); 
     });

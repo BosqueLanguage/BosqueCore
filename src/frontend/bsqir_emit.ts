@@ -2104,7 +2104,18 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
-        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), this.emitChildrenTypes(tsig.alltermargs[0]));
+        const childsigs = [...this.emitChildrenTypes(tsig.alltermargs[0])];
+        
+        const lops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps");
+        if(lops !== undefined) {
+            const vdecl = lops.typedecls.find((td) => td.name === "Vector") as AbstractNominalTypeDecl;
+            if(vdecl !== undefined) {
+                const vtsig = BSQIREmitter.generateRcvrForNominalAndBinds(vdecl, instantiation.binds, undefined);
+                childsigs.push(vtsig.tkeystr);
+            }
+        }
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
 
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ListTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }

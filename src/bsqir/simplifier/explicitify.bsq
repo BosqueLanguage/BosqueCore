@@ -377,8 +377,9 @@ entity ExplicitifyTransform {
 
     recursive method processCreateDirectExpression(e: CreateDirectExpression, vmap: VarMapping): Expression {
         let nexp = this.processUnaryArg[recursive](e.exp, vmap);
+        let cexp = this.processCoerceTypeAsNeeded(nexp, e.srctype);
 
-        return e[exp=nexp];
+        return e[exp=cexp];
     }
 
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {

@@ -19,3 +19,4 @@ describe ("SMT List -- sum float", () => {
         runishMainCodeUnsat('public function main(): Float { return List<Float>{2.0f, -1.0f}.sum(); }', "(assert (not (= 1.0 Main@main)))");
     });
 });
+

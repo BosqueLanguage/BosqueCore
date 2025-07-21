@@ -64,6 +64,11 @@ entity UntermifyExpression provides SafeExpression {
     field intotype: TypeKey;
 }
 
+entity CreateDirectExpression provides SafeExpression {
+    field ctype: TypeKey;
+    field exp: SafeExpression;
+}
+
 entity LiteralTypeDeclExpression provides SafeExpression {
     field value: ConstantExpression;
     field constype: TypeKey;
@@ -181,27 +186,6 @@ entity FormatCheckExpression provides SafeExpression {
     field arg: SafeExpression;
 }
 
-entity ValidateAccessContainerSizeExpression provides SafeExpression {
-    field ontype: TypeKey;
-
-    field arg: SafeExpression;
-}
-
-entity ValidateIndexInboundsAndExpression provides SafeExpression {
-    field ontype: TypeKey;
-    field index: CString;
-
-    field arg: SafeExpression;
-    field andop: SafeExpression;
-}
-
-entity ValidateAccessContainerElementSafeExpression provides SafeExpression {
-    field ontype: TypeKey;
-    field index: CString;
-    
-    field arg: SafeExpression;
-}
-
 %*
 *********************** TODO: we can use these for the validator ops to access container elements via index without needing any other setup ***********************
 
@@ -256,6 +240,7 @@ entity MethodInvokeStaticExpression provides Expression {
 
 datatype UnaryExpression provides SafeExpression using {
     field exp: SafeExpression;
+    field usefp: Bool;
 }
 of
 PrefixNotOpExpression { }
@@ -266,6 +251,7 @@ PrefixNotOpExpression { }
 datatype BinaryArithExpression provides SafeExpression using {
     field lhs: SafeExpression;
     field rhs: SafeExpression;
+    field usefp: Bool;
 }
 of
 BinAddExpression { }
@@ -325,6 +311,7 @@ entity KeyLessExpression provides SafeExpression {
 datatype BinaryNumericCompareExpression provides SafeExpression using {
     field lhs: SafeExpression;
     field rhs: SafeExpression;
+    field usefp: Bool;
 }
 of
 NumericEqExpression { }
