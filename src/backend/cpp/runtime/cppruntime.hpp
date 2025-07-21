@@ -4,7 +4,6 @@
 #include <iostream>
 #include <cmath>
 #include <csetjmp>
-#include <variant> // TODO: Need to remove dependency!
 
 #define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
 #define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
@@ -703,42 +702,6 @@ constexpr std::string t_to_string(T v) {
     }
 
     return res;
-}
-
-// Will need to support Bosque CString and String eventually
-typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType; 
-
-//
-// Converts return type of main to string
-//
-std::string to_string(MainType v) {
-    if(std::holds_alternative<bool>(v)) {
-        bool res = std::get<bool>(v);
-        if(!res) {
-            return "false";
-        }
-        return "true";
-    }
-    else if(std::holds_alternative<Int>(v)) {
-        return std::to_string(std::get<Int>(v).get()) + "_i";
-    }
-    else if (std::holds_alternative<Nat>(v)) {
-        return std::to_string(std::get<Nat>(v).get()) + "_n";
-    }
-    else if (std::holds_alternative<Float>(v)) {
-        return std::to_string(std::get<Float>(v).get()) + "_f";
-    }
-    else if(std::holds_alternative<BigInt>(v)) {
-        __int128_t res = std::get<BigInt>(v).get();
-        return t_to_string<__int128_t>(res) + "_I";
-    }
-    else if(std::holds_alternative<BigNat>(v)) {
-        __int128_t res = std::get<BigNat>(v).get();
-        return t_to_string<__uint128_t>(res) + "_N";
-    }
-    else {
-        return "Unable to print main return type!\n";
-    }
 }
 
 } // namespace __CoreCpp

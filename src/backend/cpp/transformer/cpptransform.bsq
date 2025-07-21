@@ -851,8 +851,7 @@ entity CPPTransformer {
 
     method transformTypeFunctionDeclToCpp(decl: BSQAssembly::TypeFunctionDecl): CPPAssembly::TypeFunctionDecl {
         let base = this.transformAbstractInvokeDecl(decl);
-        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, decl.completens, 
-            CPPTransformNameManager::convertInvokeKey(decl.completeikey) };
+        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, CPPTransformNameManager::convertInvokeKey(decl.completeikey) };
     } 
 
     method transformConstMemberDeclToCpp(decl: BSQAssembly::ConstMemberDecl): CPPAssembly::ConstMemberDecl {
@@ -1245,7 +1244,7 @@ entity CPPTransformer {
 
         let transformer_nsdecls_typefuncs = transformer_typefuncs.reduce<Map<CString, CPPAssembly::NamespaceDecl>>( 
             transformer_nsdecls_nsfuncs, fn(acc, ikey, cppfunc) => {
-                return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.completens, acc,
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.fullns, acc,
                     fn(decl) => { 
                         let ntypefuncs = decl.typefuncs.pushBack(ikey);
                         return decl[typefuncs=ntypefuncs];
@@ -1301,7 +1300,6 @@ entity CPPTransformer {
                         let ndatatypes = decl.datatypes.pushBack(cpptk);
                         let nalltypes = decl.alltypes.pushBack(cpptk);
                         let ndecl = transformer.updateNSMethods(decl, cppdatatype@<CPPAssembly::AbstractNominalTypeDecl>);
-                        
                         return ndecl[datatypes=ndatatypes, alltypes=nalltypes];
                     });                     
             });

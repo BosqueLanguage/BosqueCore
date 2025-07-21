@@ -4,10 +4,8 @@ int main() {
         std::cout << "Assertion failed! Or perhaps over/underflow?" << std::endl;
         return EXIT_FAILURE;
     }
-
-    // Calling our emitted main is hardcoded for now
-    __CoreCpp::MainType ret = Main::main();
-    std::cout << __CoreCpp::to_string(ret) << std::endl;
+    
+    std::cout << Main::main() << std::endl;
 
     return 0;
 }

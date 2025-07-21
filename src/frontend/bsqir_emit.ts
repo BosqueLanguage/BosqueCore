@@ -573,10 +573,9 @@ class BSQIREmitter {
 
         // ConstructorStdExpression provides Expression (not AbstractDecl), so we need to emit fullns explicitly
         // Last element is entity name, we cannot properly look this up as fullns is for resolving namespaces
-        let cstrns = exp.ctype.tkeystr.split('::').map(e => `'${e}'`);
-        if(cstrns.length >= 1) {
-            cstrns.pop();
-        }
+        let noname = exp.ctype.tkeystr.split(cdecl.name)[0];
+        let cstrns = noname.split('::').map(e => `'${e}'`);
+
         const fmt_cstrns = `fullns = List<CString>{${cstrns.join(', ')}}`;
 
         const argsinfo = this.emitStdConstructorArgumentInfo(exp.args.args, exp.shuffleinfo);
@@ -1827,20 +1826,10 @@ class BSQIREmitter {
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
-            const nsParts = nskey.split('::');
-            const iParts = ikey.split('::');
-            
-            let i = 0;
-            while(i < nsParts.length && nsParts[i] !== iParts[0]) {
-                i++;
-            }
-            const combinedParts = i == 0 ? iParts : nsParts.slice(0, i).concat(iParts);
+            let template = ikey.split(fdecl.name)[1];
+            let updatedikey = nskey.concat('::', fdecl.name, template);
 
-            const updatedIKey = combinedParts.join("::");
-            const updatedNsKey = `${updatedIKey.split("::").slice(0,-2).join("::")}`; // Does not include type declared in or name
-            let cstrns = updatedNsKey.split('::').map(e => `'${e}'`);
-
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completens=List<CString>{${cstrns}}, completeikey='${updatedIKey}'<BSQAssembly::InvokeKey>}`);
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completeikey='${updatedikey}'<BSQAssembly::InvokeKey>}`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {
