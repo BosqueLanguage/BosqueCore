@@ -146,11 +146,23 @@ entity CPPTransformer {
     }
 
     method shouldBeRef(fields: List<BSQAssembly::SaturatedFieldInfo>, asm: BSQAssembly::Assembly): Bool {
-        let fieldsPrimitive = fields.reduce<Bool>(true, fn(acc, f) => acc 
-            && (asm.isPrimtitiveType(f.ftype.tkeystr) || asm.enums.has(f.ftype.tkeystr)));
-        if(fields.size() > 4n || !fieldsPrimitive) {
+        let primitiveAndSize = fields.reduce<(|Bool, Nat|)>((|true, 0n|), fn(acc, f) => {
+            let ftype = f.ftype;
+            if(ftype)@<BSQAssembly::EListTypeSignature> {
+                let efields = $ftype.entries.reduce<Bool>(true, fn(nacc, ef) => {
+                    return nacc && (asm.isPrimtitiveType(ef.tkeystr) || asm.enums.has(ef.tkeystr));
+                });
+
+                return acc.0 && efields, acc.1 + $ftype.entries.size();
+            }
+
+            return (acc.0 && (asm.isPrimtitiveType(ftype.tkeystr) || asm.enums.has(ftype.tkeystr))), acc.1 + 1n;
+        });
+
+        if(primitiveAndSize.1 > 4n || !primitiveAndSize.0) {
             return true;
         }
+
         return false;
     }
 
@@ -722,6 +734,14 @@ entity CPPTransformer {
         return CPPAssembly::SwitchStatement { sval, switchflow, stmt.mustExhaustive, optypes };
     }
 
+    method transformVariableAssignmentStatement(stmt: BSQAssembly::VariableAssignmentStatement): CPPAssembly::VariableAssignmentStatement {
+        let name = CPPTransformNameManager::convertIdentifier(stmt.name);
+        let vtype = this.convertTypeSignature(stmt.vtype);
+        let exp = this.transformExpressionToCpp(stmt.exp);
+
+        return CPPAssembly::VariableAssignmentStatement{ name, vtype, exp };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
@@ -730,7 +750,7 @@ entity CPPTransformer {
             | BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
             | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
             | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; }
-            | BSQAssembly::VariableAssignmentStatement => { abort; }
+            | BSQAssembly::VariableAssignmentStatement => { return this.transformVariableAssignmentStatement($stmt); }
             | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
             | BSQAssembly::VariableRetypeStatement => { abort; }
@@ -831,8 +851,7 @@ entity CPPTransformer {
 
     method transformTypeFunctionDeclToCpp(decl: BSQAssembly::TypeFunctionDecl): CPPAssembly::TypeFunctionDecl {
         let base = this.transformAbstractInvokeDecl(decl);
-        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, decl.completens, 
-            CPPTransformNameManager::convertInvokeKey(decl.completeikey) };
+        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
     } 
 
     method transformConstMemberDeclToCpp(decl: BSQAssembly::ConstMemberDecl): CPPAssembly::ConstMemberDecl {
@@ -890,47 +909,60 @@ entity CPPTransformer {
     method generateNominalConcreteTypeInfo(bsqtk: BSQAssembly::TypeKey, cpptk: CPPAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): 
         (|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|) {
             let bsqant = bsqasm.lookupNominalTypeDeclaration(bsqtk);
-            let tag = if(this.shouldBeRef(bsqant.saturatedBFieldInfo, bsqasm)) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value; 
+            let tag = if(this.shouldBeRef(bsqant.saturatedBFieldInfo, bsqasm)) 
+                then CPPAssembly::Tag#Ref 
+                else CPPAssembly::Tag#Value; 
             
             let updated = bsqant.saturatedBFieldInfo
                 .reduce<(|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>(
                     (|CPPAssembly::TypeInfo{ tid, 0n, 0n, '', cpptk, tag }, tinfos|), fn(acc, f) => {
+                        let fieldtype = f.ftype;
+                        
                         var ntinfo: CPPAssembly::TypeInfo;
-                        if(bsqasm.isNominalTypeConcept(f.ftype.tkeystr)) {
+                        if(fieldtype)@<BSQAssembly::EListTypeSignature> {
+                            let esize, eslotsize, eptrmask, ntinfos = $fieldtype.entries
+                                .reduce<(|Nat, Nat, CString, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>((|0n, 0n, acc.0.ptrmask, acc.1|), 
+                                    fn(nacc, entry) => {
+                                        let etinfo = this.generateTypeInfo(entry.tkeystr, nacc.3, tid + 1n, bsqasm);
+                                        return etinfo.0.typesize, etinfo.0.slotsize, CString::concat(nacc.2, etinfo.0.ptrmask), etinfo.1;
+                                    });
+                                ntinfo = acc.0[typesize=acc.0.typesize + esize, slotsize=acc.0.slotsize + eslotsize, ptrmask=eptrmask]; 
+                                return ntinfo, ntinfos;
+                        }
+                        
+                        if(bsqasm.isNominalTypeConcept(fieldtype.tkeystr)) {
                             ntinfo = acc.0[typesize=acc.0.typesize + 8n, slotsize=acc.0.slotsize + 1n, 
                                 ptrmask=CString::concat(acc.0.ptrmask, '1')];
-                            return (|ntinfo, acc.1|);  
+                            return ntinfo, acc.1;  
+                        }
+                        
+                        let ctinfo, ntinfos = this.generateTypeInfo(f.ftype.tkeystr, acc.1, tid + 1n, bsqasm);
+                        if(bsqasm.isPrimtitiveType(f.ftype.tkeystr)) {
+                            ntinfo = acc.0[typesize=acc.0.typesize + ctinfo.typesize, slotsize=acc.0.slotsize + ctinfo.slotsize, 
+                                ptrmask=CString::concat(acc.0.ptrmask, ctinfo.ptrmask)];
                         }
                         else {
-                            let ctinfo, ntinfos = this.generateTypeInfo(f.ftype.tkeystr, acc.1, tid + 1n, bsqasm);
-                            if(bsqasm.isPrimtitiveType(f.ftype.tkeystr)) {
+                            if(ctinfo.tag === CPPAssembly::Tag#Ref) {
+                                ntinfo = acc.0[typesize=acc.0.typesize + 8n, slotsize=acc.0.slotsize + 1n, 
+                                    ptrmask=CString::concat(acc.0.ptrmask, '1')];
+                            }
+                            else {
                                 ntinfo = acc.0[typesize=acc.0.typesize + ctinfo.typesize, slotsize=acc.0.slotsize + ctinfo.slotsize, 
                                     ptrmask=CString::concat(acc.0.ptrmask, ctinfo.ptrmask)];
                             }
-                            else {
-                                if(ctinfo.tag === CPPAssembly::Tag#Ref) {
-                                    ntinfo = acc.0[typesize=acc.0.typesize + 8n, slotsize=acc.0.slotsize + 1n, 
-                                        ptrmask=CString::concat(acc.0.ptrmask, '1')];
-                                }
-                                else {
-                                    ntinfo = acc.0[typesize=acc.0.typesize + ctinfo.typesize, slotsize=acc.0.slotsize + ctinfo.slotsize, 
-                                        ptrmask=CString::concat(acc.0.ptrmask, ctinfo.ptrmask)];
-                                }
-                            }
-                            return (|ntinfo, ntinfos|);
                         }
-                    });
-            return (|updated.0, updated.1.insert(cpptk, updated.0)|);
+                        return ntinfo, ntinfos;
+                     });
+            return updated.0, updated.1.insert(cpptk, updated.0);
     }
 
     %%
-    %% TODO: Handle elist as field special case!
     %% TODO: I think it is also possible for there to be repeated tids currently, so we likely need to return the tid of the tinfo we just generated/fetched
     %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): 
         (|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|) { 
             let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
-            if(tinfos.has(cpptkey) && tinfos.get(cpptkey).typesize != 5n) {
+            if(tinfos.has(cpptkey)) {
                 return tinfos.get(cpptkey), tinfos;
             }
 
@@ -1212,7 +1244,7 @@ entity CPPTransformer {
 
         let transformer_nsdecls_typefuncs = transformer_typefuncs.reduce<Map<CString, CPPAssembly::NamespaceDecl>>( 
             transformer_nsdecls_nsfuncs, fn(acc, ikey, cppfunc) => {
-                return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.completens, acc,
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppfunc.fullns, acc,
                     fn(decl) => { 
                         let ntypefuncs = decl.typefuncs.pushBack(ikey);
                         return decl[typefuncs=ntypefuncs];
@@ -1268,7 +1300,6 @@ entity CPPTransformer {
                         let ndatatypes = decl.datatypes.pushBack(cpptk);
                         let nalltypes = decl.alltypes.pushBack(cpptk);
                         let ndecl = transformer.updateNSMethods(decl, cppdatatype@<CPPAssembly::AbstractNominalTypeDecl>);
-                        
                         return ndecl[datatypes=ndatatypes, alltypes=nalltypes];
                     });                     
             });

@@ -72,19 +72,6 @@ function removeCommonPrefix(name: String, prefix: String): String {
     return name.removePrefixString(prefix);
 }
 
-function emitSpecialTemplate(name: String): String {
-    if(name.startsWithString("__CoreCpp")) {
-        return name;
-    }
-    
-    return name
-        .replaceAllStringOccurrences(" ", "")
-        .replaceAllStringOccurrences("<", "ᐸ")
-        .replaceAllStringOccurrences(",", "ᐧ")
-        .replaceAllStringOccurrences(">", "ᐳ")
-        .replaceAllStringOccurrences("::", "ᘏ");
-}
-
 function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, converttype: String, exp: String): String { 
     let name = emitVarIdentifier(bname); 
     let tbindtype = String::concat("[[maybe_unused]] ", converttype, " ");
@@ -138,7 +125,7 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     var resolvedik: Option<CPPAssembly::InvokeKey>;
     match(ik) {
         Some<CPPAssembly::InvokeKey> => { resolvedik = if(isTypeFunc) 
-            then some(ctx.asm.typefuncs.get(ik@some).completeikey) 
+            then some(ctx.asm.typefuncs.get(ik@some).ikey) 
             else ik; }
         | None => { resolvedik = ik; }
     }
@@ -148,22 +135,13 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         Some<CPPAssembly::TypeKey> => { declaredInNS = emitNamespaceKey(ctx.asm.lookupNominalTypeDeclaration(tk@some).declaredInNS); }
         | None => { declaredInNS = emitNamespaceKey(ctx.asm.tryLookupInvokeImplDeclaration(ik@some)@some.declaredInNS); }
     }
-    
-    %% If a typefunc we need to create the namespace key from its completens (as tfunc.declaredInNS is lacking "Core::" prefix)
-    var resolvedns: String;
-    match(ik) { 
-        Some<CPPAssembly::InvokeKey> => { resolvedns = if(isTypeFunc) 
-            then String::joinAll("::", convertCStringList(ctx.asm.typefuncs.get(ik@some).completens)) 
-            else declaredInNS; }
-        | None => { resolvedns = declaredInNS; }
-    }
 
     let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
     if(key.startsWithString("__CoreCpp")) {  
         return key;
     }
     else { 
-        let ns = String::concat(resolvedns, "::");
+        let ns = String::concat(declaredInNS, "::");
         let resolvedkey = if(ns.startsWithString("Core") && !key.startsWithString("Core")) 
             then String::concat("Core::", key)
             else key;
@@ -175,26 +153,42 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     }
 }
 
+function emitSpecialTemplate(name: String): String {
+    if(name.startsWithString("__CoreCpp")) {
+        return name;
+    }
+    
+    return name
+        .replaceAllStringOccurrences(" ", "")
+        .replaceAllStringOccurrences("(|", "丨")
+        .replaceAllStringOccurrences("|)", "丨")
+        .replaceAllStringOccurrences("<", "ᐸ")
+        .replaceAllStringOccurrences(",", "ᐧ")
+        .replaceAllStringOccurrences(">", "ᐳ")
+        .replaceAllStringOccurrences("::", "ᘏ");
+}
+
 function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: Context): String {
     let resolved = emitResolvedNamespace(ctx.fullns_list, emitTypeKeyValue(lts.tkeystr));
 
-    let base = if(resolved.startsWithString("fn")) 
-        then resolved.removePrefixString("fn") 
-        else resolved.removePrefixString("pred");
-    let replace = base
-        .replaceAllStringOccurrences("(", "")
-        .replaceAllStringOccurrences(")", "")
-        .replaceAllStringOccurrences("->", "$")
-        .replaceAllStringOccurrences(">", "ᐳ")
-        .replaceAllStringOccurrences("<", "ᐸ")
-        .replaceAllStringOccurrences(",", "ᐧ")
-        .replaceAllStringOccurrences(" ", "");
+    let replace = emitSpecialTemplate(resolved.replaceAllStringOccurrences("->", "$"))
+        .replaceAllStringOccurrences("(", "_")
+        .replaceAllStringOccurrences(")", "_");
 
-    return String::concat("λ_", replace);
+    return String::concat("λ", replace);
 }
 
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
+
+        %%
+        %% We may need to generate a typedef for our tuples instead
+        %%
+
+        if(!shouldCheckTag) {
+            return emitSpecialTemplate(String::fromCString($ts.tkeystr.value));
+        }
+
         let argssizes = $ts.entries.map<String>(fn(e) => {
             let tinfo = ctx.asm.typeinfos.get(e.tkeystr);
             return if(tinfo.tag !== CPPAssembly::Tag#Ref) then String::fromCString(tinfo.slotsize.toCString())
@@ -249,6 +243,14 @@ function emitInvokeKey(ik: CPPAssembly::InvokeKey, ctx: Context): String {
     return emitResolvedNamespace(ctx.fullns_list, emitResolvedTemplates(none, some(ik), ctx)); 
 }
 
+function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
+    let mdecl = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
+    let mdeclname = emitTypeKey(declaredIn, false, ctx);
+    let basename = String::fromCString(m.value.removePrefixString(declaredIn.value).removePrefixString('::'));
+
+    return String::concat(mdeclname, "ᘏ", emitSpecialTemplate(basename));
+}
+
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
     return String::fromCString(nsk.value);
 }
@@ -266,14 +268,6 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
             return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
                 else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
         }
-}
-
-function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
-    let mdecl = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
-    let mdeclname = emitTypeKey(declaredIn, false, ctx);
-    let basename = String::fromCString(m.value.removePrefixString(declaredIn.value).removePrefixString('::'));
-
-    return String::concat(mdeclname, "ᘏ", emitSpecialTemplate(basename));
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
@@ -553,10 +547,6 @@ function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc
 }
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: String, ctx: Context): String {
-    %% We don't want to do any resolution of these keys yet
-    let ik = String::fromCString(op.resolvedTrgt.value);
-    let tk = String::fromCString(op.resolvedType.tkeystr.value);
-
     let args = emitArguments(op.args, ctx);
 
     %% The "this" arguemnt does not exist in explicitify so we handle the coersion here (we manually added it for cpp emission)
@@ -572,12 +562,6 @@ function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: 
         thisarg = rootexp;
     } 
 
-    let resolvedtype = ctx.asm.lookupNominalTypeDeclaration(op.resolvedType.tkeystr);
-    let ns = emitResolvedNamespace(ctx.fullns_list, emitNamespaceKey(resolvedtype.declaredInNS));
-    let resolvedns = if(ns !== "" && !ns.endsWithString("::")) 
-        then String::concat(ns, "::")
-        else ns;
-    
     let name = generateMethodName(op.resolvedTrgt, op.resolvedType.tkeystr, ctx);
     if(args === "") {
         return String::concat(name, "(", thisarg, ")");
@@ -756,15 +740,21 @@ function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpres
     if(exp.args.size() > 4n) {
         abort; %% Tuples of size > 4 not supported yet
     }
-    let ceetype = emitTypeSignature(exp.etype, false, ctx);
+    let ceetype = emitTypeSignature(exp.etype, true, ctx);
     let args = String::joinAll(", ", exp.args.map<String>(fn(e) => emitExpression(e, ctx))); 
 
     return String::concat(ceetype, "(", args, ")");
 }
 
 function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrimaryListExpression, ctx: Context): String {
-    let ttype = ctx.asm.lookupNominalTypeDeclaration(exp.elemtype.tkeystr);
-    let nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
+    var nctx: Context;
+    if(exp.elemtype)<CPPAssembly::EListTypeSignature> {
+        nctx = ctx;
+    }
+    else { 
+        let ttype = ctx.asm.lookupNominalTypeDeclaration(exp.elemtype.tkeystr);
+        nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
+    }
 
     let args = emitArguments(exp.args, ctx);
     let ns = "Core::ListOps::"; %% So long as lists impl stays in Core::ListOps this will hold 
@@ -1038,6 +1028,13 @@ function emitVariableInitializationStatement(stmt: CPPAssembly::VariableInitiali
     return String::concat(full_indent, " ", name, " = ", exp, ";");
 }
 
+function emitVariableAssignmentStatement(stmt: CPPAssembly::VariableAssignmentStatement, ctx: Context, indent: String): String {
+    let name = emitIdentifier(stmt.name);
+    let exp = emitExpression(stmt.exp, ctx);
+
+    return String::concat(indent, "    ", name, " = ", exp, ";");
+}
+
 function emitBlockStatement(block: CPPAssembly::BlockStatement, ctx: Context, indent: String): String {
     let stmts = block.statements.map<String>(fn(stmt) => emitStatement(stmt, ctx, indent));
     return String::joinAll("%n;", stmts);
@@ -1240,7 +1237,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
         | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
         %%| CPPAssembly::VariableMultiInitializationImplicitStatement => { abort; }
-        %%| CPPAssembly::VariableAssignmentStatement => { abort; }
+        | CPPAssembly::VariableAssignmentStatement => { return emitVariableAssignmentStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
         %%| CPPAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
         %%| CPPAssembly::VariableRetypeStatement => { abort; }
@@ -1367,12 +1364,11 @@ function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPA
 
 %% Type funcs are fully resolved before cpp emission so we can group them with nsfuncs
 function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {
-    let isTypeFunc = ctx.asm.typefuncs.has(func.ikey);
     let ikey = func.ikey;   
-    let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(func.ikey).completens else func.fullns;
+    let ns = func.fullns;
     let nctx = ctx.updateCurrentNamespace(func.declaredInNS, ns);
 
-    let name = emitInvokeKey(ikey, nctx);
+    var name = emitInvokeKey(ikey, nctx);
     let params, templates = emitParameters(func.params, nctx);
     let rtype = emitTypeSignature(func.resultType, true, nctx); 
 
@@ -1485,8 +1481,7 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 }
 
 function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, ctx: Context, ident: String): String {
-    let isTypeFunc = ctx.asm.typefuncs.has(decl.ikey);
-    let ns = if(isTypeFunc) then ctx.asm.typefuncs.get(decl.ikey).completens else decl.fullns;
+    let ns = decl.fullns;
     let nctx = ctx.updateCurrentNamespace(decl.declaredInNS, ns);
 
     let ikey = emitInvokeKey(decl.ikey, nctx);
@@ -1498,15 +1493,18 @@ function emitFunctionForwardDeclaration(decl: CPPAssembly::AbstractInvokeDecl, c
     return String::concat(first, "(", params, ") noexcept;%n;");
 }
 
-%%
-%% TODO: Need to add lookup methods for these vtables and give this some thought. A lot of this code is repetitive or could be
-%% cleaned up pretty signifigantly. We currently emit a vtable entry for all fields, not just those who are derived. (this may need changed)
-%%
-
 function generateVTableEntry(entry: CPPAssembly::MemberFieldDecl, resolved_name: String, enum_name: String, idx: Nat, ctx: Context, indent: String): String {
-    let tinfo = ctx.asm.typeinfos.tryGet(entry.declaredType.tkeystr)@some;
+    let tinfo = ctx.asm.typeinfos.tryGet(entry.declaredType.tkeystr);
 
-    let id = String::fromCString(tinfo.id.toCString());
+    var id: String;
+    if(tinfo)@none { %% elist case
+        %% Since elists are our special case we should likely reserve a specific id for all elists (say 0n)
+        id = String::fromCString(0n.toCString()); 
+    }
+    else {
+        id = String::fromCString($tinfo.id.toCString());
+    }
+
     let entrytype = String::concat(enum_name, "::", resolved_name, "_", emitIdentifier(entry.name));
     let byteoffset = String::fromCString((idx * 8n).toCString()); %% Woudlnt be a bad idea to make these 8 byte alignment a const
 
@@ -1613,16 +1611,22 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
     }
 }
 
+%%
+%% TODO: We should move the definition to the source file. Defining them in the header is a bad idea.
+%% We will also need to be careful about the order these emit in as its possible one const could
+%% contain in its definition another const
+%%
 function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);
     
     let exp = emitExpression(cmd.value, nctx);
     let rtype = emitTypeSignature(cmd.declaredType, true, nctx);
+    let name = emitTypeSignature(cmd.declaredType, false, nctx);
 
     %% Not 100% about removing previx, fixes bug for emitting "one" and "zero" constmember decls
-    let name = removeCppPrefix(String::concat(rtype, "ᘏ", emitIdentifier(cmd.name)));
+    let fullname = removeCppPrefix(String::concat(name, "ᘏ", emitIdentifier(cmd.name)));
 
-    let pre = String::concat(indent, rtype, " ", name, " = ");
+    let pre = String::concat(indent, rtype, " ", fullname, " = ");
     return String::concat(pre, exp, ";%n;");
 }
 
