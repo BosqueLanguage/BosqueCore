@@ -136,19 +136,19 @@ class InstantiationPropagator {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "ListOps") as NamespaceDeclaration;
 
             const createdecl = nns.functions.find((tt) => tt.name === "s_list_create_empty") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
 
             const pushdecl = nns.functions.find((tt) => tt.name === "s_list_push_back") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
         }
         if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "MapOps") as NamespaceDeclaration;
 
             const createdecl = nns.functions.find((tt) => tt.name === "s_map_create_empty") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs, this.currentMapping);
+            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
 
             const pushdecl = nns.functions.find((tt) => tt.name === "s_map_insert") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs, this.currentMapping);
+            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
         }
     }
 
@@ -251,8 +251,8 @@ class InstantiationPropagator {
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
-        const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
+    private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[]) {
+        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = `${ns.fullnamespace.emit()}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
         if(tterms.length === 0) {
@@ -412,12 +412,12 @@ class InstantiationPropagator {
                 if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
                     if(args.length === 0) {
                         const ff = lops.functions.find((f) => f.name === "s_list_create_empty") as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                        this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]]);
                     }
                     else if(args.length <= 6) {
                         const ff = lops.functions.find((f) => f.name === `s_list_create_${args.length}`);
                         if(ff !== undefined) {
-                            this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]], this.currentMapping);
+                            this.instantiateNamespaceFunction(lops, ff, [t.alltermargs[0]]);
                         }
                     }
                     else {
@@ -455,12 +455,12 @@ class InstantiationPropagator {
                 if(args.every((arg) => arg instanceof PositionalArgumentValue)) {
                     if(args.length === 0) {
                         const ff = mops.functions.find((f) => f.name === "s_map_create_empty") as NamespaceFunctionDecl;
-                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]], this.currentMapping);
+                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]]);
                     }
                     else if(args.length <= 2) {
                         const ff = mops.functions.find((f) => f.name === `s_map_create_${args.length}`) as NamespaceFunctionDecl;
 
-                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]], this.currentMapping);
+                        this.instantiateNamespaceFunction(mops, ff, [t.alltermargs[0], t.alltermargs[1]]);
                     }
                     else {
                         assert(false, "Not Implemented -- large explicit map constructors");
@@ -547,7 +547,7 @@ class InstantiationPropagator {
 
         const nns = this.assembly.resolveNamespaceDecl(exp.ns.ns) as NamespaceDeclaration;
         const nfd = this.assembly.resolveNamespaceFunction(exp.ns, exp.name) as NamespaceFunctionDecl;
-        this.instantiateNamespaceFunction(nns, nfd, exp.terms, this.currentMapping);
+        this.instantiateNamespaceFunction(nns, nfd, exp.terms);
     }
 
     private instantiateCallTypeFunctionExpression(exp: CallTypeFunctionExpression) {
