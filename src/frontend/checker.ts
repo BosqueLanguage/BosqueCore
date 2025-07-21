@@ -1779,7 +1779,6 @@ class TypeChecker {
 
             exp.isSpecialCall = true;
             exp.resolvedDeclType = fdecl.typeinfo.tsig;
-            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
             exp.shuffleinfo = [[0, etype]];
 
             return exp.setType(fdecl.typeinfo.tsig);
@@ -1794,7 +1793,6 @@ class TypeChecker {
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
             const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
             exp.resolvedDeclType = fdecl.typeinfo.tsig;
-            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
             exp.shuffleinfo = arginfo.shuffleinfo;
             exp.resttype = arginfo.resttype;
             exp.restinfo = arginfo.restinfo;
@@ -1999,14 +1997,12 @@ class TypeChecker {
 
             if(rrt !== undefined) { 
                 exp.resolvedTrgt = rrt.typeinfo.tsig;
-                exp.resolvedDeclMapping = rrt.typeinfo.mapping;
             }
         }
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
             if(smresolve !== undefined) {
                 exp.resolvedTrgt = smresolve.typeinfo.tsig;
-                exp.resolvedDeclMapping = smresolve.typeinfo.mapping;
                 exp.resolvedMethod = smresolve.member;
             }
         }

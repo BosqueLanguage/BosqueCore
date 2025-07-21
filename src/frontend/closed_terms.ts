@@ -277,9 +277,9 @@ class InstantiationPropagator {
     }
 
     //Given a type function -- instantiate it
-    private instantiateTypeFunction(resolvedtype: TypeSignature, ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
+    private instantiateTypeFunction(resolvedtype: TypeSignature, ttype: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl, terms: TypeSignature[]) {
         const rcvrtype = this.currentMapping !== undefined ? resolvedtype.remapTemplateBindings(this.currentMapping) : resolvedtype;
-        const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
+        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = `${rcvrtype.tkeystr}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
         if(tterms.length === 0) {
@@ -304,9 +304,9 @@ class InstantiationPropagator {
     }
 
     //Given a namespace function -- instantiate it
-    private instantiateSpecificResolvedMemberMethod(ns: FullyQualifiedNamespace, enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[], mapping: TemplateNameMapper | undefined) {
+    private instantiateSpecificResolvedMemberMethod(ns: FullyQualifiedNamespace, enclosingType: TypeSignature, fdecl: MethodDecl, terms: TypeSignature[]) {
         const retype = this.currentMapping !== undefined ? enclosingType.remapTemplateBindings(this.currentMapping) : enclosingType;
-        const tterms = mapping !== undefined ? terms.map((t) => t.remapTemplateBindings(mapping)) : terms;
+        const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const mkey = `${retype.tkeystr}@${fdecl.name}${computeTBindsKey(tterms)}`;
 
         if(tterms.length === 0) {
@@ -573,8 +573,7 @@ class InstantiationPropagator {
 
         if(!exp.isSpecialCall) {
             const fdecl = (exp.resolvedDeclType as NominalTypeSignature).decl.functions.find((ff) => ff.name === exp.name) as TypeFunctionDecl;
-            const imapping = TemplateNameMapper.tryMerge(this.currentMapping, exp.resolvedDeclMapping);
-            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms, imapping);
+            this.instantiateTypeFunction(exp.resolvedDeclType as TypeSignature, (exp.resolvedDeclType as NominalTypeSignature).decl, fdecl, exp.terms);
         }
     }
     
@@ -647,7 +646,7 @@ class InstantiationPropagator {
 
             const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
             const mm = (exp.resolvedMethod as MethodDecl);
-            this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt, mm, exp.terms, this.currentMapping);
+            this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt, mm, exp.terms);
         }
         else {
             assert(false, "Not Implemented -- instantiatePostfixInvoke for virtual");
@@ -1031,7 +1030,7 @@ class InstantiationPropagator {
 
         const nns = (exp.resolvedTrgt as NominalTypeSignature).decl.ns;
         const mm = (exp.resolvedTrgt as NominalTypeSignature).decl.methods.find((m) => m.isThisRef && m.name === exp.name) as MethodDecl;
-        this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms, this.currentMapping);
+        this.instantiateSpecificResolvedMemberMethod(nns, exp.resolvedTrgt as NominalTypeSignature, mm, exp.terms);
     }
 
     private instantiateCallRefVariableExpression(exp: CallRefVariableExpression) {
