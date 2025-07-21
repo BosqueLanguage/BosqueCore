@@ -303,8 +303,8 @@ public function render_fixed(): Color {
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
 }
 
-public function render_params(things: List<SceneObject>): Color {
-    let sc = RayTracer::createParameterScene(things);
+public function render_param(thing: SceneObject): Color {
+    let sc = RayTracer::createParameterScene(List<SceneObject>{thing});
 
     return RayTracer{}.traceRay(Ray{sc.camera.pos, Vector::norm(Vector::minus(sc.camera.forward, sc.camera.pos))}, sc, 0i);
 }

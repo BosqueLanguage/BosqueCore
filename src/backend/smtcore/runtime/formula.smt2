@@ -21,72 +21,6 @@
 )
 
 ;;
-;; Approximation of real as sign and special values 
-;;
-(declare-datatypes () ((@AbsReal @AbsReal-Zero @AbsReal-NotZero)))
-
-(declare-fun @AbsReal-adduf (@AbsReal @AbsReal) @AbsReal)
-(declare-fun @AbsReal-subuf (@AbsReal @AbsReal) @AbsReal)
-
-(declare-fun @AbsReal-lessuf (@AbsReal @AbsReal) Bool)
-
-(define-fun @AbsReal-create ((s String)) @AbsReal
-    (ite (= s "0.0" ) @AbsReal-Zero @AbsReal-NotZero)
-)
-
-(define-fun @AbsReal-negate ((x @AbsReal)) @AbsReal
-    (ite (= x @AbsReal-Zero) @AbsReal-Zero @AbsReal-NotZero)
-)
-
-(define-fun @AbsReal-add ((x @AbsReal) (y @AbsReal)) @AbsReal
-    (ite (and (= x @AbsReal-Zero) (= y @AbsReal-Zero)) @AbsReal-Zero
-        (ite (or (= x @AbsReal-Zero) (= y @AbsReal-Zero)) @AbsReal-NotZero
-            (@AbsReal-adduf x y)
-        )
-    )
-)
-
-(define-fun @AbsReal-sub ((x @AbsReal) (y @AbsReal)) @AbsReal
-    (ite (and (= x @AbsReal-Zero) (= y @AbsReal-Zero)) @AbsReal-Zero
-        (ite (or (= x @AbsReal-Zero) (= y @AbsReal-Zero)) @AbsReal-NotZero
-            (@AbsReal-subuf x y)
-        )
-    )
-)
-
-(define-fun @AbsReal-mult ((x @AbsReal) (y @AbsReal)) @AbsReal
-    (ite (or (= x @AbsReal-Zero) (= y @AbsReal-Zero)) @AbsReal-Zero @AbsReal-NotZero)
-)
-
-(define-fun @AbsReal-div ((x @AbsReal) (y @AbsReal)) @AbsReal
-    (ite (= x @AbsReal-Zero) @AbsReal-Zero @AbsReal-NotZero)
-)
-
-(define-fun @AbsReal-pow ((x @AbsReal) (y @AbsReal)) @AbsReal
-    @AbsReal-NotZero
-)
-
-(define-fun @AbsReal-sqrt ((x @AbsReal)) @AbsReal
-    (ite (= x @AbsReal-Zero) @AbsReal-Zero @AbsReal-NotZero)
-)
-
-(define-fun @AbsReal-less ((x @AbsReal) (y @AbsReal)) Bool
-    (ite (= x y) false (@AbsReal-lessuf x y))
-)
-
-(define-fun @AbsReal-lessequal ((x @AbsReal) (y @AbsReal)) Bool
-    (ite (= x y) true (@AbsReal-lessuf x y))
-)
-
-(define-fun @AbsReal-greater ((x @AbsReal) (y @AbsReal)) Bool
-    (ite (= x y) false (@AbsReal-lessuf y x))
-)
-
-(define-fun @AbsReal-greaterequal ((x @AbsReal) (y @AbsReal)) Bool
-    (ite (= x y) true (@AbsReal-lessuf y x))
-)
-
-;;
 ;; Primitive datatypes 
 ;;
 (declare-datatype None ((none)))
@@ -95,7 +29,7 @@
 ;;Int is Int
 (define-sort BigNat () Int)
 (define-sort BigInt () Int)
-(define-sort Float () @AbsReal)
+(define-sort Float () Real)
 (define-sort CString () String)
 ;;String is String
 
@@ -146,7 +80,7 @@
 (define-fun @Validate-Int ((v Int)) Bool (and (<= (- SMV_I_RANGE) v) (<= v SMV_I_RANGE)))
 (define-fun @Validate-BigNat ((v BigNat)) Bool (and (<= 0 v) (<= v SMV_I_RANGE)))
 (define-fun @Validate-BigInt ((v BigInt)) Bool (and (<= (- SMV_I_RANGE) v) (<= v SMV_I_RANGE)))
-(define-fun @Validate-Float ((v Float)) Bool true)
+(define-fun @Validate-Float ((v Float)) Bool (and (<= -1024.0 v) (<= v 1024.0)))
 (define-fun @Validate-CString ((v CString)) Bool (and (<= (str.len v) SMV_STR_LENGTH) (str.in.re v (re.* (re.union (str.to.re "\u{9}") (re.range " " "~"))))))
 (define-fun @Validate-String ((v String)) Bool (<= (str.len v) SMV_STR_LENGTH))
 

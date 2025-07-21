@@ -99,7 +99,7 @@ function emitLiteralSimpleExpression(e: SMTAssembly::LiteralSimpleExpression): C
         | 'Int'<SMTAssembly::TypeKey>    => { return emitTaggedNumericType(e.value, 'i'); }
         | 'BigNat'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(e.value, 'N'); }
         | 'BigInt'<SMTAssembly::TypeKey> => { return emitTaggedNumericType(e.value, 'I'); }
-        | 'Float'<SMTAssembly::TypeKey>  => { return CString::concat('(@AbsReal-create "', emitTaggedNumericType(e.value, 'f'), '")'); }
+        | 'Float'<SMTAssembly::TypeKey>  => { return emitTaggedNumericType(e.value, 'f'); }
     }
 }
 
@@ -467,7 +467,7 @@ recursive function emitPrefixNegateOpExpression(v: SMTAssembly::PrefixNegateOpEx
         return CString::concat('(- ', vv, ')');
     }
     else {
-        return CString::concat('(@AbsReal-negate ', vv, ')');
+        return CString::concat('(- ', vv, ')');
     }
 }
 
@@ -491,7 +491,7 @@ recursive function emitBinAddExpression(e: SMTAssembly::BinAddExpression, eev: S
         return CString::concat('(+ ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(@AbsReal-add ', lhs, ' ', rhs, ')');
+        return CString::concat('(+ ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -503,7 +503,7 @@ recursive function emitBinSubExpression(e: SMTAssembly::BinSubExpression, eev: S
         return CString::concat('(- ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(@AbsReal-sub ', lhs, ' ', rhs, ')');
+        return CString::concat('(- ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -515,7 +515,7 @@ recursive function emitBinMultExpression(e: SMTAssembly::BinMultExpression, eev:
         return CString::concat('(* ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(@AbsReal-mult ', lhs, ' ', rhs, ')');
+        return CString::concat('(* ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -527,7 +527,7 @@ recursive function emitBinDivExpression(e: SMTAssembly::BinDivExpression, eev: S
         return CString::concat('(/ ', lhs, ' ', rhs, ')');
     }
     else {
-        return CString::concat('(@AbsReal-div ', lhs, ' ', rhs, ')');
+        return CString::concat('(/ ', lhs, ' ', rhs, ')');
     }
 }
 
@@ -637,10 +637,10 @@ recursive function emitBinaryNumericCompareExpression(e: SMTAssembly::BinaryNume
         match(e)@ {
             SMTAssembly::NumericEqExpression => { return CString::concat('(= ', lhs, ' ', rhs, ')'); }
             | SMTAssembly::NumericNeqExpression => { return CString::concat('(not (= ', lhs, ' ', rhs, '))'); }
-            | SMTAssembly::NumericLessExpression => { return CString::concat('(@AbsReal-less ', lhs, ' ', rhs, ')'); }
-            | SMTAssembly::NumericLessEqExpression => { return CString::concat('(@AbsReal-lessequal ', lhs, ' ', rhs, ')'); }
-            | SMTAssembly::NumericGreaterExpression => { return CString::concat('(@AbsReal-greater ', lhs, ' ', rhs, ')'); }
-            | SMTAssembly::NumericGreaterEqExpression => { return CString::concat('(@AbsReal-greaterequal ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericLessExpression => { return CString::concat('(< ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericLessEqExpression => { return CString::concat('(<= ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterExpression => { return CString::concat('(> ', lhs, ' ', rhs, ')'); }
+            | SMTAssembly::NumericGreaterEqExpression => { return CString::concat('(>= ', lhs, ' ', rhs, ')'); }
         }
     }
 }
@@ -1281,10 +1281,10 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
         body = '(str.len s)';
     }
     elif(f.specialname === 's_float_pow') {
-        body = '(@AbsReal-pow a b)';
+        body = '(^ a b)';
     }
     elif(f.specialname === 's_float_sqrt') {
-        body = '(@AbsReal-sqrt a)';
+        body = '(^ a 0.5)';
     }
     elif(f.specialname === 's_blockingfailure') {
         body = emitResultErrOtherAs(f.resultType.rtype);
