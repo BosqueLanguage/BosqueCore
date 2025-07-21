@@ -1612,7 +1612,9 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
 }
 
 %%
-%% TODO: We should extern these in the header then define in the cpp. Defining them in the header is a bad idea
+%% TODO: We should move the definition to the source file. Defining them in the header is a bad idea.
+%% We will also need to be careful about the order these emit in as its possible one const could
+%% contain in its definition another const
 %%
 function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);

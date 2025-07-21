@@ -962,7 +962,7 @@ entity CPPTransformer {
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat, bsqasm: BSQAssembly::Assembly): 
         (|CPPAssembly::TypeInfo, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|) { 
             let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
-            if(tinfos.has(cpptkey) && tinfos.get(cpptkey).typesize != 5n) { %% 5n???? why did i write this
+            if(tinfos.has(cpptkey)) {
                 return tinfos.get(cpptkey), tinfos;
             }
 
