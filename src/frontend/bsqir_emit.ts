@@ -1826,10 +1826,7 @@ class BSQIREmitter {
             const ibase = this.emitExplicitInvokeDecl(fdecl, nskey, ikey, fmt);
             this.mapper = omap;
 
-            let template = ikey.split(fdecl.name)[1];
-            let updatedikey = nskey.concat('::', fdecl.name, template);
-
-            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase}, completeikey='${updatedikey}'<BSQAssembly::InvokeKey>}`);
+            this.typefuncs.push(`'${ikey}'<BSQAssembly::InvokeKey> => BSQAssembly::TypeFunctionDecl{ ${ibase} }`);
             this.allfuncs.push(`'${ikey}'<BSQAssembly::InvokeKey>`);        
         }
         else {

@@ -756,7 +756,6 @@ function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrima
         nctx = ctx.updateCurrentNamespace(ttype.declaredInNS, ttype.fullns);
     }
 
-    %% This is the line that causes us to abort, somethjing with our arguments not emitting
     let args = emitArguments(exp.args, ctx);
     let ns = "Core::ListOps::"; %% So long as lists impl stays in Core::ListOps this will hold 
 
@@ -1612,6 +1611,9 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
     }
 }
 
+%%
+%% TODO: We should extern these in the header then define in the cpp. Defining them in the header is a bad idea
+%%
 function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);
     

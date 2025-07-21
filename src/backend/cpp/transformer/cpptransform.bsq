@@ -851,7 +851,7 @@ entity CPPTransformer {
 
     method transformTypeFunctionDeclToCpp(decl: BSQAssembly::TypeFunctionDecl): CPPAssembly::TypeFunctionDecl {
         let base = this.transformAbstractInvokeDecl(decl);
-        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, CPPTransformNameManager::convertInvokeKey(decl.completeikey) };
+        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
     } 
 
     method transformConstMemberDeclToCpp(decl: BSQAssembly::ConstMemberDecl): CPPAssembly::ConstMemberDecl {

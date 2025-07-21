@@ -1214,8 +1214,7 @@ entity ConstantSimplification {
             body = this.processBodyImpl(typefunc.body),
 
             preconditions = typefunc.preconditions.map<PreConditionDecl>(fn(precond) => this.processPrecondition(precond)),
-            postconditions = typefunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond)),
-            completeikey = typefunc.completeikey
+            postconditions = typefunc.postconditions.map<PostConditionDecl>(fn(postcond) => this.processPostcondition(postcond))
         }; 
     }
 

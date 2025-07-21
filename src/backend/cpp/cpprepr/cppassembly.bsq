@@ -192,7 +192,6 @@ entity NamespaceFunctionDecl provides AbstractInvokeDecl {
 }
 
 entity TypeFunctionDecl provides AbstractInvokeDecl {
-    field completeikey: InvokeKey;
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 

@@ -76,7 +76,6 @@ entity NamespaceFunctionDecl provides FunctionInvokeDecl {
 }
 
 entity TypeFunctionDecl provides FunctionInvokeDecl {
-    field completeikey: InvokeKey; %% For easily grabbing name
 }
 
 datatype MethodDecl provides ExplicitInvokeDecl using {
