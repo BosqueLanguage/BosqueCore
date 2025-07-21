@@ -1030,6 +1030,7 @@ class PostfixInvoke extends PostfixOperation {
     resttype: TypeSignature | undefined = undefined;
     restinfo: [number, boolean, TypeSignature][] | undefined = undefined;
     resolvedTrgt: TypeSignature | undefined = undefined;
+    resolvedDeclMapping: TemplateNameMapper | undefined = undefined;
     resolvedMethod: MethodDecl | undefined = undefined;
 
     constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {

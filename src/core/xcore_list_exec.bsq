@@ -258,6 +258,54 @@ namespace ListOps {
         return XCore::s_createDirect<Tree<T>, List<T>>(Tree<T>::reverse(l.value));
     }
 
+    function s_list_firstk<T>(l: List<T>, k: Nat): List<T> {
+        %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
+        return ListOps::s_list_reduce<T, List<T>>(l, List<T>{}, fn(acc, v) => {
+            if(ListOps::s_list_size<T>(acc) >= k) {
+                return acc;
+            }
+            else {
+                return ListOps::s_list_push_back<T>(acc, v);
+            }
+        });
+    }
+
+    function s_list_lastk<T>(l: List<T>, k: Nat): List<T> {
+        %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
+        return ListOps::s_list_lreduce<T, List<T>>(l, List<T>{}, fn(acc, v) => {
+            if(ListOps::s_list_size<T>(acc) >= k) {
+                return acc;
+            }
+            else {
+                return ListOps::s_list_push_front<T>(acc, v);
+            }
+        });
+    }
+
+    function s_list_shiftk<T>(l: List<T>, k: Nat): List<T> {
+        %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
+        return ListOps::s_list_reduce<T, (|List<T>, Nat|)>(l, (|List<T>{}, k|), fn(acc, v) => {
+            if(acc.1 > 0n) {
+                return (|acc.0, acc.1 - 1n|);
+            }
+            else {
+                return (|ListOps::s_list_push_back<T>(acc.0, v), 0n|);
+            }
+        }).0;
+    }
+
+    function s_list_popk<T>(l: List<T>, k: Nat): List<T> {
+        %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
+        return ListOps::s_list_lreduce<T, (|List<T>, Nat|)>(l, (|List<T>{}, k|), fn(acc, v) => {
+            if(acc.1 > 0n) {
+                return (|acc.0, acc.1 - 1n|);
+            }
+            else {
+                return (|ListOps::s_list_push_front<T>(acc.0, v), 0n|);
+            }
+        }).0;
+    }
+
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
         return Tree<T>::allof[recursive?](l.value, p);
     }

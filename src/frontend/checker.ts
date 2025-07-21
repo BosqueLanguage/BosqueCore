@@ -1997,12 +1997,16 @@ class TypeChecker {
             const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            exp.resolvedTrgt = (rrt !== undefined) ? rrt.typeinfo.tsig : undefined;
+            if(rrt !== undefined) { 
+                exp.resolvedTrgt = rrt.typeinfo.tsig;
+                exp.resolvedDeclMapping = rrt.typeinfo.mapping;
+            }
         }
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
             if(smresolve !== undefined) {
                 exp.resolvedTrgt = smresolve.typeinfo.tsig;
+                exp.resolvedDeclMapping = smresolve.typeinfo.mapping;
                 exp.resolvedMethod = smresolve.member;
             }
         }
@@ -3406,6 +3410,9 @@ class TypeChecker {
             else {
                 const mtype = stmt.matchflow[i].mtype as TypeSignature;
                 this.checkTypeSignature(mtype);
+                if(mtype instanceof ErrorTypeSignature) {
+                    return env;
+                }
 
                 const splits = this.relations.refineMatchType(ctype, mtype, this.constraints);
                 if(splits === undefined) {

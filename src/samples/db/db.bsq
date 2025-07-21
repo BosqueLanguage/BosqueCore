@@ -1,0 +1,272 @@
+%*
+A sample Database application -- adapted from SPEC JVM benchmark
+*%
+declare namespace Main;
+
+%** An entry in the database **%
+entity Entry {
+    field items: List<CString>;
+}
+
+entity FormatEntry {
+    field header: CString;
+    field entries: List<CString>;
+
+    method format(values: List<CString>): CString {
+        let parts = this.entries.mapIdx<CString>(fn(vv, ii) => CString::concat(vv, ': ', values.get(ii)));
+        let iidt = CString::joinAll('%n;  ', parts);
+
+        let hdr = CString::concat(this.header, '%n;');
+        return CString::concat(hdr, '  ', iidt);
+    }
+}
+
+%** The Format of the current Database --  **%
+entity Format {
+    field entries: List<FormatEntry>;
+    field vcount: Nat;
+
+    invariant $vcount == $entries.map<Nat>(fn(ee) => ee.entries.size()).sum();
+
+    method formatEntry(entry: Entry): CString {
+        let res, _ = this.entries.reduce<(|CString, List<CString>|)>((|'', entry.items|), fn(acc, fmt) => {
+            let fargs = acc.1.firstK(fmt.entries.size());
+            let rrest = acc.1.shiftK(fmt.entries.size());
+
+            let formatted = CString::concat(acc.0, '%n;', fmt.format(fargs));
+            return formatted, rrest;
+        });
+
+        return res;
+    }
+}
+
+datatype DatabaseOperation
+of
+NumRecordsOp { }
+| EndOp { }
+| ListOp { }
+| GotoRecordOp { field ridx: Nat; }
+| NextOp { }
+| PreviousOp { }
+| StatusOp { }
+| AddOp { field entry: Entry; }
+| ModifyOp { field entry: Entry; }
+| RemoveOp { }
+;
+
+entity DatabaseIndex {
+    field imap: List<Nat>;
+    field curr: Nat;
+
+    invariant $curr < $imap.size();
+}
+
+entity Database {
+    field dbname: Option<CString> = none;
+    field entries: List<Entry>;
+    field format: Format;
+
+    field index: Option<DatabaseIndex>;
+	field fnum: Option<Nat>;
+
+    function indexQuickCheck(idx: Option<DatabaseIndex>, entrycount: Nat): Bool {
+        if(idx)@none {
+            return true;
+        }
+        else {
+            return $idx.imap.size() == entrycount && $idx.curr < entrycount;
+        }
+    }
+
+    function indexFullCheck(idx: Option<DatabaseIndex>, entrycount: Nat): Bool {
+        if(idx)@none {
+            return true;
+        }
+        else {
+            if($idx.imap.size() != entrycount || $idx.curr >= entrycount) {
+                return false;
+            }
+            else {
+                return $idx.imap.allOf(pred(i) => i < entrycount);
+            }
+        }
+    }
+
+    invariant Database::indexQuickCheck($index, $entries.size());
+
+    validate $entries.allOf(pred(e) => e.items.size() == $format.vcount);
+    validate Database::indexFullCheck($index, $entries.size());
+
+    method setIndex(atidx: Nat): Database, DatabaseIndex {
+        let nidx = this.entries.mapIdx<Nat>(fn(e, i) => i);
+        let nindex = DatabaseIndex{nidx, atidx};
+
+        return Database{ this.dbname, this.entries, this.format, some(nindex), this.fnum }, nindex;
+    }
+
+    method ensureIndex(atidx: Option<Nat>): Database, DatabaseIndex {
+        if($tidx = this.index)@none {
+            if(atidx)@none {
+                return this.setIndex(0n);
+            }
+            else {
+                return this.setIndex($atidx);   
+            }
+            
+        }
+        else {
+            if(atidx)@none {
+                return this, $tidx;
+            }
+            else {
+                let dbidx = DatabaseIndex{$tidx.imap, $atidx};
+                return Database{ this.dbname, this.entries, this.format, some(dbidx), this.fnum }, dbidx;
+            }
+        }
+    }
+
+    method setCurr(atIdx: Nat): Database
+        requires this.index?some;
+    {
+        return Database{ this.dbname, this.entries, this.format, some(DatabaseIndex{this.index@some.imap, atIdx}), this.fnum };
+    }
+
+    method printRec(): CString, Database {
+        let tdb, tidx = this.ensureIndex(none); 
+
+        let entry = tdb.entries.get(tidx.imap.get(tidx.curr));
+        return tdb.format.formatEntry(entry), tdb;
+	}
+
+    method processNumRecords(op: NumRecordsOp): CString {
+        return CString::concat('Records Count: ', this.entries.size().toCString());
+    }
+
+    method processEnd(op: EndOp): CString, Database {
+        if(this.entries.empty()) {
+            return 'Empty DB', this;
+        }
+        else {
+            let tdb, _ = this.ensureIndex(some(this.entries.lastIndex()));
+            return tdb.printRec();
+        }
+    }
+
+    method processList(op: ListOp): CString, Database {
+        if(this.entries.empty()) {
+            return 'Empty DB', this;
+        }
+        else {
+            let tdb, _ = this.ensureIndex(some(0n));
+            return tdb.printRec();
+        }
+    }
+
+    method processGotoRecord(op: GotoRecordOp): CString, Database {
+        if(0n == op.ridx || this.entries.size() < op.ridx) {
+            return 'Invalid Record Index', this;
+        }
+        else {
+            let tdb, tidx = this.ensureIndex(some(op.ridx - 1n));
+            return tdb.printRec();
+        }
+    }
+
+    method processNext(op: NextOp): CString, Database {
+        let tdb, tidx = this.ensureIndex(none);
+
+        if(tidx.curr >= this.entries.lastIndex()) {
+            return '', tdb;
+        }
+        else {
+            let ntdb = tdb.setCurr(tidx.curr + 1n);
+            return ntdb.printRec();
+        }
+    }
+
+    method processPrevious(op: PreviousOp): CString, Database {
+        let tdb, tidx = this.ensureIndex(none);
+
+        if(tidx.curr == 0n) {
+            return '', tdb;
+        }
+        else {
+            let ntdb = tdb.setCurr(tidx.curr - 1n);
+            return ntdb.printRec();
+        }
+    }
+
+    method processStatus(op: StatusOp): CString {
+        let tdb, tidx = this.ensureIndex(none);
+
+        return CString::concat(tidx.curr.toCString(), ' of ', this.entries.size().toCString());
+    }
+
+    method processAdd(op: AddOp): Database {
+        return Database{ this.dbname, this.entries.pushBack(op.entry), this.format, none, none };
+    }
+
+    method processModify(op: ModifyOp): Database {
+        if($idx = this.index)@none {
+            return this;
+        }
+        else {
+           return Database{ this.dbname, this.entries.set($idx.imap.get($idx.curr), op.entry), this.format, this.index, none };
+        }
+    }
+
+    method processRemove(op: RemoveOp): Database {
+        let tdb, tidx = this.ensureIndex(none);
+
+        return Database{ this.dbname, this.entries.delete(tidx.imap.get(tidx.curr)), this.format, none, none };
+    }
+
+    method processDatabaseOperation(op: DatabaseOperation): CString, Database {
+        match(op)@ {
+            NumRecordsOp => { return this.processNumRecords($op), this; }
+            | EndOp => { return this.processEnd($op); }
+            | ListOp => { return this.processList($op); }
+            | GotoRecordOp => { return this.processGotoRecord($op); }
+            | NextOp => { return this.processNext($op); }
+            | PreviousOp => { return this.processPrevious($op); }
+            | StatusOp => { return this.processStatus($op), this; }
+            | AddOp => { return '', this.processAdd($op); }
+            | ModifyOp => { return '', this.processModify($op); }
+            | RemoveOp => { return '', this.processRemove($op); }
+        }
+    }
+
+    method processDB(ops: List<DatabaseOperation>): CString, Database {
+        let res, tdb = ops.reduce<(|List<CString>, Database|)>((|List<CString>{}, this|), fn(acc, op) => {
+            let opstr, ndb = acc.1.processDatabaseOperation(op);
+            return acc.0.pushBack(opstr), ndb;
+        });
+
+        return CString::joinAll('%n;', res), tdb;
+    }
+}
+
+function getSampleDB(): Database {
+    let entries = List<Entry>{
+        Entry{List<CString>{'Bosque', 'Yes', 'Hybrid'}},
+        Entry{List<CString>{'C++', 'Yes', 'Compiled'}},
+        Entry{List<CString>{'JavaScript', 'No', 'JIT'}}
+    };
+
+    let format = Format{
+        List<FormatEntry>{
+            FormatEntry{'PL', List<CString>{'Name'}},
+            FormatEntry{'Features', List<CString>{'Static Types', 'Runtime'}}
+        },
+        3n
+    };
+
+    return Database{none, entries, format, none, none};
+}
+
+public function testOpOnSample(op: DatabaseOperation): CString {
+    let db = getSampleDB();
+
+    return db.processDatabaseOperation(op).0;
+}
