@@ -150,9 +150,67 @@ namespace ListOps {
 
     function s_list_pop_front<T>(l: List<T>): T, List<T> = s_list_pop_front;
     function s_list_pop_back<T>(l: List<T>): T, List<T> = s_list_pop_back;
-    function s_list_delete_front<T>(l: List<T>): List<T> = s_list_delete_front;
-    function s_list_delete_back<T>(l: List<T>): List<T> = s_list_delete_back;
-    function s_list_delete<T>(l: List<T>, idx: Nat): List<T> = s_list_delete;
+
+    function s_list_delete_front<T>(l: List<T>): List<T> {
+        let ll = l.value;
+        match(ll)@ {
+            Vector1<T> => { 
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+            }
+            | Vector2<T> => {
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i1}); 
+            }
+            | _ => {
+                let ll3 = XCore::s_safeas<Vector<T>, Vector3<T>>($ll);
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{ll3.i1, ll3.i2});
+            }
+        }
+    }
+
+    function s_list_delete_back<T>(l: List<T>): List<T> {
+        let ll = l.value;
+        match(ll)@ {
+            Vector1<T> => { 
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+            }
+            | Vector2<T> => {
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i0}); 
+            }
+            | _ => {
+                let ll3 = XCore::s_safeas<Vector<T>, Vector3<T>>($ll);
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{ll3.i0, ll3.i1});
+            }
+        }
+    }
+
+    function s_list_delete<T>(l: List<T>, idx: Nat): List<T>  {
+        let ll = l.value;
+        match(ll)@ {
+            Vector1<T> => { 
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+            }
+            | Vector2<T> => {
+                if(idx == 0n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i1});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i0});
+                } 
+            }
+            | _ => {
+                let ll3 = XCore::s_safeas<Vector<T>, Vector3<T>>($ll);
+                if(idx == 0n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{ll3.i1, ll3.i2});
+                } 
+                elif(idx == 1n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{ll3.i0, ll3.i2});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{ll3.i0, ll3.i1});
+                }
+            }
+        }
+    }
 
     function s_list_create_empty<T>(): List<T> {
         return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
@@ -204,6 +262,94 @@ namespace ListOps {
     }
 
     function s_list_reverse<T>(l: List<T>): List<T> = s_list_reverse;
+
+    function s_list_firstk<T>(l: List<T>, k: Nat): List<T> {
+        let ll = l.value;
+        match(ll)@ {
+            Vector0<T> => { 
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+            }
+            | Vector1<T> => { 
+                if(k == 0n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i0});
+                }
+            }
+            | Vector2<T> => { 
+                if(k == 0n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                }
+                elif(k == 1n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i0});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{$ll.i0, $ll.i1});
+                }
+            }
+            | Vector3<T> => { 
+                if(k == 0n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                }
+                elif(k == 1n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i0});
+                } 
+                elif(k == 2n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{$ll.i0, $ll.i1});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector3<T>{$ll.i0, $ll.i1, $ll.i2});
+                }
+            }
+        }
+    }
+
+    function s_list_lastk<T>(l: List<T>, k: Nat): List<T> = s_list_lastk;
+
+    function s_list_shiftk<T>(l: List<T>, k: Nat): List<T> {
+        let ll = l.value;
+        match(ll)@ {
+            Vector0<T> => { 
+                return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+            }
+            | Vector1<T> => { 
+                if(k == 0n) {
+                    return l;
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                }
+            }
+            | Vector2<T> => { 
+                if(k == 0n) {
+                    return l;
+                }
+                elif(k == 1n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i1});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                }
+            }
+            | Vector3<T> => { 
+                if(k == 0n) {
+                    return l;
+                }
+                elif(k == 1n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector2<T>{$ll.i1, $ll.i2});
+                } 
+                elif(k == 2n) {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector1<T>{$ll.i2});
+                } 
+                else {
+                    return XCore::s_createDirect<Vector<T>, List<T>>(Vector0<T>{});
+                }
+            }
+        }
+    }
+
+    function s_list_popk<T>(l: List<T>, k: Nat): List<T> = s_list_takek;
 
     recursive? function s_list_allof<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool {
         let ll = l.value;

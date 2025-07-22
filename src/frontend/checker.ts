@@ -1779,7 +1779,6 @@ class TypeChecker {
 
             exp.isSpecialCall = true;
             exp.resolvedDeclType = fdecl.typeinfo.tsig;
-            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
             exp.shuffleinfo = [[0, etype]];
 
             return exp.setType(fdecl.typeinfo.tsig);
@@ -1794,7 +1793,6 @@ class TypeChecker {
             const fullmapper = TemplateNameMapper.merge(fdecl.typeinfo.mapping, imapper);
             const arginfo = this.checkArgumentList(exp.sinfo, env, refok, exp.args.args, fdecl.member.params, fullmapper);
             exp.resolvedDeclType = fdecl.typeinfo.tsig;
-            exp.resolvedDeclMapping = fdecl.typeinfo.mapping;
             exp.shuffleinfo = arginfo.shuffleinfo;
             exp.resttype = arginfo.resttype;
             exp.restinfo = arginfo.restinfo;
@@ -1997,7 +1995,9 @@ class TypeChecker {
             const rrt = this.relations.resolveTypeMethodImplementation(resolvefrom, exp.name, this.constraints);
             this.checkError(exp.sinfo, rrt === undefined, `Method ${exp.name} is not specifically resolvable from type ${resolvefrom.emit()}`);
 
-            exp.resolvedTrgt = (rrt !== undefined) ? rrt.typeinfo.tsig : undefined;
+            if(rrt !== undefined) { 
+                exp.resolvedTrgt = rrt.typeinfo.tsig;
+            }
         }
         else {
             const smresolve = this.postfixInvokeStaticResolve(env, mresolve, exp.name, resolvefrom);
@@ -3406,6 +3406,9 @@ class TypeChecker {
             else {
                 const mtype = stmt.matchflow[i].mtype as TypeSignature;
                 this.checkTypeSignature(mtype);
+                if(mtype instanceof ErrorTypeSignature) {
+                    return env;
+                }
 
                 const splits = this.relations.refineMatchType(ctype, mtype, this.constraints);
                 if(splits === undefined) {

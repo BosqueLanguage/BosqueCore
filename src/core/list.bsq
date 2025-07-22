@@ -162,15 +162,7 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
-            return this.reduce<List<T>>(List<T>{}, fn(acc, v) => {
-                if(acc.size() >= n) {
-                    return acc;
-                }
-                else {
-                    return acc.pushBack(v);
-                }
-            });
+            return ListOps::s_list_firstk<T>(this, n);
         }
     }
 
@@ -181,15 +173,29 @@ __internal entity List<T> {
             return List<T>{};
         }
         else {
-            %%TODO: we should specialize this as a slice -- using reduce means we visit the full list even if we just take 2 elements
-            return this.lreduce<List<T>>(List<T>{}, fn(acc, v) => {
-                if(acc.size() >= n) {
-                    return acc;
-                }
-                else {
-                    return acc.pushBack(v);
-                }
-            });
+            return ListOps::s_list_lastk<T>(this, n);
+        }
+    }
+
+    method shiftK(n: Nat): List<T> 
+        requires n <= this.size();
+    {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_shiftk<T>(this, n);
+        }
+    }
+
+    method popK(n: Nat): List<T> 
+        requires n <= this.size();
+    {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_popk<T>(this, n);
         }
     }
 
