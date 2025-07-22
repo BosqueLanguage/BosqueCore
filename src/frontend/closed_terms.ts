@@ -22,7 +22,7 @@ class PendingNamespaceFunction {
         this.function = func;
         this.instantiation = instantiation;
 
-        this.fkey = `${namespace.name}::${func.name}${computeTBindsKey(instantiation)}`;
+        this.fkey = `${namespace.fullnamespace.emit()}::${func.name}${computeTBindsKey(instantiation)}`;
     }
 }
 
@@ -80,12 +80,14 @@ class InstantiationPropagator {
 
     readonly wellknowntypes: Map<string, TypeSignature>;
 
+    readonly pendingNominalTypeDecls: PendingNominalTypeDecl[] = [];
     readonly pendingNamespaceFunctions: PendingNamespaceFunction[] = [];
     readonly pendingTypeFunctions: PendingTypeFunction[] = [];
     readonly pendingTypeMethods: PendingTypeMethod[] = [];
-    readonly pendingNominalTypeDecls: PendingNominalTypeDecl[] = [];
-
+    
     readonly completedInstantiations: Set<string> = new Set<string>();
+    readonly completedNamespaceFunctions: Set<string> = new Set<string>();
+    readonly completedTypeFunctions: Set<string> = new Set<string>();
 
     currentMapping: TemplateNameMapper | undefined = undefined;
     currentNSInstantiation: NamespaceInstantiationInfo | undefined = undefined;
@@ -104,6 +106,14 @@ class InstantiationPropagator {
 
     private isAlreadySeenType(tkey: string): boolean {
         return this.completedInstantiations.has(tkey) || this.pendingNominalTypeDecls.some((pntd) => pntd.tkey === tkey);
+    }
+
+    private isAlreadySeenNamespaceFunction(fkey: string): boolean {
+        return this.completedNamespaceFunctions.has(fkey) || this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey);
+    }
+
+    private isAlreadySeenTypeFunction(tkey: string): boolean {
+        return this.completedTypeFunctions.has(tkey) || this.pendingTypeFunctions.some((ptf) => ptf.fkey === tkey);
     }
 
     //Given a type signature -- instantiate it and all sub-component types
@@ -164,60 +174,6 @@ class InstantiationPropagator {
         }
     }
 
-    private isAlreadySeenNamespaceFunction(ns: FullyQualifiedNamespace, fkey: string, fdecl: NamespaceFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
-        if(this.pendingNamespaceFunctions.some((pnf) => pnf.fkey === fkey)) {
-            return true;
-        }
-
-        const nsopt = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
-        if(nsopt === undefined) {
-            return false;
-        }
-            
-        if(!nsopt.functionbinds.has(fdecl.name)) {
-            return false;
-        }
-
-        const bop = nsopt.functionbinds.get(fdecl.name) as FunctionInstantiationInfo;
-        if(bop.binds === undefined) {
-            return true;
-        }
-        
-        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-    }
-
-    private isAlreadySeenTypeFunction(ns: FullyQualifiedNamespace, tname: string, tkey: string, fkey: string, fdecl: TypeFunctionDecl, mapping: TemplateNameMapper | undefined): boolean {
-        if(this.pendingTypeFunctions.some((ptm) => ptm.fkey === fkey)) {
-            return true;
-        }
-
-        const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
-        if(nsinst === undefined) {
-            return false;
-        }
-
-        const tinsts = nsinst.typebinds.get(tname);
-        if(tinsts === undefined) {
-            return false;
-        }
-
-        const tinst = tinsts.find((t) => t.tkey === tkey);
-        if(tinst === undefined) {
-            return false;
-        }
-
-        if(!tinst.functionbinds.has(fdecl.name)) {
-            return false;
-        }
-
-        const bop = tinst.functionbinds.get(fdecl.name) as FunctionInstantiationInfo;
-        if(bop.binds === undefined) {
-            return true;
-        }
-        
-        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-    }
-
     private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {
         if(this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey)) {
             return true;
@@ -255,25 +211,11 @@ class InstantiationPropagator {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = `${ns.fullnamespace.emit()}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
-        if(tterms.length === 0) {
-            if(this.isAlreadySeenNamespaceFunction(ns.fullnamespace, fkey, fdecl, undefined)) {
-                return;
-            }
-    
-            this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, []));
+        if(this.isAlreadySeenNamespaceFunction(fkey)) {
+            return;
         }
-        else {
-            let fmapping = new Map<string, TypeSignature>();
-            for(let i = 0; i < fdecl.terms.length; ++i) {
-                fmapping.set(fdecl.terms[i].name, tterms[i]);
-            }
 
-            if(this.isAlreadySeenNamespaceFunction(ns.fullnamespace, fkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
-                return;
-            }
-
-            this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
-        }
+        this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
     }
 
     //Given a type function -- instantiate it
@@ -282,25 +224,11 @@ class InstantiationPropagator {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const fkey = `${rcvrtype.tkeystr}::${fdecl.name}${computeTBindsKey(tterms)}`;
 
-        if(tterms.length === 0) {
-            if(this.isAlreadySeenTypeFunction(ttype.ns, ttype.name, rcvrtype.tkeystr, fkey, fdecl, undefined)) {
-                return;
-            }
-    
-            this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, []));
+        if(this.isAlreadySeenTypeFunction(fkey)) {
+            return;
         }
-        else {
-            let fmapping = new Map<string, TypeSignature>();
-            for(let i = 0; i < fdecl.terms.length; ++i) {
-                fmapping.set(fdecl.terms[i].name, tterms[i]);
-            }
 
-            if(this.isAlreadySeenTypeFunction(ttype.ns, ttype.name, rcvrtype.tkeystr, fkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
-                return;
-            }
-
-            this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms));
-        }
+        this.pendingTypeFunctions.push(new PendingTypeFunction(rcvrtype, fdecl, tterms));
     }
 
     //Given a namespace function -- instantiate it
@@ -1539,10 +1467,10 @@ class InstantiationPropagator {
         if(fdecl.function.terms.length !== 0) {
             let tmap = new Map<string, TypeSignature>();
             fdecl.function.terms.forEach((t, ii) => {
-                tmap.set(t.name, fdecl.instantiation[ii])
+                tmap.set(t.name, fdecl.instantiation[ii]);
             });
 
-            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap)
+            this.currentMapping = TemplateNameMapper.createInitialMapping(tmap);
         }
 
         this.instantiateExplicitInvokeDeclSignature(fdecl.function);
@@ -2166,12 +2094,14 @@ class InstantiationPropagator {
                     const nfd = iim.pendingNamespaceFunctions[0];
                     iim.instantiateNamespaceFunctionDecl(nfd.namespace, nfd);
 
+                    iim.completedNamespaceFunctions.add(nfd.fkey);
                     iim.pendingNamespaceFunctions.shift();
                 }
                 else if(iim.pendingTypeFunctions.length !== 0) {
                     const tfd = iim.pendingTypeFunctions[0];
                     iim.instantiateTypeFunctionDecl((tfd.type as NominalTypeSignature).decl, tfd);
 
+                    iim.completedTypeFunctions.add(tfd.fkey);
                     iim.pendingTypeFunctions.shift();
                 }
                 else {
