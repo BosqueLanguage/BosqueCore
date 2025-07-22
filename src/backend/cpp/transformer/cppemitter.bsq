@@ -1647,7 +1647,7 @@ recursive function emitFuncForwardDeclarations(nsdecl: CPPAssembly::NamespaceDec
 
     let subns_fwddecls = nsdecl.subns.reduce<String>("", fn(acc, nsname, subns) => {
         let ns = String::concat(indent, "namespace ", String::fromCString(nsname), " {%n;");
-        return String::concat(ns, emitFuncForwardDeclarations[recursive](subns, ctx, full_indent), indent, "}%n;");
+        return String::concat(acc, ns, emitFuncForwardDeclarations[recursive](subns, ctx, full_indent), indent, "}%n;");
     });
 
     %% Emit our method and func fwd decls
@@ -1672,9 +1672,17 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
+    %% Will need nsdecl consts too, this is just ConstMemberDecls 
+    let consts = nsdecl.typeconsts
+        .reduce<String>(String::concat(subns, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
+            let tc = ctx.asm.typeconsts.get(s);
+            let def = emitConstMemberDecl(tc, ctx, full_indent);
+            return String::concat(acc, def);
+    });
+
     %% Emit methods after all type defintions to prevent types not being fully defined but used
     let methods = nsdecl.alltypes
-        .reduce<String>(subns, fn(acc, tk) => {
+        .reduce<String>(consts, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let func = emitMethods(ant, tk, ctx, full_indent);
             return String::concat(acc, func);
@@ -1721,10 +1729,11 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     });
 
     %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let types = nsdecl.typeconsts.reduce<String>(String::concat(collections, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
-        let tc = ctx.asm.typeconsts.get(s);
-        let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
-        return String::concat(acc, def);
+    let types = nsdecl.typeconsts
+        .reduce<String>(String::concat(collections, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
+            let tc = ctx.asm.typeconsts.get(s);
+            let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
+            return String::concat(acc, def);
     });
 
 
@@ -1770,16 +1779,9 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, def);
     });
 
-    %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let types = nsdecl.typeconsts.reduce<String>(String::concat(other, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
-        let tc = ctx.asm.typeconsts.get(s);
-        let def = emitConstMemberDecl(tc, ctx, full_indent);
-        return String::concat(acc, def);
-    });
-
     %% Only support static methods for now
     let method_fwddecls = nsdecl.staticmethods
-        .reduce<String>(String::concat(types, "//%n;// All Methods%n;//%n;"), fn(acc, mtkey) => {
+        .reduce<String>(String::concat(other, "//%n;// All Methods%n;//%n;"), fn(acc, mtkey) => {
             return String::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
 
