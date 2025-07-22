@@ -887,6 +887,16 @@ entity CPPTransformer {
         });
     }
 
+    %% Finds number of fields handling elist case
+    method getFieldsSize(ant: BSQAssembly::AbstractNominalTypeDecl): Nat {
+        return ant.saturatedBFieldInfo
+            .reduce<Nat>(0n, fn(acc, f) =>  {
+                let ftype = f.ftype;
+                return acc + if(ftype)@<BSQAssembly::EListTypeSignature> 
+                    then $ftype.entries.size() else 1n;
+        });
+    }
+
     %% Explore all subtypes and find largest possible field count (generating subtype tinfo when necessary)
     method findMaxFieldCount(cur: BSQAssembly::AbstractConceptTypeDecl, bsqasm: BSQAssembly::Assembly, tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>, tid: Nat): 
         (|Nat, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|) {
@@ -896,7 +906,7 @@ entity CPPTransformer {
                     let subtinfo, ntinfos = this.generateTypeInfo(subtk, acc.1, tid, bsqasm);
                     if(subant)<BSQAssembly::AbstractEntityTypeDecl> {
                         let fieldssize = if(subtinfo.tag === CPPAssembly::Tag#Ref) then 1n 
-                            else subant.saturatedBFieldInfo.size();
+                            else this.getFieldsSize(subant);
                         return if(fieldssize > acc.0) then (|fieldssize, ntinfos|) 
                             else (|acc.0, ntinfos|);
                     }
@@ -924,7 +934,7 @@ entity CPPTransformer {
                                 .reduce<(|Nat, Nat, CString, Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>|)>((|0n, 0n, acc.0.ptrmask, acc.1|), 
                                     fn(nacc, entry) => {
                                         let etinfo = this.generateTypeInfo(entry.tkeystr, nacc.3, tid + 1n, bsqasm);
-                                        return etinfo.0.typesize, etinfo.0.slotsize, CString::concat(nacc.2, etinfo.0.ptrmask), etinfo.1;
+                                        return nacc.0 + etinfo.0.typesize, nacc.1 + etinfo.0.slotsize, CString::concat(nacc.2, etinfo.0.ptrmask), etinfo.1;
                                     });
                                 ntinfo = acc.0[typesize=acc.0.typesize + esize, slotsize=acc.0.slotsize + eslotsize, ptrmask=eptrmask]; 
                                 return ntinfo, ntinfos;
