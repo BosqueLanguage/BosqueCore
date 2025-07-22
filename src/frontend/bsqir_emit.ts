@@ -1984,6 +1984,11 @@ class BSQIREmitter {
         return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, declaredInType=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
     }
 
+    private emitSaturatedValidateInfo(invariants: {containingtype: NominalTypeSignature, ii: number, file: string, sinfo: SourceInfo, tag: string | undefined}): string {
+        const ikey = EmitNameManager.generateTypeKey(invariants.containingtype) + "_$_validate" + invariants.ii.toString()
+        return `BSQAssembly::SaturatedInvariantInfo{ ikey='${ikey}'<BSQAssembly::InvokeKey>, declaredInType=${this.emitTypeSignature(invariants.containingtype)}, file="${invariants.file}", sinfo=${this.emitSourceInfo(invariants.sinfo)}, tag=${invariants.tag !== undefined ? `some('${invariants.tag}')` : "none"} }`;
+    }
+
     private emitAbstractNominalTypeDeclBase(ns: FullyQualifiedNamespace, tsig: NominalTypeSignature, tdecl: AbstractNominalTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): string {
         const tbase = this.emitAbstractDeclBase(tdecl, EmitNameManager.generateNamespaceKey(ns));
 
@@ -2003,7 +2008,7 @@ class BSQIREmitter {
         const bfields = tdecl.saturatedBFieldInfo.map((sb) => this.emitSaturatedFieldInfo(sb)).join(", ");
 
         const allInvariants = tdecl.allInvariants.map((ai) => this.emitSaturatedInvariantInfo(ai)).join(", ");
-        const allValidates = tdecl.allValidates.map((av) => this.emitSaturatedInvariantInfo(av)).join(", ");
+        const allValidates = tdecl.allValidates.map((av) => this.emitSaturatedValidateInfo(av)).join(", ");
 
         return `${tbase}, tkey='${tkey}'<BSQAssembly::TypeKey>, name='${tdecl.name}', invariants=List<BSQAssembly::InvariantDecl>{ ${invariants} }, validates=List<BSQAssembly::ValidateDecl>{ ${validates} }, absmethods=List<BSQAssembly::InvokeKey>{ ${absmethods} }, virtmethods=List<BSQAssembly::InvokeKey>{ ${virtmethods} }, overmethods=List<BSQAssembly::InvokeKey>{ ${overmethods} }, staticmethods=List<BSQAssembly::InvokeKey>{ ${staticmethods} }, saturatedProvides=List<BSQAssembly::NominalTypeSignature>{ ${provides} }, saturatedBFieldInfo=List<BSQAssembly::SaturatedFieldInfo>{ ${bfields} }, allInvariants=List<BSQAssembly::SaturatedInvariantInfo>{ ${allInvariants} }, allValidates=List<BSQAssembly::SaturatedInvariantInfo>{ ${allValidates} }`;
     }

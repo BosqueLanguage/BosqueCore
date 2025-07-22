@@ -88,6 +88,7 @@ class InstantiationPropagator {
     readonly completedInstantiations: Set<string> = new Set<string>();
     readonly completedNamespaceFunctions: Set<string> = new Set<string>();
     readonly completedTypeFunctions: Set<string> = new Set<string>();
+    readonly completedMemberMethods: Set<string> = new Set<string>();
 
     currentMapping: TemplateNameMapper | undefined = undefined;
     currentNSInstantiation: NamespaceInstantiationInfo | undefined = undefined;
@@ -114,6 +115,10 @@ class InstantiationPropagator {
 
     private isAlreadySeenTypeFunction(tkey: string): boolean {
         return this.completedTypeFunctions.has(tkey) || this.pendingTypeFunctions.some((ptf) => ptf.fkey === tkey);
+    }
+
+    private isAlreadySeenMemberMethod(mkey: string): boolean {
+        return this.completedMemberMethods.has(mkey) || this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey);
     }
 
     //Given a type signature -- instantiate it and all sub-component types
@@ -162,50 +167,6 @@ class InstantiationPropagator {
         }
     }
 
-    private areInvokeMappingsEqual(ma: TemplateNameMapper | undefined, mb: TemplateNameMapper | undefined): boolean {
-        if(ma === undefined && mb === undefined) {
-            return true;
-        }
-        else if(ma === undefined || mb === undefined) {
-            return false;
-        }
-        else {
-            return TemplateNameMapper.identicalMappings(ma, mb);
-        }
-    }
-
-    private isAlreadySeenMemberMethod(ns: FullyQualifiedNamespace, tname: string, tkey: string, mkey: string, mdecl: MethodDecl, mapping: TemplateNameMapper | undefined): boolean {
-        if(this.pendingTypeMethods.some((ptm) => ptm.mkey === mkey)) {
-            return true;
-        }
-
-        const nsinst = this.instantiation.find((ainfo) => ainfo.ns.emit() === ns.emit());
-        if(nsinst === undefined) {
-            return false;
-        }
-
-        const tinsts = nsinst.typebinds.get(tname);
-        if(tinsts === undefined) {
-            return false;
-        }
-
-        const tinst = tinsts.find((t) => t.tkey === tkey);
-        if(tinst === undefined) {
-            return false;
-        }
-
-        if(!tinst.methodbinds.has(mdecl.name)) {
-            return false;
-        }
-
-        const bop = tinst.methodbinds.get(mdecl.name) as MethodInstantiationInfo;
-        if(bop.binds === undefined) {
-            return true;
-        }
-        
-        return bop.binds.some((b) => this.areInvokeMappingsEqual(b, mapping));
-    }
-
     //Given a namespace function -- instantiate it
     private instantiateNamespaceFunction(ns: NamespaceDeclaration, fdecl: NamespaceFunctionDecl, terms: TypeSignature[]) {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
@@ -237,25 +198,11 @@ class InstantiationPropagator {
         const tterms = this.currentMapping !== undefined ? terms.map((t) => t.remapTemplateBindings(this.currentMapping as TemplateNameMapper)) : terms;
         const mkey = `${retype.tkeystr}@${fdecl.name}${computeTBindsKey(tterms)}`;
 
-        if(tterms.length === 0) {
-            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, undefined)) {
-                return;
-            }
-    
-            this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, []));
+        if(this.isAlreadySeenMemberMethod(mkey)) {
+            return;
         }
-        else {
-            let fmapping = new Map<string, TypeSignature>();
-            for(let i = 0; i < fdecl.terms.length; ++i) {
-                fmapping.set(fdecl.terms[i].name, tterms[i]);
-            }
 
-            if(this.isAlreadySeenMemberMethod(ns, (enclosingType as NominalTypeSignature).decl.name, retype.tkeystr, mkey, fdecl, TemplateNameMapper.createInitialMapping(fmapping))) {
-                return;
-            }
-
-            this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, tterms));
-        }
+        this.pendingTypeMethods.push(new PendingTypeMethod(retype, fdecl, tterms));
     }
 
     private processITestAsBoolean(src: TypeSignature, tt: ITest) {
@@ -2116,6 +2063,7 @@ class InstantiationPropagator {
                         iim.instantiateMethodDecl((tmd.type as NominalTypeSignature).decl, tmd);
                     }
 
+                    iim.completedMemberMethods.add(tmd.mkey);
                     iim.pendingTypeMethods.shift();
                 }
             }

@@ -1280,6 +1280,12 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     elif(f.specialname === 'cstring_size') {
         body = '(str.len s)';
     }
+    elif(f.specialname === 'cstring_concat2') {
+        body = '(str.++ s1 s2)';
+    }
+    elif(f.specialname === 's_nat_to_cstring') {
+        body = '(str.from_int v)';
+    }
     elif(f.specialname === 's_float_pow') {
         body = '(^ a b)';
     }
