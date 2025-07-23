@@ -2608,8 +2608,8 @@ class BSQIREmitter {
         return sccs;
     }
 
-    static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[]): string {
-        const emitter = new BSQIREmitter(assembly, asminstantiation, false, undefined, undefined);
+    static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): string {
+        const emitter = new BSQIREmitter(assembly, asminstantiation, false, testfilefilter, undefined);
         emitter.computeSubtypes();
 
         //emit each of the assemblies

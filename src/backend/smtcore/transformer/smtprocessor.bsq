@@ -23,20 +23,29 @@ entity Transformer {
         return SMTTransformer::transformAssemblyToSMT(treeAssembly, callg, errinvokes);
     }
 }
-%*
-public function main(assembly: BSQAssembly::Assembly): CString {
-    let tasm = Transformer::transformAssembly(assembly);
-    let smtstr = SMTEmitter::emitAssembly(tasm, (|'[NO_ERROR_TRGT]', SMTEmitter::s_ignoreErrTrgt|));
 
-    return CString::concat('#BEGIN _ERRORS_%n;', errstr, '#END _ERRORS_%n;', smtstr);
-}
-*%
+public function main(mode: CString, assembly: BSQAssembly::Assembly): CString {
+    if(mode !== '--errtest' && mode !== '--chktest') {
+        let tasm = Transformer::transformAssembly(assembly);
+        return SMTEmitter::emitAssembly(tasm, (|'[NO_ERROR_TRGT]', SMTEmitter::s_ignoreErrTrgt|));
+    }
+    else {
+        if(mode === '--chktest') {
+            let tasm, opc = Transformer::transformAssemblyAsCheckTest(assembly);
+            return CString::concat(SMTEmitter::emitAssembly(tasm, (|'[NO_ERROR_TRGT]', SMTEmitter::s_ignoreErrTrgt|)), '%n;%n;', opc);
+        }
+        else {
+            let tasm, opc = Transformer::transformAssemblyAsErrorTest(assembly);
 
-public function main(assembly: BSQAssembly::Assembly): CString {
-    let tasm = Transformer::transformAssembly(assembly);
+            let erroropts = tasm.getAllErrors();
+            let errcompiles = erroropts.map<CString>(fn(err) => {
+                let smtstr = SMTEmitter::emitAssembly(tasm, (|err.ininvoke@some, err.errCtr|));
 
-    let errstr = CString::joinAll('%n;', tasm.getAllErrors().map<CString>(fn(e) => CString::concat(e.ininvoke@some, ': ', e.errCtr.toCString())));
-    let smtstr = SMTEmitter::emitAssembly(tasm, (|'Main@Database@processRemove'<SMTAssembly::InvokeKey>, 2n|));
+                let smtchk = CString::concat(';;Error in ', err.ininvoke@some, '%n;%n;', smtstr, '%n;', opc);
+                return CString::concat('#### CHECK ####%n;', smtchk);
+            });
 
-    return CString::concat('#BEGIN _ERRORS_%n;', errstr, '#END _ERRORS_%n;', smtstr);
+            return CString::joinAll('%n;%n;', errcompiles);
+        }
+    }
 }

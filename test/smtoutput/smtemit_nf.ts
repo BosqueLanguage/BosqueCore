@@ -45,7 +45,7 @@ function buildMainCode(assembly: Assembly, outname: string): string | undefined 
     const fname = path.join(nndir, "bsqir.bsqon");
 
     try {
-        fs.writeFileSync(fname, tinfo);
+        fs.writeFileSync(fname, "'smtgen'" + " " + tinfo);
     }
     catch(e) {      
         return undefined;
