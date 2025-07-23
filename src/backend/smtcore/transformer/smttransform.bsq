@@ -2965,8 +2965,8 @@ entity SMTTransformer {
     }
 
     method transformAssemblyCodeToSMT(): SMTAssembly::Assembly {
-        let tnsconstsinfo = this.assembly.nsconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::NamespaceConstDecl, List<LambdaGeneratorInfo>|)>(fn(nsc) => transformer.transformNamspaceConstDeclToSMT(nsc));
-        let ttypeconstsinfo = this.assembly.typeconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::ConstMemberDecl, List<LambdaGeneratorInfo>|)>(fn(tc) => transformer.transformTypeConstDeclToSMT(tc));
+        let tnsconstsinfo = this.assembly.nsconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::NamespaceConstDecl, List<LambdaGeneratorInfo>|)>(fn(nsc) => this.transformNamspaceConstDeclToSMT(nsc));
+        let ttypeconstsinfo = this.assembly.typeconsts.filter(pred(nsc) => !SMTTransformer::isConstDeclARegex(nsc.declaredType)).map<(|SMTAssembly::ConstMemberDecl, List<LambdaGeneratorInfo>|)>(fn(tc) => this.transformTypeConstDeclToSMT(tc));
         let lgstate = LambdaGeneratorState{Map<BSQAssembly::InvokeKey, List<LambdaGeneratorInfo>>{}}
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(tnsconstsinfo.map<List<LambdaGeneratorInfo>>(fn(nsc) => nsc.1)))
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(ttypeconstsinfo.map<List<LambdaGeneratorInfo>>(fn(tc) => tc.1)));
@@ -2974,7 +2974,7 @@ entity SMTTransformer {
         let tnsfuncs, lgstatef, tnsinvkeys = this.callg.topoorder
             .lreduce<(|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>, LambdaGeneratorState, List<SMTAssembly::InvokeKey>|)>((|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, lgstate, List<SMTAssembly::InvokeKey>{}|), 
                 fn(acc, ikey) => {
-                    let fdinfo = transformer.transformInvokeToSMTFunction(ikey, acc.1.getLambdaGeneratorInfo(ikey));
+                    let fdinfo = this.transformInvokeToSMTFunction(ikey, acc.1.getLambdaGeneratorInfo(ikey));
                     if(fdinfo)@some {
                         let nfm = $fdinfo.0.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(acc.0, fn(mm, f) => mm.insert(f.invokeKey, f));
                         let nlgen = acc.1.mergeLambdaGeneratorInfo($fdinfo.1);
@@ -2990,7 +2990,7 @@ entity SMTTransformer {
         let tnsfuncsbuiltin = this.callg.topoorder
             .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>{}, 
                 fn(acc, ikey) => {
-                    let bidl = transformer.transformInvokeToSMTBuiltinFunction(ikey, lgstatef.getLambdaGeneratorInfo(ikey));
+                    let bidl = this.transformInvokeToSMTBuiltinFunction(ikey, lgstatef.getLambdaGeneratorInfo(ikey));
                     if(bidl)@some {
                         return $bidl.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(acc, fn(mm, f) => mm.insert(f.invokeKey, f));
                     }
@@ -3010,52 +3010,52 @@ entity SMTTransformer {
             .filter(pred(tkey) => this.assembly.typedecls.has(tkey))
             .map<SMTAssembly::TypedeclTypeDecl>(fn(tkey) => {
                 let bsqtypedecl = this.assembly.typedecls.get(tkey);
-                return SMTAssembly::TypedeclTypeDecl{TransformNameManager::convertTypeKey(tkey), !bsqtypedecl.saturatedProvides.empty(), transformer.transformStdTypeToSMT(bsqtypedecl.valuetype)}; 
+                return SMTAssembly::TypedeclTypeDecl{TransformNameManager::convertTypeKey(tkey), !bsqtypedecl.saturatedProvides.empty(), this.transformStdTypeToSMT(bsqtypedecl.valuetype)}; 
             });
         let stdecls = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.stringoftypedecls.has(tkey))
             .map<SMTAssembly::TypedeclTypeDecl>(fn(tkey) => {
                 let bsqtypedecl = this.assembly.stringoftypedecls.get(tkey);
-                return SMTAssembly::TypedeclTypeDecl{TransformNameManager::convertTypeKey(tkey), !bsqtypedecl.saturatedProvides.empty(), transformer.transformStdTypeToSMT(bsqtypedecl.valuetype)};
+                return SMTAssembly::TypedeclTypeDecl{TransformNameManager::convertTypeKey(tkey), !bsqtypedecl.saturatedProvides.empty(), this.transformStdTypeToSMT(bsqtypedecl.valuetype)};
             });
 
         let tentities = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.entities.has(tkey))
-            .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => transformer.transformEntityDeclToSMT(this.assembly.entities.get(tkey)));
+            .map<SMTAssembly::EntityTypeDecl>(fn(tkey) => this.transformEntityDeclToSMT(this.assembly.entities.get(tkey)));
 
         let tdmtypes = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.datamembers.has(tkey))
-            .map<SMTAssembly::DatatypeMemberEntityTypeDecl>(fn(tkey) => transformer.transformDatatypeMemberEntityTypeDeclToSMT(this.assembly.datamembers.get(tkey)));
+            .map<SMTAssembly::DatatypeMemberEntityTypeDecl>(fn(tkey) => this.transformDatatypeMemberEntityTypeDeclToSMT(this.assembly.datamembers.get(tkey)));
 
         let tconstructables = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.constructables.has(tkey))
-            .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => transformer.transformConstructableDeclToSMT(this.assembly.constructables.get(tkey)));
+            .map<SMTAssembly::ConstructableTypeDecl>(fn(tkey) => this.transformConstructableDeclToSMT(this.assembly.constructables.get(tkey)));
 
         let tcollections = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.collections.has(tkey))
-            .map<SMTAssembly::CollectionTypeDecl>(fn(tkey) => transformer.transformCollectionDeclToSMT(this.assembly.collections.get(tkey)));
+            .map<SMTAssembly::CollectionTypeDecl>(fn(tkey) => this.transformCollectionDeclToSMT(this.assembly.collections.get(tkey)));
 
         let tpconcepts = this.assembly.allabstracttypes
             .filter(pred(tkey) => this.assembly.pconcepts.has(tkey))
-            .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => transformer.transformPrimitiveConceptDeclToSMT(this.assembly.pconcepts.get(tkey)));
+            .map<SMTAssembly::PrimitiveConceptTypeDecl>(fn(tkey) => this.transformPrimitiveConceptDeclToSMT(this.assembly.pconcepts.get(tkey)));
 
         let tcconcepts = this.assembly.allabstracttypes
             .filter(pred(tkey) => this.assembly.concepts.has(tkey))
-            .map<SMTAssembly::ConceptTypeDecl>(fn(tkey) => transformer.transformConceptDeclToSMT(this.assembly.concepts.get(tkey)));
+            .map<SMTAssembly::ConceptTypeDecl>(fn(tkey) => this.transformConceptDeclToSMT(this.assembly.concepts.get(tkey)));
 
         let tddtypes = this.assembly.allabstracttypes
             .filter(pred(tkey) => this.assembly.datatypes.has(tkey))
-            .map<SMTAssembly::DatatypeTypeDecl>(fn(tkey) => transformer.transformDatatypeTypeDeclToSMT(this.assembly.datatypes.get(tkey)));
+            .map<SMTAssembly::DatatypeTypeDecl>(fn(tkey) => this.transformDatatypeTypeDeclToSMT(this.assembly.datatypes.get(tkey)));
 
         let tallfuncs = List<SMTAssembly::InvokeKey>::concat(tnsfuncsbuiltin.keyList(), tnsinvkeys);
 
         let tvalidators = this.assembly.typetopo.ctopo
             .filter(pred(tkey) => !this.assembly.primtives.has(tkey))
-            .map<SMTAssembly::FunctionDecl>(fn(tkey) => transformer.generateValidatorFunction(this.assembly.lookupNominalTypeDeclaration(tkey)));
+            .map<SMTAssembly::FunctionDecl>(fn(tkey) => this.generateValidatorFunction(this.assembly.lookupNominalTypeDeclaration(tkey)));
 
         let tvalidatorsroot = this.assembly.typetopo.ctopo
             .filter(pred(tkey) => !this.assembly.primtives.has(tkey))
-            .map<SMTAssembly::FunctionDecl>(fn(tkey) => transformer.generateValidatorFunctionRootArg(this.assembly.lookupNominalTypeDeclaration(tkey)));
+            .map<SMTAssembly::FunctionDecl>(fn(tkey) => this.generateValidatorFunctionRootArg(this.assembly.lookupNominalTypeDeclaration(tkey)));
 
         return SMTAssembly::Assembly {
             nsconsts = tnsconstsinfo.map<SMTAssembly::NamespaceConstDecl>(fn(nsc) => nsc.0),
@@ -3089,7 +3089,7 @@ entity SMTTransformer {
         return transformer.transformAssemblyCodeToSMT();
     }
 
-    method generateSMTParamDecls(fun: NamespaceFunctionDecl): CString {
+    method generateSMTParamDecls(fun: BSQAssembly::NamespaceFunctionDecl): CString {
         let params = fun.params.map<CString>(fn(p) => {
             let argn = CString::concat('@arg-', SMTTransformer::safeifyName(p.pname.value));
             let dd = CString::concat('(declare-const ', argn, ' ', this.transformParamTypeToSMT(p.ptype), ')');
@@ -3107,7 +3107,7 @@ entity SMTTransformer {
         return CString::concat(CString::joinAll('%n;', params), '%n;%n;', CString::concat('(Seq++ ', CString::joinAll(' ', args), ')'));
     }
 
-    method generateResultCheck(fun: NamespaceFunctionDecl, ischeck: Bool): CString {
+    method generateResultCheck(fun: BSQAssembly::NamespaceFunctionDecl, ischeck: Bool): CString {
         let iivk = TransformNameManager::convertInvokeKey(fun.ikey, List<Bool>{});
         let rrbasetype = this.transformStdTypeToSMT(fun.resulttype);
 
@@ -3117,16 +3117,26 @@ entity SMTTransformer {
 
         if(!this.errinvokes.get(fun.ikey)) {
             let rdecl = CString::concat('(declare-const @return ', rrbasetype, ')');
-            let asgn = CString::concat('(assert (= @return (', iivk, ' ' CString::joinAll(' ', args), ')))');
+            let asgn = CString::concat('(assert (= @return (', iivk, ' ', CString::joinAll(' ', args), ')))');
+
             if(ischeck) {
                 return CString::join('%n', rdecl, asgn, '(assert (not @return))');
             }
             else {
-                xxxx;  
+                return CString::join('%n', rdecl, asgn);
             }
         }
         else {
-            return CString::empty();
+            let rdecl = CString::concat('(declare-const @return (@Result ', rrbasetype, '))');
+            let asgn = CString::concat('(assert (= @return (', iivk, ' ', CString::joinAll(' ', args), ')))');
+            
+            if(ischeck) {
+                return CString::join('%n;', rdecl, asgn, '(assert (= @return (@Result-ok false)))');
+            }
+            else {
+                let failtrgt = CString::concat('(assert (= @return ((as @Result-err (@Result ', rrbasetype, ')) @err-trgt)))');
+                return CString::join('%n;', rdecl, asgn, failtrgt);
+            }
         }
     }
 
@@ -3135,12 +3145,18 @@ entity SMTTransformer {
         let asmcode = transformer.transformAssemblyCodeToSMT();
     
         let chkfunction = this.callg.topoorder.find(pred(ikey) => assembly.nsfuncs.has(ikey) && assembly.nsfuncs.get(ikey).fkind === BSQAssembly::FunctionKind::ChkTest);
-        let pdecls = chkfunction.params.map<CString>(fn(p) => {p.name.value);
+        let opc = CString::concat(this.generateSMTParamDecls(chkfunction), '%n;', this.generateResultCheck(chkfunction, true));
 
-        return asmcode, xxx;
+        return asmcode, opc;
     }
 
     function transformAssemblyAsErrorTest(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
-        xxxx;
+        let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
+        let asmcode = transformer.transformAssemblyCodeToSMT();
+    
+        let chkfunction = this.callg.topoorder.find(pred(ikey) => assembly.nsfuncs.has(ikey) && assembly.nsfuncs.get(ikey).fkind === BSQAssembly::FunctionKind::ChkTest);
+        let opc = CString::concat(this.generateSMTParamDecls(chkfunction), '%n;', this.generateResultCheck(chkfunction, false));
+
+        return asmcode, opc;
     }
 }
