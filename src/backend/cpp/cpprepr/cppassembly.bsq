@@ -169,6 +169,11 @@ entity TypeInfo {
     field ptrmask: CString;
     field typekey: TypeKey;
     field tag: Tag;
+
+    method update(ntypesize: Nat, nslotsize: Nat, nptrmask: CString): TypeInfo {
+        return this[typesize = $typesize + ntypesize, slotsize = $slotsize + nslotsize, 
+            ptrmask = CString::concat($ptrmask, nptrmask)];
+    }
 }
 
 datatype MethodDecl provides AbstractInvokeDecl using {
