@@ -220,4 +220,19 @@ entity Assembly {
 
     field orderedfuncs: List<InvokeKey>;
     field validators: List<FunctionDecl>;
+
+    method getAllErrors(): List<ErrorInfo> {
+        let allegroups = this.orderedfuncs.map<List<ErrorInfo>>(fn(ik) => {
+            let fdecl = this.funcs.tryGet(ik);
+            if (fdecl)@none {
+                return List<ErrorInfo>{};
+            }
+            else {
+                return $fdecl.body.errors.filter(pred(e) => e.ininvoke?some);
+            }
+        })
+        .filter(pred(el) => !el.empty());
+
+        return List<ErrorInfo>::concatAll(allegroups);
+    }
 }

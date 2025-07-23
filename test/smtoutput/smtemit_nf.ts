@@ -38,7 +38,7 @@ function buildAssembly(srcfile: string): Assembly | undefined {
 }
 
 function buildMainCode(assembly: Assembly, outname: string): string | undefined {
-    const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, ["Main"]);
     const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
 
     const nndir = path.normalize(outname);

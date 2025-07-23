@@ -41,6 +41,17 @@ function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
+function extractErrorList(smtcomponents: string): string {
+    const sstr = "#BEGIN _ERRORS_";
+    const estr = "#END _ERRORS_";
+
+    const sidx = smtcomponents.indexOf(sstr) + sstr.length;
+    const eidx = smtcomponents.indexOf(estr);
+    const repl = smtcomponents.substring(sidx, eidx).trim();
+
+    return repl;
+}
+
 function processSingleComponent(formula: string, smtcomponents: string, rterm: string): string {
     const sstr = `#BEGIN ${rterm}`;
     const estr = `#END ${rterm}`;
@@ -107,6 +118,12 @@ function generateFormulaFile(smtcomponents: string, outname: string) {
     ];
     formula = formula.replace(";;--SMV_CONSTANTS--;;", smv_constants.join("\n"));
 
+    const rinfos = extractErrorList(smtcomponents);
+    if(rinfos !== "") {
+        const einfo = rinfos.split("\n").map((v) => `;;${v}`).join("\n");
+        formula = einfo + "\n\n" + formula;
+    }
+
     Status.output("    Writing SMT Formula File...\n");
     try {
         const fname = path.join(nndir, "formula.smt2");
@@ -138,7 +155,7 @@ function runSMTEmit(outname: string): string {
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
     Status.output("Generating Type Info assembly...\n");
-    const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
     const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
 
     Status.output("    Writing BSQIR to disk...\n");
