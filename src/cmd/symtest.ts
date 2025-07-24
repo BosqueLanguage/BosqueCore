@@ -19,6 +19,11 @@ const smt_runtime_code_path = path.join(bosque_dir, "bin/smtruntime/formula.smt2
 
 const z3bin = path.join(bosque_dir, "build/include/z3/bin/z3");
 
+////////////////////////////////////////////////////
+Status.enable();
+////////////////////////////////////////////////////
+
+
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
     Status.error("No input files specified!\n");
@@ -187,8 +192,6 @@ function processTestFile(assembly: Assembly, rootasm: string, testfile: string, 
 }
 
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
-    Status.enable();
-
     const lstart = Date.now();
     Status.output("Loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
@@ -225,22 +228,29 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
     }
 }
 
-function checkSMTFormula(smtcomponents: string, outname: string) {
+function checkSMTFormula(smtcomponents: string, outname: string): boolean {
     generateFormulaFile(smtcomponents, outname, true, false);
 
-    Status.output("Running SMT Solver...\n");
+    process.stdout.write("    Running SMT Solver...\n");
     const nndir = path.normalize(outname);
 
     let rr = "";
     try {
-        rr = execSync(`${z3bin} ${path.join(nndir, "formula.smt2")}`).toString();
+        rr = execSync(`${z3bin} -T:30 ${path.join(nndir, "formula.smt2")}`).toString().trim();
     }
     catch(e) {
         Status.error("Failed to run SMT solver!\n");
-        return;
+        return false;
     }
 
-    Status.output("Result is -- " + rr.replace("\n", " ") + "\n");
+    if(rr !== "sat") {
+        process.stdout.write("    Pass!\n");
+        return false;
+    }
+    else {
+        process.stdout.write("    Violation Found!\n");
+        return true;
+    }
 }
 
 const asm = checkAssembly(fullargs);
@@ -249,6 +259,10 @@ if(asm === undefined) {
 }
 
 Status.output(`-- SMT output directory: ${outdir}\n\n`);
+
+///////////////////////////////////////////////////////
+Status.statusDisable();
+///////////////////////////////////////////////////////
 
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
@@ -263,17 +277,30 @@ processTestFile(asm, mainns, testfile, outdir);
 const smtcomponents = runSMTEmit(outdir);
 
 if(ischktest) {
+    process.stdout.write(`Checking for Property Violation...\n`);
     checkSMTFormula(smtcomponents, outdir);
 }
 else {
     const opts = smtcomponents.split("#### CHECK ####").map((opt) => opt.trim()).filter((opt) => opt !== "");
+
+    let errct = 0;
     for(let i = 0; i < opts.length; ++i) {
         const opt = opts[i]
         let opterr = opt.split("\n")[0].trim();
 
-        Status.output(`Processing Possible Error ${i + 1} of ${opts.length}...\n`);
-        Status.output(opterr + "\n");
+        process.stdout.write(`\nChecking Possible Error ${i + 1} of ${opts.length}...\n`);
+        process.stdout.write("    " + opterr + "\n");
 
-        checkSMTFormula(opt, outdir);
+        let err = checkSMTFormula(opt, outdir);
+        if(err) {
+            errct++;
+        }
+    }
+
+    if(errct === 0) {
+        process.stdout.write("\n----\nNo Violations Found.\n\n");
+    }
+    else {
+        process.stdout.write(`\n----\n${errct} Issues Found!\n\n`);
     }
 }
