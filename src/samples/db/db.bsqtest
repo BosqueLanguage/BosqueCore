@@ -1,0 +1,18 @@
+%**
+ ** Example (symbolic) tests for the database code.
+**%
+
+namespace Main;
+
+errtest singleOpFailure(op: DatabaseOperation): CString {
+    let db = getSampleDB();
+    let res, _ = db.processDatabaseOperation(op);
+
+    return res;
+}
+
+chktest removeInvariant(db: Database): Bool {
+    let rdb = db.processRemove(RemoveOp{});
+
+    return db.entries.size() > rdb.entries.size();
+}
