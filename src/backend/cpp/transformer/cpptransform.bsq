@@ -973,6 +973,8 @@ entity CPPTransformer {
                     return acc.0.update(e.typesize, e.slotsize, e.ptrmask), tic;
                 }
 
+                %% Not right. We should always inline concepts so that the GC knows to explore its
+                %% typeinfo from the '2' ptrmask. The issue we are facing lies elsewere I believe
                 if(this.bsqasm.isNominalTypeConcept(ftype.tkeystr)) {
                     return acc.0.update(8n, 1n, '1'), acc.1;
                 }
@@ -1022,42 +1024,16 @@ entity CPPTransformer {
                 elif(this.bsqasm.constructables.has(typekey)) { 
                     if(ant)@<BSQAssembly::SomeTypeDecl> {
                         let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
-                        let cppoftkey = CPPTransformNameManager::convertTypeKey($ant.oftype.tkeystr);
-                        
-                        %% We should move this logic into a method (maybe "generateTypeTag()?")
-                        var oftypetag: CPPAssembly::Tag;
-                        if($ant.oftype)<BSQAssembly::EListTypeSignature> {
-                            oftypetag = if(this.shouldBeRef(ant.saturatedBFieldInfo, this.bsqasm)) 
-                                then CPPAssembly::Tag#Ref 
-                                else CPPAssembly::Tag#Value;
-                        }
-                        else {
-                            oftypetag = ntic.tinfos.get(cppoftkey).tag;
-                        }
-
-                        let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, oftypetag }; 
+                        let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
 
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
                     abort;
                 }
                 elif(this.bsqasm.collections.has(typekey)) { 
-                    %% Just the underlying datastructure
                     if(ant)@<BSQAssembly::ListTypeDecl> {
                         let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
-                        let cppoftkey = CPPTransformNameManager::convertTypeKey($ant.oftype.tkeystr);
-
-                        var oftypetag: CPPAssembly::Tag;
-                        if($ant.oftype)<BSQAssembly::EListTypeSignature> {
-                            oftypetag = if(this.shouldBeRef(ant.saturatedBFieldInfo, this.bsqasm)) 
-                                then CPPAssembly::Tag#Ref 
-                                else CPPAssembly::Tag#Value;
-                        }
-                        else {
-                            oftypetag = ntic.tinfos.get(cppoftkey).tag;
-                        }
-                        
-                        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, oftypetag };
+                        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value };
 
                         return listinfo, ntic.update(cpptkey, listinfo);
                     }

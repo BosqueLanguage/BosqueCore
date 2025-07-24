@@ -1713,7 +1713,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     });
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value && !ctx.asm.collections.has(tk))
         .reduce<String>("", fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
@@ -1752,7 +1752,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
     });
 
-    %% Emit enums and collections first
+    %% Emit enums first
     let enums = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.enums.has(tk))
         .reduce<String>(String::concat(subns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
