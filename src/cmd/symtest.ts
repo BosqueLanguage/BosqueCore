@@ -161,7 +161,7 @@ function runSMTEmit(outname: string): string {
     let res = "";
     try {
         const fname = path.join(nndir, "bsqir.bsqon");
-        res = execSync(`node ${smt_transform_bin_path} --file ${fname}`).toString();
+        res = execSync(`node ${smt_transform_bin_path} --file ${fname}`, { maxBuffer: 16777216 }).toString();
     }
     catch(e) {      
         Status.error("Failed to write bsqir info file!\n");

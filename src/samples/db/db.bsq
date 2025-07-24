@@ -217,9 +217,14 @@ entity Database {
     }
 
     method processRemove(op: RemoveOp): Database {
-        let tdb, tidx = this.ensureIndex(none);
+        if(this.entries.empty()) {
+            return this;
+        }
+        else {
+            let tdb, tidx = this.ensureIndex(none);
 
-        return Database{ this.dbname, this.entries.delete(tidx.imap.get(tidx.curr)), this.format, none, none };
+            return Database{ this.dbname, this.entries.delete(tidx.imap.get(tidx.curr)), this.format, none, none };
+        }
     }
 
     method processDatabaseOperation(op: DatabaseOperation): CString, Database {
