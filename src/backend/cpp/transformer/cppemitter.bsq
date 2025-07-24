@@ -180,11 +180,6 @@ function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: 
 
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
-
-        %%
-        %% We may need to generate a typedef for our tuples instead
-        %%
-
         if(!shouldCheckTag) {
             return emitSpecialTemplate(String::fromCString($ts.tkeystr.value));
         }
@@ -1673,8 +1668,17 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     });
 
     %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let consts = nsdecl.typeconsts
+    let consts_fwddecls = nsdecl.typeconsts
         .reduce<String>(String::concat(subns, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
+            let tc = ctx.asm.typeconsts.get(s);
+            let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
+            return String::concat(acc, def);
+    });
+
+
+    %% Will need nsdecl consts too, this is just ConstMemberDecls 
+    let consts = nsdecl.typeconsts
+        .reduce<String>(String::concat(consts_fwddecls, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
             let tc = ctx.asm.typeconsts.get(s);
             let def = emitConstMemberDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
@@ -1713,7 +1717,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     });
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value && !ctx.asm.collections.has(tk))
+        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk))
         .reduce<String>("", fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
@@ -1728,16 +1732,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
             return String::concat(acc, fwddecl);
     });
 
-    %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let types = nsdecl.typeconsts
-        .reduce<String>(String::concat(collections, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
-            let tc = ctx.asm.typeconsts.get(s);
-            let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
-            return String::concat(acc, def);
-    });
-
-
-    return String::concat(subns_fwddecls, types, indent, "}%n;");
+    return String::concat(subns_fwddecls, collections, indent, "}%n;");
 }
 
 %%

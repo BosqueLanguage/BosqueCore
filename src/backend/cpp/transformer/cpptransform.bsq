@@ -1,5 +1,7 @@
 namespace CPPEmitter;
 
+const reftypeThreshold: Nat = 4n;
+
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
     function convertNamespaceKey(nskey: BSQAssembly::NamespaceKey): CPPAssembly::NamespaceKey {
@@ -178,7 +180,7 @@ entity CPPTransformer {
             return (acc.0 && (asm.isPrimtitiveType(ftype.tkeystr) || asm.enums.has(ftype.tkeystr))), acc.1 + 1n;
         });
 
-        if(primitiveAndSize.1 > 4n || !primitiveAndSize.0) {
+        if(primitiveAndSize.1 > reftypeThreshold || !primitiveAndSize.0) {
             return true;
         }
 
@@ -973,8 +975,7 @@ entity CPPTransformer {
                     return acc.0.update(e.typesize, e.slotsize, e.ptrmask), tic;
                 }
 
-                %% Not right. We should always inline concepts so that the GC knows to explore its
-                %% typeinfo from the '2' ptrmask. The issue we are facing lies elsewere I believe
+                %% If we have a concept as a field we need to make it a ref otherwise a cycle is possible
                 if(this.bsqasm.isNominalTypeConcept(ftype.tkeystr)) {
                     return acc.0.update(8n, 1n, '1'), acc.1;
                 }
@@ -1054,17 +1055,17 @@ entity CPPTransformer {
                 if(this.bsqasm.concepts.has(typekey) || this.bsqasm.datatypes.has(typekey)) {
                     let mfc, ntic = this.findLargestSubtype(ant@<BSQAssembly::AbstractConceptTypeDecl>, tic);
                     let ptrmask = CPPTransformNameManager::repeatCString('0', mfc, '2');
-                    let matchedType = CPPAssembly::TypeInfo{ ntic.tid, 8n + (mfc * 8n), mfc + 1n, ptrmask, cpptkey, CPPAssembly::Tag#Tagged }; 
+                    let ntag = if(mfc > reftypeThreshold) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+                    let matchedType = CPPAssembly::TypeInfo{ ntic.tid, 8n + (mfc * 8n), mfc + 1n, ptrmask, cpptkey, ntag }; 
                     
                     return matchedType, ntic.update(cpptkey, matchedType);
-
                 }
                 elif(this.bsqasm.pconcepts.has(typekey)) {
                     if(ant)@<BSQAssembly::OptionTypeDecl> {
                         let pcinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
                         let ptrmask = CPPTransformNameManager::repeatCString('0', pcinfo.slotsize, '2');
-                        let pctinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, 
-                            ptrmask, cpptkey, CPPAssembly::Tag#Tagged };
+                        let ntag = if(pcinfo.slotsize > reftypeThreshold) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+                        let pctinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, ptrmask, cpptkey, ntag };
 
                         return pctinfo, ntic.update(cpptkey, pctinfo);
                     }
