@@ -17,10 +17,19 @@ const bosque_dir: string = path.join(__dirname, "../../../");
 const smt_transform_bin_path = path.join(bosque_dir, "bin/smtemit/SMTEmitter.mjs");
 const smt_runtime_code_path = path.join(bosque_dir, "bin/smtruntime/formula.smt2");
 
+const z3bin = path.join(bosque_dir, "build/include/z3/bin/z3");
+
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
     Status.error("No input files specified!\n");
     process.exit(1);
+}
+
+let ischktest = false;
+let ischktestidx = fullargs.findIndex((v) => v === "--chktest");
+if(ischktestidx !== -1) {
+    ischktest = true;
+    fullargs = fullargs.slice(0, ischktestidx).concat(fullargs.slice(ischktestidx + 1));
 }
 
 let mainns = "Main";
@@ -35,13 +44,6 @@ let outdiridx = fullargs.findIndex((v) => v === "--output");
 if(outdiridx !== -1) {
     outdir = fullargs[outdiridx + 1];
     fullargs = fullargs.slice(0, outdiridx).concat(fullargs.slice(outdiridx + 2));
-}
-
-let ischktest = false;
-let ischktestidx = fullargs.findIndex((v) => v === "--chktest");
-if(ischktestidx !== -1) {
-    ischktest = true;
-    fullargs = fullargs.slice(0, ischktestidx).concat(fullargs.slice(ischktestidx + 1));
 }
 
 function getSimpleFilename(fn: string): string {
@@ -136,7 +138,7 @@ function generateFormulaFile(smtcomponents: string, outname: string, chksat?: bo
         formula = formula + "\n\n" + "(check-sat)\n";
 
         if(getres) {
-            formula = formula + "\n" + "(display args)\n";
+            formula = formula + "\n" + "(get-model)\n";
         }
     }
 
@@ -224,14 +226,14 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
 }
 
 function checkSMTFormula(smtcomponents: string, outname: string) {
-    generateFormulaFile(smtcomponents, outdir, true, false);
+    generateFormulaFile(smtcomponents, outname, true, false);
 
     Status.output("Running SMT Solver...\n");
     const nndir = path.normalize(outname);
 
     let rr = "";
     try {
-        rr = execSync(`z3 ${path.join(nndir, "formula.smt2")}`).toString();
+        rr = execSync(`${z3bin} ${path.join(nndir, "formula.smt2")}`).toString();
     }
     catch(e) {
         Status.error("Failed to run SMT solver!\n");
@@ -264,16 +266,14 @@ if(ischktest) {
     checkSMTFormula(smtcomponents, outdir);
 }
 else {
-    const opts = smtcomponents.split("#### CHECK ####");
+    const opts = smtcomponents.split("#### CHECK ####").map((opt) => opt.trim()).filter((opt) => opt !== "");
     for(let i = 0; i < opts.length; ++i) {
-        const opt = opts[i].trim();
-        if(opt !== "") {
-            let opterr = opt.split("\n")[0].trim();
+        const opt = opts[i]
+        let opterr = opt.split("\n")[0].trim();
 
-            Status.output(`Processing Possible Error ${i} of ${opts.length}...\n`);
-            Status.output(opterr + "\n");
+        Status.output(`Processing Possible Error ${i + 1} of ${opts.length}...\n`);
+        Status.output(opterr + "\n");
 
-            checkSMTFormula(opt, outdir);
-        }
+        checkSMTFormula(opt, outdir);
     }
 }

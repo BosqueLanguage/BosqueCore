@@ -1803,10 +1803,10 @@ class BSQIREmitter {
             return "BSQAssembly::FunctionDeclKindTag#Predicate";
         }
         else if(fkind === "errtest") {
-            return "BSQAssembly::FunctionDeclKindTag#ErrorTest";
+            return "BSQAssembly::FunctionDeclKindTag#ErrTest";
         }
         else if(fkind === "chktest") {
-            return "BSQAssembly::FunctionDeclKindTag#CheckTest";
+            return "BSQAssembly::FunctionDeclKindTag#ChkTest";
         }
         else {
             return "BSQAssembly::FunctionDeclKindTag#Example";
@@ -2609,7 +2609,7 @@ class BSQIREmitter {
     }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], testfilefilter?: string[]): string {
-        const emitter = new BSQIREmitter(assembly, asminstantiation, false, testfilefilter, undefined);
+        const emitter = new BSQIREmitter(assembly, asminstantiation, testfilefilter !== undefined, testfilefilter, undefined);
         emitter.computeSubtypes();
 
         //emit each of the assemblies

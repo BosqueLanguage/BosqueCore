@@ -125,7 +125,8 @@ entity SMTTransformerCtx {
     field lambdaerr: Map<BSQAssembly::Identifier, Bool>;
 
     field currentFile: String;
-    field currentInvoke: Option<BSQAssembly::InvokeKey>;
+    field sccCheckInvoke: Option<BSQAssembly::InvokeKey>;
+    field currentInvoke: Option<SMTAssembly::InvokeKey>;
     field isSCCInternal: Bool;
 
     field tempCtr: Nat;
@@ -136,8 +137,7 @@ entity SMTTransformerCtx {
 
     method addError(bsqsinfo: BSQAssembly::SourceInfo): SMTTransformerCtx {
         let smtsinfo = SMTAssembly::SourceInfo{bsqsinfo.line, bsqsinfo.column};
-        let iiv = if($ci = this.currentInvoke)@some then some($ci.value) else none; 
-        let errinfo = SMTAssembly::ErrorInfo{this.errCtr, this.currentFile, smtsinfo, iiv};
+        let errinfo = SMTAssembly::ErrorInfo{this.errCtr, this.currentFile, smtsinfo, this.currentInvoke};
 
         return this[errors = $errors.pushBack(errinfo), errCtr = $errCtr + 1n];
     }
@@ -598,7 +598,7 @@ entity SMTTransformer {
 
     recursive method transformCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
-        if($cinv = ctx.currentInvoke)@some {
+        if($cinv = ctx.sccCheckInvoke)@some {
             sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(e.ikey)));
         }
 
@@ -645,7 +645,7 @@ entity SMTTransformer {
 
     recursive method transformCallTypeFunctionExpression(e: BSQAssembly::CallTypeFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
-        if($cinv = ctx.currentInvoke)@some {
+        if($cinv = ctx.sccCheckInvoke)@some {
             sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(e.ikey)));
         }
 
@@ -989,7 +989,7 @@ entity SMTTransformer {
 
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
-        if($cinv = ctx.currentInvoke)@some {
+        if($cinv = ctx.sccCheckInvoke)@some {
             sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(op.resolvedTrgt)));
         }
         
@@ -2145,7 +2145,7 @@ entity SMTTransformer {
             let rtype = this.transformStdTypeToSMT(decl.resultType);
             let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
             let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
             if(!this.callg.isInSCC(decl.ikey)) {
@@ -2153,7 +2153,7 @@ entity SMTTransformer {
             }
             else {
                 let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, List<Bool>{});
-                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
                 let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                 return List<SMTAssembly::FunctionDecl>{ 
@@ -2177,7 +2177,7 @@ entity SMTTransformer {
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
                 let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
-                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
@@ -2185,7 +2185,7 @@ entity SMTTransformer {
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
-                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                     let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                     return List<SMTAssembly::FunctionDecl>{ 
@@ -2210,7 +2210,7 @@ entity SMTTransformer {
             let rtype = this.transformStdTypeToSMT(decl.resultType);
             let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
             let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
             
             if(!this.callg.isInSCC(decl.ikey)) {
@@ -2218,7 +2218,7 @@ entity SMTTransformer {
             }
             else {
                 let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, List<Bool>{});
-                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
                 let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                 return List<SMTAssembly::FunctionDecl>{ 
@@ -2242,7 +2242,7 @@ entity SMTTransformer {
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
                 let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
-                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
@@ -2250,7 +2250,7 @@ entity SMTTransformer {
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
-                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                     let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                     return List<SMTAssembly::FunctionDecl>{ 
@@ -2277,7 +2277,7 @@ entity SMTTransformer {
             let rtype = this.transformStdTypeToSMT(decl.resultType);
             let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
             let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
             if(!this.callg.isInSCC(decl.ikey)) {
@@ -2285,7 +2285,7 @@ entity SMTTransformer {
             }
             else {
                 let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, List<Bool>{});
-                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+                let ctxrec = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
                 let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                 return List<SMTAssembly::FunctionDecl>{ 
@@ -2309,7 +2309,7 @@ entity SMTTransformer {
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
                 let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
-                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
                 if(!this.callg.isInSCC(decl.ikey)) {
@@ -2317,7 +2317,7 @@ entity SMTTransformer {
                 }
                 else {
                     let ikeyrec = TransformNameManager::convertInvokeKeyPlusRecInfo(decl.ikey, true, lgi.largerrors.map<Bool>(fn(gg) => gg.1));
-                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                    let ctxrec = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikeyrec), true, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                     let _, bodyrec = this.transformBodyToSMTBody(decl.body, ctxrec, decl.resultType);
 
                     return List<SMTAssembly::FunctionDecl>{ 
@@ -2352,7 +2352,7 @@ entity SMTTransformer {
             let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
             let artype = if(this.errinvokes.get(cond.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-            let ctx = SMTTransformerCtx{this.errinvokes.get(cond.ikey), Map<BSQAssembly::Identifier, Bool>{}, cond.file, some(cond.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+            let ctx = SMTTransformerCtx{this.errinvokes.get(cond.ikey), Map<BSQAssembly::Identifier, Bool>{}, cond.file, some(cond.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
             let rctx, smtexp = this.transformExpressionToSMT(cond.exp, ctx);
 
             let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
@@ -2385,7 +2385,7 @@ entity SMTTransformer {
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
                 let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
-                let ctx = SMTTransformerCtx{mayerr, lambdaerr, cond.file, some(cond.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
+                let ctx = SMTTransformerCtx{mayerr, lambdaerr, cond.file, some(cond.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, smtexp = this.transformExpressionToSMT(cond.exp, ctx);
 
                 let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
@@ -2436,7 +2436,7 @@ entity SMTTransformer {
         let rtype = 'Bool'<SMTAssembly::TypeKey>;
         let artype = if(this.errinvokes.get(decl.ikey)) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+        let ctx = SMTTransformerCtx{this.errinvokes.get(decl.ikey), Map<BSQAssembly::Identifier, Bool>{}, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
         let rctx, smtexp = this.transformExpressionToSMT(decl.exp, ctx);
 
         let resexp = if(smtexp)@<ErrorResult> then $smtexp.exp else $smtexp.exp;
@@ -2459,7 +2459,7 @@ entity SMTTransformer {
         let nskey = TransformNameManager::convertNamespaceKey(decl.declaredInNS);
         let vtype = SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
 
-        let ctx = SMTTransformerCtx{true, Map<BSQAssembly::Identifier, Bool>{}, decl.file, none, false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+        let ctx = SMTTransformerCtx{true, Map<BSQAssembly::Identifier, Bool>{}, decl.file, none, none, false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
         let rctx, body = this.processConstExpression(decl.value, ctx);
         return SMTAssembly::NamespaceConstDecl{ nskey, decl.name.value, vtype, body }, rctx.lambdagen;
     }
@@ -2468,7 +2468,7 @@ entity SMTTransformer {
         let tkey = TransformNameManager::convertTypeKey(decl.declaredInType.tkeystr);
         let vtype = SMTAssembly::ErrorResult{ this.transformStdTypeToSMT(decl.declaredType) }; %%Not strictly needed but means we don't need to do errors over consts
 
-        let ctx = SMTTransformerCtx{true, Map<BSQAssembly::Identifier, Bool>{}, decl.file, none, false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
+        let ctx = SMTTransformerCtx{true, Map<BSQAssembly::Identifier, Bool>{}, decl.file, none, none, false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{}};
         let rctx, body = this.processConstExpression(decl.value, ctx);
         return SMTAssembly::ConstMemberDecl{ tkey, decl.name.value, vtype, body }, rctx.lambdagen;
     }
@@ -3091,71 +3091,97 @@ entity SMTTransformer {
 
     method generateSMTParamDecls(fun: BSQAssembly::NamespaceFunctionDecl): CString {
         let params = fun.params.map<CString>(fn(p) => {
-            let argn = CString::concat('@arg-', SMTTransformer::safeifyName(p.pname.value));
-            let dd = CString::concat('(declare-const ', argn, ' ', this.transformParamTypeToSMT(p.ptype), ')');
+            let argn = CString::concat('@arg-', TransformNameManager::safeifyName(p.pname.value));
+            let argtype = this.transformParamTypeToSMT(p.ptype, false);
+            let dd = CString::concat('(declare-const ', argn, ' ', argtype.value, ')');
 
-            let vinv = SMTNameManager::generateNameForValidatorFunctionRoot(fun.pname.tkeystr);
-            let vv = CString::concat('(assert (', vinv, ' ', argn, '))');
+            var vinv: SMTAssembly::InvokeKey;
+            let ptdecl = this.assembly.lookupNominalTypeDeclaration(p.ptype.tkeystr);
+            if(ptdecl)<BSQAssembly::PrimitiveEntityTypeDecl> {
+                vinv = TransformNameManager::generateNameForValidatorFunction(p.ptype.tkeystr);
+            }
+            else {
+                vinv = TransformNameManager::generateNameForValidatorFunctionRoot(p.ptype.tkeystr);
+            }
+            let vv = CString::concat('(assert (', vinv.value, ' ', argn, '))');
 
             return CString::concat(dd, ' ', vv);
         });
 
         let args = fun.params.map<CString>(fn(p) => {
-            return CString::concat('(seq.unit @arg-', SMTTransformer::safeifyName(p.pname.value), ')');
+            return CString::concat('(seq.unit @arg-', TransformNameManager::safeifyName(p.pname.value), ')');
         });
 
-        return CString::concat(CString::joinAll('%n;', params), '%n;%n;', CString::concat('(Seq++ ', CString::joinAll(' ', args), ')'));
+        return CString::joinAll('%n;', params);
     }
 
     method generateResultCheck(fun: BSQAssembly::NamespaceFunctionDecl, ischeck: Bool): CString {
         let iivk = TransformNameManager::convertInvokeKey(fun.ikey, List<Bool>{});
-        let rrbasetype = this.transformStdTypeToSMT(fun.resulttype);
+        let rrbasetype = this.transformStdTypeToSMT(fun.resultType);
 
         let args = fun.params.map<CString>(fn(p) => {
-            return CString::concat(' @arg-', SMTTransformer::safeifyName(p.pname.value));
+            return CString::concat(' @arg-', TransformNameManager::safeifyName(p.pname.value));
         });
 
         if(!this.errinvokes.get(fun.ikey)) {
-            let rdecl = CString::concat('(declare-const @return ', rrbasetype, ')');
-            let asgn = CString::concat('(assert (= @return (', iivk, ' ', CString::joinAll(' ', args), ')))');
+            let rdecl = CString::concat('(declare-const @return ', rrbasetype.value, ')');
+            let asgn = CString::concat('(assert (= @return (', iivk.value, ' ', CString::joinAll(' ', args), ')))');
 
             if(ischeck) {
-                return CString::join('%n', rdecl, asgn, '(assert (not @return))');
+                return CString::join('%n;', rdecl, asgn, '(assert (not @return))');
             }
             else {
-                return CString::join('%n', rdecl, asgn);
+                return CString::join('%n;', rdecl, asgn);
             }
         }
         else {
-            let rdecl = CString::concat('(declare-const @return (@Result ', rrbasetype, '))');
-            let asgn = CString::concat('(assert (= @return (', iivk, ' ', CString::joinAll(' ', args), ')))');
+            let rdecl = CString::concat('(declare-const @return (@Result ', rrbasetype.value, '))');
+            let asgn = CString::concat('(assert (= @return (', iivk.value, ' ', CString::joinAll(' ', args), ')))');
             
             if(ischeck) {
                 return CString::join('%n;', rdecl, asgn, '(assert (= @return (@Result-ok false)))');
             }
             else {
-                let failtrgt = CString::concat('(assert (= @return ((as @Result-err (@Result ', rrbasetype, ')) @err-trgt)))');
+                let failtrgt = CString::concat('(assert (= @return ((as @Result-err (@Result ', rrbasetype.value, ')) @err-trgt)))');
                 return CString::join('%n;', rdecl, asgn, failtrgt);
             }
         }
     }
 
-    function transformAssemblyAsCheckTest(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
+    function transformAssemblyAsCheckTest(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly, CString {
         let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
         let asmcode = transformer.transformAssemblyCodeToSMT();
     
-        let chkfunction = this.callg.topoorder.find(pred(ikey) => assembly.nsfuncs.has(ikey) && assembly.nsfuncs.get(ikey).fkind === BSQAssembly::FunctionKind::ChkTest);
-        let opc = CString::concat(this.generateSMTParamDecls(chkfunction), '%n;', this.generateResultCheck(chkfunction, true));
+        let chkikey = transformer.callg.topoorder.find(pred(ikey) => {
+            let ff = assembly.nsfuncs.tryGet(ikey);
+            if(ff)@none {
+                return false;
+            } 
+            else {
+                return $ff.fkind === BSQAssembly::FunctionDeclKindTag#ChkTest;
+            }
+        });
+        let chkfunction = assembly.nsfuncs.get(chkikey);
+        let opc = CString::concat(transformer.generateSMTParamDecls(chkfunction), '%n;%n;', transformer.generateResultCheck(chkfunction, true));
 
         return asmcode, opc;
     }
 
-    function transformAssemblyAsErrorTest(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly {
+    function transformAssemblyAsErrorTest(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph, errinvokes: Map<BSQAssembly::InvokeKey, Bool>): SMTAssembly::Assembly, CString {
         let transformer = SMTTransformer{assembly, callg, errinvokes, MayErrorAnalysis{assembly, callg}};
         let asmcode = transformer.transformAssemblyCodeToSMT();
     
-        let chkfunction = this.callg.topoorder.find(pred(ikey) => assembly.nsfuncs.has(ikey) && assembly.nsfuncs.get(ikey).fkind === BSQAssembly::FunctionKind::ChkTest);
-        let opc = CString::concat(this.generateSMTParamDecls(chkfunction), '%n;', this.generateResultCheck(chkfunction, false));
+        let chkikey = transformer.callg.topoorder.find(pred(ikey) => {
+            let ff = assembly.nsfuncs.tryGet(ikey);
+            if(ff)@none {
+                return false;
+            } 
+            else {
+                return $ff.fkind === BSQAssembly::FunctionDeclKindTag#ErrTest;
+            }
+        });
+        let chkfunction = assembly.nsfuncs.get(chkikey);
+        let opc = CString::concat(transformer.generateSMTParamDecls(chkfunction), '%n;%n;', transformer.generateResultCheck(chkfunction, false));
 
         return asmcode, opc;
     }

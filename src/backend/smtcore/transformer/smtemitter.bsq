@@ -1268,7 +1268,7 @@ function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CStri
     return CString::concat('(declare-fun ', f.invokeKey.value, ' ', pll, ' Bool)');
 }
 
-function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (|SMTAssembly::InvokeKey, Nat|)): CString {
+function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -1303,12 +1303,12 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: (|SMTAssembly::InvokeKey, Nat|)): CString {
+function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     var eev: SMTEmitterEnv;
-    if(trgterr.0 !== f.invokeKey) {
+    if(trgterr.0)@none {
         eev = SMTEmitterEnv{SMTEmitter::s_ignoreErrTrgt, f.resultType.rtype};
     }
     else {
@@ -1607,7 +1607,7 @@ function emitAllFieldAccessFunctions(concepts: List<SMTAssembly::ConceptTypeDecl
     return CString::joinAll('%n;', List<CString>::concat(cfields, dfields).filter(pred(s) => !s.empty()));
 }
 
-function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|SMTAssembly::InvokeKey, Nat|)): CString {
+function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
     let conststr = CString::join('%n;',
         '#BEGIN ;;--GLOBAL_DECLS--;;',
