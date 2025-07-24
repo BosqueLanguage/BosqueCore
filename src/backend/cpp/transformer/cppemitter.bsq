@@ -61,8 +61,21 @@ function emitSpecialThis(): String {
     return "𝐭𝐡𝐢𝐬";
 }    
 
-function getAccessor(tk: CPPAssembly::TypeKey, ctx: Context): String {
-    return if(ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Ref) then ".access_ref" else ".access";
+%% Probably should name this better
+function generateAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
+    let tag = ctx.asm.typeinfos.tryGet(tk)@some.tag;
+    switch(tag) {
+        CPPAssembly::Tag#Value => { return "."; }
+        | CPPAssembly::Tag#Ref => { return "->"; }
+        | CPPAssembly::Tag#Tagged => { return "."; } 
+    }
+ }
+
+function getAccessor(basetk: CPPAssembly::TypeKey, accessingtk: CPPAssembly::TypeKey, ctx: Context): String {
+    let accessor = generateAccess(basetk, ctx);
+    return if(ctx.asm.typeinfos.get(accessingtk).tag === CPPAssembly::Tag#Ref) 
+        then String::concat(accessor, "access_ref")
+        else String::concat(accessor, "access");
 }
 
 function removeCommonPrefix(name: String, prefix: String): String {
@@ -254,14 +267,18 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
+        let needsGCAlloc = if(ctx.asm.typeinfos.get(constype.tkeystr).tag === CPPAssembly::Tag#Ref)
+            then "new " %% TODO: Make this not new! It should be a call to our GC allocator
+            else "";
 
+        let base = String::concat(needsGCAlloc, econstype);
+        let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
         if(ctx.asm.isNominalTypeConcept(ttype.tkeystr)) {
-            return String::concat(econstype, "{ ", eexp, " }");
+            return String::concat(base, "{ &", ettype, ", ", eexp, " }");
         }
         else {
-            let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
-            return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
-                else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+            return if(eexp === "") then String::concat(base, "{ &", ettype, " }")
+                else String::concat(base, "{ &", ettype, ", ", eexp, " }");
         }
 }
 
@@ -508,12 +525,13 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     if(ctx.asm.collections.has(op.baseType.tkeystr)) {
         return "";
     }
+
     if(ctx.asm.isNominalTypeConcept(op.baseType.tkeystr)) {
         let e = ctx.asm.lookupNominalTypeDeclaration(op.baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
         let canresolve, offset = canUseDirectFieldAccess(e, op.name, ctx);
         let ftype = emitTypeSignature(op.ftype, true, ctx);
         
-        let accessor = getAccessor(op.ftype.tkeystr, ctx);
+        let accessor = getAccessor(op.ftype.tkeystr, op.ftype.tkeystr, ctx);
         if(canresolve) {
             return String::concat(accessor, "<", ftype, ", ", String::fromCString(offset.toCString()), ">()");
         }
@@ -524,12 +542,9 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
             return String::concat(accessor, "vlookup<", ftype, enumentry, ">(", args); 
         }
     }
-
-    switch(op_tinfo.tag) {
-        CPPAssembly::Tag#Value => { return String::concat(".", ident); }
-        | CPPAssembly::Tag#Ref => { return String::concat("->", ident); }
-        | CPPAssembly::Tag#Tagged => { return String::concat(".", ident); } 
-    }
+    
+    let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
+    return String::concat(accessor, ident);
 }
 
 %% For now we assume this is only used for accessing elist fields
@@ -579,10 +594,11 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
     }
     else {
         %% T-type is concrete case
+        let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
         if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
             let ttype = emitTypeSignature(it.ttype, false, ctx);
-            return if(it.isnot) then String::concat(".typeinfo != &", ttype, "Type")
-                else String::concat(".typeinfo == &", ttype, "Type");
+            return if(it.isnot) then String::concat(accessor, " != &", ttype, "Type")
+                else String::concat(accessor, " == &", ttype, "Type");
         }
         else {
             abort; %% Handle case where both are abstract (vtable lookup likely)
@@ -591,15 +607,17 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
 }
 
 function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+    let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
     return if(it.isnot) 
-        then ".typeinfo == &NoneType" 
-        else ".typeinfo != &NoneType";
+        then String::concat(accessor, " == &NoneType") 
+        else String::concat(accessor, " != &NoneType");
 }
 
 function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+    let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
     return if(it.isnot) 
-        then ".typeinfo != &NoneType" 
-        else ".typeinfo == &NoneType";
+        then String::concat(accessor, " != &NoneType") 
+        else String::concat(accessor, " == &NoneType");
 }
 
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
@@ -616,8 +634,8 @@ function emitITestAsConvertNone(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
     if(isnot) {
         return emitITestAsConvertSome(false, fromtype, ctx);
     }
-    else {
-        return (|String::concat(getAccessor(fromtype, ctx), "none()"), "__CoreCpp::None" |);
+    else { %% I dont love this but it works
+        return (|String::concat(getAccessor(fromtype, CPPAssembly::TypeKey::from('__CoreCpp::None'), ctx), "none()"), "__CoreCpp::None" |);
     }
 }
 
@@ -629,7 +647,7 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
             return emitITestAsConvertNone(false, fromtype, ctx);
         }
         else {
-            return (|String::concat(getAccessor($ant.someType.tkeystr, ctx), "<", emitTypeSignature($ant.someType, true, ctx), ">().value"),
+            return (|String::concat(getAccessor(fromtype, $ant.someType.tkeystr, ctx), "<", emitTypeSignature($ant.someType, true, ctx), ">().value"),
                 emitTypeKey($ant.oftype.tkeystr, true, ctx)|);
         }
     }
@@ -643,8 +661,8 @@ function emitITestAsConvertType(isnot: Bool, fromtype: CPPAssembly::TypeKey, tot
     let emittotype = emitTypeKey(ttype, false, ctx);
 
     %% We want to make sure we return the totype as a possible field here(our access method handles ref case)
-    return if(fromtype.value === ttype.value) then (|"", emittotype|) 
-        else (|String::concat(getAccessor(ttype, ctx), "<", emittotype, ">()"), emitTypeKey(ttype, true, ctx)|);
+    return if(fromtype.value === ttype.value) then (|"", emitTypeKey(ttype, true, ctx)|) 
+        else (|String::concat(getAccessor(fromtype, totype, ctx), "<", emittotype, ">()"), emitTypeKey(ttype, true, ctx)|);
 }
 
 function emitITestAsConvert(isnot: Bool, itc: CPPAssembly::ITest, fromtype: CPPAssembly::TypeKey, totype: Option<CPPAssembly::TypeKey>, ctx: Context): (|String, String|) { %% Convert, Emitted type
@@ -867,7 +885,7 @@ function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression
     let emitexp = emitExpression(exp.exp, ctx);   
 
     if(ctx.asm.isNominalTypeConcept(exp.srctype.tkeystr)) {
-        return String::concat(emitexp, getAccessor(exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
+        return String::concat(emitexp, getAccessor(exp.srctype.tkeystr, exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
     }
     else {
         return emitexp;
@@ -877,7 +895,7 @@ function emitNarrowedTypeExpression(exp: CPPAssembly::CoerceNarrowTypeExpression
 function emitSafeConvertExpression(exp: CPPAssembly::SafeConvertExpression, ctx: Context): String {
     let tottype = emitTypeSignature(exp.trgttype, false, ctx);
 
-   return String::concat(emitExpression(exp.exp, ctx), getAccessor(exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
+   return String::concat(emitExpression(exp.exp, ctx), getAccessor(exp.srctype.tkeystr, exp.trgttype.tkeystr, ctx), "<", tottype, ">()");
 }
 
 function emitCreateDirectExpression(exp: CPPAssembly::CreateDirectExpression, ctx: Context): String {
@@ -1171,7 +1189,8 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
     let fullfull_indent = String::concat("    ", full_indent);
 
     let expr = emitExpression(stmt.sval, ctx);
-    let sval = String::concat(expr, ".typeinfo == &");
+    let accessor = generateAccess(stmt.sval.etype.tkeystr, ctx);
+    let sval = String::concat(expr, accessor, "typeinfo == &");
     var bind: String;
 
     let matchflow = stmt.matchflow.mapIdx<String>(fn(mf, ii) => {
@@ -1573,6 +1592,12 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
+%%
+%% We always emit collection type decls as values, so they arent going to be visible to the GC
+%% This is definetly wrong so we will need to modify their type info generation to correctly
+%% reflcet our types
+%%
+
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
     let ttype = emitTypeSignature(ctd.oftype, false, nctx);
@@ -1588,7 +1613,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::CollectionTypeDecl => { return emitCollectionTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::CollectionTypeDecl => { return emitCollectionTypeDecl($ant, ctx, indent); } %% I think this should jut emit its typeinfo
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
     }

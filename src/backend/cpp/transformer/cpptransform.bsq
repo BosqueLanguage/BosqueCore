@@ -909,20 +909,26 @@ entity CPPTransformer {
     }
 
     %% Explore all subtypes and find largest possible field slot size (generating subtype tinfo when necessary)
-    method findLargestSubtype(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, TypeInfoContext {
-        return cur.subtypes.reduce<(|Nat, TypeInfoContext|)>((|0n, tic|), fn(acc, subtk) => {              
+    method findLargestSubtype(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, CPPAssembly::Tag, TypeInfoContext {
+        return cur.subtypes.reduce<(|Nat, CPPAssembly::Tag, TypeInfoContext|)>((|0n, CPPAssembly::Tag#Value, tic|), fn(acc, subtk) => {              
             let subant = this.bsqasm.lookupNominalTypeDeclaration(subtk);
 
             if(subant)@<BSQAssembly::AbstractEntityTypeDecl> {
-                let finfo, ntic = this.generateFieldInfo(none, some(subtk), acc.1);
+                let finfo, ntic = this.generateFieldInfo(none, some(subtk), acc.2);
+
+                %% If already a ref keep it like so
+                var tag = acc.1;
+                if(this.shouldBeRef($subant.saturatedBFieldInfo, this.bsqasm)) {
+                    tag = CPPAssembly::Tag#Ref;
+                }
 
                 if(finfo.slotsize > acc.0) {
-                    return finfo.slotsize, ntic;
+                    return finfo.slotsize, tag, ntic;
                 }
-                return acc.0, ntic;
+                return acc.0, tag, ntic;
             }
 
-            return this.findLargestSubtype[recursive](subant@<BSQAssembly::AbstractConceptTypeDecl>, acc.1);
+            return this.findLargestSubtype[recursive](subant@<BSQAssembly::AbstractConceptTypeDecl>, acc.2);
         });
     }
 
@@ -1032,6 +1038,12 @@ entity CPPTransformer {
                     abort;
                 }
                 elif(this.bsqasm.collections.has(typekey)) { 
+                    
+                    %%
+                    %% TODO: Take a look at this, i am skeptical our lists should always be by value.
+                    %% I dont think that makes any sense as they can be super large (well the tree that constructs them)
+                    %%
+                    
                     if(ant)@<BSQAssembly::ListTypeDecl> {
                         let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
                         let listinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value };
@@ -1053,9 +1065,8 @@ entity CPPTransformer {
             }
             elif(this.bsqasm.isNominalTypeConcept(typekey)) {
                 if(this.bsqasm.concepts.has(typekey) || this.bsqasm.datatypes.has(typekey)) {
-                    let mfc, ntic = this.findLargestSubtype(ant@<BSQAssembly::AbstractConceptTypeDecl>, tic);
+                    let mfc, ntag, ntic = this.findLargestSubtype(ant@<BSQAssembly::AbstractConceptTypeDecl>, tic);
                     let ptrmask = CPPTransformNameManager::repeatCString('0', mfc, '2');
-                    let ntag = if(mfc > reftypeThreshold) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
                     let matchedType = CPPAssembly::TypeInfo{ ntic.tid, 8n + (mfc * 8n), mfc + 1n, ptrmask, cpptkey, ntag }; 
                     
                     return matchedType, ntic.update(cpptkey, matchedType);
