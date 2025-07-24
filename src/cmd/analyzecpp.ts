@@ -103,7 +103,7 @@ function runCPPEmit(outname: string): [string, string] {
 
 function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
     Status.output("Generating Type Info assembly...\n");
-    const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
     const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
 
     Status.output("    Writing BSQIR to disk...\n");

@@ -51,7 +51,7 @@ function buildAssembly(srcfile: string): Assembly | undefined {
 }
 
 function buildMainCode(assembly: Assembly, outname: string) {
-    const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, ["Main"]);
     const jscode = JSEmitter.emitAssembly(assembly, "debug", "test", "Main", iim);
 
     const nndir = path.normalize(outname);

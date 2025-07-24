@@ -1268,7 +1268,7 @@ function emitPredicateFunctionDecl(f: SMTAssembly::PredicateFunctionDecl): CStri
     return CString::concat('(declare-fun ', f.invokeKey.value, ' ', pll, ' Bool)');
 }
 
-function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: Nat): CString {
+function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
@@ -1303,12 +1303,20 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: N
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), ' ', body, ')');
 }
 
-function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: Nat): CString {
+function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let plist = f.params.map<CString>(fn(p) => CString::concat('(', p.pname.value, ' ', p.ptype.value, ')'));
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
+    var eev: SMTEmitterEnv;
+    if(trgterr.0)@none {
+        eev = SMTEmitterEnv{SMTEmitter::s_ignoreErrTrgt, f.resultType.rtype};
+    }
+    else {
+        eev = SMTEmitterEnv{trgterr.1, f.resultType.rtype};
+    }
+
     let psig = CString::concat('define-fun ', f.invokeKey.value, ' ', pll, ' ');
-    let body = CString::concat('%n;', emitBody(f.body, SMTEmitterEnv{trgterr, f.resultType.rtype}, some('    ')));
+    let body = CString::concat('%n;', emitBody(f.body, eev, some('    ')));
 
     return CString::concat('(', psig, SMTNameManager::generateResultName(f.resultType), body, '%n;)');
 }
@@ -1599,7 +1607,7 @@ function emitAllFieldAccessFunctions(concepts: List<SMTAssembly::ConceptTypeDecl
     return CString::joinAll('%n;', List<CString>::concat(cfields, dfields).filter(pred(s) => !s.empty()));
 }
 
-function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
+function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly::InvokeKey>, Nat|)): CString {
     let constdecls, constimpls = emitConstInfo(asm.nsconsts, asm.typeconsts);
     let conststr = CString::join('%n;',
         '#BEGIN ;;--GLOBAL_DECLS--;;',
@@ -1722,7 +1730,7 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: Nat): CString {
 
     let validates = CString::join('%n;',
         '#BEGIN ;;--VALIDATE_PREDICATES--;;',
-        CString::joinAll('%n;', asm.validators.map<CString>(fn(vf) => emitFunctionDecl(vf, SMTEmitter::s_ignoreErrTrgt))),
+        CString::joinAll('%n;', asm.validators.map<CString>(fn(vf) => emitFunctionDecl(vf, trgterr))),
         '#END ;;--VALIDATE_PREDICATES--;;'
     );
 

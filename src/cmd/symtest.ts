@@ -17,10 +17,19 @@ const bosque_dir: string = path.join(__dirname, "../../../");
 const smt_transform_bin_path = path.join(bosque_dir, "bin/smtemit/SMTEmitter.mjs");
 const smt_runtime_code_path = path.join(bosque_dir, "bin/smtruntime/formula.smt2");
 
+const z3bin = path.join(bosque_dir, "build/include/z3/bin/z3");
+
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
     Status.error("No input files specified!\n");
     process.exit(1);
+}
+
+let ischktest = false;
+let ischktestidx = fullargs.findIndex((v) => v === "--chktest");
+if(ischktestidx !== -1) {
+    ischktest = true;
+    fullargs = fullargs.slice(0, ischktestidx).concat(fullargs.slice(ischktestidx + 1));
 }
 
 let mainns = "Main";
@@ -57,6 +66,22 @@ function processSingleComponent(formula: string, smtcomponents: string, rterm: s
     }
 }
 
+function processSingleComponentAppend(formula: string, smtcomponents: string, rterm: string): string {
+    const sstr = `#BEGIN ${rterm}`;
+    const estr = `#END ${rterm}`;
+
+    const sidx = smtcomponents.indexOf(sstr) + sstr.length;
+    const eidx = smtcomponents.indexOf(estr);
+    const repl = smtcomponents.substring(sidx, eidx).trim();
+
+    if(repl === "") {
+        return formula;
+    }
+    else {
+        return formula + "\n\n" + repl;
+    }
+}
+
 const smtcomponenttags = [
     ";;--GLOBAL_DECLS--;;",
     ";;--GLOBAL_IMPLS--;;",
@@ -81,7 +106,7 @@ const smtcomponenttags = [
     ";;--VALIDATE_PREDICATES--;;"
 ];
 
-function generateFormulaFile(smtcomponents: string, outname: string) {
+function generateFormulaFile(smtcomponents: string, outname: string, chksat?: boolean, getres?: boolean) {
     Status.output("Processing SMT Formula...\n");
     const nndir = path.normalize(outname);
 
@@ -107,6 +132,16 @@ function generateFormulaFile(smtcomponents: string, outname: string) {
     ];
     formula = formula.replace(";;--SMV_CONSTANTS--;;", smv_constants.join("\n"));
 
+
+    formula = processSingleComponentAppend(formula, smtcomponents, ";;--SMT_OPERATION--;;");
+    if(chksat) {
+        formula = formula + "\n\n" + "(check-sat)\n";
+
+        if(getres) {
+            formula = formula + "\n" + "(get-model)\n";
+        }
+    }
+
     Status.output("    Writing SMT Formula File...\n");
     try {
         const fname = path.join(nndir, "formula.smt2");
@@ -115,7 +150,6 @@ function generateFormulaFile(smtcomponents: string, outname: string) {
     catch(e) {
         Status.error("Failed to write SMT formula file!\n");
     }
-
 
     Status.output(`SMT Formula generation successful -- emitted to ${nndir}\n\n`);
 }
@@ -136,22 +170,20 @@ function runSMTEmit(outname: string): string {
     return validateCStringLiteral(res.slice(1, -1));
 }
 
-function buildBSQONAssembly(assembly: Assembly, rootasm: string, outname: string) {
+function processTestFile(assembly: Assembly, rootasm: string, testfile: string, outname: string) {
     Status.output("Generating Type Info assembly...\n");
-    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
-    const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
+    const iim = InstantiationPropagator.computeTestInstantiations(assembly, [rootasm]);
+    const bsqir = BSQIREmitter.emitAssembly(assembly, iim, [testfile])
 
     Status.output("    Writing BSQIR to disk...\n");
     const nndir = path.normalize(outname);
     try {
         const fname = path.join(nndir, "bsqir.bsqon");
-        fs.writeFileSync(fname, "'smtgen'" + " " + tinfo);
+        fs.writeFileSync(fname, (ischktest ? "'--chktest'" : "'--errtest'") + " " + bsqir);
     }
     catch(e) {      
         Status.error("Failed to write bsqir info file!\n");
     }
-
-    Status.output(`    IR generation successful -- emitted to ${nndir}\n\n`);
 }
 
 function checkAssembly(srcfiles: string[]): Assembly | undefined {
@@ -193,6 +225,24 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
     }
 }
 
+function checkSMTFormula(smtcomponents: string, outname: string) {
+    generateFormulaFile(smtcomponents, outname, true, false);
+
+    Status.output("Running SMT Solver...\n");
+    const nndir = path.normalize(outname);
+
+    let rr = "";
+    try {
+        rr = execSync(`${z3bin} ${path.join(nndir, "formula.smt2")}`).toString();
+    }
+    catch(e) {
+        Status.error("Failed to run SMT solver!\n");
+        return;
+    }
+
+    Status.output("Result is -- " + rr.replace("\n", " ") + "\n");
+}
+
 const asm = checkAssembly(fullargs);
 if(asm === undefined) {
     process.exit(1);
@@ -203,11 +253,27 @@ Status.output(`-- SMT output directory: ${outdir}\n\n`);
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
 
-buildBSQONAssembly(asm, mainns, outdir);
+const testfile = fullargs.find((v) => v.endsWith(".bsqtest"));
+if(testfile === undefined) {
+    Status.error("No test file specified!\n");
+    process.exit(1);
+}
 
+processTestFile(asm, mainns, testfile, outdir);
 const smtcomponents = runSMTEmit(outdir);
-generateFormulaFile(smtcomponents, outdir);
 
-//
-//TODO: later various options to setup the solver and invoke the stuff
-//
+if(ischktest) {
+    checkSMTFormula(smtcomponents, outdir);
+}
+else {
+    const opts = smtcomponents.split("#### CHECK ####").map((opt) => opt.trim()).filter((opt) => opt !== "");
+    for(let i = 0; i < opts.length; ++i) {
+        const opt = opts[i]
+        let opterr = opt.split("\n")[0].trim();
+
+        Status.output(`Processing Possible Error ${i + 1} of ${opts.length}...\n`);
+        Status.output(opterr + "\n");
+
+        checkSMTFormula(opt, outdir);
+    }
+}

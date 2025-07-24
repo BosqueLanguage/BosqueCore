@@ -32,7 +32,7 @@ import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
 import { validateStringLiteral } from "@bosque/jsbrex";
 
 function buildMainCode(assembly: Assembly, outname: string): [string, string] | undefined{
-    const iim = InstantiationPropagator.computeInstantiations(assembly, "Main");
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, ["Main"]);
     const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
 
     const nndir = path.normalize(outname);

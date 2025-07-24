@@ -57,7 +57,7 @@ function getSimpleFilename(fn: string): string {
 
 function buildExeCode(assembly: Assembly, mode: "release" | "debug", buildlevel: BuildLevel, rootasm: string, outname: string) {
     Status.output("Generating JS code...\n");
-    const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
     const jscode = JSEmitter.emitAssembly(assembly, mode, buildlevel, mainns, iim);
 
     Status.output("    Writing JS code to disk...\n");
@@ -81,7 +81,7 @@ function buildExeCode(assembly: Assembly, mode: "release" | "debug", buildlevel:
 
 function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
     Status.output("Generating Type Info assembly...\n");
-    const iim = InstantiationPropagator.computeInstantiations(assembly, rootasm);
+    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, [rootasm]);
     const tinfo = BSQONTypeInfoEmitter.emitAssembly(assembly, iim, true);
 
     Status.output("    Writing Type Info to disk...\n");
@@ -99,7 +99,7 @@ function buildTypeInfo(assembly: Assembly, rootasm: string, outname: string) {
 
 function buildExeCodeTest(assembly: Assembly, outname: string) {
     Status.output("Generating JS code...\n");
-    const iim = InstantiationPropagator.computeInstantiations(assembly, undefined);
+    const iim = InstantiationPropagator.computeTestInstantiations(assembly, ["Main"]);
     const [jscode, testasm] = JSEmitter.emitTestAssembly(assembly, iim, undefined, undefined);
 
     Status.output("    Writing JS code to disk...\n");

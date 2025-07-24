@@ -1984,7 +1984,7 @@ class InstantiationPropagator {
         wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []));
     }
 
-    static computeInstantiations(assembly: Assembly, roonts: string | undefined): NamespaceInstantiationInfo[] {
+    static computeInstantiations(assembly: Assembly, istesting: boolean, roonts: string[]): NamespaceInstantiationInfo[] {
         let wellknownTypes = new Map<string, TypeSignature>();
         wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
@@ -2012,13 +2012,16 @@ class InstantiationPropagator {
         iim.instantiateTypeSignature(iim.getWellKnownType("None"), undefined);
         iim.instantiateTypeSignature(iim.getWellKnownType("Bool"), undefined);
 
-        if(roonts !== undefined) {
-            const rootns = assembly.getToplevelNamespace(roonts) as NamespaceDeclaration;
-            iim.instantiateRootNamespaceDeclaration(rootns);
+        if(!istesting) {
+            for(let i = 0; i < roonts.length; ++i) {
+                const ns = assembly.getToplevelNamespace(roonts[i]) as NamespaceDeclaration;
+                iim.instantiateRootNamespaceDeclaration(ns);
+            }
         }
         else {
-            for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
-                iim.instantiateRootNamespaceDeclarationForTest(assembly.toplevelNamespaces[i]);
+            for(let i = 0; i < roonts.length; ++i) {
+                const ns = assembly.getToplevelNamespace(roonts[i]) as NamespaceDeclaration;
+                iim.instantiateRootNamespaceDeclarationForTest(ns);
             }
         }
 
@@ -2070,6 +2073,14 @@ class InstantiationPropagator {
         }
 
         return iim.instantiation;
+    }
+
+    static computeExecutableInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
+        return InstantiationPropagator.computeInstantiations(assembly, false, roonts);
+    }
+
+    static computeTestInstantiations(assembly: Assembly, roonts: string[]): NamespaceInstantiationInfo[] {
+        return InstantiationPropagator.computeInstantiations(assembly, true, roonts);
     }
 }
 
