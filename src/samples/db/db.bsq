@@ -203,7 +203,9 @@ entity Database {
         return CString::concat(tidx.curr.toCString(), ' of ', this.entries.size().toCString());
     }
 
-    method processAdd(op: AddOp): Database {
+    method processAdd(op: AddOp): Database 
+        requires op.entry.items.size() == this.format.vcount;
+    {
         return Database{ this.dbname, this.entries.pushBack(op.entry), this.format, none, none };
     }
 
@@ -272,6 +274,7 @@ function getSampleDB(): Database {
 
 public function testOpOnSample(op: DatabaseOperation): CString {
     let db = getSampleDB();
-
-    return db.processDatabaseOperation(op).0;
+    let res, _ = db.processDatabaseOperation(op);
+    
+    return res;
 }

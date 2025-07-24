@@ -1308,11 +1308,16 @@ function emitFunctionDecl(f: SMTAssembly::FunctionDecl, trgterr: (|Option<SMTAss
     let pll = CString::concat('(', CString::joinAll(' ', plist), ')');
 
     var eev: SMTEmitterEnv;
-    if(trgterr.0)@none {
+    if($tfunc = trgterr.0)@none {
         eev = SMTEmitterEnv{SMTEmitter::s_ignoreErrTrgt, f.resultType.rtype};
     }
     else {
-        eev = SMTEmitterEnv{trgterr.1, f.resultType.rtype};
+        if($tfunc === f.invokeKey) {
+            eev = SMTEmitterEnv{trgterr.1, f.resultType.rtype};
+        }
+        else {
+            eev = SMTEmitterEnv{SMTEmitter::s_ignoreErrTrgt, f.resultType.rtype};
+        }
     }
 
     let psig = CString::concat('define-fun ', f.invokeKey.value, ' ', pll, ' ');

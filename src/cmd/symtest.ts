@@ -236,20 +236,24 @@ function checkSMTFormula(smtcomponents: string, outname: string): boolean {
 
     let rr = "";
     try {
-        rr = execSync(`${z3bin} -T:30 ${path.join(nndir, "formula.smt2")}`).toString().trim();
+        rr = execSync(`${z3bin} -T:60 ${path.join(nndir, "formula.smt2")}`).toString().trim();
     }
     catch(e) {
         Status.error("Failed to run SMT solver!\n");
         return false;
     }
 
-    if(rr !== "sat") {
+    if(rr === "unsat") {
         process.stdout.write("    Pass!\n");
         return false;
     }
-    else {
+    else if(rr === "sat") {
         process.stdout.write("    Violation Found!\n");
         return true;
+    }
+    else {
+        process.stdout.write("    Exhausted Checking...\n");
+        return false;
     }
 }
 
