@@ -9,7 +9,7 @@
 #define LEAF_PTR_MASK nullptr
 
 //
-// TODO: Change string mask to tagged mask and
+// TODO: Change string mask to tagged mask 
 //
 
 //An inline string has the length in the low 3 bits of the pointer
