@@ -155,9 +155,7 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
     field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
 
-%%
-%% TODO: I believe Tagged can be removed, but needs some thought first
-%%
+%% I believe tagged can be removed
 enum Tag {
     Value,
     Ref,
@@ -172,11 +170,6 @@ entity TypeInfo {
     field ptrmask: CString;
     field typekey: TypeKey;
     field tag: Tag;
-
-    method update(ntypesize: Nat, nslotsize: Nat, nptrmask: CString): TypeInfo {
-        return this[typesize = $typesize + ntypesize, slotsize = $slotsize + nslotsize, 
-            ptrmask = CString::concat($ptrmask, nptrmask)];
-    }
 }
 
 datatype MethodDecl provides AbstractInvokeDecl using {

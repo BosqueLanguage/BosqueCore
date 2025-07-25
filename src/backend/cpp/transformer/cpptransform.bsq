@@ -916,7 +916,7 @@ entity CPPTransformer {
             if(subant)@<BSQAssembly::AbstractEntityTypeDecl> {
                 let finfo, ntic = this.generateFieldInfo(none, some(subtk), acc.2);
 
-                %% If already a ref keep it like so
+                %% If already a ref do not update
                 var tag = acc.1;
                 if(this.shouldBeRef($subant.saturatedBFieldInfo, this.bsqasm)) {
                     tag = CPPAssembly::Tag#Ref;
@@ -940,6 +940,7 @@ entity CPPTransformer {
                     if(f)@<BSQAssembly::EListTypeSignature> {
                         return this.generateEListInfo[recursive]($f, acc.1);
                     }
+
                     var finfo, ntic = this.generateFieldInfo(some(f), none, acc.1);
                     let tag = if(this.shouldBeRef(this.bsqasm.lookupNominalTypeDeclaration(f.tkeystr).saturatedBFieldInfo, this.bsqasm)) 
                         then CPPAssembly::Tag#Ref 
@@ -1072,7 +1073,9 @@ entity CPPTransformer {
                     if(ant)@<BSQAssembly::OptionTypeDecl> {
                         let pcinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
                         let ptrmask = CPPTransformNameManager::repeatCString('0', pcinfo.slotsize, '2');
-                        let ntag = if(pcinfo.slotsize > reftypeThreshold) then CPPAssembly::Tag#Ref else CPPAssembly::Tag#Value;
+                        let ntag = if(pcinfo.slotsize > reftypeThreshold || pcinfo.ptrmask.containsString('1')) 
+                            then CPPAssembly::Tag#Ref 
+                            else CPPAssembly::Tag#Value;
                         let pctinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, ptrmask, cpptkey, ntag };
 
                         return pctinfo, ntic.update(cpptkey, pctinfo);
