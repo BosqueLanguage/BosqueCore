@@ -1038,15 +1038,12 @@ entity CPPTransformer {
                     abort;
                 }
                 elif(this.bsqasm.collections.has(typekey)) { 
-                    
-                    %%
-                    %% TODO: Take a look at this, i am skeptical our lists should always be by value.
-                    %% I dont think that makes any sense as they can be super large (well the tree that constructs them)
-                    %%
-                    
+                    %% List<T> is just alias of Tree<T> so we need to get Tree<T>'s typeinfo 
                     if(ant)@<BSQAssembly::ListTypeDecl> {
-                        let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
-                        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value };
+                        let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
+
+                        let treeinfo, ntic = this.generateTypeInfo[recursive](treetk, tic);
+                        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
 
                         return listinfo, ntic.update(cpptkey, listinfo);
                     }

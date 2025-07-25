@@ -273,8 +273,10 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
 
         let base = String::concat(needsGCAlloc, econstype);
         let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
-        if(ctx.asm.isNominalTypeConcept(ttype.tkeystr)) {
-            return String::concat(base, "{ &", ettype, ", ", eexp, " }");
+        
+        %% Since List<T> is just an alias of Tree<T>, we dont need to explicitly emit List<T> constructor
+        if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
+            return eexp;
         }
         else {
             return if(eexp === "") then String::concat(base, "{ &", ettype, " }")
@@ -1323,7 +1325,7 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
     let resolved_type = emitTypeKey(tk, false, ctx);
 
     if(ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Ref) {
-        return String::concat("[[maybe_unused]] const ", resolved_type, "*");
+        return String::concat("[[maybe_unused]] ", resolved_type, "*");
     }
     return String::concat("[[maybe_unused]] ", resolved_type);
 }
@@ -1592,18 +1594,12 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
-%%
-%% We always emit collection type decls as values, so they arent going to be visible to the GC
-%% This is definetly wrong so we will need to modify their type info generation to correctly
-%% reflcet our types
-%%
-
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
-    let ttype = emitTypeSignature(ctd.oftype, false, nctx);
+    let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
     let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) then ttype.removePrefixString("__CoreCpp::") 
         else ttype;
-    return String::concat(indent, "typedef ListOps::Treeᐸ", emitSpecialTemplate(resolvedttype), "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
 }
 
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1613,7 +1609,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::CollectionTypeDecl => { return emitCollectionTypeDecl($ant, ctx, indent); } %% I think this should jut emit its typeinfo
+        | CPPAssembly::CollectionTypeDecl => { return emitTypeInfo(ctx.asm.typeinfos.get($ant.tkey), some($ant), ctx, indent); } %% Collection typedef done with fwd decls
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
     }
@@ -1753,7 +1749,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
         .filter(pred(tk) => ctx.asm.collections.has(tk))
         .reduce<String>(ant_fwddecls, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
-            let fwddecl = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent); 
+            let fwddecl = emitCollectionTypeDecl(ant@<CPPAssembly::CollectionTypeDecl>, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     });
 
@@ -1792,7 +1788,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 
     %% Ref and Tagged types
     let other = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value && !ctx.asm.collections.has(tk))
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
         .reduce<String>(String::concat(values, "//%n;// Ref and Tagged Type Definitions%n;//%n;"), fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
