@@ -187,6 +187,14 @@ entity CPPTransformer {
         return false;
     }
 
+    %% We will have to manually determine if we are tagged (should be easy since tagged is only for concepts)
+    method determineTag(ant: BSQAssembly::AbstractNominalTypeDecl): CPPAssembly::Tag {
+        if(this.shouldBeRef(ant.saturatedBFieldInfo, this.bsqasm)) {
+            return CPPAssembly::Tag#Ref;
+        }
+        return CPPAssembly::Tag#Value;
+    }
+
     recursive method processBinaryArgs(lhs: BSQAssembly::Expression, rhs: BSQAssembly::Expression): CPPAssembly::Expression, CPPAssembly::Expression {
         let cpplhs = this.transformExpressionToCpp[recursive](lhs);
         let cpprhs = this.transformExpressionToCpp[recursive](rhs);
@@ -909,17 +917,18 @@ entity CPPTransformer {
     }
 
     %% Explore all subtypes and find largest possible field slot size (generating subtype tinfo when necessary)
-    method findLargestSubtype(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, CPPAssembly::Tag, TypeInfoContext {
-        return cur.subtypes.reduce<(|Nat, CPPAssembly::Tag, TypeInfoContext|)>((|0n, CPPAssembly::Tag#Value, tic|), fn(acc, subtk) => {              
+    method findLargestSubtypeAndTag(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, CPPAssembly::Tag, TypeInfoContext {
+        let basetag = this.determineTag(cur);
+        return cur.subtypes.reduce<(|Nat, CPPAssembly::Tag, TypeInfoContext|)>((|0n, basetag, tic|), fn(acc, subtk) => {              
             let subant = this.bsqasm.lookupNominalTypeDeclaration(subtk);
 
             if(subant)@<BSQAssembly::AbstractEntityTypeDecl> {
                 let finfo, ntic = this.generateFieldInfo(none, some(subtk), acc.2);
 
-                %% If already a ref do not update
+                %% If all subtypes are not of the same tag we must return tagged 
                 var tag = acc.1;
-                if(this.shouldBeRef($subant.saturatedBFieldInfo, this.bsqasm)) {
-                    tag = CPPAssembly::Tag#Ref;
+                if(tag !== CPPAssembly::Tag#Tagged && this.determineTag($subant) !== tag) {
+                    tag = CPPAssembly::Tag#Tagged;
                 }
 
                 if(finfo.slotsize > acc.0) {
@@ -928,7 +937,7 @@ entity CPPTransformer {
                 return acc.0, tag, ntic;
             }
 
-            return this.findLargestSubtype[recursive](subant@<BSQAssembly::AbstractConceptTypeDecl>, acc.2);
+            return this.findLargestSubtypeAndTag[recursive](subant@<BSQAssembly::AbstractConceptTypeDecl>, acc.2);
         });
     }
 
@@ -1063,7 +1072,7 @@ entity CPPTransformer {
             }
             elif(this.bsqasm.isNominalTypeConcept(typekey)) {
                 if(this.bsqasm.concepts.has(typekey) || this.bsqasm.datatypes.has(typekey)) {
-                    let mfc, ntag, ntic = this.findLargestSubtype(ant@<BSQAssembly::AbstractConceptTypeDecl>, tic);
+                    let mfc, ntag, ntic = this.findLargestSubtypeAndTag(ant@<BSQAssembly::AbstractConceptTypeDecl>, tic);
                     let ptrmask = CPPTransformNameManager::repeatCString('0', mfc, '2');
                     let matchedType = CPPAssembly::TypeInfo{ ntic.tid, 8n + (mfc * 8n), mfc + 1n, ptrmask, cpptkey, ntag }; 
                     
@@ -1073,10 +1082,7 @@ entity CPPTransformer {
                     if(ant)@<BSQAssembly::OptionTypeDecl> {
                         let pcinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, tic);
                         let ptrmask = CPPTransformNameManager::repeatCString('0', pcinfo.slotsize, '2');
-                        let ntag = if(pcinfo.slotsize > reftypeThreshold || pcinfo.ptrmask.containsString('1')) 
-                            then CPPAssembly::Tag#Ref 
-                            else CPPAssembly::Tag#Value;
-                        let pctinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, ptrmask, cpptkey, ntag };
+                        let pctinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n + pcinfo.typesize, 1n + pcinfo.slotsize, ptrmask, cpptkey, CPPAssembly::Tag#Tagged };
 
                         return pctinfo, ntic.update(cpptkey, pctinfo);
                     }

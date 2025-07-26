@@ -29,8 +29,11 @@ namespace UnicodeCharBuffer {
 
 entity Context {
     field asm: CPPAssembly::Assembly;
-    field fullns_key: CPPAssembly::NamespaceKey; %% Main::Foo::Bar::...
-    field fullns_list: List<CString>; %% ["Main", "Foo", "Bar", ...]
+    field fullns_key: CPPAssembly::NamespaceKey;
+    field fullns_list: List<CString>;
+
+    %% When dealing with tagged types we need to determine whether they were created as ref or value
+    field varmap: Map<CPPAssembly::Identifier, CPPAssembly::Tag>;
 
     method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString>): Context {
         return Context{ this.asm, new_ns, new_nsname };
@@ -650,7 +653,7 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
         }
         else {
             return (|String::concat(getAccessor(fromtype, $ant.someType.tkeystr, ctx), "<", emitTypeSignature($ant.someType, true, ctx), ">().value"),
-                emitTypeKey($ant.oftype.tkeystr, true, ctx)|);
+                emitTypeSignature($ant.oftype, true, ctx)|);
         }
     }
     else {

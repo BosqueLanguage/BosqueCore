@@ -155,7 +155,6 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
     field associatedMemberEntityDecls: List<NominalTypeSignature>;
 }
 
-%% I believe tagged can be removed
 enum Tag {
     Value,
     Ref,
