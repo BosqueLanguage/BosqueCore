@@ -1011,10 +1011,9 @@ entity CPPTransformer {
                         return acc.0.update(e.typesize, e.slotsize, e.ptrmask), tic;
                     }
 
-                    %% Generating pointer mask of a concept with subtype containing concept as field
-                    %% First slot for typeinfo, second for pointer to concept
+                    %% Contains enough slots for possible typeinfo ptr and data ptr
                     if(findingLargestField && this.bsqasm.isNominalTypeConcept(ftype.tkeystr)) {
-                        return acc.0.update(16n, 2n, '00'), acc.1;
+                        return acc.0.update(16n, 2n, '00'), acc.1; %% [typeinfo ptr][dataptr]
                     }
 
                     let tinfo, ntic = this.generateTypeInfo(ftype.tkeystr, acc.1);
