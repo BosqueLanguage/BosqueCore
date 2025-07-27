@@ -267,11 +267,6 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
-        let needsGCAlloc = if(ctx.asm.typeinfos.get(ttype.tkeystr).tag === CPPAssembly::Tag#Ref)
-            then "new " %% TODO: Make this not new! It should be a call to our GC allocator
-            else "";
-
-        let base = String::concat(needsGCAlloc, econstype);
         let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
         
         %% Since List<T> is just an alias of Tree<T>, we dont need to explicitly emit List<T> constructor
@@ -279,8 +274,8 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
             return eexp;
         }
         else {
-            return if(eexp === "") then String::concat(base, "{ &", ettype, " }")
-                else String::concat(base, "{ &", ettype, ", ", eexp, " }");
+            return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
+                else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
         }
 }
 
@@ -1063,7 +1058,6 @@ function emitIfTestStatement(stmt: CPPAssembly::IfTestStatement, ctx: Context, i
     return String::concat(ifstmt, trueBlock, indent, "}");
 }
 
-%% TODO: This is lacking proper redefine for "@@*" itest!
 function emitIfBinderStatement(stmt: CPPAssembly::IfBinderStatement, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     
@@ -1320,7 +1314,6 @@ function genLambdaTemplate(templates: String, indent: String): String {
         else "";
 }
 
-%% Determine whether to emit this param as const this* or this
 function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
     let resolved_type = emitTypeKey(tk, false, ctx);
 
@@ -1385,13 +1378,9 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 }
 
 function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: String): String {
-    var ftype = emitTypeSignature(sfi.ftype, true, ctx);
-
-    %% Would be better to determine this somewhere more central
-    if(ctx.asm.isNominalTypeConcept(sfi.ftype.tkeystr)) {
-        ftype = String::concat(ftype, "*");
-    }
+    let ftype = emitTypeSignature(sfi.ftype, true, ctx);
     let fname = emitIdentifier(sfi.fname);
+
     return String::concat(indent, ftype, " ", fname, ";%n;");
 }
 

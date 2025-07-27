@@ -185,7 +185,9 @@ entity CPPTransformer {
             }
             tk = ntsig.tkeystr;
         }
-        tk = tkey@some;
+        else {
+            tk = tkey@some;
+        }
         
         let fields = this.bsqasm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo;
         let primitiveAndBelowThresh = fields.reduce<(|Bool, Nat|)>((|true, 0n|), fn(acc, f) => {
@@ -1010,8 +1012,9 @@ entity CPPTransformer {
                     }
 
                     %% Generating pointer mask of a concept with subtype containing concept as field
+                    %% First slot for typeinfo, second for pointer to concept
                     if(findingLargestField && this.bsqasm.isNominalTypeConcept(ftype.tkeystr)) {
-                        return acc.0.update(8n, 1n, '0'), acc.1;
+                        return acc.0.update(16n, 2n, '00'), acc.1;
                     }
 
                     let tinfo, ntic = this.generateTypeInfo(ftype.tkeystr, acc.1);
