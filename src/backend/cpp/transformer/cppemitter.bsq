@@ -32,11 +32,8 @@ entity Context {
     field fullns_key: CPPAssembly::NamespaceKey;
     field fullns_list: List<CString>;
 
-    %% When dealing with tagged types we need to determine whether they were created as ref or value
-    field varmap: Map<CPPAssembly::Identifier, CPPAssembly::Tag>;
-
     method updateCurrentNamespace(new_ns: CPPAssembly::NamespaceKey, new_nsname: List<CString>): Context {
-        return Context{ this.asm, new_ns, new_nsname };
+        return this[fullns_key = new_ns, fullns_list = new_nsname ];
     }
 }
 
@@ -270,7 +267,7 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
-        let needsGCAlloc = if(ctx.asm.typeinfos.get(constype.tkeystr).tag === CPPAssembly::Tag#Ref)
+        let needsGCAlloc = if(ctx.asm.typeinfos.get(ttype.tkeystr).tag === CPPAssembly::Tag#Ref)
             then "new " %% TODO: Make this not new! It should be a call to our GC allocator
             else "";
 
@@ -1388,7 +1385,12 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
 }
 
 function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: String): String {
-    let ftype = emitTypeSignature(sfi.ftype, true, ctx);
+    var ftype = emitTypeSignature(sfi.ftype, true, ctx);
+
+    %% Would be better to determine this somewhere more central
+    if(ctx.asm.isNominalTypeConcept(sfi.ftype.tkeystr)) {
+        ftype = String::concat(ftype, "*");
+    }
     let fname = emitIdentifier(sfi.fname);
     return String::concat(indent, ftype, " ", fname, ";%n;");
 }
