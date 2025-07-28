@@ -14,11 +14,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
-const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
-const cpp_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
-
-const cc_flags: string = "-Og -Wall -Wextra -Werror -Wno-unused-parameter -Wuninitialized -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector";
-const cc: string = "/usr/bin/g++"; // Note: This will not work on all systems :(
+const cpp_emit_runtime_path = path.join(bosque_dir, "bin/cppruntime/");
+const cpp_emit_runtime_src_path = path.join(cpp_emit_runtime_path, "emit.cpp");
+const cpp_emit_runtime_header_path = path.join(cpp_emit_runtime_path, "emit.hpp");
+const cpp_runtime_header_path = path.join(cpp_emit_runtime_path, "cppruntime.hpp");
+const makefile_path = path.join(cpp_emit_runtime_path, "makefile");
+const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
+const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
 
 const bsq_max_int: string = "4611686018427387903";
 const bsq_min_int: string = "-4611686018427387903";
@@ -62,24 +64,52 @@ function buildMainCode(assembly: Assembly, outname: string): [string, string] | 
     return [validateStringLiteral(res[0].slice(1)), validateStringLiteral(res[1].slice(0, -2))];
 }
 
+function copyGC(src: string, dst: string) {
+    if (!fs.existsSync(dst)) {
+        fs.mkdirSync(dst, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(src);
+
+    files.forEach(file => {
+        const currentPath = path.join(src, file);
+        const newPath = path.join(dst, file);
+        if(fs.statSync(currentPath).isDirectory()) {
+            copyGC(currentPath, newPath);
+        }
+        else {
+            fs.copyFileSync(currentPath, newPath);
+        }
+    });
+}
+
+function copyFile(src: string, dst: string) {
+    const dir = path.normalize(dst);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const runtimeDstPath = path.join(dir, path.basename(src));
+    fs.copyFileSync(src, runtimeDstPath); 
+}
+
 function generateCPPFiles(header: string, src: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
 
     let srcbase: string = "";
+    let headerbase: string = "";
     try {
-        srcbase = fs.readFileSync(cpp_runtime_src_path).toString() + `\n\n`;
+        srcbase = fs.readFileSync(cpp_emit_runtime_src_path).toString();
+        headerbase = fs.readFileSync(cpp_emit_runtime_header_path).toString();
     }
     catch(e) {
         return false;
     }
-    const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
-    const src_header: string = `#include "emit.hpp"\n\n`;
-    const nheader_contents: string = runtime_header.concat( header ); 
-    const nsrc_contents: string = src_header.concat(src, srcbase);
-
+    
     try {
         const headername = path.join(dir, "emit.hpp");
-        fs.writeFileSync(headername, nheader_contents);
+        const updated = headerbase.concat(header);
+        fs.writeFileSync(headername, updated);
     }
     catch(e) {
         return false;
@@ -87,12 +117,22 @@ function generateCPPFiles(header: string, src: string, outdir: string): boolean 
 
     try {
         const srcname = path.join(dir, "emit.cpp");
-        fs.writeFileSync(srcname, nsrc_contents);
+        let updated = srcbase.replace("//CODE", src);
+        fs.writeFileSync(srcname, updated);
     }
     catch(e) {
         return false;
     }
 
+    try {
+        copyFile(cpp_runtime_header_path, outdir);
+        copyFile(makefile_path, outdir);
+        copyGC(gc_path, path.join(outdir, "gc/"));
+        copyGC(output_path, path.join(outdir, "output/"));
+    }
+    catch(e) {
+        return false;
+    }
     return true;
 }
 
@@ -128,18 +168,17 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
                     return `[FAILED TO GENERATE CPP FILE] \n\n ${header} ${src}`;
                 }
                 else {
-                    const emit_cpp_path = path.join(nndir, "emit.cpp");
-                    const executable_path = path.join(nndir, "emit_executable");
+                    const output_path = path.join(nndir, "output/memex");
                     
                     try {
-                        execSync(`${cc} ${cc_flags} ${emit_cpp_path} -o ${executable_path}`);
+                        execSync(`make`, {cwd: nndir});
                     }
                     catch {
                         return `[CPP COMPILATION ERROR] \n\n ${header} ${src} `
                     }
 
                     try {
-                        result = execSync(executable_path).toString().trim();
+                        result = execSync(output_path).toString().trim();
                     }
                     catch(e) {
                         if(expect_err) {
@@ -162,9 +201,6 @@ function execMainCode(bsqcode: string, expect_err: boolean) {
     return result;
 }
 
-//
-// Lets check what the emitted cpp code (from bsqcode) spits out and make sure it matches our expected output
-//
 function runMainCode(bsqcode: string, expected_output: string) {
     const cpp_output = execMainCode(bsqcode, false);
     assert.equal(cpp_output, expected_output);

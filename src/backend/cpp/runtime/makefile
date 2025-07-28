@@ -36,6 +36,14 @@ MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(OUT_OBJ)gc.o
 
 all: $(OUT_EXE)memex
 
+# Only builds the GC by executing a temporary file that does nothing
+gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS)
+	@mkdir -p $(OUT_EXE)
+	@echo "int main() { return 0; }" > $(OUT_EXE)gcmain.cpp
+	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(OUT_EXE)gcmain.cpp
+	@rm $(OUT_EXE)gcmain.cpp
+	@rm $(OUT_EXE)gctest
+
 $(OUT_EXE)memex: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp
 	@mkdir -p $(OUT_EXE)
 	$(CC) $(CFLAGS) -o $(OUT_EXE)memex $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp

@@ -21,6 +21,7 @@ const cpp_emit_runtime_header_path = path.join(cpp_emit_runtime_path, "emit.hpp"
 const cpp_runtime_header_path = path.join(cpp_emit_runtime_path, "cppruntime.hpp");
 const makefile_path = path.join(cpp_emit_runtime_path, "makefile");
 const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
+const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
 
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
@@ -115,6 +116,7 @@ function generateCPPFiles(header: string, src: string, outdir: string) {
         copyFile(cpp_runtime_header_path, outdir);
         copyFile(makefile_path, outdir);
         copyGC(gc_path, path.join(outdir, "gc/"));
+        copyGC(output_path, path.join(outdir, "output/"));
     }
     catch(e) {
         Status.error("Failed to copy GC and runtime files!\n");
