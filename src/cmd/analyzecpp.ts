@@ -15,9 +15,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
-const cpp_emit_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
-const cpp_emit_runtime_header_path = path.join(bosque_dir, "bin/cppruntime/emit.hpp");
-const cpp_runtime_header_path = path.join(bosque_dir, "bin/cppruntime/cppruntime.hpp");
+const cpp_emit_runtime_path = path.join(bosque_dir, "bin/cppruntime/");
+const cpp_emit_runtime_src_path = path.join(cpp_emit_runtime_path, "emit.cpp");
+const cpp_emit_runtime_header_path = path.join(cpp_emit_runtime_path, "emit.hpp");
+const cpp_runtime_header_path = path.join(cpp_emit_runtime_path, "cppruntime.hpp");
+const makefile_path = path.join(cpp_emit_runtime_path, "makefile");
 const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 
 let fullargs = [...process.argv].slice(2);
@@ -63,14 +65,14 @@ function copyGC(src: string, dst: string) {
     });
 }
 
-function copyRuntime(outdir: string) {
-    const dir = path.normalize(outdir);
+function copyFile(src: string, dst: string) {
+    const dir = path.normalize(dst);
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
 
-    const runtimeDstPath = path.join(dir, path.basename(cpp_runtime_header_path));
-    fs.copyFileSync(cpp_runtime_header_path, runtimeDstPath); 
+    const runtimeDstPath = path.join(dir, path.basename(src));
+    fs.copyFileSync(src, runtimeDstPath); 
 }
 
 function generateCPPFiles(header: string, src: string, outdir: string) {
@@ -110,7 +112,8 @@ function generateCPPFiles(header: string, src: string, outdir: string) {
 
     Status.output("    Copying GC and runtime files...\n");
     try {
-        copyRuntime(outdir);
+        copyFile(cpp_runtime_header_path, outdir);
+        copyFile(makefile_path, outdir);
         copyGC(gc_path, path.join(outdir, "gc/"));
     }
     catch(e) {

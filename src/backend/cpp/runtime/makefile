@@ -1,14 +1,15 @@
 MAKE_PATH=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-BUILD_DIR=$(MAKE_PATH)/
-BIN_DIR=$(MAKE_PATH)/../bin/
-SRC_DIR=$(MAKE_PATH)/../src/
+GC_PATH=$(MAKE_PATH)/gc
+BUILD_DIR=$(GC_PATH)/build/
+SRC_DIR=$(GC_PATH)/src/
+CPPEMIT_DIR=$(MAKE_PATH)/
 
 RUNTIME_DIR=$(SRC_DIR)runtime/
 SUPPORT_DIR=$(SRC_DIR)runtime/support/
 MEMORY_DIR=$(SRC_DIR)runtime/memory/
 
-OUT_EXE=$(BUILD_DIR)output/
-OUT_OBJ=$(BUILD_DIR)output/obj/
+OUT_EXE=$(MAKE_PATH)/output/
+OUT_OBJ=$(MAKE_PATH)/output/obj/
 
 TEST_DIR=$(MAKE_PATH)/../test/
 MEMORY_TEST_DIR=$(MAKE_PATH)/../test/memory/
@@ -35,19 +36,9 @@ MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(OUT_OBJ)gc.o
 
 all: $(OUT_EXE)memex
 
-test: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS)
-	@if [ -z "$(TEST)" ]; then \
-		echo "Error: Please specify a test file with TEST=<filename>."; \
-		exit 1; \
-	fi
+$(OUT_EXE)memex: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp
 	@mkdir -p $(OUT_EXE)
-	$(CC) $(CFLAGS) -o $(OUT_EXE)$(TEST) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(TEST_DIR)$(TEST).cpp
-	@echo "Running test: $(TEST)"
-	@$(OUT_EXE)$(TEST)
-
-$(OUT_EXE)memex: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(MEMORY_TEST_DIR)memex.cpp
-	@mkdir -p $(OUT_EXE)
-	$(CC) $(CFLAGS) -o $(OUT_EXE)memex $(SUPPORT_OBJS) $(MEMORY_OBJS) $(MEMORY_TEST_DIR)memex.cpp
+	$(CC) $(CFLAGS) -o $(OUT_EXE)memex $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp
 
 $(OUT_OBJ)gc.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)gc.cpp
 	@mkdir -p $(OUT_OBJ)
@@ -70,4 +61,4 @@ $(OUT_OBJ)common.o: $(SUPPORT_HEADERS) $(RUNTIME_DIR)common.cpp
 	$(CC) $(CFLAGS) -o $(OUT_OBJ)common.o -c $(RUNTIME_DIR)common.cpp
 
 clean:
-	rm -rf $(OUT_EXE)* $(OUT_OBJ)*.o $(BIN_DIR)*
+	rm -rf $(OUT_EXE)
