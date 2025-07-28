@@ -166,21 +166,11 @@ entity CPPTransformer {
         }
     }
 
-    method checkEListFieldsArePrimitive(elist: BSQAssembly::EListTypeSignature): Bool {
-        return elist.entries
-            .reduce<Bool>(true, fn(acc, ef) => {
-                return acc && (this.bsqasm.isPrimtitiveType(ef.tkeystr) || this.bsqasm.enums.has(ef.tkeystr));
-            });
-    }
-
     method shouldBeRef(tkey: Option<BSQAssembly::TypeKey>, tsig: Option<BSQAssembly::TypeSignature>): Bool {
         var tk: BSQAssembly::TypeKey;
         if(tsig)@some {
             let ntsig = $tsig;
             if(ntsig)@<BSQAssembly::EListTypeSignature> {
-                if(!this.checkEListFieldsArePrimitive($ntsig) || $ntsig.entries.size() > reftypeThreshold) {
-                    return true;
-                }
                 return false;
             }
             tk = ntsig.tkeystr;
@@ -193,7 +183,7 @@ entity CPPTransformer {
         let primitiveAndBelowThresh = fields.reduce<(|Bool, Nat|)>((|true, 0n|), fn(acc, f) => {
             let ftype = f.ftype;
             if(ftype)@<BSQAssembly::EListTypeSignature> {
-                return acc.0 && this.checkEListFieldsArePrimitive($ftype), acc.1 + $ftype.entries.size();
+                return true, acc.1 + $ftype.entries.size();
             }
 
             return (acc.0 && (this.bsqasm.isPrimtitiveType(ftype.tkeystr) || this.bsqasm.enums.has(ftype.tkeystr))), acc.1 + 1n;
