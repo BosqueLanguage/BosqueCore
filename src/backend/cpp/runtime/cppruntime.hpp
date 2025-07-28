@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gc/src/language/bsqtype.h"
+
 #include <stdint.h>
 #include <iostream>
 #include <cmath>
@@ -27,33 +29,6 @@ public:
 };
 ThreadLocalInfo& info = ThreadLocalInfo::get();
 
-enum Tag 
-{
-    Value,
-    Ref,
-    Tagged
-};
-
-// Note: This will be deleted when the GC is merged, only exists so emitted cpp still compiles
-struct FieldOffsetInfo 
-{
-    uint16_t id;
-    uint16_t type;
-    uint32_t byteoffset;
-};
-
-// Will need to add tag and vtable to gc
-struct TypeInfoBase 
-{
-    uint32_t type_id;
-    uint32_t type_size;
-    uint32_t slot_size;
-    Tag tag; 
-    const char* ptr_mask;
-    const char* typekey;
-    const FieldOffsetInfo* vtable; 
-};
-
 template <size_t N>
 inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
     for(size_t i = 0; i < N; i++) {
@@ -64,7 +39,7 @@ inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
 template <size_t K>
 class Boxed {
 public:
-    TypeInfoBase* typeinfo = nullptr;
+    __CoreGC::TypeInfoBase* typeinfo = nullptr;
     uintptr_t data[K] = {};
 
     Boxed() noexcept = default;
@@ -80,12 +55,12 @@ public:
     }
 
     template<typename T>
-    Boxed(__CoreCpp::TypeInfoBase* ti, T d) noexcept : typeinfo(ti) {
+    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti) {
         memcpy<K>(this->data, reinterpret_cast<uintptr_t*>(&d));
     };
 
     // None constructor
-    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {}
+    Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {}
 
     template<typename T, uintptr_t I=0>
     constexpr T* access_ref() noexcept {
@@ -94,7 +69,7 @@ public:
 
     template<typename T, uintptr_t I=0>
     constexpr T access() noexcept { 
-        if(this->typeinfo->tag == Tag::Ref) {
+        if(this->typeinfo->tag == __CoreGC::Tag::Ref) {
             return *access_ref<T, I>();
         }
         else {
@@ -105,8 +80,8 @@ public:
     constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
 
     template<typename T, uintptr_t E>
-    T vlookup(const __CoreCpp::FieldOffsetInfo* vtable) noexcept {
-        if(this->typeinfo->tag == Tag::Ref) {
+    T vlookup(const __CoreGC::FieldOffsetInfo* vtable) noexcept {
+        if(this->typeinfo->tag == __CoreGC::Tag::Ref) {
             return *reinterpret_cast<T*>(this->data[static_cast<uintptr_t>(vtable[E].byteoffset)]);
         }
         else {
@@ -118,7 +93,7 @@ public:
 template<>
 class Boxed<1> {
 public:
-    TypeInfoBase* typeinfo = nullptr;
+    __CoreGC::TypeInfoBase* typeinfo = nullptr;
     uintptr_t data = 0;
 
     Boxed() noexcept = default;
@@ -126,10 +101,10 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept = default;
 
     template<typename T>
-    Boxed(TypeInfoBase* ti, T d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
+    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
 
     // None constructor
-    Boxed(TypeInfoBase* ti) noexcept : typeinfo(ti) {};
+    Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     template<typename T, uintptr_t I=0>
     constexpr T* access_ref() noexcept {
@@ -138,7 +113,7 @@ public:
 
     template<typename T, uintptr_t I=0>
     constexpr T access() noexcept { 
-        if (this->typeinfo->tag == Tag::Ref) {
+        if (this->typeinfo->tag == __CoreGC::Tag::Ref) {
             return *access_ref<T, I>();
         }
         else {
@@ -152,13 +127,13 @@ public:
 template<>
 class Boxed<0> {
 public:
-    TypeInfoBase* typeinfo = nullptr;
+    __CoreGC::TypeInfoBase* typeinfo = nullptr;
 
     Boxed() noexcept = default;
     Boxed(const Boxed& rhs) noexcept = default;
     Boxed& operator=(const Boxed& rhs) noexcept = default;        
 
-    Boxed(TypeInfoBase* ti) noexcept: typeinfo(ti) {};
+    Boxed(__CoreGC::TypeInfoBase* ti) noexcept: typeinfo(ti) {};
 
     template<typename T>
     constexpr T access() noexcept { 

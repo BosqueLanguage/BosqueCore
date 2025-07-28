@@ -124,7 +124,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
 
         // Decrement ref counts of objects this object points to
-        const TypeInfoBase* type_info = GC_TYPE(obj);
+        const __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
 
         if(type_info->ptr_mask != LEAF_PTR_MASK) {
             const char* ptr_mask = type_info->ptr_mask;
@@ -202,7 +202,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 // Update pointers using forward table
 void updatePointers(void** obj, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    TypeInfoBase* type_info = GC_TYPE(obj);
+    __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
 
     if(type_info->ptr_mask != LEAF_PTR_MASK) {
         const char* ptr_mask = type_info->ptr_mask;
@@ -236,7 +236,7 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front();
-        TypeInfoBase* type_info = GC_TYPE(obj);
+        __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
         if(GC_IS_ROOT(obj)) {
@@ -339,7 +339,7 @@ void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     while(!tinfo.visit_stack.isEmpty()) {
         MarkStackEntry entry = tinfo.visit_stack.pop_back();
-        TypeInfoBase* obj_type = GC_TYPE(entry.obj);
+        __CoreGC::TypeInfoBase* obj_type = GC_TYPE(entry.obj);
 
         if((obj_type->ptr_mask == LEAF_PTR_MASK) | (entry.color == MARK_STACK_NODE_COLOR_BLACK)) {
             // No children so do by definition

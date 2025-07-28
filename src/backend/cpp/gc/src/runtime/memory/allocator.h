@@ -115,7 +115,7 @@ public:
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }
 
-    static void initializeWithDebugInfo(void* mem, TypeInfoBase* type) noexcept
+    static void initializeWithDebugInfo(void* mem, __CoreGC::TypeInfoBase* type) noexcept
     {
         uint64_t* pre = (uint64_t*)mem;
         *pre = ALLOC_DEBUG_CANARY_VALUE;
@@ -169,7 +169,13 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 
-#define AllocType(T, A, L) (T*)(A.allocate(L))
+// Uses statement expression, can be replaced with lambda if needed
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V)            \
+({                                     \
+    T* _ptr = (T*)A.allocate(L);       \
+    *_ptr = (V);                       \
+    _ptr;                              \
+})
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
@@ -495,7 +501,7 @@ public:
         }
     }
 
-    inline void* allocate(TypeInfoBase* type)
+    inline void* allocate(__CoreGC::TypeInfoBase* type)
     {
         assert(type->type_size == this->allocsize);
 
@@ -515,7 +521,7 @@ public:
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
 
-    inline void* allocateEvacuation(TypeInfoBase* type)
+    inline void* allocateEvacuation(__CoreGC::TypeInfoBase* type)
     {
         assert(type->type_size == this->allocsize);
 

@@ -15,6 +15,8 @@
 //An inline string has the length in the low 3 bits of the pointer
 #define PTR_MASK_STRING_AND_SLOT_PTR_VALUED(M, V) ((M == PTR_MASK_STRING) & (((uintptr_t)(V) & 0x7)== 0))
 
+namespace __CoreGC {
+
 enum Tag 
 {
     Value,
@@ -39,3 +41,5 @@ struct TypeInfoBase
     const char* typekey;
     FieldOffsetInfo* vtable;
 };
+
+} // namespace __CoreGC
