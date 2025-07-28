@@ -1,3 +1,7 @@
+#include "emit.hpp"
+
+//CODE
+
 int main() {
     if(setjmp(__CoreCpp::info.error_handler)) { 
         // We may want to pass in some source info here and perhaps expression causing failure

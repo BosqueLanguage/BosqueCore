@@ -14,9 +14,11 @@ import { validateStringLiteral } from "@bosque/jsbrex";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
-const cpp_runtime_dir_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
-const cpp_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
+const cpp_emit_runtime_src_path = path.join(bosque_dir, "bin/cppruntime/emit.cpp");
+const cpp_emit_runtime_header_path = path.join(bosque_dir, "bin/cppruntime/emit.hpp");
+const cpp_runtime_header_path = path.join(bosque_dir, "bin/cppruntime/cppruntime.hpp");
+const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 
 let fullargs = [...process.argv].slice(2);
 if(fullargs.length === 0) {
@@ -42,27 +44,55 @@ function getSimpleFilename(fn: string): string {
     return path.basename(fn);
 }
 
+function copyGC(src: string, dst: string) {
+    if (!fs.existsSync(dst)) {
+        fs.mkdirSync(dst, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(src);
+
+    files.forEach(file => {
+        const currentPath = path.join(src, file);
+        const newPath = path.join(dst, file);
+        if(fs.statSync(currentPath).isDirectory()) {
+            copyGC(currentPath, newPath);
+        }
+        else {
+            fs.copyFileSync(currentPath, newPath);
+        }
+    });
+}
+
+function copyRuntime(outdir: string) {
+    const dir = path.normalize(outdir);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    const runtimeDstPath = path.join(dir, path.basename(cpp_runtime_header_path));
+    fs.copyFileSync(cpp_runtime_header_path, runtimeDstPath); 
+}
+
 function generateCPPFiles(header: string, src: string, outdir: string) {
     Status.output("Processing existing contents of emit.cpp...\n");
     const dir = path.normalize(outdir);
 
-    Status.output("    Reading Contents of Base emit.cpp File...\n");
+    Status.output("    Reading Contents of Base emit.cpp & emit.hpp File...\n");
     let srcbase: string = "";
+    let headerbase: string = "";
     try {
-        srcbase = fs.readFileSync(cpp_runtime_src_path).toString() + `\n\n`;
+        srcbase = fs.readFileSync(cpp_emit_runtime_src_path).toString();
+        headerbase = fs.readFileSync(cpp_emit_runtime_header_path).toString();
     }
     catch(e) {
-        Status.error("Failed to Read Base emit.cpp File!\n");
+        Status.error("Failed to Read Base emit.cpp or emit.hpp File!\n");
     }
-    const runtime_header: string = `#include "${cpp_runtime_dir_path}cppruntime.hpp"\n\n`;
-    const src_header: string = `#include "emit.hpp"\n\n`;
-    const nheader_contents: string = runtime_header.concat( header ); 
-    const nsrc_contents: string = src_header.concat(src, srcbase);
-
+    
     Status.output("    Writing to emit.hpp...\n");
     try {
         const headername = path.join(dir, "emit.hpp");
-        fs.writeFileSync(headername, nheader_contents);
+        const updated = headerbase.concat(header);
+        fs.writeFileSync(headername, updated);
     }
     catch(e) {
         Status.error("Failed to write to emit.hpp!\n");
@@ -71,10 +101,20 @@ function generateCPPFiles(header: string, src: string, outdir: string) {
     Status.output("    Writing to emit.cpp...\n");
     try {
         const srcname = path.join(dir, "emit.cpp");
-        fs.writeFileSync(srcname, nsrc_contents);
+        let updated = srcbase.replace("//CODE", src);
+        fs.writeFileSync(srcname, updated);
     }
     catch(e) {
         Status.error("Failed to write to emit.cpp!\n");
+    }
+
+    Status.output("    Copying GC and runtime files...\n");
+    try {
+        copyRuntime(outdir);
+        copyGC(gc_path, path.join(outdir, "gc/"));
+    }
+    catch(e) {
+        Status.error("Failed to copy GC and runtime files!\n");
     }
 
     Status.output(`    CPP emission successful -- emitted to ${dir}\n\n`);

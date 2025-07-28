@@ -26,6 +26,7 @@ copyResourceDir("core/", "core/");
 copyResourceDir("backend/jsemitter/runtime/", "jsruntime/");
 copyResourceDir("backend/smtcore/runtime/", "smtruntime/");
 copyResourceDir("backend/cpp/runtime/", "cppruntime/");
+copyResourceDir("backend/cpp/gc/", "cppruntime/gc/");
 
 copyResourceDir("samples/", "samples/");
 
