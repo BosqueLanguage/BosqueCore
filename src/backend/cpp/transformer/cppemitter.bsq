@@ -37,6 +37,10 @@ entity Context {
     }
 }
 
+function natToString(nat: Nat): String {
+    return String::fromCString(nat.toCString());
+}
+
 function emitEnclosedParen(s: CString): String {
     return String::fromCString(CString::concat('"', s, '"'));
 }
@@ -1829,6 +1833,23 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
     });
 
+    %% Various size allocators needed for the GC
+    var allocs, allocslist, allocmap = asm.typeinfos
+        .reduce<(|String, List<String>, Map<Nat, String>|)>((|"", List<String>{}, Map<Nat, String>{}|), fn(acc, tk, ti) => {
+            if(acc.2.has(ti.slotsize) || ti.slotsize == 0n) {
+                return acc;
+            }
+            
+            let name = String::concat("alloc", natToString(ti.slotsize));
+            let decl = String::concat("GCAllocator ", name);
+            let cons = String::concat(decl, "(", natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), collect);%n;");
+
+            return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", name)), acc.2.insert(ti.slotsize, name);
+        });
+    let nallocslist = String::concat("GCAllocator* allocs[", natToString(allocmap.size()), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
+
+    let gcinfo = String::concat(allocs, nallocslist);
+
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp
-    return String::concat(funcfwddecls, "𝐬𝐫𝐜", ns_emission);
+    return String::concat(funcfwddecls, "𝐬𝐫𝐜", gcinfo, ns_emission);
 }

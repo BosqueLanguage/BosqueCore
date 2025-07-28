@@ -1,6 +1,6 @@
 "use strict";
 
-import { exec } from "node:child_process";
+import { exec, execSync } from "node:child_process";
 
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -12,6 +12,7 @@ const bsqdir = path.dirname(__dirname);
 const cmdpath = path.join(bsqdir, "bin/src/cmd/bosque.js");
 
 const binoutdir = path.join(bsqdir, "bin/cppemit");
+const cppruntimedir = path.join(bsqdir, "bin/cppruntime");
 
 const allsrcdirs = [
     path.join(bsqdir, "src/bsqir/asm"),
@@ -31,6 +32,8 @@ for(let i = 0; i < allsrcdirs.length; ++i) {
         }
     }
 }
+
+execSync(`make gc`, {cwd: cppruntimedir});
 
 exec(`node ${cmdpath} --namespace CPPEmitter --output ${binoutdir} ${allsources.join(" ")}`, {cwd: bsqdir}, (err, stdout, stderr) => {
     if(err !== null) {
