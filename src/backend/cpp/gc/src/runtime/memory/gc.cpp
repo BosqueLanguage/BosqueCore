@@ -105,6 +105,50 @@ bool pageNeedsMoved(float old_util, float new_util)
     }
 }
 
+inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
+{
+    PageInfo::extractPageFromPointer(*obj)->pending_decs_count++;
+    tinfo.pending_decs.push_back(*obj);
+}
+
+
+void walkPointerMaskForDecs(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
+{
+    const char* ptr_mask = typeinfo->ptr_mask;
+    if(ptr_mask == PTR_MASK_LEAF) {
+        return ;
+    }
+
+    for( ; *ptr_mask != '\0'; slots++) {
+        char mask = *(ptr_mask++);
+
+        if(*slots == nullptr) {
+            continue;
+        }
+    
+        if(mask == PTR_MASK_PTR) {
+            if(!GC_IS_ROOT(*slots) || DEC_REF_COUNT(*slots) != 0) {
+                continue;
+            }
+            pushPendingDecs(tinfo, slots);
+        }
+
+        // If we are tagged extract the typeinfo stored and walk its pointer mask instead
+        if(mask == PTR_MASK_TAGGED) {
+            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
+                void* ref = *(slots + 1);
+                if(DEC_REF_COUNT(ref) == 0) {
+                    if(!GC_IS_ROOT(ref) || DEC_REF_COUNT(ref) != 0) {
+                        continue;
+                    }
+                    pushPendingDecs(tinfo, slots + 1);
+                }
+            }
+        }
+    }
+}
+
 void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
 #ifdef MEM_STATS
@@ -115,7 +159,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
-        void* obj = (void**)tinfo.pending_decs.pop_front();
+        void* obj = tinfo.pending_decs.pop_front();
         deccount++;
 
         // Skip if the object is already freed
@@ -124,28 +168,10 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
 
         // Decrement ref counts of objects this object points to
-        const __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
+        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
 
-        if(type_info->ptr_mask != LEAF_PTR_MASK) {
-            const char* ptr_mask = type_info->ptr_mask;
-            void** slots = (void**)obj;
-            while(*ptr_mask != '\0') {
-                char mask = *(ptr_mask++);
-
-                if(*slots != nullptr) {
-                    //If this object is a root we dont want to explore its children (this deletes a subtree who is still alive)
-                    if(mask == PTR_MASK_PTR && DEC_REF_COUNT(*slots) == 0  && !GC_IS_ROOT(*slots)) {
-                        PageInfo::extractPageFromPointer(*slots)->pending_decs_count++;
-                        tinfo.pending_decs.push_back(*slots);
-                    }
-                    if(PTR_MASK_STRING_AND_SLOT_PTR_VALUED(mask, *slots) && DEC_REF_COUNT(*slots) == 0 && !GC_IS_ROOT(*slots)) {
-                        PageInfo::extractPageFromPointer(*slots)->pending_decs_count++;
-                        tinfo.pending_decs.push_back(*slots);
-                    }
-                }
-
-                slots++;
-            }
+        if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
+            walkPointerMaskForDecs(tinfo, typeinfo, (void**)obj);
         }
 
         // Put object onto its pages freelist by masking to the page itself then pushing to front of list 
@@ -199,31 +225,45 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 #endif
 }
 
+inline void forwardRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
+{
+    uint32_t fwd_index = GC_FWD_INDEX(*obj);
+    if(fwd_index != MAX_FWD_INDEX) {
+        *obj = tinfo.forward_table[fwd_index]; 
+    }
+    
+    INC_REF_COUNT(*obj);
+}
+
 // Update pointers using forward table
 void updatePointers(void** obj, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
-
-    if(type_info->ptr_mask != LEAF_PTR_MASK) {
-        const char* ptr_mask = type_info->ptr_mask;
-        void** slots = (void**)obj;
-
-        while(*ptr_mask != '\0') {
-            char mask = *(ptr_mask++);
-
-            if(*slots != nullptr) {
-                if((mask == PTR_MASK_PTR) | PTR_MASK_STRING_AND_SLOT_PTR_VALUED(mask, *slots)) {
-                    uint32_t fwd_index = GC_FWD_INDEX(*slots);
-                    if(fwd_index != MAX_FWD_INDEX) {
-                        *slots = tinfo.forward_table[fwd_index]; 
-                    }
-                    INC_REF_COUNT(*slots);
-                }
-            }
-
-            slots++;
-        }
+    if(type_info->ptr_mask == PTR_MASK_LEAF) {
+        return;
     }
+    
+    const char* ptr_mask = type_info->ptr_mask;
+    void** slots = (void**)obj;
+
+    for( ; *ptr_mask != '\0'; slots++) {
+        char mask = *(ptr_mask++);
+
+        if(*slots == nullptr) {
+            continue;
+        }
+        
+        if(mask == PTR_MASK_PTR) {
+            forwardRef(slots, tinfo);
+        }
+
+        if(mask == PTR_MASK_TAGGED) {
+            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
+                forwardRef(slots + 1, tinfo);
+            }
+        }
+    }        
 }
 
 // Move non root young objects to evacuation page (as needed) then forward pointers and inc ref counts
@@ -239,11 +279,15 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
+        /*
         if(GC_IS_ROOT(obj)) {
             updatePointers((void**)obj, tinfo);
             GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(obj));
         }
-        else {
+
+        */
+        
+        if(!GC_IS_ROOT(obj)) {
             // If we are not a root we want to evacuate
             GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(obj));
             GC_INVARIANT_CHECK(gcalloc != nullptr);
@@ -335,41 +379,63 @@ void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     tinfo.unloadNativeRootSet();
 }
 
+void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
+{
+    MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
+    if(meta == nullptr) {
+        assert(false);
+    }
+
+    if(!GC_SHOULD_VISIT(meta)) {
+        return ;
+    }
+    
+    GC_MARK_AS_MARKED(meta);
+    tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
+}
+
+void walkPointerMaskMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept 
+{
+    const char* ptr_mask = typeinfo->ptr_mask;
+    if(ptr_mask == PTR_MASK_LEAF) {
+        return ;
+    }
+
+    for( ; *ptr_mask != '\0'; slots++) {
+        char mask = *(ptr_mask++);
+
+        if(*slots == nullptr) {
+            continue;
+        }
+
+        if(mask == PTR_MASK_PTR) { 
+            markRef(tinfo, slots);
+        }
+
+        if(mask == PTR_MASK_TAGGED) {
+            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
+                markRef(tinfo, slots + 1);
+            }
+        }
+    }
+}
+
 void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     while(!tinfo.visit_stack.isEmpty()) {
         MarkStackEntry entry = tinfo.visit_stack.pop_back();
-        __CoreGC::TypeInfoBase* obj_type = GC_TYPE(entry.obj);
+        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(entry.obj);
 
-        if((obj_type->ptr_mask == LEAF_PTR_MASK) | (entry.color == MARK_STACK_NODE_COLOR_BLACK)) {
+        if((typeinfo->ptr_mask == PTR_MASK_LEAF) || (entry.color == MARK_STACK_NODE_COLOR_BLACK)) {
             // No children so do by definition
             tinfo.pending_young.push_back(entry.obj);
+            continue;
         }
-        else {
-            tinfo.visit_stack.push_back({entry.obj, MARK_STACK_NODE_COLOR_BLACK});
-
-            const char* ptr_mask = obj_type->ptr_mask;
-            void** slots = (void**)entry.obj;
-
-            while(*ptr_mask != '\0') {
-                char mask = *(ptr_mask++);
-
-                if(*slots != nullptr) {
-                    if ((mask == PTR_MASK_PTR) | PTR_MASK_STRING_AND_SLOT_PTR_VALUED(mask, *slots)) {
-                        MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
-
-                        // Check metadata isnt null for sanitys sake
-                        if(meta != nullptr && GC_SHOULD_VISIT(meta)) {
-                            GC_MARK_AS_MARKED(meta);
-                            tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
-                        }
-                    }
-                }
-
-                slots++;
-            }
-        }
-    }
+        
+        tinfo.visit_stack.push_back({entry.obj, MARK_STACK_NODE_COLOR_BLACK});
+        walkPointerMaskMarking(tinfo, typeinfo, (void**)entry.obj);
+     }
 }
 
 void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept

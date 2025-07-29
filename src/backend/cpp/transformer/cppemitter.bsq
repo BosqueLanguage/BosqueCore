@@ -42,6 +42,9 @@ function natToString(nat: Nat): String {
 }
 
 function emitEnclosedParen(s: CString): String {
+    if(s === '') {
+        return "nullptr";
+    }
     return String::fromCString(CString::concat('"', s, '"'));
 }
 

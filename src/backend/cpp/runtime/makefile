@@ -20,7 +20,7 @@ LANGUAGE_DIR=$(MAKE_PATH)/../src/language/
 BUILD := dev
 
 CC=g++
-CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -Wno-gnu-statement-expression -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector
+CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector
 
 CFLAGS_OPT.dev=-O0 -g -ggdb 
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
