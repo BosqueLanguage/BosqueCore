@@ -5,7 +5,8 @@
 #include "../support/pagetable.h"
 #include "gc.h"
 
-#define ALLOC_MEM_INITIALIZE_VALUE 0xFFFFFFFFFFFFFFFFul
+//Can also use other values like 0xFFFFFFFFFFFFFFFFul
+#define ALLOC_DEBUG_MEM_INITIALIZE_VALUE 0x0ul
 
 //Must be multiple of 8
 #define ALLOC_DEBUG_CANARY_SIZE 16
