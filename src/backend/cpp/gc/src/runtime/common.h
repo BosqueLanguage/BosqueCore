@@ -127,7 +127,7 @@ public:
 struct MetaData 
 {
     //!!!! alloc info is valid even when this is in a free-list so we need to make sure it does not collide with the free-list data !!!!
-    TypeInfoBase* type;
+    __CoreGC::TypeInfoBase* type;
     bool isalloc;
     bool isyoung;
     bool ismarked;

@@ -42,6 +42,9 @@ function natToString(nat: Nat): String {
 }
 
 function emitEnclosedParen(s: CString): String {
+    if(s === '') {
+        return "nullptr";
+    }
     return String::fromCString(CString::concat('"', s, '"'));
 }
 
@@ -719,10 +722,17 @@ function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::
     }
 }
 
-%%
-%% TODO: Once the GC is integrated we will need to call our special GC allocate on ref type objects instead of the default
-%% constructor like we do now. Currently they call "new"
-%%
+function generateGCAlloc(ti: CPPAssembly::TypeInfo): String {
+    return String::concat("alloc", natToString(ti.slotsize));
+}
+
+function callGCAlloc(ti: CPPAssembly::TypeInfo, constype: String, cons: String): String {
+    let alloc = generateGCAlloc(ti);
+    let body = String::concat(constype, ", ", alloc, ", &", constype, "Type");
+    
+    return String::concat("𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞( ", body, ", (", cons, ") )");
+}
+
 function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression, ctx: Context): String {
     let emitargs = emitArguments(exp.args, ctx); 
     let name = emitTypeSignature(exp.ctype, false, ctx);
@@ -743,11 +753,9 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
     }
 
     if(tinfo.tag === CPPAssembly::Tag#Ref) {
-        return String::concat("new ", cons); %% We use new solely to keep the code compiling before GC integration
+        return String::concat(callGCAlloc(tinfo, name, cons)); 
     }
-    else {
-        return cons;
-    } 
+    return cons;
 }
 
 function emitConstructorEListExpression(exp: CPPAssembly::ConstructorEListExpression, ctx: Context): String {
@@ -1522,7 +1530,7 @@ function generateVTable(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<
     let enum_name = String::concat(name, "_entries");
     let vtable_name = String::concat(name, "_vtable");
 
-    let base = String::concat("const __CoreCpp::FieldOffsetInfo ", vtable_name, "[] = ", "{%n;");
+    let base = String::concat("const __CoreGC::FieldOffsetInfo ", vtable_name, "[] = ", "{%n;");
     let field_names = fields.mapIdx<String>(fn(f_entry, ii) => generateVTableEntry(f_entry, name, enum_name, ii, ctx, full_indent));
     return String::concat(indent, base, String::joinAll(",%n;", field_names), "%n;", indent, "};%n;"); 
 }
@@ -1568,11 +1576,11 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
 
     let tinfo_name = String::concat(name, "Type");
 
-    let base = String::concat(indent, "__CoreCpp::TypeInfoBase ", tinfo_name, " = {%n;");
+    let base = String::concat(indent, "__CoreGC::TypeInfoBase ", tinfo_name, " = {%n;");
     let id = String::concat(base, full_indent, ".type_id = ", String::fromCString(info.id.toCString()), ",%n;");
     let typesize = String::concat(id, full_indent, ".type_size = ", String::fromCString(info.typesize.toCString()), ", %n;");
     let slotsize = String::concat(typesize, full_indent, ".slot_size = ", String::fromCString(info.slotsize.toCString()), ",%n;");
-    let tag = String::concat(slotsize, full_indent, ".tag = __CoreCpp::Tag::", convertTagEnumEntries(info.tag), ",%n;");
+    let tag = String::concat(slotsize, full_indent, ".tag = __CoreGC::Tag::", convertTagEnumEntries(info.tag), ",%n;");
     let ptrmask = String::concat(tag, full_indent, ".ptr_mask = ", emitEnclosedParen(info.ptrmask), ",%n;");
     let typekey = String::concat(ptrmask, full_indent, ".typekey = ", emitEnclosedParen(info.typekey.value), ",%n;");
     let vtable = if(needsvtable) then String::concat(typekey, full_indent, ".vtable = ", String::concat(name, "_vtable"), "%n;")
@@ -1840,7 +1848,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
                 return acc;
             }
             
-            let name = String::concat("alloc", natToString(ti.slotsize));
+            let name = generateGCAlloc(ti);
             let decl = String::concat("GCAllocator ", name);
             let cons = String::concat(decl, "(", natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), collect);%n;");
 
