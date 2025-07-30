@@ -31,9 +31,13 @@ ThreadLocalInfo& info = ThreadLocalInfo::get();
 
 template <size_t N>
 inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overread"
+    #pragma GCC diagnostic ignored "-Warray-bounds"
     for(size_t i = 0; i < N; i++) {
         dst[i] = src[i];
     }
+    #pragma GCC diagnostic pop
 }
 
 template <size_t K>

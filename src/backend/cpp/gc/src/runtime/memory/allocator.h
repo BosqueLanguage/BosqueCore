@@ -522,7 +522,7 @@ public:
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
         entry = SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
-        *(uintptr_t*)entry = ALLOC_MEM_INITIALIZE_VALUE;
+        xmem_zerofill(entry, (size_t)type->slot_size);
 
         return entry;
     }

@@ -144,13 +144,13 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
     }
 
     for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
-        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE){
+        if(*slots == nullptr){
             continue;
         }
 
         switch(mask) {
             case PTR_MASK_PTR:    handleRefDecrement(tinfo, slots); break;
-            case PTR_MASK_TAGGED: handleTaggedObjectDecrement(tinfo, slots);
+            case PTR_MASK_TAGGED: handleTaggedObjectDecrement(tinfo, slots); break;
             case PTR_MASK_NOP:    break;
         }
     }
@@ -262,7 +262,7 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
     
     for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
-        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE){
+        if(*slots == nullptr){
             continue;
         }
 
@@ -416,7 +416,7 @@ void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInf
     }
 
     for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
-        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE) {
+        if(*slots == nullptr) {
             continue;
         }
 
