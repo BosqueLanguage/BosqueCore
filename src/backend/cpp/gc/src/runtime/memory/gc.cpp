@@ -9,6 +9,10 @@
 #define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
 #define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
+void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
+void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept;
+void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
+
 void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
@@ -111,7 +115,8 @@ inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
     tinfo.pending_decs.push_back(*obj);
 }
 
-inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
+{
     void* obj = *slots;
     uint32_t refcount = DEC_REF_COUNT(obj);
     if(refcount != 0 || !GC_IS_ROOT(obj)) {
@@ -121,7 +126,8 @@ inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noe
     pushPendingDecs(tinfo, slots);
 }
 
-inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
+{
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref:    handleRefDecrement(tinfo, slots + 1); break;
@@ -226,7 +232,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 #endif
 }
 
-inline void forwardRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
+inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
 {
     uint32_t fwd_index = GC_FWD_INDEX(*obj);
     if(fwd_index != MAX_FWD_INDEX) {
@@ -236,10 +242,11 @@ inline void forwardRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
     INC_REF_COUNT(*obj);
 }
 
-inline void handleTaggedObjectPointerUpdate(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept {
+inline void handleTaggedObjectUpdate(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept 
+{
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
-        case __CoreGC::Tag::Ref:    forwardRef(slots + 1, tinfo); break;
+        case __CoreGC::Tag::Ref:    updateRef(slots + 1, tinfo); break;
         case __CoreGC::Tag::Tagged: updatePointers(slots + 1, tinfo); break;
         case __CoreGC::Tag::Value:  return ;
     }
@@ -260,8 +267,8 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
         
         switch(mask) {
-            case PTR_MASK_PTR:    forwardRef(slots, tinfo); break;
-            case PTR_MASK_TAGGED: handleTaggedObjectPointerUpdate(slots, tinfo); break;
+            case PTR_MASK_PTR:    updateRef(slots, tinfo); break;
+            case PTR_MASK_TAGGED: handleTaggedObjectUpdate(slots, tinfo); break;
             case PTR_MASK_NOP:    break;
         }
     }        
@@ -391,7 +398,8 @@ void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
 }
 
-void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
+{
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref:    markRef(tinfo, slots + 1); break;
@@ -526,7 +534,7 @@ void collect() noexcept
 
     //
     // TODO: Lets move these pound defined MEM_STATS bits of code
-    // into functions that only contain something if MEM_STATS is defined
+    // that are disabled if MEM_STATS is not defined
     //
 #ifdef MEM_STATS
     auto end = std::chrono::high_resolution_clock::now();
