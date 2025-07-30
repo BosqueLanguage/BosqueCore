@@ -5,8 +5,7 @@
 #include "../support/pagetable.h"
 #include "gc.h"
 
-//Can also use other values like 0xFFFFFFFFFFFFFFFFul
-#define ALLOC_DEBUG_MEM_INITIALIZE_VALUE 0x0ul
+#define ALLOC_MEM_INITIALIZE_VALUE 0xFFFFFFFFFFFFFFFFul
 
 //Must be multiple of 8
 #define ALLOC_DEBUG_CANARY_SIZE 16
@@ -522,7 +521,10 @@ public:
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
-        return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
+        entry = SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
+        *(uintptr_t*)entry = ALLOC_MEM_INITIALIZE_VALUE;
+
+        return entry;
     }
 
     inline void* allocateEvacuation(__CoreGC::TypeInfoBase* type)

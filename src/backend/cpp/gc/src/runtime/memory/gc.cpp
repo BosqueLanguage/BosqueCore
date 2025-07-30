@@ -143,8 +143,8 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
         return ;
     }
 
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
+    for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
+        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE){
             continue;
         }
 
@@ -261,11 +261,11 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
         return;
     }
     
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
+    for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
+        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE){
             continue;
         }
-        
+
         switch(mask) {
             case PTR_MASK_PTR:    updateRef(slots, tinfo); break;
             case PTR_MASK_TAGGED: handleTaggedObjectUpdate(slots, tinfo); break;
@@ -415,8 +415,8 @@ void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInf
         return ;
     }
 
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
+    for(char mask = *ptr_mask; mask != '\0'; mask = *(++ptr_mask), slots++) {
+        if(*slots == PTR_MASK_LEAF || *(uintptr_t*)slots == ALLOC_MEM_INITIALIZE_VALUE) {
             continue;
         }
 
