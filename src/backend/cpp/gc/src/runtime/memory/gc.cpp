@@ -111,40 +111,41 @@ inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
     tinfo.pending_decs.push_back(*obj);
 }
 
+inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+    void* obj = *slots;
+    uint32_t refcount = DEC_REF_COUNT(obj);
+    if(refcount != 0 || !GC_IS_ROOT(obj)) {
+        return ;
+    }
 
-void walkPointerMaskForDecs(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
+    pushPendingDecs(tinfo, slots);
+}
+
+inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+    __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+    switch(tagged_typeinfo->tag) {
+        case __CoreGC::Tag::Ref:    handleRefDecrement(tinfo, slots + 1); break;
+        case __CoreGC::Tag::Tagged: walkPointerMaskForDecrements(tinfo, tagged_typeinfo, slots + 1); break;
+        case __CoreGC::Tag::Value:  return ;
+    }
+}
+
+void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
 {
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
         return ;
     }
 
-    for( ; *ptr_mask != '\0'; slots++) {
-        char mask = *(ptr_mask++);
-
-        if(*slots == nullptr) {
+    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
+        if(*slots == PTR_MASK_LEAF) {
             continue;
         }
-    
-        if(mask == PTR_MASK_PTR) {
-            if(!GC_IS_ROOT(*slots) || DEC_REF_COUNT(*slots) != 0) {
-                continue;
-            }
-            pushPendingDecs(tinfo, slots);
-        }
 
-        // If we are tagged extract the typeinfo stored and walk its pointer mask instead
-        if(mask == PTR_MASK_TAGGED) {
-            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
-            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
-                void* ref = *(slots + 1);
-                if(DEC_REF_COUNT(ref) == 0) {
-                    if(!GC_IS_ROOT(ref) || DEC_REF_COUNT(ref) != 0) {
-                        continue;
-                    }
-                    pushPendingDecs(tinfo, slots + 1);
-                }
-            }
+        switch(mask) {
+            case PTR_MASK_PTR:    handleRefDecrement(tinfo, slots); break;
+            case PTR_MASK_TAGGED: handleTaggedObjectDecrement(tinfo, slots);
+            case PTR_MASK_NOP:    break;
         }
     }
 }
@@ -171,7 +172,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
 
         if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
-            walkPointerMaskForDecs(tinfo, typeinfo, (void**)obj);
+            walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
         }
 
         // Put object onto its pages freelist by masking to the page itself then pushing to front of list 
@@ -235,33 +236,33 @@ inline void forwardRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
     INC_REF_COUNT(*obj);
 }
 
+inline void handleTaggedObjectPointerUpdate(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept {
+    __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+    switch(tagged_typeinfo->tag) {
+        case __CoreGC::Tag::Ref:    forwardRef(slots + 1, tinfo); break;
+        case __CoreGC::Tag::Tagged: updatePointers(slots + 1, tinfo); break;
+        case __CoreGC::Tag::Value:  return ;
+    }
+}
+
 // Update pointers using forward table
-void updatePointers(void** obj, const BSQMemoryTheadLocalInfo& tinfo) noexcept
+void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
-    if(type_info->ptr_mask == PTR_MASK_LEAF) {
+    __CoreGC::TypeInfoBase* type_info = GC_TYPE(slots);
+    const char* ptr_mask = type_info->ptr_mask;
+    if(ptr_mask == PTR_MASK_LEAF) {
         return;
     }
     
-    const char* ptr_mask = type_info->ptr_mask;
-    void** slots = (void**)obj;
-
-    for( ; *ptr_mask != '\0'; slots++) {
-        char mask = *(ptr_mask++);
-
-        if(*slots == nullptr) {
+    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
+        if(*slots == PTR_MASK_LEAF) {
             continue;
         }
         
-        if(mask == PTR_MASK_PTR) {
-            forwardRef(slots, tinfo);
-        }
-
-        if(mask == PTR_MASK_TAGGED) {
-            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
-            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
-                forwardRef(slots + 1, tinfo);
-            }
+        switch(mask) {
+            case PTR_MASK_PTR:    forwardRef(slots, tinfo); break;
+            case PTR_MASK_TAGGED: handleTaggedObjectPointerUpdate(slots, tinfo); break;
+            case PTR_MASK_NOP:    break;
         }
     }        
 }
@@ -279,26 +280,22 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
-        /*
         if(GC_IS_ROOT(obj)) {
             updatePointers((void**)obj, tinfo);
             GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(obj));
+            continue;
         }
-
-        */
         
-        if(!GC_IS_ROOT(obj)) {
-            // If we are not a root we want to evacuate
-            GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(obj));
-            GC_INVARIANT_CHECK(gcalloc != nullptr);
-        
-            void* newobj = gcalloc->allocateEvacuation(type_info);
-            xmem_copy(obj, newobj, type_info->slot_size);
-            updatePointers((void**)newobj, tinfo);
+        // If we are not a root we want to evacuate
+        GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(obj));
+        GC_INVARIANT_CHECK(gcalloc != nullptr);
+    
+        void* newobj = gcalloc->allocateEvacuation(type_info);
+        xmem_copy(obj, newobj, type_info->slot_size);
+        updatePointers((void**)newobj, tinfo);
 
-            RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(obj), (uint32_t)tinfo.forward_table_index);
-            tinfo.forward_table[tinfo.forward_table_index++] = newobj;
-        }
+        RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(obj), (uint32_t)tinfo.forward_table_index);
+        tinfo.forward_table[tinfo.forward_table_index++] = newobj;
     }
 
     GC_REFCT_LOCK_RELEASE();
@@ -394,29 +391,31 @@ void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
 }
 
-void walkPointerMaskMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept 
+void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept {
+    __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+    switch(tagged_typeinfo->tag) {
+        case __CoreGC::Tag::Ref:    markRef(tinfo, slots + 1); break;
+        case __CoreGC::Tag::Tagged: walkPointerMaskForMarking(tinfo, tagged_typeinfo, slots + 1); break;
+        case __CoreGC::Tag::Value:  return ;
+    }
+}
+
+void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept 
 {
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
         return ;
     }
 
-    for( ; *ptr_mask != '\0'; slots++) {
-        char mask = *(ptr_mask++);
-
-        if(*slots == nullptr) {
+    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
+        if(*slots == PTR_MASK_LEAF) {
             continue;
         }
 
-        if(mask == PTR_MASK_PTR) { 
-            markRef(tinfo, slots);
-        }
-
-        if(mask == PTR_MASK_TAGGED) {
-            __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
-            if(tagged_typeinfo->tag == __CoreGC::Tag::Ref) {
-                markRef(tinfo, slots + 1);
-            }
+        switch(mask) {
+            case PTR_MASK_PTR:    markRef(tinfo, slots); break;
+            case PTR_MASK_TAGGED: handleMarkingTaggedObject(tinfo, slots); break;
+            case PTR_MASK_NOP:    break;
         }
     }
 }
@@ -434,7 +433,7 @@ void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
         
         tinfo.visit_stack.push_back({entry.obj, MARK_STACK_NODE_COLOR_BLACK});
-        walkPointerMaskMarking(tinfo, typeinfo, (void**)entry.obj);
+        walkPointerMaskForMarking(tinfo, typeinfo, (void**)entry.obj);
      }
 }
 
@@ -525,6 +524,10 @@ void collect() noexcept
     gtl_info.roots_count = 0;
     gtl_info.newly_filled_pages_count = 0;
 
+    //
+    // TODO: Lets move these pound defined MEM_STATS bits of code
+    // into functions that only contain something if MEM_STATS is defined
+    //
 #ifdef MEM_STATS
     auto end = std::chrono::high_resolution_clock::now();
 
