@@ -130,9 +130,17 @@ inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** s
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
-        case __CoreGC::Tag::Ref:    handleRefDecrement(tinfo, slots + 1); break;
-        case __CoreGC::Tag::Tagged: walkPointerMaskForDecrements(tinfo, tagged_typeinfo, slots + 1); break;
-        case __CoreGC::Tag::Value:  return ;
+        case __CoreGC::Tag::Ref: {
+            handleRefDecrement(tinfo, slots + 1); 
+            break;
+        }
+        case __CoreGC::Tag::Tagged: {
+            walkPointerMaskForDecrements(tinfo, tagged_typeinfo, slots + 1); 
+            break;
+        }
+        case __CoreGC::Tag::Value: {
+            return ;
+        }
     }
 }
 
@@ -143,16 +151,23 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
         return ;
     }
 
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
-            continue;
+    while(*ptr_mask != '\0') {
+        switch(*ptr_mask) {
+            case PTR_MASK_PTR:    { 
+                handleRefDecrement(tinfo, slots); 
+                break;
+            }
+            case PTR_MASK_TAGGED: { 
+                handleTaggedObjectDecrement(tinfo, slots); 
+                break; 
+            }
+            case PTR_MASK_NOP:   { 
+                break; 
+            }
         }
-
-        switch(mask) {
-            case PTR_MASK_PTR:    handleRefDecrement(tinfo, slots); break;
-            case PTR_MASK_TAGGED: handleTaggedObjectDecrement(tinfo, slots);
-            case PTR_MASK_NOP:    break;
-        }
+ 
+        ptr_mask++;
+        slots++;
     }
 }
 
@@ -246,9 +261,17 @@ inline void handleTaggedObjectUpdate(void** slots, const BSQMemoryTheadLocalInfo
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
-        case __CoreGC::Tag::Ref:    updateRef(slots + 1, tinfo); break;
-        case __CoreGC::Tag::Tagged: updatePointers(slots + 1, tinfo); break;
-        case __CoreGC::Tag::Value:  return ;
+        case __CoreGC::Tag::Ref: {
+            updateRef(slots + 1, tinfo); 
+            break;
+        }
+        case __CoreGC::Tag::Tagged: {
+            updatePointers(slots + 1, tinfo); 
+            break;
+        }
+        case __CoreGC::Tag::Value: {
+            return ;
+        }
     }
 }
 
@@ -260,17 +283,24 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
     if(ptr_mask == PTR_MASK_LEAF) {
         return;
     }
-    
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
-            continue;
+
+    while(*ptr_mask != '\0') {
+        switch(*ptr_mask) {
+            case PTR_MASK_PTR: {
+                updateRef(slots, tinfo); 
+                break;
+            }
+            case PTR_MASK_TAGGED: { 
+                handleTaggedObjectUpdate(slots, tinfo); 
+                break;
+            }
+            case PTR_MASK_NOP: {
+                break;
+            }
         }
-        
-        switch(mask) {
-            case PTR_MASK_PTR:    updateRef(slots, tinfo); break;
-            case PTR_MASK_TAGGED: handleTaggedObjectUpdate(slots, tinfo); break;
-            case PTR_MASK_NOP:    break;
-        }
+
+        ptr_mask++;
+        slots++;
     }        
 }
 
@@ -402,9 +432,17 @@ void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noe
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
-        case __CoreGC::Tag::Ref:    markRef(tinfo, slots + 1); break;
-        case __CoreGC::Tag::Tagged: walkPointerMaskForMarking(tinfo, tagged_typeinfo, slots + 1); break;
-        case __CoreGC::Tag::Value:  return ;
+        case __CoreGC::Tag::Ref: {
+            markRef(tinfo, slots + 1); 
+            break;
+        }
+        case __CoreGC::Tag::Tagged: {
+            walkPointerMaskForMarking(tinfo, tagged_typeinfo, slots + 1); 
+            break;
+        }
+        case __CoreGC::Tag::Value: { 
+            return ;
+        }
     }
 }
 
@@ -413,18 +451,25 @@ void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInf
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
         return ;
-    }
+    } 
 
-    for(char mask = *ptr_mask; mask != '\0'; ptr_mask++, slots++) {
-        if(*slots == PTR_MASK_LEAF) {
-            continue;
+    while(*ptr_mask != '\0') {
+        switch(*ptr_mask) {
+            case PTR_MASK_PTR: {
+                markRef(tinfo, slots); 
+                break;
+            }
+            case PTR_MASK_TAGGED: {
+                handleMarkingTaggedObject(tinfo, slots); 
+                break;
+            }
+            case PTR_MASK_NOP: {
+                break;
+            }
         }
 
-        switch(mask) {
-            case PTR_MASK_PTR:    markRef(tinfo, slots); break;
-            case PTR_MASK_TAGGED: handleMarkingTaggedObject(tinfo, slots); break;
-            case PTR_MASK_NOP:    break;
-        }
+        ptr_mask++;
+        slots++;
     }
 }
 

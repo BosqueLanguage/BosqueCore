@@ -169,17 +169,17 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V) [&]() -> T* { T* _ptr = (T*)A.allocate(L); *_ptr = (V); return _ptr; }()
+template<typename T>
+T* MEM_ALLOC_CHECK(T* alloc)
+{
+    if(alloc == nullptr) {
+        assert(false);
+    }
+    return alloc;
+}
 
-// May be slightly faster depending on if the lambda call gets optimized away 
-/*
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V)            \
-({                                     \
-    T* _ptr = (T*)A.allocate(L);       \
-    *_ptr = (V);                       \
-    _ptr;                              \
-})
-*/
+#define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (new (GC_ALLOC_OBJECT(A, L)) T(__VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
@@ -522,7 +522,9 @@ public:
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
-        return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
+        entry = SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
+
+        return entry;
     }
 
     inline void* allocateEvacuation(__CoreGC::TypeInfoBase* type)
