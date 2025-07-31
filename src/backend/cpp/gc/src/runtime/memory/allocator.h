@@ -169,25 +169,17 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 
-// We add a barrier to prevent reordering with heavy optimizations enabled
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V)                  \
-[&]() -> T* {                                 \
-    T tmp = (V);                              \
-    T* _ptr = (T*)A.allocate(L);              \
-    *_ptr = tmp;                              \
-    asm volatile("" ::: "memory");            \
-    return _ptr;                              \
-}()
+template<typename T>
+T* MEM_ALLOC_CHECK(T* alloc)
+{
+    if(alloc == nullptr) {
+        assert(false);
+    }
+    return alloc;
+}
 
-// May be slightly faster depending on if the lambda call gets optimized away 
-/*
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V)            \
-({                                     \
-    T* _ptr = (T*)A.allocate(L);       \
-    *_ptr = (V);                       \
-    _ptr;                              \
-})
-*/
+#define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (new (GC_ALLOC_OBJECT(A, L)) T(__VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
