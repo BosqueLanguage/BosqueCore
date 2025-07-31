@@ -173,10 +173,7 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
 
 void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-#ifdef MEM_STATS
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-
+    MEM_STATS_START();
     GC_REFCT_LOCK_ACQUIRE();
 
     size_t deccount = 0;
@@ -230,21 +227,10 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     tinfo.decremented_pages_index = 0;
 
     GC_REFCT_LOCK_RELEASE();
-
+    MEM_STATS_END(decrement_times, decrement_times_index);
     //
     //TODO: we want to do a bit of PID controller here on the max decrement count to ensure that we eventually make it back to stable but keep pauses small
     //
-
-#ifdef MEM_STATS
-    auto end = std::chrono::high_resolution_clock::now();
-
-    double duration_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end - start).count();
-    
-    gtl_info.decrement_times[gtl_info.decrement_times_index++] = duration_ms;
-    if(gtl_info.decrement_times_index == MAX_MEMSTAT_TIMES_INDEX) {
-        gtl_info.decrement_times_index = 0;
-    }
-#endif
 }
 
 inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
@@ -307,9 +293,7 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 // Move non root young objects to evacuation page (as needed) then forward pointers and inc ref counts
 void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-#ifdef MEM_STATS
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
+    MEM_STATS_START();
     GC_REFCT_LOCK_ACQUIRE();
 
     while(!tinfo.pending_young.isEmpty()) {
@@ -336,17 +320,7 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
 
     GC_REFCT_LOCK_RELEASE();
-
-#ifdef MEM_STATS
-    auto end = std::chrono::high_resolution_clock::now();
-
-    double duration_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end - start).count();
-    
-    gtl_info.evacuation_times[gtl_info.evacuation_times_index++] = duration_ms;
-    if(gtl_info.evacuation_times_index == MAX_MEMSTAT_TIMES_INDEX) {
-        gtl_info.evacuation_times_index = 0;
-    }
-#endif
+    MEM_STATS_END(evacuation_times, evacuation_times_index);
 }
 
 void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
@@ -492,9 +466,7 @@ void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-#ifdef MEM_STATS
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
+    MEM_STATS_START();
     
     gtl_info.pending_roots.initialize();
     gtl_info.visit_stack.initialize();
@@ -516,23 +488,12 @@ void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.visit_stack.clear();
     gtl_info.pending_roots.clear();
 
-#ifdef MEM_STATS
-    auto end = std::chrono::high_resolution_clock::now();
-
-    double duration_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end - start).count();
-    
-    gtl_info.marking_times[gtl_info.marking_times_index++] = duration_ms;
-    if(gtl_info.marking_times_index == MAX_MEMSTAT_TIMES_INDEX) {
-        gtl_info.marking_times_index = 0;
-    }
-#endif
+    MEM_STATS_END(marking_times, marking_times_index);
 }
 
 void collect() noexcept
 {   
-#ifdef MEM_STATS
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
+    MEM_STATS_START();
 
     static bool should_reset_pending_decs = true;
     gtl_info.pending_young.initialize();
@@ -577,18 +538,5 @@ void collect() noexcept
     gtl_info.roots_count = 0;
     gtl_info.newly_filled_pages_count = 0;
 
-    //
-    // TODO: Lets move these pound defined MEM_STATS bits of code
-    // that are disabled if MEM_STATS is not defined
-    //
-#ifdef MEM_STATS
-    auto end = std::chrono::high_resolution_clock::now();
-
-    double duration_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end - start).count();
-    
-    gtl_info.collection_times[gtl_info.collection_times_index++] = duration_ms;
-    if(gtl_info.collection_times_index == MAX_MEMSTAT_TIMES_INDEX) {
-        gtl_info.collection_times_index = 0;
-    }
-#endif
+    MEM_STATS_END(collection_times, collection_times_index);
 }
