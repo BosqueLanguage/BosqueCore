@@ -284,7 +284,8 @@ private:
                     // Insert as the left child
                     current->left = new_page;
                     break;
-                } else {
+                } 
+                else {
                     current = current->left;
                 }
             } 
@@ -295,7 +296,8 @@ private:
                     // Insert as the right child
                     current->right = new_page;
                     break;
-                } else {
+                } 
+                else {
                     current = current->right;
                 }
             }

@@ -38,22 +38,23 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
             // Was dropped from roots
             tinfo.pending_decs.push_back(cur_oldroot);
             oldroots_idx++;
+            continue;
         }
+        
+        void* cur_root = tinfo.roots[roots_idx];
+        if(cur_root < cur_oldroot) {
+            // New root in current
+            roots_idx++;
+        } 
+        else if(cur_oldroot < cur_root) {
+            // Was dropped from roots
+            tinfo.pending_decs.push_back(cur_oldroot);
+            oldroots_idx++;
+        } 
         else {
-            void* cur_root = tinfo.roots[roots_idx];
-
-            if(cur_root < cur_oldroot) {
-                // New root in current
-                roots_idx++;
-            } else if(cur_oldroot < cur_root) {
-                // Was dropped from roots
-                tinfo.pending_decs.push_back(cur_oldroot);
-                oldroots_idx++;
-            } else {
-                // In both lists
-                roots_idx++;
-                oldroots_idx++;
-            }
+            // In both lists
+            roots_idx++;
+            oldroots_idx++;
         }
     }
 
@@ -328,23 +329,27 @@ void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
     // Make sure our page is in pagetable, our address is not a page itself,
     // or a pointer into the page's metadata
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
-    if(GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr)
-        && !(page_offset < sizeof(PageInfo))
-    ) {
-        MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
-        void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
-        
-        //Need to verify our object is allocated and not already marked
-        if(GC_SHOULD_PROCESS_AS_ROOT(meta)) {
-            GC_MARK_AS_ROOT(meta);
 
-            tinfo.roots[tinfo.roots_count++] = obj;
-            if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
-                tinfo.pending_roots.push_back(obj);
-            }
-        }
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr)
+        || page_offset < sizeof(PageInfo)) {
+            return ;
     }
-}
+
+    MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
+    void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
+    
+    if(!GC_SHOULD_PROCESS_AS_ROOT(meta)) {
+        return ;
+    }
+
+    //Need to verify our object is allocated and not already marked
+    GC_MARK_AS_ROOT(meta);
+
+    tinfo.roots[tinfo.roots_count++] = obj;
+    if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
+        tinfo.pending_roots.push_back(obj);
+    }
+ }
 
 void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
