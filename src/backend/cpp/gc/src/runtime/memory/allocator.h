@@ -169,7 +169,15 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
 
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V) [&]() -> T* { T* _ptr = (T*)A.allocate(L); *_ptr = (V); return _ptr; }()
+// We add a barrier to prevent reordering with heavy optimizations enabled
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, V)                  \
+[&]() -> T* {                                 \
+    T tmp = (V);                              \
+    T* _ptr = (T*)A.allocate(L);              \
+    *_ptr = tmp;                              \
+    asm volatile("" ::: "memory");            \
+    return _ptr;                              \
+}()
 
 // May be slightly faster depending on if the lambda call gets optimized away 
 /*
@@ -523,7 +531,6 @@ public:
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
         entry = SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
-        xmem_zerofill(entry, (size_t)type->slot_size);
 
         return entry;
     }
