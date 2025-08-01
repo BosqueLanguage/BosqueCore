@@ -13,12 +13,20 @@
 #define ALLOC_DEBUG_CANARY_VALUE 0xDEADBEEFDEADBEEFul
 
 #ifdef MEM_STATS
-#define ENABLE_MEM_STATS
-#define MEM_STATS_OP(X) X
-#define MEM_STATS_ARG(X) X
+#define MEM_STATS_START() auto start = std::chrono::high_resolution_clock::now()
+#define MEM_STATS_END(TT, TTI)                                                         \
+do {                                                                                   \
+    auto end = std::chrono::high_resolution_clock::now();                              \
+    double duration_ms = std::chrono::                                                 \
+        duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
+    gtl_info. TT[gtl_info. TTI++] = duration_ms;                                       \
+    if(gtl_info. TTI == MAX_MEMSTAT_TIMES_INDEX) {                                     \
+        gtl_info. TTI = 0;                                                             \
+    }                                                                                  \
+}while(0)
 #else
-#define MEM_STATS_OP(X)
-#define MEM_STATS_ARG(X)
+#define MEM_STATS_START()
+#define MEM_STATS_END(TT, TTI)
 #endif
 
 // Allows us to correctly determine pointer offsets
@@ -276,7 +284,8 @@ private:
                     // Insert as the left child
                     current->left = new_page;
                     break;
-                } else {
+                } 
+                else {
                     current = current->left;
                 }
             } 
@@ -287,7 +296,8 @@ private:
                     // Insert as the right child
                     current->right = new_page;
                     break;
-                } else {
+                } 
+                else {
                     current = current->right;
                 }
             }
@@ -548,9 +558,9 @@ public:
     }
 
 #ifdef MEM_STATS
-    void updateMemStats();
-#else
-    inline void updateMemStats() {}
+    void updateMemStats() noexcept;
+#else 
+    inline void updateMemStats() noexcept {};
 #endif
 
     //Take a page (that may be in of the page sets -- or may not -- if it is a alloc or evac page) and move it to the appropriate page set
