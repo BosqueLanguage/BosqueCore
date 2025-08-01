@@ -158,7 +158,7 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
 
     while(*ptr_mask != '\0') {
         switch(*ptr_mask) {
-            case PTR_MASK_PTR:    { 
+            case PTR_MASK_PTR: { 
                 handleRefDecrement(tinfo, slots); 
                 break;
             }
@@ -166,7 +166,7 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
                 handleTaggedObjectDecrement(tinfo, slots); 
                 break; 
             }
-            case PTR_MASK_NOP:   { 
+            case PTR_MASK_NOP: { 
                 break; 
             }
         }
@@ -245,6 +245,11 @@ inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
         *obj = tinfo.forward_table[fwd_index]; 
     }
     
+    // Prevent possible ref count increase of a non-forwarded object
+    if(*obj == nullptr) {
+        return ;
+    }
+
     INC_REF_COUNT(*obj);
 }
 
@@ -519,7 +524,7 @@ void collect() noexcept
     }
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);
-    // We do not want to clear pending decs list every collection as it may still be populated
+
     if(gtl_info.pending_decs.isEmpty()) {
         gtl_info.pending_decs.clear();
         should_reset_pending_decs = true;

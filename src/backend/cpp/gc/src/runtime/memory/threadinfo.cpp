@@ -97,6 +97,10 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 #ifdef MEM_STATS
 double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept
 {
+    if(size > MAX_MEMSTAT_TIMES_INDEX) {
+        assert(false);
+    }
+
     double total_collection_time = 0;
     int num_collections = 0;
     for(int i = 0; i < size; i++) {
