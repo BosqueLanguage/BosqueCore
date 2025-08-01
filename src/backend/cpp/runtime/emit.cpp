@@ -10,11 +10,13 @@ int wrap_setjmp() {
         return EXIT_FAILURE;
     }
 
-    gtl_info.initializeGC<sizeof(allocs) / sizeof(allocs[1])>(allocs);
+    gtl_info.initializeGC<sizeof(allocs) / sizeof(allocs[0])>(allocs);
 
     // Calling our emitted main is hardcoded for now
     __CoreCpp::MainType ret = Main::main();
     std::cout << __CoreCpp::to_string(ret) << std::endl;
+
+    //GCTEST
 
     return 0;
 }

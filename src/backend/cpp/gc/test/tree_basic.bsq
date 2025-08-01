@@ -1,0 +1,34 @@
+declare namespace Main;
+
+datatype BasicTree of 
+DeadTree
+| Leaf { v: Nat }
+| Node { v: Nat, l: BasicTree, r: BasicTree }
+;
+
+function makeTree(depth: Nat, val: Nat): BasicTree {
+    if(depth == 0n) {
+        return Leaf { val };
+    }
+    
+    return Node {
+        val,
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n)
+    };
+}
+
+public function main(): Bool {
+    %*DISABLE_COLLECTIONS*%
+    var t: BasicTree = makeTree(3n, 0n);
+
+    %*COLLECT*%
+
+    t = DeadTree{};
+
+    %*COLLECT*%
+
+    %*ASSERT_CLEAR*%
+
+    return true;
+}
