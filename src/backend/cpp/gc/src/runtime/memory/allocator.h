@@ -558,9 +558,9 @@ public:
     }
 
 #ifdef MEM_STATS
-    void updateMemStats();
-#else
-    inline void updateMemStats() {}
+    void updateMemStats() noexcept;
+#else 
+    inline void updateMemStats() noexcept {};
 #endif
 
     //Take a page (that may be in of the page sets -- or may not -- if it is a alloc or evac page) and move it to the appropriate page set

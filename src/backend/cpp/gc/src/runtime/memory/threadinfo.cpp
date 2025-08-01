@@ -93,3 +93,19 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
     XAllocPageManager::g_page_manager.freePage(this->native_stack_contents);
     this->native_stack_contents = nullptr;
 }
+
+#ifdef MEM_STATS
+double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept
+{
+    double total_collection_time = 0;
+    int num_collections = 0;
+    for(int i = 0; i < size; i++) {
+        double elapsed_time = time[i];
+
+        num_collections++;
+        total_collection_time += elapsed_time;
+    }
+
+    return (total_collection_time / num_collections);
+}
+#endif

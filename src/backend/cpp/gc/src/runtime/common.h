@@ -5,8 +5,8 @@
 #include <sys/mman.h> //mmap
 
 //DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
-#define BSQ_GC_CHECK_ENABLED
 #define MEM_STATS
+#define BSQ_GC_CHECK_ENABLED
 #define VERBOSE_HEADER
 
 #ifdef BSQ_GC_CHECK_ENABLED
@@ -170,4 +170,3 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->ref_count == 0 && !(META)->isroot) || (!(META)->isroot && !(META)->ismarked))
-

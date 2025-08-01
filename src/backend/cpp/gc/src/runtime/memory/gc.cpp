@@ -3,6 +3,10 @@
 #include "../support/qsort.h"
 #include "threadinfo.h"
 
+#ifdef MEM_STATS
+#include <chrono>
+#endif
+
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
@@ -521,7 +525,7 @@ void collect() noexcept
         should_reset_pending_decs = true;
     }
 
-    gtl_info.total_live_bytes = 0;
+    UPDATE_TOTAL_LIVE_BYTES(gtl_info, ++);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {

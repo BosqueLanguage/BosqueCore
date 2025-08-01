@@ -2,13 +2,9 @@
 
 #include "allocator.h"
 
-//Seems that chrono is pretty fast and shouldn't mess with our metrics too much here
-#ifdef MEM_STATS
-#include <chrono>
-#define MAX_MEMSTAT_TIMES_INDEX 512
-#endif
-
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
+
+#define MAX_MEMSTAT_TIMES_INDEX 512
 
 #define MARK_STACK_NODE_COLOR_GREY 0
 #define MARK_STACK_NODE_COLOR_BLACK 1
@@ -124,28 +120,48 @@ struct BSQMemoryTheadLocalInfo
         }
     }
 
-#ifdef MEM_STATS
-    double compute_average_time(double* time) noexcept
-    {
-        double total_collection_time = 0;
-        int num_collections = 0;
-        for(int i = 0; i < MAX_MEMSTAT_TIMES_INDEX; i++) {
-            double elapsed_time = time[i];
-    
-            if(elapsed_time > 0.0) {
-                num_collections++;
-                total_collection_time += elapsed_time;
-            }
-        }
-    
-        return (total_collection_time / num_collections);
-    }
-#else
-    inline void compute_average_collection_time() = { };
-#endif
-
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;
 };
+
+#ifdef MEM_STATS
+    #define NUM_ALLOCS(E)           (E).num_allocs
+    #define TOTAL_GC_PAGES(E)       (E).total_gc_pages
+    #define TOTAL_EMPTY_GC_PAGES(E) (E).total_empty_gc_pages
+    #define TOTAL_LIVE_BYTES(E)     (E).total_live_bytes
+
+    #define UPDATE_NUM_ALLOCS(E, OP, ...)           NUM_ALLOCS(E) OP __VA_ARGS__
+    #define UPDATE_TOTAL_GC_PAGES(E, OP, ...)       TOTAL_GC_PAGES(E) OP __VA_ARGS__
+    #define UPDATE_TOTAL_EMPTY_GC_PAGES(E, OP, ...) TOTAL_EMPTY_GC_PAGES(E) OP __VA_ARGS__
+    #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)     TOTAL_LIVE_BYTES(E) OP __VA_ARGS__
+
+    double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept;
+    
+    #define PRINT_COLLECTION_TIME(E) (std::cout << "Total Collection Time: " << compute_average_time((E).collection_times, (E).collection_times_index) << "ms\n")
+    #define PRINT_MARKING_TIME(E) (std::cout << "Total Marking Time: " << compute_average_time((E).marking_times, (E).marking_times_index) << "ms\n")
+    #define PRINT_EVACUATION_TIME(E) (std::cout << "Total Evacuation Time: " << compute_average_time((E).evacuation_times, (E).evacuation_times_index) << "ms\n")
+    #define PRINT_DECREMENT_TIME(E) (std::cout << "Total Decrement Time: " << compute_average_time((E).decrement_times, (E).decrement_times_index) << "ms\n")
+
+    #define MEM_STATS_DUMP(E)     \
+    do {                          \
+        PRINT_COLLECTION_TIME(E); \
+        PRINT_MARKING_TIME(E);    \
+        PRINT_EVACUATION_TIME(E); \
+        PRINT_DECREMENT_TIME(E);  \
+    } while(0)
+#else
+    #define NUM_ALLOCS(E)           0 
+    #define TOTAL_GC_PAGES(E)       0
+    #define TOTAL_EMPTY_GC_PAGES(E) 0
+    #define TOTAL_LIVE_BYTES(E)     0
+
+    #define UPDATE_NUM_ALLOCS(OP, ...)
+    #define UPDATE_TOTAL_GC_PAGES(OP, ...)
+    #define UPDATE_TOTAL_EMPTY_GC_PAGES(OP, ...)
+    #define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
+
+    #define compute_average_time (void)sizeof
+    #define MEM_STATS_DUMP(E)
+#endif
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;
