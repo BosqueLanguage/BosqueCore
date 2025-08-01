@@ -178,8 +178,8 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
 
 void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    MEM_STATS_START();
     GC_REFCT_LOCK_ACQUIRE();
+    MEM_STATS_START();
 
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
@@ -231,8 +231,9 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
     tinfo.decremented_pages_index = 0;
 
-    GC_REFCT_LOCK_RELEASE();
     MEM_STATS_END(decrement_times, decrement_times_index);
+    GC_REFCT_LOCK_RELEASE();
+
     //
     //TODO: we want to do a bit of PID controller here on the max decrement count to ensure that we eventually make it back to stable but keep pauses small
     //
@@ -303,8 +304,8 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 // Move non root young objects to evacuation page (as needed) then forward pointers and inc ref counts
 void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    MEM_STATS_START();
     GC_REFCT_LOCK_ACQUIRE();
+    MEM_STATS_START();
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front();
@@ -329,8 +330,8 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         tinfo.forward_table[tinfo.forward_table_index++] = newobj;
     }
 
-    GC_REFCT_LOCK_RELEASE();
     MEM_STATS_END(evacuation_times, evacuation_times_index);
+    GC_REFCT_LOCK_RELEASE();
 }
 
 void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
