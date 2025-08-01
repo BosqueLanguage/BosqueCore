@@ -16,8 +16,6 @@ int wrap_setjmp() {
     __CoreCpp::MainType ret = Main::main();
     std::cout << __CoreCpp::to_string(ret) << std::endl;
 
-    //GCTEST
-
     return 0;
 }
 

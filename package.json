@@ -30,7 +30,9 @@
         "test-docs": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/documentation/*/*.test.js",
         "test-apps": "node ./build/build_all.js && node --test-concurrency=8 --test ./test/apps/*/*.test.js",
         "test-smtoutput": "node ./build/build_all.js && node ./build/build_smtemit.js && node --test-concurrency=8 --test ./test/smtoutput/*/*.test.js",
-        "test-cppoutput": "node ./build/build_all.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test ./test/cppoutput/*/*.test.js"
+        "test-cppoutput": "node ./build/build_all.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test ./test/cppoutput/*/*.test.js",
+        "test-gc": "node ./build/build_all.js && node ./build/build_cppemit.js && node --test-concurrency=8 --test ./test/gc/*/*.test.js"
+
     },
     "files": [
         "bin/*"

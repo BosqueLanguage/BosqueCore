@@ -137,10 +137,10 @@ struct BSQMemoryTheadLocalInfo
 
     double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept;
     
-    #define PRINT_COLLECTION_TIME(E) (std::cout << "Total Collection Time: " << compute_average_time((E).collection_times, (E).collection_times_index) << "ms\n")
-    #define PRINT_MARKING_TIME(E) (std::cout << "Total Marking Time: " << compute_average_time((E).marking_times, (E).marking_times_index) << "ms\n")
-    #define PRINT_EVACUATION_TIME(E) (std::cout << "Total Evacuation Time: " << compute_average_time((E).evacuation_times, (E).evacuation_times_index) << "ms\n")
-    #define PRINT_DECREMENT_TIME(E) (std::cout << "Total Decrement Time: " << compute_average_time((E).decrement_times, (E).decrement_times_index) << "ms\n")
+    #define PRINT_COLLECTION_TIME(E) (std::cout << "Average Collection Time: " << compute_average_time((E).collection_times, (E).collection_times_index) << "ms\n")
+    #define PRINT_MARKING_TIME(E) (std::cout << "Average Marking Time: " << compute_average_time((E).marking_times, (E).marking_times_index) << "ms\n")
+    #define PRINT_EVACUATION_TIME(E) (std::cout << "Average Evacuation Time: " << compute_average_time((E).evacuation_times, (E).evacuation_times_index) << "ms\n")
+    #define PRINT_DECREMENT_TIME(E) (std::cout << "Average Decrement Time: " << compute_average_time((E).decrement_times, (E).decrement_times_index) << "ms\n")
 
     #define MEM_STATS_DUMP(E)     \
     do {                          \

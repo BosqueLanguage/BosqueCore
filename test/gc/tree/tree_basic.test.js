@@ -1,6 +1,6 @@
 "use strict";
 
-import { runMainCodeGC } from "../gc_nf.ts"
+import { runMainCodeGC } from "../../../bin/test/gc/gc_nf.js"
 import { describe, it } from "node:test";
 
 describe("GC --- tree_basic", () => {

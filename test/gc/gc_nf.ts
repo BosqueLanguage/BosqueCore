@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { runMainCode } from "../cppoutput/cppemit_nf.js"
+import { runMainCode } from "../cppoutput/cppemit_nf.js";
 
 const gc_test_path = "bin/cppruntime/gc/test/";
 
@@ -13,8 +13,9 @@ function insertGCCalls(bsqcode: string): string {
     return assertClear;
 }
 
+// The problem here is that we are replacing code inside the BOSQUE not the c++
 function runMainCodeGC(testname: string, expected_output: string) {
-    const test_contents = fs.readFileSync(path.join(gc_test_path, testname)).toString();
+    const test_contents = fs.readFileSync(path.join(gc_test_path, testname.concat(".bsq"))).toString();
 
     const formattedTest = insertGCCalls(test_contents);
     runMainCode(formattedTest, expected_output);
