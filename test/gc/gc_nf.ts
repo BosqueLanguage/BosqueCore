@@ -3,17 +3,13 @@ import * as path from "path";
 
 import assert from "node:assert";
 
-import { generateASMCPP } from '../../src/cmd/workflows.js';
-import { Assembly } from '../../src/frontend/assembly.js';
-import { InstantiationPropagator } from "../../src/frontend/closed_terms.js";
+import { buildMainCode, copyGC, copyFile, buildCppAssembly } from "../cppoutput/cppemit_nf.js"
 
 import { fileURLToPath } from 'url';
-import { PackageConfig } from "../../src/frontend/build_decls.js";
 import { execSync } from "child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const bosque_dir: string = path.join(__dirname, "../../../");
-const cpp_transform_bin_path = path.join(bosque_dir, "bin/cppemit/CPPEmitter.mjs");
 const cpp_emit_runtime_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_emit_runtime_src_path = path.join(cpp_emit_runtime_path, "emit.cpp");
 const cpp_emit_runtime_header_path = path.join(cpp_emit_runtime_path, "emit.hpp");
@@ -24,73 +20,11 @@ const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
 const gc_test_path = "bin/cppruntime/gc/test/";
 
 import { tmpdir } from 'node:os';
-import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
-import { validateStringLiteral } from "@bosque/jsbrex";
-
-function buildMainCode(assembly: Assembly, outname: string): [string, string] | undefined{
-    const iim = InstantiationPropagator.computeExecutableInstantiations(assembly, ["Main"]);
-    const tinfo = BSQIREmitter.emitAssembly(assembly, iim);
-
-    const nndir = path.normalize(outname);
-    const fname = path.join(nndir, "bsqir.bsqon");
-
-    try {
-        fs.writeFileSync(fname, tinfo);
-    }
-    catch(e) {      
-        return undefined;
-    }
-
-    let res = ["", ""];
-    try {
-        const fname = path.join(nndir, "bsqir.bsqon");
-        let exec = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
-        const boldstr = "𝐬𝐫𝐜";
-        const boldidx = exec.indexOf(boldstr);
-        
-        res[0] = exec.substring(0, boldidx);
-        res[1] = exec.substring(boldidx + boldstr.length);
-    }
-    catch(e) {      
-        return undefined;
-    }
-
-    return [validateStringLiteral(res[0].slice(1)), validateStringLiteral(res[1].slice(0, -2))];
-}
-
-function copyGC(src: string, dst: string) {
-    if (!fs.existsSync(dst)) {
-        fs.mkdirSync(dst, { recursive: true });
-    }
-    
-    const files = fs.readdirSync(src);
-
-    files.forEach(file => {
-        const currentPath = path.join(src, file);
-        const newPath = path.join(dst, file);
-        if(fs.statSync(currentPath).isDirectory()) {
-            copyGC(currentPath, newPath);
-        }
-        else {
-            fs.copyFileSync(currentPath, newPath);
-        }
-    });
-}
-
-function copyFile(src: string, dst: string) {
-    const dir = path.normalize(dst);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const runtimeDstPath = path.join(dir, path.basename(src));
-    fs.copyFileSync(src, runtimeDstPath); 
-}
 
 function generateCPPFiles(header: string, src: string, cppmain: string, cpp_testcode: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
 
-    // We concat our tests to the emit.hpp header
+    // We concat our tests into the source file
     let srcbase: string = "";
     let headerbase: string = "";
     try {
@@ -132,18 +66,6 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
         return false;
     }
     return true;
-}
-
-function buildCppAssembly(srcfile: string): Assembly | undefined {
-    const userpackage = new PackageConfig([], [{ srcpath: "test.bsq", filename: "test.bsq", contents: srcfile }]);
-    const [asm, perrors, terrors] = generateASMCPP(userpackage);
-
-    if(perrors.length === 0 && terrors.length === 0) {
-        return asm;
-    }
-    else {
-        return undefined;
-    }
 }
 
 function execMainCode(bsqcode: string, cpp_testcode: string, cppmain: string, expect_err: boolean) {
@@ -198,11 +120,6 @@ function execMainCode(bsqcode: string, cpp_testcode: string, cppmain: string, ex
     }
     return result;
 }
-
-//
-// TODO: Once we get this up and running we should go through and find the functions
-// that are same on cppemit_nf.ts and remove
-//
 
 function runMainCodeGC(testname: string, cppmain: string, expected_output: string) {
     const test_dir = path.join(gc_test_path, `${testname}/`);
