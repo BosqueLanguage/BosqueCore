@@ -211,4 +211,4 @@ function runMainCodeError(bsqcode: string, error_msg: string) {
     assert.equal(cpp_err_msg, error_msg);   
 }
 
-export {runMainCode, runMainCodeError, bsq_max_int, bsq_max_nat, bsq_max_bigint, bsq_max_bignat, bsq_min_int, bsq_min_bigint};
+export {runMainCode, runMainCodeError, buildMainCode, copyGC, copyFile, buildCppAssembly, bsq_max_int, bsq_max_nat, bsq_max_bigint, bsq_max_bignat, bsq_min_int, bsq_min_bigint};
