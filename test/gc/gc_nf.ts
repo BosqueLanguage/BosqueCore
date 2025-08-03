@@ -1,11 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const gc_test_path = "bin/cppruntime/gc/test/";
-
 import assert from "node:assert";
 
-// import { runMainCode } from "../cppoutput/cppemit_nf.js";
 import { generateASMCPP } from '../../src/cmd/workflows.js';
 import { Assembly } from '../../src/frontend/assembly.js';
 import { InstantiationPropagator } from "../../src/frontend/closed_terms.js";
@@ -24,6 +21,7 @@ const cpp_runtime_header_path = path.join(cpp_emit_runtime_path, "cppruntime.hpp
 const makefile_path = path.join(cpp_emit_runtime_path, "makefile");
 const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
+const gc_test_path = "bin/cppruntime/gc/test/";
 
 import { tmpdir } from 'node:os';
 import { BSQIREmitter } from "../../src/frontend/bsqir_emit.js";
@@ -89,9 +87,10 @@ function copyFile(src: string, dst: string) {
     fs.copyFileSync(src, runtimeDstPath); 
 }
 
-function generateCPPFiles(header: string, src: string, cppmain: string, outdir: string): boolean {
+function generateCPPFiles(header: string, src: string, cppmain: string, cpp_testcode: string, outdir: string): boolean {
     const dir = path.normalize(outdir);
 
+    // We concat our tests to the emit.hpp header
     let srcbase: string = "";
     let headerbase: string = "";
     try {
@@ -112,9 +111,11 @@ function generateCPPFiles(header: string, src: string, cppmain: string, outdir: 
     }
 
     try {
+        let tests = cpp_testcode.concat(src);
         const srcname = path.join(dir, "emit.cpp");
-        let updated = srcbase.replace("//CODE", src);
-        let insert = updated.replace(/__CoreCpp::\w+ Main::main\([^)]*\)\s*\{[^}]*\}/gs, cppmain);
+        let updated = srcbase.replace("//CODE", tests);
+        let insert = updated.replace(/__CoreCpp::\w+\s+main\s*\([^)]*\)\s*noexcept\s*\{[^}]*\}/gs, cppmain);
+
         fs.writeFileSync(srcname, insert);
     }
     catch(e) {
@@ -145,7 +146,7 @@ function buildCppAssembly(srcfile: string): Assembly | undefined {
     }
 }
 
-function execMainCode(bsqcode: string, cppmain: string, expect_err: boolean) {
+function execMainCode(bsqcode: string, cpp_testcode: string, cppmain: string, expect_err: boolean) {
     const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-cpptest-"));
 
     let result = "";
@@ -161,7 +162,7 @@ function execMainCode(bsqcode: string, cppmain: string, expect_err: boolean) {
             }
             else {
                 const [header, src] = build;
-                if(!generateCPPFiles(header, src, cppmain, nndir)) {
+                if(!generateCPPFiles(header, src, cppmain, cpp_testcode, nndir)) {
                     return `[FAILED TO GENERATE CPP FILE] \n\n ${header} ${src}`;
                 }
                 else {
@@ -204,9 +205,11 @@ function execMainCode(bsqcode: string, cppmain: string, expect_err: boolean) {
 //
 
 function runMainCodeGC(testname: string, cppmain: string, expected_output: string) {
-    const test_contents = fs.readFileSync(path.join(gc_test_path, testname.concat(".bsq"))).toString();
+    const test_dir = path.join(gc_test_path, `${testname}/`);
+    const test_contents = fs.readFileSync(path.join(test_dir, testname.concat(".bsq"))).toString();
+    const cpp_test_contents = fs.readFileSync(path.join(test_dir, testname.concat(".cpp"))).toString();
 
-    const results = execMainCode(test_contents, cppmain, false);
+    const results = execMainCode(test_contents, cpp_test_contents, cppmain, false);
     assert.equal(results, expected_output)
 }
 

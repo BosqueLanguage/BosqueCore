@@ -1,5 +1,3 @@
-declare namespace Main;
-
 datatype BasicTree of 
 Leaf { v: Nat }
 | Node { v: Nat, l: BasicTree, r: BasicTree }
