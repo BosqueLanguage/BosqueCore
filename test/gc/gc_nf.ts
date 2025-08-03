@@ -48,7 +48,7 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
         let tests = cpp_testcode.concat(src);
         const srcname = path.join(dir, "emit.cpp");
         let updated = srcbase.replace("//CODE", tests);
-        let insert = updated.replace(/__CoreCpp::\w+\s+main\s*\([^)]*\)\s*noexcept\s*\{[^}]*\}/gs, cppmain);
+        let insert = updated.replace(/__CoreCpp::\w+\s+main\s*\([^)]*\)\s*\w*\s*\{[^}]*\}/gs, cppmain);
 
         fs.writeFileSync(srcname, insert);
     }
