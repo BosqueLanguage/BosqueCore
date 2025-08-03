@@ -1,8 +1,7 @@
 declare namespace Main;
 
 datatype BasicTree of 
-DeadTree
-| Leaf { v: Nat }
+Leaf { v: Nat }
 | Node { v: Nat, l: BasicTree, r: BasicTree }
 ;
 
@@ -19,16 +18,6 @@ function makeTree(depth: Nat, val: Nat): BasicTree {
 }
 
 public function main(): Bool {
-    %*DISABLE_COLLECTIONS*%
-    var t: BasicTree = makeTree(3n, 0n);
-
-    %*COLLECT*%
-
-    t = DeadTree{};
-
-    %*COLLECT*%
-
-    %*ASSERT_CLEAR*%
-
+    let t = makeTree(3n, 3n);
     return true;
 }

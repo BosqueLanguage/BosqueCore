@@ -124,7 +124,7 @@ inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noe
 {
     void* obj = *slots;
     uint32_t refcount = DEC_REF_COUNT(obj);
-    if(refcount != 0 || !GC_IS_ROOT(obj)) {
+    if(refcount != 0 || GC_IS_ROOT(obj)) {
         return ;
     }
 
@@ -531,7 +531,7 @@ void collect() noexcept
         should_reset_pending_decs = true;
     }
 
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, ++);
+    UPDATE_TOTAL_LIVE_BYTES(gtl_info, =, 0);
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {

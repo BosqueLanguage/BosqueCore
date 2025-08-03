@@ -532,9 +532,7 @@ public:
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
-        entry = SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
-
-        return entry;
+        return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
 
     inline void* allocateEvacuation(__CoreGC::TypeInfoBase* type)
