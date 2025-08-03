@@ -116,7 +116,9 @@ struct BSQMemoryTheadLocalInfo
     {
         for(size_t i = 0; i < NUM; i++) {
             GCAllocator* alloc = allocs[i];
-            this->g_gcallocs[alloc->getAllocSize() >> 3] = alloc;
+
+            uint64_t idx = alloc->getAllocSize() >> 3;
+            this->g_gcallocs[idx] = alloc;
         }
     }
 

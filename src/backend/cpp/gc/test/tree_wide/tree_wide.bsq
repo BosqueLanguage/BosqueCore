@@ -1,5 +1,6 @@
 datatype WideTree of 
-Leaf { v: Nat }
+DeadTree { }
+| Leaf { v: Nat }
 | Node { 
     v: Nat, 
     n1: WideTree, 
@@ -14,6 +15,9 @@ Leaf { v: Nat }
     n10: WideTree, 
     n11: WideTree, 
     n12: WideTree
+} 
+& {
+    const deadTree: WideTree = DeadTree{};
 }
 ;
 
@@ -39,7 +43,11 @@ function makeTree(depth: Nat, val: Nat): WideTree {
     };
 }
 
+function accessNode(t: WideTree): Node {
+    return t@<Node>;
+}
+
 public function main(): Bool {
-    let t = makeTree(2n, 3n);
+    let t = accessNode(makeTree(2n, 3n));
     return true;
 }
