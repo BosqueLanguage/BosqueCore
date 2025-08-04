@@ -315,7 +315,6 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
         | "__CoreCpp::BigNat" => { return String::concat(val, "_N"); }
         | "__CoreCpp::Float" => { return String::concat(val, "_f"); }
         | "__CoreCpp::Bool" => { return val; }
-        | "__CoreCpp::CChar" => { return val; }
         | _ => { abort; }
     }
 }
