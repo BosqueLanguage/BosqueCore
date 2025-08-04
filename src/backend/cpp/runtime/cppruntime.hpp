@@ -261,6 +261,7 @@ public:
 typedef uintptr_t None;
 typedef bool Bool;
 typedef uint8_t CChar;
+typedef uint32_t UnicodeChar;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
@@ -631,33 +632,33 @@ struct PathStack {
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 struct CCharBuffer {
-    uint8_t chars[8];
+    CChar chars[8];
     int size;
 
     static CCharBuffer create_empty();
-    static CCharBuffer create_1(uint8_t c1);
-    static CCharBuffer create_2(uint8_t c1, uint8_t c2);
-    static CCharBuffer create_3(uint8_t c1, uint8_t c2, uint8_t c3);
-    static CCharBuffer create_4(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4);
-    static CCharBuffer create_5(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5);
-    static CCharBuffer create_6(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6);
-    static CCharBuffer create_7(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6, uint8_t c7);
-    static CCharBuffer create_8(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6, uint8_t c7, uint8_t c8);
+    static CCharBuffer create_1(CChar c1);
+    static CCharBuffer create_2(CChar c1, CChar c2);
+    static CCharBuffer create_3(CChar c1, CChar c2, CChar c3);
+    static CCharBuffer create_4(CChar c1, CChar c2, CChar c3, CChar c4);
+    static CCharBuffer create_5(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5);
+    static CCharBuffer create_6(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6);
+    static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
+    static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
 
 struct UnicodeCharBuffer {
-    uint32_t chars[8];
+    UnicodeChar chars[8];
     int size;
 
     static UnicodeCharBuffer create_empty();
-    static UnicodeCharBuffer create_1(uint32_t c1);
-    static UnicodeCharBuffer create_2(uint32_t c1, uint32_t c2);
-    static UnicodeCharBuffer create_3(uint32_t c1, uint32_t c2, uint32_t c3);
-    static UnicodeCharBuffer create_4(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4);
-    static UnicodeCharBuffer create_5(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5);
-    static UnicodeCharBuffer create_6(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6);
-    static UnicodeCharBuffer create_7(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7);
-    static UnicodeCharBuffer create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8);
+    static UnicodeCharBuffer create_1(UnicodeChar c1);
+    static UnicodeCharBuffer create_2(UnicodeChar c1, UnicodeChar c2);
+    static UnicodeCharBuffer create_3(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3);
+    static UnicodeCharBuffer create_4(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4);
+    static UnicodeCharBuffer create_5(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5);
+    static UnicodeCharBuffer create_6(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6);
+    static UnicodeCharBuffer create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7);
+    static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
 
 //

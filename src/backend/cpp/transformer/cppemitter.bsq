@@ -1288,8 +1288,15 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
     switch(String::fromCString(body.builtin)) {
         "s_float_power" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
         | "s_float_sqrt" => { return String::concat(indent, "    ", "return __CoreCpp::Float(sqrtf64(a.get()));%n;"); }
-        | "ccharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(
-            static_cast<uint8_t>(c1), static_cast<uint8_t>(c2), static_cast<uint8_t>(c3));", ); }
+        | "ccharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_empty();", ); }
+        | "ccharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1);", ); }
+        | "ccharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2);", ); }
+        | "ccharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3);", ); }
+        | "ccharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4);", ); }
+        | "ccharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5);", ); }
+        | "ccharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6);", ); }
+        | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);", ); }
+        | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);", ); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }

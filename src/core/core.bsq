@@ -127,6 +127,10 @@ __internal __typedeclable __keycomparable entity CChar {
 __internal __typedeclable __keycomparable entity UnicodeChar { 
 }
 
+%%
+%% May need to add CCharBuffer and UnicodeCharBuffer?
+%%
+
 %** Primitive string value. **%
 __internal __typedeclable __keycomparable entity String {
     #if STRIPPED_CORE
