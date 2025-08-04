@@ -6,6 +6,8 @@
 
 #define MAX_MEMSTAT_TIMES_INDEX 512
 
+#define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
+
 #define MARK_STACK_NODE_COLOR_GREY 0
 #define MARK_STACK_NODE_COLOR_BLACK 1
 
@@ -76,6 +78,9 @@ struct BSQMemoryTheadLocalInfo
 
     size_t max_decrement_count;
 
+    uint8_t g_gcallocs_lookuptable[MAX_ALLOC_LOOKUP_TABLE_SIZE] = {};
+    uint8_t g_gcallocs_idx = 0;
+
     //We may want this in prod, so i'll have it always be visible
     bool disable_automatic_collections = false;
 
@@ -105,20 +110,31 @@ struct BSQMemoryTheadLocalInfo
     BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_count(0), native_stack_contents(nullptr), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(0), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
-        GCAllocator* gcalloc = this->g_gcallocs[page->allocsize >> 3];
-        return gcalloc;
+        uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
+        return this->g_gcallocs[idx];
     }
 
-    void initialize(size_t tl_id, void** caller_rbp) noexcept;
+    inline uint8_t generateAllocLookupIndex(GCAllocator* alloc) noexcept 
+    {
+        size_t idx = alloc->getAllocSize() >> 3;
+        if(this->g_gcallocs_lookuptable[idx] == 0) {
+            this->g_gcallocs_lookuptable[idx] = this->g_gcallocs_idx++;
+        }
+
+        return this->g_gcallocs_lookuptable[idx];
+    }
 
     template <size_t NUM>
     void initializeGC(GCAllocator* allocs[NUM]) noexcept
     {
         for(size_t i = 0; i < NUM; i++) {
             GCAllocator* alloc = allocs[i];
-            this->g_gcallocs[alloc->getAllocSize() >> 3] = alloc;
+            uint8_t idx = generateAllocLookupIndex(alloc);
+            this->g_gcallocs[idx] = alloc;
         }
     }
+
+    void initialize(size_t tl_id, void** caller_rbp) noexcept;
 
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;

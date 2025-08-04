@@ -1,0 +1,53 @@
+datatype WideTree of 
+DeadTree { }
+| Leaf { v: Nat }
+| Node { 
+    v: Nat, 
+    n1: WideTree, 
+    n2: WideTree, 
+    n3: WideTree, 
+    n4: WideTree, 
+    n5: WideTree, 
+    n6: WideTree, 
+    n7: WideTree, 
+    n8: WideTree, 
+    n9: WideTree, 
+    n10: WideTree, 
+    n11: WideTree, 
+    n12: WideTree
+} 
+& {
+    const deadTree: WideTree = DeadTree{};
+}
+;
+
+function makeTree(depth: Nat, val: Nat): WideTree {
+    if(depth == 0n) {
+        return Leaf { val };
+    }
+    
+    return Node {
+        val,
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n),
+        makeTree(depth - 1n, val + 1n)
+    };
+}
+
+function accessNode(t: WideTree): Node {
+    return t@<Node>;
+}
+
+public function main(): Bool {
+    let t = accessNode(makeTree(2n, 3n));
+    return true;
+}
