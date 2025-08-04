@@ -34,19 +34,22 @@ MEMORY_HEADERS=$(RUNTIME_DIR)common.h $(MEMORY_DIR)allocator.h $(MEMORY_DIR)thre
 MEMORY_SOURCES=$(MEMORY_DIR)allocator.cpp $(MEMORY_DIR)threadinfo.cpp $(MEMORY_DIR)gc.cpp
 MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(OUT_OBJ)gc.o 
 
+CPPEMIT_HEADERS=$(CPPEMIT_DIR)cppruntime.hpp
+CPPEMIT_OBJS=$(OUT_OBJ)cppruntime.o
+
 all: $(OUT_EXE)memex
 
 # Only builds the GC by executing a temporary file that does nothing
-gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS)
+gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
 	@mkdir -p $(OUT_EXE)
 	@echo "int main() { return 0; }" > $(OUT_EXE)gcmain.cpp
 	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gctest
 
-$(OUT_EXE)memex: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp
+$(OUT_EXE)memex: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(CPPEMIT_DIR)emit.cpp
 	@mkdir -p $(OUT_EXE)
-	$(CC) $(CFLAGS) -o $(OUT_EXE)memex $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_DIR)emit.cpp
+	$(CC) $(CFLAGS) -o $(OUT_EXE)memex $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(CPPEMIT_DIR)emit.cpp
 
 $(OUT_OBJ)gc.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)gc.cpp
 	@mkdir -p $(OUT_OBJ)
@@ -67,6 +70,10 @@ $(OUT_OBJ)xalloc.o: $(SUPPORT_HEADERS) $(SUPPORT_DIR)xalloc.cpp
 $(OUT_OBJ)common.o: $(SUPPORT_HEADERS) $(RUNTIME_DIR)common.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CC) $(CFLAGS) -o $(OUT_OBJ)common.o -c $(RUNTIME_DIR)common.cpp
+
+$(OUT_OBJ)cppruntime.o: $(CPPEMIT_HEADERS) $(CPPEMIT_DIR)cppruntime.cpp 
+	@mkdir -p $(OUT_OBJ)
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)cppruntime.o -c $(CPPEMIT_DIR)cppruntime.cpp
 
 clean:
 	rm -rf $(OUT_EXE)

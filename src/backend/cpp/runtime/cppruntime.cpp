@@ -2,6 +2,8 @@
 
 namespace __CoreCpp {
 
+ThreadLocalInfo& info = ThreadLocalInfo::get();
+    
 PathStack PathStack::create() {
     return {0, 0};
 }
@@ -71,4 +73,41 @@ UnicodeCharBuffer UnicodeCharBuffer::create_8(UnicodeChar c1, UnicodeChar c2, Un
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8};
 }
 
+std::string to_string(MainType v) noexcept {
+    if(std::holds_alternative<bool>(v)) {
+        bool res = std::get<bool>(v);
+        if(!res) {
+            return "false";
+        }
+        return "true";
+    }
+    else if(std::holds_alternative<Int>(v)) {
+        return std::to_string(std::get<Int>(v).get()) + "_i";
+    }
+    else if (std::holds_alternative<Nat>(v)) {
+        return std::to_string(std::get<Nat>(v).get()) + "_n";
+    }
+    else if (std::holds_alternative<Float>(v)) {
+        return std::to_string(std::get<Float>(v).get()) + "_f";
+    }
+    else if(std::holds_alternative<BigInt>(v)) {
+        __int128_t res = std::get<BigInt>(v).get();
+        return t_to_string<__int128_t>(res) + "_I";
+    }
+    else if(std::holds_alternative<BigNat>(v)) {
+        __int128_t res = std::get<BigNat>(v).get();
+        return t_to_string<__uint128_t>(res) + "_N";
+    }
+    else {
+        return "Unable to print main return type!\n";
+    }
+}
+
 } // namespace __CoreCpp
+
+// For debugging
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t) { return os << t.get() << "_i"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()) << "_I"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t) { return os << t.get() << "_n"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()) << "_N"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t) { return os << t.get() << "_f"; }
