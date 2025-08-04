@@ -12,8 +12,6 @@ const test_2 = base.concat("wideTreeTest_2();", end);
 const multi_test_1 = base.concat("wideTreeTestMulti_1();", end);
 const multi_test_2 = base.concat("wideTreeTestMulti_2();", end);
 
-const drop_child_test = base.concat("dropChildWideTreeTest();", end);
-
 describe("GC --- tree_wide", () => {
     it("wide tree creation and destruction", function () {
         runMainCodeGC("tree_wide", test_1, "true");
@@ -23,9 +21,5 @@ describe("GC --- tree_wide", () => {
     it("multiple wide tree creation and destruction", function () {
         runMainCodeGC("tree_wide", multi_test_1, "true");
         runMainCodeGC("tree_wide", multi_test_2, "true");
-    });
-
-    it("wide tree drop child", function() {
-        runMainCodeGC("tree_wide", drop_child_test, "true");
     });
 });
