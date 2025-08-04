@@ -230,7 +230,7 @@ private:
 
     //should match sizes in the page infos
     uint16_t allocsize; //size of the alloc entries in this page (excluding metadata)
-    uint16_t realsize; //size of the alloc entries in this page (including metadata and other stuff)
+    uint16_t realsize;  //size of the alloc entries in this page (including metadata and other stuff)
 
     PageInfo* pendinggc_pages; // Pages that are pending GC
 
