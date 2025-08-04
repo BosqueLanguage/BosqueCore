@@ -228,6 +228,30 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
     }
 }
 
+class PendingCompnentInfo {
+    readonly idx: number;
+    readonly errinfo: string;
+
+    readonly smtcomponents: string;
+    readonly smt2file: string;
+
+    readonly starttime: Date;
+}
+
+let smt_components = [];
+let current_component = 0;
+
+let pending_count = [];
+const max_components = 8;
+
+function checkSMTFormulaAsync() {
+    xxxx;
+}
+
+function completeSMTComponent(cinfo: PendingCompnentInfo, result: string) {
+    xxxx;
+}
+
 function checkSMTFormula(smtcomponents: string, outname: string): boolean {
     generateFormulaFile(smtcomponents, outname, true, false);
 
