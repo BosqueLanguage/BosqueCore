@@ -18,6 +18,7 @@ namespace UnicodeCharBufferOps {
 
 namespace StringOps {
     function s_fromCString(s: CString): String = string_from_cstring;
+    function s_fromCChar(s: CChar): String = string_from_cchar;
 
     function s_empty(s: String): Bool = string_empty;
 

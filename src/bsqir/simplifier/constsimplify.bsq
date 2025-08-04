@@ -749,7 +749,9 @@ entity ConstantSimplification {
             LiteralNoneExpression => { return e; }
             | LiteralSimpleExpression => { return e; }
             | LiteralCStringExpression => { return e; }
-            | LiteralStringExpression => { return e; }  
+            | LiteralStringExpression => { return e; }
+            | LiteralCCharExpression => { return e; }
+            | LiteralUnicodeCharExpression => { return e; }
             | LiteralCRegexExpression => { return e; }
             | LiteralRegexExpression => { return e; }
             | LiteralTypeDeclValueExpression => { return e; }

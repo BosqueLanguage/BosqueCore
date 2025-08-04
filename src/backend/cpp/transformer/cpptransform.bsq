@@ -618,14 +618,34 @@ entity CPPTransformer {
         return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
     }
 
+    method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): CPPAssembly::LiteralCStringExpression {
+        abort; %% TODO: Lacking ropes so this is an abort for now
+    }
+
+    method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): CPPAssembly::LiteralStringExpression {
+        abort; %% TODO: Lacking ropes so this is an abort for now
+    }
+
+    method transformLiteralCCharExpression(exp: BSQAssembly::LiteralCCharExpression): CPPAssembly::LiteralCCharExpression {
+        let etype = this.convertTypeSignature(exp.etype); 
+        return CPPAssembly::LiteralCCharExpression{ etype, exp.value };
+    }
+
+    method transformLiteralUnicodeCharExpression(exp: BSQAssembly::LiteralUnicodeCharExpression): CPPAssembly::LiteralUnicodeCharExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        return CPPAssembly::LiteralUnicodeCharExpression{ etype, exp.value };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
-            | BSQAssembly::LiteralCCharExpression => { abort; }
-            | BSQAssembly::LiteralUnicodeCharExpression => { abort; }
-            | BSQAssembly::LiteralCStringExpression => { abort; }
-            | BSQAssembly::LiteralStringExpression => { abort; }
+            | BSQAssembly::LiteralCCharExpression => { return this.transformLiteralCCharExpression($expr); }
+            | BSQAssembly::LiteralUnicodeCharExpression => { return this.transformLiteralUnicodeCharExpression($expr); }
+            | BSQAssembly::LiteralCStringExpression => { return this.transformLiteralCStringExpression($expr); }
+            | BSQAssembly::LiteralStringExpression => { return this.transformLiteralStringExpression($expr); }
+            | BSQAssembly::LiteralCCharExpression => { return this.transformLiteralCCharExpression($expr); }
+            | BSQAssembly::LiteralUnicodeCharExpression => { return this.transformLiteralUnicodeCharExpression($expr); }
             | BSQAssembly::LiteralCRegexExpression => { abort; }
             | BSQAssembly::LiteralRegexExpression => { abort; }
             | BSQAssembly::LiteralTypeDeclValueExpression => { abort; }
@@ -1030,6 +1050,10 @@ entity CPPTransformer {
                     | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'Float'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CChar'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { abort; }
                     | _ => { abort; } %% Not supported by cpp emitter yet!
                 }
 

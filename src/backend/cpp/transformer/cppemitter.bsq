@@ -315,6 +315,7 @@ function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression):
         | "__CoreCpp::BigNat" => { return String::concat(val, "_N"); }
         | "__CoreCpp::Float" => { return String::concat(val, "_f"); }
         | "__CoreCpp::Bool" => { return val; }
+        | "__CoreCpp::CChar" => { return val; }
         | _ => { abort; }
     }
 }
@@ -984,12 +985,22 @@ function emitLambdaInvokeExpression(exp: CPPAssembly::LambdaInvokeExpression, ct
     return String::concat(name, "( ", args, " )");
 }
 
+function emitLiteralCCharExpression(exp: CPPAssembly::LiteralCCharExpression): String {
+    return String::concat("'", String::fromCChar(exp.value), "'");
+}
+
+function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharExpression): String {
+    abort; %% TODO: Once ropes for CStrings work we will need unicode char emission support
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
         %%| CPPAssembly::LiteralCCharExpression => { abort; }
         %%| CPPAssembly::LiteralUnicodeCharExpression => { abort; }
+        | CPPAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
+        | CPPAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
         %%| CPPAssembly::LiteralCStringExpression => { abort; }
         %%| CPPAssembly::LiteralStringExpression => { abort; }
         %%| CPPAssembly::LiteralCRegexExpression => { abort; }
@@ -1277,6 +1288,8 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
     switch(String::fromCString(body.builtin)) {
         "s_float_power" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
         | "s_float_sqrt" => { return String::concat(indent, "    ", "return __CoreCpp::Float(sqrtf64(a.get()));%n;"); }
+        | "ccharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(
+            static_cast<uint8_t>(c1), static_cast<uint8_t>(c2), static_cast<uint8_t>(c3));", ); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }

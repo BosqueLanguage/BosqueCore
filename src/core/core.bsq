@@ -136,6 +136,15 @@ __internal __typedeclable __keycomparable entity String {
         return StringOps::s_fromCString(s);
     }
 
+    %** Convert a CChar to a String **%
+    function fromCChar(s: CChar): String {
+        return StringOps::s_fromCChar(s);
+    }
+
+    %%
+    %% TODO: Will need a UnicodeChar -> String function too
+    %%
+
     %** Check if the string is empty **%
     method empty(): Bool {
         return StringOps::s_empty(this);

@@ -260,6 +260,7 @@ public:
 
 typedef uintptr_t None;
 typedef bool Bool;
+typedef uint8_t CChar;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
