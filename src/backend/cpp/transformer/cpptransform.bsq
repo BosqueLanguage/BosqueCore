@@ -1048,6 +1048,9 @@ entity CPPTransformer {
                 return tic.tinfos.get(cpptkey), tic;
             }
             
+            %%
+            %% NOTE: If we decide to make our char buffers support 16 characters this will break
+            %%
             if(this.bsqasm.isPrimtitiveType(typekey)) {
                 var matchedType: CPPAssembly::TypeInfo;
                 switch(typekey) {
@@ -1061,7 +1064,7 @@ entity CPPTransformer {
                     | 'CChar'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-                    | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { abort; }
+                    | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 32n, 4n, '0000', cpptkey, CPPAssembly::Tag#Value }; }
                     | _ => { abort; } %% Not supported by cpp emitter yet!
                 }
 

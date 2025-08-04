@@ -990,7 +990,7 @@ function emitLiteralCCharExpression(exp: CPPAssembly::LiteralCCharExpression): S
 }
 
 function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharExpression): String {
-    abort; %% TODO: Once ropes for CStrings work we will need unicode char emission support
+    return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
@@ -1297,6 +1297,15 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "ccharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6);", ); }
         | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);", ); }
         | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);", ); }
+        | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();", ); }
+        | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);", ); }
+        | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);", ); }
+        | "unicodecharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3);", ); }
+        | "unicodecharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4);", ); }
+        | "unicodecharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5);", ); }
+        | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);", ); }
+        | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);", ); }
+        | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);", ); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }

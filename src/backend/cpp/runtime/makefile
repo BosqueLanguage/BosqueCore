@@ -40,10 +40,10 @@ CPPEMIT_OBJS=$(OUT_OBJ)cppruntime.o
 all: $(OUT_EXE)memex
 
 # Only builds the GC by executing a temporary file that does nothing
-gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
+gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
 	@mkdir -p $(OUT_EXE)
 	@echo "int main() { return 0; }" > $(OUT_EXE)gcmain.cpp
-	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(OUT_EXE)gcmain.cpp
+	$(CC) $(CFLAGS) -o $(OUT_EXE)gctest $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS) $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gcmain.cpp
 	@rm $(OUT_EXE)gctest
 

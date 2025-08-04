@@ -145,9 +145,10 @@ __internal __typedeclable __keycomparable entity String {
         return StringOps::s_fromCChar(s);
     }
 
-    %%
-    %% TODO: Will need a UnicodeChar -> String function too
-    %%
+    %** Convert a UnicodeChar to a String **%
+    function fromUnicodeChar(s: UnicodeChar): String {
+        return StringOps::s_fromUnicodeChar(s);
+    }
 
     %** Check if the string is empty **%
     method empty(): Bool {

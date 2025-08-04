@@ -2342,6 +2342,9 @@ class JSEmitter {
         else if(bname === "string_from_cchar") {
             bop = `s`
         }
+        else if(bname === "string_from_unicodechar") {
+            bop = `s`
+        }
         else if(bname === "string_empty") {
             bop = `s === ""`;
         }
