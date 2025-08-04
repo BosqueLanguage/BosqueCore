@@ -111,18 +111,17 @@ struct BSQMemoryTheadLocalInfo
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
-        GCAllocator* gcalloc = this->g_gcallocs[idx];
-        return gcalloc;
+        return this->g_gcallocs[idx];
     }
 
     inline uint8_t generateAllocLookupIndex(GCAllocator* alloc) noexcept 
     {
-        size_t size = alloc->getAllocSize() >> 3;
-        if(this->g_gcallocs_lookuptable[size] == 0) {
-            this->g_gcallocs_lookuptable[size] = this->g_gcallocs_idx++;
+        size_t idx = alloc->getAllocSize() >> 3;
+        if(this->g_gcallocs_lookuptable[idx] == 0) {
+            this->g_gcallocs_lookuptable[idx] = this->g_gcallocs_idx++;
         }
 
-        return this->g_gcallocs_lookuptable[size];
+        return this->g_gcallocs_lookuptable[idx];
     }
 
     template <size_t NUM>
