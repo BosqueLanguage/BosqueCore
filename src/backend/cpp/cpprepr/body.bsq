@@ -204,6 +204,23 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
+%% These should just be ropes (eventually)
+entity LiteralCStringExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralStringExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralCCharExpression provides Expression {
+    field value: CChar;
+}
+
+entity LiteralUnicodeCharExpression provides Expression {
+    field value: UnicodeChar;
+}
+
 entity LogicActionAndExpression provides Expression {
     field args: List<Expression>;
 }

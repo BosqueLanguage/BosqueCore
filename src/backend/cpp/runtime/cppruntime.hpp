@@ -27,7 +27,7 @@ public:
     ThreadLocalInfo(const ThreadLocalInfo&) = delete;
     ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
 };
-ThreadLocalInfo& info = ThreadLocalInfo::get();
+extern ThreadLocalInfo& info;
 
 template <size_t N>
 inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
@@ -260,6 +260,8 @@ public:
 
 typedef uintptr_t None;
 typedef bool Bool;
+typedef uint8_t CChar;
+typedef uint32_t UnicodeChar;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
@@ -304,23 +306,6 @@ do {                                            \
     this->value = res;                          \
     return *this;                               \
 } while(0)                                      \
-
-//
-// Converts string into corresponding integer representation. Used when
-// converting our literals to 128 bit values.
-//
-template<typename T>
-constexpr T string_to_t(const char* s) {
-    T res = 0;  
-    const char* p = s;
-
-    while(*p >= '0' && *p <= '9') {
-        res = (res * 10) + (*p - '0');
-        p++;
-    }
-
-    return res;
-}
 
 // Signed 63 bit value
 class Int {
@@ -379,6 +364,48 @@ public:
     friend constexpr bool operator<=(const Int& lhs, const Int& rhs) noexcept { return !(lhs > rhs); }
     friend constexpr bool operator>=(const Int& lhs, const Int& rhs) noexcept { return !(lhs < rhs); }
 };
+
+//
+// Converts string into corresponding integer representation. Used when
+// converting our literals to 128 bit values.
+//
+template<typename T>
+constexpr T string_to_t(const char* s) noexcept {
+    T res = 0;  
+    const char* p = s;
+
+    while(*p >= '0' && *p <= '9') {
+        res = (res * 10) + (*p - '0');
+        p++;
+    }
+
+    return res;
+}
+
+//
+// Allows us to print 128 bit values
+//
+template<typename T>
+constexpr std::string t_to_string(T v) noexcept {
+    if(v == 0) {
+        return "0";
+    }
+
+    std::string tmp, res;
+    if(v < 0) {
+        res.push_back('-');
+        v = -v;
+    }
+    while (v > 0) {
+        tmp.push_back((v % 10) + '0');
+        v /= 10;
+    }
+    for(auto it = tmp.rbegin(); it != tmp.rend(); it++) {
+        res.push_back(*it);
+    }
+
+    return res;
+}
 
 // Signed 127 bit value
 class BigInt {
@@ -630,59 +657,34 @@ struct PathStack {
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 struct CCharBuffer {
-    uint8_t chars[8];
+    CChar chars[8];
     int size;
 
     static CCharBuffer create_empty();
-    static CCharBuffer create_1(uint8_t c1);
-    static CCharBuffer create_2(uint8_t c1, uint8_t c2);
-    static CCharBuffer create_3(uint8_t c1, uint8_t c2, uint8_t c3);
-    static CCharBuffer create_4(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4);
-    static CCharBuffer create_5(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5);
-    static CCharBuffer create_6(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6);
-    static CCharBuffer create_7(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6, uint8_t c7);
-    static CCharBuffer create_8(uint8_t c1, uint8_t c2, uint8_t c3, uint8_t c4, uint8_t c5, uint8_t c6, uint8_t c7, uint8_t c8);
+    static CCharBuffer create_1(CChar c1);
+    static CCharBuffer create_2(CChar c1, CChar c2);
+    static CCharBuffer create_3(CChar c1, CChar c2, CChar c3);
+    static CCharBuffer create_4(CChar c1, CChar c2, CChar c3, CChar c4);
+    static CCharBuffer create_5(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5);
+    static CCharBuffer create_6(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6);
+    static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
+    static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
 
 struct UnicodeCharBuffer {
-    uint32_t chars[8];
+    UnicodeChar chars[8];
     int size;
 
     static UnicodeCharBuffer create_empty();
-    static UnicodeCharBuffer create_1(uint32_t c1);
-    static UnicodeCharBuffer create_2(uint32_t c1, uint32_t c2);
-    static UnicodeCharBuffer create_3(uint32_t c1, uint32_t c2, uint32_t c3);
-    static UnicodeCharBuffer create_4(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4);
-    static UnicodeCharBuffer create_5(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5);
-    static UnicodeCharBuffer create_6(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6);
-    static UnicodeCharBuffer create_7(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7);
-    static UnicodeCharBuffer create_8(uint32_t c1, uint32_t c2, uint32_t c3, uint32_t c4, uint32_t c5, uint32_t c6, uint32_t c7, uint32_t c8);
+    static UnicodeCharBuffer create_1(UnicodeChar c1);
+    static UnicodeCharBuffer create_2(UnicodeChar c1, UnicodeChar c2);
+    static UnicodeCharBuffer create_3(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3);
+    static UnicodeCharBuffer create_4(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4);
+    static UnicodeCharBuffer create_5(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5);
+    static UnicodeCharBuffer create_6(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6);
+    static UnicodeCharBuffer create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7);
+    static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
-
-//
-// Allows us to print 128 bit values
-//
-template<typename T>
-constexpr std::string t_to_string(T v) {
-    if(v == 0) {
-        return "0";
-    }
-
-    std::string tmp, res;
-    if(v < 0) {
-        res.push_back('-');
-        v = -v;
-    }
-    while (v > 0) {
-        tmp.push_back((v % 10) + '0');
-        v /= 10;
-    }
-    for(auto it = tmp.rbegin(); it != tmp.rend(); it++) {
-        res.push_back(*it);
-    }
-
-    return res;
-}
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType; 
@@ -690,35 +692,7 @@ typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType;
 //
 // Converts return type of main to string
 //
-std::string to_string(MainType v) {
-    if(std::holds_alternative<bool>(v)) {
-        bool res = std::get<bool>(v);
-        if(!res) {
-            return "false";
-        }
-        return "true";
-    }
-    else if(std::holds_alternative<Int>(v)) {
-        return std::to_string(std::get<Int>(v).get()) + "_i";
-    }
-    else if (std::holds_alternative<Nat>(v)) {
-        return std::to_string(std::get<Nat>(v).get()) + "_n";
-    }
-    else if (std::holds_alternative<Float>(v)) {
-        return std::to_string(std::get<Float>(v).get()) + "_f";
-    }
-    else if(std::holds_alternative<BigInt>(v)) {
-        __int128_t res = std::get<BigInt>(v).get();
-        return t_to_string<__int128_t>(res) + "_I";
-    }
-    else if(std::holds_alternative<BigNat>(v)) {
-        __int128_t res = std::get<BigNat>(v).get();
-        return t_to_string<__uint128_t>(res) + "_N";
-    }
-    else {
-        return "Unable to print main return type!\n";
-    }
-}
+std::string to_string(MainType v) noexcept; 
 
 } // namespace __CoreCpp
 
@@ -729,8 +703,8 @@ constexpr __CoreCpp::BigNat operator "" _N(const char* v) { return __CoreCpp::Bi
 constexpr __CoreCpp::Float operator "" _f(long double v) { return __CoreCpp::Float(static_cast<double>(v)); }
 
 // For debugging
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t) { return os << t.get() << "_i"; }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t) { return os << __CoreCpp::t_to_string<__int128_t>(t.get()) << "_I"; }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t) { return os << t.get() << "_n"; }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t) { return os << __CoreCpp::t_to_string<__uint128_t>(t.get()) << "_N"; }
-std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t) { return os << t.get() << "_f"; }
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Int& t);
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigInt& t);
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Nat& t);
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::BigNat& t);
+std::ostream& operator<<(std::ostream &os, const __CoreCpp::Float& t);

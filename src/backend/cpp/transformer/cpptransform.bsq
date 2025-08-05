@@ -21,6 +21,10 @@ namespace CPPTransformNameManager {
             | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
             | 'BigInt' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
             | 'Float' => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
+            | 'CChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::CChar'); }
+            | 'UnicodeChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::UnicodeChar'); }
+            | 'CCharBuffer' => { return CPPAssembly::TypeKey::from('__CoreCpp::CCharBuffer'); }
+            | 'UnicodeCharBuffer' => { return CPPAssembly::TypeKey::from('__CoreCpp::UnicodeCharBuffer'); }
             | _ => { return CPPAssembly::TypeKey::from(tk.value); } 
         }
     }
@@ -35,6 +39,10 @@ namespace CPPTransformNameManager {
             | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }
             | '__CoreCpp::BigInt' => { return BSQAssembly::TypeKey::from('BigInt'); }
             | '__CoreCpp::Float' => { return BSQAssembly::TypeKey::from('Float'); }
+            | '__CoreCpp::CChar' => { return BSQAssembly::TypeKey::from('CChar'); }
+            | '__CoreCpp::UnicodeChar' => { return BSQAssembly::TypeKey::from('UnicodeChar'); }
+            | '__CoreCpp::CCharBuffer' => { return BSQAssembly::TypeKey::from('CCharBuffer'); }
+            | '__CoreCpp::UnicodeCharBuffer' => { return BSQAssembly::TypeKey::from('UnicodeCharBuffer'); }
             | _ => { return BSQAssembly::TypeKey::from(tk.value); }
         }
     }
@@ -618,14 +626,34 @@ entity CPPTransformer {
         return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
     }
 
+    method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): CPPAssembly::LiteralCStringExpression {
+        abort; %% TODO: Lacking ropes so this is an abort for now
+    }
+
+    method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): CPPAssembly::LiteralStringExpression {
+        abort; %% TODO: Lacking ropes so this is an abort for now
+    }
+
+    method transformLiteralCCharExpression(exp: BSQAssembly::LiteralCCharExpression): CPPAssembly::LiteralCCharExpression {
+        let etype = this.convertTypeSignature(exp.etype); 
+        return CPPAssembly::LiteralCCharExpression{ etype, exp.value };
+    }
+
+    method transformLiteralUnicodeCharExpression(exp: BSQAssembly::LiteralUnicodeCharExpression): CPPAssembly::LiteralUnicodeCharExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        return CPPAssembly::LiteralUnicodeCharExpression{ etype, exp.value };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
-            | BSQAssembly::LiteralCCharExpression => { abort; }
-            | BSQAssembly::LiteralUnicodeCharExpression => { abort; }
-            | BSQAssembly::LiteralCStringExpression => { abort; }
-            | BSQAssembly::LiteralStringExpression => { abort; }
+            | BSQAssembly::LiteralCCharExpression => { return this.transformLiteralCCharExpression($expr); }
+            | BSQAssembly::LiteralUnicodeCharExpression => { return this.transformLiteralUnicodeCharExpression($expr); }
+            | BSQAssembly::LiteralCStringExpression => { return this.transformLiteralCStringExpression($expr); }
+            | BSQAssembly::LiteralStringExpression => { return this.transformLiteralStringExpression($expr); }
+            | BSQAssembly::LiteralCCharExpression => { return this.transformLiteralCCharExpression($expr); }
+            | BSQAssembly::LiteralUnicodeCharExpression => { return this.transformLiteralUnicodeCharExpression($expr); }
             | BSQAssembly::LiteralCRegexExpression => { abort; }
             | BSQAssembly::LiteralRegexExpression => { abort; }
             | BSQAssembly::LiteralTypeDeclValueExpression => { abort; }
@@ -1020,6 +1048,9 @@ entity CPPTransformer {
                 return tic.tinfos.get(cpptkey), tic;
             }
             
+            %%
+            %% NOTE: If we decide to make our char buffers support 16 characters this will break
+            %%
             if(this.bsqasm.isPrimtitiveType(typekey)) {
                 var matchedType: CPPAssembly::TypeInfo;
                 switch(typekey) {
@@ -1030,6 +1061,10 @@ entity CPPTransformer {
                     | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'Float'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CChar'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 32n, 4n, '0000', cpptkey, CPPAssembly::Tag#Value }; }
                     | _ => { abort; } %% Not supported by cpp emitter yet!
                 }
 
