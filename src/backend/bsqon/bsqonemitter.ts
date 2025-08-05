@@ -273,12 +273,12 @@ class BSQONTypeInfoEmitter {
     }
 
     private emitCRopeTypeDecl(tdecl: CRopeTypeDecl, instantiation: TypeInstantiationInfo): any {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "CRope");
     }
 
     private emitUnicodeRopeTypeDecl(tdecl: UnicodeRopeTypeDecl, instantiation: TypeInstantiationInfo): any {
-        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "UnicodeRope");
     }
 

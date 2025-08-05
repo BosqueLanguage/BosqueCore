@@ -132,10 +132,6 @@ class InstantiationPropagator {
             ; //nothing to do
         }
         else if(rt instanceof NominalTypeSignature) {
-
-            // Based on this it appears we just dont correctly assign the CRopeTypeDecl to decl at some point in the compilation process
-            console.log(rt.tkeystr,  " + ",  rt.decl.name);
-
             rt.alltermargs.forEach((tt) => this.instantiateTypeSignature(tt, mapping));
             this.pendingNominalTypeDecls.push(new PendingNominalTypeDecl(rt.tkeystr, rt, rt.decl, rt.alltermargs));
         }
@@ -161,28 +157,35 @@ class InstantiationPropagator {
             this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
         }
 
-        // This doesnt quite work :/
-        if(rt instanceof NominalTypeSignature && rt.decl instanceof CRopeTypeDecl) {
+        // I wonder if the tkey compare is a bandaid
+        if(rt instanceof NominalTypeSignature && rt.tkeystr === "CString") {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
 
-            console.log(rt.tkeystr);
+            if(nns !== undefined) {
+                const createdecl = nns.functions.find((tt) => tt.name === "s_crope_create") as NamespaceFunctionDecl;
+                this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
 
-
-            const createdecl = nns.functions.find((tt) => tt.name === "s_crope_create") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
-
-            const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+                // TODO: Append has not been implemented yet!
+                /*
+                const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
+                this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+                */
+            }
         }
 
-        if(rt instanceof NominalTypeSignature && rt.decl instanceof UnicodeRopeTypeDecl) {
+        if(rt instanceof NominalTypeSignature && rt.tkeystr === "String") {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
 
-            const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_create") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
+            if(nns !== undefined) {
+                assert(false, "Not Implemented -- UnicodeRope instantiation");
+                /*
+                const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_create") as NamespaceFunctionDecl;
+                this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
 
-            const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
-            this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+                const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
+                this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+                */
+            }
         }
 
         if(rt instanceof NominalTypeSignature && rt.decl instanceof MapTypeDecl) {
