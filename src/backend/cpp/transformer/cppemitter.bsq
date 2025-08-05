@@ -992,6 +992,14 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
     return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
+function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
+    return ""; %% TODO: Need to figure out necessary rope representation
+}
+
+function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
+    abort;
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
@@ -1000,7 +1008,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::LiteralUnicodeCharExpression => { abort; }
         | CPPAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
         | CPPAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
-        %%| CPPAssembly::LiteralCStringExpression => { abort; }
+        | CPPAssembly::LiteralCStringExpression => { return emitLiteralCStringExpression($e); }
         %%| CPPAssembly::LiteralStringExpression => { abort; }
         %%| CPPAssembly::LiteralCRegexExpression => { abort; }
         %%| CPPAssembly::LiteralRegexExpression => { abort; }

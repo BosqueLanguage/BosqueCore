@@ -106,7 +106,7 @@ function generateASMSMT(usercode: PackageConfig): [Assembly | undefined, ParserE
 
 // We MAY want to create separate core files for cpp explicitly to easily make stuff builtin, ok for now
 function generateASMCPP(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
-    return generateASMGeneral(usercode, ["EXEC_LIBS"])
+    return generateASMGeneral(usercode, ["EXEC_LIBS", "CPP_CORE"])
 }
 
 export { 

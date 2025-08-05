@@ -1,17 +1,10 @@
 namespace Core;
 
+#if CPP_CORE 
 __internal entity CRope {
-#if STRIPPED_CORE
-#else
-    method createFromCString(s: CString): CRope {
-        return CRopeOps::s_create_from_cstring(s);
-    }
-#endif %%STRIPPED_CORE
 }
 
 __internal entity UnicodeRope {
-#if STRIPPED_CORE
-#else
-
-#endif %%STRIPPED_CORE
 }
+#else
+#endif %%CPP_CORE

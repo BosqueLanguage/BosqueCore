@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
+import { AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, FailTypeDecl, InternalEntityTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, MapEntryTypeDecl, MapTypeDecl, NamespaceDeclaration, OkTypeDecl, OptionTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TypedeclTypeDecl } from "../../frontend/assembly.js";
 import { NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { NamespaceInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
 import { AccessNamespaceConstantExpression, LiteralRegexExpression } from "../../frontend/body.js";
@@ -272,6 +272,16 @@ class BSQONTypeInfoEmitter {
         return ldecl;
     }
 
+    private emitCRopeTypeDecl(tdecl: CRopeTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "CRope");
+    }
+
+    private emitUnicodeRopeTypeDecl(tdecl: UnicodeRopeTypeDecl, instantiation: TypeInstantiationInfo): any {
+        const rcvr = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        return this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "UnicodeRope");
+    }
+
     private emitStackTypeDecl(tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo): any {
         const rcvr = BSQONTypeInfoEmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const sdecl = this.emitInteralSimpleTypeDeclHelper(tdecl, rcvr, instantiation, "Stack");
@@ -371,6 +381,12 @@ class BSQONTypeInfoEmitter {
         }
         else if(tt instanceof ListTypeDecl) {
             alldecls.push(this.emitListTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof CRopeTypeDecl) {
+            alldecls.push(this.emitCRopeTypeDecl(tt, instantiation));
+        }
+        else if(tt instanceof UnicodeRopeTypeDecl) {
+            alldecls.push(this.emitUnicodeRopeTypeDecl(tt, instantiation));
         }
         else if(tt instanceof StackTypeDecl) {
             alldecls.push(this.emitStackTypeDecl(tt, instantiation));

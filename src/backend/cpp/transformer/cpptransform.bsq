@@ -21,6 +21,8 @@ namespace CPPTransformNameManager {
             | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
             | 'BigInt' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
             | 'Float' => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
+            | 'CString' => { return CPPAssembly::TypeKey::from('Core::CRope'); }
+            | 'String' => { return CPPAssembly::TypeKey::from('Core::UnicodeRope'); }
             | 'CChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::CChar'); }
             | 'UnicodeChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::UnicodeChar'); }
             | 'CCharBuffer' => { return CPPAssembly::TypeKey::from('__CoreCpp::CCharBuffer'); }
@@ -39,6 +41,8 @@ namespace CPPTransformNameManager {
             | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }
             | '__CoreCpp::BigInt' => { return BSQAssembly::TypeKey::from('BigInt'); }
             | '__CoreCpp::Float' => { return BSQAssembly::TypeKey::from('Float'); }
+            | 'Core::CRope' => { return BSQAssembly::TypeKey::from('CString'); }
+            | 'Core::UnicodeRope' => { return BSQAssembly::TypeKey::from('String'); }
             | '__CoreCpp::CChar' => { return BSQAssembly::TypeKey::from('CChar'); }
             | '__CoreCpp::UnicodeChar' => { return BSQAssembly::TypeKey::from('UnicodeChar'); }
             | '__CoreCpp::CCharBuffer' => { return BSQAssembly::TypeKey::from('CCharBuffer'); }
@@ -626,12 +630,19 @@ entity CPPTransformer {
         return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
     }
 
+    %% We do an implict conversion of strings to corresponding rope impl
     method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): CPPAssembly::LiteralCStringExpression {
-        abort; %% TODO: Lacking ropes so this is an abort for now
+        let etype = this.convertTypeSignature(exp.etype);
+#if CPP_CORE
+        let rope = CRope{ exp.value };
+        return CPPAssembly::LiteralCStringExpression{ etype, rope };
+#else 
+        return CPPAssembly::LiteralCStringExpression{ etype };
+#endif %%CORE_CPP
     }
 
     method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): CPPAssembly::LiteralStringExpression {
-        abort; %% TODO: Lacking ropes so this is an abort for now
+        abort; %% TODO: Unicode ropes are lacking implementation 
     }
 
     method transformLiteralCCharExpression(exp: BSQAssembly::LiteralCCharExpression): CPPAssembly::LiteralCCharExpression {
@@ -1061,6 +1072,8 @@ entity CPPTransformer {
                     | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'Float'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CString'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'String'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CChar'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }

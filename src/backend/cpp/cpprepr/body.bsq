@@ -204,13 +204,18 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
-%% These should just be ropes (eventually)
 entity LiteralCStringExpression provides Expression {
-    field value: CString;
+#if CPP_CORE
+    field value: CRope;
+#else
+#endif %%CORE_CPP
 }
 
 entity LiteralStringExpression provides Expression {
-    field value: CString;
+#if CPP_CORE
+    field value: UnicodeRope;
+#else
+#endif %%CPP_CORE
 }
 
 entity LiteralCCharExpression provides Expression {

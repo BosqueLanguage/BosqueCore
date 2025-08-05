@@ -15,16 +15,17 @@ namespace CCharBufferOps {
 }
 
 __internal entity CCharBuffer {
+#if CPP_CORE
     function fromCString(s: CString): CCharBuffer {
         return CCharBufferOps::s_create_from_cstring(s);
     }
+#else
+#endif %%CPP_CORE
 }
 
-#if STRIPPED_CORE
-#else
-#if EXEC_LIBS
+#if CPP_CORE
 namespace CRopeOps {
-    function s_create_from_cstring(s: CString): CRope {
+    function s_crope_create(s: CString): CRope {
         %% Temporary to ensure the compiler is setup right
         if(s.size() > 8n) {
             abort;
@@ -52,5 +53,4 @@ namespace UnicodeRopeOps {
 
 } %% namespace RopeOps
 #else
-#endif %% EXEC_LIBS
-#endif %% STRIPPED_CORE
+#endif %% CPP_CORE
