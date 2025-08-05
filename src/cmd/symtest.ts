@@ -236,20 +236,78 @@ class PendingCompnentInfo {
     readonly smt2file: string;
 
     readonly starttime: Date;
+
+    constructor(idx: number, errinfo: string, smtcomponents: string, smt2file: string) {
+        this.idx = idx;
+        this.errinfo = errinfo;
+
+        this.smtcomponents = smtcomponents;
+        this.smt2file = smt2file;
+
+        this.starttime = new Date();
+    }
 }
 
-let smt_components = [];
+let smt_components: {errinfo: string, smtinfo: string}[] = [];
 let current_component = 0;
+let completed_count = 0;
 
-let pending_count = [];
+let async_errct = 0;
+let pending_count = 0;
 const max_components = 8;
 
 function checkSMTFormulaAsync() {
-    xxxx;
+    if(completed_count === smt_components.length) {
+        completeRun();
+    }
+    else {
+        if(pending_count < max_components) {
+            startSMTComponent();
+        }
+    }
 }
 
-function completeSMTComponent(cinfo: PendingCompnentInfo, result: string) {
-    xxxx;
+function startSMTComponent() {
+    const cc = smt_components[current_component++];
+
+    process.stdout.write(`\nChecking Possible Error ${current_component} of ${smt_components.length}...\n`);
+    process.stdout.write("    " + opterr + "\n");
+
+    pending_count++;
+    async (completeSMTComponent with capture);
+}
+
+function completeSMTComponent(cinfo: PendingCompnentInfo, err: any, result: string) {
+    process.stdout.write(`Completed test #${cinfo.idx} for ${cinfo.errinfo} -- `);
+
+    if(err) { 
+        Status.error("Failed to run SMT solver!\n");
+    }
+    else {
+        if(result === "unsat") {
+            process.stdout.write("    Pass!\n");
+        }
+        else if(result === "sat") {
+            process.stdout.write("    Violation Found!\n");
+            async_errct++;
+        }
+        else {
+            process.stdout.write("    Exhausted Checking...\n");
+        }
+    }
+
+    pending_count--;
+    completed_count++;
+    checkSMTFormulaAsync();
+}
+
+function completeRun() {
+    if(async_errct === 0) {
+        process.stdout.write("\n----\nNo Violations Found.\n\n");
+    }
+    else {
+        process.stdout.write(`\n----\n${async_errct} Issues Found!\n\n`);
+    }
 }
 
 function checkSMTFormula(smtcomponents: string, outname: string): boolean {
