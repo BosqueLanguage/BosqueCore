@@ -70,11 +70,11 @@ entity LiteralSimpleExpression provides Expression {
 }
 
 entity LiteralCCharExpression provides Expression {
-    field value: CString;
+    field value: CChar;
 }
 
 entity LiteralUnicodeCharExpression provides Expression {
-    field value: String;
+    field value: UnicodeChar;
 }
 
 entity LiteralCStringExpression provides Expression {

@@ -14,6 +14,7 @@ const cpp_emit_runtime_path = path.join(bosque_dir, "bin/cppruntime/");
 const cpp_emit_runtime_src_path = path.join(cpp_emit_runtime_path, "emit.cpp");
 const cpp_emit_runtime_header_path = path.join(cpp_emit_runtime_path, "emit.hpp");
 const cpp_runtime_header_path = path.join(cpp_emit_runtime_path, "cppruntime.hpp");
+const cpp_runtime_source_path = path.join(cpp_emit_runtime_path, "cppruntime.cpp");
 const makefile_path = path.join(cpp_emit_runtime_path, "makefile");
 const gc_path = path.join(bosque_dir, "bin/cppruntime/gc/");
 const output_path = path.join(bosque_dir, "bin/cppruntime/output/");
@@ -58,6 +59,7 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
 
     try {
         copyFile(cpp_runtime_header_path, outdir);
+        copyFile(cpp_runtime_source_path, outdir);
         copyFile(makefile_path, outdir);
         copyGC(gc_path, path.join(outdir, "gc/"));
         copyGC(output_path, path.join(outdir, "output/"));
