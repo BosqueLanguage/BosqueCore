@@ -205,17 +205,11 @@ entity LiteralSimpleExpression provides Expression {
 }
 
 entity LiteralCStringExpression provides Expression {
-#if CPP_CORE
-    field value: CRope;
-#else
-#endif %%CORE_CPP
+    field value: CString;
 }
 
 entity LiteralStringExpression provides Expression {
-#if CPP_CORE
-    field value: UnicodeRope;
-#else
-#endif %%CPP_CORE
+    field value: CString;
 }
 
 entity LiteralCCharExpression provides Expression {

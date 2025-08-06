@@ -992,10 +992,12 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
     return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
-%% So, I believe we will need to basically just call s_crope_create here
-%% and perhaps we can do the appending inside this method?
+function emitCStringAsLiteral(s: CString): String {
+    return String::fromCString(CString::concat('"', s,'"'));
+}
+
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
-    return ""; %% TODO: Need to figure out necessary rope representation
+    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::CCharBuffer::fromStringLiteral( const_cast<CChar*>(", emitCStringAsLiteral(exp.value), ")))");
 }
 
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
@@ -1640,10 +1642,22 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
 
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
-    let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
-    let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) then ttype.removePrefixString("__CoreCpp::") 
-        else ttype;
-    return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+
+    if(ctd)@<CPPAssembly::CRopeTypeDecl> {
+        return String::concat(indent, "typedef CRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    if(ctd)@<CPPAssembly::UnicodeRopeTypeDecl> {
+        return String::concat(indent, "typedef UnicodeRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    if(ctd)@<CPPAssembly::ListTypeDecl> {
+        let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
+        let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) 
+            then ttype.removePrefixString("__CoreCpp::") 
+            else ttype;
+        return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    
+    abort; %% Non supported collection type!
 }
 
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {

@@ -10,47 +10,39 @@ namespace CCharBufferOps {
     function s_create_6(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar): CCharBuffer = ccharbuffer_create_6;
     function s_create_7(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar): CCharBuffer = ccharbuffer_create_7;
     function s_create_8(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar, c8: CChar): CCharBuffer = ccharbuffer_create_8;
-
-    function s_create_from_cstring(s: CString): CCharBuffer = ccharbuffer_create_from_cstring;
 }
 
 __internal entity CCharBuffer {
-#if CPP_CORE
-    function fromCString(s: CString): CCharBuffer {
-        return CCharBufferOps::s_create_from_cstring(s);
-    }
-#else
-#endif %%CPP_CORE
 }
 
 #if CPP_CORE
 namespace CRopeOps {
-    function s_crope_create(s: CString): CRope {
-        %% Temporary to ensure the compiler is setup right
-        if(s.size() > 8n) {
-            abort;
-        }
-
-        let buf: CCharBuffer = CCharBuffer::fromCString(s);
-        return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(s.size(), buf));
+    function s_crope_create(buf: CCharBuffer): CRope {
+        return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));
     }
-    
+
     datatype Rope of 
-        Leaf{ len: Nat, buffer: CCharBuffer }
+        BBLeaf { }
+        | Leaf{ buffer: CCharBuffer }
         | Node { weight: Nat, l: Rope, r: Rope }
     & {
-        function createLeaf(len: Nat, buf: CCharBuffer): Leaf {
-            return Leaf{ len, buf };
+        function createLeaf(buf: CCharBuffer): Leaf {
+            return Leaf{ buf };
         }
 
         function createNode(w: Nat, l: Rope, r: Rope): Node {
             return Node{ w, l, r };
         }
+
+        %%
+        %% TODO: need an append method
+        %%
+
     }
 } %% namespace CRopeOps
 
 namespace UnicodeRopeOps {
 
-} %% namespace RopeOps
+} %% namespace UnicodeRopeOps
 #else
 #endif %% CPP_CORE

@@ -1,10 +1,7 @@
 namespace Core;
 
-#if CPP_CORE 
 __internal entity CRope {
 }
 
 __internal entity UnicodeRope {
 }
-#else
-#endif %%CPP_CORE

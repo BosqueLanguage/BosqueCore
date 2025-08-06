@@ -2127,8 +2127,11 @@ class BSQIREmitter {
         }
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
+        
+        let bufdecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "CCharBuffer") as AbstractNominalTypeDecl;
+        const buftype = new NominalTypeSignature(tdecl.sinfo, undefined, bufdecl, tsig.alltermargs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::CRopeTypeDecl{ ${ibase} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::CRopeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(buftype)} }`];
     }
 
     private emitUnicodeRopeTypeDecl(ns: FullyQualifiedNamespace, tdecl: UnicodeRopeTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -2148,7 +2151,10 @@ class BSQIREmitter {
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::UnicodeRopeTypeDecl{ ${ibase} }`];
+        let bufdecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "UnicodeCharBuffer") as AbstractNominalTypeDecl;
+        const buftype = new NominalTypeSignature(tdecl.sinfo, undefined, bufdecl, tsig.alltermargs);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::UnicodeRopeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(buftype)} }`];
     }
 
     private emitStackTypeDecl(ns: FullyQualifiedNamespace, tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {

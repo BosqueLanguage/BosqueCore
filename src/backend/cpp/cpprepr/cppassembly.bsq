@@ -101,6 +101,8 @@ datatype CollectionTypeDecl provides AbstractEntityTypeDecl using {
 }
 of
 ListTypeDecl {  }
+| CRopeTypeDecl { }
+| UnicodeRopeTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
