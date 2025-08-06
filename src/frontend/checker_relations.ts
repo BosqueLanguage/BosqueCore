@@ -726,14 +726,9 @@ class TypeCheckerRelations {
         const decl = t.decl;
         if((decl instanceof ListTypeDecl) || (decl instanceof StackTypeDecl) || (decl instanceof QueueTypeDecl)) {
             return t.alltermargs[0];
-        }
-        
-        // Not sure if my well known type idea works
-        else if(decl instanceof CRopeTypeDecl) {
-            return this.wellknowntypes.get("CString");
-        }
-        else if(decl instanceof UnicodeRopeTypeDecl) {
-            return this.wellknowntypes.get("String");
+        } 
+        else if(decl instanceof CRopeTypeDecl || decl instanceof UnicodeRopeTypeDecl) {
+            return undefined;
         }
         else if(decl instanceof SetTypeDecl) {
             return t.alltermargs[0];

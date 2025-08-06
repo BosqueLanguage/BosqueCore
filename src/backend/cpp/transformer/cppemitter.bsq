@@ -992,6 +992,8 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
     return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
+%% So, I believe we will need to basically just call s_crope_create here
+%% and perhaps we can do the appending inside this method?
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     return ""; %% TODO: Need to figure out necessary rope representation
 }

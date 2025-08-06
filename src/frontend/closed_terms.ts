@@ -157,7 +157,6 @@ class InstantiationPropagator {
             this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
         }
 
-        // I wonder if the tkey compare is a bandaid
         if(rt instanceof NominalTypeSignature && rt.tkeystr === "CString") {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
 
@@ -345,6 +344,11 @@ class InstantiationPropagator {
                 if(ists !== undefined) {
                     this.instantiateTypeSignature(ists, this.currentMapping);
                 }
+
+                //
+                // TODO: Take a look at this, I think its fine as it would be nice to just pass
+                // the cstring in and do all the conversions behind the sceens but i got to be careful
+                //
 
                 if(args.length > 1) {
                     assert(false, "Attempted to construct a CRope using more than one CString!");

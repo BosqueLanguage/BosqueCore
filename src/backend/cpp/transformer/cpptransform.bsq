@@ -630,6 +630,15 @@ entity CPPTransformer {
         return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
     }
 
+    %%
+    %% Ok actually now that i think about it we may want to just push this CString into the emitter
+    %% and call the correct rope builtin constructor. The main problem I can think of here though is
+    %% how exactly we can split up our string into 8 char or less chunks, convert into a char buffer,
+    %% call create on the first char buffer, then append the rest to the create call.
+    %%
+    %% Ok maybe this wont work we really need some way to manipulate thsi string correctly...
+    %%
+
     %% We do an implict conversion of strings to corresponding rope impl
     method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): CPPAssembly::LiteralCStringExpression {
         let etype = this.convertTypeSignature(exp.etype);
