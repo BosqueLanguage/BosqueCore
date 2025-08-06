@@ -328,29 +328,6 @@ class InstantiationPropagator {
                 }
             }
         }
-        else if(decl instanceof CRopeTypeDecl) {
-            const rops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps");
-            if(rops !== undefined) {
-                const rope = rops.typedecls.find((tt) => tt.name === "Rope");
-                ists = (rope !== undefined) ? new NominalTypeSignature(t.sinfo, undefined, rope, []) : undefined;
-
-                if(ists !== undefined) {
-                    this.instantiateTypeSignature(ists, this.currentMapping);
-                }
-
-                //
-                // TODO: Take a look at this, I think its fine as it would be nice to just pass
-                // the cstring in and do all the conversions behind the sceens but i got to be careful
-                //
-
-                if(args.length > 1) {
-                    assert(false, "Attempted to construct a CRope using more than one CCharBuffer!");
-                }
-                
-                const ff = rops.functions.find((f) => f.name === "s_crope_create") as NamespaceFunctionDecl;
-                this.instantiateNamespaceFunction(rops, ff, []);
-            }
-        }
         else if(decl instanceof StackTypeDecl) {
             assert(false, "Not Implemented");
         }

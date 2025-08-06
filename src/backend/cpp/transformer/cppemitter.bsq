@@ -996,8 +996,9 @@ function emitCStringAsLiteral(s: CString): String {
     return String::fromCString(CString::concat('"', s,'"'));
 }
 
+%% Oh boy...
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
-    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::CCharBuffer::fromStringLiteral( const_cast<CChar*>(", emitCStringAsLiteral(exp.value), ")))");
+    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral( reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value), ")))");
 }
 
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
@@ -1865,8 +1866,11 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
+    %% We convert String -> UnicodeRope and CString -> CRope in the transform so no need to emit here
     let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
-        return if(asm.isPrimtitiveType(tk)) then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) else acc;
+        return if(/\(asm.isPrimtitiveType(tk), tk.value !== 'Core::CRope', tk.value !== 'Core::UnicodeRope')) 
+            then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) 
+            else acc;
     }); 
 
     %% Non-value type forward decls
