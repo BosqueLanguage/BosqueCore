@@ -17,6 +17,9 @@ __internal entity CCharBuffer {
 
 #if CPP_CORE
 namespace CRopeOps {
+    %% It may be smartest if we pass in a variable amount of buffers (>=1)
+    %% then call append on each and just let the cpp emitter handle the actual
+    %% insertion of buffers as arguments
     function s_crope_create(buf: CCharBuffer): CRope {
         return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));
     }

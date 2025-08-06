@@ -46,7 +46,9 @@ CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar 
 }
 
 //
-// TODO: We need to check the possible sizes and return appropriate buffer
+// TODO: we will likely need a size parameter (for the incomming buf) and some way
+// to handle buffers that are larger than 8 chars. This is currently just to test
+// that we can emit a base rope consisting of just a leaf
 //
 CCharBuffer cbufferFromStringLiteral(const CChar* buf) {
     return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );

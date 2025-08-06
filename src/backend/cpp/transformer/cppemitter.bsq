@@ -996,7 +996,6 @@ function emitCStringAsLiteral(s: CString): String {
     return String::fromCString(CString::concat('"', s,'"'));
 }
 
-%% Oh boy...
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral( reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value), ")))");
 }
