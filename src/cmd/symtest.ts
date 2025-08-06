@@ -8,8 +8,12 @@ import * as path from "path";
 
 import { fileURLToPath } from 'url';
 import { PackageConfig } from "../frontend/build_decls.js";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import { validateCStringLiteral } from "@bosque/jsbrex";
+import chalk from "chalk";
+
+import { tmpdir } from 'node:os';
+import { rmSync } from "node:fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -228,6 +232,106 @@ function checkAssembly(srcfiles: string[]): Assembly | undefined {
     }
 }
 
+class PendingCompnentInfo {
+    readonly idx: number;
+    readonly errinfo: string;
+
+    readonly smtcomponents: string;
+    readonly smt2file: string;
+
+    readonly starttime: number;
+
+    constructor(idx: number, errinfo: string, smtcomponents: string, smt2file: string) {
+        this.idx = idx;
+        this.errinfo = errinfo;
+
+        this.smtcomponents = smtcomponents;
+        this.smt2file = smt2file;
+
+        this.starttime = Date.now();
+    }
+}
+
+let smt_components: {errinfo: string, smtinfo: string}[] = [];
+let current_component = 0;
+let completed_count = 0;
+
+let async_errct = 0;
+let pending_count = 0;
+const max_components = 16;
+
+function checkSMTFormulaAsync() {
+    if(completed_count === smt_components.length) {
+        completeRun();
+    }
+    else {
+        if(pending_count < max_components && current_component < smt_components.length) {
+            startSMTComponent();
+        }
+    }
+}
+
+function startSMTComponent() {
+    const cc = smt_components[current_component++];
+    pending_count++;
+
+    //process.stdout.write(`\nChecking Possible Error ${current_component} of ${smt_components.length}...\n`);
+
+    const nndir = fs.mkdtempSync(path.join(tmpdir(), "bosque-symtest-"));
+    generateFormulaFile(cc.smtinfo, nndir, true, false);
+
+    let cinfo = new PendingCompnentInfo(current_component, cc.errinfo, cc.smtinfo, nndir);
+    exec(`${z3bin} -T:60 ${path.join(nndir, "formula.smt2")}`, (err, stdout, stderr) => {
+        const rr = stdout.toString().trim();
+        completeSMTComponent(cinfo, err, rr);
+    });
+}
+
+function completeSMTComponent(cinfo: PendingCompnentInfo, err: any, result: string) {
+    const end = Date.now();
+
+    process.stdout.write(`Completed test #${cinfo.idx} for ${cinfo.errinfo} -- `);
+    rmSync(cinfo.smt2file, { recursive: true });
+
+    if(err) { 
+        Status.error("Failed to run SMT solver!\n");
+    }
+    else {
+        if(result === "unsat") {
+            process.stdout.write(chalk.green("Pass") + "!\n");
+            if(PRINT_TIMING) {
+                process.stdout.write(`    Solve Time ${end - cinfo.starttime}ms\n`);
+            }
+        }
+        else if(result === "sat") {
+            process.stdout.write(chalk.red("Violation Found") + "!\n");
+            if(PRINT_TIMING) {
+                process.stdout.write(`    Solve Time ${end - cinfo.starttime}ms\n`);
+            }
+            async_errct++;
+        }
+        else {
+            process.stdout.write(chalk.yellow("Exhausted Checking") + "...\n");
+            if(PRINT_TIMING) {
+                process.stdout.write(`    Solve Time ${end - cinfo.starttime}ms\n`);
+            }
+        }
+    }
+
+    pending_count--;
+    completed_count++;
+    checkSMTFormulaAsync();
+}
+
+function completeRun() {
+    if(async_errct === 0) {
+        process.stdout.write("\n----\nNo Violations Found.\n\n");
+    }
+    else {
+        process.stdout.write(`\n----\n${async_errct} Issues Found!\n\n`);
+    }
+}
+
 function checkSMTFormula(smtcomponents: string, outname: string): boolean {
     generateFormulaFile(smtcomponents, outname, true, false);
 
@@ -235,6 +339,7 @@ function checkSMTFormula(smtcomponents: string, outname: string): boolean {
     const nndir = path.normalize(outname);
 
     let rr = "";
+    let start = Date.now();
     try {
         rr = execSync(`${z3bin} -T:60 ${path.join(nndir, "formula.smt2")}`).toString().trim();
     }
@@ -242,17 +347,27 @@ function checkSMTFormula(smtcomponents: string, outname: string): boolean {
         Status.error("Failed to run SMT solver!\n");
         return false;
     }
+    let end = Date.now();
 
     if(rr === "unsat") {
         process.stdout.write("    Pass!\n");
+        if(PRINT_TIMING) {
+            process.stdout.write(`    Solve Time ${end - start}ms\n`);
+        }
         return false;
     }
     else if(rr === "sat") {
         process.stdout.write("    Violation Found!\n");
+        if(PRINT_TIMING) {
+            process.stdout.write(`    Solve Time ${end - start}ms\n`);
+        }
         return true;
     }
     else {
         process.stdout.write("    Exhausted Checking...\n");
+        if(PRINT_TIMING) {
+            process.stdout.write(`    Solve Time ${end - start}ms\n`);
+        }
         return false;
     }
 }
@@ -267,6 +382,9 @@ Status.output(`-- SMT output directory: ${outdir}\n\n`);
 ///////////////////////////////////////////////////////
 Status.statusDisable();
 ///////////////////////////////////////////////////////
+
+const ENABLE_ASYNC = true;
+const PRINT_TIMING = true;
 
 fs.rmSync(outdir, { recursive: true, force: true });
 fs.mkdirSync(outdir);
@@ -287,24 +405,39 @@ if(ischktest) {
 else {
     const opts = smtcomponents.split("#### CHECK ####").map((opt) => opt.trim()).filter((opt) => opt !== "");
 
-    let errct = 0;
-    for(let i = 0; i < opts.length; ++i) {
-        const opt = opts[i]
-        let opterr = opt.split("\n")[0].trim();
+    if(ENABLE_ASYNC) {
+        process.stdout.write(`Checking ${opts.length} possible errors...\n`);
+        for(let i = 0; i < opts.length; ++i) {
+            const opt = opts[i]
+            let opterr = opt.split("\n")[0].trim().slice(2);
 
-        process.stdout.write(`\nChecking Possible Error ${i + 1} of ${opts.length}...\n`);
-        process.stdout.write("    " + opterr + "\n");
+            smt_components.push({ errinfo: opterr, smtinfo: opt });
+        }
 
-        let err = checkSMTFormula(opt, outdir);
-        if(err) {
-            errct++;
+        for(let j = 0; j < max_components; ++j) {
+            checkSMTFormulaAsync();
         }
     }
-
-    if(errct === 0) {
-        process.stdout.write("\n----\nNo Violations Found.\n\n");
-    }
     else {
-        process.stdout.write(`\n----\n${errct} Issues Found!\n\n`);
+        let errct = 0;
+        for(let i = 0; i < opts.length; ++i) {
+            const opt = opts[i]
+            let opterr = opt.split("\n")[0].trim().slice(2);
+
+            process.stdout.write(`\nChecking Possible Error ${i + 1} of ${opts.length}...\n`);
+            process.stdout.write("    " + opterr + "\n");
+
+            let err = checkSMTFormula(opt, outdir);
+            if(err) {
+                errct++;
+            }
+        }
+
+        if(errct === 0) {
+            process.stdout.write("\n----\nNo Violations Found.\n\n");
+        }
+        else {
+            process.stdout.write(`\n----\n${errct} Issues Found!\n\n`);
+        }
     }
 }
