@@ -147,11 +147,8 @@ class InstantiationPropagator {
                     const createdecl = nns.functions.find((tt) => tt.name === "s_crope_create") as NamespaceFunctionDecl;                    
                     this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
 
-                    // TODO: Append has not been implemented yet!
-                    /*
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
-                    */
                 }
             }
 

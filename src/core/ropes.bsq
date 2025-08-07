@@ -1,6 +1,12 @@
 namespace Core;
 
 __internal entity CRope {
+#if CPP_CORE
+    method append(buf: CCharBuffer): CRope {
+        return CRopeOps::s_crope_append(this, buf);
+    }
+#else
+#endif %%CPP_CORE
 }
 
 __internal entity UnicodeRope {
