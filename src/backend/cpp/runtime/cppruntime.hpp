@@ -13,6 +13,11 @@
 
 namespace __CoreCpp {
 
+typedef uintptr_t None;
+typedef bool Bool;
+typedef uint8_t CChar;
+typedef uint32_t UnicodeChar;
+
 class ThreadLocalInfo {
 public:
     std::jmp_buf error_handler;
@@ -257,11 +262,6 @@ public:
         }
     }
 };
-
-typedef uintptr_t None;
-typedef bool Bool;
-typedef uint8_t CChar;
-typedef uint32_t UnicodeChar;
 
 #define MAX_BSQ_INT ((int64_t(1) << 62) - 1)
 #define MIN_BSQ_INT (-(int64_t(1) << 62) + 1) 
@@ -670,8 +670,8 @@ struct CCharBuffer {
     static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
     static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
+CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr);
 
-CCharBuffer cbufferFromStringLiteral(size_t idx, size_t size, const CChar* buf);
 
 struct UnicodeCharBuffer {
     UnicodeChar chars[8];
