@@ -49,7 +49,7 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
     const CChar* buf = basestr;
     basestr += 8;
 
-    if(size > 7) {
+    if(size >= 8) {
         return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
     }
 

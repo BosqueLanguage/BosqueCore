@@ -1002,7 +1002,6 @@ function emitCStringAsLiteral(s: CString): String {
     return String::fromCString(CString::concat('"', s,'"'));
 }
 
-%% This code does not appear to modify what address "str" points to correctly
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     let strsize = exp.value.size();
     let baseargs = String::concat(natToString(exp.value.size()), ", str");

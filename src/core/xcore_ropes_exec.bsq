@@ -283,8 +283,10 @@ namespace CRopeOps {
             return Leaf{ buf };
         }
 
+        %%
         %% TODO: We will need a weight calculation method where weight
         %% is the sum of all buffer sizes in left subtree
+        %%
         function createNode(c: Color, l: Rope, r: Rope): Node {
             return Node{ c, 0n, l, r };
         }
