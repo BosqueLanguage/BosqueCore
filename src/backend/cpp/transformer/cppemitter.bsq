@@ -1004,7 +1004,17 @@ function emitCStringAsLiteral(s: CString): String {
 
 %% We will need some clean interface for calling append on the base rope
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
-    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral( reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value), ")))");
+    let baseargs = String::concat(natToString(0n), ", ", natToString(exp.value.size()), ", reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value));
+    let base = String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral(", baseargs, ")))");
+    return Algorithm::while<(|Nat, String|)>((|8n, base|), 
+        pred(cons) => cons.0 < exp.value.size(), 
+        fn(cons) => { 
+            %% This is problematic as we are creating the target string new each time
+            let append_base = String::concat("Core::CRopeOps::s_crope_append(", cons.1, ", __CoreCpp::cbufferFromStringLiteral(");
+            let args = String::concat(natToString(cons.0), ", ", natToString(exp.value.size()), ", reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value));
+            return cons.0 + 8n, String::concat(append_base, args, ")))");
+    }).1;
+
 }
 
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
