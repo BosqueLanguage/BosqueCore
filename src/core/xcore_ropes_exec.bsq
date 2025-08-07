@@ -21,10 +21,6 @@ namespace CRopeOps {
         return XCore::s_createDirect<Rope, CRope>(append(r.value, buf));
     }
 
-    %%
-    %% NOTE: Most of the logic that follows will be basically identical for
-    %% UnicodeRopes so we may want to move to a central namespace
-    %%
     enum Color {
         Red,
         Black,
@@ -292,11 +288,6 @@ namespace CRopeOps {
         function createNode(c: Color, l: Rope, r: Rope): Node {
             return Node{ c, 0n, l, r };
         }
-
-        %%
-        %% TODO: need an append method
-        %%
-
     }
 } %% namespace CRopeOps
 
