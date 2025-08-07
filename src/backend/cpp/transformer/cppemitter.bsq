@@ -276,14 +276,20 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         let econstype = emitTypeSignature(constype, false, ctx);
         let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
         
-        %% Since List<T> is just an alias of Tree<T>, we dont need to explicitly emit List<T> constructor
+        %% Since our collections are just alias for underlying data structure we dont need to emit explicit constructors 
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
             return eexp;
         }
-        else {
-            return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
-                else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+        if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::CRopeTypeDecl> {
+            return eexp;
         }
+        if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::UnicodeRopeTypeDecl> {
+            return eexp;
+        }
+        
+        return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
+            else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+        
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
@@ -997,7 +1003,20 @@ function emitCStringAsLiteral(s: CString): String {
 }
 
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
-    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral( reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value), ")))");
+    let strsize = exp.value.size();
+    let baseargs = String::concat(natToString(exp.value.size()), ", str");
+    let base = String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral(", baseargs, "))");
+    
+    let constructor = Algorithm::while<(|Nat, String|)>((|8n, base|), 
+        pred(cons) => cons.0 < exp.value.size(), 
+        fn(cons) => { 
+            let append_base = String::concat("Core::CRopeOps::s_crope_append(", cons.1, ", __CoreCpp::cbufferFromStringLiteral(");
+            let args = String::concat(natToString(strsize - cons.0), ", str");
+            return cons.0 + 8n, String::concat(append_base, args, "))");
+    }).1;
+
+    return String::concat("[]() -> Core::CRope { const __CoreCpp::CChar* str = reinterpret_cast<const __CoreCpp::CChar*>(", 
+        emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {

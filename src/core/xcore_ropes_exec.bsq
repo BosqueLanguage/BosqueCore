@@ -17,30 +17,279 @@ __internal entity CCharBuffer {
 
 #if CPP_CORE
 namespace CRopeOps {
-    %% It may be smartest if we pass in a variable amount of buffers (>=1)
-    %% then call append on each and just let the cpp emitter handle the actual
-    %% insertion of buffers as arguments
-    function s_crope_create(buf: CCharBuffer): CRope {
-        return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));
+    function s_crope_append(r: CRope, buf: CCharBuffer): CRope {
+        return XCore::s_createDirect<Rope, CRope>(append(r.value, buf));
+    }
+
+    enum Color {
+        Red,
+        Black,
+        BB,
+        NB
+    }
+
+    function blacken(c: Color): Color {
+        assert c !== Color#BB;
+
+        switch(c) {
+            Color#Black => { return Color#BB; }
+            | Color#Red => { return Color#Black; }
+            | _         => { return Color#Red; }
+        }
+    }
+
+    function redden(c: Color): Color {
+        assert c !== Color#NB;
+
+        switch(c) {
+            Color#BB      => { return Color#Black; }
+            | Color#Black => { return Color#Red; }
+            | _           => { return Color#NB; }
+        }
+    }
+
+
+    %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
+    function balanceHelper_RR_LL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(/\(c !== Color#Black, c !== Color#BB)) {
+            return none;
+        }
+
+        if (tleft)@@!<Node> {
+            return none;
+        }
+
+        let lleft = tleft.l;
+        if(lleft)@@!<Node> {
+            return none;
+        }
+            
+        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
+            return none;
+        }
+
+        let nl = Rope::createNode(Color#Black, lleft.l, lleft.r);
+        let nr = Rope::createNode(Color#Black, tleft.r, tright);
+        return some(Rope::createNode(redden(c), nl, nr));
+    }
+
+    %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
+    function balanceHelper_RR_LR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(/\(c !== Color#Black, c !== Color#BB)) {
+            return none;
+        }
+
+        if (tleft)@@!<Node> {
+            return none;
+        }
+
+        let lright = tleft.r;
+        if(lright)@@!<Node> {
+            return none;
+        }
+            
+        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
+            return none;
+        }
+
+        let nl = Rope::createNode(Color#Black, tleft.l, lright.l);
+        let nr = Rope::createNode(Color#Black, lright.r, tright);
+        return some(Rope::createNode(redden(c), nl, nr));
+    }
+
+    %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
+    function balanceHelper_RR_RL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(/\(c !== Color#Black, c !== Color#BB)) {
+            return none;
+        }
+
+        if (tright)@@!<Node> {
+            return none;
+        }
+
+        let rleft = tright.l;
+        if(rleft)@@!<Node> {
+            return none;
+        }
+            
+        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
+            return none;
+        }
+
+        let nl = Rope::createNode(Color#Black, tleft, rleft.l);
+        let nr = Rope::createNode(Color#Black, rleft.r, tright.r);
+        return some(Rope::createNode(redden(c), nl, nr));
+    }
+
+    %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
+    function balanceHelper_RR_RR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(/\(c !== Color#Black, c !== Color#BB)) {
+            return none;
+        }
+
+        if (tright)@@!<Node> {
+            return none;
+        }
+
+        let rright = tright.r;
+        if(rright)@@!<Node> {
+            return none;
+        }
+            
+        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
+            return none;
+        }
+
+        let nl = Rope::createNode(Color#Black, tleft, tright.l);
+        let nr = Rope::createNode(Color#Black, rright.l, rright.r);
+        return some(Rope::createNode(redden(c), nl, nr));
+    }
+    
+    %% Case where we have negative blacks on L side -- tleft = Node{NB, _, Node{Black, _, a, b}, Node{Black, _, c, d}}
+    recursive function balanceHelper_DB_L(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(c !== Color#BB) {
+            return none;
+        }
+
+        if (tleft)@@!<Node> {
+            return none;
+        }
+
+        if(tleft.c !== Color#NB) {
+            return none;
+        }
+
+        let lleft = tleft.l;
+        if(lleft)@@!<Node> {
+            return none;
+        }
+
+        let lright = tleft.r;
+        if(lright)@@!<Node> {
+            return none;
+        }
+
+        if(\/(lleft.c !== Color#Black, lright.c !== Color#Black)) {
+            return none;
+        }
+
+        let nl = balance[recursive](Color#Black, Rope::createNode(Color#Red, lleft.l, lleft.r), lright.l);
+        let nr = Rope::createNode(Color#Black, lright.r, tright);
+        return some(Rope::createNode(Color#Black, nl, nr));
+    }
+
+    %% Case where we have negative blacks on R side -- tright = Node{NB, _, Node{Black, _, b, c}, Node{Black, _, d, e}}}
+    recursive function balanceHelper_DB_R(c: Color, tleft: Rope, tright: Rope): Option<Node> {
+        if(c !== Color#BB) {
+            return none;
+        }
+
+        if (tright)@@!<Node> {
+            return none;
+        }
+
+        if(tright.c !== Color#NB) {
+            return none;
+        }
+
+        let rleft = tright.l;
+        if(rleft)@@!<Node> {
+            return none;
+        }
+
+        let rright = tright.r;
+        if(rright)@@!<Node> {
+            return none;
+        }
+
+        if(\/(rleft.c !== Color#Black, rright.c !== Color#Black)) {
+            return none;
+        }
+
+        let nl = Rope::createNode(Color#Black, tleft, rleft.l);
+        let nr = balance[recursive](Color#Black, rleft.r, Rope::createNode(Color#Red, rright.l, rright.r));
+        return some(Rope::createNode(Color#Black, nl, nr));
+    }
+
+    recursive function balance(c: Color, tleft: Rope, tright: Rope): Rope {
+        let doubleRedLL = balanceHelper_RR_LL(c, tleft, tright);
+        if(doubleRedLL)@!none {
+            return $doubleRedLL;
+        }
+
+        let doubleRedLR = balanceHelper_RR_LR(c, tleft, tright);
+        if(doubleRedLR)@!none {
+            return $doubleRedLR;
+        }
+
+        let doubleRedRL = balanceHelper_RR_RL(c, tleft, tright);
+        if(doubleRedRL)@!none {
+            return $doubleRedRL;
+        }
+
+        let doubleRedRR = balanceHelper_RR_RR(c, tleft, tright);
+        if(doubleRedRR)@!none {
+            return $doubleRedRR;
+        }
+
+        let negBlackL = balanceHelper_DB_L(c, tleft, tright);
+        if(negBlackL)@!none {
+            return $negBlackL;
+        }
+
+        let negBlackR = balanceHelper_DB_R(c, tleft, tright);
+        if(negBlackR)@!none {
+            return $negBlackR;
+        }
+
+        return Rope::createNode(c, tleft, tright);
+    }
+
+    recursive function append_helper(t: Rope, v: CCharBuffer): Rope {
+        match(t)@ {
+            Leaf => { return balance(Color#Red, $t, Rope::createLeaf(v)); }
+            | Node => { 
+                let nr = append_helper[recursive]($t.r, v);
+                return balance($t.c, $t.l, nr); 
+            }
+        }
+    }
+
+    function append(t: Rope, v: CCharBuffer): Rope {
+        if(t)<BBLeaf> { 
+            return Rope::createLeaf(v); 
+        }
+
+        let tt = append_helper(t, v); 
+        if (tt)@!<Node> {
+            return tt;
+        }
+        else {
+            let nt = if($tt.c === Color#Red) then Rope::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            return nt;
+        }
+    }
+
+    function s_crope_create(buf: CCharBuffer): CRope {        
+        return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));       
     }
 
     datatype Rope of 
         BBLeaf { }
-        | Leaf{ buffer: CCharBuffer }
-        | Node { weight: Nat, l: Rope, r: Rope }
+        | Leaf{ buf: CCharBuffer }
+        | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
         function createLeaf(buf: CCharBuffer): Leaf {
             return Leaf{ buf };
         }
 
-        function createNode(w: Nat, l: Rope, r: Rope): Node {
-            return Node{ w, l, r };
+        %%
+        %% TODO: We will need a weight calculation method where weight
+        %% is the sum of all buffer sizes in left subtree
+        %%
+        function createNode(c: Color, l: Rope, r: Rope): Node {
+            return Node{ c, 0n, l, r };
         }
-
-        %%
-        %% TODO: need an append method
-        %%
-
     }
 } %% namespace CRopeOps
 

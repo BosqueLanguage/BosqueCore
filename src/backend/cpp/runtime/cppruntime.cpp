@@ -45,13 +45,25 @@ CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar 
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8};
 }
 
-//
-// TODO: we will likely need a size parameter (for the incomming buf) and some way
-// to handle buffers that are larger than 8 chars. This is currently just to test
-// that we can emit a base rope consisting of just a leaf
-//
-CCharBuffer cbufferFromStringLiteral(const CChar* buf) {
-    return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
+CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
+    const CChar* buf = basestr;
+    basestr += 8;
+
+    if(size >= 8) {
+        return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
+    }
+
+    switch(size) {
+        case 0: return CCharBuffer::create_empty();
+        case 1: return CCharBuffer::create_1(buf[0]);
+        case 2: return CCharBuffer::create_2(buf[0], buf[1]);
+        case 3: return CCharBuffer::create_3(buf[0], buf[1], buf[2]);
+        case 4: return CCharBuffer::create_4(buf[0], buf[1], buf[2], buf[3]);
+        case 5: return CCharBuffer::create_5(buf[0], buf[1], buf[2], buf[3], buf[4]);
+        case 6: return CCharBuffer::create_6(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+        case 7: return CCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
+        default: 𝐚𝐛𝐨𝐫𝐭;
+    }
 }
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
