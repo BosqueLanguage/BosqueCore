@@ -49,10 +49,6 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
     const CChar* buf = basestr;
     basestr += 8;
 
-    if(size >= 8) {
-        return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
-    }
-
     switch(size) {
         case 0: return CCharBuffer::create_empty();
         case 1: return CCharBuffer::create_1(buf[0]);
@@ -62,7 +58,7 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
         case 5: return CCharBuffer::create_5(buf[0], buf[1], buf[2], buf[3], buf[4]);
         case 6: return CCharBuffer::create_6(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
         case 7: return CCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
-        default: 𝐚𝐛𝐨𝐫𝐭;
+        default: return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
     }
 }
 

@@ -270,6 +270,26 @@ namespace CRopeOps {
         }
     }
 
+    %% Do we really need a reduce function?
+    recursive? function s_crope_reduce<T, U>(l: List<T>, init: U, f: recursive? fn(U, T) -> U): U {
+        return Tree<T>::reduce[recursive?]<U>(l.value, init, f);
+    }
+
+    %%
+    %% TODO: We should try to merge buffers whenever possible here
+    %%
+    function s_concat2<T>(l1: Rope, l2: Rope): Rope {
+        if(s_list_empty<T>(l1)) {
+            return l2;
+        }
+        elif(s_list_empty<T>(l2)) {
+            return l1;
+        }
+        else {
+            return ListOps::s_list_reduce<T, List<T>>(l2, l1, fn(ll: List<T>, v: T): List<T> => ListOps::s_list_push_back<T>(ll, v));
+        }
+    }
+
     function s_crope_create(buf: CCharBuffer): CRope {        
         return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));       
     }
@@ -279,6 +299,10 @@ namespace CRopeOps {
         | Leaf{ buf: CCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
+        function createEmpty(): BBLeaf {
+            return BBLeaf{ };
+        }
+
         function createLeaf(buf: CCharBuffer): Leaf {
             return Leaf{ buf };
         }
