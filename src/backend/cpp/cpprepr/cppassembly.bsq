@@ -101,6 +101,8 @@ datatype CollectionTypeDecl provides AbstractEntityTypeDecl using {
 }
 of
 ListTypeDecl {  }
+| CRopeTypeDecl { }
+| UnicodeRopeTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
@@ -255,7 +257,7 @@ entity Assembly {
     field datatypes: Map<TypeKey, DatatypeTypeDecl>;
 
     field pconcepts: Map<TypeKey, PrimitiveConceptTypeDecl>; %% Note: Currently only supports option
-    field concepts: Map<TypeKey, ConceptTypeDecl>; %% We dont emit these but need to look them up
+    field concepts: Map<TypeKey, ConceptTypeDecl>; 
 
     field allmethods: List<InvokeKey>;
     field typeinfos: Map<TypeKey, TypeInfo>;

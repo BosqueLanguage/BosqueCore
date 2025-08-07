@@ -204,7 +204,6 @@ entity LiteralSimpleExpression provides Expression {
     field value: CString;
 }
 
-%% These should just be ropes (eventually)
 entity LiteralCStringExpression provides Expression {
     field value: CString;
 }

@@ -21,6 +21,8 @@ namespace CPPTransformNameManager {
             | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
             | 'BigInt' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
             | 'Float' => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
+            | 'CString' => { return CPPAssembly::TypeKey::from('Core::CRope'); }
+            | 'String' => { return CPPAssembly::TypeKey::from('Core::UnicodeRope'); }
             | 'CChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::CChar'); }
             | 'UnicodeChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::UnicodeChar'); }
             | 'CCharBuffer' => { return CPPAssembly::TypeKey::from('__CoreCpp::CCharBuffer'); }
@@ -39,6 +41,8 @@ namespace CPPTransformNameManager {
             | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }
             | '__CoreCpp::BigInt' => { return BSQAssembly::TypeKey::from('BigInt'); }
             | '__CoreCpp::Float' => { return BSQAssembly::TypeKey::from('Float'); }
+            | 'Core::CRope' => { return BSQAssembly::TypeKey::from('CString'); }
+            | 'Core::UnicodeRope' => { return BSQAssembly::TypeKey::from('String'); }
             | '__CoreCpp::CChar' => { return BSQAssembly::TypeKey::from('CChar'); }
             | '__CoreCpp::UnicodeChar' => { return BSQAssembly::TypeKey::from('UnicodeChar'); }
             | '__CoreCpp::CCharBuffer' => { return BSQAssembly::TypeKey::from('CCharBuffer'); }
@@ -625,13 +629,15 @@ entity CPPTransformer {
 
         return CPPAssembly::AccessCapturedVariableExpression{ etype, vname };
     }
-
+ 
     method transformLiteralCStringExpression(exp: BSQAssembly::LiteralCStringExpression): CPPAssembly::LiteralCStringExpression {
-        abort; %% TODO: Lacking ropes so this is an abort for now
+        let etype = this.convertTypeSignature(exp.etype);
+        return CPPAssembly::LiteralCStringExpression{ etype, exp.value };
     }
 
     method transformLiteralStringExpression(exp: BSQAssembly::LiteralStringExpression): CPPAssembly::LiteralStringExpression {
-        abort; %% TODO: Lacking ropes so this is an abort for now
+        let etype = this.convertTypeSignature(exp.etype);       
+        return CPPAssembly::LiteralStringExpression{ etype, exp.value };
     }
 
     method transformLiteralCCharExpression(exp: BSQAssembly::LiteralCCharExpression): CPPAssembly::LiteralCCharExpression {
@@ -1061,6 +1067,8 @@ entity CPPTransformer {
                     | 'BigNat'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'BigInt'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'Float'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'CString'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                    | 'String'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CChar'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
@@ -1102,6 +1110,23 @@ entity CPPTransformer {
 
                         return listinfo, ntic.update(cpptkey, listinfo);
                     }
+                    if(ant)@<BSQAssembly::CRopeTypeDecl> {
+                        let ropetk = BSQAssembly::TypeKey::from(CString::concat('CRopeOps::Rope'));
+
+                        let ropeinfo, ntic = this.generateTypeInfo[recursive](ropetk, tic);
+                        let cropeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+
+                        return cropeinfo, ntic.update(cpptkey, cropeinfo);
+                    }
+                    if(ant)@<BSQAssembly::UnicodeRopeTypeDecl> {
+                        let ropetk = BSQAssembly::TypeKey::from(CString::concat('UnicodeRopeOps::Rope'));
+
+                        let ropeinfo, ntic = this.generateTypeInfo[recursive](ropetk, tic);
+                        let unicoderopeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+                    
+                        return unicoderopeinfo, ntic.update(cpptkey, unicoderopeinfo);
+                    }
+
                     abort;
                 }
                 elif(this.bsqasm.stringoftypedecls.has(typekey)) {
@@ -1250,11 +1275,23 @@ entity CPPTransformer {
     method transformCollectionTypeDecl(ctd: BSQAssembly::CollectionTypeDecl): CPPAssembly::CollectionTypeDecl {
         match(ctd)@ {
             BSQAssembly::ListTypeDecl =>    { return this.transformListTypeDecl($ctd); }
+            | BSQAssembly::CRopeTypeDecl => { return this.transformCRopeTypeDecl($ctd); }
+            | BSQAssembly::UnicodeRopeTypeDecl => { return this.transformUnicodeRopeTypeDecl($ctd); }
             | BSQAssembly::StackTypeDecl => { return this.transformStackTypeDecl($ctd); }
             | BSQAssembly::QueueTypeDecl => { return this.transformQueueTypeDecl($ctd); }
             | BSQAssembly::SetTypeDecl =>   { return this.transformSetTypeDecl($ctd); }
-            | BSQAssembly::MapTypeDecl =>   { return this.transformMapTypeDecl($ctd); }
+            | BSQAssembly::MapTypeDecl =>   { return this.transformMapTypeDecl($ctd); }   
         }
+    }
+
+    method transformCRopeTypeDecl(crtd: BSQAssembly::CRopeTypeDecl): CPPAssembly::CRopeTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(crtd@<BSQAssembly::AbstractNominalTypeDecl>);
+        let oftype = this.convertTypeSignature(crtd.oftype);
+        return CPPAssembly::CRopeTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype };
+    }
+
+    method transformUnicodeRopeTypeDecl(urtd: BSQAssembly::UnicodeRopeTypeDecl): CPPAssembly::UnicodeRopeTypeDecl {
+        abort;
     }
 
     method transformEntityDeclToCpp(e: BSQAssembly::EntityTypeDecl): CPPAssembly::EntityTypeDecl {

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, ValidateDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, CRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, UnicodeRopeTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
@@ -2111,6 +2111,52 @@ class BSQIREmitter {
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::ListTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])} }`];
     }
 
+    private emitCRopeTypeDecl(ns: FullyQualifiedNamespace, tdecl: CRopeTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
+        const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+
+        const childsigs = [];
+
+        const rops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps");
+        if(rops !== undefined) {
+            const rdecl = rops.typedecls.find((td) => td.name === "Rope") as AbstractNominalTypeDecl;
+            if(rdecl !== undefined) {
+                const vtsig = BSQIREmitter.generateRcvrForNominalAndBinds(rdecl, instantiation.binds, undefined);
+                childsigs.push(vtsig.tkeystr);
+            }
+        }
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
+        
+        let bufdecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "CCharBuffer") as AbstractNominalTypeDecl;
+        const buftype = new NominalTypeSignature(tdecl.sinfo, undefined, bufdecl, tsig.alltermargs);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::CRopeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(buftype)} }`];
+    }
+
+    private emitUnicodeRopeTypeDecl(ns: FullyQualifiedNamespace, tdecl: UnicodeRopeTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
+        const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+
+        const childsigs = [];
+
+        const rops = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps");
+        if(rops !== undefined) {
+            const rdecl = rops.typedecls.find((td) => td.name === "Rope") as AbstractNominalTypeDecl;
+            if(rdecl !== undefined) {
+                const vtsig = BSQIREmitter.generateRcvrForNominalAndBinds(rdecl, instantiation.binds, undefined);
+                childsigs.push(vtsig.tkeystr);
+            }
+        }
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
+
+        let bufdecl = this.assembly.getCoreNamespace().typedecls.find((td) => td.name === "UnicodeCharBuffer") as AbstractNominalTypeDecl;
+        const buftype = new NominalTypeSignature(tdecl.sinfo, undefined, bufdecl, tsig.alltermargs);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::UnicodeRopeTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(buftype)} }`];
+    }
+
     private emitStackTypeDecl(ns: FullyQualifiedNamespace, tdecl: StackTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         assert(false, "Not implemented -- emitStackTypeDecl");
     }
@@ -2293,6 +2339,16 @@ class BSQIREmitter {
                     this.allconcretetypes.push(tkey);
                     this.collections.push(decl);
                 }
+                else if(tt instanceof CRopeTypeDecl) {
+                    const [tkey, decl] = this.emitCRopeTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
+                    this.allconcretetypes.push(tkey);
+                    this.collections.push(decl);
+                }
+                else if(tt instanceof UnicodeRopeTypeDecl) {
+                    const [tkey, decl] = this.emitUnicodeRopeTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
+                    this.allconcretetypes.push(tkey);
+                    this.collections.push(decl);
+                }
                 else if(tt instanceof StackTypeDecl) {
                     const [tkey, decl] = this.emitStackTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allconcretetypes.push(tkey);
@@ -2420,6 +2476,12 @@ class BSQIREmitter {
         }
         else if(tdecl instanceof ListTypeDecl) {
             return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        }
+        else if(tdecl instanceof CRopeTypeDecl) {
+            return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        }
+        else if(tdecl instanceof UnicodeRopeTypeDecl) {
+            return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         }
         else if(tdecl instanceof StackTypeDecl) {
             assert(false, "Not implemented -- emitStackTypeDecl");

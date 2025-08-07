@@ -194,6 +194,8 @@ datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
 }
 of
 ListTypeDecl {  }
+| CRopeTypeDecl { }
+| UnicodeRopeTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }

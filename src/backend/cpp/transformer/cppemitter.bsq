@@ -992,6 +992,18 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
     return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
+function emitCStringAsLiteral(s: CString): String {
+    return String::fromCString(CString::concat('"', s,'"'));
+}
+
+function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
+    return String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral( reinterpret_cast<const __CoreCpp::CChar*>(", emitCStringAsLiteral(exp.value), ")))");
+}
+
+function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
+    abort;
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
@@ -1000,7 +1012,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::LiteralUnicodeCharExpression => { abort; }
         | CPPAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
         | CPPAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
-        %%| CPPAssembly::LiteralCStringExpression => { abort; }
+        | CPPAssembly::LiteralCStringExpression => { return emitLiteralCStringExpression($e); }
         %%| CPPAssembly::LiteralStringExpression => { abort; }
         %%| CPPAssembly::LiteralCRegexExpression => { abort; }
         %%| CPPAssembly::LiteralRegexExpression => { abort; }
@@ -1630,10 +1642,22 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
 
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
-    let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
-    let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) then ttype.removePrefixString("__CoreCpp::") 
-        else ttype;
-    return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+
+    if(ctd)@<CPPAssembly::CRopeTypeDecl> {
+        return String::concat(indent, "typedef CRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    if(ctd)@<CPPAssembly::UnicodeRopeTypeDecl> {
+        return String::concat(indent, "typedef UnicodeRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    if(ctd)@<CPPAssembly::ListTypeDecl> {
+        let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
+        let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) 
+            then ttype.removePrefixString("__CoreCpp::") 
+            else ttype;
+        return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+    }
+    
+    abort; %% Non supported collection type!
 }
 
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1841,8 +1865,11 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
+    %% We convert String -> UnicodeRope and CString -> CRope in the transform so no need to emit here
     let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
-        return if(asm.isPrimtitiveType(tk)) then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) else acc;
+        return if(/\(asm.isPrimtitiveType(tk), tk.value !== 'Core::CRope', tk.value !== 'Core::UnicodeRope')) 
+            then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) 
+            else acc;
     }); 
 
     %% Non-value type forward decls
