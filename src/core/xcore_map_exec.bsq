@@ -646,10 +646,6 @@ namespace MapOps {
                     then Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r) 
                     else nt;
 
-                if(!checkRBChildColorInvariant<K, V>(ntt)) {
-                    abort;
-                }
-
                 return ntt;
             }
             | _ => { 
