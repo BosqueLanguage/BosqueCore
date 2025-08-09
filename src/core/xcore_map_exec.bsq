@@ -414,10 +414,6 @@ namespace MapOps {
     }
 
     function bubble<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Tree<K, V> {
-        if(tleft?<BBLeaf<K, V>> && tright?<BBLeaf<K, V>>) {
-            return Tree<K, V>::emptyTree;
-        }
-
         %% Propagate up live subtree
         if(tleft)<BBLeaf<K, V>> {
             return tright;
