@@ -12,14 +12,14 @@ __internal entity CRope {
     %%
     function concat(...lr: List<CRope>): CRope {
         if(lr.empty()) {
-            return CRopeOps::createEmpty();
+            return CRope{};
         }
         else {
             if(lr.isSingle()) {
                 return lr.single();
             }
             else {
-                return lr.reduce<CRope>(CRope::createEmpty(), fn(acc, r) => ListOps::s_concat2(acc, r));
+                return lr.reduce<CRope>(CRope{}, fn(acc, r) => CRopeOps::s_crope_concat2(acc, r));
             }
         }
     }
