@@ -641,16 +641,12 @@ namespace ListOps {
     }
 
     function bubble<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
-        if(tleft?<BBLeaf<T>> && tright?<BBLeaf<T>>) {
-            return Tree<T>::emptyTree;
-        }
-
         %% Propagate up live subtree
         if(tleft)<BBLeaf<T>> {
             return tright;
         }
-        if(tleft)<BBLeaf<T>> {
-            return tright;
+        if(tright)<BBLeaf<T>> {
+            return tleft;
         }
 
         return balance<T>(c, tleft, tright);
