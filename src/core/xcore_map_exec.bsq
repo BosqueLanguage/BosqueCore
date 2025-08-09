@@ -418,7 +418,7 @@ namespace MapOps {
             return Tree<K, V>::emptyTree;
         }
 
-        %% Propogate up live subtree
+        %% Propagate up live subtree
         if(tleft)<BBLeaf<K, V>> {
             return tright;
         }
@@ -646,9 +646,15 @@ namespace MapOps {
                     then Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r) 
                     else nt;
 
+                if(!checkRBChildColorInvariant<K, V>(ntt)) {
+                    abort;
+                }
+
                 return ntt;
             }
-            | _ => { return nt; }
+            | _ => { 
+                return nt; 
+            }
         }
     }
 
