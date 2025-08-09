@@ -414,20 +414,14 @@ namespace MapOps {
     }
 
     function bubble<K: keytype, V>(c: Color, tleft: Tree<K, V>, tright: Tree<K, V>): Tree<K, V> {
-        %% Handle case where we try to bubble an empty tree up
-        if(/\(tleft?<BBLeaf<K, V>>, tright?<BBLeaf<K, V>>)) {
-            return Tree<K, V>::emptyTree;
+        %% Propagate up live subtree
+        if(tleft)<BBLeaf<K, V>> {
+            return tright;
         }
-        if(/\(tleft?<Node<K, V>>, tright?<Node<K, V>>)) {
-            let tl = tleft@<Node<K, V>>;
-            let tr = tright@<Node<K, V>>;
+        if(tright)<BBLeaf<K, V>> {
+            return tleft;
+        }
 
-            if(tl.c === Color#BB || tr.c === Color#BB) {
-                let nl = create_with_empty<K, V>(redden(tl.c), tl.l, tl.r);
-                let nr = create_with_empty<K, V>(redden(tr.c), tr.l, tr.r);
-                return balance<K, V>(blacken(tl.c), nl, nr);
-            }
-        }
         return balance<K, V>(c, tleft, tright);
     }
 
@@ -554,7 +548,10 @@ namespace MapOps {
 
     recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
         match(t)@ {
-            Leaf<K, V> => {
+            BBLeaf<K, V> => {
+                return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v});               
+            }
+            | Leaf<K, V> => {
                 assert !KeyComparator::equal<K>(k, $t.v.key);
 
                 if(KeyComparator::less<K>(k, $t.v.key)) {
@@ -617,78 +614,39 @@ namespace MapOps {
         }
     }
 
-    function create_with_empty<K: keytype, V>(c: Color, l: Tree<K, V>, r: Tree<K, V>): Tree<K, V> {
-        if(/\(l?<BBLeaf<K, V>>, r?<BBLeaf<K, V>>)) {
-            return Tree<K, V>::emptyTree;
-        }
-        if(l?<BBLeaf<K, V>>) {
-            if(c === Color#Red) {
-                return r;
-            }
-        }
-        if(r?<BBLeaf<K, V>>) {
-            if(c === Color#Red) {
-                return l;
-            }
-        }
-        assert /\(l?!<BBLeaf<K, V>>, r?!<BBLeaf<K, V>>);
-        return Tree<K, V>::createNode(c, l, r);
-    }
-
-    %% Search through tree until we find leaf of interest, then replace with empty tree
+    %% Replace target node with empty tree
     recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         match(t)@ {
-            BBLeaf<K, V> => { return Tree<K, V>::emptyTree; }
-            | Leaf<K, V> => {             
+            Leaf<K, V> => {             
                 return Tree<K, V>::emptyTree;
             }
             | Node<K, V> => {
-                %% Ensure we dont try to bubble with an empty tree
-                if($t.l)@<BBLeaf<K, V>> {
-                    return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
-                }
-                if($t.r)@<BBLeaf<K, V>> {
-                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
-                }
-
-                %% Determine if we need to recurse left or right
                 let rmin = mink<K, V>($t.r);
-                let lmin = mink<K, V>($t.l);
                 if(KeyComparator::less<K>(k, rmin)) {
-                    return bubble<K, V>($t.c, delete_helper[recursive]<K, V>($t.l, k), $t.r);
+                    let nl = delete_helper[recursive]<K, V>($t.l, k);
+                    return bubble<K, V>($t.c, nl, $t.r);
                 }
-                return bubble<K, V>($t.c, $t.l, delete_helper[recursive]<K, V>($t.r, k));
+                else {
+                    let nr = delete_helper[recursive]<K, V>($t.r, k);
+                    return bubble<K, V>($t.c, $t.l, nr);
+                }
             }
         }
     }
 
-    %% Deletes node of given key, k, from our tree
     function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         let nt = delete_helper[recursive]<K, V>(t, k);
         match(nt)@ {
             Node<K, V> => {
-                %% If empty sub tree move root down
-                if($nt.l?<BBLeaf<K, V>>) {
-                    let r = $nt.r;
-                    if(r)@@!<Node<K, V>> {
-                        return r;
-                    }
-                    let nrt = balance<K, V>(r.c, r.l, r.r);
-                    return nrt;
-                }
+                let ntt = if($nt.c === Color#Red) 
+                    then Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r) 
+                    else nt;
 
-                if($nt.r?<BBLeaf<K, V>>) {
-                    let l = $nt.l;
-                    if(l)@@!<Node<K, V>> {
-                        return l;
-                    }
-                    let nlt = balance<K, V>(l.c, l.l, l.r);
-                    return nlt;
-                }
-
-                return nt;
+                return ntt;
             }
-            | _ => { return nt; }
+            | _ => { 
+                return nt; 
+            }
         }
     }
 

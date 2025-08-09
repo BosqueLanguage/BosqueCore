@@ -641,22 +641,14 @@ namespace ListOps {
     }
 
     function bubble<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Tree<T> {
-        %% Handle case where we try to bubble an empty tree up
-        if(/\(tleft?<BBLeaf<T>>, tright?<BBLeaf<T>>)) {
-            return Tree<T>::emptyTree;
+        %% Propagate up live subtree
+        if(tleft)<BBLeaf<T>> {
+            return tright;
+        }
+        if(tright)<BBLeaf<T>> {
+            return tleft;
         }
 
-        if(/\(tleft?<Node<T>>, tright?<Node<T>>)) {
-            let tl = tleft@<Node<T>>;
-            let tr = tright@<Node<T>>;
-
-            if(tl.c === Color#BB || tr.c === Color#BB) {
-                let nl = create_with_empty<T>(redden(tl.c), tl.l, tl.r);
-                let nr = create_with_empty<T>(redden(tr.c), tr.l, tr.r);
-                return balance<T>(blacken(tl.c), nl, nr);
-            }
-        }
-        
         return balance<T>(c, tleft, tright);
     }
 
@@ -800,7 +792,10 @@ namespace ListOps {
 
     recursive function insert_helper<T>(t: Tree<T>, idx: Nat, v: T): Tree<T> {
         match(t)@ {
-            Leaf<T> => { 
+            BBLeaf<T> => {
+                return Tree<T>::createLeaf(v);
+            }
+            | Leaf<T> => { 
                 if(idx == 0n) {
                     return Tree<T>::createNode(Color#Red, Tree<T>::createLeaf(v), $t);
                 }
@@ -837,36 +832,21 @@ namespace ListOps {
         }
     }
 
-    %% Forcefully bubble up leaves to red nodes, otherwise create new node
-    function create_with_empty<T>(c: Color, l: Tree<T>, r: Tree<T>): Tree<T> {
-        if(/\(l?<BBLeaf<T>>, r?<BBLeaf<T>>)) {
-            return Tree<T>::emptyTree;
-        }
-        if(l?<BBLeaf<T>>) {
-            if(c === Color#Red) {
-                return r;
-            }
-        }
-        if(r?<BBLeaf<T>>) {
-            if(c === Color#Red) {
-                return l;
-            }
-        }
-        assert /\(l?!<BBLeaf<T>>, r?!<BBLeaf<T>>);
-        return Tree<T>::createNode(c, l, r);
-    }
-
     recursive function delete_helper<T>(t: Tree<T>, idx: Nat): Tree<T> {
         match(t)@ {
-            BBLeaf<T> => { return Tree<T>::emptyTree; }
-            | Leaf<T> => { return Tree<T>::emptyTree; }
+            Leaf<T> => { 
+                return Tree<T>::emptyTree; 
+            }
             | Node<T> => {
-                %% We need to locate our leaf of interest
                 let count = size<T>($t.l);
                 if(idx < count) {
-                     return bubble<T>($t.c, delete_helper[recursive]<T>($t.l, idx), $t.r);
+                    let nl = delete_helper[recursive]<T>($t.l, idx);
+                    return bubble<T>($t.c, nl, $t.r);
                 }
-                return bubble<T>($t.c, $t.l, delete_helper[recursive]<T>($t.r, idx - count));
+                else {
+                    let nr = delete_helper[recursive]<T>($t.r, idx - count);
+                    return bubble<T>($t.c, $t.l, nr);
+                }
             }
         }
     }
@@ -875,28 +855,15 @@ namespace ListOps {
         let nt = delete_helper<T>(t, idx); 
         match(nt)@ {
             Node<T> => {
-                %% If empty sub tree move root down to non empty slot
-                if($nt.l?<BBLeaf<T>>) {
-                    let r = $nt.r;
-                    if(r)@@!<Node<T>> {
-                        return r;
-                    }
-                    let nrt = balance<T>(r.c, r.l, r.r);
-                    return nrt;
-                }
-                
-                if($nt.r?<BBLeaf<T>>) {
-                    let l = $nt.l;
-                    if(l)@@!<Node<T>> {
-                        return l;
-                    }
-                    let nlt = balance<T>(l.c, l.l, l.r);
-                    return nlt;
-                }
-                
+                let ntt = if($nt.c === Color#Red)
+                    then Tree<T>::createNode(Color#Black, $nt.l, $nt.r)
+                    else nt;
+
                 return nt;
             }
-            | _ => { return nt; }
+            | _ => { 
+                return nt; 
+            }
         }
     }
 
