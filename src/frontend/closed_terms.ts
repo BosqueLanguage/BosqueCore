@@ -149,6 +149,10 @@ class InstantiationPropagator {
 
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+
+                    // We likely do not want to keep this, just for testing
+                    const concatdecl = nns.functions.find((tt) => tt.name === "s_crope_concat2") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, concatdecl, rt.alltermargs);
                 }
             }
 

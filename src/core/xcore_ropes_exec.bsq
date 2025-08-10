@@ -292,6 +292,7 @@ namespace CRopeOps {
 
     function concat(l: Rope, r: Rope): Rope {
         let nn = Rope::createNode(Color#Black, l, r);
+        
         return balance(nn.c, nn.l, nn.r);
     }    
 

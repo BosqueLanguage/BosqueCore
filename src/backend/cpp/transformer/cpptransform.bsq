@@ -21,8 +21,6 @@ namespace CPPTransformNameManager {
             | 'BigNat' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigNat'); }
             | 'BigInt' => { return CPPAssembly::TypeKey::from('__CoreCpp::BigInt'); }
             | 'Float' => { return CPPAssembly::TypeKey::from('__CoreCpp::Float'); }
-            | 'CString' => { return CPPAssembly::TypeKey::from('Core::CRope'); }
-            | 'String' => { return CPPAssembly::TypeKey::from('Core::UnicodeRope'); }
             | 'CChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::CChar'); }
             | 'UnicodeChar' => { return CPPAssembly::TypeKey::from('__CoreCpp::UnicodeChar'); }
             | 'CCharBuffer' => { return CPPAssembly::TypeKey::from('__CoreCpp::CCharBuffer'); }
@@ -41,8 +39,6 @@ namespace CPPTransformNameManager {
             | '__CoreCpp::BigNat' => { return BSQAssembly::TypeKey::from('BigNat'); }
             | '__CoreCpp::BigInt' => { return BSQAssembly::TypeKey::from('BigInt'); }
             | '__CoreCpp::Float' => { return BSQAssembly::TypeKey::from('Float'); }
-            | 'Core::CRope' => { return BSQAssembly::TypeKey::from('CString'); }
-            | 'Core::UnicodeRope' => { return BSQAssembly::TypeKey::from('String'); }
             | '__CoreCpp::CChar' => { return BSQAssembly::TypeKey::from('CChar'); }
             | '__CoreCpp::UnicodeChar' => { return BSQAssembly::TypeKey::from('UnicodeChar'); }
             | '__CoreCpp::CCharBuffer' => { return BSQAssembly::TypeKey::from('CCharBuffer'); }
