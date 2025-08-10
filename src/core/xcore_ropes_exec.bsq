@@ -68,6 +68,46 @@ namespace CRopeOps {
         }
     }
 
+    recursive function checkRBChildColorInvariant(t: Rope): Bool {
+        if(t)@@!<Node> {
+            return true;
+        }
+
+        if(t.c === Color#Red) {
+            let islred = if(t.l)@<Node> then $_.c === Color#Red  else false;
+            let isrred = if(t.r)@<Node> then $_.c === Color#Red  else false;
+
+            return !\/(islred, isrred);
+        }
+        
+        return checkRBChildColorInvariant[recursive](t.l) && checkRBChildColorInvariant[recursive](t.r);
+    }
+
+    recursive function checkRBPathLengthInvariant(t: Rope): Int {
+        if(t)@@!<Node> {
+            return 0i;
+        }
+
+        let lc = checkRBPathLengthInvariant[recursive](t.l);
+        if(lc == -1i) {
+            return -1i;
+        }
+
+        let rc = checkRBPathLengthInvariant[recursive](t.r);
+        if(rc == -1i) {
+            return -1i;
+        }
+
+        if(lc != rc) {
+            return -1i; %% we have a black height mismatch return sentinel value
+        }
+
+        return if(t.c === Color#Black) then lc + 1i else lc;
+    }
+
+    function checkRBInvariants(t: Rope): Bool {
+       return checkRBChildColorInvariant(t) && checkRBPathLengthInvariant(t) >= 0i;
+    }
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
     function balanceHelper_RR_LL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
@@ -291,9 +331,16 @@ namespace CRopeOps {
     }
 
     function concat(l: Rope, r: Rope): Rope {
-        let nn = Rope::createNode(Color#Black, l, r);
-        
-        return balance(nn.c, nn.l, nn.r);
+        let nn = Rope::createNode(Color#Red, l, r);
+        let tt = balance(nn.c, nn.l, nn.r);
+
+        if(tt)@<Node> {
+            let nt = if($tt.c === Color#Red) then Rope::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            return nt;
+        }
+        else {
+            return tt;
+        }
     }    
 
     datatype Rope of 
@@ -311,7 +358,7 @@ namespace CRopeOps {
 
         %%
         %% TODO: We will need a weight calculation method where weight
-        %% is the sum of all buffer sizes in left subtree
+        %% is the sum of all buffer sizes in left subRope
         %%
         function createNode(c: Color, l: Rope, r: Rope): Node {
             return Node{ c, 0n, l, r };
