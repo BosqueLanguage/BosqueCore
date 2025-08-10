@@ -1,30 +1,6 @@
 namespace Core;
 
 __internal entity CRope {
-#if CPP_CORE
-    method append(buf: CCharBuffer): CRope {
-        return CRopeOps::s_crope_append(this, buf);
-    }
-
-    %%
-    %% We might need to give some thought to whats actually necessary here.
-    %% Also, cpp emitter needs rest param support
-    %%
-    function concat(...lr: List<CRope>): CRope {
-        if(lr.empty()) {
-            return CRope{};
-        }
-        else {
-            if(lr.isSingle()) {
-                return lr.single();
-            }
-            else {
-                return lr.reduce<CRope>(CRope{}, fn(acc, r) => CRopeOps::s_crope_concat2(acc, r));
-            }
-        }
-    }
-#else
-#endif %%CPP_CORE
 }
 
 __internal entity UnicodeRope {
