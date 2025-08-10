@@ -1318,24 +1318,26 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
     switch(String::fromCString(body.builtin)) {
         "s_float_power" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
         | "s_float_sqrt" => { return String::concat(indent, "    ", "return __CoreCpp::Float(sqrtf64(a.get()));%n;"); }
-        | "ccharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_empty();", ); }
-        | "ccharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1);", ); }
-        | "ccharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2);", ); }
-        | "ccharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3);", ); }
-        | "ccharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4);", ); }
-        | "ccharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5);", ); }
-        | "ccharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6);", ); }
-        | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);", ); }
-        | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);", ); }
-        | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();", ); }
-        | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);", ); }
-        | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);", ); }
-        | "unicodecharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3);", ); }
-        | "unicodecharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4);", ); }
-        | "unicodecharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5);", ); }
-        | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);", ); }
-        | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);", ); }
-        | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);", ); }
+        | "ccharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_empty();%n;"); }
+        | "ccharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1);%n;"); }
+        | "ccharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2);%n;"); }
+        | "ccharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3);%n;"); }
+        | "ccharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4);%n;"); }
+        | "ccharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5);%n;"); }
+        | "ccharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
+        | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
+        | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
+        | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();%n;"); }
+        | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);%n;"); }
+        | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);%n;"); }
+        | "unicodecharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3);%n;"); }
+        | "unicodecharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4);%n;"); }
+        | "unicodecharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5);%n;"); }
+        | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
+        | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
+        | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
+        | "cstring_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_concat2(s1, s2);%n;"); }
+        | "cstring_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_empty(s);%n;"); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }
@@ -1663,10 +1665,16 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
 
     if(ctd)@<CPPAssembly::CRopeTypeDecl> {
-        return String::concat(indent, "typedef CRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+        let ropedef = String::concat(indent, "typedef CRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+        let cstring_alias = String::concat(indent, "typedef CRope CString;%n;");
+
+        return String::concat(ropedef, cstring_alias);
     }
     if(ctd)@<CPPAssembly::UnicodeRopeTypeDecl> {
-        return String::concat(indent, "typedef UnicodeRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+        let ropedef = String::concat(indent, "typedef UnicodeRopeOps::Rope ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
+        let string_alias = String::concat(indent, "typedef UnicodeRope String;%n;");
+
+        return String::concat(ropedef, string_alias);
     }
     if(ctd)@<CPPAssembly::ListTypeDecl> {
         let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
@@ -1689,6 +1697,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::CollectionTypeDecl => { return emitTypeInfo(ctx.asm.typeinfos.get($ant.tkey), some($ant), ctx, indent); } %% Collection typedef done with fwd decls
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::PrimitiveEntityTypeDecl => { return ""; } %% We just need PrimitiveEntityTypeDecl's methods
     }
 }
 
@@ -1815,7 +1824,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     });
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk))
+        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>("", fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
@@ -1856,7 +1865,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 
     %% Value types
     let values = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk))
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(enums, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
@@ -1884,9 +1893,8 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
-    %% We convert String -> UnicodeRope and CString -> CRope in the transform so no need to emit here
     let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
-        return if(/\(asm.isPrimtitiveType(tk), tk.value !== 'Core::CRope', tk.value !== 'Core::UnicodeRope')) 
+        return if(/\(asm.isPrimtitiveType(tk), tk.value !== 'CString', tk.value !== 'String')) 
             then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) 
             else acc;
     }); 

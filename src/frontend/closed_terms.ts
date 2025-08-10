@@ -145,10 +145,10 @@ class InstantiationPropagator {
 
                 if(nns !== undefined) {
                     const createdecl = nns.functions.find((tt) => tt.name === "s_crope_create") as NamespaceFunctionDecl;                    
-                    this.instantiateNamespaceFunction(nns, createdecl, rt.alltermargs);
+                    this.instantiateNamespaceFunction(nns, createdecl, []);
 
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, pushdecl, rt.alltermargs);
+                    this.instantiateNamespaceFunction(nns, pushdecl, []);
                 }
             }
 
@@ -196,6 +196,22 @@ class InstantiationPropagator {
         if(this.isAlreadySeenNamespaceFunction(fkey)) {
             return;
         }
+
+        // If we are cpp runtime see if we need to instantiate rope functions 
+        if(fkey.startsWith("CString")) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
+
+            if(nns !== undefined) {
+                if(fkey.endsWith("s_concat2")) {
+                    const concatdecl = nns.functions.find((tt) => tt.name === "s_crope_concat2") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, concatdecl, []);
+                }
+                if(fkey.endsWith("s_empty")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_empty") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
+            }
+        } 
 
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
     }
