@@ -1337,6 +1337,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
         | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
         | "cstring_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_concat2(s1, s2);%n;"); }
+        | "cstring_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_empty(s);%n;"); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }
@@ -1696,6 +1697,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::CollectionTypeDecl => { return emitTypeInfo(ctx.asm.typeinfos.get($ant.tkey), some($ant), ctx, indent); } %% Collection typedef done with fwd decls
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::PrimitiveEntityTypeDecl => { return ""; } %% We just need PrimitiveEntityTypeDecl's methods
     }
 }
 
@@ -1822,7 +1824,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     });
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk))
+        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>("", fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
@@ -1863,7 +1865,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 
     %% Value types
     let values = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk))
+        .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(enums, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);

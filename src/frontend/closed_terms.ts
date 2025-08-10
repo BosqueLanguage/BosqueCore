@@ -206,6 +206,10 @@ class InstantiationPropagator {
                     const concatdecl = nns.functions.find((tt) => tt.name === "s_crope_concat2") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, concatdecl, []);
                 }
+                if(fkey.endsWith("s_empty")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_empty") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
             }
         } 
 

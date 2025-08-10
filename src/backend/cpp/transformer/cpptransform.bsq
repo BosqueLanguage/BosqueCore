@@ -1524,6 +1524,17 @@ entity CPPTransformer {
                 return acc.insert(base.2, CPPAssembly::PrimitiveEntityTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9 });
         });
 
+        let transformer_nsdecls_primitives = transformer_primitives.reduce<Map<CString, CPPAssembly::NamespaceDecl>>(
+            transformer_nsdecls_enums, fn(acc, cpptk, cppetd) => {
+                return CPPTransformNameManager::getNamespaceDeclMapping(cppetd.fullns, acc,
+                    fn(decl) => {
+                        let nalltypes = decl.alltypes.pushBack(cpptk);
+                        let ndecl = transformer.updateNSMethods(decl, cppetd@<CPPAssembly::AbstractNominalTypeDecl>);
+                        
+                        return ndecl[alltypes=nalltypes];
+                    });                     
+            }); 
+
         let transformer_staticmethods = bsqasm.staticmethods.reduce<Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>>(
             Map<CPPAssembly::InvokeKey, CPPAssembly::MethodDeclStatic>{}, fn(acc, ikey, decl) => {
                 return acc.insert(CPPTransformNameManager::convertInvokeKey(ikey), transformer.transformStaticMethodDecl(decl));
@@ -1566,7 +1577,7 @@ entity CPPTransformer {
         });
 
         return CPPAssembly::Assembly {
-            nsdecls = transformer_nsdecls_enums,
+            nsdecls = transformer_nsdecls_primitives,
             typeconsts = transformer_typeconsts,
             allfuncs = transformer_allfuncs,
             nsfuncs = transformer_nsfuncs,
