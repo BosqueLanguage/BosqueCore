@@ -674,7 +674,7 @@ struct CCharBuffer {
 CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr);
 
 inline Bool cbuf_memcmp(CChar b1[maxCCharBufSize], CChar b2[maxCCharBufSize]) noexcept {
-    static_assert(maxCCharBufSize == 8);
+    static_assert(maxCCharBufSize * sizeof(CChar) == sizeof(uintptr_t));
     
     return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
 }

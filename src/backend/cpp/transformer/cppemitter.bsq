@@ -265,7 +265,7 @@ function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::
         then removeCppPrefix(mdeclname)
         else mdeclname;
 
-    %% Builtins like our char buffers do not contain 'Core' in their typekey
+    %% Internal types like our char buffers do not contain 'Core' in their typekey
     var removeDeclaredIn: CString;
     if(m.value.startsWithString(declaredIn.value)) {
         removeDeclaredIn = m.value.removePrefixString(declaredIn.value).removePrefixString('::');
