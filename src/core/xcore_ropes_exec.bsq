@@ -1,6 +1,15 @@
 namespace Core;
 
+__internal entity CCharBuffer {
+    method size(): Nat {
+        return CCharBufferOps::size(this);
+    }
+}
+
 namespace CCharBufferOps {
+    function size(cb: CCharBuffer): Nat = ccharbuffer_size;
+    function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
+
     function s_create_empty(): CCharBuffer = ccharbuffer_create_empty;
     function s_create_1(c1: CChar): CCharBuffer = ccharbuffer_create_1;
     function s_create_2(c1: CChar, c2: CChar): CCharBuffer = ccharbuffer_create_2;
@@ -10,9 +19,6 @@ namespace CCharBufferOps {
     function s_create_6(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar): CCharBuffer = ccharbuffer_create_6;
     function s_create_7(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar): CCharBuffer = ccharbuffer_create_7;
     function s_create_8(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar, c8: CChar): CCharBuffer = ccharbuffer_create_8;
-}
-
-__internal entity CCharBuffer {
 }
 
 #if CPP_CORE
@@ -39,6 +45,10 @@ namespace CRopeOps {
         else {
             return XCore::s_createDirect<Rope, CRope>(concat(cr1.value, cr2.value));
         }
+    }
+
+    function s_crope_equal(cr1: CRope, cr2: CRope): Bool {
+        return equal(cr1.value, cr2.value);
     }
 
     enum Color {
@@ -315,6 +325,9 @@ namespace CRopeOps {
         }
     }
 
+    %%
+    %% TODO: Lets try to merge buffers when possible
+    %%
     function append(t: Rope, v: CCharBuffer): Rope {
         if(t)<BBLeaf> { 
             return Rope::createLeaf(v); 
@@ -335,13 +348,37 @@ namespace CRopeOps {
         let tt = balance(nn.c, nn.l, nn.r);
 
         if(tt)@<Node> {
-            let nt = if($tt.c === Color#Red) then Rope::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            let nt = if($tt.c === Color#Red) 
+                then Rope::createNode(Color#Black, $tt.l, $tt.r) 
+                else $tt;
             return nt;
         }
         else {
             return tt;
         }
     }    
+
+    function equal(r1: Rope, r2: Rope): Bool {
+        if(r1?<Leaf> && r2?<Leaf>) {
+            let nr1 = r1@<Leaf>;
+            let nr2 = r2@<Leaf>;
+
+            return CCharBufferOps::equal(nr1.buf, nr2.buf);
+        }
+
+        if(r1?<Node> && r2?<Node>) {
+            let nr1 = r1@<Node>;
+            let nr2 = r2@<Node>;
+
+            if(nr1.w != nr2.w) {
+                return false;
+            }
+
+            return equal(nr1.l, nr2.l) && equal(nr1.r, nr2.r);
+        }
+    
+        return false;
+    }
 
     datatype Rope of 
         BBLeaf { }
@@ -356,12 +393,20 @@ namespace CRopeOps {
             return Leaf{ buf };
         }
 
-        %%
-        %% TODO: We will need a weight calculation method where weight
-        %% is the sum of all buffer sizes in left subRope
-        %%
+        %% Weight is determined by the number of characters present in left sub-tree
         function createNode(c: Color, l: Rope, r: Rope): Node {
-            return Node{ c, 0n, l, r };
+            return Node{ c, Rope::getCharacterCount(l), l, r };
+        }
+
+        function getCharacterCount(rope: Rope): Nat {
+            match(rope)@ {
+                Leaf => {
+                    return $rope.buf.size();
+                }
+                | Node => {
+                    return Rope::getCharacterCount($rope.l) + Rope::getCharacterCount($rope.r);
+                }
+            }
         }
     }
 } %% namespace CRopeOps

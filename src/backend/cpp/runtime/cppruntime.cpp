@@ -18,31 +18,31 @@ PathStack PathStack::up() const {
 }
 
 CCharBuffer CCharBuffer::create_empty() {
-    return {{}, 0};
+    return {{}, 0_n};
 }
 CCharBuffer CCharBuffer::create_1(CChar c1) {
-    return {{c1}, 1};
+    return {{c1}, 1_n};
 }
 CCharBuffer CCharBuffer::create_2(CChar c1, CChar c2) {
-    return {{c1, c2}, 2};
+    return {{c1, c2}, 2_n};
 }
 CCharBuffer CCharBuffer::create_3(CChar c1, CChar c2, CChar c3) {
-    return {{c1, c2, c3}, 3};
+    return {{c1, c2, c3}, 3_n};
 }
 CCharBuffer CCharBuffer::create_4(CChar c1, CChar c2, CChar c3, CChar c4) {
-    return {{c1, c2, c3, c4}, 4};
+    return {{c1, c2, c3, c4}, 4_n};
 }
 CCharBuffer CCharBuffer::create_5(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5) {
-    return {{c1, c2, c3, c4, c5}, 5};
+    return {{c1, c2, c3, c4, c5}, 5_n};
 }
 CCharBuffer CCharBuffer::create_6(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6) {
-    return {{c1, c2, c3, c4, c5, c6}, 6};
+    return {{c1, c2, c3, c4, c5, c6}, 6_n};
 }
 CCharBuffer CCharBuffer::create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7) {
-    return {{c1, c2, c3, c4, c5, c6, c7}, 7};
+    return {{c1, c2, c3, c4, c5, c6, c7}, 7_n};
 }
 CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8) {
-    return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8};
+    return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
 CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
@@ -58,36 +58,36 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
         case 5: return CCharBuffer::create_5(buf[0], buf[1], buf[2], buf[3], buf[4]);
         case 6: return CCharBuffer::create_6(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
         case 7: return CCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
-        default: return CCharBuffer::create_8( buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7] );
+        default: return CCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     }
 }
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
-    return {{}, 0};
+    return {{}, 0_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_1(UnicodeChar c1) {
-    return {{c1}, 1};
+    return {{c1}, 1_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_2(UnicodeChar c1, UnicodeChar c2) {
-    return {{c1, c2}, 2};
+    return {{c1, c2}, 2_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_3(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3) {
-    return {{c1, c2, c3}, 3};
+    return {{c1, c2, c3}, 3_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_4(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4) {
-    return {{c1, c2, c3, c4}, 4};
+    return {{c1, c2, c3, c4}, 4_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_5(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5) {
-    return {{c1, c2, c3, c4, c5}, 5};
+    return {{c1, c2, c3, c4, c5}, 5_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_6(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6) {
-    return {{c1, c2, c3, c4, c5, c6}, 6};
+    return {{c1, c2, c3, c4, c5, c6}, 6_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7) {
-    return {{c1, c2, c3, c4, c5, c6, c7}, 7};
+    return {{c1, c2, c3, c4, c5, c6, c7}, 7_n};
 }
 UnicodeCharBuffer UnicodeCharBuffer::create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8) {
-    return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8};
+    return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
 std::string to_string(MainType v) noexcept {
