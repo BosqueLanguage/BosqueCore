@@ -656,8 +656,9 @@ struct PathStack {
 };
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
+const int maxCCharBufSize = 8;
 struct CCharBuffer {
-    CChar chars[8];
+    CChar chars[maxCCharBufSize];
     Nat size;
 
     static CCharBuffer create_empty();
@@ -672,19 +673,14 @@ struct CCharBuffer {
 };
 CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr);
 
-template<typename T>
-inline Bool memcmp(T* b1, T* b2, Nat size) noexcept {
-    for(uint64_t i = 0; i < size.get(); i++) {
-        if(b1[i] != b2[i]) {
-            return false;
-        }
-    }
-
-    return true;
+inline Bool cbuf_memcmp(CChar b1[maxCCharBufSize], CChar b2[maxCCharBufSize]) noexcept {
+    static_assert(maxCCharBufSize == 8);
+    
+    return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
 }
 
 inline Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    return memcmp<CChar>(cb1.chars, cb2.chars, cb1.size);
+    return cbuf_memcmp(cb1.chars, cb2.chars);
 }
 
 struct UnicodeCharBuffer {
