@@ -1954,7 +1954,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     let gcinfo = String::concat(allocs, nallocslist);
 
-    %% We need to overload equality on ropes (will need to be done for unicode ropes too)
+    %% Checking for equality on our ropes needs to be overloaded in global namespace
     var overloads: String;
     if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('CRope'))) {
         overloads = "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }";
