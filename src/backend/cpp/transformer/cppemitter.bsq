@@ -261,9 +261,21 @@ function emitInvokeKey(ik: CPPAssembly::InvokeKey, ctx: Context): String {
 function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
     let mdecl = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
     let mdeclname = emitTypeKey(declaredIn, false, ctx);
-    let basename = String::fromCString(m.value.removePrefixString(declaredIn.value).removePrefixString('::'));
+    let updatedname = if(mdeclname.startsWithString("__CoreCpp::"))
+        then removeCppPrefix(mdeclname)
+        else mdeclname;
 
-    return String::concat(mdeclname, "ᘏ", emitSpecialTemplate(basename));
+    %% Builtins like our char buffers do not contain 'Core' in their typekey
+    var removeDeclaredIn: CString;
+    if(m.value.startsWithString(declaredIn.value)) {
+        removeDeclaredIn = m.value.removePrefixString(declaredIn.value).removePrefixString('::');
+    }
+    else {
+        removeDeclaredIn = m.value.removePrefixString(mdecl.name).removePrefixString('::');
+    }
+    
+    let basename = String::fromCString(removeDeclaredIn);
+    return String::concat(updatedname, "ᘏ", emitSpecialTemplate(basename));
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
@@ -1327,6 +1339,8 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "ccharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
         | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
         | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
+        | "ccharbuffer_size" => { return String::concat(indent, "    return cb.size;%n;"); }
+        | "ccharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::cbufferEqual(cb1, cb2);%n;"); }
         | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();%n;"); }
         | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);%n;"); }
         | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);%n;"); }

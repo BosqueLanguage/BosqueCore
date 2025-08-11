@@ -1,6 +1,15 @@
 namespace Core;
 
+__internal entity CCharBuffer {
+    method size(): Nat {
+        return CCharBufferOps::size(this);
+    }
+}
+
 namespace CCharBufferOps {
+    function size(cb: CCharBuffer): Nat = ccharbuffer_size;
+    function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
+
     function s_create_empty(): CCharBuffer = ccharbuffer_create_empty;
     function s_create_1(c1: CChar): CCharBuffer = ccharbuffer_create_1;
     function s_create_2(c1: CChar, c2: CChar): CCharBuffer = ccharbuffer_create_2;
@@ -10,9 +19,6 @@ namespace CCharBufferOps {
     function s_create_6(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar): CCharBuffer = ccharbuffer_create_6;
     function s_create_7(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar): CCharBuffer = ccharbuffer_create_7;
     function s_create_8(c1: CChar, c2: CChar, c3: CChar, c4: CChar, c5: CChar, c6: CChar, c7: CChar, c8: CChar): CCharBuffer = ccharbuffer_create_8;
-}
-
-__internal entity CCharBuffer {
 }
 
 #if CPP_CORE
@@ -39,6 +45,10 @@ namespace CRopeOps {
         else {
             return XCore::s_createDirect<Rope, CRope>(concat(cr1.value, cr2.value));
         }
+    }
+
+    function s_crope_equal(cr1: CRope, cr2: CRope): Bool {
+        return equal(cr1.value, cr2.value);
     }
 
     enum Color {
@@ -335,13 +345,20 @@ namespace CRopeOps {
         let tt = balance(nn.c, nn.l, nn.r);
 
         if(tt)@<Node> {
-            let nt = if($tt.c === Color#Red) then Rope::createNode(Color#Black, $tt.l, $tt.r) else $tt;
+            let nt = if($tt.c === Color#Red) 
+                then Rope::createNode(Color#Black, $tt.l, $tt.r) 
+                else $tt;
             return nt;
         }
         else {
             return tt;
         }
     }    
+
+    %% If weights are not equal return false early
+    function equal(r1: Rope, r2: Rope): Bool {
+        return false;
+    }
 
     datatype Rope of 
         BBLeaf { }
@@ -355,13 +372,22 @@ namespace CRopeOps {
         function createLeaf(buf: CCharBuffer): Leaf {
             return Leaf{ buf };
         }
-
-        %%
-        %% TODO: We will need a weight calculation method where weight
-        %% is the sum of all buffer sizes in left subRope
-        %%
+ 
         function createNode(c: Color, l: Rope, r: Rope): Node {
-            return Node{ c, 0n, l, r };
+            return Node{ c, Rope::computeWeight(l), l, r };
+        }
+
+        %% We MAY be able to return earlier. Could be problematic for small
+        %% ropes however...
+        function computeWeight(rope: Rope): Nat {
+            match(rope)@ {
+                Leaf => {
+                    return $rope.buf.size();
+                }
+                | Node => {
+                    return Rope::computeWeight($rope.l) + Rope::computeWeight($rope.r);
+                }
+            }
         }
     }
 } %% namespace CRopeOps
