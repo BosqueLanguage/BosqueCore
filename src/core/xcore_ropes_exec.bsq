@@ -325,6 +325,9 @@ namespace CRopeOps {
         }
     }
 
+    %%
+    %% TODO: Lets try to merge buffers when possible
+    %%
     function append(t: Rope, v: CCharBuffer): Rope {
         if(t)<BBLeaf> { 
             return Rope::createLeaf(v); 
@@ -389,20 +392,19 @@ namespace CRopeOps {
         function createLeaf(buf: CCharBuffer): Leaf {
             return Leaf{ buf };
         }
- 
+
+        %% Weight is determined by the number of characters present in left sub-tree
         function createNode(c: Color, l: Rope, r: Rope): Node {
-            return Node{ c, Rope::computeWeight(l), l, r };
+            return Node{ c, Rope::getCharacterCount(l), l, r };
         }
 
-        %% We MAY be able to return earlier. Could be problematic for small
-        %% ropes however...
-        function computeWeight(rope: Rope): Nat {
+        function getCharacterCount(rope: Rope): Nat {
             match(rope)@ {
                 Leaf => {
                     return $rope.buf.size();
                 }
                 | Node => {
-                    return Rope::computeWeight($rope.l) + Rope::computeWeight($rope.r);
+                    return Rope::getCharacterCount($rope.l) + Rope::getCharacterCount($rope.r);
                 }
             }
         }
