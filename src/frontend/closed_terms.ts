@@ -636,6 +636,28 @@ class InstantiationPropagator {
     }
 
     private instantiateBinKeyEqExpression(exp: BinKeyEqExpression) {
+        let ltkey = exp.lhs.getType()?.tkeystr;
+        if(ltkey === "CString") {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
+
+            if(nns !== undefined) {
+                const createdecl = nns.functions.find((tt) => tt.name === "s_crope_equal") as NamespaceFunctionDecl;                    
+                this.instantiateNamespaceFunction(nns, createdecl, []);
+            }
+        }
+        if(ltkey === "String") {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
+
+            if(nns !== undefined) {
+                assert(false, "Not Implemented -- Unicode Rope Comparison");
+                /*
+                const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
+                this.instantiateNamespaceFunction(nns, createdecl, []);
+                */
+            }
+        }
+
+
         this.instantiateExpression(exp.lhs);
         this.instantiateExpression(exp.rhs);
     }

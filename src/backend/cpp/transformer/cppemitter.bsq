@@ -1954,6 +1954,18 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     let gcinfo = String::concat(allocs, nallocslist);
 
+    %% We need to overload equality on ropes (will need to be done for unicode ropes too)
+    var overloads: String;
+    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('CRope'))) {
+        overloads = "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }";
+    }
+    elif(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('UnicodeRope'))) {
+        overloads = "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }";
+    }
+    else {
+        overloads = "";
+    }
+
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp
-    return String::concat(funcfwddecls, "𝐬𝐫𝐜", gcinfo, ns_emission);
+    return String::concat(funcfwddecls, overloads, "𝐬𝐫𝐜", gcinfo, ns_emission);
 }

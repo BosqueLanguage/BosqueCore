@@ -672,13 +672,19 @@ struct CCharBuffer {
 };
 CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr);
 
-#include <string.h>
+template<typename T>
+inline Bool memcmp(T* b1, T* b2, Nat size) noexcept {
+    for(uint64_t i = 0; i < size.get(); i++) {
+        if(b1[i] != b2[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 inline Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    //
-    // We will need to whip up a custom memcmp to avoid string.h
-    //
-    return memcmp(cb1.chars, cb2.chars, sizeof(CCharBuffer) - sizeof(Nat));
+    return memcmp<CChar>(cb1.chars, cb2.chars, cb1.size);
 }
 
 struct UnicodeCharBuffer {

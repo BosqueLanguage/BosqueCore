@@ -355,8 +355,25 @@ namespace CRopeOps {
         }
     }    
 
-    %% If weights are not equal return false early
     function equal(r1: Rope, r2: Rope): Bool {
+        if(r1?<Leaf> && r2?<Leaf>) {
+            let nr1 = r1@<Leaf>;
+            let nr2 = r2@<Leaf>;
+
+            return CCharBufferOps::equal(nr1.buf, nr2.buf);
+        }
+
+        if(r1?<Node> && r2?<Node>) {
+            let nr1 = r1@<Node>;
+            let nr2 = r2@<Node>;
+
+            if(nr1.w != nr2.w) {
+                return false;
+            }
+
+            return equal(nr1.l, nr2.l) && equal(nr1.r, nr2.r);
+        }
+    
         return false;
     }
 
