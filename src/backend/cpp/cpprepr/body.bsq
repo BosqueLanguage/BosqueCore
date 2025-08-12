@@ -143,6 +143,11 @@ entity VariableAssignmentStatement provides Statement {
     field exp: Expression;
 }
 
+entity VariableDeclarationStatement provides Statement {
+    field name: Identifier;
+    field vtype: TypeSignature;
+}
+
 entity BlockStatement provides Statement {
     field statements: List<Statement>;
     field isScoping: Bool;

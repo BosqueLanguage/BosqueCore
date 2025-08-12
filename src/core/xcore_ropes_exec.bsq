@@ -1,5 +1,7 @@
 namespace Core;
 
+%% const maxCCharBufferSize: Nat = 8n;
+
 __internal entity CCharBuffer {
     method size(): Nat {
         return CCharBufferOps::size(this);
@@ -9,6 +11,9 @@ __internal entity CCharBuffer {
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
+    function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
+    function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
+    function mergeCBuffers2(cb1: CCharBuffer, cb2: CCharBuffer): (|CCharBuffer, CCharBuffer|) = ccharbuffer_merge2;
 
     function s_create_empty(): CCharBuffer = ccharbuffer_create_empty;
     function s_create_1(c1: CChar): CCharBuffer = ccharbuffer_create_1;
@@ -49,6 +54,26 @@ namespace CRopeOps {
 
     function s_crope_equal(cr1: CRope, cr2: CRope): Bool {
         return equal(cr1.value, cr2.value);
+    }
+
+    %% Once we know this works lets un-magic number it
+    function s_nat_to_crope(v: Nat): CRope {
+        let buf1 = CCharBufferOps::natToCBuffer(v);
+        if(v <= 99999999n) {
+            return s_crope_create(buf1);
+        }
+
+        var val = v // 100000000n;
+        let buf2 = CCharBufferOps::natToCBuffer(val);
+        if(val <= 99999999n) {
+            return s_crope_append(s_crope_create(buf2), buf1);
+        }
+
+        val = val // 100000000n;
+        let buf3 = CCharBufferOps::natToCBuffer(val);
+        let rope = s_crope_append(s_crope_append(s_crope_create(buf3), buf2), buf1);
+
+        return rope;
     }
 
     enum Color {
@@ -315,32 +340,58 @@ namespace CRopeOps {
         return Rope::createNode(c, tleft, tright);
     }
 
-    recursive function append_helper(t: Rope, v: CCharBuffer): Rope {
+    %% We keep track of the closest buffer (current nodes parents left child) for merging
+    recursive function append_helper(t: Rope, l: Rope, v: CCharBuffer): Rope {
         match(t)@ {
-            Leaf => { return balance(Color#Red, $t, Rope::createLeaf(v)); }
+            Leaf => { %% We want to keep buffers as full as possible
+                let sum = $t.buf.size() + v.size();
+                %% For whatever reason using a nsconst is broken here
+                if(sum <= 8n) { %% Add v to t's buffer
+                    let merge = CCharBufferOps::mergeCBuffers($t.buf, v);
+                    return Rope::createLeaf(merge);
+                }
+                if($t.buf.size() < 8n) { %% Merge some chars from v
+
+                    %%
+                    %% TODO: once multi assignment is supported for emission lets one line this
+                    %%
+
+                    let tmp = CCharBufferOps::mergeCBuffers2($t.buf, v);
+                    let cb1 = tmp.0;
+                    let cb2 = tmp.1;
+                    return balance(Color#Red, Rope::createLeaf(cb1), Rope::createLeaf(cb2)); 
+                }
+
+                return balance(Color#Red, $t, Rope::createLeaf(v)); 
+            }
             | Node => { 
-                let nr = append_helper[recursive]($t.r, v);
+                let nr = append_helper[recursive]($t.r, $t.l, v);
                 return balance($t.c, $t.l, nr); 
             }
         }
     }
 
-    %%
-    %% TODO: Lets try to merge buffers when possible
-    %%
     function append(t: Rope, v: CCharBuffer): Rope {
-        if(t)<BBLeaf> { 
-            return Rope::createLeaf(v); 
+        var tt: Rope;
+        match(t)@ {
+            BBLeaf => { 
+                tt = Rope::createLeaf(v); 
+            }
+            | Leaf => {
+                tt = append_helper(t, t, v);
+            }
+            | Node => {
+                tt = append_helper(t, $t.l, v);
+            }
         }
-
-        let tt = append_helper(t, v); 
-        if (tt)@!<Node> {
-            return tt;
-        }
-        else {
-            let nt = if($tt.c === Color#Red) then Rope::createNode(Color#Black, $tt.l, $tt.r) else $tt;
-            return nt;
-        }
+        
+        let nt = tt@<Node>;    
+        let ntt = if(nt.c === Color#Red) 
+            then Rope::createNode(Color#Black, nt.l, nt.r) 
+            else nt;
+    
+        return ntt;
+        
     }
 
     function concat(l: Rope, r: Rope): Rope {
@@ -382,7 +433,7 @@ namespace CRopeOps {
 
     datatype Rope of 
         BBLeaf { }
-        | Leaf{ buf: CCharBuffer }
+        | Leaf { buf: CCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
         function createEmpty(): BBLeaf {

@@ -1401,8 +1401,23 @@ class InstantiationPropagator {
     }
 
     private instantiateBodyImplementation(body: BodyImplementation) {
-        if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation || body instanceof BuiltinBodyImplementation || body instanceof SynthesisBodyImplementation) {
-            return;
+        if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation || body instanceof SynthesisBodyImplementation) {
+            return ;
+        }
+
+        if(body instanceof BuiltinBodyImplementation) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
+
+            if(nns === undefined) {
+                return ;
+            }
+
+            if(body.builtin === "s_nat_to_cstring") { 
+                const concatdecl = nns.functions.find((tt) => tt.name === "s_nat_to_crope") as NamespaceFunctionDecl;
+                this.instantiateNamespaceFunction(nns, concatdecl, []);
+            }
+
+            return ;
         }
 
         if(body instanceof ExpressionBodyImplementation) {

@@ -45,7 +45,7 @@ CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar 
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
-CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
+CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) noexcept {
     const CChar* buf = basestr;
     basestr += 8;
 
@@ -61,6 +61,119 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
         default: return CCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     }
 }
+
+CCharBuffer cbufferFromNat(Nat v) noexcept {
+    uint64_t val = v.get();
+    const int radix = 10;
+
+    CChar stack[maxCCharBufSize] = {};
+    CCharBuffer buf = {};
+    int stacksize = 0;
+    while(stacksize < maxCCharBufSize) {
+        if(val == 0) {
+            break;
+        }
+
+        uint64_t dig = val % radix;
+        val /= radix;
+
+        stack[stacksize] = dig + '0'; 
+        buf.size += 1_n;
+
+        stacksize++;
+    }
+
+    // Chars are inserted into 'stack' initially in reverse order
+    int i = stacksize - 1;
+    while(i >= 0) {
+        buf.chars[(stacksize - 1) - i] = stack[i];
+        i--;
+    }
+
+    return buf;
+}
+
+// A little bit funny but ensures cb2's updates are reflected at runtime
+Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8> cbufferMerge2(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
+    uint64_t cb1size = cb1.size.get();
+    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
+        uint64_t cb2_idx = i - cb1size;
+        cb1.chars[i] = cb2.chars[cb2_idx];
+        cb2.chars[cb2_idx] = 0;
+
+        // Could we make this better?
+        uint64_t cb2_remainder = (maxCCharBufSize - cb1size) + (i - cb1size);
+        if(cb2_remainder < maxCCharBufSize) {
+            cb2.chars[cb2_idx] = cb2.chars[cb2_remainder];
+            cb2.chars[cb2_remainder] = 0;
+        }
+
+        cb1.size += 1_n;
+        cb2.size -= 1_n;
+    }
+
+    return Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8>(cb1, cb2);
+}
+
+// Case when cb1.size + cb2.size <= maxCCharBufferSize
+CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
+    uint64_t i = cb1.size.get();
+    while(i <= maxCCharBufSize) {
+        cb1.chars[i] = cb2.chars[maxCCharBufSize - i];
+    }
+
+    return cb1;
+}
+
+// This code works but is heinousely over-engineered.
+    /*
+    uint64_t cb1size = cb1.size.get();
+    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
+        uint64_t cb2_idx = i - cb1size;
+        cb1.chars[i] = cb2.chars[cb2_idx];
+        cb2.chars[cb2_idx] = 0;
+        
+        // Could we make this better?
+        uint64_t cb2_remainder = (maxCCharBufSize - cb1size) + (i - cb1size);
+        if(cb2_remainder < maxCCharBufSize) {
+            cb2.chars[cb2_idx] = cb2.chars[cb2_remainder];
+            cb2.chars[cb2_remainder] = 0;
+        }
+        
+        cb1.size += 1_n;
+        cb2.size -= 1_n;
+    }
+    return cb1;
+    */
+
+// Hmm this also blows maybe my origin al code was better
+/* 
+    CChar buf[maxCCharBufSize * 2] = {};
+    Nat size = cb1.size + cb2.size;
+    uint64_t cb1_size = cb1.size.get();
+    uint64_t buf_i = 0;
+    uint64_t cb_i = 0;
+    uint64_t max_charpos = cb1.size.get();
+    while(buf_i < size.get()) {
+        if(cb_i == max_charpos) {
+            max_charpos = cb2.size.get();
+            cb_i = 0;
+        }
+        CChar cur = 0;
+        if(buf_i < cb1_size) {
+            cur = cb1.chars[cb_i];
+        }
+        else {
+            cur = cb2.chars[cb_i];
+        }
+        buf[buf_i] = cur;
+    }
+    &cb1.chars = reinterpret_cast<CChar*>(buf);
+    &cb2.chars = reinterpret_cast<CChar*>(buf + maxCCharBufSize);
+    return Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8>(cb1, cb2);
+*/ 
+
+
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
