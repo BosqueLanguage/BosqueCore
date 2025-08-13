@@ -138,7 +138,7 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     if(tk?some && tk@some.value.startsWithString('(|')) { %% Handle elists explicitly
         return emitSpecialTemplate(String::fromCString(tk@some.value));
     }
-    
+
     %% Handle Type Funcs explicitly as their InvokeKey is missing the "Core::" prefix
     let isTypeFunc = if(ik)@some then ctx.asm.typefuncs.has($ik) else false;
     
@@ -152,8 +152,17 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
 
     var declaredInNS: String;
     match(tk) {
-        Some<CPPAssembly::TypeKey> => { declaredInNS = emitNamespaceKey(ctx.asm.lookupNominalTypeDeclaration(tk@some).declaredInNS); }
-        | None => { declaredInNS = emitNamespaceKey(ctx.asm.tryLookupInvokeImplDeclaration(ik@some)@some.declaredInNS); }
+        Some<CPPAssembly::TypeKey> => { 
+            let ntk = tk@some;
+            if(ctx.asm.primitives.has(ntk)) {
+                return String::fromCString(ntk.value);
+            }
+
+            declaredInNS = emitNamespaceKey(ctx.asm.lookupNominalTypeDeclaration(ntk).declaredInNS); 
+        }
+        | None => { 
+            declaredInNS = emitNamespaceKey(ctx.asm.tryLookupInvokeImplDeclaration(ik@some)@some.declaredInNS); 
+        }
     }
 
     let key = if(tk)@some then emitTypeKeyValue($tk) else emitInvokeKeyValue(resolvedik@some);
@@ -273,9 +282,19 @@ function generateMethodName(m: CPPAssembly::InvokeKey, declaredIn: CPPAssembly::
     else {
         removeDeclaredIn = m.value.removePrefixString(mdecl.name).removePrefixString('::');
     }
-    
+
+    %% If we are not in core but calling internal primitive method (i.e. nat to cstring) attach core prefix
+    let isInternalEntityMethodInvoke: Bool = 
+        ctx.asm.lookupNominalTypeDeclaration(declaredIn)?<CPPAssembly::InternalEntityTypeDecl> 
+        && ctx.fullns_list.front() !== 'Core'
+        && !updatedname.startsWithString("Core");
+
     let basename = String::fromCString(removeDeclaredIn);
-    return String::concat(updatedname, "ᘏ", emitSpecialTemplate(basename));
+    let final = if(isInternalEntityMethodInvoke)
+        then String::concat("Core::", updatedname, "ᘏ", emitSpecialTemplate(basename))
+        else String::concat(updatedname, "ᘏ", emitSpecialTemplate(basename));
+
+    return final;
 }
 
 function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
@@ -1016,15 +1035,22 @@ function emitCStringAsLiteral(s: CString): String {
 
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     let strsize = exp.value.size();
-    let baseargs = String::concat(natToString(exp.value.size()), ", str");
+    let baseargs = String::concat("0, ", natToString(strsize), ", str");
     let base = String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral(", baseargs, "))");
-    
-    let constructor = Algorithm::while<(|Nat, String|)>((|8n, base|), 
-        pred(cons) => cons.0 < exp.value.size(), 
-        fn(cons) => { 
+
+    %%
+    %% TODO: We need some way to properly reflect this max size in both the
+    %% cppruntime files and the actual emitter itself.
+    %%
+
+    let maxCCharBufferSize = 8n;
+
+    let constructor = Algorithm::while<(|Nat, String|)>((|maxCCharBufferSize, base|), 
+        pred(cons) => cons.0 < strsize, 
+        fn(cons) => {
             let append_base = String::concat("Core::CRopeOps::s_crope_append(", cons.1, ", __CoreCpp::cbufferFromStringLiteral(");
-            let args = String::concat(natToString(strsize - cons.0), ", str");
-            return cons.0 + 8n, String::concat(append_base, args, "))");
+            let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
+            return cons.0 + maxCCharBufferSize, String::concat(append_base, args, "))");
     }).1;
 
     return String::concat("[]() -> Core::CRope { const __CoreCpp::CChar* str = reinterpret_cast<const __CoreCpp::CChar*>(", 
@@ -1099,6 +1125,14 @@ function emitVariableAssignmentStatement(stmt: CPPAssembly::VariableAssignmentSt
     let exp = emitExpression(stmt.exp, ctx);
 
     return String::concat(indent, "    ", name, " = ", exp, ";");
+}
+
+function emitVariableDeclarationStatement(stmt: CPPAssembly::VariableDeclarationStatement, ctx: Context, indent: String): String {
+    let name = emitIdentifier(stmt.name);
+    let stype = emitTypeSignature(stmt.vtype, true, ctx);
+
+    let full_indent: String = String::concat(indent, "    ", stype);
+    return String::concat(full_indent, " ", name, ";");
 }
 
 function emitBlockStatement(block: CPPAssembly::BlockStatement, ctx: Context, indent: String): String {
@@ -1298,7 +1332,7 @@ function emitSwitchStatement(stmt: CPPAssembly::SwitchStatement, ctx: Context, i
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
         CPPAssembly::EmptyStatement => { return ""; }
-        %%| CPPAssembly::VariableDeclarationStatement => { abort; }
+        | CPPAssembly::VariableDeclarationStatement => { return emitVariableDeclarationStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiDeclarationStatement => { abort; }
         | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
@@ -1340,7 +1374,11 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "ccharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
         | "ccharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
         | "ccharbuffer_size" => { return String::concat(indent, "    return cb.size;%n;"); }
+        | "ccharbuffer_maxsize" => { return String::concat(indent, "    return __CoreCpp::Nat(__CoreCpp::maxCCharBufferSize);%n;"); }
         | "ccharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::cbufferEqual(cb1, cb2);%n;"); }
+        | "nat_to_ccharbuffer" => { return String::concat(indent, "    return __CoreCpp::cbufferFromNat(v);%n;"); }
+        | "ccharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::cbufferMerge(cb1, cb2);%n;"); }
+        | "ccharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::cbufferRemainder(cb, split);%n;"); }
         | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();%n;"); }
         | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);%n;"); }
         | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);%n;"); }
@@ -1352,6 +1390,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
         | "cstring_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_concat2(s1, s2);%n;"); }
         | "cstring_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_empty(s);%n;"); }
+        | "s_nat_to_cstring" => { return String::concat(indent, "    return Core::CRopeOps::s_nat_to_crope(v);%n;"); }
         | _ => { abort; } %% TODO: Not implemented
     }
 }

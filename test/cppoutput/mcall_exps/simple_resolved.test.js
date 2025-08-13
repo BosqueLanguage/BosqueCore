@@ -34,6 +34,15 @@ describe ("CPP Emit Evaluate -- entity methods", () => {
     });
 });
 
+describe ("CPP Emit Evaluate -- builtin methods", () => {
+    it("should exec nat to cstring(rope) builtin", function () {
+        runMainCode("public function main(): Bool { return 4611686018427387903n.toCString() === '4611686018427387903'; }", "true");
+        runMainCode("public function main(): Bool { return 123456789n.toCString() === '123456789'; }", "true");
+        runMainCode("public function main(): Bool { return 4611686018427387902n.toCString() === '4611686018427387903'; }", "false");
+        runMainCode("public function main(): Bool { return 2048n.toCString() === '1234'; }", "false");
+    });
+});
+
 describe ("CPP Emit Evaluate -- eADT methods", () => {
     it("should exec simple eADT methods", function () {
         runMainCode('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "3_i"); 

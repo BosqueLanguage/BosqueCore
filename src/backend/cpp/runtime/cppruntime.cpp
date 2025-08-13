@@ -45,10 +45,8 @@ CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar 
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
-CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
-    const CChar* buf = basestr;
-    basestr += 8;
-
+CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &basestr) noexcept {
+    const CChar* buf = basestr + ptr;
     switch(size) {
         case 0: return CCharBuffer::create_empty();
         case 1: return CCharBuffer::create_1(buf[0]);
@@ -60,6 +58,79 @@ CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) {
         case 7: return CCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
         default: return CCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     }
+}
+
+CCharBuffer cbufferFromNat(Nat v) noexcept {
+    uint64_t val = v.get();
+    const int radix = 10;
+
+    CChar stack[maxCCharBufferSize] = {};
+    CCharBuffer buf = {};
+    int stacksize = 0;
+    while(stacksize < maxCCharBufferSize) {
+        if(val == 0) {
+            break;
+        }
+
+        uint64_t dig = val % radix;
+        val /= radix;
+
+        stack[stacksize] = dig + '0'; 
+        buf.size += 1_n;
+
+        stacksize++;
+    }
+
+    // Chars are inserted into 'stack' initially in reverse order
+    int i = stacksize - 1;
+    while(i >= 0) {
+        buf.chars[(stacksize - 1) - i] = stack[i];
+        i--;
+    }
+
+    return buf;
+}
+
+// Moves chars from cb2 to cb1 until cb1 is full
+CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
+    uint64_t cb1size = cb1.size.get();
+    uint64_t cb2size = cb2.size.get();
+
+    if(cb1size + cb2size >= maxCCharBufferSize) {
+        cb1.size = Nat(maxCCharBufferSize);
+    }
+    else {
+        cb1.size += cb2.size;
+    }
+
+    // We could probably make this loop tighter but its fine as is
+    for(uint64_t i = cb1size; i < maxCCharBufferSize; i++) {
+        cb1.chars[i] = cb2.chars[i - cb1size];
+    }
+
+    return cb1;
+}
+
+// Removes already merged chars from cb
+CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept {
+    uint64_t nsplit = split.get();
+
+    if(nsplit == 0) {
+        return cb;
+    }
+
+    for(uint64_t i = 0; i < maxCCharBufferSize; i++) {
+        if(i < nsplit) {
+            cb.chars[i] = 0;
+            cb.size -= 1_n;
+        }
+        else {
+            cb.chars[i - nsplit] = cb.chars[i];
+            cb.chars[i] = 0;
+        }
+    }
+
+    return cb;
 }
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {

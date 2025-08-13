@@ -86,17 +86,20 @@ concept AbstractInvokeDecl provides AbstractDecl {
 concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
 }
 
+concept InternalEntityTypeDecl provides AbstractEntityTypeDecl {
+}
+
 entity EntityTypeDecl provides AbstractEntityTypeDecl{
     field fields: List<MemberFieldDecl>;
 }
 
-datatype ConstructableTypeDecl provides AbstractEntityTypeDecl
+datatype ConstructableTypeDecl provides InternalEntityTypeDecl
 of
 SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ; %% TODO: Other ConstructableTypeDecls!
 
-datatype CollectionTypeDecl provides AbstractEntityTypeDecl using {
+datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
     field oftype: TypeSignature;
 }
 of
@@ -109,7 +112,7 @@ ListTypeDecl {  }
 | MapTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 ;
 
-entity PrimitiveEntityTypeDecl provides AbstractEntityTypeDecl {
+entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 }
 
 entity EnumTypeDecl provides AbstractEntityTypeDecl {
