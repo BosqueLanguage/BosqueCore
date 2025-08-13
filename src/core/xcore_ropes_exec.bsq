@@ -13,7 +13,16 @@ namespace CCharBufferOps {
     function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
     function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
     function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
-    function mergeCBuffers2(cb1: CCharBuffer, cb2: CCharBuffer): (|CCharBuffer, CCharBuffer|) = ccharbuffer_merge2;
+    function remainder(cb: CCharBuffer, split: Nat): CCharBuffer = ccharbuffer_remainder;
+
+    function mergeCBuffers2(cb1: CCharBuffer, cb2: CCharBuffer): (|CCharBuffer, CCharBuffer|) {
+        let cb1size = cb1.size();
+        
+        let ncb1 = mergeCBuffers(cb1, cb2);
+        let ncb2 = remainder(cb2, cb1size);
+
+        return (|ncb1, ncb2|);
+    }
 
     function s_create_empty(): CCharBuffer = ccharbuffer_create_empty;
     function s_create_1(c1: CChar): CCharBuffer = ccharbuffer_create_1;

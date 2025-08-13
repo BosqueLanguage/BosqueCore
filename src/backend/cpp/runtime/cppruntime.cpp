@@ -45,10 +45,8 @@ CCharBuffer CCharBuffer::create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar 
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
-CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) noexcept {
-    const CChar* buf = basestr;
-    basestr += 8;
-
+CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &basestr) noexcept {
+    const CChar* buf = basestr + ptr;
     switch(size) {
         case 0: return CCharBuffer::create_empty();
         case 1: return CCharBuffer::create_1(buf[0]);
@@ -93,87 +91,47 @@ CCharBuffer cbufferFromNat(Nat v) noexcept {
     return buf;
 }
 
-// A little bit funny but ensures cb2's updates are reflected at runtime
-Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8> cbufferMerge2(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    uint64_t cb1size = cb1.size.get();
-    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
-        uint64_t cb2_idx = i - cb1size;
-        cb1.chars[i] = cb2.chars[cb2_idx];
-        cb2.chars[cb2_idx] = 0;
-
-        // Could we make this better?
-        uint64_t cb2_remainder = (maxCCharBufSize - cb1size) + (i - cb1size);
-        if(cb2_remainder < maxCCharBufSize) {
-            cb2.chars[cb2_idx] = cb2.chars[cb2_remainder];
-            cb2.chars[cb2_remainder] = 0;
-        }
-
-        cb1.size += 1_n;
-        cb2.size -= 1_n;
-    }
-
-    return Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8>(cb1, cb2);
-}
-
-// Case when cb1.size + cb2.size <= maxCCharBufferSize
+// Moves chars from cb1 to cb2 until cb1 is full
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    uint64_t i = cb1.size.get();
-    while(i <= maxCCharBufSize) {
-        cb1.chars[i] = cb2.chars[maxCCharBufSize - i];
+    uint64_t cb1size = cb1.size.get();
+    uint64_t cb2size = cb2.size.get();
+
+    if(cb1size + cb2size >= maxCCharBufSize) {
+        cb1.size = Nat(maxCCharBufSize);
+    }
+    else {
+        cb1.size += cb2.size;
+    }
+
+    // We could probably make this loop tighter but its fine as is
+    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
+        cb1.chars[i] = cb2.chars[i - cb1size];
     }
 
     return cb1;
 }
 
-// This code works but is heinousely over-engineered.
-    /*
-    uint64_t cb1size = cb1.size.get();
-    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
-        uint64_t cb2_idx = i - cb1size;
-        cb1.chars[i] = cb2.chars[cb2_idx];
-        cb2.chars[cb2_idx] = 0;
-        
-        // Could we make this better?
-        uint64_t cb2_remainder = (maxCCharBufSize - cb1size) + (i - cb1size);
-        if(cb2_remainder < maxCCharBufSize) {
-            cb2.chars[cb2_idx] = cb2.chars[cb2_remainder];
-            cb2.chars[cb2_remainder] = 0;
-        }
-        
-        cb1.size += 1_n;
-        cb2.size -= 1_n;
-    }
-    return cb1;
-    */
+// Removes already merged chars from cb
+CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept {
+    uint64_t nsplit = maxCCharBufSize - split.get();
 
-// Hmm this also blows maybe my origin al code was better
-/* 
-    CChar buf[maxCCharBufSize * 2] = {};
-    Nat size = cb1.size + cb2.size;
-    uint64_t cb1_size = cb1.size.get();
-    uint64_t buf_i = 0;
-    uint64_t cb_i = 0;
-    uint64_t max_charpos = cb1.size.get();
-    while(buf_i < size.get()) {
-        if(cb_i == max_charpos) {
-            max_charpos = cb2.size.get();
-            cb_i = 0;
-        }
-        CChar cur = 0;
-        if(buf_i < cb1_size) {
-            cur = cb1.chars[cb_i];
+    if(nsplit == 0) {
+        return cb;
+    }
+
+    for(uint64_t i = 0; i < maxCCharBufSize; i++) {
+        if(i < nsplit) {
+            cb.chars[i] = 0;
+            cb.size -= 1_n;
         }
         else {
-            cur = cb2.chars[cb_i];
+            cb.chars[i - nsplit] = cb.chars[i];
+            cb.chars[i] = 0;
         }
-        buf[buf_i] = cur;
     }
-    &cb1.chars = reinterpret_cast<CChar*>(buf);
-    &cb2.chars = reinterpret_cast<CChar*>(buf + maxCCharBufSize);
-    return Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8>(cb1, cb2);
-*/ 
 
-
+    return cb;
+}
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};

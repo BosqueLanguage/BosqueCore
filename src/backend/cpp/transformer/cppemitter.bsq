@@ -1034,14 +1034,19 @@ function emitCStringAsLiteral(s: CString): String {
 
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     let strsize = exp.value.size();
-    let baseargs = String::concat(natToString(exp.value.size()), ", str");
+    let baseargs = String::concat("0, ", natToString(strsize), ", str");
     let base = String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral(", baseargs, "))");
     
+    %%
+    %% TODO: Once I figure out why nsconsts do not work i need to replace 8n with
+    %% maxCCharBufferSize
+    %%
+
     let constructor = Algorithm::while<(|Nat, String|)>((|8n, base|), 
-        pred(cons) => cons.0 < exp.value.size(), 
-        fn(cons) => { 
+        pred(cons) => cons.0 < strsize, 
+        fn(cons) => {
             let append_base = String::concat("Core::CRopeOps::s_crope_append(", cons.1, ", __CoreCpp::cbufferFromStringLiteral(");
-            let args = String::concat(natToString(strsize - cons.0), ", str");
+            let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
             return cons.0 + 8n, String::concat(append_base, args, "))");
     }).1;
 
@@ -1369,7 +1374,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "ccharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::cbufferEqual(cb1, cb2);%n;"); }
         | "nat_to_ccharbuffer" => { return String::concat(indent, "    return __CoreCpp::cbufferFromNat(v);%n;"); }
         | "ccharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::cbufferMerge(cb1, cb2);%n;"); }
-        | "ccharbuffer_merge2" => { return String::concat(indent, "    return __CoreCpp::cbufferMerge2(cb1, cb2);%n;"); }
+        | "ccharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::cbufferRemainder(cb, split);%n;"); }
         | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();%n;"); }
         | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);%n;"); }
         | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);%n;"); }

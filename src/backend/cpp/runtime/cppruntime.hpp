@@ -658,8 +658,8 @@ struct PathStack {
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufSize = 8;
 struct CCharBuffer {
-    CChar chars[maxCCharBufSize];
-    Nat size;
+    CChar chars[maxCCharBufSize] = {};
+    Nat size = {};
 
     static CCharBuffer create_empty();
     static CCharBuffer create_1(CChar c1);
@@ -671,10 +671,10 @@ struct CCharBuffer {
     static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
     static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
-CCharBuffer cbufferFromStringLiteral(size_t size, const CChar* &basestr) noexcept;
+CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &basestr) noexcept;
 CCharBuffer cbufferFromNat(Nat v) noexcept;
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
-Tuple2<maxCCharBufSize / 8, maxCCharBufSize / 8> cbufferMerge2(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
+CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept;
 
 inline Bool cbuf_memcmp(CChar b1[maxCCharBufSize], CChar b2[maxCCharBufSize]) noexcept {
     static_assert(maxCCharBufSize * sizeof(CChar) == sizeof(uintptr_t));
@@ -687,8 +687,8 @@ inline Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 }
 
 struct UnicodeCharBuffer {
-    UnicodeChar chars[8];
-    Nat size;
+    UnicodeChar chars[8] = {};
+    Nat size = {};
 
     static UnicodeCharBuffer create_empty();
     static UnicodeCharBuffer create_1(UnicodeChar c1);
@@ -702,7 +702,7 @@ struct UnicodeCharBuffer {
 };
 
 // Will need to support Bosque CString and String eventually
-typedef std::variant<Int, Nat, BigInt, BigNat, Float, bool> MainType; 
+typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
 
 //
 // Converts return type of main to string
