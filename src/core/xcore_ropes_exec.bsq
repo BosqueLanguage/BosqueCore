@@ -65,7 +65,7 @@ namespace CRopeOps {
     }
 
     %%
-    %% NOTE: If our buffer sizes change this breaks...
+    %% NOTE: If our cchar buffer size is not 8 this breaks
     %%
     function s_nat_to_crope(v: Nat): CRope {
         let maxNatSizeForBuffer = 99999999n;
