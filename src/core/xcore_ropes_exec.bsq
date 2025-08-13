@@ -64,10 +64,10 @@ namespace CRopeOps {
         return equal(cr1.value, cr2.value);
     }
 
-    %%
-    %% NOTE: If our cchar buffer size is not 8 this breaks
-    %%
     function s_nat_to_crope(v: Nat): CRope {
+        %% TODO: Once invariant is added to cpp emitter lets use that instead
+        assert CCharBufferOps::getMaxSize() == 8n;
+      
         let maxNatSizeForBuffer = 99999999n;
         let remainder = 100000000n;
 

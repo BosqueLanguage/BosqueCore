@@ -91,7 +91,7 @@ CCharBuffer cbufferFromNat(Nat v) noexcept {
     return buf;
 }
 
-// Moves chars from cb1 to cb2 until cb1 is full
+// Moves chars from cb2 to cb1 until cb1 is full
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
     uint64_t cb1size = cb1.size.get();
     uint64_t cb2size = cb2.size.get();
