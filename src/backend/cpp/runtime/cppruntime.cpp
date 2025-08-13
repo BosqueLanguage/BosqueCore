@@ -64,10 +64,10 @@ CCharBuffer cbufferFromNat(Nat v) noexcept {
     uint64_t val = v.get();
     const int radix = 10;
 
-    CChar stack[maxCCharBufSize] = {};
+    CChar stack[maxCCharBufferSize] = {};
     CCharBuffer buf = {};
     int stacksize = 0;
-    while(stacksize < maxCCharBufSize) {
+    while(stacksize < maxCCharBufferSize) {
         if(val == 0) {
             break;
         }
@@ -96,15 +96,15 @@ CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
     uint64_t cb1size = cb1.size.get();
     uint64_t cb2size = cb2.size.get();
 
-    if(cb1size + cb2size >= maxCCharBufSize) {
-        cb1.size = Nat(maxCCharBufSize);
+    if(cb1size + cb2size >= maxCCharBufferSize) {
+        cb1.size = Nat(maxCCharBufferSize);
     }
     else {
         cb1.size += cb2.size;
     }
 
     // We could probably make this loop tighter but its fine as is
-    for(uint64_t i = cb1size; i < maxCCharBufSize; i++) {
+    for(uint64_t i = cb1size; i < maxCCharBufferSize; i++) {
         cb1.chars[i] = cb2.chars[i - cb1size];
     }
 
@@ -113,13 +113,13 @@ CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 
 // Removes already merged chars from cb
 CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept {
-    uint64_t nsplit = maxCCharBufSize - split.get();
+    uint64_t nsplit = split.get();
 
     if(nsplit == 0) {
         return cb;
     }
 
-    for(uint64_t i = 0; i < maxCCharBufSize; i++) {
+    for(uint64_t i = 0; i < maxCCharBufferSize; i++) {
         if(i < nsplit) {
             cb.chars[i] = 0;
             cb.size -= 1_n;

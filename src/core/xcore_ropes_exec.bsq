@@ -1,7 +1,5 @@
 namespace Core;
 
-%% const maxCCharBufferSize: Nat = 8n;
-
 __internal entity CCharBuffer {
     method size(): Nat {
         return CCharBufferOps::size(this);
@@ -10,13 +8,14 @@ __internal entity CCharBuffer {
 
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
+    function getMaxSize(): Nat = ccharbuffer_maxsize;
     function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
     function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
     function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
     function remainder(cb: CCharBuffer, split: Nat): CCharBuffer = ccharbuffer_remainder;
 
     function mergeCBuffers2(cb1: CCharBuffer, cb2: CCharBuffer): (|CCharBuffer, CCharBuffer|) {
-        let cb1size = cb1.size();
+        let cb1size = getMaxSize() - cb1.size();
         
         let ncb1 = mergeCBuffers(cb1, cb2);
         let ncb2 = remainder(cb2, cb1size);
@@ -65,20 +64,25 @@ namespace CRopeOps {
         return equal(cr1.value, cr2.value);
     }
 
-    %% Once we know this works lets un-magic number it
+    %%
+    %% NOTE: If our buffer sizes change this breaks...
+    %%
     function s_nat_to_crope(v: Nat): CRope {
+        let maxNatSizeForBuffer = 99999999n;
+        let remainder = 100000000n;
+
         let buf1 = CCharBufferOps::natToCBuffer(v);
-        if(v <= 99999999n) {
+        if(v <= maxNatSizeForBuffer) {
             return s_crope_create(buf1);
         }
 
-        var val = v // 100000000n;
+        var val = v // remainder;
         let buf2 = CCharBufferOps::natToCBuffer(val);
-        if(val <= 99999999n) {
+        if(val <= maxNatSizeForBuffer) {
             return s_crope_append(s_crope_create(buf2), buf1);
         }
 
-        val = val // 100000000n;
+        val = val // maxNatSizeForBuffer;
         let buf3 = CCharBufferOps::natToCBuffer(val);
         let rope = s_crope_append(s_crope_append(s_crope_create(buf3), buf2), buf1);
 
@@ -352,14 +356,15 @@ namespace CRopeOps {
     %% We keep track of the closest buffer (current nodes parents left child) for merging
     recursive function append_helper(t: Rope, l: Rope, v: CCharBuffer): Rope {
         match(t)@ {
-            Leaf => { %% We want to keep buffers as full as possible
-                let sum = $t.buf.size() + v.size();
-                %% For whatever reason using a nsconst is broken here
-                if(sum <= 8n) { %% Add v to t's buffer
+            Leaf => { 
+                %% Merge all of v into t.buf
+                if($t.buf.size() + v.size() <= CCharBufferOps::getMaxSize()) {
                     let merge = CCharBufferOps::mergeCBuffers($t.buf, v);
                     return Rope::createLeaf(merge);
                 }
-                if($t.buf.size() < 8n) { %% Merge some chars from v
+
+                %% Merge chars from v into t.buf until t.buf is full
+                if($t.buf.size() < CCharBufferOps::getMaxSize()) {
 
                     %%
                     %% TODO: once multi assignment is supported for emission lets one line this

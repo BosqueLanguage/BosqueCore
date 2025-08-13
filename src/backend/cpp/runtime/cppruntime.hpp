@@ -656,9 +656,9 @@ struct PathStack {
 };
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
-const int maxCCharBufSize = 8;
+const int maxCCharBufferSize = 8;
 struct CCharBuffer {
-    CChar chars[maxCCharBufSize] = {};
+    CChar chars[maxCCharBufferSize] = {};
     Nat size = {};
 
     static CCharBuffer create_empty();
@@ -676,8 +676,8 @@ CCharBuffer cbufferFromNat(Nat v) noexcept;
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
 CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept;
 
-inline Bool cbuf_memcmp(CChar b1[maxCCharBufSize], CChar b2[maxCCharBufSize]) noexcept {
-    static_assert(maxCCharBufSize * sizeof(CChar) == sizeof(uintptr_t));
+inline Bool cbuf_memcmp(CChar b1[maxCCharBufferSize], CChar b2[maxCCharBufferSize]) noexcept {
+    static_assert(maxCCharBufferSize * sizeof(CChar) == sizeof(uintptr_t));
     
     return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
 }
