@@ -1,19 +1,17 @@
 #pragma once
 
-#include "../common.h"
-
 ///////////////////////////////////
 // Epsilon Allocator 
-// -- Intented to aid in observing collection impact on performance 
+// -- Does no memory management what so ever, continues to allocate until OOM (so be careful)
+// -- Intended to aid with observing GC impact on performance 
+// -- Enabled by running make with `ALLOC=epsilon` (e.g. `make BUILD=release ALLOC=epsilon`)
 
-//
-// Something I cant quite figure out is how eactly we can determine that a page is fully
-// dead and elligible to be nuked...
-//
+#ifdef EPSILON 
+
+#include "../common.h"
 
 class EpsilonAllocator {
 private: 
-    // We should experiment with making these uintptr_t* 
     void* ptr;
     
     void* heapstart;
@@ -71,3 +69,6 @@ public:
         munmap(heapstart, static_cast<uintptr_t*>(heapstart) - static_cast<uintptr_t*>(heapend));
     }
 };
+
+#else
+#endif //EPSILON

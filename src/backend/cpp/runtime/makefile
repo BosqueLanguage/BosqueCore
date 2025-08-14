@@ -19,12 +19,18 @@ LANGUAGE_DIR=$(MAKE_PATH)/../src/language/
 #dev is default, for another flavor : make BUILD=release or debug
 BUILD := dev
 
+#also support epsilon to disable gc
+ALLOC := gc
+
 CC=g++
 CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector
 
+INTERNAL_FLAGS.gc= 
+INTERNAL_FLAGS.epsilon=-DEPSILON
+
 CFLAGS_OPT.dev=-O0 -g -ggdb 
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
-CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS}
+CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 
 SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h 
 SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp
