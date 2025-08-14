@@ -9,6 +9,9 @@
 #define BSQ_GC_CHECK_ENABLED
 #define VERBOSE_HEADER
 
+// If enabled we will not be collecting but rather just using a bump pointer allocator
+#define EPSILON_ALLOC
+
 #ifdef BSQ_GC_CHECK_ENABLED
 #define ALLOC_DEBUG_MEM_INITIALIZE
 #define ALLOC_DEBUG_MEM_DETERMINISTIC

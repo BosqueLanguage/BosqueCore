@@ -26,9 +26,9 @@ CFLAGS_OPT.dev=-O0 -g -ggdb
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
 CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS}
 
-SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h 
-SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp
-SUPPORT_OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)xalloc.o
+SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h 
+SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp
+SUPPORT_OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)xalloc.o $(OUT_OBJ)epsilon.o
 
 MEMORY_HEADERS=$(RUNTIME_DIR)common.h $(MEMORY_DIR)allocator.h $(MEMORY_DIR)threadinfo.h $(MEMORY_DIR)gc.h
 MEMORY_SOURCES=$(MEMORY_DIR)allocator.cpp $(MEMORY_DIR)threadinfo.cpp $(MEMORY_DIR)gc.cpp
@@ -62,6 +62,10 @@ $(OUT_OBJ)threadinfo.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)thread
 $(OUT_OBJ)allocator.o: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(MEMORY_DIR)allocator.cpp
 	@mkdir -p $(OUT_OBJ)
 	$(CC) $(CFLAGS) -o $(OUT_OBJ)allocator.o -c $(MEMORY_DIR)allocator.cpp
+
+$(OUT_OBJ)epsilon.o: $(SUPPORT_HEADERS) $(SUPPORT_DIR)epsilon.cpp 
+	@mkdir -p $(OUT_OBJ)
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)epsilon.o -c $(SUPPORT_DIR)epsilon.cpp
 
 $(OUT_OBJ)xalloc.o: $(SUPPORT_HEADERS) $(SUPPORT_DIR)xalloc.cpp
 	@mkdir -p $(OUT_OBJ)

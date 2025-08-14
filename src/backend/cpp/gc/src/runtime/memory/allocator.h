@@ -5,6 +5,11 @@
 #include "../support/pagetable.h"
 #include "gc.h"
 
+// We should make this a cli arg
+#ifdef EPSILON_ALLOC
+    #include "../support/epsilon.h"
+#endif
+
 //Can also use other values like 0xFFFFFFFFFFFFFFFFul
 #define ALLOC_DEBUG_MEM_INITIALIZE_VALUE 0x0ul
 
@@ -186,7 +191,12 @@ T* MEM_ALLOC_CHECK(T* alloc)
     return alloc;
 }
 
+#ifndef EPSILON_ALLOC
 #define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
+#else 
+#define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK(EpsilonAllocator::alloc.allocate((L)))
+#endif
+
 #define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (new (GC_ALLOC_OBJECT(A, L)) T(__VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
