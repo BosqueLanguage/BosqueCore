@@ -43,7 +43,8 @@ MEMORY_OBJS=$(OUT_OBJ)allocator.o $(OUT_OBJ)threadinfo.o $(OUT_OBJ)gc.o
 CPPEMIT_HEADERS=$(CPPEMIT_DIR)cppruntime.hpp
 CPPEMIT_OBJS=$(OUT_OBJ)cppruntime.o
 
-all: $(OUT_EXE)memex
+#if we built with epsilon allocator enabled clean first
+all: clean $(OUT_EXE)memex
 
 # Only builds the GC by executing a temporary file that does nothing
 gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
