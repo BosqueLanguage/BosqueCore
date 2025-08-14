@@ -1371,13 +1371,18 @@ function emitVariableMultiInitilizationImplicitStatement(vmii: CPPAssembly::Vari
             return edecl, assignment, acc.2 + 1n;
         });
 
-    return String::concat(decls.0, decls.1, full_indent "}%n;");
+    return String::concat(decls.0, decls.1, full_indent, "}%n;");
 }
 
 function emitReturnMultiStatement(rms: CPPAssembly::ReturnMultiStatement, ctx: Context, indent: String): String {
-    return "";
-}
+    let full_indent = String::concat(indent, "    ");
+    
+    let elsig = emitTypeSignature(rms.elsig, true, ctx);
+    let exps = rms.exps.map<String>(fn(e) => emitExpression(e, ctx));
+    let eexps = String::joinAll(", ", exps);
 
+    return String::concat(full_indent, "return ", elsig, "(", eexps, ");");
+}
 
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
