@@ -157,10 +157,10 @@ public:
 
     TupleEntry() noexcept = default;
     TupleEntry(const TupleEntry& rhs) noexcept {
-        memcpy<K>(this->data, rhs->data);
+        memcpy<K>(this->data, rhs.data);
     }
     TupleEntry& operator=(const TupleEntry& rhs) noexcept {
-        memcpy<K>(this->data, rhs->data);
+        memcpy<K>(this->data, rhs.data);
         
         return *this;
     }
