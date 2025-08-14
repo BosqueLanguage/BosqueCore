@@ -59,12 +59,13 @@ public:
     // Get a new block of tinfo->type_size from heap
     inline void* allocate(__CoreGC::TypeInfoBase* tinfo)
     {
-        if(static_cast<uint8_t*>(ptr) + tinfo->type_size > heapend || ptr == nullptr) [[unlikely]] {
+        void* newptr = static_cast<uint8_t*>(this->ptr) + tinfo->type_size;
+        if(newptr > heapend || ptr == nullptr) [[unlikely]] {
             this->allocatePage();
         }
         
         void* entry = this->ptr;
-        this->ptr = static_cast<uint8_t*>(this->ptr) + tinfo->type_size;
+        this->ptr = newptr;
     
         return entry;
     }

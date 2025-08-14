@@ -44,7 +44,13 @@ CPPEMIT_HEADERS=$(CPPEMIT_DIR)cppruntime.hpp
 CPPEMIT_OBJS=$(OUT_OBJ)cppruntime.o
 
 #if we built with epsilon allocator enabled clean first
-all: clean $(OUT_EXE)memex
+ifeq ($(ALLOC), epsilon)
+NEED_CLEAN=clean
+else
+NEED_CLEAN=
+endif
+
+all: $(NEED_CLEAN) $(OUT_EXE)memex
 
 # Only builds the GC by executing a temporary file that does nothing
 gc: $(SUPPORT_HEADERS) $(MEMORY_HEADERS) $(CPPEMIT_HEADERS) $(SUPPORT_OBJS) $(MEMORY_OBJS) $(CPPEMIT_OBJS)
