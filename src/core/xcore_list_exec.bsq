@@ -859,7 +859,7 @@ namespace ListOps {
                     then Tree<T>::createNode(Color#Black, $nt.l, $nt.r)
                     else nt;
 
-                return nt;
+                return ntt;
             }
             | _ => { 
                 return nt; 

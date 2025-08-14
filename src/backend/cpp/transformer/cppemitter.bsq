@@ -155,7 +155,13 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
         Some<CPPAssembly::TypeKey> => { 
             let ntk = tk@some;
             if(ctx.asm.primitives.has(ntk)) {
-                return String::fromCString(ntk.value);
+                %% CString and String are not defined in __CoreCpp
+                let t = String::fromCString(ntk.value);
+                if(t === "CString" || t === "String") {
+                    return String::concat("Core::", t);
+                }
+
+                return t;
             }
 
             declaredInNS = emitNamespaceKey(ctx.asm.lookupNominalTypeDeclaration(ntk).declaredInNS); 
@@ -1037,7 +1043,9 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
 }
 
 function emitCStringAsLiteral(s: CString): String {
-    return String::fromCString(CString::concat('"', s,'"'));
+    let formatted = s.replaceAllStringOccurrences('%n;', '\n');
+    
+    return String::fromCString(CString::concat('"', formatted,'"'));
 }
 
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
@@ -1361,7 +1369,7 @@ function emitVariableMultiInitilizationImplicitStatement(vmii: CPPAssembly::Vari
     let decls = vmii.decls
         .reduce<(|String, String, Nat|)>((|"", String::concat(full_indent, "{%n;", rhsinit), 0n|), fn(acc, decl) => {
             let name = emitIdentifier(decl.0);
-            let stype = emitTypeSignature(decl.1, true, ctx);
+            let stype = String::concat("[[maybe_unused]] ", emitTypeSignature(decl.1, true, ctx));
 
             let edecl = String::concat(acc.0, full_indent, stype, " ", name, ";%n;");
 
@@ -2050,12 +2058,14 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     %% Checking for equality on our ropes needs to be overloaded in global namespace
     var overloads: String;
-    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('CRope'))) {
+    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_equal'))) {
         overloads = "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }";
     }
+    %*
     elif(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('UnicodeRope'))) {
         overloads = "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }";
     }
+    *%
     else {
         overloads = "";
     }
