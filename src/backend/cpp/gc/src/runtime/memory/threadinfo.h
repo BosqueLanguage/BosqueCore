@@ -4,7 +4,8 @@
 
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
-#define MAX_MEMSTAT_TIMES_INDEX 512
+// our buckets store 0.2ms variance
+#define MAX_MEMSTATS_BUCKETS 100
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
@@ -90,17 +91,10 @@ struct BSQMemoryTheadLocalInfo
     uint64_t total_empty_gc_pages = 0;
     uint64_t total_live_bytes = 0; //doesnt include canary or metadata size
 
-    int collection_times_index = 0;
-    double collection_times[MAX_MEMSTAT_TIMES_INDEX]; //store in ms how much time each collection takes
-
-    int marking_times_index = 0;
-    double marking_times[MAX_MEMSTAT_TIMES_INDEX];
-
-    int evacuation_times_index = 0;
-    double evacuation_times[MAX_MEMSTAT_TIMES_INDEX];
-
-    int decrement_times_index = 0;
-    double decrement_times[MAX_MEMSTAT_TIMES_INDEX];
+    size_t collection_times[MAX_MEMSTATS_BUCKETS];
+    size_t marking_times[MAX_MEMSTATS_BUCKETS];
+    size_t evacuation_times[MAX_MEMSTATS_BUCKETS];
+    size_t decrement_times[MAX_MEMSTATS_BUCKETS];
 #endif
 
 #ifdef BSQ_GC_CHECK_ENABLED
@@ -140,6 +134,11 @@ struct BSQMemoryTheadLocalInfo
     void unloadNativeRootSet() noexcept;
 };
 
+//
+// Hmmmm how do we want to do this... dumping memstats for quick feedback is very nice
+// so i dont think we want to lose it. We will probably want to spit to stdout a nice
+// block of text containing the count for each bucket to make graphing easier
+//
 #ifdef MEM_STATS
     #define NUM_ALLOCS(E)           (E).num_allocs
     #define TOTAL_GC_PAGES(E)       (E).total_gc_pages
