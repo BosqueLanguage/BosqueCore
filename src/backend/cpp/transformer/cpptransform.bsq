@@ -817,21 +817,53 @@ entity CPPTransformer {
         return CPPAssembly::VariableDeclarationStatement{ name, vtype };
     }
 
+    method transformVariableMultiInitilizationExplicitStatement(vmie: BSQAssembly::VariableMultiInitializationExplicitStatement): CPPAssembly::VariableMultiInitializationExplicitStatement {
+        let decls = vmie.decls.map<(|CPPAssembly::Identifier, CPPAssembly::TypeSignature|)>(fn(decl) => {
+            let cppidentifier = CPPTransformNameManager::convertIdentifier(decl.0);
+            let cpptsig = this.convertTypeSignature(decl.1);
+
+            return cppidentifier, cpptsig;
+        });
+        let exps = vmie.exps.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+
+        return CPPAssembly::VariableMultiInitializationExplicitStatement{ decls, exps };
+    }
+
+    method transformVariableMultiInitilizationImplicitStatement(vmii: BSQAssembly::VariableMultiInitializationImplicitStatement): CPPAssembly::VariableMultiInitializationImplicitStatement {
+        let decls = vmii.decls.map<(|CPPAssembly::Identifier, CPPAssembly::TypeSignature|)>(fn(decl) => {
+            let cppidentifier = CPPTransformNameManager::convertIdentifier(decl.0);
+            let cpptsig = this.convertTypeSignature(decl.1);
+
+            return cppidentifier, cpptsig;
+        });
+        let exp = this.transformExpressionToCpp(vmii.exp);
+
+        return CPPAssembly::VariableMultiInitializationImplicitStatement{ decls, exp };
+    }
+
+    method transformReturnMultiStatement(rms: BSQAssembly::ReturnMultiStatement): CPPAssembly::ReturnMultiStatement {
+        let elsig = this.convertTypeSignature(rms.elsig)@<CPPAssembly::EListTypeSignature>;
+        let rtypes = rms.rtypes.map<CPPAssembly::TypeSignature>(fn(ts) => this.convertTypeSignature(ts));
+        let exps = rms.exps.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
+
+        return CPPAssembly::ReturnMultiStatement{ elsig, rtypes, exps };
+    }
+
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
             BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
             | BSQAssembly::VariableDeclarationStatement => { return this.transformVariableDeclarationStatement($stmt); }
             | BSQAssembly::VariableMultiDeclarationStatement => { abort; }
             | BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
-            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
-            | BSQAssembly::VariableMultiInitializationImplicitStatement => { abort; }
+            | BSQAssembly::VariableMultiInitializationExplicitStatement => { return this.transformVariableMultiInitilizationExplicitStatement($stmt); }
+            | BSQAssembly::VariableMultiInitializationImplicitStatement => { return this.transformVariableMultiInitilizationImplicitStatement($stmt); }
             | BSQAssembly::VariableAssignmentStatement => { return this.transformVariableAssignmentStatement($stmt); }
-            | BSQAssembly::VariableMultiInitializationExplicitStatement => { abort; }
+            | BSQAssembly::VariableMultiAssignmentExplicitStatement => { abort; }
             | BSQAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
             | BSQAssembly::VariableRetypeStatement => { abort; }
             | BSQAssembly::ReturnVoidStatement => { abort; }
             | BSQAssembly::ReturnSingleStatement => { return this.transformReturnSingleStatementToCpp[recursive]($stmt); }
-            | BSQAssembly::ReturnMultiStatement => { abort; }
+            | BSQAssembly::ReturnMultiStatement => { return this.transformReturnMultiStatement($stmt); }
             | BSQAssembly::IfStatement => { return this.transformIfStatement[recursive]($stmt); }
             | BSQAssembly::IfElseStatement => { return this.transformIfElseStatement[recursive]($stmt); }
             | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }

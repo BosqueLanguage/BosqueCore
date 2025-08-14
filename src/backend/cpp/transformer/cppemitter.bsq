@@ -588,13 +588,20 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     return String::concat(accessor, ident);
 }
 
-%% For now we assume this is only used for accessing elist fields
-function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc: String, ctx: Context): String {
-    let accesstype = op.baseType@<CPPAssembly::EListTypeSignature>.entries.get(Nat::fromCString(op.idx));
-    let accessed = emitTypeSignature(accesstype, true, ctx);
-    let idx = String::fromCString(op.idx);
+%% Assumes access type is elist (I believe this is the only type accessable via postfix index)
+function generateAccessFromIndex(idx: Nat, accessing: CPPAssembly::TypeSignature, ctx: Context): String {
+    let accessed = emitTypeSignature(accessing, true, ctx);
+    let accessidx = natToString(idx);
 
-    return String::concat(acc, ".access<", accessed, ", ", idx, ">()");
+    return String::concat(".access<", accessed, ", ", accessidx, ">()");
+}
+
+function emitPostfixAccessFromIndex(op: CPPAssembly::PostfixAccessFromIndex, acc: String, ctx: Context): String {
+    let idx = Nat::fromCString(op.idx);
+    let accesstype = op.baseType@<CPPAssembly::EListTypeSignature>.entries.get(idx);
+    let access = generateAccessFromIndex(idx, accesstype, ctx);
+
+    return String::concat(acc, access);
 }
 
 function emitPostfixInvokeStatic(op: CPPAssembly::PostfixInvokeStatic, rootexp: String, ctx: Context): String {
@@ -1329,21 +1336,64 @@ function emitSwitchStatement(stmt: CPPAssembly::SwitchStatement, ctx: Context, i
     return String::concat(matches, failure);
 }
 
+function emitVariableMultiInitilizationExplicitStatement(vmie: CPPAssembly::VariableMultiInitializationExplicitStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat(indent, "    ");
+    let stmts = vmie.decls.mapIdx<String>(fn(decl, ii) => {
+        let name = emitIdentifier(decl.0);
+        let tsig = emitTypeSignature(decl.1, true, ctx);
+        let exp = emitExpression(vmie.exps.get(ii), ctx);
+
+        return String::concat(indent, tsig, " ", name, " = ", exp);
+    });
+
+    return String::joinAll(";%n;", stmts);
+}
+
+%% This assumes implicit multiple initialization is done using elist
+function emitVariableMultiInitilizationImplicitStatement(vmii: CPPAssembly::VariableMultiInitializationImplicitStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat(indent, "    ");
+    let fullfull_indent = String::concat(full_indent,  "    ");
+    let exp = emitExpression(vmii.exp, ctx);
+    let etype = emitTypeSignature(vmii.exp.etype, true, ctx);
+    let rhsinit = String::concat(fullfull_indent, etype, " elist = ", exp, ";%n;");
+
+    %% (| decls, assignment, elist index |)
+    let decls = vmii.decls
+        .reduce<(|String, String, Nat|)>((|"", String::concat(full_indent, "{%n;", rhsinit), 0n|), fn(acc, decl) => {
+            let name = emitIdentifier(decl.0);
+            let stype = emitTypeSignature(decl.1, true, ctx);
+
+            let edecl = String::concat(acc.0, full_indent, stype, " ", name, ";%n;");
+
+            let access = generateAccessFromIndex(acc.2, decl.1, ctx);
+            let assignment = String::concat(acc.1, fullfull_indent, name, " = elist", access, ";%n;");
+
+            return edecl, assignment, acc.2 + 1n;
+        });
+
+    return String::concat(decls.0, decls.1, full_indent "}%n;");
+}
+
+function emitReturnMultiStatement(rms: CPPAssembly::ReturnMultiStatement, ctx: Context, indent: String): String {
+    return "";
+}
+
+
 function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: String): String {
     match(stmt)@ {
         CPPAssembly::EmptyStatement => { return ""; }
         | CPPAssembly::VariableDeclarationStatement => { return emitVariableDeclarationStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiDeclarationStatement => { abort; }
         | CPPAssembly::VariableInitializationStatement => { return emitVariableInitializationStatement($stmt, ctx, indent); }
-        %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
-        %%| CPPAssembly::VariableMultiInitializationImplicitStatement => { abort; }
+        | CPPAssembly::VariableMultiInitializationExplicitStatement => { return emitVariableMultiInitilizationExplicitStatement($stmt, ctx, indent); }
+        | CPPAssembly::VariableMultiInitializationImplicitStatement => { return emitVariableMultiInitilizationImplicitStatement($stmt, ctx, indent); }
         | CPPAssembly::VariableAssignmentStatement => { return emitVariableAssignmentStatement($stmt, ctx, indent); }
         %%| CPPAssembly::VariableMultiInitializationExplicitStatement => { abort; }
         %%| CPPAssembly::VariableMultiAssignmentImplicitStatement => { abort; }
         %%| CPPAssembly::VariableRetypeStatement => { abort; }
         %%| CPPAssembly::ReturnVoidStatement => { abort; }
         | CPPAssembly::ReturnSingleStatement => { return emitReturnSingleStatement($stmt, ctx, indent); }
-        %%| CPPAssembly::ReturnMultiStatement => { abort; }
+        | CPPAssembly::ReturnMultiStatement => { return emitReturnMultiStatement($stmt, ctx, indent); }
         | CPPAssembly::IfStatement => { return emitIfStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElseStatement => { return emitIfElseStatement($stmt, ctx, indent); }
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }

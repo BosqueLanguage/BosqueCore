@@ -137,6 +137,16 @@ entity VariableInitializationStatement provides Statement {
     field exp: Expression;
 }
 
+entity VariableMultiInitializationExplicitStatement provides Statement {
+    field decls: List<(|Identifier, TypeSignature|)>;
+    field exps: List<Expression>;
+}
+
+entity VariableMultiInitializationImplicitStatement provides Statement {
+    field decls: List<(|Identifier, TypeSignature|)>;
+    field exp: Expression;
+}
+
 entity VariableAssignmentStatement provides Statement {
     field name: Identifier;
     field vtype: TypeSignature;
@@ -165,6 +175,12 @@ entity BinderBlockStatement provides Statement {
 entity ReturnSingleStatement provides Statement {
     field rtype: TypeSignature;
     field value: Expression;
+}
+
+entity ReturnMultiStatement provides Statement {
+    field elsig: EListTypeSignature;
+    field rtypes: List<TypeSignature>;
+    field exps: List<Expression>;
 }
 
 entity CallNamespaceFunctionExpression provides Expression {
