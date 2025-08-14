@@ -73,7 +73,7 @@ public:
     // Frees all memory from heapstart -> heapend (this may not get used)
     void freeheap() noexcept
     {
-        munmap(heapstart, static_cast<uintptr_t*>(heapstart) - static_cast<uintptr_t*>(heapend));
+        munmap(heapstart, static_cast<uint8_t*>(heapstart) - static_cast<uint8_t*>(heapend));
     }
 };
 
