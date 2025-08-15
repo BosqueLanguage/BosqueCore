@@ -27,7 +27,7 @@ do {                                                                            
 }while(0)
 #else
 #define MEM_STATS_START()
-#define MEM_STATS_END(TT, TTI)
+#define MEM_STATS_END(BUCKETS)
 #endif
 
 // Allows us to correctly determine pointer offsets

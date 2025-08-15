@@ -96,12 +96,12 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 
 #ifdef MEM_STATS
 
-// Overflow in this calculation IS possible so we need to be careful
+// Overflow in this calculation IS possible so we need to be careful if we are
+// running very long tests
 double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept
 {
     double sum = 0.0;
-    double avg = 0.1;
-    const double factor = 0.2;
+    double avg = BUCKET_AVERAGE;
     uint64_t count = 0;
 
     for(int i = 0; i < MAX_MEMSTATS_BUCKETS - 1; i++) {
@@ -110,7 +110,7 @@ double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept
             sum += nentries * avg;
             count += nentries;
         }
-        avg += factor;
+        avg += BUCKET_VARIANCE;
     }
 
     return sum / count;
@@ -138,7 +138,8 @@ std::string generate_bucket_data(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcep
 //
 std::string generate_formatted_memstats(MemStats& ms) noexcept
 {
-    std::string header = "{..., ...}\n";
+    std::string header = "{" + std::to_string(BUCKET_VARIANCE) 
+        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n";
 
     std::string collection_data = generate_bucket_data(ms.collection_times);
     std::string collection_times = "<Collection Times>" + collection_data;

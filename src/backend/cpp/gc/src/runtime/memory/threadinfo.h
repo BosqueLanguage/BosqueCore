@@ -4,9 +4,6 @@
 
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
-// Buckets store 0.2ms variance, final entry is for outliers (hopefully never any values present there)
-#define MAX_MEMSTATS_BUCKETS 100 + 1
-
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
 #define MARK_STACK_NODE_COLOR_GREY 0
@@ -41,6 +38,9 @@ struct RegisterContents
 };
 
 #ifdef MEM_STATS
+
+// Buckets store 0.2ms variance, final entry is for outliers (hopefully never any values present there)
+#define MAX_MEMSTATS_BUCKETS 100 + 1
 struct MemStats {
     uint64_t num_allocs = 0;
     uint64_t total_gc_pages = 0;
@@ -142,6 +142,9 @@ struct BSQMemoryTheadLocalInfo
 
 #ifdef MEM_STATS
     #include <iostream>
+    
+    #define BUCKET_VARIANCE 0.2
+    #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
     #define NUM_ALLOCS(E)           (E).mstats.num_allocs
     #define TOTAL_GC_PAGES(E)       (E).mstats.total_gc_pages
@@ -154,8 +157,7 @@ struct BSQMemoryTheadLocalInfo
     #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)     TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
 
     inline void update_bucket(uint64_t* bucket, double time) noexcept {
-        // We should make these numbers not magic
-        int index = static_cast<int>((time * 5) + 0.5);
+        int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
         if(index > MAX_MEMSTATS_BUCKETS) { // Outlier
             bucket[MAX_MEMSTATS_BUCKETS - 1]++;
         }
@@ -191,7 +193,8 @@ struct BSQMemoryTheadLocalInfo
     #define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
 
     #define update_bucket (void)sizeof
-    #define compute_average_time (void)sizeof
+    #define compute_average_time(B) 0
+    #define generate_formatted_memstats(MS) ""
 
     #define MEM_STATS_DUMP(E)
 #endif // MEM_STATS
