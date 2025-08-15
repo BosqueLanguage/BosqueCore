@@ -145,7 +145,6 @@ struct BSQMemoryTheadLocalInfo
     #define UPDATE_TOTAL_EMPTY_GC_PAGES(E, OP, ...) TOTAL_EMPTY_GC_PAGES(E) OP __VA_ARGS__
     #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)     TOTAL_LIVE_BYTES(E) OP __VA_ARGS__
 
-    #include <iostream>
     inline void update_bucket(uint64_t* bucket, double time) noexcept {
         // We should make these numbers not magic
         int index = static_cast<int>((time * 5) + 0.5);
