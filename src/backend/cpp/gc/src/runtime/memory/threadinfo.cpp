@@ -95,21 +95,25 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 }
 
 #ifdef MEM_STATS
-double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept
+
+// Overflow in this calculation IS possible so we need to be careful
+double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept
 {
-    if(size > MAX_MEMSTAT_TIMES_INDEX) {
-        assert(false);
+    double sum = 0.0;
+    double avg = 0.1;
+    const double factor = 0.2;
+    uint64_t count = 0;
+
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS - 1; i++) {
+        uint64_t nentries = buckets[i];
+        if(nentries != 0) {
+            sum += nentries * avg;
+            count += nentries;
+        }
+        avg += factor;
     }
 
-    double total_collection_time = 0;
-    int num_collections = 0;
-    for(int i = 0; i < size; i++) {
-        double elapsed_time = time[i];
-
-        num_collections++;
-        total_collection_time += elapsed_time;
-    }
-
-    return (total_collection_time / num_collections);
+    return sum / count;
 }
+
 #endif

@@ -4,8 +4,8 @@
 
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
-// our buckets store 0.2ms variance
-#define MAX_MEMSTATS_BUCKETS 100
+// Buckets store 0.2ms variance, final entry is for outliers (hopefully never any values present there)
+#define MAX_MEMSTATS_BUCKETS 100 + 1
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
 
@@ -91,10 +91,10 @@ struct BSQMemoryTheadLocalInfo
     uint64_t total_empty_gc_pages = 0;
     uint64_t total_live_bytes = 0; //doesnt include canary or metadata size
 
-    size_t collection_times[MAX_MEMSTATS_BUCKETS];
-    size_t marking_times[MAX_MEMSTATS_BUCKETS];
-    size_t evacuation_times[MAX_MEMSTATS_BUCKETS];
-    size_t decrement_times[MAX_MEMSTATS_BUCKETS];
+    uint64_t collection_times[MAX_MEMSTATS_BUCKETS];
+    uint64_t marking_times[MAX_MEMSTATS_BUCKETS];
+    uint64_t evacuation_times[MAX_MEMSTATS_BUCKETS];
+    uint64_t decrement_times[MAX_MEMSTATS_BUCKETS];
 #endif
 
 #ifdef BSQ_GC_CHECK_ENABLED
@@ -134,11 +134,6 @@ struct BSQMemoryTheadLocalInfo
     void unloadNativeRootSet() noexcept;
 };
 
-//
-// Hmmmm how do we want to do this... dumping memstats for quick feedback is very nice
-// so i dont think we want to lose it. We will probably want to spit to stdout a nice
-// block of text containing the count for each bucket to make graphing easier
-//
 #ifdef MEM_STATS
     #define NUM_ALLOCS(E)           (E).num_allocs
     #define TOTAL_GC_PAGES(E)       (E).total_gc_pages
@@ -150,12 +145,23 @@ struct BSQMemoryTheadLocalInfo
     #define UPDATE_TOTAL_EMPTY_GC_PAGES(E, OP, ...) TOTAL_EMPTY_GC_PAGES(E) OP __VA_ARGS__
     #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)     TOTAL_LIVE_BYTES(E) OP __VA_ARGS__
 
-    double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept;
+    #include <iostream>
+    inline void update_bucket(uint64_t* bucket, double time) noexcept {
+        // We should make these numbers not magic
+        int index = static_cast<int>((time * 5) + 0.5);
+        if(index > MAX_MEMSTATS_BUCKETS) { // Outlier
+            bucket[MAX_MEMSTATS_BUCKETS - 1]++;
+        }
+        else {
+            bucket[index]++;
+        }
+    }
+    double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
     
-    #define PRINT_COLLECTION_TIME(E) (std::cout << "Average Collection Time: " << compute_average_time((E).collection_times, (E).collection_times_index) << "ms\n")
-    #define PRINT_MARKING_TIME(E) (std::cout << "Average Marking Time: " << compute_average_time((E).marking_times, (E).marking_times_index) << "ms\n")
-    #define PRINT_EVACUATION_TIME(E) (std::cout << "Average Evacuation Time: " << compute_average_time((E).evacuation_times, (E).evacuation_times_index) << "ms\n")
-    #define PRINT_DECREMENT_TIME(E) (std::cout << "Average Decrement Time: " << compute_average_time((E).decrement_times, (E).decrement_times_index) << "ms\n")
+    #define PRINT_COLLECTION_TIME(E) (std::cout << "Average Collection Time: " << compute_average_time((E).collection_times) << "ms\n")
+    #define PRINT_MARKING_TIME(E) (std::cout << "Average Marking Time: " << compute_average_time((E).marking_times) << "ms\n")
+    #define PRINT_EVACUATION_TIME(E) (std::cout << "Average Evacuation Time: " << compute_average_time((E).evacuation_times) << "ms\n")
+    #define PRINT_DECREMENT_TIME(E) (std::cout << "Average Decrement Time: " << compute_average_time((E).decrement_times) << "ms\n")
 
     #define MEM_STATS_DUMP(E)     \
     do {                          \
@@ -175,7 +181,9 @@ struct BSQMemoryTheadLocalInfo
     #define UPDATE_TOTAL_EMPTY_GC_PAGES(OP, ...)
     #define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
 
+    #define update_bucket (void)sizeof
     #define compute_average_time (void)sizeof
+
     #define MEM_STATS_DUMP(E)
 #endif
 
