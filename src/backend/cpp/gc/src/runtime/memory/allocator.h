@@ -18,19 +18,16 @@
 
 #ifdef MEM_STATS
 #define MEM_STATS_START() auto start = std::chrono::high_resolution_clock::now()
-#define MEM_STATS_END(TT, TTI)                                                         \
+#define MEM_STATS_END(BUCKETS)                                                         \
 do {                                                                                   \
     auto end = std::chrono::high_resolution_clock::now();                              \
     double duration_ms = std::chrono::                                                 \
         duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
-    gtl_info. TT[gtl_info. TTI++] = duration_ms;                                       \
-    if(gtl_info. TTI == MAX_MEMSTAT_TIMES_INDEX) {                                     \
-        gtl_info. TTI = 0;                                                             \
-    }                                                                                  \
+    update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
 }while(0)
 #else
 #define MEM_STATS_START()
-#define MEM_STATS_END(TT, TTI)
+#define MEM_STATS_END(BUCKETS)
 #endif
 
 // Allows us to correctly determine pointer offsets

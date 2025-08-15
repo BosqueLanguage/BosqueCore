@@ -95,21 +95,66 @@ void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 }
 
 #ifdef MEM_STATS
-double compute_average_time(double time[MAX_MEMSTAT_TIMES_INDEX], int size) noexcept
+
+// Overflow in this calculation IS possible so we need to be careful if we are
+// running very long tests
+double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept
 {
-    if(size > MAX_MEMSTAT_TIMES_INDEX) {
-        assert(false);
+    double sum = 0.0;
+    double avg = BUCKET_AVERAGE;
+    uint64_t count = 0;
+
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS - 1; i++) {
+        uint64_t nentries = buckets[i];
+        if(nentries != 0) {
+            sum += nentries * avg;
+            count += nentries;
+        }
+        avg += BUCKET_VARIANCE;
     }
 
-    double total_collection_time = 0;
-    int num_collections = 0;
-    for(int i = 0; i < size; i++) {
-        double elapsed_time = time[i];
-
-        num_collections++;
-        total_collection_time += elapsed_time;
-    }
-
-    return (total_collection_time / num_collections);
+    return sum / count;
 }
-#endif
+
+std::string generate_bucket_data(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept 
+{
+    std::string buf = "[";
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+        std::string ndata = std::to_string(buckets[i]);
+        if(i != MAX_MEMSTATS_BUCKETS - 1) {
+            ndata += ", ";
+        }
+        
+        buf += ndata;    
+    }
+    return buf + "]\n";
+}
+
+//
+// Spits out contents of each bucket in a format like so: 
+// {Bucket Variance, Number of Buckets}
+// <Statistic Name>[data, data, data]
+// <Statistic Name>[data, data, data] ...
+//
+std::string generate_formatted_memstats(MemStats& ms) noexcept
+{
+    std::string header = "{" + std::to_string(BUCKET_VARIANCE) 
+        + ", " + std::to_string(MAX_MEMSTATS_BUCKETS) + "}\n";
+
+    std::string collection_data = generate_bucket_data(ms.collection_times);
+    std::string collection_times = "<Collection Times>" + collection_data;
+
+    std::string marking_data = generate_bucket_data(ms.marking_times);
+    std::string marking_times = "<Marking Times>" + marking_data;
+
+    std::string evacuation_data = generate_bucket_data(ms.evacuation_times);
+    std::string evacuation_times = "<Evacuation Times>" + evacuation_data;
+
+    std::string decrement_data = generate_bucket_data(ms.decrement_times);
+    std::string decrement_times = "<Decrement Times>" + decrement_data;
+
+    return header + collection_times + marking_times
+        + evacuation_times + decrement_times;
+}
+
+#endif //MEM_STATS

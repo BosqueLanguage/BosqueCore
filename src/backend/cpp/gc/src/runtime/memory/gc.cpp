@@ -231,7 +231,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
     tinfo.decremented_pages_index = 0;
 
-    MEM_STATS_END(decrement_times, decrement_times_index);
+    MEM_STATS_END(decrement_times);
     GC_REFCT_LOCK_RELEASE();
 
     //
@@ -330,7 +330,7 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         tinfo.forward_table[tinfo.forward_table_index++] = newobj;
     }
 
-    MEM_STATS_END(evacuation_times, evacuation_times_index);
+    MEM_STATS_END(evacuation_times);
     GC_REFCT_LOCK_RELEASE();
 }
 
@@ -503,7 +503,7 @@ void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     gtl_info.visit_stack.clear();
     gtl_info.pending_roots.clear();
 
-    MEM_STATS_END(marking_times, marking_times_index);
+    MEM_STATS_END(marking_times);
 }
 
 void collect() noexcept
@@ -553,5 +553,5 @@ void collect() noexcept
     gtl_info.roots_count = 0;
     gtl_info.newly_filled_pages_count = 0;
 
-    MEM_STATS_END(collection_times, collection_times_index);
+    MEM_STATS_END(collection_times);
 }
