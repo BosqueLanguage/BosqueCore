@@ -116,4 +116,44 @@ double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept
     return sum / count;
 }
 
-#endif
+std::string generate_bucket_data(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept 
+{
+    std::string buf = "[";
+    for(int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+        std::string ndata = std::to_string(buckets[i]);
+        if(i != MAX_MEMSTATS_BUCKETS - 1) {
+            ndata += ", ";
+        }
+        
+        buf += ndata;    
+    }
+    return buf + "]\n";
+}
+
+//
+// Spits out contents of each bucket in a format like so: 
+// {Bucket Variance, Number of Buckets}
+// <Statistic Name>[data, data, data]
+// <Statistic Name>[data, data, data] ...
+//
+std::string generate_formatted_memstats(MemStats& ms) noexcept
+{
+    std::string header = "{..., ...}\n";
+
+    std::string collection_data = generate_bucket_data(ms.collection_times);
+    std::string collection_times = "<Collection Times>" + collection_data;
+
+    std::string marking_data = generate_bucket_data(ms.marking_times);
+    std::string marking_times = "<Marking Times>" + marking_data;
+
+    std::string evacuation_data = generate_bucket_data(ms.evacuation_times);
+    std::string evacuation_times = "<Evacuation Times>" + evacuation_data;
+
+    std::string decrement_data = generate_bucket_data(ms.decrement_times);
+    std::string decrement_times = "<Decrement Times>" + decrement_data;
+
+    return header + collection_times + marking_times
+        + evacuation_times + decrement_times;
+}
+
+#endif //MEM_STATS

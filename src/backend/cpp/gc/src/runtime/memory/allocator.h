@@ -23,7 +23,7 @@ do {                                                                            
     auto end = std::chrono::high_resolution_clock::now();                              \
     double duration_ms = std::chrono::                                                 \
         duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
-    update_bucket(gtl_info. BUCKETS, duration_ms);                                     \
+    update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
 }while(0)
 #else
 #define MEM_STATS_START()
