@@ -479,9 +479,10 @@ class BSQONTypeInfoEmitter {
         return {ns: decl, types: tdecls};
     }
 
-    private emitElistInfo(): any[] {
-        return ["TODO -- EList Emit"];
-    }
+	//NOTE: Needs to be off for smtextractor to parse json.
+    // private emitElistInfo(): any[] {
+    //     return ["TODO -- EList Emit"];
+    // }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
         let decl: any = {};
@@ -503,7 +504,7 @@ class BSQONTypeInfoEmitter {
                 decl.typerefs.push(...nsemit.types);
                 if(nsii.elists.size !== 0) {
                     //TODO: asminsantiation has the elist that are instantiated!!!!
-                    decl.typerefs.push(...emitter.emitElistInfo());
+                    // decl.typerefs.push(...emitter.emitElistInfo());
                 }
 
                 nsworklist.push(...nsdecl.subns);

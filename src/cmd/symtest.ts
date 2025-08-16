@@ -21,6 +21,9 @@ const bosque_dir: string = path.join(__dirname, "../../../");
 const smt_transform_bin_path = path.join(bosque_dir, "bin/smtemit/SMTEmitter.mjs");
 const smt_runtime_code_path = path.join(bosque_dir, "bin/smtruntime/formula.smt2");
 
+const smtextractor_bin = path.join(bosque_dir,"build/include/z3/bin/smtextract");
+const type_info_gen = path.join(bosque_dir, "bin/src/cmd/bosque.js");
+
 const z3bin = path.join(bosque_dir, "build/include/z3/bin/z3");
 
 ////////////////////////////////////////////////////
@@ -305,6 +308,15 @@ function completeSMTComponent(cinfo: PendingCompnentInfo, err: any, result: stri
         }
         else if(result === "sat") {
             process.stdout.write(chalk.red("Violation Found") + "!\n");
+
+			//---------------Move this to a better location when it works....
+			process.stdout.write(chalk.blue("\tExtracting Violation...") +"\n");
+
+			let res = "";
+			res = runSMTExtractor()
+
+			process.stdout.write(chalk.red("Violation Values:\n") + res + "\n");
+
             if(PRINT_TIMING) {
                 process.stdout.write(`    Solve Time ${end - cinfo.starttime}ms\n`);
             }
@@ -358,6 +370,12 @@ function checkSMTFormula(smtcomponents: string, outname: string): boolean {
     }
     else if(rr === "sat") {
         process.stdout.write("    Violation Found!\n");
+
+		let res = "";
+		res = runSMTExtractor()
+
+		process.stdout.write(chalk.red("Violation Values:\n") + res + "\n");
+
         if(PRINT_TIMING) {
             process.stdout.write(`    Solve Time ${end - start}ms\n`);
         }
@@ -378,6 +396,42 @@ if(asm === undefined) {
 }
 
 Status.output(`-- SMT output directory: ${outdir}\n\n`);
+
+function runSMTExtractor(): string {
+
+	const bsqfile = fullargs.find((v) => v.endsWith(".bsq"));
+
+	// (declare-fun MockTest (Int) Int) (assert ( < (MockTest 2) 7))
+	const extractor_helper = "(declare-const op @Term) (assert (@ValidateRoot-Main@DatabaseOperation op)) (declare-fun MockTest (@Term) (@Result CString)) (declare-const result (@Result CString)) (assert (= (MockTest op) (Main@testOpOnSample op))) (assert (= result (MockTest op)))";
+	const smtfile = path.join(outdir,"formula.smt2")
+
+	fs.appendFileSync(smtfile, extractor_helper, "utf8");
+	fs.readFileSync(smtfile,"utf8")
+
+	let json_dir = "";
+	const mock_target = "--function singleOpFailure"
+    try {
+		const json_output = execSync(`node ${type_info_gen} ${mock_target} ${bsqfile}`, { 
+        encoding: 'utf8'  // This converts Buffer to string
+		});
+		json_dir = json_output.toString().split("-- JS output directory:")[1]?.split('\n')[0]?.trim();
+	}
+	catch(e) {      
+	console.error(e)
+		Status.error("Failed to generate typeinfo and targettype files.\n");
+	}
+
+	let extracted_val = ""
+	try {
+		extracted_val = execSync(`${smtextractor_bin} ${smtfile} ${path.join(json_dir,"targettype.json")} ${path.join(json_dir,"typeinfo.json")} --mock`).toString().trim();
+	}
+	catch(e) {
+		console.error(e)
+		Status.error("Failed to run SMT Extractor!\n");
+	}
+
+	return extracted_val
+}
 
 ///////////////////////////////////////////////////////
 Status.statusDisable();

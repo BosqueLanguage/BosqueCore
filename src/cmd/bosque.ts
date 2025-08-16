@@ -203,7 +203,7 @@ else {
         }
 
         if (allmatches.length === 0) {
-            console.error(`Function ${functionname}`)
+            console.error(`ERROR: Function ${functionname} not found.`)
             process.exit(1);
         }
         const target = allmatches[0];
