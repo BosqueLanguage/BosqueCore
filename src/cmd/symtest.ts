@@ -401,17 +401,12 @@ function runSMTExtractor(): string {
 
 	const bsqfile = fullargs.find((v) => v.endsWith(".bsq"));
 
-	// (declare-fun MockTest (Int) Int) (assert ( < (MockTest 2) 7))
-	const extractor_helper = "(declare-const op @Term) (assert (@ValidateRoot-Main@DatabaseOperation op)) (declare-fun MockTest (@Term) (@Result CString)) (declare-const result (@Result CString)) (assert (= (MockTest op) (Main@testOpOnSample op))) (assert (= result (MockTest op)))";
 	const smtfile = path.join(outdir,"formula.smt2")
-
-	fs.appendFileSync(smtfile, extractor_helper, "utf8");
-	fs.readFileSync(smtfile,"utf8")
 
 	let json_dir = "";
 	const mock_target = "--function singleOpFailure"
     try {
-		const json_output = execSync(`node ${type_info_gen} ${mock_target} ${bsqfile}`, { 
+		const json_output = execSync(`node ${type_info_gen} ${mock_target} ${bsqfile} ${testfile}`, { 
         encoding: 'utf8'  // This converts Buffer to string
 		});
 		json_dir = json_output.toString().split("-- JS output directory:")[1]?.split('\n')[0]?.trim();
