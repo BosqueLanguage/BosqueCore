@@ -401,7 +401,8 @@ function runSMTExtractor(): string {
 
 	const bsqfile = fullargs.find((v) => v.endsWith(".bsq"));
 
-	const smtfile = path.join(outdir,"formula.smt2")
+	console.log(outdir)
+	const smtfile = path.join(path.normalize(outdir),"formula.smt2")
 
 	let json_dir = "";
 	const mock_target = "--function singleOpFailure"
@@ -418,7 +419,7 @@ function runSMTExtractor(): string {
 
 	let extracted_val = ""
 	try {
-		extracted_val = execSync(`${smtextractor_bin} ${smtfile} ${path.join(json_dir,"targettype.json")} ${path.join(json_dir,"typeinfo.json")} --mock`).toString().trim();
+		extracted_val = execSync(`${smtextractor_bin} ${smtfile} ${path.join(json_dir,"targettype.json")} ${path.join(json_dir,"typeinfo.json")} --mock`,{encoding: "utf-8"}).toString().trim();
 	}
 	catch(e) {
 		console.error(e)
