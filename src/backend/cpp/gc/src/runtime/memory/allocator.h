@@ -450,9 +450,7 @@ private:
 
     void allocatorRefreshEvacuationPage() noexcept
     {
-        // If our evac page is full put directly on filled pages list
-        if(this->evac_page != nullptr && this->evac_page->freecount == 0) {
-            this->evac_page->approx_utilization = 1.0f;
+        if(this->evac_page != nullptr) {
             this->evac_page->next = this->filled_pages;
             this->filled_pages = this->evac_page;
         }
