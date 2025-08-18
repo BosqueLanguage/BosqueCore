@@ -336,6 +336,10 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
+    if(addr == nullptr) {
+        return ;
+    }
+
     // Make sure our page is in pagetable, our address is not a page itself,
     // or a pointer into the page's metadata
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
@@ -380,8 +384,8 @@ void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     
     tinfo.loadNativeRootSet();
 
-    for(size_t i = 0; i < tinfo.native_stack_count; i++) {
-        checkPotentialPtr(tinfo.native_stack_contents[i], tinfo);
+    while(!tinfo.native_stack_contents.isEmpty()) {
+        checkPotentialPtr(tinfo.native_stack_contents.pop_front(), tinfo);
     }
 
     checkPotentialPtr(tinfo.native_register_contents.rax, tinfo);

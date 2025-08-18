@@ -35,7 +35,8 @@ public:
 extern ThreadLocalInfo& info;
 
 template <size_t N>
-inline void memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
+inline void __attribute__((no_sanitize_address)) 
+memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wstringop-overread"
     #pragma GCC diagnostic ignored "-Warray-bounds"

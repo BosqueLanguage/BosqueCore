@@ -48,10 +48,10 @@ do {                                                                            
 class GlobalDataStorage
 {
 public:
-    void** native_global_storage;
-    void** native_global_storage_end;
+    void** native_global_storage = nullptr;
+    void** native_global_storage_end = nullptr;
 
-    GlobalDataStorage() noexcept : native_global_storage(nullptr), native_global_storage_end(nullptr) { }
+    GlobalDataStorage() noexcept = default;
 
     static GlobalDataStorage g_global_data;
 
@@ -531,7 +531,7 @@ public:
 
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
-        this->alloc_page->freelist = this->alloc_page->freelist->next;
+        //this->alloc_page->freelist = this->alloc_page->freelist->next;
             
         this->alloc_page->freecount--;
 
@@ -551,7 +551,7 @@ public:
 
         void* entry = this->evacfreelist;
         this->evacfreelist = this->evacfreelist->next;
-        this->evac_page->freelist = this->evac_page->freelist->next;
+        //this->evac_page->freelist = this->evac_page->freelist->next;
 
         this->evac_page->freecount--;
 
