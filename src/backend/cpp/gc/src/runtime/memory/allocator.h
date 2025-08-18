@@ -271,7 +271,10 @@ private:
             // If current and our pages utilization are equal we add it to this pages list
             // TODO: Insert at beginning of list, means we need a reference from parent node
             if(UTILIZATIONS_ARE_EQUAL(n_util, root->approx_utilization)) {
-                if(current->next == nullptr) {
+                if(current == new_page) {
+                    break;
+                }
+                else if(current->next == nullptr) {
                     current->next = new_page;
                 }
                 else {
@@ -521,6 +524,12 @@ public:
         }
     }
 
+    //
+    // I really wonder if we can get away with not updating the 
+    // alloc/evac pages freecount here and just assume its garbage
+    // in the rest of the allocator
+    //
+
     inline void* allocate(__CoreGC::TypeInfoBase* type)
     {
         assert(type->type_size == this->allocsize);
@@ -531,10 +540,7 @@ public:
 
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
-        //this->alloc_page->freelist = this->alloc_page->freelist->next;
             
-        this->alloc_page->freecount--;
-
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
@@ -551,9 +557,6 @@ public:
 
         void* entry = this->evacfreelist;
         this->evacfreelist = this->evacfreelist->next;
-        //this->evac_page->freelist = this->evac_page->freelist->next;
-
-        this->evac_page->freecount--;
 
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);

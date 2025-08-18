@@ -109,13 +109,13 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     // If our page freshly became full we need to gc
     else if(IS_FULL(n_util) && !IS_FULL(old_util)) {
         // We dont want to collect evac page
-        if(!(p == this->evac_page)) {
-            p->next = this->pendinggc_pages;
-            pendinggc_pages = p;
-        }
-        else {
+        if(p != this->evac_page) {
             p->next = this->filled_pages;
             filled_pages = p;
+        }
+        else {
+            p->next = this->pendinggc_pages;
+            pendinggc_pages = p;
         }
     }
     // If our page was full before and still full put on filled pages
@@ -163,7 +163,6 @@ void GCAllocator::allocatorRefreshPage() noexcept
     else {
         // Rotate collection pages
         processPage(this->alloc_page);
-        this->alloc_page = nullptr;
 
         //use BSQ_COLLECTION_THRESHOLD; NOTE: ONLY INCREMENT when we have a full page
         gtl_info.newly_filled_pages_count++;
