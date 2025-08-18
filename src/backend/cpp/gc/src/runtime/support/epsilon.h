@@ -31,8 +31,8 @@ private:
 
     void allocatePage() noexcept {
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
-        EpsilonPage* page = mmap(curaddr, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
-        curaddr = static_cast<uint8_t*>(curaddr) + EPSILON_BLOCK_SIZE
+        EpsilonPage* page = static_cast<EpsilonPage*>(mmap(curaddr, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0));
+        curaddr = static_cast<uint8_t*>(curaddr) + EPSILON_BLOCK_SIZE;
 #else
         EpsilonPage* page = static_cast<EpsilonPage*>(mmap(NULL, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0));
 #endif
