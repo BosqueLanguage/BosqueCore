@@ -20,7 +20,7 @@ function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
             const realpath = path.resolve(files[i]);
             Status.output(`    ++ loading ${realpath}...\n`);
 
-            code.push({ srcpath: realpath, filename: path.basename(files[i]), contents: fs.readFileSync(realpath).toString() });
+            code.push({ srcpath: realpath, filename: path.basename(realpath), contents: fs.readFileSync(realpath).toString() });
         }
 
         return code;
