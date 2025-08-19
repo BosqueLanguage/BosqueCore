@@ -69,7 +69,7 @@ bool pageNeedsMoved(float old_util, float new_util)
 {
     // If page has not been processed it needs to be inserted into a bucket
     if (old_util > 1.1f) {
-        return false;
+        return true;
     }
 
     // Handle empty page case
@@ -184,37 +184,50 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
+        deccount++;
 
+        // Skip if the object is already freed
         if (!GC_IS_ALLOCATED(obj)) {
             continue;
         }
-        deccount++;
 
+        // Decrement ref counts of objects this object points to
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
+
         if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
             walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
         }
 
+        // Put object onto its pages freelist by masking to the page itself then pushing to front of list 
         PageInfo* objects_page = PageInfo::extractPageFromPointer(obj);
+        FreeListEntry* entry = (FreeListEntry*)((uint8_t*)obj - sizeof(MetaData));
+        entry->next = objects_page->freelist;
+        objects_page->freelist = entry;
+
+        // Need to make sure pending decs count is not 0 already, this prevents us from
+        // decrementing dec count for the root object and wrapping to max uint16
         if(objects_page->pending_decs_count != 0) {
             objects_page->pending_decs_count--;
         }
 
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        RESET_METADATA_FOR_OBJECT(m, MAX_FWD_INDEX);
+        // Mark the object as unallocated
+        GC_IS_ALLOCATED(obj) = false;
 
-        assert(static_cast<long unsigned int>(tinfo.decremented_pages_index) < BSQ_INITIAL_MAX_DECREMENT_COUNT);
+        objects_page->freecount++;
         tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
     }
 
-    // If we still have pending decs we do not want to attempt to reprocess
     for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
+        // We only want to move pages without pending decs
+        // We can think of these pages as stable
         PageInfo* p = tinfo.decremented_pages[i];
         if(p->pending_decs_count > 0) {
             continue;
         }
 
-        reprocessPageInfo(p, tinfo);
+        if(pageNeedsMoved(p->approx_utilization, CALC_APPROX_UTILIZATION(p))) {
+            reprocessPageInfo(p, tinfo);
+        }
     }
     tinfo.decremented_pages_index = 0;
 
@@ -225,6 +238,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     //TODO: we want to do a bit of PID controller here on the max decrement count to ensure that we eventually make it back to stable but keep pauses small
     //
 }
+
 
 inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
 {

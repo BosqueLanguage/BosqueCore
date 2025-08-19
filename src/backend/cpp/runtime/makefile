@@ -28,7 +28,6 @@ CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++
 INTERNAL_FLAGS.gc= 
 INTERNAL_FLAGS.epsilon=-DEPSILON
 
-# NOTE: We need to rever these vlags
 CFLAGS_OPT.dev=-O0 -g -ggdb 
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
 CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
