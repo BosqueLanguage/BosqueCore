@@ -395,7 +395,7 @@ if(testfile === undefined) {
     process.exit(1);
 }
 
-processTestFile(asm, mainns, testfile, outdir);
+processTestFile(asm, mainns, path.normalize(testfile), outdir);
 const smtcomponents = runSMTEmit(outdir);
 
 if(ischktest) {
