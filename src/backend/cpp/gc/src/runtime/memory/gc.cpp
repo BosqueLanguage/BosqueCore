@@ -22,7 +22,7 @@ void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
     if(gcalloc->checkNonAllocOrGCPage(page)) {
-        gcalloc->deleteOldPage(page);
+        page->rebuild();
         gcalloc->processPage(page);
     }
 }
@@ -67,7 +67,7 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 bool pageNeedsMoved(float old_util, float new_util)
 {
-    // Case where page hasnt been processed before
+    // If page has not been processed it needs to be inserted into a bucket
     if (old_util > 1.1f) {
         return false;
     }
@@ -184,50 +184,37 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
-        deccount++;
 
-        // Skip if the object is already freed
         if (!GC_IS_ALLOCATED(obj)) {
             continue;
         }
+        deccount++;
 
-        // Decrement ref counts of objects this object points to
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-
         if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
             walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
         }
 
-        // Put object onto its pages freelist by masking to the page itself then pushing to front of list 
         PageInfo* objects_page = PageInfo::extractPageFromPointer(obj);
-        FreeListEntry* entry = (FreeListEntry*)((uint8_t*)obj - sizeof(MetaData));
-        entry->next = objects_page->freelist;
-        objects_page->freelist = entry;
-
-        // Need to make sure pending decs count is not 0 already, this prevents us from
-        // decrementing dec count for the root object and wrapping to max uint16
         if(objects_page->pending_decs_count != 0) {
             objects_page->pending_decs_count--;
         }
 
-        // Mark the object as unallocated
-        GC_IS_ALLOCATED(obj) = false;
+        MetaData* m = GC_GET_META_DATA_ADDR(obj);
+        RESET_METADATA_FOR_OBJECT(m, MAX_FWD_INDEX);
 
-        objects_page->freecount++;
+        assert(static_cast<long unsigned int>(tinfo.decremented_pages_index) < BSQ_INITIAL_MAX_DECREMENT_COUNT);
         tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
     }
 
-    for(int i = 0; i < tinfo.decremented_pages_index; i++) {        
-        // We only want to move pages without pending decs
-        // We can think of these pages as stable
+    // If we still have pending decs we do not want to attempt to reprocess
+    for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
         PageInfo* p = tinfo.decremented_pages[i];
         if(p->pending_decs_count > 0) {
             continue;
         }
 
-        if(pageNeedsMoved(p->approx_utilization, CALC_APPROX_UTILIZATION(p))) {
-            reprocessPageInfo(p, tinfo);
-        }
+        reprocessPageInfo(p, tinfo);
     }
     tinfo.decremented_pages_index = 0;
 

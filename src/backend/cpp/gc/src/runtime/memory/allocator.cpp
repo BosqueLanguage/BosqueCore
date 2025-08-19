@@ -161,11 +161,6 @@ void GCAllocator::allocatorRefreshPage() noexcept
         this->alloc_page = this->getFreshPageForAllocator();
     }
     else {
-        // Rotate collection pages
-        this->alloc_page->next = this->pendinggc_pages;
-        this->pendinggc_pages = this->alloc_page;
-
-        //use BSQ_COLLECTION_THRESHOLD; NOTE: ONLY INCREMENT when we have a full page
         gtl_info.newly_filled_pages_count++;
 
         // If we exceed our filled pages thresh collect
@@ -174,6 +169,12 @@ void GCAllocator::allocatorRefreshPage() noexcept
                 collect();
             }
         }
+        else {
+            // Rotate collection pages
+            this->alloc_page->next = this->pendinggc_pages;
+            this->pendinggc_pages = this->alloc_page;            
+        }
+    
     
         this->alloc_page = this->getFreshPageForAllocator();
     }

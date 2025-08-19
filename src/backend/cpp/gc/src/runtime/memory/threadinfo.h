@@ -89,7 +89,7 @@ struct BSQMemoryTheadLocalInfo
     ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
 
     //TODO: Once PID is implemented this will need to use this->max_decrement_count
-    int decremented_pages_index = 0;
+    uint32_t decremented_pages_index = 0;
     PageInfo* decremented_pages[BSQ_INITIAL_MAX_DECREMENT_COUNT];
 
     size_t max_decrement_count;

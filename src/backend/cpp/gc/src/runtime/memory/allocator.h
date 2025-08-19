@@ -522,12 +522,6 @@ public:
         }
     }
 
-    //
-    // I really wonder if we can get away with not updating the 
-    // alloc/evac pages freecount here and just assume its garbage
-    // in the rest of the allocator
-    //
-
     inline void* allocate(__CoreGC::TypeInfoBase* type)
     {
         assert(type->type_size == this->allocsize);
