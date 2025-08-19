@@ -11,72 +11,84 @@
 #include "../common.h"
 
 // 1 GB
-#define EPSILON_BLOCK_SIZE (1024 * 1024 * 1024)
+#define EPSILON_BLOCK_SIZE (1024UL * 1024UL * 1024UL)
+#define GET_PAGE_END(P) (reinterpret_cast<uint8_t*>(P) + EPSILON_BLOCK_SIZE)
+
+struct EpsilonPage {
+    EpsilonPage* next;
+};
 
 class EpsilonAllocator {
 private: 
     void* ptr;
-    
-    void* heapstart;
-    void* current;
-    void* heapend;
+    EpsilonPage* allpages;
+    EpsilonPage* curpage;
 
-    // Append new page onto current, then bump heapend pointer to reflect new block
+#ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
+    void* curaddr;
+#else
+#endif
+
     void allocatePage() noexcept {
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
-        if(current == nullptr) {
-            this->current = ALLOC_BASE_ADDRESS;
-        }
-        else {
-            this->current = static_cast<uint8_t*>(this->current) + EPSILON_BLOCK_SIZE;
-        }
-
-        this->current = mmap(this->current, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+        EpsilonPage* page = static_cast<EpsilonPage*>(mmap(curaddr, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0));
+        curaddr = static_cast<uint8_t*>(curaddr) + EPSILON_BLOCK_SIZE;
 #else
-        this->current = mmap(NULL, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-
-        if(this->heapstart == nullptr) {
-            this->heapstart = this->current;
-        }
+        EpsilonPage* page = static_cast<EpsilonPage*>(mmap(NULL, EPSILON_BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0));
 #endif
-        if(this->ptr == nullptr) {
-            this->ptr = this->current;
-        }
-
-        if(this->current == MAP_FAILED) {
+        if(page == MAP_FAILED) [[unlikely]] {
             this->freeheap();
             assert(false);
         }
 
-        this->heapend = static_cast<uint8_t*>(this->current) + EPSILON_BLOCK_SIZE;
+        if(this->curpage == nullptr) [[unlikely]] {
+            this->curpage = page;   
+        }
+        else {
+            this->curpage->next = page;
+            this->curpage = this->curpage->next;
+        }
+        this->curpage->next = nullptr;
+
+        if(this->allpages == nullptr) [[unlikely]] {
+            this->allpages = this->curpage;
+        }
+
+        this->ptr = reinterpret_cast<uint8_t*>(this->curpage) + sizeof(EpsilonPage);
     }
 
 #ifdef ALLOC_DEBUG_MEM_DETERMINISTIC
-    EpsilonAllocator() noexcept : ptr(ALLOC_BASE_ADDRESS), heapstart(ALLOC_BASE_ADDRESS), current(nullptr), heapend(ALLOC_BASE_ADDRESS) {}
+    EpsilonAllocator() noexcept : ptr(nullptr), allpages(nullptr), curpage(nullptr), curaddr(ALLOC_BASE_ADDRESS) {}
 #else 
-    EpsilonAllocator() noexcept : ptr(nullptr), heapstart(nullptr), current(nullptr), heapend(nullptr) {}
+    EpsilonAllocator() noexcept : ptr(nullptr), allpages(nullptr), curpage(nullptr) {}
 #endif
+
 public:
     static EpsilonAllocator alloc;
 
     // Get a new block of tinfo->type_size from heap
-    inline void* allocate(__CoreGC::TypeInfoBase* tinfo)
-    {
-        void* newptr = static_cast<uint8_t*>(this->ptr) + tinfo->type_size;
-        if(newptr > heapend || ptr == nullptr) [[unlikely]] {
+    inline void* allocate(__CoreGC::TypeInfoBase* tinfo) {
+        void* next = static_cast<uint8_t*>(this->ptr) + tinfo->type_size; 
+        if (this->curpage == nullptr || next > GET_PAGE_END(this->curpage)) [[unlikely]] {
             this->allocatePage();
+            next = static_cast<uint8_t*>(this->ptr) + tinfo->type_size;  // Recalculate after new page
         }
-        
-        void* entry = this->ptr;
-        this->ptr = newptr;
     
+        void* entry = this->ptr;
+        this->ptr = next;
+
         return entry;
     }
 
-    // Frees all memory from heapstart -> heapend (this may not get used)
     void freeheap() noexcept
     {
-        munmap(heapstart, static_cast<uint8_t*>(heapstart) - static_cast<uint8_t*>(heapend));
+        EpsilonPage* p = this->allpages;
+        while(p != nullptr) {
+            EpsilonPage* next = p->next;
+            munmap(p, EPSILON_BLOCK_SIZE);
+
+            p = next;
+        }
     }
 };
 

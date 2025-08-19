@@ -32,7 +32,7 @@ void BSQMemoryTheadLocalInfo::initialize(size_t tl_id, void** caller_rbp) noexce
 
     this->forward_table = forward_table_array;
     this->forward_table_index = 0;
-    xmem_zerofill(this->forward_table, BSQ_MAX_ROOTS);
+    xmem_zerofill(this->forward_table, BSQ_MAX_FWD_TABLE_ENTRIES);
 
     this->g_gcallocs = g_gcallocs_array;
     xmem_zerofill(this->g_gcallocs, BSQ_MAX_ALLOC_SLOTS);
@@ -40,10 +40,7 @@ void BSQMemoryTheadLocalInfo::initialize(size_t tl_id, void** caller_rbp) noexce
 
 void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 {
-    this->native_stack_count = 0;
-
-    this->native_stack_contents = (void**)XAllocPageManager::g_page_manager.allocatePage();
-    xmem_zerofillpage(this->native_stack_contents);
+    this->native_stack_contents.initialize();
 
     //this code should load from the asm stack pointers and copy the native stack into the roots memory
     #ifdef __x86_64__
@@ -58,13 +55,12 @@ void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
             void** it = current_frame;
             void* potential_ptr = *it;
             if (PTR_IN_RANGE(potential_ptr) && PTR_NOT_IN_STACK(native_stack_base, current_frame, potential_ptr)) {
-                this->native_stack_contents[this->native_stack_count++] = potential_ptr;
+                this->native_stack_contents.push_back(potential_ptr);
             }
             it--;
             
             current_frame++;
-        }
-    
+        } 
 
         /* Check contents of registers */
         PROCESS_REGISTER(native_stack_base, current_frame, rax)
@@ -88,10 +84,7 @@ void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 
 void BSQMemoryTheadLocalInfo::unloadNativeRootSet() noexcept
 {
-    this->native_stack_count = 0;
-
-    XAllocPageManager::g_page_manager.freePage(this->native_stack_contents);
-    this->native_stack_contents = nullptr;
+    this->native_stack_contents.clear();
 }
 
 #ifdef MEM_STATS

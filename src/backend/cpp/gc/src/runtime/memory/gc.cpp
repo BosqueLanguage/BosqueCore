@@ -22,7 +22,7 @@ void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
     if(gcalloc->checkNonAllocOrGCPage(page)) {
-        gcalloc->deleteOldPage(page);
+        page->rebuild();
         gcalloc->processPage(page);
     }
 }
@@ -67,9 +67,9 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 bool pageNeedsMoved(float old_util, float new_util)
 {
-    // Case where page hasnt been processed before
+    // If page has not been processed it needs to be inserted into a bucket
     if (old_util > 1.1f) {
-        return false;
+        return true;
     }
 
     // Handle empty page case
@@ -217,7 +217,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
     }
 
-    for(int i = 0; i < tinfo.decremented_pages_index; i++) {        
+    for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
         // We only want to move pages without pending decs
         // We can think of these pages as stable
         PageInfo* p = tinfo.decremented_pages[i];
@@ -238,6 +238,7 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     //TODO: we want to do a bit of PID controller here on the max decrement count to ensure that we eventually make it back to stable but keep pauses small
     //
 }
+
 
 inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
 {
@@ -336,6 +337,10 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
+    if(addr == nullptr) {
+        return ;
+    }
+
     // Make sure our page is in pagetable, our address is not a page itself,
     // or a pointer into the page's metadata
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
@@ -380,8 +385,8 @@ void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     
     tinfo.loadNativeRootSet();
 
-    for(size_t i = 0; i < tinfo.native_stack_count; i++) {
-        checkPotentialPtr(tinfo.native_stack_contents[i], tinfo);
+    while(!tinfo.native_stack_contents.isEmpty()) {
+        checkPotentialPtr(tinfo.native_stack_contents.pop_front(), tinfo);
     }
 
     checkPotentialPtr(tinfo.native_register_contents.rax, tinfo);

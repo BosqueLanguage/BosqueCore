@@ -21,20 +21,20 @@ struct RegisterContents
     //void* rbp;
     //void* rsp;
 
-    void* rax;
-    void* rbx;
-    void* rcx;
-    void* rdx;
-    void* rsi;
-    void* rdi;
-    void* r8;
-    void* r9;
-    void* r10;
-    void* r11;
-    void* r12;
-    void* r13;
-    void* r14;
-    void* r15;
+    void* rax = nullptr;
+    void* rbx = nullptr;
+    void* rcx = nullptr;
+    void* rdx = nullptr;
+    void* rsi = nullptr;
+    void* rdi = nullptr;
+    void* r8 = nullptr;
+    void* r9 = nullptr;
+    void* r10 = nullptr;
+    void* r11 = nullptr;
+    void* r12 = nullptr;
+    void* r13 = nullptr;
+    void* r14 = nullptr;
+    void* r15 = nullptr;
 };
 
 #ifdef MEM_STATS
@@ -67,8 +67,7 @@ struct BSQMemoryTheadLocalInfo
     //Mark Phase information
     void** native_stack_base; //the base of the native stack
 
-    size_t native_stack_count;
-    void** native_stack_contents; //the contents of the native stack extracted in the mark phase
+    ArrayList<void*> native_stack_contents; //the contents of the native stack extracted in the mark phase
     RegisterContents native_register_contents; //the contents of the native registers extracted in the mark phase
 
     //We assume that the roots always fit in a single page block
@@ -90,7 +89,7 @@ struct BSQMemoryTheadLocalInfo
     ArrayList<void*> pending_decs; //the list of objects that need to be decremented 
 
     //TODO: Once PID is implemented this will need to use this->max_decrement_count
-    int decremented_pages_index = 0;
+    uint32_t decremented_pages_index = 0;
     PageInfo* decremented_pages[BSQ_INITIAL_MAX_DECREMENT_COUNT];
 
     size_t max_decrement_count;
@@ -107,7 +106,7 @@ struct BSQMemoryTheadLocalInfo
     bool disable_stack_refs_for_tests = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_count(0), native_stack_contents(nullptr), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(0), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(0), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];

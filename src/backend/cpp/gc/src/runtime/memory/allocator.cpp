@@ -1,7 +1,7 @@
 #include "allocator.h"
 #include "threadinfo.h"
 
-GlobalDataStorage GlobalDataStorage::g_global_data;
+GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
@@ -109,13 +109,13 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     // If our page freshly became full we need to gc
     else if(IS_FULL(n_util) && !IS_FULL(old_util)) {
         // We dont want to collect evac page
-        if(!(p == this->evac_page)) {
-            p->next = this->pendinggc_pages;
-            pendinggc_pages = p;
-        }
-        else {
+        if(p == this->evac_page) {
             p->next = this->filled_pages;
             filled_pages = p;
+        }
+        else {
+            p->next = this->pendinggc_pages;
+            pendinggc_pages = p;
         }
     }
     // If our page was full before and still full put on filled pages
@@ -136,6 +136,7 @@ void GCAllocator::processCollectorPages() noexcept
     }
     
     if(this->evac_page != nullptr) {
+        this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
         this->evac_page = nullptr;
@@ -154,18 +155,12 @@ void GCAllocator::processCollectorPages() noexcept
     this->pendinggc_pages = nullptr;
 }
 
-
 void GCAllocator::allocatorRefreshPage() noexcept
 {
     if(this->alloc_page == nullptr) {
         this->alloc_page = this->getFreshPageForAllocator();
     }
     else {
-        // Rotate collection pages
-        processPage(this->alloc_page);
-        this->alloc_page = nullptr;
-
-        //use BSQ_COLLECTION_THRESHOLD; NOTE: ONLY INCREMENT when we have a full page
         gtl_info.newly_filled_pages_count++;
 
         // If we exceed our filled pages thresh collect
@@ -174,6 +169,12 @@ void GCAllocator::allocatorRefreshPage() noexcept
                 collect();
             }
         }
+        else {
+            // Rotate collection pages
+            this->alloc_page->next = this->pendinggc_pages;
+            this->pendinggc_pages = this->alloc_page;            
+        }
+    
     
         this->alloc_page = this->getFreshPageForAllocator();
     }

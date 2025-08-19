@@ -11,7 +11,14 @@
 
 #ifdef BSQ_GC_CHECK_ENABLED
 #define ALLOC_DEBUG_MEM_INITIALIZE
+
+//
+// Note: If we are deterministic the base addresses for our pages
+// will be outside of asan's address range. Will need to run asan
+// in non-deterministic
+//
 #define ALLOC_DEBUG_MEM_DETERMINISTIC
+
 #define ALLOC_DEBUG_CANARY
 #define DSA_INVARIANTS
 #define GC_INVARIANTS

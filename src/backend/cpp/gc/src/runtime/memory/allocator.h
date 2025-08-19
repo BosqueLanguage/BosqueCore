@@ -48,10 +48,10 @@ do {                                                                            
 class GlobalDataStorage
 {
 public:
-    void** native_global_storage;
-    void** native_global_storage_end;
+    void** native_global_storage = nullptr;
+    void** native_global_storage_end = nullptr;
 
-    GlobalDataStorage() noexcept : native_global_storage(nullptr), native_global_storage_end(nullptr) { }
+    GlobalDataStorage() noexcept = default;
 
     static GlobalDataStorage g_global_data;
 
@@ -271,7 +271,10 @@ private:
             // If current and our pages utilization are equal we add it to this pages list
             // TODO: Insert at beginning of list, means we need a reference from parent node
             if(UTILIZATIONS_ARE_EQUAL(n_util, root->approx_utilization)) {
-                if(current->next == nullptr) {
+                if(current == new_page) {
+                    break;
+                }
+                else if(current->next == nullptr) {
                     current->next = new_page;
                 }
                 else {
@@ -447,9 +450,7 @@ private:
 
     void allocatorRefreshEvacuationPage() noexcept
     {
-        // If our evac page is full put directly on filled pages list
-        if(this->evac_page != nullptr && this->evac_page->freecount == 0) {
-            this->evac_page->approx_utilization = 1.0f;
+        if(this->evac_page != nullptr) {
             this->evac_page->next = this->filled_pages;
             this->filled_pages = this->evac_page;
         }
@@ -531,10 +532,7 @@ public:
 
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
-        this->alloc_page->freelist = this->alloc_page->freelist->next;
             
-        this->alloc_page->freecount--;
-
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
@@ -551,9 +549,6 @@ public:
 
         void* entry = this->evacfreelist;
         this->evacfreelist = this->evacfreelist->next;
-        this->evac_page->freelist = this->evac_page->freelist->next;
-
-        this->evac_page->freecount--;
 
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
