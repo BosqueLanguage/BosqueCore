@@ -14,7 +14,12 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->allocsize = allocsize;
     pp->realsize = realsize;
     pp->pending_decs_count = 0;
+
+
+    // Pretty sure this can go away
     pp->approx_utilization = 100.0f; // Approx util has not been calculated
+    
+    pp->seen = false;
     pp->left = nullptr;
     pp->right = nullptr;
     pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
@@ -33,6 +38,7 @@ void PageInfo::rebuild() noexcept
 {
     this->freelist = nullptr;
     this->freecount = 0;
+    this->seen = false;
     
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
