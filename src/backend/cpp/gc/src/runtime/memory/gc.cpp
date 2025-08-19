@@ -139,44 +139,27 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         if (!GC_IS_ALLOCATED(obj)) {
             continue;
         }
-        deccount++;
 
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
         if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
             walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
         }
 
-        //
-        // Do we really need to re-insert the object onto the freelist?
-        // Doesnt this get taken care of when we rebuild the page?
-        // I think all we should do is reset its metadata (even just the alloc bit)
-        //
         PageInfo* objects_page = PageInfo::extractPageFromPointer(obj);
-        FreeListEntry* entry = (FreeListEntry*)((uint8_t*)obj - sizeof(MetaData));
-        entry->next = objects_page->freelist;
-        objects_page->freelist = entry;
-
-        if(objects_page->pending_decs_count != 0) {
-            objects_page->pending_decs_count--;
-        }
+        objects_page->pending_decs_count--;
 
         GC_IS_ALLOCATED(obj) = false;
 
-        objects_page->freecount++;
         if(objects_page->seen == false) {
             objects_page->seen = true;
             tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
         }
+
+        deccount++;
     }
 
-    // For a page to be safely re-processed it needs have all decrements finished (stable)
     for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
-        PageInfo* p = tinfo.decremented_pages[i];
-        if(p->pending_decs_count > 0) {
-            continue;
-        }
-
-        reprocessPageInfo(p, tinfo);
+        reprocessPageInfo(tinfo.decremented_pages[i], tinfo);
     }
     tinfo.decremented_pages_index = 0;
 
@@ -489,8 +472,8 @@ void collect() noexcept
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->processCollectorPages();
             alloc->resetBuckets();
+            alloc->processCollectorPages();
             alloc->updateMemStats();
         }
     }
