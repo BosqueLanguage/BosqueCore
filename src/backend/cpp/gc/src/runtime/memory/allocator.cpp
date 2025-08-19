@@ -14,10 +14,6 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
     pp->allocsize = allocsize;
     pp->realsize = realsize;
     pp->pending_decs_count = 0;
-
-
-    // Pretty sure this can go away
-    pp->approx_utilization = 100.0f; // Approx util has not been calculated
     
     pp->seen = false;
     pp->left = nullptr;
@@ -53,6 +49,7 @@ void PageInfo::rebuild() noexcept
         }
     }
 
+    this->approx_utilization = CALC_APPROX_UTILIZATION(this);
     this->next = nullptr;
 }
 
@@ -93,42 +90,57 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
     return pp;
 }
 
+static inline int get_bucket_index(float util, int nbuckets, bool ishighutil) {
+    float tmp_util = 0.0f;
+    if(ishighutil) {
+        tmp_util = 0.60f;
+    }
+    
+    for(int i = 0; i < nbuckets; i++) {
+        float new_tmp_util = tmp_util + 0.05f;
+        if (util > tmp_util && util <= new_tmp_util) {
+            return i;
+        }
+        tmp_util = new_tmp_util;
+    }
+
+    // No bucket index found!
+    assert(false);
+}
+
 void GCAllocator::processPage(PageInfo* p) noexcept
 {
-    float old_util = p->approx_utilization;
-    float n_util = CALC_APPROX_UTILIZATION(p);
-    p->approx_utilization = n_util;
-    int bucket_index = 0;
-
+    float util = p->approx_utilization;
     if(p->entrycount == p->freecount) {
         GlobalPageGCManager::g_gc_page_manager.addNewPage(p);
         UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, ++);
+
+        return ;
     }
-    else if(IS_LOW_UTIL(n_util)) {
-        GET_BUCKET_INDEX(n_util, NUM_LOW_UTIL_BUCKETS, bucket_index, 0);
-        this->insertPageInBucket(&this->low_utilization_buckets[bucket_index], p, n_util);    
+    
+    if(IS_LOW_UTIL(util)) {
+        int idx = get_bucket_index(util, NUM_LOW_UTIL_BUCKETS, false);
+        this->insertPageInBucket(&this->low_utilization_buckets[idx], p, util);  
+        
+        return ;
     }
-    else if(IS_HIGH_UTIL(n_util)) {
-        GET_BUCKET_INDEX(n_util, NUM_HIGH_UTIL_BUCKETS, bucket_index, 1);
-        this->insertPageInBucket(&this->high_utilization_buckets[bucket_index], p, n_util);
+    
+    if(IS_HIGH_UTIL(util)) {
+        int idx = get_bucket_index(util, NUM_HIGH_UTIL_BUCKETS, true);
+        this->insertPageInBucket(&this->high_utilization_buckets[idx], p, util);
+
+        return ;
     }
-    // If our page freshly became full we need to gc
-    else if(IS_FULL(n_util) && !IS_FULL(old_util)) {
-        // We dont want to collect evac page
-        if(p == this->evac_page) {
-            p->next = this->filled_pages;
-            filled_pages = p;
-        }
-        else {
-            p->next = this->pendinggc_pages;
-            pendinggc_pages = p;
-        }
-    }
-    // If our page was full before and still full put on filled pages
-    else if(IS_FULL(n_util) && IS_FULL(old_util)) {
+    
+    // Full page
+    if(p == this->evac_page) {
         p->next = this->filled_pages;
         filled_pages = p;
     }
+    else {
+        p->next = this->pendinggc_pages;
+        pendinggc_pages = p;
+    } 
 }
 
 void GCAllocator::processCollectorPages() noexcept

@@ -65,55 +65,6 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
     tinfo.old_roots_count = 0;
 }
 
-bool pageNeedsMoved(float old_util, float new_util)
-{
-    // If page has not been processed it needs to be inserted into a bucket
-    if (old_util > 1.1f) {
-        return true;
-    }
-
-    // Handle empty page case
-    if (new_util < 0.01f && old_util > 0.01f) {
-        return true;
-    }
-
-    const bool was_low_util = IS_LOW_UTIL(old_util);
-    const bool now_low_util = IS_LOW_UTIL(new_util);
-    if (was_low_util != now_low_util) {
-        return true;
-    }
-
-    const bool was_high_util = IS_HIGH_UTIL(old_util);
-    const bool now_high_util = IS_HIGH_UTIL(new_util);
-    if (was_high_util != now_high_util) {
-        return true;
-    }
-
-    const bool was_full = IS_FULL(old_util);
-    const bool now_full = IS_FULL(new_util);
-    if (was_full != now_full) {
-        return true;
-    }
-
-    if (now_low_util) {
-        int old_bucket = -1; 
-        int new_bucket = -1;
-        GET_BUCKET_INDEX(old_util, NUM_LOW_UTIL_BUCKETS, old_bucket, 0);
-        GET_BUCKET_INDEX(new_util, NUM_LOW_UTIL_BUCKETS, new_bucket, 0);
-        return old_bucket != new_bucket;
-    } 
-    else if (now_high_util){
-        int old_bucket = -1; 
-        int new_bucket = -1;
-        GET_BUCKET_INDEX(old_util, NUM_HIGH_UTIL_BUCKETS, old_bucket, 1);
-        GET_BUCKET_INDEX(new_util, NUM_HIGH_UTIL_BUCKETS, new_bucket, 1);
-        return old_bucket != new_bucket;
-    }
-    else {
-        return false;
-    }
-}
-
 inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
 {
     PageInfo::extractPageFromPointer(*obj)->pending_decs_count++;
@@ -539,6 +490,7 @@ void collect() noexcept
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {
             alloc->processCollectorPages();
+            alloc->resetBuckets();
             alloc->updateMemStats();
         }
     }
