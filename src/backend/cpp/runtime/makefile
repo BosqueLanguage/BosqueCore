@@ -32,7 +32,7 @@ CFLAGS_OPT.dev=-O0 -g -ggdb
 CFLAGS_OPT.release=-O2 -march=x86-64-v3
 CFLAGS=${CFLAGS_OPT.${BUILD}} ${CSTDFLAGS} ${INTERNAL_FLAGS.${ALLOC}}
 
-SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h 
+SUPPORT_HEADERS=$(RUNTIME_DIR)common.h $(SUPPORT_DIR)xalloc.h $(SUPPORT_DIR)epsilon.h $(SUPPORT_DIR)arraylist.h $(SUPPORT_DIR)pagetable.h $(SUPPORT_DIR)qsort.h $(SUPPORT_DIR)pagebst.h
 SUPPORT_SOURCES=$(RUNTIME_DIR)common.cpp $(SUPPORT_DIR)xalloc.cpp $(SUPPORT_DIR)epsilon.cpp
 SUPPORT_OBJS=$(OUT_OBJ)common.o $(OUT_OBJ)xalloc.o $(OUT_OBJ)epsilon.o
 

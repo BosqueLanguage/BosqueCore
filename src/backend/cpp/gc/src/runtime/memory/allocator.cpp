@@ -1,18 +1,11 @@
 #include "allocator.h"
 #include "threadinfo.h"
+#include "../support/pagebst.h"
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
-
-    //
-    // I really think we should be fine without this. Its a huge perf hit having to 
-    // walk the full page twice when initilizaing it. There shouldnt be any problem
-    // with having some garbage still on the page. Should look into this more.
-    //
-    xmem_zerofillpage(block); 
-
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
@@ -100,27 +93,8 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
     return pp;
 }
 
-static inline int get_bucket_index(float util, int nbuckets, bool ishighutil) {
-    float tmp_util = 0.0f;
-    if(ishighutil) {
-        tmp_util = 0.60f;
-    }
-    
-    for(int i = 0; i < nbuckets; i++) {
-        float new_tmp_util = tmp_util + 0.05f;
-        if (util > tmp_util && util <= new_tmp_util) {
-            return i;
-        }
-        tmp_util = new_tmp_util;
-    }
-
-    // No bucket index found!
-    assert(false);
-}
-
 void GCAllocator::processPage(PageInfo* p) noexcept
 {
-    float util = p->approx_utilization;
     if(p->entrycount == p->freecount) {
         GlobalPageGCManager::g_gc_page_manager.addNewPage(p);
         UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, ++);
@@ -128,17 +102,7 @@ void GCAllocator::processPage(PageInfo* p) noexcept
         return ;
     }
     
-    if(IS_LOW_UTIL(util)) {
-        int idx = get_bucket_index(util, NUM_LOW_UTIL_BUCKETS, false);
-        this->insertPageInBucket(&this->low_utilization_buckets[idx], p, util);  
-        
-        return ;
-    }
-    
-    if(IS_HIGH_UTIL(util)) {
-        int idx = get_bucket_index(util, NUM_HIGH_UTIL_BUCKETS, true);
-        this->insertPageInBucket(&this->high_utilization_buckets[idx], p, util);
-
+    if(insertPageInBucket(this, p)) {
         return ;
     }
     
@@ -183,7 +147,30 @@ void GCAllocator::processCollectorPages() noexcept
     this->pendinggc_pages = nullptr;
 }
 
-void GCAllocator::allocatorRefreshPage() noexcept
+PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
+{
+    PageInfo* page = getLowestUtilPageLow(this);
+    if(page == nullptr) {
+        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+    }
+
+    return page;
+}
+
+PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
+{
+    PageInfo* page = getLowestUtilPageHigh(this);
+    if(page == nullptr) {
+        page = getLowestUtilPageLow(this);
+    }
+    if(page == nullptr) {
+        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+    }
+
+    return page;
+}
+
+void GCAllocator::allocatorRefreshAllocationPage() noexcept
 {
     if(this->alloc_page == nullptr) {
         this->alloc_page = this->getFreshPageForAllocator();
@@ -208,6 +195,17 @@ void GCAllocator::allocatorRefreshPage() noexcept
     }
 
     this->freelist = this->alloc_page->freelist;
+}
+
+void GCAllocator::allocatorRefreshEvacuationPage() noexcept
+{
+    if(this->evac_page != nullptr) {
+        this->evac_page->next = this->filled_pages;
+        this->filled_pages = this->evac_page;
+    }
+
+    this->evac_page = this->getFreshPageForEvacuation();
+    this->evacfreelist = this->evac_page->freelist;
 }
 
 #ifdef MEM_STATS
@@ -248,12 +246,12 @@ void GCAllocator::updateMemStats() noexcept
 
     // Compute stats for high util pages
     for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
-        traverseBST(this->high_utilization_buckets[i]);
+        traverseBST(this->high_util_buckets[i]);
     }
 
     // Compute stats for low util pages
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
-        traverseBST(this->low_utilization_buckets[i]);
+        traverseBST(this->low_util_buckets[i]);
     }
 }
 
