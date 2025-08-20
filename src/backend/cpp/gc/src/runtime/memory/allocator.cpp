@@ -10,12 +10,11 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
 
     pp->freelist = nullptr;
     pp->next = nullptr;
-
     pp->data = ((uint8_t*)block + sizeof(PageInfo));
     pp->allocsize = allocsize;
     pp->realsize = realsize;
+    pp->approx_utilization = 0.0f;
     pp->pending_decs_count = 0;
-    
     pp->seen = false;
     pp->left = nullptr;
     pp->right = nullptr;
@@ -44,8 +43,6 @@ void PageInfo::rebuild() noexcept
         MetaData* meta = this->getMetaEntryAtIndex(i);
         
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
-            // Just to be safe reset metadata
-            RESET_METADATA_FOR_OBJECT(meta, MAX_FWD_INDEX);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;

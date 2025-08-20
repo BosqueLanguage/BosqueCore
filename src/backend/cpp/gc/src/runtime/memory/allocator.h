@@ -86,10 +86,6 @@ public:
 
     float approx_utilization;
     uint16_t pending_decs_count;
-
-    //
-    // NOTE: This name is a bit ambiguous, probably needs somethign more clear
-    //
     bool seen; // Have we visited this page while processing decrements?
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
