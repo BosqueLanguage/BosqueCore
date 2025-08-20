@@ -8,7 +8,7 @@
 
 #define NO_BUCKET_FOUND -1
 
-PageInfo* insert(PageInfo* cur, PageInfo* entry) noexcept 
+static PageInfo* insert(PageInfo* cur, PageInfo* entry) noexcept 
 {
     if(cur == nullptr) {
         return entry;
@@ -48,7 +48,7 @@ static inline int getBucketIndex(float util, int nbuckets, bool ishighutil) noex
     return NO_BUCKET_FOUND;
 }
 
-bool insertPageLow(GCAllocator* alloc, PageInfo* p) 
+static bool insertPageLow(GCAllocator* alloc, PageInfo* p) 
 {
     float util = p->approx_utilization;
     if(!IS_LOW_UTIL(util)) {
@@ -67,7 +67,7 @@ bool insertPageLow(GCAllocator* alloc, PageInfo* p)
     return true;
 }
 
-bool insertPageHigh(GCAllocator* alloc, PageInfo* p) 
+static bool insertPageHigh(GCAllocator* alloc, PageInfo* p) 
 {
     float util = p->approx_utilization;
     if(!IS_HIGH_UTIL(util)) {
@@ -79,7 +79,6 @@ bool insertPageHigh(GCAllocator* alloc, PageInfo* p)
         // If page is high util but no idx found something failed
         assert(false);
     }
-
     
     PageInfo* root = alloc->high_util_buckets[idx];
     alloc->high_util_buckets[idx] = insert(root, p);
@@ -131,7 +130,7 @@ static inline int findFirstBucket(PageInfo* buckets[N]) noexcept
     return idx;
 }
 
-PageInfo* getLowestUtilPageAndRemove(PageInfo* cur, PageInfo** lowest) noexcept
+static PageInfo* getLowestUtilPageAndRemove(PageInfo* cur, PageInfo** lowest) noexcept
 {
     if(cur->left == nullptr) {
         *lowest = cur;

@@ -243,21 +243,33 @@ public:
         xmem_zerofill(this->high_util_buckets, NUM_HIGH_UTIL_BUCKETS);
     }
 
-    // Simple check to see if a page is in alloc/evac/pendinggc pages
-    bool checkNonAllocOrGCPage(PageInfo* p) {
+    //
+    // NOTE: This search is quite slow, if we have a lot of pages
+    // maybe problematic (faster that just rebuilding all filled pages though)
+    //
+
+    // Remove for reprocessing, called if decrements occured on p
+    PageInfo* tryRemoveFromFilledPages(PageInfo* p) {
         if(p == alloc_page || p == evac_page) {
-            return false;
+            return nullptr;
         }
 
-        PageInfo* cur = pendinggc_pages;
+        PageInfo* prev = nullptr;
+        PageInfo* cur = this->filled_pages;
         while(cur != nullptr) {
             if(cur == p) {
-                return false;
+                if(prev == nullptr) {
+                    this->filled_pages = nullptr;
+                }
+                else {
+                    prev->next = cur->next;
+                    return p;
+                }
             }
+            prev = cur;
             cur = cur->next;
         }
-
-        return true;
+        return nullptr;
     }
 
     inline void* allocate(__CoreGC::TypeInfoBase* type)

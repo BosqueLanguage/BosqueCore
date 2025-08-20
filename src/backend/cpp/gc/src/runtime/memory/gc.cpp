@@ -21,9 +21,10 @@ void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
-    if(gcalloc->checkNonAllocOrGCPage(page)) {
-        page->rebuild();
-        gcalloc->processPage(page);
+    PageInfo* npage = gcalloc->tryRemoveFromFilledPages(page);
+    if(npage != nullptr) {
+        npage->rebuild();
+        gcalloc->processPage(npage);
     }
 }
 
@@ -472,7 +473,6 @@ void collect() noexcept
     for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) {
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {
-            alloc->resetBuckets();
             alloc->processCollectorPages();
             alloc->updateMemStats();
         }

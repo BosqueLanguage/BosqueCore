@@ -207,16 +207,30 @@ void GCAllocator::allocatorRefreshEvacuationPage() noexcept
 
 #ifdef MEM_STATS
 
-inline void process(PageInfo* page) noexcept
+static uint64_t getPageFreeCount(PageInfo* p) noexcept 
+{
+    uint64_t freecount = 0;
+    for(int64_t i = 0; i < p->entrycount; i++) {
+        MetaData* meta = p->getMetaEntryAtIndex(i); 
+        if(!meta->isalloc) {
+            freecount++;
+        }
+    }
+
+    return freecount;
+}
+
+static inline void process(PageInfo* page) noexcept
 {
     if(!page) {
         return;
     }
-    
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - page->freecount)));
+   
+    uint64_t freecount = getPageFreeCount(page);
+    UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - freecount)));
 }
 
-void traverseBST(PageInfo* node) noexcept
+static void traverseBST(PageInfo* node) noexcept
 {
     if(!node) {
         return;
