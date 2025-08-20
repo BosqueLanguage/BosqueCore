@@ -9,7 +9,7 @@
 **/.DS_Store
 **/output/*
 
-/jsout
+/jsout/node_modules
 */smtout
 *.smt2
 *.bsqon

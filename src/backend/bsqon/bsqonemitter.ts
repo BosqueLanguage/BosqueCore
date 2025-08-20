@@ -479,10 +479,35 @@ class BSQONTypeInfoEmitter {
         return {ns: decl, types: tdecls};
     }
 
-	//NOTE: Needs to be off for smtextractor to parse json.
-    // private emitElistInfo(): any[] {
-    //     return ["TODO -- EList Emit"];
-    // }
+	//TODO: Return an array of all elist typerefs of the given namspace.
+    private emitElistInfo(nsdecl: NamespaceDeclaration,asminstantiation: NamespaceInstantiationInfo) : any[] {
+        let edecl: any = {};
+		decl.tag = "(|...|)";
+
+		//TODO: You'll need nsdecl to search for the type of the entry and fill it in the entries.
+
+        return edecls;
+        // if(tdecl.attributes.length !== 0) {
+        //     decl.attributes = this.emitTypeAttributes(tdecl.attributes);
+        // }
+        //
+        // if(tdecl.optofexp !== undefined) {
+        //     if(tdecl.optofexp.exp instanceof LiteralRegexExpression) {
+        //         decl.ofvalidators = [tdecl.optofexp.exp.value, tdecl.ns.emit()];
+        //     }
+        //     else {
+        //         const [ane, nns] = this.assembly.resolveConstantRegexExpressionValue(tdecl.optofexp.exp as AccessNamespaceConstantExpression, tdecl.ns.emit());
+        //         decl.ofvalidators = [ane as string, nns];
+        //     }
+        // }
+        //
+        // decl.hasvalidations = tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0;
+        // decl.valuetype = tdecl.valuetype.tkeystr;
+        //
+        // decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
+        // decl.tkey = rcvr.tkeystr;
+        // decl.name = tdecl.name;
+    }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
         let decl: any = {};
@@ -504,7 +529,7 @@ class BSQONTypeInfoEmitter {
                 decl.typerefs.push(...nsemit.types);
                 if(nsii.elists.size !== 0) {
                     //TODO: asminsantiation has the elist that are instantiated!!!!
-                    // decl.typerefs.push(...emitter.emitElistInfo());
+                    decl.typerefs.push(...emitter.emitElistInfo(nsdecl,nsii));
                 }
 
                 nsworklist.push(...nsdecl.subns);

@@ -1,0 +1,12 @@
+{
+    "fname": "Main::removeInvariant",
+    "args": [
+        {
+            "name": "db",
+            "type": "Main::Database"
+        }
+    ],
+    "precondition": [],
+    "postcondition": [],
+    "return": "Bool"
+}
