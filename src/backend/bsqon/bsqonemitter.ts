@@ -479,34 +479,27 @@ class BSQONTypeInfoEmitter {
         return {ns: decl, types: tdecls};
     }
 
-	//TODO: Return an array of all elist typerefs of the given namspace.
-    private emitElistInfo(nsdecl: NamespaceDeclaration,asminstantiation: NamespaceInstantiationInfo) : any[] {
-        let edecl: any = {};
-		decl.tag = "(|...|)";
+    private emitElistInfo(asminstantiation: NamespaceInstantiationInfo) : any[] {
+        let edecls: any[] = [];
 
-		//TODO: You'll need nsdecl to search for the type of the entry and fill it in the entries.
+		for(const [tkey,entries_arr] of asminstantiation.elists){
+			let edecl: any = {};
+			edecl.tag = "(|...|)";
+
+			const entries: any[] = [];
+			edecl.entries = entries;
+
+			edecl.name = tkey;
+			edecl.tkey = tkey;
+
+			for(let i =0; i < entries_arr.entries.length; ++i){
+				const entry = entries_arr.entries[i];
+				entries.push(entry.tkeystr)
+			}
+			edecls.push(edecl)
+		}
 
         return edecls;
-        // if(tdecl.attributes.length !== 0) {
-        //     decl.attributes = this.emitTypeAttributes(tdecl.attributes);
-        // }
-        //
-        // if(tdecl.optofexp !== undefined) {
-        //     if(tdecl.optofexp.exp instanceof LiteralRegexExpression) {
-        //         decl.ofvalidators = [tdecl.optofexp.exp.value, tdecl.ns.emit()];
-        //     }
-        //     else {
-        //         const [ane, nns] = this.assembly.resolveConstantRegexExpressionValue(tdecl.optofexp.exp as AccessNamespaceConstantExpression, tdecl.ns.emit());
-        //         decl.ofvalidators = [ane as string, nns];
-        //     }
-        // }
-        //
-        // decl.hasvalidations = tdecl.allInvariants.length !== 0 || tdecl.allValidates.length !== 0;
-        // decl.valuetype = tdecl.valuetype.tkeystr;
-        //
-        // decl.supertypes = this.emitSuperTypes(tdecl, rcvr);
-        // decl.tkey = rcvr.tkeystr;
-        // decl.name = tdecl.name;
     }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
@@ -528,8 +521,7 @@ class BSQONTypeInfoEmitter {
                 decl.namespaces.push(nsemit.ns);
                 decl.typerefs.push(...nsemit.types);
                 if(nsii.elists.size !== 0) {
-                    //TODO: asminsantiation has the elist that are instantiated!!!!
-                    decl.typerefs.push(...emitter.emitElistInfo(nsdecl,nsii));
+                    decl.typerefs.push(...emitter.emitElistInfo(nsii));
                 }
 
                 nsworklist.push(...nsdecl.subns);
