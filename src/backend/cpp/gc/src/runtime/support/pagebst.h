@@ -143,13 +143,14 @@ static inline int findFirstBucket(PageInfo* buckets[N]) noexcept
 
 static PageInfo* getLowestUtilPageAndRemove(PageInfo* cur, PageInfo** lowest) noexcept
 {
-    if(cur->left == nullptr && cur->right == nullptr) {
+    if(cur->left == nullptr) {
         *lowest = cur;
-        return nullptr;
-    }
-
-    if(cur->left == nullptr && cur->right != nullptr) {
-        *lowest = cur;
+        if(cur->next != nullptr) {
+            PageInfo* replacement = cur->next;
+            replacement->right = cur->right;
+            return replacement;
+        }
+    
         return cur->right;
     }
 
