@@ -168,6 +168,8 @@ PageInfo* getLowestUtilPageLow(GCAllocator* alloc) noexcept
     PageInfo* nroot = getLowestUtilPageAndRemove(alloc->low_util_buckets[idx], &lowest);
     alloc->low_util_buckets[idx] = nroot;
 
+    assert(lowest != nullptr);
+
     return resetPointers(lowest);
 }
 
@@ -181,6 +183,8 @@ PageInfo* getLowestUtilPageHigh(GCAllocator* alloc) noexcept
     PageInfo* lowest = nullptr;
     PageInfo* nroot = getLowestUtilPageAndRemove(alloc->high_util_buckets[idx], &lowest);
     alloc->high_util_buckets[idx] = nroot;
+
+    assert(lowest != nullptr);
 
     return resetPointers(lowest);
 }
