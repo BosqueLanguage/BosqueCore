@@ -479,8 +479,27 @@ class BSQONTypeInfoEmitter {
         return {ns: decl, types: tdecls};
     }
 
-    private emitElistInfo(): any[] {
-        return ["TODO -- EList Emit"];
+    private emitElistInfo(asminstantiation: NamespaceInstantiationInfo) : any[] {
+        let edecls: any[] = [];
+
+		for(const [tkey,entries_arr] of asminstantiation.elists){
+			let edecl: any = {};
+			edecl.tag = "(|...|)";
+
+			const entries: any[] = [];
+			edecl.entries = entries;
+
+			edecl.name = tkey;
+			edecl.tkey = tkey;
+
+			for(let i =0; i < entries_arr.entries.length; ++i){
+				const entry = entries_arr.entries[i];
+				entries.push(entry.tkeystr)
+			}
+			edecls.push(edecl)
+		}
+
+        return edecls;
     }
 
     static emitAssembly(assembly: Assembly, asminstantiation: NamespaceInstantiationInfo[], includeregexinfo: boolean): any {
@@ -502,8 +521,7 @@ class BSQONTypeInfoEmitter {
                 decl.namespaces.push(nsemit.ns);
                 decl.typerefs.push(...nsemit.types);
                 if(nsii.elists.size !== 0) {
-                    //TODO: asminsantiation has the elist that are instantiated!!!!
-                    decl.typerefs.push(...emitter.emitElistInfo());
+                    decl.typerefs.push(...emitter.emitElistInfo(nsii));
                 }
 
                 nsworklist.push(...nsdecl.subns);
