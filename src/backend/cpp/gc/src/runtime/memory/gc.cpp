@@ -21,9 +21,10 @@ void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
-    if(gcalloc->checkNonAllocOrGCPage(page)) {
-        page->rebuild();
-        gcalloc->processPage(page);
+    PageInfo* npage = gcalloc->tryRemoveFromFilledPages(page);
+    if(npage != nullptr) {
+        npage->rebuild();
+        gcalloc->processPage(npage);
     }
 }
 
@@ -63,55 +64,6 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
 
     tinfo.old_roots_count = 0;
-}
-
-bool pageNeedsMoved(float old_util, float new_util)
-{
-    // If page has not been processed it needs to be inserted into a bucket
-    if (old_util > 1.1f) {
-        return true;
-    }
-
-    // Handle empty page case
-    if (new_util < 0.01f && old_util > 0.01f) {
-        return true;
-    }
-
-    const bool was_low_util = IS_LOW_UTIL(old_util);
-    const bool now_low_util = IS_LOW_UTIL(new_util);
-    if (was_low_util != now_low_util) {
-        return true;
-    }
-
-    const bool was_high_util = IS_HIGH_UTIL(old_util);
-    const bool now_high_util = IS_HIGH_UTIL(new_util);
-    if (was_high_util != now_high_util) {
-        return true;
-    }
-
-    const bool was_full = IS_FULL(old_util);
-    const bool now_full = IS_FULL(new_util);
-    if (was_full != now_full) {
-        return true;
-    }
-
-    if (now_low_util) {
-        int old_bucket = -1; 
-        int new_bucket = -1;
-        GET_BUCKET_INDEX(old_util, NUM_LOW_UTIL_BUCKETS, old_bucket, 0);
-        GET_BUCKET_INDEX(new_util, NUM_LOW_UTIL_BUCKETS, new_bucket, 0);
-        return old_bucket != new_bucket;
-    } 
-    else if (now_high_util){
-        int old_bucket = -1; 
-        int new_bucket = -1;
-        GET_BUCKET_INDEX(old_util, NUM_HIGH_UTIL_BUCKETS, old_bucket, 1);
-        GET_BUCKET_INDEX(new_util, NUM_HIGH_UTIL_BUCKETS, new_bucket, 1);
-        return old_bucket != new_bucket;
-    }
-    else {
-        return false;
-    }
 }
 
 inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
@@ -184,50 +136,31 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
-        deccount++;
 
-        // Skip if the object is already freed
         if (!GC_IS_ALLOCATED(obj)) {
             continue;
         }
 
-        // Decrement ref counts of objects this object points to
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-
         if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
             walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
         }
 
-        // Put object onto its pages freelist by masking to the page itself then pushing to front of list 
         PageInfo* objects_page = PageInfo::extractPageFromPointer(obj);
-        FreeListEntry* entry = (FreeListEntry*)((uint8_t*)obj - sizeof(MetaData));
-        entry->next = objects_page->freelist;
-        objects_page->freelist = entry;
+        objects_page->pending_decs_count--;
 
-        // Need to make sure pending decs count is not 0 already, this prevents us from
-        // decrementing dec count for the root object and wrapping to max uint16
-        if(objects_page->pending_decs_count != 0) {
-            objects_page->pending_decs_count--;
-        }
-
-        // Mark the object as unallocated
         GC_IS_ALLOCATED(obj) = false;
 
-        objects_page->freecount++;
-        tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
+        if(objects_page->seen == false) {
+            objects_page->seen = true;
+            tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
+        }
+
+        deccount++;
     }
 
     for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
-        // We only want to move pages without pending decs
-        // We can think of these pages as stable
-        PageInfo* p = tinfo.decremented_pages[i];
-        if(p->pending_decs_count > 0) {
-            continue;
-        }
-
-        if(pageNeedsMoved(p->approx_utilization, CALC_APPROX_UTILIZATION(p))) {
-            reprocessPageInfo(p, tinfo);
-        }
+        reprocessPageInfo(tinfo.decremented_pages[i], tinfo);
     }
     tinfo.decremented_pages_index = 0;
 

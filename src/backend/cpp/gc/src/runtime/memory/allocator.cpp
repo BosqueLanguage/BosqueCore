@@ -1,5 +1,6 @@
 #include "allocator.h"
 #include "threadinfo.h"
+#include "../support/pagebst.h"
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 
@@ -9,12 +10,12 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
 
     pp->freelist = nullptr;
     pp->next = nullptr;
-
     pp->data = ((uint8_t*)block + sizeof(PageInfo));
     pp->allocsize = allocsize;
     pp->realsize = realsize;
+    pp->approx_utilization = 0.0f;
     pp->pending_decs_count = 0;
-    pp->approx_utilization = 100.0f; // Approx util has not been calculated
+    pp->seen = false;
     pp->left = nullptr;
     pp->right = nullptr;
     pp->entrycount = (BSQ_BLOCK_ALLOCATION_SIZE - (pp->data - (uint8_t*)pp)) / realsize;
@@ -33,13 +34,15 @@ void PageInfo::rebuild() noexcept
 {
     this->freelist = nullptr;
     this->freecount = 0;
+    this->seen = false;
+    this->next = nullptr;
+    this->left = nullptr;
+    this->right = nullptr;
     
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
         
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
-            // Just to be safe reset metadata
-            RESET_METADATA_FOR_OBJECT(meta, MAX_FWD_INDEX);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -47,7 +50,7 @@ void PageInfo::rebuild() noexcept
         }
     }
 
-    this->next = nullptr;
+    this->approx_utilization = CALC_APPROX_UTILIZATION(this);
 }
 
 GlobalPageGCManager GlobalPageGCManager::g_gc_page_manager;
@@ -89,40 +92,26 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
 
 void GCAllocator::processPage(PageInfo* p) noexcept
 {
-    float old_util = p->approx_utilization;
-    float n_util = CALC_APPROX_UTILIZATION(p);
-    p->approx_utilization = n_util;
-    int bucket_index = 0;
-
     if(p->entrycount == p->freecount) {
         GlobalPageGCManager::g_gc_page_manager.addNewPage(p);
         UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, ++);
+
+        return ;
     }
-    else if(IS_LOW_UTIL(n_util)) {
-        GET_BUCKET_INDEX(n_util, NUM_LOW_UTIL_BUCKETS, bucket_index, 0);
-        this->insertPageInBucket(&this->low_utilization_buckets[bucket_index], p, n_util);    
+    
+    if(insertPageInBucket(this, p)) {
+        return ;
     }
-    else if(IS_HIGH_UTIL(n_util)) {
-        GET_BUCKET_INDEX(n_util, NUM_HIGH_UTIL_BUCKETS, bucket_index, 1);
-        this->insertPageInBucket(&this->high_utilization_buckets[bucket_index], p, n_util);
-    }
-    // If our page freshly became full we need to gc
-    else if(IS_FULL(n_util) && !IS_FULL(old_util)) {
-        // We dont want to collect evac page
-        if(p == this->evac_page) {
-            p->next = this->filled_pages;
-            filled_pages = p;
-        }
-        else {
-            p->next = this->pendinggc_pages;
-            pendinggc_pages = p;
-        }
-    }
-    // If our page was full before and still full put on filled pages
-    else if(IS_FULL(n_util) && IS_FULL(old_util)) {
+    
+    // Full page
+    if(p == this->evac_page) {
         p->next = this->filled_pages;
         filled_pages = p;
     }
+    else {
+        p->next = this->pendinggc_pages;
+        pendinggc_pages = p;
+    } 
 }
 
 void GCAllocator::processCollectorPages() noexcept
@@ -155,7 +144,30 @@ void GCAllocator::processCollectorPages() noexcept
     this->pendinggc_pages = nullptr;
 }
 
-void GCAllocator::allocatorRefreshPage() noexcept
+PageInfo* GCAllocator::getFreshPageForAllocator() noexcept
+{
+    PageInfo* page = getLowestUtilPageLow(this);
+    if(page == nullptr) {
+        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+    }
+
+    return page;
+}
+
+PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
+{
+    PageInfo* page = getLowestUtilPageHigh(this);
+    if(page == nullptr) {
+        page = getLowestUtilPageLow(this);
+    }
+    if(page == nullptr) {
+        page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
+    }
+
+    return page;
+}
+
+void GCAllocator::allocatorRefreshAllocationPage() noexcept
 {
     if(this->alloc_page == nullptr) {
         this->alloc_page = this->getFreshPageForAllocator();
@@ -182,18 +194,43 @@ void GCAllocator::allocatorRefreshPage() noexcept
     this->freelist = this->alloc_page->freelist;
 }
 
+void GCAllocator::allocatorRefreshEvacuationPage() noexcept
+{
+    if(this->evac_page != nullptr) {
+        this->evac_page->next = this->filled_pages;
+        this->filled_pages = this->evac_page;
+    }
+
+    this->evac_page = this->getFreshPageForEvacuation();
+    this->evacfreelist = this->evac_page->freelist;
+}
+
 #ifdef MEM_STATS
 
-inline void process(PageInfo* page) noexcept
+static uint64_t getPageFreeCount(PageInfo* p) noexcept 
+{
+    uint64_t freecount = 0;
+    for(int64_t i = 0; i < p->entrycount; i++) {
+        MetaData* meta = p->getMetaEntryAtIndex(i); 
+        if(!meta->isalloc) {
+            freecount++;
+        }
+    }
+
+    return freecount;
+}
+
+static inline void process(PageInfo* page) noexcept
 {
     if(!page) {
         return;
     }
-    
-    UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - page->freecount)));
+   
+    uint64_t freecount = getPageFreeCount(page);
+    UPDATE_TOTAL_LIVE_BYTES(gtl_info, +=, (page->allocsize * (page->entrycount - freecount)));
 }
 
-void traverseBST(PageInfo* node) noexcept
+static void traverseBST(PageInfo* node) noexcept
 {
     if(!node) {
         return;
@@ -220,100 +257,18 @@ void GCAllocator::updateMemStats() noexcept
 
     // Compute stats for high util pages
     for(int i = 0; i < NUM_HIGH_UTIL_BUCKETS; i++) {
-        traverseBST(this->high_utilization_buckets[i]);
+        traverseBST(this->high_util_buckets[i]);
     }
 
     // Compute stats for low util pages
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
-        traverseBST(this->low_utilization_buckets[i]);
+        traverseBST(this->low_util_buckets[i]);
     }
 }
 
 #endif
 
-//TODO: Rework these very funky canary check functions !!!
-
-/*
-//Following 3 methods verify integrity of canaries
-bool verifyCanariesInBlock(char* block, uint16_t entry_size)
-{
-    uint64_t* pre_canary = (uint64_t*)(block);
-    uint64_t* post_canary = (uint64_t*)(block + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + entry_size);
-
-    debug_print("[CANARY_CHECK] Verifying canaries for block at %p\n", block);
-    debug_print("\tPre-canary value: %lx\n", *pre_canary);
-    debug_print("\tPost-canary value: %lx\n", *post_canary);
-
-    if (*pre_canary != ALLOC_DEBUG_CANARY_VALUE || *post_canary != ALLOC_DEBUG_CANARY_VALUE)
-    {
-        debug_print("[ERROR] Canary corruption detected at block %p\n", block);
-        return false;
-    }
-    return true;
-}
-
-void verifyCanariesInPage(PageInfo* page)
-{
-    FreeListEntry* list = page->freelist;
-    uint16_t alloced_blocks = 0;
-    uint16_t free_blocks = 0;
-
-    debug_print("[CANARY_CHECK] Verifying canaries for page at %p\n", page);
-
-    for (uint16_t i = 0; i < page->entrycount; i++) {
-        char* block_address = PAGE_MASK_EXTRACT_DATA(list) + (i * REAL_ENTRY_SIZE(page->entrysize));
-        debug_print("\tChecking block %d at address %p\n", i, block_address);
-        MetaData* metadata = (MetaData*)(block_address + ALLOC_DEBUG_CANARY_SIZE);
-        debug_print("\tBlock %d metadata state: isalloc=%d\n", i, metadata->isalloc);
-
-        if (metadata->isalloc) {
-            debug_print("\tAllocated block detected, verifying canaries...\n");
-            alloced_blocks++;
-            assert(verifyCanariesInBlock(block_address, page->entrysize));
-        }
-    }
-    debug_print("\n");
-
-    debug_print("[CANARY_CHECK] Verifying freelist for page at %p\n", page);
-    while(list){
-        debug_print("\tChecking freelist block at %p\n", (void*)list);
-        MetaData* metadata = (MetaData*)((char*)list + ALLOC_DEBUG_CANARY_SIZE);
-        debug_print("\tFreelist block metadata state: isalloc=%d\n", metadata->isalloc);
-
-        if(metadata->isalloc){
-            debug_print("[ERROR] Block in free list was allocated at %p\n", list);
-            assert(0);
-        }
-        free_blocks++;
-        list = list->next;
-    }   
-
-    // Make sure no blocks are lost
-    assert((free_blocks + alloced_blocks) == page->entrycount);
-
-    debug_print("\n");
-}
-
-void verifyAllCanaries()
-{
-    for(int i = 0; i < NUM_BINS; i++) {
-        AllocatorBin* bin = getBinForSize(8 * (1 << i));
-        PageInfo* alloc_page = bin->alloc_page;
-        PageInfo* evac_page = bin->evac_page;
-
-        debug_print("[CANARY_CHECK] Verifying all pages in bin\n");
-
-        while (alloc_page) {
-            debug_print("[CANARY_CHECK] Verifying canaries in alloc page at %p\n", alloc_page);
-            verifyCanariesInPage(alloc_page);
-            alloc_page = alloc_page->next;
-        }
-
-        while (evac_page) {
-            debug_print("[CANARY_CHECK] Verifying canaries in evac page at %p\n", evac_page);
-            verifyCanariesInPage(evac_page);
-            evac_page = evac_page->next;
-        }
-    }
-}
-*/
+//
+// TODO: Might be a good idea to add some canary verify
+// functions
+//

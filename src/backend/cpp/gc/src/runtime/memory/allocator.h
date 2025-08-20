@@ -86,6 +86,7 @@ public:
 
     float approx_utilization;
     uint16_t pending_decs_count;
+    bool seen; // Have we visited this page while processing decrements?
 
     static PageInfo* initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept;
 
@@ -200,31 +201,6 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define NUM_LOW_UTIL_BUCKETS 12
 #define NUM_HIGH_UTIL_BUCKETS 6
 
-#define IS_LOW_UTIL(U) (U >= 0.01f && U <= 0.60f)
-#define IS_HIGH_UTIL(U) (U > 0.60f && U <= 0.90f)
-
-//<=1.0f is very crucial here because new pages start at 100.0f, wihout we just reprocess them until OOM
-#define IS_FULL(U) (U > 0.90f && U <= 1.0f)
-
-#define UTILIZATIONS_ARE_EQUAL(F1, F2) (-0.00001 <= (F1 - F2) && (F1 - F2) <= 0.00001)
-
-//Find proper bucket based on increments of 0.05f
-#define GET_BUCKET_INDEX(U, N, I, O)                \
-do {                                                \
-    float tmp_util = 0.0f;                          \
-    if(O) {                                         \
-        tmp_util = 0.60f;                           \
-    }                                               \
-    for (int i = 0; i < N; i++) {                   \
-        float new_tmp_util = tmp_util + 0.05f;      \
-        if (U > tmp_util && U <= new_tmp_util) {    \
-            I = i;                                  \
-            break;                                  \
-        }                                           \
-        tmp_util = new_tmp_util;                    \
-    }                                               \
-} while (0)
-
 class GCAllocator
 {
 private:
@@ -239,287 +215,61 @@ private:
     uint16_t realsize;  //size of the alloc entries in this page (including metadata and other stuff)
 
     PageInfo* pendinggc_pages; // Pages that are pending GC
-
-    // Each "bucket" is a binary tree storing 5% of variance in approx_utiliation
-    PageInfo* low_utilization_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
-    PageInfo* high_utilization_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
-
     PageInfo* filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
 
     void (*collectfp)();
 
-    void insertPageInBucket(PageInfo** bucket, PageInfo* new_page, float n_util) 
-    {                             
-        if(new_page == nullptr) { //sanity check
-            assert(false);
-        }
-        
-        PageInfo* root = *bucket;     
-        new_page->left = nullptr;
-        new_page->right = nullptr;
-        new_page->next = nullptr;
-
-        //no root case
-        if(root == nullptr) {
-            *bucket = new_page;
-            return ;
-        }
-    
-        PageInfo* current = root;
-        while (current != nullptr) {
-            // If current and our pages utilization are equal we add it to this pages list
-            // TODO: Insert at beginning of list, means we need a reference from parent node
-            if(UTILIZATIONS_ARE_EQUAL(n_util, root->approx_utilization)) {
-                if(current == new_page) {
-                    break;
-                }
-                else if(current->next == nullptr) {
-                    current->next = new_page;
-                }
-                else {
-                    PageInfo* it = current;
-                    while(it->next != nullptr) {
-                        it = it->next;
-                    }
-                    it->next = new_page;
-                }
-                break;
-            }
-
-            // Traverse down left subtree
-            else if (n_util < current->approx_utilization) {
-                if (current->left == nullptr) {
-                    // Insert as the left child
-                    current->left = new_page;
-                    break;
-                } 
-                else {
-                    current = current->left;
-                }
-            } 
-
-            // Traverse down right subtree
-            else {
-                if (current->right == nullptr) {
-                    // Insert as the right child
-                    current->right = new_page;
-                    break;
-                } 
-                else {
-                    current = current->right;
-                }
-            }
-        }
-    }
-
-    void deletePageFromBucket(PageInfo** root_ptr, PageInfo* old_page)
-    {
-        float old_util = old_page->approx_utilization;
-        PageInfo* root = *root_ptr;
-        if (root == nullptr) {
-            return; 
-        }
-    
-        if (UTILIZATIONS_ARE_EQUAL(old_util, root->approx_utilization)) {
-            // Handle case where root itself is the node to delete
-            if(root == old_page) {
-                if(root->next != nullptr) {
-                    *root_ptr = root->next;
-                    root->next->left = root->left;  // Preserve left subtree
-                    root->next->right = root->right; // Preserve right subtree
-                } 
-                else {
-                    // Normal BST deletion
-                    if (root->left == nullptr) {
-                        *root_ptr = root->right; 
-                    }
-                    else if (root->right == nullptr) {
-                        *root_ptr = root->left; 
-                    }
-                    else {
-                        PageInfo* successor = getSuccessor(root);
-
-                        // Crucial to update sucessors ptrs
-                        successor->left = root->left;
-                        successor->right = root->right;
-                        successor->next = root->next;
-
-                        root->approx_utilization = successor->approx_utilization;
-                        deletePageFromBucket(&root->right, successor);
-                    }
-                }
-                return;
-            }
-    
-            //Handle node in the linked list
-            PageInfo* prev = root;
-            PageInfo* current = root->next;
-            while(current != nullptr) {
-                if(current == old_page) {
-                    prev->next = current->next;
-                    return;
-                }
-                prev = current;
-                current = current->next;
-            }
-            return; //Node not found
-        }
-
-        else if (root->approx_utilization > old_util) {  
-            deletePageFromBucket(&((*root_ptr)->left), old_page);
-        }
-        else {
-            deletePageFromBucket(&((*root_ptr)->right), old_page);
-        }
-    }
-
-    inline PageInfo* getSuccessor(PageInfo* p) 
-    {
-        p = p->right;
-        while(p != nullptr && p->left != nullptr) {
-            p = p->left;
-        }
-        return p;
-    }
-
-    PageInfo* findLowestUtilPage(PageInfo** buckets, int n)
-    {
-        for(int i = 0; i < n; i++) {
-            PageInfo* parent = nullptr;
-            PageInfo* cur = buckets[i];
-            if(cur == nullptr) continue;
-            
-            while(cur->left != nullptr) {
-                parent = cur;
-                cur = cur->left;
-            }
-            
-            if(cur == buckets[i]) { // If cur is root
-                if(cur->next != nullptr) {
-                    buckets[i] = cur->next;
-                    buckets[i]->left = cur->left;
-                    buckets[i]->right = cur->right;
-                } 
-                else {
-                    // Normal BST removal
-                    if(cur->right != nullptr) {
-                        buckets[i] = cur->right;
-                    } 
-                    else {
-                        buckets[i] = nullptr;
-                    }
-                }
-            } 
-            else { // If cur is not root
-                if(cur->right != nullptr) {
-                    parent->left = cur->right;
-                }
-                else {
-                    parent->left = nullptr;
-                }
-            }
-            
-            return cur;
-        }
-        return nullptr;
-    }
-
-    PageInfo* getFreshPageForAllocator() noexcept
-    {
-        PageInfo* page = findLowestUtilPage(low_utilization_buckets, NUM_LOW_UTIL_BUCKETS);
-        if(page == nullptr) {
-            page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
-        }
-
-        return page;
-    }
-
-    PageInfo* getFreshPageForEvacuation() noexcept
-    {
-        PageInfo* page = findLowestUtilPage(high_utilization_buckets, NUM_HIGH_UTIL_BUCKETS);
-        if(page == nullptr) {
-            page = findLowestUtilPage(low_utilization_buckets, NUM_LOW_UTIL_BUCKETS);
-        }
-        if(page == nullptr) {
-            page = GlobalPageGCManager::g_gc_page_manager.allocateFreshPage(this->allocsize, this->realsize);
-        }
-
-        return page;
-    }
-
-    void allocatorRefreshEvacuationPage() noexcept
-    {
-        if(this->evac_page != nullptr) {
-            this->evac_page->next = this->filled_pages;
-            this->filled_pages = this->evac_page;
-        }
-
-        this->evac_page = this->getFreshPageForEvacuation();
-        this->evacfreelist = this->evac_page->freelist;
-    }
+    PageInfo* getFreshPageForAllocator() noexcept; 
+    PageInfo* getFreshPageForEvacuation() noexcept;
 
 public:
-    GCAllocator(uint16_t allocsize, uint16_t realsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(allocsize), realsize(realsize), pendinggc_pages(nullptr), low_utilization_buckets{}, high_utilization_buckets{}, filled_pages(nullptr), collectfp(collect) { }
+    GCAllocator(uint16_t allocsize, uint16_t realsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(allocsize), realsize(realsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
+        resetBuckets();
+    }
+
+    // Each "bucket" is a binary tree storing 5% of variance in approx_utiliation
+    PageInfo* low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
+    PageInfo* high_util_buckets[NUM_HIGH_UTIL_BUCKETS]; // Pages with 61-90% utilization 
 
     inline size_t getAllocSize() const noexcept
     {
         return this->allocsize;
     }
 
-    // Simple check to see if a page is in alloc/evac/pendinggc pages
-    bool checkNonAllocOrGCPage(PageInfo* p) {
-        if(p == alloc_page || p == evac_page) {
-            return false;
-        }
-
-        PageInfo* cur = pendinggc_pages;
-        while(cur != nullptr) {
-            if(cur == p) {
-                return false;
-            }
-            cur = cur->next;
-        }
-
-        return true;
+    inline void resetBuckets() noexcept 
+    {
+        xmem_zerofill(this->low_util_buckets, NUM_LOW_UTIL_BUCKETS);
+        xmem_zerofill(this->high_util_buckets, NUM_HIGH_UTIL_BUCKETS);
     }
 
-    // Used in case where a page's utilization changed and it isnt being grabbed for evac/alloc
-    void deleteOldPage(PageInfo* p) 
-    {
-        int bucket_index = 0;
-        float old_util = p->approx_utilization;
+    //
+    // NOTE: This search is quite slow, if we have a lot of pages
+    // maybe problematic (faster that just rebuilding all filled pages though)
+    //
 
-        if(IS_LOW_UTIL(old_util)) {
-            GET_BUCKET_INDEX(old_util, NUM_LOW_UTIL_BUCKETS, bucket_index, 0);
-            this->deletePageFromBucket(
-                &this->low_utilization_buckets[bucket_index], p);        
-        }
-        else if(IS_HIGH_UTIL(old_util)) {
-            GET_BUCKET_INDEX(old_util, NUM_HIGH_UTIL_BUCKETS, bucket_index, 1);
-            this->deletePageFromBucket(
-                &this->high_utilization_buckets[bucket_index], p);
+    // Remove for reprocessing, called if decrements occured on p
+    PageInfo* tryRemoveFromFilledPages(PageInfo* p) {
+        if(p == alloc_page || p == evac_page) {
+            return nullptr;
         }
 
-        // May want to make this traversal not O(n) worst case (sort?)
-        else {
-            PageInfo* cur = this->filled_pages;
-            PageInfo* prev = nullptr;
-            while(cur != nullptr && cur != p) {
-                prev = cur;
-                cur = cur->next;
+        PageInfo* prev = nullptr;
+        PageInfo* cur = this->filled_pages;
+        while(cur != nullptr) {
+            if(cur == p) {
+                if(prev == nullptr) {
+                    this->filled_pages = nullptr;
+                }
+                else {
+                    prev->next = cur->next;
+                    return p;
+                }
             }
-
-            if(prev == nullptr) {
-                this->filled_pages = cur->next;
-            }
-            else {
-                prev->next = cur->next;
-            }
-            p->next = nullptr;
-            p->left = nullptr;
-            p->right = nullptr;
+            prev = cur;
+            cur = cur->next;
         }
+        return nullptr;
     }
 
     inline void* allocate(__CoreGC::TypeInfoBase* type)
@@ -527,7 +277,7 @@ public:
         assert(type->type_size == this->allocsize);
 
         if(this->freelist == nullptr) [[unlikely]] {
-            this->allocatorRefreshPage();
+            this->allocatorRefreshAllocationPage();
         }
 
         void* entry = this->freelist;
@@ -568,6 +318,9 @@ public:
     //process all the pending gc pages, the current alloc page, and evac page -- reset for next round
     void processCollectorPages() noexcept;
 
-    //May call collection, needs definition in cpp file to prevent cyclic dependicies in fetching gtl_info
-    void allocatorRefreshPage() noexcept;
+    //May call collection, insert full alloc page in pending gc pages, get new page
+    void allocatorRefreshAllocationPage() noexcept;
+
+    //Get new page for evacuation, append old to filled pages
+    void allocatorRefreshEvacuationPage() noexcept;
 };
