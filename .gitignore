@@ -9,9 +9,4 @@
 **/.DS_Store
 **/output/*
 
-/jsout/node_modules
-*/smtout
-*.smt2
-*.bsqon
-
 a.out
