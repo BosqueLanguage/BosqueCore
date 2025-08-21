@@ -152,8 +152,10 @@ typedef struct MetaData
 static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #endif
 
-// After we evacuate an object we need to update the original metadata
-#define RESET_METADATA_FOR_OBJECT(M, FP) *M = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=(FP), .ref_count=0 }
+#define NON_FORWARDED -1
+
+// Resets an objects metadata and updates with index into forward table
+#define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
 
 #define GC_GET_META_DATA_ADDR(O) ((MetaData*)((uint8_t*)O - sizeof(MetaData)))
 

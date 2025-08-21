@@ -42,7 +42,7 @@ void PageInfo::rebuild() noexcept
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
         
-        assert(meta->ref_count >= 0);
+        GC_INVARIANT_CHECK(meta->ref_count >= 0);
 
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
