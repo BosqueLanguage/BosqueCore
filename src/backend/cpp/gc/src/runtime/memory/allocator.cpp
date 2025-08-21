@@ -178,7 +178,7 @@ void GCAllocator::allocatorRefreshAllocationPage() noexcept
         // If we exceed our filled pages thresh collect
         if(gtl_info.newly_filled_pages_count == BSQ_COLLECTION_THRESHOLD) {
             if(!gtl_info.disable_automatic_collections) {
-                collect();
+                this->collectfp();
             }
         }
         else {

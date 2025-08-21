@@ -19,6 +19,8 @@ thread_local BSQMemoryTheadLocalInfo gtl_info;
 
 void BSQMemoryTheadLocalInfo::initialize(size_t tl_id, void** caller_rbp) noexcept
 {
+    assert(caller_rbp != nullptr);
+    
     this->tl_id = tl_id;
     this->native_stack_base = caller_rbp;
 
@@ -44,6 +46,16 @@ void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 
     //this code should load from the asm stack pointers and copy the native stack into the roots memory
     #ifdef __x86_64__
+
+    // This might be what we want?
+    /*
+           void** current_frame = nullptr;
+        asm("\t mov %%rbp,%0" : "=r"(current_frame));        
+
+        assert(current_frame != nullptr); 
+    
+    */
+
         register void** rbp asm("rbp");
         void** current_frame = rbp;
         
