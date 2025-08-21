@@ -75,7 +75,7 @@ inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
 inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
     void* obj = *slots;
-    uint32_t refcount = DEC_REF_COUNT(obj);
+    int refcount = DEC_REF_COUNT(obj);
     if(refcount != 0 || GC_IS_ROOT(obj)) {
         return ;
     }
@@ -159,6 +159,12 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         deccount++;
     }
 
+    //
+    // Honestly I am wondering if we really should be moving these pagtes around
+    // Im starting to think our bug has something to do with an object
+    // getting evacuated but its parent object not being made known
+    // so it ends up pointing to garbage.
+    //
     for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
         reprocessPageInfo(tinfo.decremented_pages[i], tinfo);
     }
@@ -175,8 +181,8 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
 {
-    uint32_t fwd_index = GC_FWD_INDEX(*obj);
-    if(fwd_index != MAX_FWD_INDEX) {
+    int fwd_index = GC_FWD_INDEX(*obj);
+    if(fwd_index >= 0) {
         *obj = tinfo.forward_table[fwd_index]; 
     }
     
@@ -260,7 +266,7 @@ void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         xmem_copy(obj, newobj, type_info->slot_size);
         updatePointers((void**)newobj, tinfo);
 
-        RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(obj), (uint32_t)tinfo.forward_table_index);
+        RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(obj), tinfo.forward_table_index);
         tinfo.forward_table[tinfo.forward_table_index++] = newobj;
     }
 

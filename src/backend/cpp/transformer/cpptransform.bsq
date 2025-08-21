@@ -1002,15 +1002,22 @@ entity CPPTransformer {
 
             if(subant)@<BSQAssembly::AbstractEntityTypeDecl> {
                 let finfo, ntic = this.generateFieldInfo(none, some(subtk), true, acc.2);
+                var size = finfo.slotsize;
+
+                %% Just a pointer so only one slot
+                let subtypetag = this.determineTag(some($subant.tkey), none);
+                if(subtypetag === CPPAssembly::Tag#Ref) {
+                    size = 1n;
+                }
 
                 %% If all subtypes are not of the same tag we must return tagged 
                 var tag = acc.1;
-                if(tag !== CPPAssembly::Tag#Tagged && this.determineTag(some($subant.tkey), none) !== tag) {
+                if(tag !== CPPAssembly::Tag#Tagged && subtypetag !== tag) {
                     tag = CPPAssembly::Tag#Tagged;
                 }
 
-                if(finfo.slotsize > acc.0) {
-                    return finfo.slotsize, tag, ntic;
+                if(size > acc.0) {
+                    return size, tag, ntic;
                 }
                 return acc.0, tag, ntic;
             }
