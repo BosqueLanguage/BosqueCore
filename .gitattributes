@@ -1,3 +1,4 @@
 /build/include/z3/bin/* filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.pptx filter=lfs diff=lfs merge=lfs -text
+build/include/z3/bin/smtextract filter=lfs diff=lfs merge=lfs -text
