@@ -140,8 +140,8 @@ struct MetaData
     bool ismarked;
     bool isroot;
     //TODO -- also a parent thread root bit (that we don't clear but we treat as a root for the purposes of marking etc.)
-    int forward_index;
-    int ref_count;
+    int32_t forward_index;
+    int32_t ref_count;
 }; 
 #else
 typedef struct MetaData 

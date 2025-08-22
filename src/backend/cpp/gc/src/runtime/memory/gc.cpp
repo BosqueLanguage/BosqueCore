@@ -187,7 +187,7 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj;
-    int fwd_index = GC_FWD_INDEX(ptr);
+    int32_t fwd_index = GC_FWD_INDEX(ptr);
 
     if(fwd_index == NON_FORWARDED) {
         // We do not want to forward roots
