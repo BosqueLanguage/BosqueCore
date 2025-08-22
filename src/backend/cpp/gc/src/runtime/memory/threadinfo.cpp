@@ -42,22 +42,6 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexc
 
 void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 {
-    // This might be what we want?
-    // Will need to do in all places that use registers. Might be a good idea as it is defined
-    // We shold probably also store the contents of the movq in a uint64 then cast to void
-    // in both clang and gcc
-    // 
-    // could try out  ` void * __builtin_frame_address(0) ` also (gcc builtin though)
-    //
-    /*
-           void** current_frame = nullptr;
-        asm("\t movq %%rbp,%0" : "=r"(current_frame));
-
-        assert(current_frame != nullptr);
-
-    */
-
-
     this->native_stack_contents.initialize();
 
     //this code should load from the asm stack pointers and copy the native stack into the roots memory

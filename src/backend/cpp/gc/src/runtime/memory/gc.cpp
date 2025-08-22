@@ -176,8 +176,10 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     updatePointers((void**)nptr, tinfo);
 
     // Insert into forward table and update object ensuring future objects update
-    RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(ptr), tinfo.forward_table_index);
-    tinfo.forward_table[tinfo.forward_table_index++] = nptr;
+    MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
+    RESET_METADATA_FOR_OBJECT(m, tinfo.forward_table_index);
+    tinfo.forward_table[tinfo.forward_table_index] = nptr;
+    tinfo.forward_table_index++;
 
     return nptr;
 }
@@ -187,13 +189,8 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
     void* ptr = *obj;
     int fwd_index = GC_FWD_INDEX(ptr);
 
-    //
-    // I BELIEVE forwarding at this point in updating pointers ensures
-    // all children pointers new address are correctly reflected in their
-    // parents data
-    //
     if(fwd_index == NON_FORWARDED) {
-        // This might me invariant
+        // We do not want to forward roots
         if(!GC_IS_ROOT(ptr)) {
             return ;
         }
@@ -278,13 +275,11 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
         return ;
     }
 
-    // Make sure our page is in pagetable, our address is not a page itself,
-    // or a pointer into the page's metadata
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
 
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr)
-        || page_offset < sizeof(PageInfo)) {
-            return ;
+    bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) || ptrToPageMetaData) {
+        return ;
     }
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
