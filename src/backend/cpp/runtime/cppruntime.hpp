@@ -8,7 +8,8 @@
 #include <csetjmp>
 #include <variant> // TODO: Need to remove dependency!
 
-#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
+//#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
+#define 𝐚𝐛𝐨𝐫𝐭 (assert(false))
 #define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
 
 namespace __CoreCpp {

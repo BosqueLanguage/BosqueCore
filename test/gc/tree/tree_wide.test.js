@@ -3,7 +3,7 @@
 import { runMainCodeGC } from "../../../bin/test/gc/gc_nf.js"
 import { describe, it } from "node:test";
 
-const base = "__CoreCpp::Bool main() {gtl_info.disable_automatic_collections = true;";
+const base = "__CoreCpp::Bool main() {";
 const end = "verifyTest();return true;}"
 
 const test_1 = base.concat("wideTreeTest_1();", end);

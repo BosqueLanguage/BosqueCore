@@ -165,27 +165,35 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     //
 }
 
+static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
+{
+    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(ptr));
+    GC_INVARIANT_CHECK(gcalloc != nullptr);
+
+    __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
+    void* nptr = gcalloc->allocateEvacuation(type_info);
+    xmem_copy(ptr, nptr, type_info->slot_size);
+    updatePointers((void**)nptr, tinfo);
+
+    // Insert into forward table and update object ensuring future objects update
+    RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(ptr), tinfo.forward_table_index);
+    tinfo.forward_table[tinfo.forward_table_index++] = nptr;
+
+    return nptr;
+}
+
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj;
     int fwd_index = GC_FWD_INDEX(ptr);
 
     if(fwd_index == NON_FORWARDED) {
-        GC_INVARIANT_CHECK(GC_IS_ROOT(ptr) == false);
-
-        GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(ptr));
-        GC_INVARIANT_CHECK(gcalloc != nullptr);
-    
-        __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
-        void* nptr = gcalloc->allocateEvacuation(type_info);
-        xmem_copy(ptr, nptr, type_info->slot_size);
-        updatePointers((void**)nptr, tinfo);
-
-        // Insert into forward table and update object ensuring future objects update
-        RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(ptr), tinfo.forward_table_index);
-        tinfo.forward_table[tinfo.forward_table_index++] = nptr;    
-        
-        *obj = nptr; 
+        // This might me invariant
+        if(!GC_IS_ROOT(ptr)) {
+            return ;
+        }
+ 
+        *obj = forward(ptr, tinfo); 
     }
     else {
         *obj = tinfo.forward_table[fwd_index]; 
@@ -248,7 +256,7 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     MEM_STATS_START();
 
     while(!tinfo.pending_young.isEmpty()) {
-        void* obj = tinfo.pending_young.pop_front();
+        void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
         MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -289,9 +297,7 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
         tinfo.pending_roots.push_back(obj);
     }
-
-    std::cout << "root: " << obj << std::endl;
- }
+}
 
 static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
@@ -441,8 +447,6 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 void collect() noexcept
 {   
     MEM_STATS_START();
-
-    std::cout << " collect! " << std::endl;
 
     static bool should_reset_pending_decs = true;
     gtl_info.pending_young.initialize();

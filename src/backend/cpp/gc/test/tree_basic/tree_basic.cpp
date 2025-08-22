@@ -1,4 +1,4 @@
-#define verifyTest() do{ collect(); 𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.mstats.total_live_bytes == 0); }while(0)
+#define verifyTest() do{ collect(); std::cout << "basicL "<< gtl_info.mstats.total_live_bytes << std::endl; 𝐚𝐬𝐬𝐞𝐫𝐭(gtl_info.mstats.total_live_bytes == 0); }while(0)
 
 __CoreCpp::Int basicTreeTest_1()
 {

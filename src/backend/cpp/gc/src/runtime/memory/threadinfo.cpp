@@ -42,11 +42,6 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexc
 
 void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 {
-    this->native_stack_contents.initialize();
-
-    //this code should load from the asm stack pointers and copy the native stack into the roots memory
-    #ifdef __x86_64__
-
     // This might be what we want?
     // Will need to do in all places that use registers. Might be a good idea as it is defined
     // We shold probably also store the contents of the movq in a uint64 then cast to void
@@ -62,25 +57,29 @@ void BSQMemoryTheadLocalInfo::loadNativeRootSet() noexcept
 
     */
 
-    register void **rbp asm("rbp");
-    void **current_frame = rbp;
 
-    /* Walk the stack */
-    while (current_frame <= native_stack_base)
-    {
-        assert(IS_ALIGNED(current_frame));
+    this->native_stack_contents.initialize();
 
-        /* Walk entire frame looking for valid pointers */
-        void **it = current_frame;
-        void *potential_ptr = *it;
-        if (PTR_IN_RANGE(potential_ptr) && PTR_NOT_IN_STACK(native_stack_base, current_frame, potential_ptr))
-        {
-            this->native_stack_contents.push_back(potential_ptr);
+    //this code should load from the asm stack pointers and copy the native stack into the roots memory
+    #ifdef __x86_64__
+        register void** rbp asm("rbp");
+        void** current_frame = rbp;
+        
+        /* Walk the stack */
+        while (current_frame <= native_stack_base) {
+            assert(IS_ALIGNED(current_frame));
+            
+            /* Walk entire frame looking for valid pointers */
+            void** it = current_frame;
+            void* potential_ptr = *it;
+            if (PTR_IN_RANGE(potential_ptr) && PTR_NOT_IN_STACK(native_stack_base, current_frame, potential_ptr)) {
+                this->native_stack_contents.push_back(potential_ptr);
+            }
+            it--;
+            
+            current_frame++;
         }
-        it--;
-
-        current_frame++;
-    } 
+    
 
         /* Check contents of registers */
         PROCESS_REGISTER(native_stack_base, current_frame, rax)
