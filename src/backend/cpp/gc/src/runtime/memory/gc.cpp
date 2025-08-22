@@ -191,7 +191,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
     if(fwd_index == NON_FORWARDED) {
         // We do not want to forward roots
-        if(!GC_IS_ROOT(ptr)) {
+        if(GC_IS_ROOT(ptr)) {
             return ;
         }
  
