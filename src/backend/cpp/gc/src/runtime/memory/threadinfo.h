@@ -133,7 +133,7 @@ struct BSQMemoryTheadLocalInfo
         }
     }
 
-    void initialize(size_t tl_id, void** caller_rbp) noexcept;
+    void initialize(size_t ntl_id, void** caller_rbp) noexcept;
 
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;

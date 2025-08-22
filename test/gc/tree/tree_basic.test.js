@@ -3,8 +3,9 @@
 import { runMainCodeGC } from "../../../bin/test/gc/gc_nf.js"
 import { describe, it } from "node:test";
 
-const base = "__CoreCpp::Bool main() {";
-const end = "verifyTest();return true;}"
+// set up global array, disable stack refs
+const base = "__CoreCpp::Bool main() { GlobalDataStorage::g_global_data.initialize(sizeof(garray), (void**)garray); gtl_info.disable_stack_refs_for_tests = true;\n";
+const end = "\nreturn true;}"
 
 const test_1 = base.concat("basicTreeTest_1();", end);
 const test_3 = base.concat("basicTreeTest_3();", end);

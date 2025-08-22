@@ -187,6 +187,11 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
     void* ptr = *obj;
     int fwd_index = GC_FWD_INDEX(ptr);
 
+    //
+    // I BELIEVE forwarding at this point in updating pointers ensures
+    // all children pointers new address are correctly reflected in their
+    // parents data
+    //
     if(fwd_index == NON_FORWARDED) {
         // This might me invariant
         if(!GC_IS_ROOT(ptr)) {
@@ -220,7 +225,6 @@ static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInf
     }
 }
 
-// Update pointers using forward table
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     __CoreGC::TypeInfoBase* type_info = GC_TYPE(slots);
