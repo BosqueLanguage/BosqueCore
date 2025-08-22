@@ -77,7 +77,7 @@ struct BSQMemoryTheadLocalInfo
     size_t old_roots_count;
     void** old_roots;
 
-    size_t forward_table_index = 0;
+    int forward_table_index = 0;
     void** forward_table;
 
     uint32_t newly_filled_pages_count = 0;
@@ -106,7 +106,7 @@ struct BSQMemoryTheadLocalInfo
     bool disable_stack_refs_for_tests = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(0), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT) { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(0), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];
@@ -133,7 +133,7 @@ struct BSQMemoryTheadLocalInfo
         }
     }
 
-    void initialize(size_t tl_id, void** caller_rbp) noexcept;
+    void initialize(size_t ntl_id, void** caller_rbp) noexcept;
 
     void loadNativeRootSet() noexcept;
     void unloadNativeRootSet() noexcept;

@@ -144,7 +144,7 @@ private:
 public:
     static GlobalPageGCManager g_gc_page_manager;
 
-    GlobalPageGCManager() noexcept : empty_pages(nullptr) { }
+    GlobalPageGCManager() noexcept : empty_pages(nullptr), pagetable() { }
 
     PageInfo* allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept;
 
@@ -176,8 +176,8 @@ public:
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif
 
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=MAX_FWD_INDEX, .ref_count=0 }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 
 template<typename T>
 T* MEM_ALLOC_CHECK(T* alloc)
@@ -224,7 +224,7 @@ private:
     PageInfo* getFreshPageForEvacuation() noexcept;
 
 public:
-    GCAllocator(uint16_t allocsize, uint16_t realsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(allocsize), realsize(realsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
         resetBuckets();
     }
 

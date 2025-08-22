@@ -46,7 +46,11 @@ function generateCPPFiles(header: string, src: string, cppmain: string, cpp_test
     }
 
     try {
-        let tests = cpp_testcode.concat(src);
+        //
+        // We may need more slots for heavy testing!
+        //
+        let garray = "void* garray[15] { nullptr };\n";
+        let tests = garray.concat(cpp_testcode).concat(src);
         const srcname = path.join(dir, "emit.cpp");
         let updated = srcbase.replace("//CODE", tests);
         let insert = updated.replace(/__CoreCpp::\w+\s+main\s*\([^)]*\)\s*\w*\s*\{[^}]*\}/gs, cppmain);

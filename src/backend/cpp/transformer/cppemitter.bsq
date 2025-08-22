@@ -1700,6 +1700,10 @@ function generateVTableEntry(entry: CPPAssembly::MemberFieldDecl, resolved_name:
 }
 
 function generateVTable(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<CPPAssembly::MemberFieldDecl>, ctx: Context, indent: String): String {
+    if(fields.size() == 0n) {
+        return "";
+    }
+    
     let nctx = ctx.updateCurrentNamespace(ant.declaredInNS, ant.fullns);
     let full_indent = String::concat("    ", indent);
     
@@ -1713,6 +1717,10 @@ function generateVTable(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<
 }
 
 function generateEntriesEnum(ant: CPPAssembly::AbstractNominalTypeDecl, fields: List<CPPAssembly::MemberFieldDecl>, ctx: Context, indent: String): String {
+    if(fields.size() == 0n) {
+        return "";
+    }
+    
     let nctx = ctx.updateCurrentNamespace(ant.declaredInNS, ant.fullns);
     let full_indent = String::concat("    ", indent);
     
@@ -1743,7 +1751,7 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
     }
     else {
         let e = ctx.asm.lookupNominalTypeDeclaration($ant.tkey);
-        if(e?<CPPAssembly::ConceptTypeDecl> || e?<CPPAssembly::DatatypeTypeDecl>) {
+        if((e?<CPPAssembly::ConceptTypeDecl> || e?<CPPAssembly::DatatypeTypeDecl>) && e.saturatedBFieldInfo.size() > 0n) {
             needsvtable = true; 
         }
         else {

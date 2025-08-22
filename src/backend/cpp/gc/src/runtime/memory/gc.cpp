@@ -13,11 +13,11 @@
 #define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
 #define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
-void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
-void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept;
-void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
+static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
+static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
+static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
-void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // This should not be called on pages that are (1) active allocators or evacuators or (2) pending collection pages
     GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(page);
@@ -28,7 +28,13 @@ void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
 }
 
-void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
+static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj)
+{
+    PageInfo::extractPageFromPointer(obj)->pending_decs_count++;
+    tinfo.pending_decs.push_back(obj);
+}
+
+static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
@@ -41,7 +47,7 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
         
         if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            tinfo.pending_decs.push_back(cur_oldroot);
+            pushPendingDecs(tinfo, cur_oldroot);
             oldroots_idx++;
             continue;
         }
@@ -53,7 +59,7 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
         } 
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
-            tinfo.pending_decs.push_back(cur_oldroot);
+            pushPendingDecs(tinfo, cur_oldroot);
             oldroots_idx++;
         } 
         else {
@@ -66,29 +72,12 @@ void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcept
     tinfo.old_roots_count = 0;
 }
 
-inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void** obj)
-{
-    PageInfo::extractPageFromPointer(*obj)->pending_decs_count++;
-    tinfo.pending_decs.push_back(*obj);
-}
-
-inline void handleRefDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
-{
-    void* obj = *slots;
-    uint32_t refcount = DEC_REF_COUNT(obj);
-    if(refcount != 0 || GC_IS_ROOT(obj)) {
-        return ;
-    }
-
-    pushPendingDecs(tinfo, slots);
-}
-
-inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
+static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
-            handleRefDecrement(tinfo, slots + 1); 
+            pushPendingDecs(tinfo, *(slots + 1)); 
             break;
         }
         case __CoreGC::Tag::Tagged: {
@@ -101,7 +90,7 @@ inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** s
     }
 }
 
-void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
+static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept
 {
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
@@ -111,7 +100,7 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
     while(*ptr_mask != '\0') {
         switch(*ptr_mask) {
             case PTR_MASK_PTR: { 
-                handleRefDecrement(tinfo, slots); 
+                pushPendingDecs(tinfo, *slots); 
                 break;
             }
             case PTR_MASK_TAGGED: { 
@@ -128,7 +117,7 @@ void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::Type
     }
 }
 
-void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
     MEM_STATS_START();
@@ -151,6 +140,10 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         GC_IS_ALLOCATED(obj) = false;
 
+        if(!GC_IS_ROOT(obj)) {
+            DEC_REF_COUNT(obj);
+        }
+
         if(objects_page->seen == false) {
             objects_page->seen = true;
             tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
@@ -172,23 +165,46 @@ void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     //
 }
 
-
-inline void updateRef(void** obj, const BSQMemoryTheadLocalInfo& tinfo)
+static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 {
-    uint32_t fwd_index = GC_FWD_INDEX(*obj);
-    if(fwd_index != MAX_FWD_INDEX) {
-        *obj = tinfo.forward_table[fwd_index]; 
+    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(ptr));
+    GC_INVARIANT_CHECK(gcalloc != nullptr);
+
+    __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
+    void* nptr = gcalloc->allocateEvacuation(type_info);
+    xmem_copy(ptr, nptr, type_info->slot_size);
+    updatePointers((void**)nptr, tinfo);
+
+    // Insert into forward table and update object ensuring future objects update
+    MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
+    RESET_METADATA_FOR_OBJECT(m, tinfo.forward_table_index);
+    tinfo.forward_table[tinfo.forward_table_index] = nptr;
+    tinfo.forward_table_index++;
+
+    return nptr;
+}
+
+static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
+{
+    void* ptr = *obj;
+    int32_t fwd_index = GC_FWD_INDEX(ptr);
+
+    if(fwd_index == NON_FORWARDED) {
+        // We do not want to forward roots
+        if(GC_IS_ROOT(ptr)) {
+            return ;
+        }
+ 
+        *obj = forward(ptr, tinfo); 
     }
-    
-    // Prevent possible ref count increase of a non-forwarded object
-    if(*obj == nullptr) {
-        return ;
+    else {
+        *obj = tinfo.forward_table[fwd_index]; 
     }
 
     INC_REF_COUNT(*obj);
 }
 
-inline void handleTaggedObjectUpdate(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept 
+static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
@@ -206,8 +222,7 @@ inline void handleTaggedObjectUpdate(void** slots, const BSQMemoryTheadLocalInfo
     }
 }
 
-// Update pointers using forward table
-void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     __CoreGC::TypeInfoBase* type_info = GC_TYPE(slots);
     const char* ptr_mask = type_info->ptr_mask;
@@ -236,51 +251,35 @@ void updatePointers(void** slots, const BSQMemoryTheadLocalInfo& tinfo) noexcept
 }
 
 // Move non root young objects to evacuation page (as needed) then forward pointers and inc ref counts
-void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
+static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
     GC_REFCT_LOCK_ACQUIRE();
     MEM_STATS_START();
 
     while(!tinfo.pending_young.isEmpty()) {
-        void* obj = tinfo.pending_young.pop_front();
-        __CoreGC::TypeInfoBase* type_info = GC_TYPE(obj);
+        void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
-        if(GC_IS_ROOT(obj)) {
-            updatePointers((void**)obj, tinfo);
-            GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(obj));
-            continue;
-        }
-        
-        // If we are not a root we want to evacuate
-        GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(obj));
-        GC_INVARIANT_CHECK(gcalloc != nullptr);
-    
-        void* newobj = gcalloc->allocateEvacuation(type_info);
-        xmem_copy(obj, newobj, type_info->slot_size);
-        updatePointers((void**)newobj, tinfo);
-
-        RESET_METADATA_FOR_OBJECT(GC_GET_META_DATA_ADDR(obj), (uint32_t)tinfo.forward_table_index);
-        tinfo.forward_table[tinfo.forward_table_index++] = newobj;
+        MetaData* m = GC_GET_META_DATA_ADDR(obj);
+        updatePointers((void**)obj, tinfo);
+        GC_CLEAR_YOUNG_MARK(m);
     }
 
     MEM_STATS_END(evacuation_times);
     GC_REFCT_LOCK_RELEASE();
 }
 
-void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     if(addr == nullptr) {
         return ;
     }
 
-    // Make sure our page is in pagetable, our address is not a page itself,
-    // or a pointer into the page's metadata
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
 
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr)
-        || page_offset < sizeof(PageInfo)) {
-            return ;
+    bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) || ptrToPageMetaData) {
+        return ;
     }
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
@@ -297,9 +296,9 @@ void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
     if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
         tinfo.pending_roots.push_back(obj);
     }
- }
+}
 
-void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
+static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
     // Process global data (TODO -- later have flag to disable this after it is fixed as immortal)
     if(GlobalDataStorage::g_global_data.native_global_storage != nullptr) {
@@ -340,7 +339,7 @@ void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
     tinfo.unloadNativeRootSet();
 }
 
-void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
+static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     if(meta == nullptr) {
@@ -355,7 +354,7 @@ void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
     tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
 }
 
-void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
+static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
@@ -373,7 +372,7 @@ void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noe
     }
 }
 
-void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept 
+static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept 
 {
     const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
@@ -400,7 +399,7 @@ void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInf
     }
 }
 
-void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     while(!tinfo.visit_stack.isEmpty()) {
         MarkStackEntry entry = tinfo.visit_stack.pop_back();
@@ -417,7 +416,7 @@ void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
      }
 }
 
-void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     MEM_STATS_START();
     

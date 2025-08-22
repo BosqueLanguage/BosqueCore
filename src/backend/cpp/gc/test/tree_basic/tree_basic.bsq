@@ -15,7 +15,11 @@ function makeTree(depth: Nat, val: Nat): BasicTree {
     };
 }
 
+function accessNode(t: BasicTree): Node {
+    return t@<Node>;
+}
+
 public function main(): Bool {
-    let t = makeTree(3n, 3n);
+    let t = accessNode(makeTree(3n, 3n));
     return true;
 }

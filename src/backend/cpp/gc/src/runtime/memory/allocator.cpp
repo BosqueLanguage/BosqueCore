@@ -42,6 +42,8 @@ void PageInfo::rebuild() noexcept
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
         
+        GC_INVARIANT_CHECK(meta->ref_count >= 0);
+
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
@@ -73,7 +75,7 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
 #else
         ALLOC_LOCK_ACQUIRE();
 
-        void* page = (XAllocPage*)mmap(GlobalThreadAllocInfo::s_current_page_address, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
+        void* page = mmap(GlobalThreadAllocInfo::s_current_page_address, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, 0, 0);
         GlobalThreadAllocInfo::s_current_page_address = (void*)((uint8_t*)GlobalThreadAllocInfo::s_current_page_address + BSQ_BLOCK_ALLOCATION_SIZE);
 
         ALLOC_LOCK_RELEASE();    
@@ -178,7 +180,7 @@ void GCAllocator::allocatorRefreshAllocationPage() noexcept
         // If we exceed our filled pages thresh collect
         if(gtl_info.newly_filled_pages_count == BSQ_COLLECTION_THRESHOLD) {
             if(!gtl_info.disable_automatic_collections) {
-                collect();
+                this->collectfp();
             }
         }
         else {

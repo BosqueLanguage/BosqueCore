@@ -23,7 +23,7 @@ BUILD := dev
 ALLOC := gc
 
 CC=g++
-CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector
+CSTDFLAGS=-Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=gnu++20 -fno-exceptions -fno-rtti -fno-strict-aliasing -fno-omit-frame-pointer -fno-stack-protector -Wshadow -Weffc++
 
 INTERNAL_FLAGS.gc= 
 INTERNAL_FLAGS.epsilon=-DEPSILON

@@ -2,31 +2,24 @@
 
 #include "xalloc.h"
 
+#define PAGETABLE_LEVELS 4
+#define BITS_PER_LEVEL   9 
+
+#define LEVEL1_SHIFT 39 
+#define LEVEL2_SHIFT 30 
+#define LEVEL3_SHIFT 21 
+#define LEVEL4_SHIFT 12 
+
+#define LEVEL_MASK 0x1FFUL 
+#define PAGE_MASK  0xFFFUL
+
+#define PAGE_PRESENT 1
+
 //A class that keeps track of which pages are in use in the GC
 class PageTableInUseInfo
 {
 private:
     void** pagetable_root;
-
-    //
-    //Original implementation designed for 12 bits per level fails
-    //due to the fact that our pages being 4096 bytes, meaning since
-    //each block stores a void* we can have up to 4096/8 = 512 entries
-    //so in order to utilize space most effectively we can have
-    //log2(512) = 9 bits per level
-    //
-    
-    constexpr static uintptr_t PAGETABLE_LEVELS = 4;
-    constexpr static uintptr_t BITS_PER_LEVEL = 9; 
-    
-    constexpr static uintptr_t LEVEL1_SHIFT = 39; 
-    constexpr static uintptr_t LEVEL2_SHIFT = 30; 
-    constexpr static uintptr_t LEVEL3_SHIFT = 21; 
-    constexpr static uintptr_t LEVEL4_SHIFT = 12; 
-    constexpr static uintptr_t LEVEL_MASK = 0x1FF; 
-    constexpr static uintptr_t PAGE_MASK = 0xFFF;
-    constexpr static uintptr_t PAGE_PRESENT = 1;
-
 public:
     PageTableInUseInfo() noexcept : pagetable_root(nullptr) {}
 
