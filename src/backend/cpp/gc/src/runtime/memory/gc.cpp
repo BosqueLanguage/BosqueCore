@@ -350,6 +350,11 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
+    void* obj = *slots;
+    if(obj == nullptr) {
+        return ; // Non-initialized object
+    }
+    
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     GC_INVARIANT_CHECK(meta != nullptr);
 

@@ -283,13 +283,13 @@ public:
     {
         assert(type->type_size == this->allocsize);
 
-        if(this->freelist == nullptr) [[unlikely]] {
+        if(this->freelist == nullptr) [[unlikely]] { 
             this->allocatorRefreshAllocationPage();
         }
-
+        
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
-            
+        
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 
