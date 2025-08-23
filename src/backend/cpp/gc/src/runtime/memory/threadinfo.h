@@ -142,7 +142,7 @@ struct BSQMemoryTheadLocalInfo
 #ifdef MEM_STATS
     #include <iostream>
     
-    #define BUCKET_VARIANCE 0.2
+    #define BUCKET_VARIANCE 0.05
     #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
     #define NUM_ALLOCS(E)           (E).mstats.num_allocs

@@ -13,6 +13,8 @@
 #define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
 #define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
+#define IS_INITIALIZED(P) ((P) != nullptr)
+
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
@@ -181,7 +183,8 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 {
-    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(PageInfo::extractPageFromPointer(ptr));
+    PageInfo* p = PageInfo::extractPageFromPointer(ptr);
+    GCAllocator* gcalloc = tinfo.getAllocatorForPageSize(p);
     GC_INVARIANT_CHECK(gcalloc != nullptr);
 
     __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
@@ -199,9 +202,8 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
-    void* ptr = *obj;
+    void* ptr = *obj; 
     int32_t fwd_index = GC_FWD_INDEX(ptr);
-
     if(fwd_index == NON_FORWARDED) {
         // We do not want to forward roots
         if(GC_IS_ROOT(ptr)) {
@@ -219,7 +221,12 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+    void* obj = *slots;
+    if(!IS_INITIALIZED(obj)) {
+        return ;
+    }
+
+    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(obj);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
             updateRef(slots + 1, tinfo); 
@@ -350,11 +357,6 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
-    void* obj = *slots;
-    if(obj == nullptr) {
-        return ; // Non-initialized object
-    }
-    
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     GC_INVARIANT_CHECK(meta != nullptr);
 
@@ -367,7 +369,12 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
+    void* obj = *slots;
+    if(!IS_INITIALIZED(obj)) {
+        return ; 
+    }
+
+    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(obj);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
             markRef(tinfo, slots + 1); 
@@ -454,6 +461,13 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     MEM_STATS_END(marking_times);
 }
 
+//
+// I believe the current `critical` flaw is due to objects not being fully 
+// initialized in the runtime. Specifically, they may be null which causes the 
+// GC to skip them and not forward their location (since it doesnt exist) 
+// making the GC THINK it can just update whatever the parent points to as well,
+// but in reality anything could be hanging out in this location.
+//
 void collect() noexcept
 {   
     MEM_STATS_START();
