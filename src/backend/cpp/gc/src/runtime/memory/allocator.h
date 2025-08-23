@@ -133,6 +133,12 @@ public:
         uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + type->type_size);
         *post = ALLOC_DEBUG_CANARY_VALUE;
     }
+
+    inline void decrementPendingDecs() noexcept 
+    {
+        GC_INVARIANT_CHECK(this->pending_decs_count > 0);
+        this->pending_decs_count--;
+    }
 };
 
 class GlobalPageGCManager
@@ -176,6 +182,11 @@ public:
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif
 
+//
+// Not totally sure if this is correct, but an idea to make freelist rebuild even easier
+// is we instead when initailizing an object (fresh meta) set its isalloc flag to false,
+// then when we do our marking we set it to true once we know the object is reachable?
+//
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 

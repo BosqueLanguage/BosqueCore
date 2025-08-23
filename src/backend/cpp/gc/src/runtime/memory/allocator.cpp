@@ -44,6 +44,12 @@ void PageInfo::rebuild() noexcept
         
         GC_INVARIANT_CHECK(meta->ref_count >= 0);
 
+        //
+        // This doesnt interact correctly with evacuation page.
+        // These objects do not have their mark bit set, but they are
+        // very much live and should not be freed
+        //
+
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;

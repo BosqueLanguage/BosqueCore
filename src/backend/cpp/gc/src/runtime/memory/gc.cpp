@@ -117,6 +117,38 @@ static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreG
     }
 }
 
+static inline void updateDecrementedPages(PageInfo* p, BSQMemoryTheadLocalInfo& tinfo) noexcept 
+{
+    if(p->seen == false) {
+        p->seen = true;
+        tinfo.decremented_pages[tinfo.decremented_pages_index++] = p;
+    }
+}
+
+static inline void decrementObject(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept 
+{
+    // A dead root may have refcount = 0 but no root flag  
+    if(GC_REF_COUNT(obj) > 0) {
+        DEC_REF_COUNT(obj);
+    }
+}
+
+static inline void updateDecrementedObject(void* obj, BSQMemoryTheadLocalInfo& tinfo)
+{
+    __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
+    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
+        walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj));
+    }
+}
+
+static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
+{
+    for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
+        reprocessPageInfo(tinfo.decremented_pages[i], tinfo);
+    }
+    tinfo.decremented_pages_index = 0;
+}
+
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
@@ -125,37 +157,22 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
-
-        if (!GC_IS_ALLOCATED(obj)) {
+        if(!GC_IS_ALLOCATED(obj)) {
             continue;
         }
 
-        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-        if(typeinfo->ptr_mask != PTR_MASK_LEAF) {
-            walkPointerMaskForDecrements(tinfo, typeinfo, (void**)obj);
-        }
+        decrementObject(obj, tinfo);
+        updateDecrementedObject(obj, tinfo);
 
-        PageInfo* objects_page = PageInfo::extractPageFromPointer(obj);
-        objects_page->pending_decs_count--;
+        PageInfo* p = PageInfo::extractPageFromPointer(obj);
+        p->decrementPendingDecs();
+        updateDecrementedPages(p, tinfo);
 
         GC_IS_ALLOCATED(obj) = false;
 
-        if(!GC_IS_ROOT(obj)) {
-            DEC_REF_COUNT(obj);
-        }
-
-        if(objects_page->seen == false) {
-            objects_page->seen = true;
-            tinfo.decremented_pages[tinfo.decremented_pages_index++] = objects_page;
-        }
-
         deccount++;
     }
-
-    for(uint32_t i = 0; i < tinfo.decremented_pages_index; i++) {        
-        reprocessPageInfo(tinfo.decremented_pages[i], tinfo);
-    }
-    tinfo.decremented_pages_index = 0;
+    tryReprocessDecrementedPages(tinfo);
 
     MEM_STATS_END(decrement_times);
     GC_REFCT_LOCK_RELEASE();
@@ -173,7 +190,6 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     __CoreGC::TypeInfoBase* type_info = GC_TYPE(ptr);
     void* nptr = gcalloc->allocateEvacuation(type_info);
     xmem_copy(ptr, nptr, type_info->slot_size);
-    updatePointers((void**)nptr, tinfo);
 
     // Insert into forward table and update object ensuring future objects update
     MetaData* m = GC_GET_META_DATA_ADDR(ptr); 
@@ -201,7 +217,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
         *obj = tinfo.forward_table[fwd_index]; 
     }
 
-    INC_REF_COUNT(*obj);
+    INC_REF_COUNT(ptr);
 }
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
