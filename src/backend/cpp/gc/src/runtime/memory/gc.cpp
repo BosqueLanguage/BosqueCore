@@ -127,7 +127,6 @@ static inline void updateDecrementedPages(PageInfo* p, BSQMemoryTheadLocalInfo& 
 
 static inline void decrementObject(void* obj, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    // A dead root may have refcount = 0 but no root flag  
     if(GC_REF_COUNT(obj) > 0) {
         DEC_REF_COUNT(obj);
     }
@@ -136,8 +135,11 @@ static inline void decrementObject(void* obj, BSQMemoryTheadLocalInfo& tinfo) no
 static inline void updateDecrementedObject(void* obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
+    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0 && !GC_IS_ROOT(obj)) {
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj));
+
+        MetaData* m = GC_GET_META_DATA_ADDR(obj);
+        GC_RESET_ALLOC(m);
     }
 }
 
@@ -157,9 +159,6 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
-        if(!GC_IS_ALLOCATED(obj)) {
-            continue;
-        }
 
         decrementObject(obj, tinfo);
         updateDecrementedObject(obj, tinfo);
@@ -167,8 +166,6 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
         PageInfo* p = PageInfo::extractPageFromPointer(obj);
         p->decrementPendingDecs();
         updateDecrementedPages(p, tinfo);
-
-        GC_IS_ALLOCATED(obj) = false;
 
         deccount++;
     }
@@ -217,7 +214,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
         *obj = tinfo.forward_table[fwd_index]; 
     }
 
-    INC_REF_COUNT(ptr);
+    INC_REF_COUNT(*obj);
 }
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
@@ -287,10 +284,6 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    if(addr == nullptr) {
-        return ;
-    }
-
     uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
 
     bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
@@ -300,13 +293,13 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
     void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
-    
-    if(!GC_SHOULD_PROCESS_AS_ROOT(meta)) {
-        return ;
+
+    if(GC_IS_ROOT(obj)) {
+        return ; // Already a root
     }
 
-    //Need to verify our object is allocated and not already marked
     GC_MARK_AS_ROOT(meta);
+    GC_SET_ALLOC(meta);
 
     tinfo.roots[tinfo.roots_count++] = obj;
     if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
@@ -358,16 +351,13 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
-    if(meta == nullptr) {
-        assert(false);
-    }
+    GC_INVARIANT_CHECK(meta != nullptr);
 
-    if(!GC_SHOULD_VISIT(meta)) {
-        return ;
+    if(GC_SHOULD_VISIT(meta)) { 
+        GC_MARK_AS_MARKED(meta);
+        GC_SET_ALLOC(meta);
+        tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
-    
-    GC_MARK_AS_MARKED(meta);
-    tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
 }
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
@@ -421,8 +411,8 @@ static void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
         MarkStackEntry entry = tinfo.visit_stack.pop_back();
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(entry.obj);
 
+        // Can we process further?
         if((typeinfo->ptr_mask == PTR_MASK_LEAF) || (entry.color == MARK_STACK_NODE_COLOR_BLACK)) {
-            // No children so do by definition
             tinfo.pending_young.push_back(entry.obj);
             continue;
         }

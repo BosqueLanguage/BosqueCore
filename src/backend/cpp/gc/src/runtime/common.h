@@ -152,7 +152,7 @@ typedef struct MetaData
 static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #endif
 
-#define NON_FORWARDED -1
+#define NON_FORWARDED 0
 
 // Resets an objects metadata and updates with index into forward table
 #define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
@@ -167,6 +167,9 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_REF_COUNT(O) (GC_GET_META_DATA_ADDR(O))->ref_count
 #define GC_TYPE(O) (GC_GET_META_DATA_ADDR(O))->type
 
+#define GC_SET_ALLOC(META)   { (META)->isalloc = true; }
+#define GC_RESET_ALLOC(META) { (META)->isalloc = false; }
+
 #define GC_SHOULD_VISIT(META) ((META)->isyoung && !(META)->ismarked)
 
 #define GC_SHOULD_PROCESS_AS_ROOT(META) ((META)->isalloc && !(META)->isroot)
@@ -178,7 +181,4 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_YOUNG_MARK(META) { (META)->isyoung = false; }
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
-//
-// Pretty sure this was trying to do too much...
-//
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc)
