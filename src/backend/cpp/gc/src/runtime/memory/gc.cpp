@@ -32,6 +32,11 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
 
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj)
 {
+    // Dead root points to root case, keep the root pointed to alive
+    if(GC_IS_ROOT(obj)) {
+        return ;
+    }
+
     PageInfo::extractPageFromPointer(obj)->pending_decs_count++;
     tinfo.pending_decs.push_back(obj);
 }
@@ -41,8 +46,14 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
     // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
 
-    size_t roots_idx = 0;
-    size_t oldroots_idx = 0;
+    //
+    // We need to be cautious here, it appears the compiler attemps
+    // to optimize out tinfo.roots_count when it detects there is 
+    // no path that needs it other that qsort
+    //
+
+    int32_t roots_idx = 0;
+    int32_t oldroots_idx = 0;
 
     while(oldroots_idx < tinfo.old_roots_count) {
         void* cur_oldroot = tinfo.old_roots[oldroots_idx];
@@ -137,7 +148,7 @@ static inline void decrementObject(void* obj, BSQMemoryTheadLocalInfo& tinfo) no
 static inline void updateDecrementedObject(void* obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
-    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0 && !GC_IS_ROOT(obj)) {
+    if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj));
 
         MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -204,7 +215,14 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj; 
     int32_t fwd_index = GC_FWD_INDEX(ptr);
-    if(fwd_index == NON_FORWARDED && !GC_IS_ROOT(ptr)) {
+
+    // Root points to root case (may be a false root)
+    if(GC_IS_ROOT(ptr)) {
+        INC_REF_COUNT(ptr);
+        return ;
+    }
+
+    if(fwd_index == NON_FORWARDED ) {
         *obj = forward(ptr, tinfo); 
     }
     else {
@@ -298,7 +316,6 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
 
     if(GC_SHOULD_PROCESS_AS_ROOT(meta)) { 
         GC_MARK_AS_ROOT(meta);
-        GC_SET_ALLOC(meta);
 
         tinfo.roots[tinfo.roots_count++] = obj;
         if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
@@ -355,19 +372,17 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
     if(GC_SHOULD_VISIT(meta)) { 
         GC_MARK_AS_MARKED(meta);
-        GC_SET_ALLOC(meta);
         tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
     }
 }
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    void* obj = *slots;
-    if(!IS_INITIALIZED(obj)) {
+    if(!IS_INITIALIZED(*slots) || !IS_INITIALIZED(*(slots + 1))) {
         return ; 
     }
 
-    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(obj);
+    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
             markRef(tinfo, slots + 1); 
@@ -455,27 +470,11 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 }
 
 //
-// We should investigate my alloc idea further and also
-// ensure our forward table clearing after a collection
-// is not fucking with the next collection call.
-// I am thinking this could cause an object not done
-// being allocated to point to garbage, but i should 
-// sleep on actually solving that one.
-// We also really should go and just read a few different
-// collectors tmmr (or well today) and whip up a wider 
-// variety of tests (raytrace and db) to hopefully bubble
-// up the less obvious bugs to more obvious cases.
-// I am thinking we are looking much better than 2 weeks ago
-// but I feel confident there are still nuanced logical
-// errors in this code that need to be flushed out
-//
-
-//
-// I believe the current `critical` flaw is due to objects not being fully 
-// initialized in the runtime. Specifically, they may be null which causes the 
-// GC to skip them and not forward their location (since it doesnt exist) 
-// making the GC THINK it can just update whatever the parent points to as well,
-// but in reality anything could be hanging out in this location.
+// I believe the last major bug left hanging about is our handling
+// of potential false roots. I think certain cases exercise this, like
+// a root object being created, its children being created with a few
+// still floating on the stack, then a collection triggers causing
+// them to be considered roots.
 //
 void collect() noexcept
 {   
@@ -488,7 +487,7 @@ void collect() noexcept
     gtl_info.pending_young.clear();
 
     xmem_zerofill(gtl_info.forward_table, gtl_info.forward_table_index);
-    gtl_info.forward_table_index = 0;
+    gtl_info.forward_table_index = FWD_TABLE_START;
 
     if(should_reset_pending_decs) {
         gtl_info.pending_decs.initialize();
@@ -514,7 +513,7 @@ void collect() noexcept
     xmem_zerofill(gtl_info.old_roots, gtl_info.old_roots_count);
     gtl_info.old_roots_count = 0;
 
-    for(size_t i = 0; i < gtl_info.roots_count; i++) {
+    for(int32_t i = 0; i < gtl_info.roots_count; i++) {
         GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
 
         gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];

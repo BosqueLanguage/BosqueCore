@@ -9,6 +9,8 @@
 #define MARK_STACK_NODE_COLOR_GREY 0
 #define MARK_STACK_NODE_COLOR_BLACK 1
 
+#define FWD_TABLE_START 1
+
 struct MarkStackEntry
 {
     void* obj;
@@ -71,10 +73,10 @@ struct BSQMemoryTheadLocalInfo
     RegisterContents native_register_contents; //the contents of the native registers extracted in the mark phase
 
     //We assume that the roots always fit in a single page block
-    size_t roots_count;
+    int32_t roots_count;
     void** roots;
     
-    size_t old_roots_count;
+    int32_t old_roots_count;
     void** old_roots;
 
     int forward_table_index;
@@ -106,7 +108,7 @@ struct BSQMemoryTheadLocalInfo
     bool disable_stack_refs_for_tests = false;
 #endif
 
-    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(1), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
+    BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }
 
     inline GCAllocator* getAllocatorForPageSize(PageInfo* page) noexcept {
         uint8_t idx = this->g_gcallocs_lookuptable[page->allocsize >> 3];

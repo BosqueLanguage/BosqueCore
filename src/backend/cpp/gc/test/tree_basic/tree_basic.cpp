@@ -9,7 +9,7 @@ __CoreCpp::Int basicTreeTest_1()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -28,7 +28,7 @@ __CoreCpp::Int basicTreeTest_3()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -47,7 +47,7 @@ __CoreCpp::Int basicTreeTest_6()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -70,7 +70,7 @@ __CoreCpp::Int basicTreeTestMulti_1()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -97,7 +97,7 @@ __CoreCpp::Int basicTreeTestMulti_3()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -124,7 +124,7 @@ __CoreCpp::Int basicTreeTestMulti_6()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -148,7 +148,7 @@ __CoreCpp::Int wideTreeTest_1()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -167,7 +167,7 @@ __CoreCpp::Int wideTreeTest_2()
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
 
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -189,8 +189,8 @@ __CoreCpp::Int wideTreeTestMulti_1()
     collect();
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
-
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;
@@ -216,8 +216,8 @@ __CoreCpp::Int wideTreeTestMulti_2()
     collect();
     uint64_t init_bytes = gtl_info.mstats.total_live_bytes;
     collect();
-
-    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes);
+    
+    𝐚𝐬𝐬𝐞𝐫𝐭(init_bytes == gtl_info.mstats.total_live_bytes && gtl_info.mstats.total_live_bytes != 0);
 
     garray[0] = nullptr;
     garray[1] = nullptr;

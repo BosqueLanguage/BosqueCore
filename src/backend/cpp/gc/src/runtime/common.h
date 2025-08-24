@@ -181,4 +181,4 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_YOUNG_MARK(META) { (META)->isyoung = false; }
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc)
+#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || (!(META)->isroot && (META)->ref_count == 0))
