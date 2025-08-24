@@ -204,12 +204,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj; 
     int32_t fwd_index = GC_FWD_INDEX(ptr);
-    if(fwd_index == NON_FORWARDED) {
-        // We do not want to forward roots
-        if(GC_IS_ROOT(ptr)) {
-            return ;
-        }
- 
+    if(fwd_index == NON_FORWARDED && !GC_IS_ROOT(ptr)) {
         *obj = forward(ptr, tinfo); 
     }
     else {
@@ -301,16 +296,14 @@ static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexce
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
     void* obj = (void*)((uint8_t*)meta + sizeof(MetaData));
 
-    if(GC_IS_ROOT(obj)) {
-        return ; // Already a root
-    }
+    if(GC_SHOULD_PROCESS_AS_ROOT(meta)) { 
+        GC_MARK_AS_ROOT(meta);
+        GC_SET_ALLOC(meta);
 
-    GC_MARK_AS_ROOT(meta);
-    GC_SET_ALLOC(meta);
-
-    tinfo.roots[tinfo.roots_count++] = obj;
-    if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
-        tinfo.pending_roots.push_back(obj);
+        tinfo.roots[tinfo.roots_count++] = obj;
+        if(GC_SHOULD_PROCESS_AS_YOUNG(meta)) {
+            tinfo.pending_roots.push_back(obj);
+        } 
     }
 }
 
@@ -460,6 +453,22 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     MEM_STATS_END(marking_times);
 }
+
+//
+// We should investigate my alloc idea further and also
+// ensure our forward table clearing after a collection
+// is not fucking with the next collection call.
+// I am thinking this could cause an object not done
+// being allocated to point to garbage, but i should 
+// sleep on actually solving that one.
+// We also really should go and just read a few different
+// collectors tmmr (or well today) and whip up a wider 
+// variety of tests (raytrace and db) to hopefully bubble
+// up the less obvious bugs to more obvious cases.
+// I am thinking we are looking much better than 2 weeks ago
+// but I feel confident there are still nuanced logical
+// errors in this code that need to be flushed out
+//
 
 //
 // I believe the current `critical` flaw is due to objects not being fully 
