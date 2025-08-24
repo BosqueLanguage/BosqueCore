@@ -46,12 +46,6 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
     // First we need to sort the roots we find
     qsort(tinfo.roots, 0, tinfo.roots_count - 1, tinfo.roots_count);
 
-    //
-    // We need to be cautious here, it appears the compiler attemps
-    // to optimize out tinfo.roots_count when it detects there is 
-    // no path that needs it other that qsort
-    //
-
     int32_t roots_idx = 0;
     int32_t oldroots_idx = 0;
 
@@ -469,13 +463,6 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
     MEM_STATS_END(marking_times);
 }
 
-//
-// I believe the last major bug left hanging about is our handling
-// of potential false roots. I think certain cases exercise this, like
-// a root object being created, its children being created with a few
-// still floating on the stack, then a collection triggers causing
-// them to be considered roots.
-//
 void collect() noexcept
 {   
     MEM_STATS_START();
