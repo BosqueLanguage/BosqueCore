@@ -6,8 +6,6 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
-    // Without zerofill we may dereference garbage when rebuilding page
-    xmem_zerofillpage(block);
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
@@ -48,6 +46,7 @@ void PageInfo::rebuild() noexcept
         GC_INVARIANT_CHECK(meta->forward_index >= 0);
 
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
+            RESET_METADATA_FOR_OBJECT(meta, NON_FORWARDED);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -119,18 +118,23 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     } 
 }
 
-//
-// TODO: Lets write a function that walks the remaining
-// freelist of 'this->freelist' for the active allocator and 
-// evacuator where we zero fill the entire block. 
-// This would cause us to not need to do zerofill on whole pages
-// and we would only hit this 0-2 times per collection.
-//
-// Would fix the metadata bug in rebuilding.
-//
+// Zerofills rest of cached freelists to aid in page rebuilding
+static void fillFreeListRemainder(FreeListEntry* flist, uint16_t size) 
+{
+    FreeListEntry* cur = flist;
+    while(cur != nullptr) {
+        FreeListEntry* next = cur->next;
+
+        xmem_zerofill(cur, size);
+
+        cur = next;
+    }
+}
+
 void GCAllocator::processCollectorPages() noexcept
 {
     if(this->alloc_page != nullptr) {
+        fillFreeListRemainder(this->freelist, this->realsize / sizeof(void*));
         this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
@@ -139,6 +143,7 @@ void GCAllocator::processCollectorPages() noexcept
     }
     
     if(this->evac_page != nullptr) {
+        fillFreeListRemainder(this->evacfreelist, this->realsize / sizeof(void*));
         this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
