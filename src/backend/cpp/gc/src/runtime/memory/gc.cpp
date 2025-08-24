@@ -144,9 +144,6 @@ static inline void updateDecrementedObject(void* obj, BSQMemoryTheadLocalInfo& t
     __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
     if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj));
-
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        GC_RESET_ALLOC(m);
     }
 }
 
