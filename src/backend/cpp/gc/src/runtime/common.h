@@ -167,6 +167,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_REF_COUNT(O) (GC_GET_META_DATA_ADDR(O))->ref_count
 #define GC_TYPE(O) (GC_GET_META_DATA_ADDR(O))->type
 
+#define GC_RESET_ALLOC(META) { (META)->isalloc = false; }
+
 #define GC_SHOULD_VISIT(META) ((META)->isyoung && !(META)->ismarked)
 
 #define GC_SHOULD_PROCESS_AS_ROOT(META) ((META)->isalloc && !(META)->isroot)

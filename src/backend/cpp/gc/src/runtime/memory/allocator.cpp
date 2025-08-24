@@ -119,6 +119,15 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     } 
 }
 
+//
+// TODO: Lets write a function that walks the remaining
+// freelist of 'this->freelist' for the active allocator and 
+// evacuator where we zero fill the entire block. 
+// This would cause us to not need to do zerofill on whole pages
+// and we would only hit this 0-2 times per collection.
+//
+// Would fix the metadata bug in rebuilding.
+//
 void GCAllocator::processCollectorPages() noexcept
 {
     if(this->alloc_page != nullptr) {
