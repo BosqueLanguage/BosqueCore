@@ -46,7 +46,6 @@ void PageInfo::rebuild() noexcept
         GC_INVARIANT_CHECK(meta->forward_index >= 0);
 
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
-            RESET_METADATA_FOR_OBJECT(meta, NON_FORWARDED);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -68,6 +67,9 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
         void* page = this->empty_pages;
         this->empty_pages = this->empty_pages->next;
 
+        // I wonder if there is any way to avoid zerofill here?
+        // At the very least we could likely zerofill empty pages on a separate thread? 
+        xmem_zerofillpage(page);
         pp = PageInfo::initialize(page, entrysize, realsize);
         UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, --);
     }
