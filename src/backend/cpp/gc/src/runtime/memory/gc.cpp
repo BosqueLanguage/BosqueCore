@@ -13,7 +13,7 @@
 #define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
 #define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
-#define IS_INITIALIZED(P) ((P) != nullptr)
+#define CHECK_INITIALIZED(O) { if((O) == nullptr) [[unlikely]] { return ; } }
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
@@ -81,10 +81,7 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 
 static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    // Uninitialized object
-    if(*slots == nullptr) {
-        return ;
-    }
+    CHECK_INITIALIZED(*slots);
 
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
@@ -237,6 +234,8 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
+    CHECK_INITIALIZED(*slots);
+
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -376,12 +375,9 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 }
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
-{
-    // Uninitialized object
-    if(*slots == nullptr) [[unlikely]] {
-        return ;
-    }
-
+{ 
+    CHECK_INITIALIZED(*slots);
+    
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
