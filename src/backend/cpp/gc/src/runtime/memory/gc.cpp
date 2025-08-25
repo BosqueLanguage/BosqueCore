@@ -80,7 +80,12 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 }
 
 static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
-{    
+{
+    // Uninitialized object
+    if(*slots == nullptr) {
+        return ;
+    }
+
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -372,6 +377,11 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
+    // Uninitialized object
+    if(*slots == nullptr) [[unlikely]] {
+        return ;
+    }
+
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {

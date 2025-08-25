@@ -118,23 +118,9 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     } 
 }
 
-// Zerofills rest of cached freelists to aid in page rebuilding
-static void fillFreeListRemainder(FreeListEntry* flist, uint16_t size) 
-{
-    FreeListEntry* cur = flist;
-    while(cur != nullptr) {
-        FreeListEntry* next = cur->next;
-
-        xmem_zerofill(cur, size);
-
-        cur = next;
-    }
-}
-
 void GCAllocator::processCollectorPages() noexcept
 {
     if(this->alloc_page != nullptr) {
-        fillFreeListRemainder(this->freelist, this->realsize / sizeof(void*));
         this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
@@ -143,7 +129,6 @@ void GCAllocator::processCollectorPages() noexcept
     }
     
     if(this->evac_page != nullptr) {
-        fillFreeListRemainder(this->evacfreelist, this->realsize / sizeof(void*));
         this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
