@@ -68,6 +68,8 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
+#define PAGE_OFFSET_MASK 0xFFF
+
 class PageInfo
 {
 public:

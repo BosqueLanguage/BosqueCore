@@ -6,6 +6,7 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
+    xmem_zerofillpage(block);
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
@@ -67,9 +68,6 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
         void* page = this->empty_pages;
         this->empty_pages = this->empty_pages->next;
 
-        // I wonder if there is any way to avoid zerofill here?
-        // At the very least we could likely zerofill empty pages on a separate thread? 
-        xmem_zerofillpage(page);
         pp = PageInfo::initialize(page, entrysize, realsize);
         UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, --);
     }

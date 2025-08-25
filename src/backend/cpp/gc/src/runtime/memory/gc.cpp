@@ -33,7 +33,7 @@ static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) no
 static inline void pushPendingDecs(BSQMemoryTheadLocalInfo& tinfo, void* obj)
 {
     // Dead root points to root case, keep the root pointed to alive
-    if(GC_IS_ROOT(obj)) {
+    if(GC_IS_ROOT(obj)) [[unlikely]] {
         return ;
     }
 
@@ -80,7 +80,7 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 }
 
 static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
-{
+{    
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -167,6 +167,10 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
         void* obj = tinfo.pending_decs.pop_front();
 
+        if(!GC_IS_ALLOCATED(obj)) {
+            continue;
+        }
+
         decrementObject(obj, tinfo);
         updateDecrementedObject(obj, tinfo);
 
@@ -207,11 +211,11 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
-    void* ptr = *obj; 
+    void* ptr = *obj;
     int32_t fwd_index = GC_FWD_INDEX(ptr);
 
     // Root points to root case (may be a false root)
-    if(GC_IS_ROOT(ptr)) {
+    if(GC_IS_ROOT(ptr)) [[unlikely]] {
         INC_REF_COUNT(ptr);
         return ;
     }
@@ -228,12 +232,7 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    void* obj = *slots;
-    if(!IS_INITIALIZED(obj)) {
-        return ;
-    }
-
-    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(obj);
+    __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
             updateRef(slots + 1, tinfo); 
@@ -287,8 +286,9 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
         GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
 
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
         updatePointers((void**)obj, tinfo);
+
+        MetaData* m = GC_GET_META_DATA_ADDR(obj);
         GC_CLEAR_YOUNG_MARK(m);
     }
 
@@ -298,7 +298,7 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    uintptr_t page_offset = (uintptr_t)addr & 0xFFF;
+    uintptr_t page_offset = (uintptr_t)addr & PAGE_OFFSET_MASK;
 
     bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
     if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) || ptrToPageMetaData) {
@@ -372,10 +372,6 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    if(!IS_INITIALIZED(*slots) || !IS_INITIALIZED(*(slots + 1))) {
-        return ; 
-    }
-
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
