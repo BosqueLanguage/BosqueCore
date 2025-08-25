@@ -68,6 +68,8 @@ struct FreeListEntry
 };
 static_assert(sizeof(FreeListEntry) <= sizeof(MetaData), "BlockHeader size is not 8 bytes");
 
+#define PAGE_OFFSET_MASK 0xFFF
+
 class PageInfo
 {
 public:
@@ -132,6 +134,12 @@ public:
 
         uint64_t* post = (uint64_t*)((uint8_t*)mem + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData) + type->type_size);
         *post = ALLOC_DEBUG_CANARY_VALUE;
+    }
+
+    inline void decrementPendingDecs() noexcept 
+    {
+        GC_INVARIANT_CHECK(this->pending_decs_count > 0);
+        this->pending_decs_count--;
     }
 };
 
@@ -276,13 +284,13 @@ public:
     {
         assert(type->type_size == this->allocsize);
 
-        if(this->freelist == nullptr) [[unlikely]] {
+        if(this->freelist == nullptr) [[unlikely]] { 
             this->allocatorRefreshAllocationPage();
         }
-
+        
         void* entry = this->freelist;
         this->freelist = this->freelist->next;
-            
+        
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
 

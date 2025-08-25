@@ -6,6 +6,7 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
+    xmem_zerofillpage(block);
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
@@ -43,6 +44,7 @@ void PageInfo::rebuild() noexcept
         MetaData* meta = this->getMetaEntryAtIndex(i);
         
         GC_INVARIANT_CHECK(meta->ref_count >= 0);
+        GC_INVARIANT_CHECK(meta->forward_index >= 0);
 
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
@@ -187,8 +189,7 @@ void GCAllocator::allocatorRefreshAllocationPage() noexcept
             // Rotate collection pages
             this->alloc_page->next = this->pendinggc_pages;
             this->pendinggc_pages = this->alloc_page;            
-        }
-    
+        } 
     
         this->alloc_page = this->getFreshPageForAllocator();
     }
