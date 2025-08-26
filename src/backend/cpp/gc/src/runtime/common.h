@@ -136,23 +136,26 @@ public:
 //   then the variant low 32 bits will be stored inside metadata
 //
 // (We could pack these better but this should get the job done!)
-// If we are in the RC old space
-// - [Type Ptr Low Bits - 32][RC - 28][Marked - 1][Root - 1][Young - 1][Allocated - 1]
+// If we are in the RC old space:
+// - high [RC - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits - 32]
 //
-// If we are in the nursery
-// - [Type Ptr Low Bits- 32][Forward Index - 28][Marked - 1][Root - 1][Young - 1][Allocated - 1]
+// If we are in the nursery:
+// - high [Forward Index - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits -32]
 //
 
 #define NUM_TYPEPTR_BITS 32
 
-#define TYPE_PTR_MASK 0xFFFF'FFFF'0000'0000
-#define RC_MASK       0x0000'0000'FFFF'FFF0
-#define FORWARD_MASK  0x0000'0000'FFFF'FFF0
+#define TYPE_PTR_MASK 0x0000'0000'FFFF'FFFFUL
+#define RC_MASK       0xFFFF'FFF0'0000'0000UL
+#define FORWARD_MASK  0xFFFF'FFF0'0000'0000UL
 
-#define ISALLOC_MASK  0x1
-#define ISYOUNG_MASK  0x2
-#define ISROOT_MASK   0x4
-#define ISMARKED_MASK 0x8
+#define ISALLOC_MASK  0x0000'0008'0000'0000UL
+#define ISYOUNG_MASK  0x0000'0004'0000'0000UL
+#define ISROOT_MASK   0x0000'0002'0000'0000UL
+#define ISMARKED_MASK 0x0000'0001'0000'0000UL
+
+#define NUM_BIT_FLAGS 4
+#define RC_AND_FORWARD_SHIFT (NUM_TYPEPTR_BITS + NUM_BIT_FLAGS)
 
 #ifdef VERBOSE_HEADER
 struct MetaData 
@@ -183,14 +186,20 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
 #define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
+#define ZERO_METADATA(M) ((*(M)) = {})
 
 #define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
 #define GC_IS_YOUNG(O) (GC_GET_META_DATA_ADDR(O))->isyoung
 #define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O))->isalloc
 #define GC_IS_ROOT(O) (GC_GET_META_DATA_ADDR(O))->isroot
+
 #define GC_FWD_INDEX(O) (GC_GET_META_DATA_ADDR(O))->forward_index
 #define GC_REF_COUNT(O) (GC_GET_META_DATA_ADDR(O))->ref_count
+
 #define GC_TYPE(O) (GC_GET_META_DATA_ADDR(O))->type
+
+#define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
+#define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
 #define GC_RESET_ALLOC(META) { (META)->isalloc = false; }
 
@@ -208,40 +217,38 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || (!(META)->isroot && (META)->ref_count == 0))
 
 #else
-
-//
-// I think atleast for accessing the fwd pointer and rc we wil need to 
-// shift off the low order zeros as they will inflate the actual value
-//
-
-#define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O) & ISMARKED_MASK) != 0UL)
-#define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O) & ISYOUNG_MASK) != 0UL)
-#define GC_IS_ALLOCATED(O) ((GC_GET_META_DATA_ADDR(O) & ISALLOC_MASK) != 0UL)
-#define GC_IS_ROOT(O)      ((GC_GET_META_DATA_ADDR(O) & ISROOT_MASK) != 0UL)
-
-#define GC_FWD_INDEX(O)    (GC_GET_META_DATA_ADDR(O) & FORWARD_MASK)
-#define GC_REF_COUNT(O)    (GC_GET_META_DATA_ADDR(O) & RC_MASK)
-
-#define GET_TYPE_PTR(O)    (GC_GET_META_DATA_ADDR(O) & TYPE_PTR_MASK | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
-#define GC_TYPE(O)         (GET_TYPE_PTR(O))
-
-#define GC_RESET_ALLOC(META)  (((META)->meta) &= ~ISALLOC_MASK) 
-#define GC_SHOULD_VISIT(META) ((((META)->meta) & (ISYOUNG_MASK | ~ISMARKED_MASK)) != 0UL) 
-
-#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((((META)->meta) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
-#define GC_SHOULD_PROCESS_AS_YOUNG(META) ((((META)->meta) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
-
-#define GC_MARK_AS_ROOT(META)   (((META)->meta) &= ISROOT_MASK)
-#define GC_MARK_AS_MARKED(META) (((META)->meta) &= ISMARKED_MASK)
-
-#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) & ~ISYOUNG_MASK) 
-#define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) & ISYOUNG_MASK) 
-
 // Resets an objects metadata and updates with index into forward table
 #define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
+#define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
 
-#define RESET_METADATA(M) (((M)->meta) = 0x0UL)
+#define GC_IS_MARKED(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISMARKED_MASK) != 0UL)
+#define GC_IS_YOUNG(O)     ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISYOUNG_MASK) != 0UL)
+#define GC_IS_ALLOCATED(O) ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISALLOC_MASK) != 0UL)
+#define GC_IS_ROOT(O)      ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISROOT_MASK) != 0UL)
 
-// I think this does the trick
-#define GC_SHOULD_FREE_LIST_ADD(META) (!(META->meta & ISALLOC_MASK) || ((!(META->meta & ISROOT_MASK)) && ((META->meta & RC_MASK) == 0UL)))
+#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_REF_COUNT(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & RC_MASK) >> RC_AND_FORWARD_SHIFT))
+
+#define GET_TYPE_PTR(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
+
+#define SET_REF_COUNT(O, COUNT)     (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~RC_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & RC_MASK))
+#define SET_FORWARD_INDEX(O, COUNT) (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~FORWARD_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & FORWARD_MASK))
+
+#define INC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) + 1UL))
+#define DEC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) - 1UL))
+
+#define GC_RESET_ALLOC(META)  (((META)->meta) &= ~ISALLOC_MASK) 
+#define GC_SHOULD_VISIT(META) ((((META)->meta) & ISYOUNG_MASK) && !(((META)->meta) & ISMARKED_MASK))
+
+#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((((META)->meta) & ISALLOC_MASK) && !(((META)->meta) & ISROOT_MASK))
+#define GC_SHOULD_PROCESS_AS_YOUNG(META) (((META)->meta) & ISYOUNG_MASK)
+
+#define GC_MARK_AS_ROOT(META)   (((META)->meta) |= ISROOT_MASK)
+#define GC_MARK_AS_MARKED(META) (((META)->meta) |= ISMARKED_MASK)
+
+#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ISYOUNG_MASK) 
+#define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) &= ~(ISROOT_MASK | ISYOUNG_MASK)) 
+
+#define GC_SHOULD_FREE_LIST_ADD(META) (!((META)->meta & ISALLOC_MASK) || (!((META)->meta & ISROOT_MASK) && (((META)->meta & RC_MASK) == 0UL)))
 #endif

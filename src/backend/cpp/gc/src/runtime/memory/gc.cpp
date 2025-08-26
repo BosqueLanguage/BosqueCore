@@ -10,9 +10,6 @@
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
-#define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
-#define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
-
 #define CHECK_INITIALIZED(O) { if((O) == nullptr) [[unlikely]] { return ; } }
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;

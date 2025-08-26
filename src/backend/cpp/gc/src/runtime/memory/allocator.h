@@ -123,6 +123,14 @@ public:
 #endif
     }
 
+    inline void* getObjectAtIndex(size_t idx) const noexcept {
+#ifdef ALLOC_DEBUG_CANARY
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData));
+#else
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + sizeof(MetaData));
+#endif
+    }
+
     inline FreeListEntry* getFreelistEntryAtIndex(size_t idx) const noexcept {
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }

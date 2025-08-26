@@ -43,7 +43,7 @@ void PageInfo::rebuild() noexcept
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
-            RESET_METADATA(meta);
+            ZERO_METADATA(meta);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -219,9 +219,8 @@ void GCAllocator::allocatorRefreshEvacuationPage() noexcept
 static uint64_t getPageFreeCount(PageInfo* p) noexcept 
 {
     uint64_t freecount = 0;
-    for(int64_t i = 0; i < p->entrycount; i++) {
-        MetaData* meta = p->getMetaEntryAtIndex(i); 
-        if(!meta->isalloc) {
+    for(size_t i = 0; i < p->entrycount; i++) {
+        if(!GC_IS_ALLOCATED(p->getObjectAtIndex(i))) {
             freecount++;
         }
     }
