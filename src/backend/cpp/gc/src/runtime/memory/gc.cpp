@@ -213,6 +213,11 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
     void* ptr = *obj;
     int32_t fwd_index = GC_FWD_INDEX(ptr);
 
+    //
+    // There are some MASSIVE values slipping into here that definietly
+    // should not causing segfaults... occurs with the packed metadata
+    //
+
     // Root points to root case (may be a false root)
     if(GC_IS_ROOT(ptr)) [[unlikely]] {
         INC_REF_COUNT(ptr);

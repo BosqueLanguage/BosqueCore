@@ -7,7 +7,7 @@
 //DEFAULT ENABLED WHILE LOTS OF DEVELOPMENT!!!!
 #define MEM_STATS
 #define BSQ_GC_CHECK_ENABLED
-//#define VERBOSE_HEADER
+#define VERBOSE_HEADER
 
 #ifdef BSQ_GC_CHECK_ENABLED
 #define ALLOC_DEBUG_MEM_INITIALIZE
@@ -221,15 +221,15 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
 #define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
 
-#define GC_IS_MARKED(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISMARKED_MASK) != 0UL)
-#define GC_IS_YOUNG(O)     ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISYOUNG_MASK) != 0UL)
-#define GC_IS_ALLOCATED(O) ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISALLOC_MASK) != 0UL)
-#define GC_IS_ROOT(O)      ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISROOT_MASK) != 0UL)
+#define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O)->meta & ISMARKED_MASK) != 0UL)
+#define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O)->meta & ISYOUNG_MASK) != 0UL)
+#define GC_IS_ALLOCATED(O) ((GC_GET_META_DATA_ADDR(O)->meta & ISALLOC_MASK) != 0UL)
+#define GC_IS_ROOT(O)      ((GC_GET_META_DATA_ADDR(O)->meta & ISROOT_MASK) != 0UL)
 
-#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
-#define GC_REF_COUNT(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & RC_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_REF_COUNT(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & RC_MASK) >> RC_AND_FORWARD_SHIFT))
 
-#define GET_TYPE_PTR(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->meta & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
 #define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
 
 #define SET_REF_COUNT(O, COUNT)     (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~RC_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & RC_MASK))
