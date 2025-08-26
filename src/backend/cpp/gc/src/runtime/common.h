@@ -221,19 +221,22 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
 #define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
 
-#define GC_IS_MARKED(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISMARKED_MASK) != 0UL)
-#define GC_IS_YOUNG(O)     ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISYOUNG_MASK) != 0UL)
-#define GC_IS_ALLOCATED(O) ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISALLOC_MASK) != 0UL)
-#define GC_IS_ROOT(O)      ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & ISROOT_MASK) != 0UL)
+#define GC_IS_MARKED(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISMARKED_MASK) != 0UL)
+#define GC_IS_YOUNG(O)     ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISYOUNG_MASK) != 0UL)
+#define GC_IS_ALLOCATED(O) ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISALLOC_MASK) != 0UL)
+#define GC_IS_ROOT(O)      ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & ISROOT_MASK) != 0UL)
 
-#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
-#define GC_REF_COUNT(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & RC_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_REF_COUNT(O)    (static_cast<uint32_t>((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & RC_MASK) >> RC_AND_FORWARD_SHIFT))
 
-#define GET_TYPE_PTR(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)) & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GET_TYPE_PTR(O)    ((reinterpret_cast<uintptr_t>(GC_GET_META_DATA_ADDR(O)->meta) & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
 #define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
 
 #define SET_REF_COUNT(O, COUNT)     (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~RC_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & RC_MASK))
 #define SET_FORWARD_INDEX(O, COUNT) (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~FORWARD_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & FORWARD_MASK))
+
+// Sets low 32 bits of ptr in meta
+#define SET_TYPE_PTR(META, PTR) ((META)->meta = ((META)->meta & ~TYPE_PTR_MASK) | (reinterpret_cast<uintptr_t>(PTR) & TYPE_PTR_MASK))
 
 #define INC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) + 1UL))
 #define DEC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) - 1UL))
@@ -247,7 +250,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_MARK_AS_ROOT(META)   (((META)->meta) |= ISROOT_MASK)
 #define GC_MARK_AS_MARKED(META) (((META)->meta) |= ISMARKED_MASK)
 
-#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ISYOUNG_MASK) 
+#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ~ISYOUNG_MASK) 
 #define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) &= ~(ISROOT_MASK | ISYOUNG_MASK)) 
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!((META)->meta & ISALLOC_MASK) || (!((META)->meta & ISROOT_MASK) && (((META)->meta & RC_MASK) == 0UL)))

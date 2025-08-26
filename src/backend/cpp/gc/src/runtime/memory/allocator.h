@@ -196,8 +196,9 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) 
+// Underlying metadata SHOIULD be zero before init
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { SET_TYPE_PTR(META, T); ((META)->meta |= (ISALLOC_MASK | ISYOUNG_MASK)); } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { SET_TYPE_PTR(META, T); (META)->meta = ((META)->meta & ~ISYOUNG_MASK) | ISALLOC_MASK; }
 #endif
 
 template<typename T>
