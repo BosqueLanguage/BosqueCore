@@ -82,7 +82,7 @@ struct BSQMemoryTheadLocalInfo
     int forward_table_index;
     void** forward_table;
 
-    uint32_t high32_typeptr; // high 32 bits taken from a typeinfo pointer
+    uint32_t typeptr_high32; // high 32 bits taken from a typeinfo pointer
 
     uint32_t newly_filled_pages_count = 0;
 

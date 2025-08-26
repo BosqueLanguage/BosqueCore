@@ -207,33 +207,41 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || (!(META)->isroot && (META)->ref_count == 0))
 
-#else 
-#define GC_IS_MARKED(O)    (GC_GET_META_DATA_ADDR(O) & ISMARKED_MASK)
-#define GC_IS_YOUNG(O)     (GC_GET_META_DATA_ADDR(O) & ISYOUNG_MASK)
-#define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O) & ISALLOC_MASK)
-#define GC_IS_ROOT(O)      (GC_GET_META_DATA_ADDR(O) & ISROOT_MASK)
+#else
+
+//
+// I think atleast for accessing the fwd pointer and rc we wil need to 
+// shift off the low order zeros as they will inflate the actual value
+//
+
+#define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O) & ISMARKED_MASK) != 0UL)
+#define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O) & ISYOUNG_MASK) != 0UL)
+#define GC_IS_ALLOCATED(O) ((GC_GET_META_DATA_ADDR(O) & ISALLOC_MASK) != 0UL)
+#define GC_IS_ROOT(O)      ((GC_GET_META_DATA_ADDR(O) & ISROOT_MASK) != 0UL)
 
 #define GC_FWD_INDEX(O)    (GC_GET_META_DATA_ADDR(O) & FORWARD_MASK)
 #define GC_REF_COUNT(O)    (GC_GET_META_DATA_ADDR(O) & RC_MASK)
 
-// Will need to determine a good place to store the SOMECONSTANT
-#define GET_TYPE_PTR(O)    (GC_GET_META_DATA_ADDR(O) & TYPE_PTR_MASK | (SOMECONSTANT << NUM_TYPEPTR_BITS)) 
+#define GET_TYPE_PTR(O)    (GC_GET_META_DATA_ADDR(O) & TYPE_PTR_MASK | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
 #define GC_TYPE(O)         (GET_TYPE_PTR(O))
 
-#define GC_RESET_ALLOC(META)  ((*(META)) &= ~ISALLOC_MASK) 
-#define GC_SHOULD_VISIT(META) (((*(META)) & (ISYOUNG_MASK | ~ISMARKED_MASK)) != 0UL) 
+#define GC_RESET_ALLOC(META)  (((META)->meta) &= ~ISALLOC_MASK) 
+#define GC_SHOULD_VISIT(META) ((((META)->meta) & (ISYOUNG_MASK | ~ISMARKED_MASK)) != 0UL) 
 
-#define GC_SHOULD_PROCESS_AS_ROOT(META)  (((*(META)) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
-#define GC_SHOULD_PROCESS_AS_YOUNG(META) (((*(META)) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
+#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((((META)->meta) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
+#define GC_SHOULD_PROCESS_AS_YOUNG(META) ((((META)->meta) & (ISALLOC_MASK | ~ISROOT_MASK)) != 0UL)
 
-#define GC_MARK_AS_ROOT(META)   ((*(META)) &= ISROOT_MASK)
-#define GC_MARK_AS_MARKED(META) ((*(META)) &= ISMARKED_MASK)
+#define GC_MARK_AS_ROOT(META)   (((META)->meta) &= ISROOT_MASK)
+#define GC_MARK_AS_MARKED(META) (((META)->meta) &= ISMARKED_MASK)
 
-#define GC_CLEAR_YOUNG_MARK(META) ((*(META)) & ~ISYOUNG_MASK) 
-#define GC_CLEAR_ROOT_MARK(META)  ((*(META)) & ISYOUNG_MASK) 
+#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) & ~ISYOUNG_MASK) 
+#define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) & ISYOUNG_MASK) 
 
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) &= (~FORWARD_MASK | FP))
+#define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
 
-#define GC_SHOULD_FREE_LIST_ADD(META) 
+#define RESET_METADATA(M) (((M)->meta) = 0x0UL)
+
+// I think this does the trick
+#define GC_SHOULD_FREE_LIST_ADD(META) (!(META->meta & ISALLOC_MASK) || ((!(META->meta & ISROOT_MASK)) && ((META->meta & RC_MASK) == 0UL)))
 #endif

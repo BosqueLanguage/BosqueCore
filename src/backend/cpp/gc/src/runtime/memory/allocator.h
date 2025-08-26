@@ -290,7 +290,7 @@ public:
         assert(type->type_size == this->allocsize);
 
         if(this->freelist == nullptr) [[unlikely]] { 
-            this->allocatorRefreshAllocationPage();
+            this->allocatorRefreshAllocationPage(type);
         }
         
         void* entry = this->freelist;

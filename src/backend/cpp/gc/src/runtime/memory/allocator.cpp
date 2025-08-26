@@ -42,11 +42,8 @@ void PageInfo::rebuild() noexcept
     
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
-        
-        GC_INVARIANT_CHECK(meta->ref_count >= 0);
-        GC_INVARIANT_CHECK(meta->forward_index >= 0);
-
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
+            RESET_METADATA(meta);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -178,8 +175,8 @@ void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinf
     // we MAY me able to access the start of the data segment somewhere though which would be ncie
     // as i dont like this method being multi purpose
     //
-    if(gtl_info.high32_typeptr == 0) {
-        gtl_info.high32_typeptr = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
+    if(gtl_info.typeptr_high32 == 0) {
+        gtl_info.typeptr_high32 = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
     }
 
     if(this->alloc_page == nullptr) {
