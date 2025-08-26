@@ -171,8 +171,17 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
     return page;
 }
 
-void GCAllocator::allocatorRefreshAllocationPage() noexcept
+void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
 {
+    //
+    // our allocate method is the first location in the program where a typeinfo ptr is easily accessable
+    // we MAY me able to access the start of the data segment somewhere though which would be ncie
+    // as i dont like this method being multi purpose
+    //
+    if(gtl_info.high32_typeptr == 0) {
+        gtl_info.high32_typeptr = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
+    }
+
     if(this->alloc_page == nullptr) {
         this->alloc_page = this->getFreshPageForAllocator();
     }
