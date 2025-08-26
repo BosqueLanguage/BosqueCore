@@ -123,6 +123,14 @@ public:
 #endif
     }
 
+    inline void* getObjectAtIndex(size_t idx) const noexcept {
+#ifdef ALLOC_DEBUG_CANARY
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + ALLOC_DEBUG_CANARY_SIZE + sizeof(MetaData));
+#else
+        return reinterpret_cast<void*>(this->data + idx * this->realsize + sizeof(MetaData));
+#endif
+    }
+
     inline FreeListEntry* getFreelistEntryAtIndex(size_t idx) const noexcept {
         return (FreeListEntry*)(this->data + idx * this->realsize);
     }
@@ -184,8 +192,13 @@ public:
 #define SET_ALLOC_LAYOUT_HANDLE_CANARY(BASEALLOC, T) PageInfo::initializeWithDebugInfo(BASEALLOC, T)
 #endif
 
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) *(META) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#ifdef VERBOSE_HEADER
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
+#else
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); ((META)->meta |= (ISALLOC_MASK | ISYOUNG_MASK)); } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->meta = ((META)->meta & ~ISYOUNG_MASK) | ISALLOC_MASK; }
+#endif
 
 template<typename T>
 T* MEM_ALLOC_CHECK(T* alloc)
@@ -285,7 +298,7 @@ public:
         assert(type->type_size == this->allocsize);
 
         if(this->freelist == nullptr) [[unlikely]] { 
-            this->allocatorRefreshAllocationPage();
+            this->allocatorRefreshAllocationPage(type);
         }
         
         void* entry = this->freelist;
@@ -327,7 +340,8 @@ public:
     void processCollectorPages() noexcept;
 
     //May call collection, insert full alloc page in pending gc pages, get new page
-    void allocatorRefreshAllocationPage() noexcept;
+    //To avoid clogging up fast path allocation we initialize high32_typeptr here if needed
+    void allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept;
 
     //Get new page for evacuation, append old to filled pages
     void allocatorRefreshEvacuationPage() noexcept;

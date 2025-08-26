@@ -42,11 +42,8 @@ void PageInfo::rebuild() noexcept
     
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
-        
-        GC_INVARIANT_CHECK(meta->ref_count >= 0);
-        GC_INVARIANT_CHECK(meta->forward_index >= 0);
-
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
+            ZERO_METADATA(meta);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
             entry->next = this->freelist;
             this->freelist = entry;
@@ -171,8 +168,15 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
     return page;
 }
 
-void GCAllocator::allocatorRefreshAllocationPage() noexcept
+void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
 {
+    //
+    // We will want a better way to get the high 32 bits (just not in this function) but this is fine
+    //
+    if(gtl_info.typeptr_high32 == 0) {
+        gtl_info.typeptr_high32 = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
+    }
+
     if(this->alloc_page == nullptr) {
         this->alloc_page = this->getFreshPageForAllocator();
     }
@@ -213,9 +217,8 @@ void GCAllocator::allocatorRefreshEvacuationPage() noexcept
 static uint64_t getPageFreeCount(PageInfo* p) noexcept 
 {
     uint64_t freecount = 0;
-    for(int64_t i = 0; i < p->entrycount; i++) {
-        MetaData* meta = p->getMetaEntryAtIndex(i); 
-        if(!meta->isalloc) {
+    for(size_t i = 0; i < p->entrycount; i++) {
+        if(!GC_IS_ALLOCATED(p->getObjectAtIndex(i))) {
             freecount++;
         }
     }

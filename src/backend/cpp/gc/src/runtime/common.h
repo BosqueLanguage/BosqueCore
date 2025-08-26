@@ -128,7 +128,34 @@ public:
 //A handy stack allocation macro
 #define BSQ_STACK_ALLOC(SIZE) ((SIZE) == 0 ? nullptr : alloca(SIZE))
 
-#define MAX_FWD_INDEX UINT32_MAX
+/////////////////////////////////////////////
+// Packed metadata bit layout
+// - All type information needed for the GC is emitted statically inside the emit.hpp header file
+//   meaning it is stored in the programs data segment. We can take advantage of these objects
+//   residing in the same location by capturing the high order 32 bits of a typeinfo address
+//   then the variant low 32 bits will be stored inside metadata
+//
+// (We could pack these better but this should get the job done!)
+// If we are in the RC old space:
+// - high [RC - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits - 32]
+//
+// If we are in the nursery:
+// - high [Forward Index - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits -32]
+//
+
+#define NUM_TYPEPTR_BITS 32
+
+#define TYPE_PTR_MASK 0x0000'0000'FFFF'FFFFUL
+#define RC_MASK       0xFFFF'FFF0'0000'0000UL
+#define FORWARD_MASK  0xFFFF'FFF0'0000'0000UL
+
+#define ISALLOC_MASK  0x0000'0008'0000'0000UL
+#define ISYOUNG_MASK  0x0000'0004'0000'0000UL
+#define ISROOT_MASK   0x0000'0002'0000'0000UL
+#define ISMARKED_MASK 0x0000'0001'0000'0000UL
+
+#define NUM_BIT_FLAGS 4
+#define RC_AND_FORWARD_SHIFT (NUM_TYPEPTR_BITS + NUM_BIT_FLAGS)
 
 #ifdef VERBOSE_HEADER
 struct MetaData 
@@ -154,18 +181,25 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define NON_FORWARDED 0
 
+#define GC_GET_META_DATA_ADDR(O) ((MetaData*)((uint8_t*)O - sizeof(MetaData)))
+
+#ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
 #define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
-
-#define GC_GET_META_DATA_ADDR(O) ((MetaData*)((uint8_t*)O - sizeof(MetaData)))
+#define ZERO_METADATA(M) ((*(M)) = {})
 
 #define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
 #define GC_IS_YOUNG(O) (GC_GET_META_DATA_ADDR(O))->isyoung
 #define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O))->isalloc
 #define GC_IS_ROOT(O) (GC_GET_META_DATA_ADDR(O))->isroot
+
 #define GC_FWD_INDEX(O) (GC_GET_META_DATA_ADDR(O))->forward_index
 #define GC_REF_COUNT(O) (GC_GET_META_DATA_ADDR(O))->ref_count
+
 #define GC_TYPE(O) (GC_GET_META_DATA_ADDR(O))->type
+
+#define INC_REF_COUNT(O) (++GC_REF_COUNT(O))
+#define DEC_REF_COUNT(O) (--GC_REF_COUNT(O))
 
 #define GC_RESET_ALLOC(META) { (META)->isalloc = false; }
 
@@ -181,3 +215,43 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || (!(META)->isroot && (META)->ref_count == 0))
+
+#else
+// Resets an objects metadata and updates with index into forward table
+#define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
+#define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
+
+#define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O)->meta & ISMARKED_MASK) != 0UL)
+#define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O)->meta & ISYOUNG_MASK) != 0UL)
+#define GC_IS_ALLOCATED(O) ((GC_GET_META_DATA_ADDR(O)->meta & ISALLOC_MASK) != 0UL)
+#define GC_IS_ROOT(O)      ((GC_GET_META_DATA_ADDR(O)->meta & ISROOT_MASK) != 0UL)
+
+#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_REF_COUNT(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & RC_MASK) >> RC_AND_FORWARD_SHIFT))
+
+#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->meta & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
+
+#define SET_REF_COUNT(O, COUNT)     (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~RC_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & RC_MASK))
+#define SET_FORWARD_INDEX(O, COUNT) (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~FORWARD_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & FORWARD_MASK))
+
+// Sets low 32 bits of ptr in meta
+#define SET_TYPE_PTR(META, PTR) ((META)->meta = ((META)->meta & ~TYPE_PTR_MASK) | (reinterpret_cast<uintptr_t>(PTR) & TYPE_PTR_MASK))
+
+#define INC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) + 1UL))
+#define DEC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) - 1UL))
+
+#define GC_RESET_ALLOC(META)  (((META)->meta) &= ~ISALLOC_MASK) 
+#define GC_SHOULD_VISIT(META) ((((META)->meta) & ISYOUNG_MASK) && !(((META)->meta) & ISMARKED_MASK))
+
+#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((((META)->meta) & ISALLOC_MASK) && !(((META)->meta) & ISROOT_MASK))
+#define GC_SHOULD_PROCESS_AS_YOUNG(META) (((META)->meta) & ISYOUNG_MASK)
+
+#define GC_MARK_AS_ROOT(META)   (((META)->meta) |= ISROOT_MASK)
+#define GC_MARK_AS_MARKED(META) (((META)->meta) |= ISMARKED_MASK)
+
+#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ~ISYOUNG_MASK) 
+#define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) &= ~(ISROOT_MASK | ISYOUNG_MASK)) 
+
+#define GC_SHOULD_FREE_LIST_ADD(META) (!((META)->meta & ISALLOC_MASK) || (!((META)->meta & ISROOT_MASK) && (((META)->meta & RC_MASK) == 0UL)))
+#endif
