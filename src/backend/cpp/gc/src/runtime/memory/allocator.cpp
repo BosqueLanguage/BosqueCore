@@ -42,9 +42,6 @@ void PageInfo::rebuild() noexcept
     
     for(int64_t i = this->entrycount - 1; i >= 0; i--) {
         MetaData* meta = this->getMetaEntryAtIndex(i);
-        //
-        // I THINK we need to check that our object is in old space in the second part of this condition 
-        //
         if(GC_SHOULD_FREE_LIST_ADD(meta)) {
             ZERO_METADATA(meta);
             FreeListEntry* entry = this->getFreelistEntryAtIndex(i);
@@ -174,9 +171,7 @@ PageInfo* GCAllocator::getFreshPageForEvacuation() noexcept
 void GCAllocator::allocatorRefreshAllocationPage(__CoreGC::TypeInfoBase* typeinfo) noexcept
 {
     //
-    // our allocate method is the first location in the program where a typeinfo ptr is easily accessable
-    // we MAY me able to access the start of the data segment somewhere though which would be ncie
-    // as i dont like this method being multi purpose
+    // We will want a better way to get the high 32 bits (just not in this function) but this is fine
     //
     if(gtl_info.typeptr_high32 == 0) {
         gtl_info.typeptr_high32 = reinterpret_cast<uint64_t>(typeinfo) >> NUM_TYPEPTR_BITS;
