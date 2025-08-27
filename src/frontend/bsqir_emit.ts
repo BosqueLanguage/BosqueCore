@@ -548,18 +548,23 @@ class BSQIREmitter {
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cbase = this.emitConstructorPrimaryExpressionBase(exp);
-
+        const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
+        
         if(cdecl instanceof SomeTypeDecl) {
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
-            const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
+
 
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
         if(cdecl instanceof MapEntryTypeDecl) {
-            const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
-            const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
-            
-            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, key=${kexp}, value=${vexp} }`;
+            const keytype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
+            const valuetype = this.emitTypeSignature(exp.ctype.alltermargs[1]);
+           
+            //
+            // So there doesnt appear to be a constructor for this type in body.bsq so 
+            // I am wondering if I donked up somewhere or need to add it myself?
+            //
+            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, keytype=${keytype}, valuetype=${valuetype} }`;
         }
         else {
             console.log(cdecl);
@@ -685,7 +690,8 @@ class BSQIREmitter {
         //
 
         if(exp.isSpecialCall) {
-            return '';
+            const eexp = this.emitExpression(exp.args.args[0].exp);
+            return `BSQAssembly::CallTypeFunctionSpecialExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, name='${exp.name}'<BSQAssembly::Identifier>, exp=${eexp}}`;
         }
         else {
             const argsinfo = this.emitInvokeArgumentInfo(exp.name, exp.rec, exp.args.args, exp.shuffleinfo, exp.resttype, exp.restinfo); 
@@ -765,11 +771,21 @@ class BSQIREmitter {
         return `BSQAssembly::PostfixAsConvert{ ${opbase}, ttest=${ttype} }`;
     }
 
-    //
-    // TODO: Figure out what is ogin gon here!
-    //
+    // Might have donked this up so lets be careful
     private emitPostfixAssignFields(exp: PostfixAssignFields): string {
-        return '';
+        const opbase = this.emitPostfixOperationBase(exp);
+        const declOnType = this.emitTypeSignature(exp.updatetype as TypeSignature);
+        const updates = exp.updates.map(([fieldName, fieldExpression], index) => {
+            const updateInfo = exp.updateinfo[index];
+            const declaredInType = this.emitTypeSignature(updateInfo.etype);
+            const fname = `'${fieldName}'<BSQAssembly::Identifier>`;
+            const ftype = this.emitTypeSignature(updateInfo.fieldtype);
+            const expEmitted = this.emitExpression(fieldExpression);
+
+            return `(|${declaredInType}, ${fname}, ${ftype}, ${expEmitted}|)`;
+        }).join(", ");
+
+        return `BSQAssembly::PostfixAssignFields{ ${opbase}, declOnType=${declOnType}, updates=List<(|BSQAssembly::NominalTypeSignature, BSQAssembly::Identifier, BSQAssembly::NominalTypeSignature, BSQAssembly::Expression|)>{ ${updates} } }`;
     }
 
     private emitResolvedPostfixInvoke(exp: PostfixInvoke): string {
@@ -934,7 +950,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpEqualExpression{ ${ebase}, ktype=${ktype}, opertype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitKeyCompareLessExpression(exp: KeyCompareLessExpression): string {
@@ -942,7 +958,7 @@ class BSQIREmitter {
         const ktype = this.emitTypeSignature(exp.ktype as TypeSignature);
         const optype = this.emitTypeSignature(exp.optype as TypeSignature);
 
-        return `BSQAssembly::KeyCmpLessExpression{ ${ebase}, ktype=${ktype}, optype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
+        return `BSQAssembly::KeyCmpLessExpression{ ${ebase}, ktype=${ktype}, opertype=${optype}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
 
     private emitNumericEqExpression(exp: NumericEqExpression): string {
@@ -1012,7 +1028,7 @@ class BSQIREmitter {
         const kexp = this.emitExpression(exp.kexp);
         const vexp = this.emitExpression(exp.vexp);
 
-        return `BSQAssembly::ConstructorPrimaryListExpression{ ${ebase}, kexp=${kexp}, vexp=${vexp} }`;
+        return `BSQAssembly::MapEntryConstructorExpression{ ${ebase}, kexp=${kexp}, vexp=${vexp} }`;
     }
 
     private emitIfExpression(exp: IfExpression): string {
