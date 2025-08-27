@@ -136,7 +136,11 @@ class InstantiationPropagator {
                 const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
 
                 if(nns !== undefined) {
-                    assert(false, "Not Implemented -- UnicodeRope instantiation"); 
+                    const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_create") as NamespaceFunctionDecl;                    
+                    this.instantiateNamespaceFunction(nns, createdecl, []);
+
+                    const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, pushdecl, []);
                 }
             }
 
