@@ -2,6 +2,3 @@ namespace Core;
 
 __internal entity CRope {
 }
-
-__internal entity UnicodeRope {
-}
