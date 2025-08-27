@@ -528,15 +528,21 @@ class BSQIREmitter {
     }
 
     private emitCollectionConstructor(cdecl: AbstractCollectionTypeDecl, exp: ConstructorPrimaryExpression): string {
+        const cpee = this.emitConstructorPrimaryExpressionBase(exp);
+        const elemtype = this.emitTypeSignature(exp.elemtype as TypeSignature);
         const args = this.emitCollectionArguments(exp.args.args);
 
         if(cdecl instanceof ListTypeDecl) {
-            const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-            const elemtype = this.emitTypeSignature(exp.elemtype as TypeSignature);
             return `BSQAssembly::ConstructorPrimaryListExpression{ ${cpee}, elemtype=${elemtype}, args=${args} }`;
         }
+        else if (cdecl instanceof MapTypeDecl) {
+            const keytype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
+            const valuetype = this.emitTypeSignature(exp.ctype.alltermargs[1]);
+
+            return `BSQAssembly::ConstructorPrimaryMapExpression{ ${cpee}, elemtype=${elemtype}, args=${args}, keytype=${keytype}, valuetype=${valuetype} }`;
+        }
         else {
-            assert(false, "Not implemented -- CollectionConstructor of Map");
+            assert(false, "Unknown Collection Constructor Type");
         }
     }
 
@@ -550,7 +556,6 @@ class BSQIREmitter {
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
         if(cdecl instanceof MapEntryTypeDecl) {
-            const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
             const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
             const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
             
@@ -674,9 +679,13 @@ class BSQIREmitter {
         const ikey = EmitNameManager.generateTypeInvokeKey(this.tproc(exp.resolvedDeclType as TypeSignature), exp.name, exp.terms.map((tt) => this.tproc(new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), tt.tkeystr))) ); 
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
-       
+      
+        //
+        // TODO: special calls!
+        //
+
         if(exp.isSpecialCall) {
-            assert(false, "Not implemented -- CallTypeFunction Special");
+            return '';
         }
         else {
             const argsinfo = this.emitInvokeArgumentInfo(exp.name, exp.rec, exp.args.args, exp.shuffleinfo, exp.resttype, exp.restinfo); 
@@ -756,8 +765,11 @@ class BSQIREmitter {
         return `BSQAssembly::PostfixAsConvert{ ${opbase}, ttest=${ttype} }`;
     }
 
+    //
+    // TODO: Figure out what is ogin gon here!
+    //
     private emitPostfixAssignFields(exp: PostfixAssignFields): string {
-        assert(false, "Not Implemented -- emitPostfixAssignFields");
+        return '';
     }
 
     private emitResolvedPostfixInvoke(exp: PostfixInvoke): string {
@@ -994,9 +1006,13 @@ class BSQIREmitter {
         const ebase = this.emitExpressionBase(exp);
         return `BSQAssembly::BinLogicIFFExpression{ ${ebase}, lhs=${this.emitExpression(exp.lhs)}, rhs=${this.emitExpression(exp.rhs)} }`;
     }
-    
-    private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {
-        assert(false, "Not implemented -- MapEntryConstructor");
+   
+    private emitMapEntryConstructorExpression(exp: MapEntryConstructorExpression): string {        
+        const ebase = this.emitExpressionBase(exp);
+        const kexp = this.emitExpression(exp.kexp);
+        const vexp = this.emitExpression(exp.vexp);
+
+        return `BSQAssembly::ConstructorPrimaryListExpression{ ${ebase}, kexp=${kexp}, vexp=${vexp} }`;
     }
 
     private emitIfExpression(exp: IfExpression): string {
@@ -2184,8 +2200,16 @@ class BSQIREmitter {
         assert(false, "Not implemented -- emitSetTypeDecl");
     }
 
+    // Pretty sure this can be identitical to emitMapEntryTypeDecl(..)
     private emitMapTypeDecl(ns: FullyQualifiedNamespace, tdecl: MapTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
-        assert(false, "Not implemented -- emitMapTypeDecl");
+        const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+
+        const childsigs = [...this.emitChildrenTypes(tsig.alltermargs[0])];
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitEventListTypeDecl(ns: FullyQualifiedNamespace, tdecl: EventListTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
