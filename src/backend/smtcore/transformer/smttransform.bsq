@@ -3142,8 +3142,9 @@ entity SMTTransformer {
                 return CString::join('%n;', rdecl, asgn, '(assert (= @return (@Result-ok false)))');
             }
             else {
+				let failis = CString::concat('(assert (is-@Result-err @return))');
                 let failtrgt = CString::concat('(assert (= @return ((as @Result-err (@Result ', rrbasetype.value, ')) @err-trgt)))');
-                return CString::join('%n;', rdecl, asgn, failtrgt);
+                return CString::join('%n;', rdecl, failis, asgn, failtrgt);
             }
         }
     }
