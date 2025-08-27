@@ -1082,7 +1082,7 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
     let constructor = Algorithm::while<(|Nat, String|)>((|maxCCharBufferSize, base|), 
         pred(cons) => cons.0 < strsize, 
         fn(cons) => {
-            let append_base = String::concat("Core::CRopeOps::s_unicoderope_append(", cons.1, ", __CoreCpp::ubufferFromStringLiteral(");
+            let append_base = String::concat("Core::UnicodeRopeOps::s_unicoderope_append(", cons.1, ", __CoreCpp::ubufferFromStringLiteral(");
             let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
             return cons.0 + maxCCharBufferSize, String::concat(append_base, args, "))");
     }).1;
@@ -2088,17 +2088,12 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     let gcinfo = String::concat(allocs, nallocslist);
 
     %% Checking for equality on our ropes needs to be overloaded in global namespace
-    var overloads: String;
+    var overloads: String = "";
     if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_equal'))) {
-        overloads = "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }";
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }");
     }
-    %*
-    elif(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('UnicodeRope'))) {
-        overloads = "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }";
-    }
-    *%
-    else {
-        overloads = "";
+    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_equal'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }");
     }
 
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp

@@ -703,20 +703,32 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
 UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept;
-UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& cb1, UnicodeCharBuffer& cb2) noexcept;
-UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& cb, Nat split) noexcept;
+UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept;
+UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept;
 
-//
-// This does NOT work
-//
-inline Bool ubuf_memcmp(UnicodeChar b1[maxUnicodeCharBufferSize], UnicodeChar b2[maxUnicodeCharBufferSize]) noexcept {
-    static_assert(maxUnicodeCharBufferSize * sizeof(CChar) == sizeof(uintptr_t));
+inline Bool ubuf_memcmp(UnicodeChar b1[maxCCharBufferSize], UnicodeChar b2[maxCCharBufferSize]) noexcept {
+    static_assert(sizeof(uintptr_t) == 2 * sizeof(UnicodeChar));
+    static_assert(maxUnicodeCharBufferSize % (sizeof(uintptr_t) / sizeof(UnicodeChar)) == 0);
+
+    UnicodeChar* cur_b1 = b1;
+    UnicodeChar* cur_b2 = b2;
+
+    constexpr size_t chars_per_chunk = sizeof(uintptr_t) / sizeof(UnicodeChar);
+    constexpr size_t num_chunks = maxUnicodeCharBufferSize / chars_per_chunk;
     
-    return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
+    for (size_t i = 0; i < num_chunks; i++) {
+        if (*reinterpret_cast<const uintptr_t*>(cur_b1) != *reinterpret_cast<const uintptr_t*>(cur_b2)) {
+            return false;
+        }
+        cur_b1 += chars_per_chunk;
+        cur_b2 += chars_per_chunk;
+    }
+
+    return true;
 }
 
-inline Bool ubufferEqual(UnicodeCharBuffer& cb1, UnicodeCharBuffer& cb2) noexcept {
-    return ubuf_memcmp(cb1.chars, cb2.chars);
+inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept {
+    return ubuf_memcmp(ub1.chars, ub2.chars);
 }
 
 // Will need to support Bosque CString and String eventually

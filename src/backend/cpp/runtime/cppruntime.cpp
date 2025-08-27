@@ -197,25 +197,25 @@ UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) 
 }
 
 // Removes already merged chars from cb
-UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& cb, Nat split) noexcept {
+UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     uint64_t nsplit = split.get();
 
     if(nsplit == 0) {
-        return cb;
+        return ub;
     }
 
     for(uint64_t i = 0; i < maxUnicodeCharBufferSize; i++) {
         if(i < nsplit) {
-            cb.chars[i] = 0;
-            cb.size -= 1_n;
+            ub.chars[i] = 0;
+            ub.size -= 1_n;
         }
         else {
-            cb.chars[i - nsplit] = cb.chars[i];
-            cb.chars[i] = 0;
+            ub.chars[i - nsplit] = ub.chars[i];
+            ub.chars[i] = 0;
         }
     }
 
-    return cb;
+    return ub;
 }
 
 std::string to_string(MainType v) noexcept {

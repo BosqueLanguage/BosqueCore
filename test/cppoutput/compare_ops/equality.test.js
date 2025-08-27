@@ -30,7 +30,7 @@ describe("CPP Emit Evalutate -- cstring(rope) equality", () => {
 
 describe("CPP Emit Evalutate -- string(rope) equality", () => {
     it("should exec compare basic strings", function () {
-        runMainCode('public function main(): Bool { return "Hello, World!" === "Hello, World"; }', "true");
+        runMainCode('public function main(): Bool { return "Hello, World!" === "Hello, World!"; }', "true");
         runMainCode('public function main(): Bool { return "abcdefghijk" === "Hello, World!"; }', "false");
     })
     it("should exec compare large-ish strings", function () {
@@ -38,7 +38,6 @@ describe("CPP Emit Evalutate -- string(rope) equality", () => {
         runMainCode('public function main(): Bool { return "abcdefghijkabcdefghijkabcdefghijk" === "Hello, World! Hello, World! Hello, World!"; }', "false");
     })
 });
-
 
 describe ("CPP Emit Evaluate -- enum strict equals", () => {
     it("should exec enum strict equals operations", function () {

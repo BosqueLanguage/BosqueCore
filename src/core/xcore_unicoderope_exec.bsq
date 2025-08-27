@@ -9,7 +9,7 @@ __internal entity UnicodeCharBuffer {
 namespace UnicodeCharBufferOps {
     function size(ub: UnicodeCharBuffer): Nat = unicodecharbuffer_size;
     function getMaxSize(): Nat = unicodecharbuffer_maxsize;
-    function equal(ub1: UnicodeCharBuffer, cb2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
+    function equal(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
     %%function natToUnicodeBuffer(v: Nat): UnicodeCharBuffer = nat_to_unicodecharbuffer;
     function mergeUnicodeBuffers(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): UnicodeCharBuffer = unicodecharbuffer_merge;
     function remainder(ub: UnicodeCharBuffer, split: Nat): UnicodeCharBuffer = unicodecharbuffer_remainder;
@@ -44,8 +44,8 @@ namespace UnicodeRopeOps {
         return XCore::s_createDirect<Rope, UnicodeRope>(append(r.value, buf));
     }
 
-    function s_unicoderope_empty(cr: UnicodeRope): Bool {
-        return cr.value?<BBLeaf>;
+    function s_unicoderope_empty(ur: UnicodeRope): Bool {
+        return ur.value?<BBLeaf>;
     }
 
     function s_unicoderope_concat2(ur1: UnicodeRope, ur2: UnicodeRope): UnicodeRope {
