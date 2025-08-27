@@ -329,8 +329,8 @@ class BSQIREmitter {
         return 'List<BSQAssembly::Expression>{' + args.map((arg) => this.emitExpression(arg.exp)).join(", ") + '}';
     }
 
-    private emitSimpleSingleArgument(args: ArgumentValue[]): string {
-        return this.emitExpression(args[0].exp);
+    private emitSimpleSingleArgument(arg: ArgumentValue): string {
+        return this.emitExpression(arg.exp);
     }
 
     private emitBinderInfo(binder: BinderInfo): string {
@@ -542,21 +542,29 @@ class BSQIREmitter {
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cbase = this.emitConstructorPrimaryExpressionBase(exp);
-        const vexp = this.emitSimpleSingleArgument(exp.args.args);
 
         if(cdecl instanceof SomeTypeDecl) {
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
 
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
+        if(cdecl instanceof MapEntryTypeDecl) {
+            const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
+            const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
+            
+            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, key=${kexp}, value=${vexp} }`;
+        }
         else {
+            console.log(cdecl);
             assert(false, "Not implemented -- SpecialConstructableConstructor");
         }
     }
 
     private emitTypeDeclConstructor(cdecl: TypedeclTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cpee = this.emitConstructorPrimaryExpressionBase(exp);
-        const vexp = this.emitSimpleSingleArgument(exp.args.args);
+        const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
 
         if(cdecl.optofexp === undefined) {
             return `BSQAssembly::ConstructorTypeDeclExpression{ ${cpee}, value=${vexp}, valuetype=${this.emitTypeSignature(cdecl.valuetype)} }`;
@@ -2088,7 +2096,14 @@ class BSQIREmitter {
     }
 
     private emitMapEntryTypeDecl(ns: FullyQualifiedNamespace, tdecl: MapEntryTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
-        assert(false, "Not implemented -- emitMapEntryTypeDecl");
+        const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
+        const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+
+        const childsigs = [...this.emitChildrenTypes(tsig.alltermargs[0])];
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapEntryTypeDecl{ ${ibase}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitListTypeDecl(ns: FullyQualifiedNamespace, tdecl: ListTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
@@ -2472,7 +2487,7 @@ class BSQIREmitter {
             return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["T"]);
         }
         else if(tdecl instanceof MapEntryTypeDecl) {
-            assert(false, "Not implemented -- emitMapEntryTypeDecl");
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["K", "V"]);           
         }
         else if(tdecl instanceof ListTypeDecl) {
             return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
@@ -2493,7 +2508,7 @@ class BSQIREmitter {
             assert(false, "Not implemented -- emitSetTypeDecl");
         }
         else if(tdecl instanceof MapTypeDecl) {
-            assert(false, "Not implemented -- emitMapTypeDecl");
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, ["K", "V"]);
         }
         else if(tdecl instanceof EventListTypeDecl) {
             assert(false, "Not implemented -- emitEventListTypeDecl");
