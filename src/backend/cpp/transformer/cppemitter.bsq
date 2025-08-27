@@ -1466,7 +1466,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
         | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
         | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
-        | "unicodecharbuffer_size" => { return String::concat(indent, "    return cb.size;%n;"); }
+        | "unicodecharbuffer_size" => { return String::concat(indent, "    return ub.size;%n;"); }
         | "unicodecharbuffer_maxsize" => { return String::concat(indent, "    return __CoreCpp::Nat(__CoreCpp::maxUnicodeCharBufferSize);%n;"); }
         | "unicodecharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::ubufferEqual(ub1, ub2);%n;"); }
         | "nat_to_unicodecharbuffer" => { return String::concat(indent, "    return __CoreCpp::ubufferFromNat(v);%n;"); }

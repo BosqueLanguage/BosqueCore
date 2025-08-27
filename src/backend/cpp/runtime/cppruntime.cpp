@@ -161,6 +161,63 @@ UnicodeCharBuffer UnicodeCharBuffer::create_8(UnicodeChar c1, UnicodeChar c2, Un
     return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
 }
 
+UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept {
+    const UnicodeChar* buf = basestr + ptr;
+    switch(size) {
+        case 0: return UnicodeCharBuffer::create_empty();
+        case 1: return UnicodeCharBuffer::create_1(buf[0]);
+        case 2: return UnicodeCharBuffer::create_2(buf[0], buf[1]);
+        case 3: return UnicodeCharBuffer::create_3(buf[0], buf[1], buf[2]);
+        case 4: return UnicodeCharBuffer::create_4(buf[0], buf[1], buf[2], buf[3]);
+        case 5: return UnicodeCharBuffer::create_5(buf[0], buf[1], buf[2], buf[3], buf[4]);
+        case 6: return UnicodeCharBuffer::create_6(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
+        case 7: return UnicodeCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
+        default: return UnicodeCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+    }
+}
+
+// Moves chars from ub2 to ub1 until ub1 is full
+UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept {
+    uint64_t ub1size = ub1.size.get();
+    uint64_t ub2size = ub2.size.get();
+
+    if(ub1size + ub2size >= maxUnicodeCharBufferSize) {
+        ub1.size = Nat(maxUnicodeCharBufferSize);
+    }
+    else {
+        ub1.size += ub2.size;
+    }
+
+    // We could probably make this loop tighter but its fine as is
+    for(uint64_t i = ub1size; i < maxUnicodeCharBufferSize; i++) {
+        ub1.chars[i] = ub2.chars[i - ub1size];
+    }
+
+    return ub1;
+}
+
+// Removes already merged chars from cb
+UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& cb, Nat split) noexcept {
+    uint64_t nsplit = split.get();
+
+    if(nsplit == 0) {
+        return cb;
+    }
+
+    for(uint64_t i = 0; i < maxUnicodeCharBufferSize; i++) {
+        if(i < nsplit) {
+            cb.chars[i] = 0;
+            cb.size -= 1_n;
+        }
+        else {
+            cb.chars[i - nsplit] = cb.chars[i];
+            cb.chars[i] = 0;
+        }
+    }
+
+    return cb;
+}
+
 std::string to_string(MainType v) noexcept {
     if(std::holds_alternative<bool>(v)) {
         bool res = std::get<bool>(v);

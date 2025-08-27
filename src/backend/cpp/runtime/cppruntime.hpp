@@ -659,8 +659,8 @@ struct PathStack {
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufferSize = 8;
 struct CCharBuffer {
-    CChar chars[maxCCharBufferSize] = {};
-    Nat size = {};
+    CChar chars[maxCCharBufferSize] {};
+    Nat size {0};
 
     static CCharBuffer create_empty();
     static CCharBuffer create_1(CChar c1);
@@ -687,9 +687,10 @@ inline Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
     return cbuf_memcmp(cb1.chars, cb2.chars);
 }
 
+const int maxUnicodeCharBufferSize = 8;
 struct UnicodeCharBuffer {
-    UnicodeChar chars[8] = {};
-    Nat size = {};
+    UnicodeChar chars[8] {};
+    Nat size {0};
 
     static UnicodeCharBuffer create_empty();
     static UnicodeCharBuffer create_1(UnicodeChar c1);
@@ -701,6 +702,22 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7);
     static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
+UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept;
+UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& cb1, UnicodeCharBuffer& cb2) noexcept;
+UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& cb, Nat split) noexcept;
+
+//
+// This does NOT work
+//
+inline Bool ubuf_memcmp(UnicodeChar b1[maxUnicodeCharBufferSize], UnicodeChar b2[maxUnicodeCharBufferSize]) noexcept {
+    static_assert(maxUnicodeCharBufferSize * sizeof(CChar) == sizeof(uintptr_t));
+    
+    return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
+}
+
+inline Bool ubufferEqual(UnicodeCharBuffer& cb1, UnicodeCharBuffer& cb2) noexcept {
+    return ubuf_memcmp(cb1.chars, cb2.chars);
+}
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
