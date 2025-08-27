@@ -36,23 +36,23 @@ namespace UnicodeCharBufferOps {
 
 #if CPP_CORE
 namespace UnicodeRopeOps {
-    function s_UnicodeRope_create(buf: UnicodeCharBuffer): UnicodeRope {        
+    function s_unicoderope_create(buf: UnicodeCharBuffer): UnicodeRope {        
         return XCore::s_createDirect<Rope, UnicodeRope>(Rope::createLeaf(buf));       
     }
 
-    function s_UnicodeRope_append(r: UnicodeRope, buf: UnicodeCharBuffer): UnicodeRope {
+    function s_unicoderope_append(r: UnicodeRope, buf: UnicodeCharBuffer): UnicodeRope {
         return XCore::s_createDirect<Rope, UnicodeRope>(append(r.value, buf));
     }
 
-    function s_UnicodeRope_empty(cr: UnicodeRope): Bool {
+    function s_unicoderope_empty(cr: UnicodeRope): Bool {
         return cr.value?<BBLeaf>;
     }
 
-    function s_UnicodeRope_concat2(ur1: UnicodeRope, ur2: UnicodeRope): UnicodeRope {
-        if(s_UnicodeRope_empty(ur1)) {
+    function s_unicoderope_concat2(ur1: UnicodeRope, ur2: UnicodeRope): UnicodeRope {
+        if(s_unicoderope_empty(ur1)) {
             return ur2;
         }
-        elif(s_UnicodeRope_empty(ur2)) {
+        elif(s_unicoderope_empty(ur2)) {
             return ur1;
         }
         else {
@@ -60,7 +60,7 @@ namespace UnicodeRopeOps {
         }
     }
 
-    function s_UnicodeRope_equal(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
+    function s_unicoderope_equal(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
         return equal(ur1.value, ur2.value);
     }
 

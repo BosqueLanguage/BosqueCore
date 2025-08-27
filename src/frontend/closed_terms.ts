@@ -217,6 +217,21 @@ class InstantiationPropagator {
             }
         } 
 
+        if(fkey.startsWith("String")) {
+            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
+
+            if(nns !== undefined) {
+                if(fkey.endsWith("s_concat2")) {
+                    const concatdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_concat2") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, concatdecl, []);
+                }
+                if(fkey.endsWith("s_empty")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_empty") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
+            }
+        } 
+
         this.pendingNamespaceFunctions.push(new PendingNamespaceFunction(ns, fdecl, tterms));
     }
 
@@ -652,12 +667,9 @@ class InstantiationPropagator {
         if(ltkey === "String") {
             const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
 
-            if(nns !== undefined) {
-                assert(false, "Not Implemented -- Unicode Rope Comparison");
-                /*
+            if(nns !== undefined) {                
                 const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
                 this.instantiateNamespaceFunction(nns, createdecl, []);
-                */
             }
         }
 
