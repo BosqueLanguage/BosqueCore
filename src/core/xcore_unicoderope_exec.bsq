@@ -7,20 +7,20 @@ __internal entity UnicodeCharBuffer {
 }
 
 namespace UnicodeCharBufferOps {
-    function size(cb: UnicodeCharBuffer): Nat = unicodecharbuffer_size;
+    function size(ub: UnicodeCharBuffer): Nat = unicodecharbuffer_size;
     function getMaxSize(): Nat = unicodecharbuffer_maxsize;
-    function equal(cb1: UnicodeCharBuffer, cb2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
-    function natToCBuffer(v: Nat): UnicodeCharBuffer = nat_to_unicodecharbuffer;
-    function mergeCBuffers(cb1: UnicodeCharBuffer, cb2: UnicodeCharBuffer): UnicodeCharBuffer = unicodecharbuffer_merge;
-    function remainder(cb: UnicodeCharBuffer, split: Nat): UnicodeCharBuffer = unicodecharbuffer_remainder;
+    function equal(ub1: UnicodeCharBuffer, cb2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
+    %%function natToUnicodeBuffer(v: Nat): UnicodeCharBuffer = nat_to_unicodecharbuffer;
+    function mergeUnicodeBuffers(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): UnicodeCharBuffer = unicodecharbuffer_merge;
+    function remainder(ub: UnicodeCharBuffer, split: Nat): UnicodeCharBuffer = unicodecharbuffer_remainder;
 
-    function mergeCBuffers2(cb1: UnicodeCharBuffer, cb2: UnicodeCharBuffer): (|UnicodeCharBuffer, UnicodeCharBuffer|) {
-        let cb1size = getMaxSize() - cb1.size();
+    function mergeUnicodeBuffers2(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): (|UnicodeCharBuffer, UnicodeCharBuffer|) {
+        let ub1size = getMaxSize() - ub1.size();
         
-        let ncb1 = mergeCBuffers(cb1, cb2);
-        let ncb2 = remainder(cb2, cb1size);
+        let nub1 = mergeUnicodeBuffers(ub1, ub2);
+        let nub2 = remainder(ub2, ub1size);
 
-        return (|ncb1, ncb2|);
+        return (|nub1, nub2|);
     }
 
     function s_create_empty(): UnicodeCharBuffer = unicodecharbuffer_create_empty;
@@ -48,22 +48,29 @@ namespace UnicodeRopeOps {
         return cr.value?<BBLeaf>;
     }
 
-    function s_UnicodeRope_concat2(cr1: UnicodeRope, cr2: UnicodeRope): UnicodeRope {
-        if(s_UnicodeRope_empty(cr1)) {
-            return cr2;
+    function s_UnicodeRope_concat2(ur1: UnicodeRope, ur2: UnicodeRope): UnicodeRope {
+        if(s_UnicodeRope_empty(ur1)) {
+            return ur2;
         }
-        elif(s_UnicodeRope_empty(cr2)) {
-            return cr1;
+        elif(s_UnicodeRope_empty(ur2)) {
+            return ur1;
         }
         else {
-            return XCore::s_createDirect<Rope, UnicodeRope>(concat(cr1.value, cr2.value));
+            return XCore::s_createDirect<Rope, UnicodeRope>(concat(ur1.value, ur2.value));
         }
     }
 
-    function s_UnicodeRope_equal(cr1: UnicodeRope, cr2: UnicodeRope): Bool {
-        return equal(cr1.value, cr2.value);
+    function s_UnicodeRope_equal(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
+        return equal(ur1.value, ur2.value);
     }
 
+%*
+    %%
+    %% TODO: This function will NOT work verbatim from the crope!
+    %% will need to determine all necessary sizes
+    %%
+    %% Actually this might not exist in String?
+    %%
     function s_nat_to_UnicodeRope(v: Nat): UnicodeRope {
         %% TODO: Once invariant is added to cpp emitter lets use that instead
         assert UnicodeCharBufferOps::getMaxSize() == 8n;
@@ -71,23 +78,24 @@ namespace UnicodeRopeOps {
         let maxNatSizeForBuffer = 99999999n;
         let remainder = 100000000n;
 
-        let buf1 = UnicodeCharBufferOps::natToCBuffer(v);
+        let buf1 = UnicodeCharBufferOps::natToUnicodeBuffer(v);
         if(v <= maxNatSizeForBuffer) {
             return s_UnicodeRope_create(buf1);
         }
 
         var val = v // remainder;
-        let buf2 = UnicodeCharBufferOps::natToCBuffer(val);
+        let buf2 = UnicodeCharBufferOps::natToUnicodeBuffer(val);
         if(val <= maxNatSizeForBuffer) {
             return s_UnicodeRope_append(s_UnicodeRope_create(buf2), buf1);
         }
 
         val = val // maxNatSizeForBuffer;
-        let buf3 = UnicodeCharBufferOps::natToCBuffer(val);
+        let buf3 = UnicodeCharBufferOps::natToUnicodeBuffer(val);
         let rope = s_UnicodeRope_append(s_UnicodeRope_append(s_UnicodeRope_create(buf3), buf2), buf1);
 
         return rope;
     }
+*%
 
     enum Color {
         Red,
@@ -359,7 +367,7 @@ namespace UnicodeRopeOps {
             Leaf => { 
                 %% Merge all of v into t.buf
                 if($t.buf.size() + v.size() <= UnicodeCharBufferOps::getMaxSize()) {
-                    let merge = UnicodeCharBufferOps::mergeCBuffers($t.buf, v);
+                    let merge = UnicodeCharBufferOps::mergeUnicodeBuffers($t.buf, v);
                     return Rope::createLeaf(merge);
                 }
 
@@ -370,7 +378,7 @@ namespace UnicodeRopeOps {
                     %% TODO: once multi assignment is supported for emission lets one line this
                     %%
 
-                    let tmp = UnicodeCharBufferOps::mergeCBuffers2($t.buf, v);
+                    let tmp = UnicodeCharBufferOps::mergeUnicodeBuffers2($t.buf, v);
                     let cb1 = tmp.0;
                     let cb2 = tmp.1;
                     return balance(Color#Red, Rope::createLeaf(cb1), Rope::createLeaf(cb2)); 

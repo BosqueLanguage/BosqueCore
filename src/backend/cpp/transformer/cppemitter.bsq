@@ -1451,8 +1451,16 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
         | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
         | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
+        | "unicodecharbuffer_size" => { return String::concat(indent, "    return cb.size;%n;"); }
+        | "unicodecharbuffer_maxsize" => { return String::concat(indent, "    return __CoreCpp::Nat(__CoreCpp::maxUnicodeCharBufferSize);%n;"); }
+        | "unicodecharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::ubufferEqual(ub1, ub2);%n;"); }
+        | "nat_to_unicodecharbuffer" => { return String::concat(indent, "    return __CoreCpp::ubufferFromNat(v);%n;"); }
+        | "unicodecharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::ubufferMerge(ub1, ub2);%n;"); }
+        | "unicodecharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::ubufferRemainder(ub, split);%n;"); }        
         | "cstring_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_concat2(s1, s2);%n;"); }
         | "cstring_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_empty(s);%n;"); }
+        | "string_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_concat2(s1, s2);%n;"); }
+        | "string_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_empty(s);%n;"); }
         | "s_nat_to_cstring" => { return String::concat(indent, "    return Core::CRopeOps::s_nat_to_crope(v);%n;"); }
         | _ => { abort; } %% TODO: Not implemented
     }
