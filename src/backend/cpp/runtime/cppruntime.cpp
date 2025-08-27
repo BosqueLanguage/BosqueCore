@@ -196,7 +196,7 @@ UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) 
     return ub1;
 }
 
-// Removes already merged chars from cb
+// Removes already merged chars from ub
 UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     uint64_t nsplit = split.get();
 
