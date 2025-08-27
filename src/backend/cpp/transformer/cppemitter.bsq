@@ -1048,15 +1048,15 @@ function emitCStringAsLiteral(s: CString): String {
     return String::fromCString(CString::concat('"', formatted,'"'));
 }
 
+%%
+%% TODO: We need some way to properly reflect this max size in both the
+%% cppruntime files and the actual emitter itself.
+%%
+
 function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression): String {
     let strsize = exp.value.size();
     let baseargs = String::concat("0, ", natToString(strsize), ", str");
     let base = String::concat("Core::CRopeOps::s_crope_create(__CoreCpp::cbufferFromStringLiteral(", baseargs, "))");
-
-    %%
-    %% TODO: We need some way to properly reflect this max size in both the
-    %% cppruntime files and the actual emitter itself.
-    %%
 
     let maxCCharBufferSize = 8n;
 
@@ -1073,7 +1073,22 @@ function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression
 }
 
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
-    abort;
+    let strsize = exp.value.size();
+    let baseargs = String::concat("0, ", natToString(strsize), ", str");
+    let base = String::concat("Core::UnicodeRopeOps::s_unicoderope_create(__CoreCpp::ubufferFromStringLiteral(", baseargs, "))");
+
+    let maxCCharBufferSize = 8n;
+
+    let constructor = Algorithm::while<(|Nat, String|)>((|maxCCharBufferSize, base|), 
+        pred(cons) => cons.0 < strsize, 
+        fn(cons) => {
+            let append_base = String::concat("Core::CRopeOps::s_unicoderope_append(", cons.1, ", __CoreCpp::ubufferFromStringLiteral(");
+            let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
+            return cons.0 + maxCCharBufferSize, String::concat(append_base, args, "))");
+    }).1;
+
+    return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(", 
+        emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
@@ -1085,7 +1100,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
         | CPPAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
         | CPPAssembly::LiteralCStringExpression => { return emitLiteralCStringExpression($e); }
-        %%| CPPAssembly::LiteralStringExpression => { abort; }
+        | CPPAssembly::LiteralStringExpression => { return emitLiteralStringExpression($e); }
         %%| CPPAssembly::LiteralCRegexExpression => { abort; }
         %%| CPPAssembly::LiteralRegexExpression => { abort; }
         %%| CPPAssembly::LiteralTypeDeclValueExpression => { abort; }
