@@ -706,7 +706,7 @@ UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const Unicod
 UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept;
 UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept;
 
-inline Bool ubuf_memcmp(UnicodeChar b1[maxCCharBufferSize], UnicodeChar b2[maxCCharBufferSize]) noexcept {
+inline Bool ubuf_memcmp(UnicodeChar b1[maxUnicodeCharBufferSize], UnicodeChar b2[maxUnicodeCharBufferSize]) noexcept {
     static_assert(sizeof(uintptr_t) == 2 * sizeof(UnicodeChar));
     static_assert(maxUnicodeCharBufferSize % (sizeof(uintptr_t) / sizeof(UnicodeChar)) == 0);
 
