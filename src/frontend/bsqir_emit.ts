@@ -559,11 +559,7 @@ class BSQIREmitter {
         if(cdecl instanceof MapEntryTypeDecl) {
             const keytype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
             const valuetype = this.emitTypeSignature(exp.ctype.alltermargs[1]);
-           
-            //
-            // So there doesnt appear to be a constructor for this type in body.bsq so 
-            // I am wondering if I donked up somewhere or need to add it myself?
-            //
+
             return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, keytype=${keytype}, valuetype=${valuetype} }`;
         }
         else {
@@ -685,10 +681,6 @@ class BSQIREmitter {
         const ttype = this.emitTypeSignature(exp.ttype);
         const resolvedDeclType = this.emitTypeSignature((this.tproc(exp.resolvedDeclType as TypeSignature)) as NominalTypeSignature);
       
-        //
-        // TODO: special calls!
-        //
-
         if(exp.isSpecialCall) {
             const eexp = this.emitExpression(exp.args.args[0].exp);
             return `BSQAssembly::CallTypeFunctionSpecialExpression{ ${ebase}, ikey='${ikey}'<BSQAssembly::InvokeKey>, ttype=${ttype}, resolvedDeclType=${resolvedDeclType}, name='${exp.name}'<BSQAssembly::Identifier>, exp=${eexp}}`;
@@ -771,7 +763,6 @@ class BSQIREmitter {
         return `BSQAssembly::PostfixAsConvert{ ${opbase}, ttest=${ttype} }`;
     }
 
-    // Might have donked this up so lets be careful
     private emitPostfixAssignFields(exp: PostfixAssignFields): string {
         const opbase = this.emitPostfixOperationBase(exp);
         const declOnType = this.emitTypeSignature(exp.updatetype as TypeSignature);
