@@ -259,6 +259,16 @@ entity ConstantSimplification {
         return e[args=nargs];
     }
 
+    recursive method processConstructorPrimaryMapExpression(e: ConstructorPrimaryMapExpression): Expression {
+        let nargs = this.processArgumentListSimple[recursive](e.args);
+        return e[args=nargs];
+    }
+
+    recursive method processConstructorPrimarySpecialMapEntryExpression(e: ConstructorPrimarySpecialMapEntryExpression): Expression {
+        let nval = this.processUnaryArg[recursive](e.value);
+        return e[value=nval];
+    }
+
     recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression): Expression {
         let nval = this.processUnaryArg[recursive](e.value);
         return e[value=nval];
@@ -283,7 +293,8 @@ entity ConstantSimplification {
     recursive method processConstructorExpression(e: ConstructorExpression): Expression {
         match(e)@ {
             ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e); }
-            | ConstructorPrimaryMapExpression => { abort; }
+            | ConstructorPrimaryMapExpression => { return this.processConstructorPrimaryMapExpression[recursive]($e); }
+            | ConstructorPrimarySpecialMapEntryExpression => { return this.processConstructorPrimarySpecialMapEntryExpression[recursive]($e); }
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e); }
             | ConstructorPrimarySpecialOkExpression => { abort; }
             | ConstructorPrimarySpecialFailExpression => { abort; }
@@ -313,6 +324,11 @@ entity ConstantSimplification {
     recursive method processCallTypeFunctionExpression(e: CallTypeFunctionExpression): Expression {
         let ninfo = this.processInvokeArgumentInfoStatic[recursive](e.argsinfo);
         return e[argsinfo=ninfo];
+    }
+
+    recursive method processCallTypeFunctionSpecialExpression(e: CallTypeFunctionSpecialExpression): Expression {
+        let nexp = this.processUnaryArg[recursive](e.exp);
+        return e[exp=nexp];
     }
 
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
@@ -388,6 +404,17 @@ entity ConstantSimplification {
         return e[exp=nexp];
     }
 
+    recursive method processPostfixAssignFields(op: PostfixAssignFields): PostfixAssignFields {
+        let nupdates = op.updates.map<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>(
+            fn(upd) => {
+                let nupdate = this.processUnaryArg[recursive](upd.3);
+                return upd.0, upd.1, upd.2, nupdate;
+            }
+        );
+
+        return op[updates=nupdates];
+    }
+
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic): PostfixInvokeStatic {
         let ninfo = this.processInvokeArgumentInfoStatic[recursive](op.argsinfo);
         return op[argsinfo=ninfo];
@@ -402,7 +429,7 @@ entity ConstantSimplification {
                 | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return this.processITestAsTest($op.sinfo, $op.baseType, $op.ttest); }
                 | PostfixAsConvert => { return this.processITestAsConvert($op.sinfo, $op.baseType, $op.ttest); }
-                | PostfixAssignFields => { abort; }
+                | PostfixAssignFields => { return this.processPostfixAssignFields($op); }
                 | PostfixInvokeStatic => { return this.processPostfixInvokeStatic($op); }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
@@ -600,6 +627,18 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processKeyCmpEqualExpression(e: KeyCmpEqualExpression): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
+    recursive method processKeyCmpLessExpression(e: KeyCmpLessExpression): Expression {
+        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+
+        return e[lhs=nlhs, rhs=nrhs];
+    }
+
     recursive method processBinaryNumericExpression(e: BinaryNumericExpression): Expression {
         let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
 
@@ -766,7 +805,7 @@ entity ConstantSimplification {
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e); }
             | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e); }
-            | CallTypeFunctionSpecialExpression => { abort; }
+            | CallTypeFunctionSpecialExpression => { return this.processCallTypeFunctionSpecialExpression[recursive]($e); }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
             | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e); }
@@ -780,8 +819,8 @@ entity ConstantSimplification {
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e); }
-            | KeyCmpEqualExpression => { abort; }
-            | KeyCmpLessExpression => { abort; }
+            | KeyCmpEqualExpression => { return this.processKeyCmpEqualExpression[recursive]($e); }
+            | KeyCmpLessExpression => { return this.processKeyCmpLessExpression[recursive]($e); }
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e); }
             | BinLogicExpression => { return this.processBinLogicExpression[recursive]($e); }
             | MapEntryConstructorExpression => { abort; }
