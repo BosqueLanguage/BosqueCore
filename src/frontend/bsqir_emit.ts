@@ -553,7 +553,6 @@ class BSQIREmitter {
         if(cdecl instanceof SomeTypeDecl) {
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
 
-
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
         if(cdecl instanceof MapEntryTypeDecl) {
@@ -563,7 +562,6 @@ class BSQIREmitter {
             return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, keytype=${keytype}, valuetype=${valuetype} }`;
         }
         else {
-            console.log(cdecl);
             assert(false, "Not implemented -- SpecialConstructableConstructor");
         }
     }

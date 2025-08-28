@@ -260,6 +260,16 @@ entity ExplicitifyTransform {
         return e[args=nargs];
     }
 
+    recursive method processConstructorPrimaryMapExpression(e: ConstructorPrimaryMapExpression, vmap: VarMapping): Expression {
+        let nargs = this.processArgumentListConstructCollection[recursive](e.args, e.elemtype, vmap);
+        return e[args=nargs]; 
+    }
+
+    recursive method processConstructorPrimarySpecialMapEntryExpression(e: ConstructorPrimarySpecialMapEntryExpression, vmap: VarMapping): Expression {
+        let nval = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
+        return e[value=nval];
+    }
+
     recursive method processConstructorTypeDeclExpression(e: ConstructorTypeDeclExpression, vmap: VarMapping): Expression {
         let nval = this.processUnaryConstructorArg[recursive](e.value, e.valuetype, vmap);
         return e[value=nval];
@@ -287,7 +297,8 @@ entity ExplicitifyTransform {
     recursive method processConstructorExpression(e: ConstructorExpression, vmap: VarMapping): Expression {
         match(e)@ {
             ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, vmap); }
-            | ConstructorPrimaryMapExpression => { abort; }
+            | ConstructorPrimaryMapExpression => { return this.processConstructorPrimaryMapExpression[recursive]($e, vmap); }
+            | ConstructorPrimarySpecialMapEntryExpression => { return this.processConstructorPrimarySpecialMapEntryExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialOkExpression => { abort; }
             | ConstructorPrimarySpecialFailExpression => { abort; }
@@ -323,6 +334,13 @@ entity ExplicitifyTransform {
         let nargs = this.processInvokeArgumentInfoStatic[recursive](e.sinfo, params, e.argsinfo, vmap);
 
         return e[argsinfo=nargs];
+    }
+
+    recursive method processCallTypeFunctionSpecialExpression(e: CallTypeFunctionSpecialExpression, vmap: VarMapping): Expression {
+        let nexp = this.processExpression[recursive](e.exp, vmap);
+        let cexp = this.processCoerceTypeAsNeeded(nexp, e.resolvedDeclType);
+
+        return e[exp=cexp];
     }
 
     recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
@@ -382,6 +400,19 @@ entity ExplicitifyTransform {
         return e[exp=cexp];
     }
 
+    recursive method processPostfixAssignFields(op: PostfixAssignFields, vmap: VarMapping): PostfixAssignFields {
+        let nupdates = op.updates.map<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>(
+            fn(upd) => {
+                let nupdate = this.processExpression[recursive](upd.3, vmap);
+                let cupdate = this.processCoerceTypeAsNeeded(nupdate, upd.2);
+
+                return upd.0, upd.1, upd.2, cupdate;
+            }
+        );
+
+        return op[updates=nupdates];
+    }
+
     recursive method processPostfixInvokeStatic(op: PostfixInvokeStatic, vmap: VarMapping): PostfixInvokeStatic {
         let smdecl = this.assembly.staticmethods.get(op.resolvedTrgt);
         let nargs = this.processInvokeArgumentInfoStatic[recursive](op.sinfo, smdecl.params, op.argsinfo, vmap);
@@ -398,7 +429,7 @@ entity ExplicitifyTransform {
                 | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return $op; }
                 | PostfixAsConvert => { return $op; }
-                | PostfixAssignFields => { abort; }
+                | PostfixAssignFields => { return this.processPostfixAssignFields[recursive]($op, vmap); }
                 | PostfixInvokeStatic => { return this.processPostfixInvokeStatic[recursive]($op, vmap); }
                 | PostfixInvokeVirtual => { abort; }
                 | PostfixLiteralKeyAccess => { abort; }
@@ -496,6 +527,44 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processKeyCmpEqualExpression(e: KeyCmpEqualExpression, vmap: VarMapping): Expression {
+        let nlhs = this.processExpression[recursive](e.lhs, vmap); 
+        let nrhs = this.processExpression[recursive](e.rhs, vmap);
+        var clhs = this.processCoerceTypeAsNeeded(nlhs, e.ktype);
+        var crhs = this.processCoerceTypeAsNeeded(nrhs, e.ktype);
+
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(clhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            clhs = TypeDeclPrimitiveFieldAccessExpression{ clhs.sinfo, $lhstype.valuetype, clhs };
+        }
+
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(crhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            crhs = TypeDeclPrimitiveFieldAccessExpression{ crhs.sinfo, $rhstype.valuetype, crhs };
+        }
+
+        return e[lhs=clhs, rhs=crhs];
+    }
+
+    recursive method processKeyCmpLessExpression(e: KeyCmpLessExpression, vmap: VarMapping): Expression {
+        let nlhs = this.processExpression[recursive](e.lhs, vmap); 
+        let nrhs = this.processExpression[recursive](e.rhs, vmap);
+        var clhs = this.processCoerceTypeAsNeeded(nlhs, e.ktype);
+        var crhs = this.processCoerceTypeAsNeeded(nrhs, e.ktype);
+
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(clhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            clhs = TypeDeclPrimitiveFieldAccessExpression{ clhs.sinfo, $lhstype.valuetype, clhs };
+        }
+
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(crhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            crhs = TypeDeclPrimitiveFieldAccessExpression{ crhs.sinfo, $rhstype.valuetype, crhs };
+        }
+
+        return e[lhs=clhs, rhs=crhs];
+    }
+
     recursive method processBinaryNumericExpression(e: BinaryNumericExpression, vmap: VarMapping): Expression {
         var nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs, vmap);
 
@@ -588,7 +657,7 @@ entity ExplicitifyTransform {
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e, vmap); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, vmap); }
             | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, vmap); }
-            | CallTypeFunctionSpecialExpression => { abort; }
+            | CallTypeFunctionSpecialExpression => { return this.processCallTypeFunctionSpecialExpression[recursive]($e, vmap); }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
             | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e, vmap); }
@@ -602,8 +671,8 @@ entity ExplicitifyTransform {
             | UnaryExpression => { return this.processUnaryExpression[recursive]($e, vmap); }
             | BinaryArithExpression => { return this.processBinaryArithExpression[recursive]($e, vmap); }
             | BinaryKeyEqExpression => { return this.processBinaryKeyEqExpression[recursive]($e, vmap); }
-            | KeyCmpEqualExpression => { abort; }
-            | KeyCmpLessExpression => { abort; }
+            | KeyCmpEqualExpression => { return this.processKeyCmpEqualExpression[recursive]($e, vmap); }
+            | KeyCmpLessExpression => { return this.processKeyCmpLessExpression[recursive]($e, vmap); }
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { return this.processBinLogicExpression[recursive]($e, vmap); }
             | MapEntryConstructorExpression => { abort; }
