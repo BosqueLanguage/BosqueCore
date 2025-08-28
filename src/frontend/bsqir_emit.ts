@@ -2205,7 +2205,6 @@ class BSQIREmitter {
         assert(false, "Not implemented -- emitSetTypeDecl");
     }
 
-    // Pretty sure this can be identitical to emitMapEntryTypeDecl(..)
     private emitMapTypeDecl(ns: FullyQualifiedNamespace, tdecl: MapTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
@@ -2214,7 +2213,7 @@ class BSQIREmitter {
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])}, ktype=${this.emitTypeSignature(tsig.alltermargs[1])}, vtype=${this.emitTypeSignature(tsig.alltermargs[2])} }`];
     }
 
     private emitEventListTypeDecl(ns: FullyQualifiedNamespace, tdecl: EventListTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
