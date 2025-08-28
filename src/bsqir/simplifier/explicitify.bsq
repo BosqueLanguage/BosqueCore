@@ -336,9 +336,6 @@ entity ExplicitifyTransform {
         return e[argsinfo=nargs];
     }
 
-    %%
-    %% TODO: Try to understand this a tad better
-    %%
     recursive method processCallTypeFunctionSpecialExpression(e: CallTypeFunctionSpecialExpression, vmap: VarMapping): Expression {
         let nexp = this.processExpression[recursive](e.exp, vmap);
         let cexp = this.processCoerceTypeAsNeeded(nexp, e.resolvedDeclType);
