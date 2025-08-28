@@ -336,7 +336,9 @@ entity ExplicitifyTransform {
         return e[argsinfo=nargs];
     }
 
+    %%
     %% TODO: Try to understand this a tad better
+    %%
     recursive method processCallTypeFunctionSpecialExpression(e: CallTypeFunctionSpecialExpression, vmap: VarMapping): Expression {
         let nexp = this.processExpression[recursive](e.exp, vmap);
         let cexp = this.processCoerceTypeAsNeeded(nexp, e.resolvedDeclType);
@@ -531,23 +533,39 @@ entity ExplicitifyTransform {
     recursive method processKeyCmpEqualExpression(e: KeyCmpEqualExpression, vmap: VarMapping): Expression {
         let nlhs = this.processExpression[recursive](e.lhs, vmap); 
         let nrhs = this.processExpression[recursive](e.rhs, vmap);
+        var clhs = this.processCoerceTypeAsNeeded(nlhs, e.ktype);
+        var crhs = this.processCoerceTypeAsNeeded(nrhs, e.ktype);
 
-        %%
-        %% What work to do? any?
-        %%
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(clhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            clhs = TypeDeclPrimitiveFieldAccessExpression{ clhs.sinfo, $lhstype.valuetype, clhs };
+        }
 
-        return e[lhs=nlhs, rhs=nrhs];
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(crhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            crhs = TypeDeclPrimitiveFieldAccessExpression{ crhs.sinfo, $rhstype.valuetype, crhs };
+        }
+
+        return e[lhs=clhs, rhs=crhs];
     }
 
     recursive method processKeyCmpLessExpression(e: KeyCmpLessExpression, vmap: VarMapping): Expression {
         let nlhs = this.processExpression[recursive](e.lhs, vmap); 
         let nrhs = this.processExpression[recursive](e.rhs, vmap);
+        var clhs = this.processCoerceTypeAsNeeded(nlhs, e.ktype);
+        var crhs = this.processCoerceTypeAsNeeded(nrhs, e.ktype);
 
-        %%
-        %% What work to do? any?
-        %%
+        let lhstype = this.assembly.lookupNominalTypeDeclaration(clhs.etype.tkeystr);
+        if(lhstype)@<TypedeclTypeDecl> {
+            clhs = TypeDeclPrimitiveFieldAccessExpression{ clhs.sinfo, $lhstype.valuetype, clhs };
+        }
 
-        return e[lhs=nlhs, rhs=nrhs];
+        let rhstype = this.assembly.lookupNominalTypeDeclaration(crhs.etype.tkeystr);
+        if(rhstype)@<TypedeclTypeDecl> {
+            crhs = TypeDeclPrimitiveFieldAccessExpression{ crhs.sinfo, $rhstype.valuetype, crhs };
+        }
+
+        return e[lhs=clhs, rhs=crhs];
     }
 
     recursive method processBinaryNumericExpression(e: BinaryNumericExpression, vmap: VarMapping): Expression {

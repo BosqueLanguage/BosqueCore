@@ -628,15 +628,40 @@ entity ConstantSimplification {
     }
 
     recursive method processKeyCmpEqualExpression(e: KeyCmpEqualExpression): Expression {
-        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+        let nlhs = this.processExpression[recursive](e.lhs);
+        let nrhs = this.processExpression[recursive](e.rhs);
 
-        return e[lhs=nlhs, rhs=nrhs];
+        if(nlhs?!<LiteralSimpleExpression> || nrhs?!<LiteralSimpleExpression>) {
+            return e[lhs=nlhs, rhs=nrhs];
+        }
+        else {
+            if(nlhs@<LiteralSimpleExpression>.value === nrhs@<LiteralSimpleExpression>.value) {
+                return ConstantSimplification::trueExp;
+            }
+            else {
+                return ConstantSimplification::falseExp;
+            }
+        }
     }
 
     recursive method processKeyCmpLessExpression(e: KeyCmpLessExpression): Expression {
-        let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
+        let nlhs = this.processExpression[recursive](e.lhs);
+        let nrhs = this.processExpression[recursive](e.rhs);
 
-        return e[lhs=nlhs, rhs=nrhs];
+        if(nlhs?!<LiteralSimpleExpression> || nrhs?!<LiteralSimpleExpression>) {
+            return e[lhs=nlhs, rhs=nrhs];
+        }
+        else {
+            %%
+            %% Eventually we might want to perform numeric checks here
+            %%
+            if(nlhs@<LiteralSimpleExpression>.value === nrhs@<LiteralSimpleExpression>.value) {
+                return ConstantSimplification::falseExp;
+            }
+            else {
+                 return e[lhs=nlhs, rhs=nrhs];
+            }
+        }
     }
 
     recursive method processBinaryNumericExpression(e: BinaryNumericExpression): Expression {
