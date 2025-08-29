@@ -1031,17 +1031,6 @@ function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx:
     }
 }
 
-%%
-%% I believe all keys (as they are only a few types reserved for keys)
-%% should be very easily represented as const char*'s and then character
-%% comparison becomes trivial. Now a great question is how do we determine
-%% a key is "less" than another? We could sum character codes for whole
-%% string to determine which is smaller, but becomes akward as this may 
-%% deviate from how bosque does this with the js emitter.
-%%
-%% Well shit unicode strings are valid keys...
-%% Maybe a bitwise comparison would still work fine?
-%%
 function emitKeyCmpEqualExpression(exp: CPPAssembly::KeyCmpEqualExpression, ctx: Context): String {
     return "";
 }
