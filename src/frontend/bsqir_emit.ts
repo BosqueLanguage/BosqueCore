@@ -555,12 +555,7 @@ class BSQIREmitter {
 
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
-
-        //
-        // Wait.... Did I fabricate the need for special map entry...?
-        //
-
-        if(cdecl instanceof MapEntryTypeDecl) {
+        else if(cdecl instanceof MapEntryTypeDecl) {
             const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
             const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
 

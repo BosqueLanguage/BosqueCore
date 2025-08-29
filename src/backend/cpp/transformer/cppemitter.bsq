@@ -850,7 +850,23 @@ function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrima
 }
 
 function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimaryMapExpression, ctx: Context): String {
-    return "";
+    let args = emitArguments(exp.args, ctx);
+    let ns = "Core::MapOps::"; %% So long as maps impl stays in Core::MapOps this will hold 
+    
+    let ktype = String::fromCString(exp.keytype.tkeystr.value);
+    let vtype = String::fromCString(exp.valuetype.tkeystr.value);
+    
+    let resolvedktype = removeCppPrefix(ktype);
+    let resolvedvtype = removeCppPrefix(vtype);
+    
+    let template = String::concat("ᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ");
+
+    switch(exp.args.size()) {
+        0n =>   { return String::concat(ns, "s_map_create_empty", template, "()"); }
+        | 1n => { return String::concat(ns, "s_map_create_1", template, "(", args, ")"); }
+        | 2n => { return String::concat(ns, "s_map_create_2", template, "(", args, ")"); } 
+        | _ => { abort; }
+    }
 }
 
 function emitConstructorPrimaryCollectionSingletonExpression(exp: CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression, ctx: Context): String {
@@ -1016,8 +1032,15 @@ function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx:
 }
 
 %%
-%% TODO: Comeup with a nice key comparison function! Likely needs to be done in the
-%% runtime files
+%% I believe all keys (as they are only a few types reserved for keys)
+%% should be very easily represented as const char*'s and then character
+%% comparison becomes trivial. Now a great question is how do we determine
+%% a key is "less" than another? We could sum character codes for whole
+%% string to determine which is smaller, but becomes akward as this may 
+%% deviate from how bosque does this with the js emitter.
+%%
+%% Well shit unicode strings are valid keys...
+%% Maybe a bitwise comparison would still work fine?
 %%
 function emitKeyCmpEqualExpression(exp: CPPAssembly::KeyCmpEqualExpression, ctx: Context): String {
     return "";
