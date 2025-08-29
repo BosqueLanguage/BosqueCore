@@ -10,6 +10,7 @@ namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
     function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
+    function less(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_less;
     function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
     function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
     function remainder(cb: CCharBuffer, split: Nat): CCharBuffer = ccharbuffer_remainder;

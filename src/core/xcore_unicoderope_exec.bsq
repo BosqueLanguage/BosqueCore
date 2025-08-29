@@ -10,7 +10,7 @@ namespace UnicodeCharBufferOps {
     function size(ub: UnicodeCharBuffer): Nat = unicodecharbuffer_size;
     function getMaxSize(): Nat = unicodecharbuffer_maxsize;
     function equal(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
-    %%function natToUnicodeBuffer(v: Nat): UnicodeCharBuffer = nat_to_unicodecharbuffer;
+    function less(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): Bool = unicodecharbuffer_less;
     function mergeUnicodeBuffers(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): UnicodeCharBuffer = unicodecharbuffer_merge;
     function remainder(ub: UnicodeCharBuffer, split: Nat): UnicodeCharBuffer = unicodecharbuffer_remainder;
 
@@ -64,38 +64,9 @@ namespace UnicodeRopeOps {
         return equal(ur1.value, ur2.value);
     }
 
-%*
-    %%
-    %% TODO: This function will NOT work verbatim from the crope!
-    %% will need to determine all necessary sizes
-    %%
-    %% Actually this might not exist in String?
-    %%
-    function s_nat_to_UnicodeRope(v: Nat): UnicodeRope {
-        %% TODO: Once invariant is added to cpp emitter lets use that instead
-        assert UnicodeCharBufferOps::getMaxSize() == 8n;
-      
-        let maxNatSizeForBuffer = 99999999n;
-        let remainder = 100000000n;
-
-        let buf1 = UnicodeCharBufferOps::natToUnicodeBuffer(v);
-        if(v <= maxNatSizeForBuffer) {
-            return s_UnicodeRope_create(buf1);
-        }
-
-        var val = v // remainder;
-        let buf2 = UnicodeCharBufferOps::natToUnicodeBuffer(val);
-        if(val <= maxNatSizeForBuffer) {
-            return s_UnicodeRope_append(s_UnicodeRope_create(buf2), buf1);
-        }
-
-        val = val // maxNatSizeForBuffer;
-        let buf3 = UnicodeCharBufferOps::natToUnicodeBuffer(val);
-        let rope = s_UnicodeRope_append(s_UnicodeRope_append(s_UnicodeRope_create(buf3), buf2), buf1);
-
-        return rope;
+    function s_unicoderope_less(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
+        return less(ur1.value, ur2.value);
     }
-*%
 
     enum Color {
         Red,
