@@ -1128,7 +1128,6 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
-%% I do not understand what made the other constructor special
 function emitMapEntryConstructorExpression(exp: CPPAssembly::MapEntryConstructorExpression, ctx: Context): String {
     let key = emitExpression(exp.kexp, ctx);
     let value = emitExpression(exp.vexp, ctx);
