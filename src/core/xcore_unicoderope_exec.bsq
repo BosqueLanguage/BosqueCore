@@ -424,6 +424,17 @@ namespace UnicodeRopeOps {
         return false;
     }
 
+    function less(r1: Rope, r2: Rope): Bool {
+        return Rope::compare(r1, r2, 
+            fn(ub1, ub2) => {    
+                if(UnicodeRopeOps::less(ub1, ub2)) {
+                    return true;
+                }
+                return false
+            }
+        );
+    }
+
     datatype Rope of 
         BBLeaf { }
         | Leaf { buf: UnicodeCharBuffer }
@@ -451,6 +462,20 @@ namespace UnicodeRopeOps {
                     return Rope::getCharacterCount($rope.l) + Rope::getCharacterCount($rope.r);
                 }
             }
+        }
+
+        function compare(l: Rope, r: Rope, comp: fn(UnicodeCharBuffer, UnicodeCharBuffer) -> Bool): Bool {
+            %% Do this traversal in order is very akward :/
+
+            if(l?<Leaf> && r?<Leaf>) {
+                let nl = l@<Leaf>;
+                let nr  r@<Leaf>;
+
+                return comp(nl.buf, nr.buf);
+            }
+
+            %% This abort is probably not right
+            abort;
         }
     }
 } %% namespace UnicodeRopeOps
