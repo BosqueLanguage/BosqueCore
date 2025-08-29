@@ -1,6 +1,7 @@
 namespace CPPEmitter;
 
 const reftypeThreshold: Nat = 4n;
+const slotSizeInBits: Nat = 8n;
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -438,19 +439,25 @@ entity CPPTransformer {
     method transformConstructorPrimarySpecialMapEntryExpression(cpsmee: BSQAssembly::ConstructorPrimarySpecialMapEntryExpression): CPPAssembly::ConstructorPrimarySpecialMapEntryExpression {
         let etype = this.convertTypeSignature(cpsmee.etype);
         let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpsmee.ctype);
+
+        let key = this.transformExpressionToCpp(cpsmee.key);
         let value = this.transformExpressionToCpp(cpsmee.value);
+
         let keytype = this.convertTypeSignature(cpsmee.keytype);
         let valuetype = this.convertTypeSignature(cpsmee.valuetype);
 
-        return CPPAssembly::ConstructorPrimarySpecialMapEntryExpression{ etype, ctype, value, keytype, valuetype };
+        %% To prevent conflicts with other special constructors key and value location
+        %% are flipped :/
+        return CPPAssembly::ConstructorPrimarySpecialMapEntryExpression{ etype, ctype, value, key, keytype, valuetype };
     }
 
     method transformConstructorPrimarySpecialSomeExpression(cpsse: BSQAssembly::ConstructorPrimarySpecialSomeExpression): CPPAssembly::ConstructorPrimarySpecialSomeExpression {
         let etype = this.convertTypeSignature(cpsse.etype);
         let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpsse.ctype);
+
         let value = this.transformExpressionToCpp(cpsse.value);
         let ofttype = this.convertTypeSignature(cpsse.ofttype);
-
+        
         return CPPAssembly::ConstructorPrimarySpecialSomeExpression{ etype, ctype, value, ofttype };
     }
 
@@ -1183,15 +1190,51 @@ entity CPPTransformer {
                         var sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
  
                         if(oftypeinfo.slotsize > reftypeThreshold) {
-                            sometinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n, 1n, '1', cpptkey, CPPAssembly::Tag#Value }; 
+                            sometinfo = CPPAssembly::TypeInfo{ ntic.tid, 1n * slotSizeInBits, 1n, '1', cpptkey, CPPAssembly::Tag#Value }; 
                         }
                         
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
+                    if(ant)@<BSQAssembly::MapEntryTypeDecl> {
+                        %%
+                        %% NOTE: I have this explicitly accounting for the keys size too here!
+                        %%       Not totally sure if this is necessary!
+                        %%
+                        let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
+                        let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
+
+                        %% Lets make this a method!
+                        var ktypemask = ktypeinfo.ptrmask;
+                        var ktypesize = ktypeinfo.slotsize;
+                        if(ktypesize > reftypeThreshold) {
+                            ktypemask = '1';
+                            ktypesize = slotSizeInBits;
+                        }
+
+                        var vtypemask = vtypeinfo.ptrmask;
+                        var vtypesize = vtypeinfo.slotsize;
+                        if(vtypesize > reftypeThreshold) {
+                            vtypemask = '1';
+                            vtypesize = slotSizeInBits;
+                        }
+
+                        let ptrmask = CString::concat(ktypemask, vtypemask);
+                        let slotsize = ktypesize + vtypesize;
+
+                        %%
+                        %% TODO: We should really check this out and make sure its somewhat logical
+                        %% im not super confident on making always value but it might work well
+                        %%
+                        let metinfo = CPPAssembly::TypeInfo{ nntic.tid, slotsize * slotSizeInBits, slotsize, ptrmask, cpptkey, CPPAssembly::Tag#Value };
+
+                        return metinfo, nntic.update(cpptkey, metinfo);
+                    }
+
                     abort;
                 }
                 elif(this.bsqasm.collections.has(typekey)) { 
-                    %% List<T> is just alias of Tree<T> so we need to get Tree<T>'s typeinfo 
+                    %% List<T> and Map<K, V> is just alias of Tree<T> and Tree<K, V> so 
+                    %% we need to get Tree<T>'s and Tree<K, V>'s typeinfo 
                     if(ant)@<BSQAssembly::ListTypeDecl> {
                         let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
 
@@ -1199,6 +1242,16 @@ entity CPPTransformer {
                         let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
 
                         return listinfo, ntic.update(cpptkey, listinfo);
+                    }
+                    if(ant)@<BSQAssembly::MapTypeDecl> {
+                        let e_ktype = $ant.ktype.tkeystr.value;
+                        let e_vtype = $ant.vtype.tkeystr.value;
+                        let treetk = BSQAssembly::TypeKey::from(CString::concat('MapOps::Tree<', e_ktype, ', ', e_vtype, '>'));
+
+                        let treeinfo, ntic = this.generateTypeInfo[recursive](treetk, tic);
+                        let mapinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+
+                        return mapinfo, ntic.update(cpptkey, mapinfo);
                     }
                     if(ant)@<BSQAssembly::CRopeTypeDecl> {
                         let ropetk = BSQAssembly::TypeKey::from('CRopeOps::Rope');

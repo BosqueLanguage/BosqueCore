@@ -548,18 +548,26 @@ class BSQIREmitter {
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cbase = this.emitConstructorPrimaryExpressionBase(exp);
-        const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
         
         if(cdecl instanceof SomeTypeDecl) {
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
 
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
+
+        //
+        // Wait.... Did I fabricate the need for special map entry...?
+        //
+
         if(cdecl instanceof MapEntryTypeDecl) {
+            const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
+
             const keytype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
             const valuetype = this.emitTypeSignature(exp.ctype.alltermargs[1]);
 
-            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, keytype=${keytype}, valuetype=${valuetype} }`;
+            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, key=${kexp}, keytype=${keytype}, valuetype=${valuetype} }`;
         }
         else {
             assert(false, "Not implemented -- SpecialConstructableConstructor");

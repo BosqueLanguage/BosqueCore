@@ -162,6 +162,8 @@ ConstructorPrimarySpecialSomeExpression {
     field ofetype: TypeSignature;
 }
 | ConstructorPrimarySpecialMapEntryExpression {
+    field key: Expression;
+    
     field keytype: TypeSignature;
     field valuetype: TypeSignature;
 } 
