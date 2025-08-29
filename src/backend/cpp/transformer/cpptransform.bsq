@@ -1,6 +1,7 @@
 namespace CPPEmitter;
 
 const reftypeThreshold: Nat = 4n;
+const slotSizeInBits: Nat = 8n;
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -435,12 +436,28 @@ entity CPPTransformer {
         return CPPAssembly::PostfixOp{ etype, rootExp, ops };
     }
 
+    method transformConstructorPrimarySpecialMapEntryExpression(cpsmee: BSQAssembly::ConstructorPrimarySpecialMapEntryExpression): CPPAssembly::ConstructorPrimarySpecialMapEntryExpression {
+        let etype = this.convertTypeSignature(cpsmee.etype);
+        let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpsmee.ctype);
+
+        let key = this.transformExpressionToCpp(cpsmee.key);
+        let value = this.transformExpressionToCpp(cpsmee.value);
+
+        let keytype = this.convertTypeSignature(cpsmee.keytype);
+        let valuetype = this.convertTypeSignature(cpsmee.valuetype);
+
+        %% To prevent conflicts with other special constructors key and value location
+        %% are flipped :/
+        return CPPAssembly::ConstructorPrimarySpecialMapEntryExpression{ etype, ctype, value, key, keytype, valuetype };
+    }
+
     method transformConstructorPrimarySpecialSomeExpression(cpsse: BSQAssembly::ConstructorPrimarySpecialSomeExpression): CPPAssembly::ConstructorPrimarySpecialSomeExpression {
         let etype = this.convertTypeSignature(cpsse.etype);
         let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpsse.ctype);
+
         let value = this.transformExpressionToCpp(cpsse.value);
         let ofttype = this.convertTypeSignature(cpsse.ofttype);
-
+        
         return CPPAssembly::ConstructorPrimarySpecialSomeExpression{ etype, ctype, value, ofttype };
     }
 
@@ -457,6 +474,7 @@ entity CPPTransformer {
             BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($cpsce); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { return this.transformConstructorPrimarySpecialOkExpression($cpsce); }
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { return this.transformConstructorPrimarySpecialFailExpression($cpsce); }
+            | BSQAssembly::ConstructorPrimarySpecialMapEntryExpression => { return this.transformConstructorPrimarySpecialMapEntryExpression($cpsce); }    
         }
     }
 
@@ -483,10 +501,21 @@ entity CPPTransformer {
         return CPPAssembly::ConstructorPrimaryListExpression{ etype, ctype, elemtype, args };
     }
 
+    method transformConstructorPrimaryMapExpression(cpme: BSQAssembly::ConstructorPrimaryMapExpression): CPPAssembly::ConstructorPrimaryMapExpression {
+        let etype = this.convertTypeSignature(cpme.etype);
+        let ctype = CPPTransformNameManager::convertNominalTypeSignature(cpme.ctype);
+        let elemtype = this.convertTypeSignature(cpme.elemtype);
+        let args = cpme.args.map<CPPAssembly::Expression>(fn(arg) => this.transformExpressionToCpp(arg.exp));
+        let keytype = this.convertTypeSignature(cpme.keytype);
+        let valuetype = this.convertTypeSignature(cpme.valuetype);
+
+        return CPPAssembly::ConstructorPrimaryMapExpression{ etype, ctype, elemtype, args, keytype, valuetype };
+    }
+
     method transformConstructorPrimaryCollectionSingletonsExpression(cpcse: BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression): CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression {
         match(cpcse)@ {
             BSQAssembly::ConstructorPrimaryListExpression => { return this.transformConstructorPrimaryListExpression($cpcse); }
-            | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
+            | BSQAssembly::ConstructorPrimaryMapExpression => { return this.transformConstructorPrimaryMapExpression($cpcse); }
         }
     }
 
@@ -596,6 +625,26 @@ entity CPPTransformer {
         }
     }
 
+    method transformKeyCmpEqualExpression(exp: BSQAssembly::KeyCmpEqualExpression): CPPAssembly::KeyCmpEqualExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let ktype = this.convertTypeSignature(exp.ktype);
+        let opertype = this.convertTypeSignature(exp.opertype);
+        let lhs = this.transformExpressionToCpp(exp.lhs);
+        let rhs = this.transformExpressionToCpp(exp.rhs);
+
+        return CPPAssembly::KeyCmpEqualExpression{ etype, ktype, opertype, lhs, rhs };
+    }
+
+    method transformKeyCmpLessExpression(exp: BSQAssembly::KeyCmpLessExpression): CPPAssembly::KeyCmpLessExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let ktype = this.convertTypeSignature(exp.ktype);
+        let opertype = this.convertTypeSignature(exp.opertype);
+        let lhs = this.transformExpressionToCpp(exp.lhs);
+        let rhs = this.transformExpressionToCpp(exp.rhs);
+
+        return CPPAssembly::KeyCmpLessExpression{ etype, ktype, opertype, lhs, rhs };
+    }
+
     method transformConstructorLambdaExpression(exp: BSQAssembly::ConstructorLambdaExpression): CPPAssembly::ConstructorLambdaExpression {
         let etype = this.convertTypeSignature(exp.etype);
         let body = this.transformBodyToCpp(exp.body);
@@ -688,8 +737,8 @@ entity CPPTransformer {
             | BSQAssembly::UnaryExpression => { return this.transformUnaryExpression[recursive]($expr); }
             | BSQAssembly::BinaryArithExpression => { return this.transformBinaryArithExpression[recursive]($expr); }
             | BSQAssembly::BinaryKeyEqExpression => { return this.transformBinaryKeyEqExpression($expr); }
-            | BSQAssembly::KeyCmpEqualExpression => { abort; }
-            | BSQAssembly::KeyCmpLessExpression => { abort; }
+            | BSQAssembly::KeyCmpEqualExpression => { return this.transformKeyCmpEqualExpression($expr); }
+            | BSQAssembly::KeyCmpLessExpression => { return this.transformKeyCmpLessExpression($expr); } 
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
             | BSQAssembly::MapEntryConstructorExpression => { abort; }
@@ -994,6 +1043,21 @@ entity CPPTransformer {
         });
     }
 
+    %% Useful for determining sizes of our constructable types
+    method getCorrectSizeAndMask(ti: FieldInfo): CString, Nat, Nat { %% (|ptrmask, slotsize, typesize|)
+        var ptrmask = ti.ptrmask;
+        var slotsize = ti.slotsize;
+        var typesize = ti.typesize;
+
+        if(typesize > reftypeThreshold) {
+            ptrmask = '1';
+            slotsize = 1n;
+            typesize = 1n * slotSizeInBits;
+        }
+
+        return ptrmask, slotsize, typesize;
+    }
+
     %% Explore all subtypes and find largest possible field slot size (generating subtype tinfo when necessary)
     method findLargestSubtypeAndTag(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, CPPAssembly::Tag, TypeInfoContext {
         let basetag = this.determineTag(some(cur.tkey), none);
@@ -1090,6 +1154,10 @@ entity CPPTransformer {
                 });
     }
 
+    %%
+    %% TODO: Eventually it would be a good idea to move the typeinfo generation
+    %% logic off to its own file as to not clutter the transformer
+    %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
             let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
             if(tic.tinfos.has(cpptkey)) {
@@ -1140,16 +1208,33 @@ entity CPPTransformer {
                         let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, false, tic);
                         var sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
  
-                        if(oftypeinfo.slotsize > reftypeThreshold) {
-                            sometinfo = CPPAssembly::TypeInfo{ ntic.tid, 8n, 1n, '1', cpptkey, CPPAssembly::Tag#Value }; 
-                        }
+                        let oftypemask, oftypeslots, oftypesize = this.getCorrectSizeAndMask(oftypeinfo);
+                        sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypesize, oftypeslots, oftypemask, cpptkey, CPPAssembly::Tag#Value }; 
                         
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
+                    if(ant)@<BSQAssembly::MapEntryTypeDecl> {
+                        let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
+                        let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
+
+                        %% Lets make this a method!
+                        let ktypemask, ktypeslots, ktypesize = this.getCorrectSizeAndMask(ktypeinfo);
+                        let vtypemask, vtypeslots, vtypesize = this.getCorrectSizeAndMask(vtypeinfo); 
+
+                        let ptrmask = CString::concat(ktypemask, vtypemask);
+                        let typesize = ktypesize + vtypesize;
+                        let slotsize = ktypeslots + vtypeslots;
+
+                        let metinfo = CPPAssembly::TypeInfo{ nntic.tid, typesize, slotsize, ptrmask, cpptkey, CPPAssembly::Tag#Value };
+
+                        return metinfo, nntic.update(cpptkey, metinfo);
+                    }
+
                     abort;
                 }
                 elif(this.bsqasm.collections.has(typekey)) { 
-                    %% List<T> is just alias of Tree<T> so we need to get Tree<T>'s typeinfo 
+                    %% List<T> and Map<K, V> is just alias of Tree<T> and Tree<K, V> so 
+                    %% we need to get Tree<T>'s and Tree<K, V>'s typeinfo 
                     if(ant)@<BSQAssembly::ListTypeDecl> {
                         let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
 
@@ -1157,6 +1242,16 @@ entity CPPTransformer {
                         let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
 
                         return listinfo, ntic.update(cpptkey, listinfo);
+                    }
+                    if(ant)@<BSQAssembly::MapTypeDecl> {
+                        let e_ktype = $ant.ktype.tkeystr.value;
+                        let e_vtype = $ant.vtype.tkeystr.value;
+                        let treetk = BSQAssembly::TypeKey::from(CString::concat('MapOps::Tree<', e_ktype, ', ', e_vtype, '>'));
+
+                        let treeinfo, ntic = this.generateTypeInfo[recursive](treetk, tic);
+                        let mapinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+
+                        return mapinfo, ntic.update(cpptkey, mapinfo);
                     }
                     if(ant)@<BSQAssembly::CRopeTypeDecl> {
                         let ropetk = BSQAssembly::TypeKey::from('CRopeOps::Rope');
@@ -1277,7 +1372,11 @@ entity CPPTransformer {
     }
 
     method transformMapEntryTypeDecl(metd: BSQAssembly::MapEntryTypeDecl): CPPAssembly::MapEntryTypeDecl {
-        abort; %% TODO: Not Implemented!
+        let base = this.transformAbstractNominalTypeDeclBase(metd@<BSQAssembly::AbstractNominalTypeDecl>);       
+        let ktype = this.convertTypeSignature(metd.ktype)@<CPPAssembly::NominalTypeSignature>;
+        let vtype = this.convertTypeSignature(metd.vtype)@<CPPAssembly::NominalTypeSignature>;
+
+        return CPPAssembly::MapEntryTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, ktype, vtype };
     }
 
     method transformConstructableTypeDecl(ctd: BSQAssembly::ConstructableTypeDecl): CPPAssembly::ConstructableTypeDecl {
@@ -1317,6 +1416,7 @@ entity CPPTransformer {
         let oftype = this.convertTypeSignature(mtd.oftype);
         let ktype = CPPTransformNameManager::convertNominalTypeSignature(mtd.ktype);
         let vtype = this.convertTypeSignature(mtd.vtype);
+        
         return CPPAssembly::MapTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, oftype, ktype, vtype };
     }
 

@@ -213,6 +213,10 @@ function convertLambdaTypeSignature(lts: CPPAssembly::LambdaTypeSignature, ctx: 
     return String::concat("λ", replace);
 }
 
+%%
+%% TODO: We need to go through all instances where emitTypeSignature is called and 
+%% replace T/F with dontCheckTag or checkTag boolean constants
+%%
 function emitTypeSignature(ts: CPPAssembly::TypeSignature, shouldCheckTag: Bool, ctx: Context): String {
     if(ts)@<CPPAssembly::EListTypeSignature> {
         if(!shouldCheckTag) {
@@ -764,11 +768,20 @@ function emitConstructorPrimarySpecialFailExpression(cpsfe: CPPAssembly::Constru
     abort; %% TODO: Not Implemented!
 }
 
+function emitConstructorPrimarySpecialMapEntryExpression(cpsmee: CPPAssembly::ConstructorPrimarySpecialMapEntryExpression, ctx: Context): String {
+    let key = emitExpression(cpsmee.key, ctx);
+    let value = emitExpression(cpsmee.value, ctx);
+    let metype = emitTypeSignature(cpsmee.ctype, false, ctx);
+
+    return String::concat(metype, "{ ", key, ", ", value, " }");
+}
+
 function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): String {    
     match(exp)@ {
         CPPAssembly::ConstructorPrimarySpecialSomeExpression => { return emitConstructorPrimarySpecialSomeExpression($exp, ctx); }
         | CPPAssembly::ConstructorPrimarySpecialOkExpression => { return emitConstructorPrimarySpecialOkExpression($exp, ctx); }
         | CPPAssembly::ConstructorPrimarySpecialFailExpression => { return emitConstructorPrimarySpecialFailExpression($exp, ctx); }
+        | CPPAssembly::ConstructorPrimarySpecialMapEntryExpression => { return emitConstructorPrimarySpecialMapEntryExpression($exp, ctx); }
     }
 }
 
@@ -837,7 +850,23 @@ function emitConstructorPrimaryListExpression(exp: CPPAssembly::ConstructorPrima
 }
 
 function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimaryMapExpression, ctx: Context): String {
-    abort;
+    let args = emitArguments(exp.args, ctx);
+    let ns = "Core::MapOps::"; %% So long as maps impl stays in Core::MapOps this will hold 
+    
+    let ktype = String::fromCString(exp.keytype.tkeystr.value);
+    let vtype = String::fromCString(exp.valuetype.tkeystr.value);
+    
+    let resolvedktype = removeCppPrefix(ktype);
+    let resolvedvtype = removeCppPrefix(vtype);
+    
+    let template = String::concat("ᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ");
+
+    switch(exp.args.size()) {
+        0n =>   { return String::concat(ns, "s_map_create_empty", template, "()"); }
+        | 1n => { return String::concat(ns, "s_map_create_1", template, "(", args, ")"); }
+        | 2n => { return String::concat(ns, "s_map_create_2", template, "(", args, ")"); } 
+        | _ => { abort; }
+    }
 }
 
 function emitConstructorPrimaryCollectionSingletonExpression(exp: CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression, ctx: Context): String {
@@ -1002,6 +1031,14 @@ function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx:
     }
 }
 
+function emitKeyCmpEqualExpression(exp: CPPAssembly::KeyCmpEqualExpression, ctx: Context): String {
+    return "";
+}
+
+function emitKeyCmpLessExpression(exp: CPPAssembly::KeyCmpLessExpression, ctx: Context): String {
+    return "";
+}
+
 function emitLambdaParameters(p: List<CPPAssembly::LambdaParameterSignature>, ctx: Context): String {
     let params = p.map<String>(fn(param) => {
         let pname = emitIdentifier(param.pname);
@@ -1091,6 +1128,14 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
+function emitMapEntryConstructorExpression(exp: CPPAssembly::MapEntryConstructorExpression, ctx: Context): String {
+    let key = emitExpression(exp.kexp, ctx);
+    let value = emitExpression(exp.vexp, ctx);
+    let metype = emitTypeSignature(exp.etype, false, ctx);
+
+    return String::concat(metype, "{ ", key, ", ", value, " }");
+}
+
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
@@ -1134,10 +1179,13 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::BinaryKeyEqExpression => { return emitBinaryKeyEqExpression($e, ctx); }
         %%| CPPAssembly::BinaryKeyCmpEqualExpression => { abort; }
         %%| CPPAssembly::BinaryKeyCmpLessExpression => { abort; }
+        | CPPAssembly::KeyCmpEqualExpression => { return emitKeyCmpEqualExpression($e, ctx); }
+        | CPPAssembly::KeyCmpLessExpression => { return emitKeyCmpLessExpression($e, ctx); }  
         | CPPAssembly::BinaryNumericExpression => { return emitBinaryNumericExpression[recursive]($e, ctx); }
         | CPPAssembly::BinLogicExpression => { return emitBinLogicExpression[recursive]($e, ctx); }
-        %%| CPPAssembly::MapEntryConstructorExpression => { abort; }
+        | CPPAssembly::MapEntryConstructorExpression => { return emitMapEntryConstructorExpression($e, ctx); }
         | CPPAssembly::IfExpression => { return emitIfExpression($e, ctx); }
+        | _ => { abort; }
     }
 }
 
@@ -1797,8 +1845,37 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
     return String::concat(vtable, indent, "};%n;");
 }
 
+function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(std.declaredInNS, std.fullns); 
+    let full_indent = String::concat("    ", indent);
+
+    let sometype = emitTypeKey(std.tkey, false, nctx);
+    let ttype = emitTypeSignature(std.oftype, true, nctx);
+
+    let std_tinfo = emitTypeInfo(nctx.asm.typeinfos.get(std.tkey), some(std@<CPPAssembly::AbstractNominalTypeDecl>), nctx, indent);
+
+    let value = String::concat(sometype, " {%n;", full_indent, ttype, " value;%n;", indent);
+    return String::concat(std_tinfo, indent, "struct ", value, "};%n;");
+}
+
 function emitMapEntryTypeDecl(mtd: CPPAssembly::MapEntryTypeDecl, ctx: Context, indent: String): String {
-    abort; %% TODO: Not Implemented!   
+    let nctx = ctx.updateCurrentNamespace(mtd.declaredInNS, mtd.fullns);
+    let full_indent = String::concat("    ", indent);
+
+    let mtdtype = emitTypeKey(mtd.tkey, false, nctx);
+    let ktype = emitTypeSignature(mtd.ktype, true, nctx);
+    let vtype = emitTypeSignature(mtd.vtype, true, nctx);
+
+    let mtd_tinfo = nctx.asm.typeinfos.get(mtd.tkey);
+    let e_mtd_tinfo = emitTypeInfo(mtd_tinfo, some(mtd), nctx, indent);
+
+    let base = String::concat(indent, "struct ", mtdtype, " {%n;");
+    let key = String::concat(full_indent, ktype, " key;%n;");
+    let value = String::concat(full_indent, vtype, " value;%n;");
+    let def = String::concat(base, key, value, indent, "};%n;");
+
+    return String::concat(e_mtd_tinfo, def);
+
 }
 
 function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
@@ -1824,13 +1901,23 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
         return String::concat(ropedef, string_alias);
     }
     if(ctd)@<CPPAssembly::ListTypeDecl> {
-        let ttype = emitSpecialTemplate(emitTypeSignature(ctd.oftype, false, nctx));
-        let resolvedttype = if(ttype.startsWithString("__CoreCpp::")) 
-            then ttype.removePrefixString("__CoreCpp::") 
-            else ttype;
+        let ttype = emitTypeSignature(ctd.oftype, false, nctx);
+        let resolvedttype = removeCppPrefix(ttype);
+
         return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
     }
-    
+    if(ctd)@<CPPAssembly::MapTypeDecl> {
+        let ktype = emitTypeSignature($ctd.ktype, false, nctx);
+        let resolvedktype = removeCppPrefix(ktype);
+
+        let vtype = emitTypeSignature($ctd.vtype, false, nctx);
+        let resolvedvtype = removeCppPrefix(vtype);
+
+        let treealias = emitTypeKey($ctd.tkey, false, nctx);
+        let mapdef = String::concat("typedef MapOps::Treeᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ ");
+        return String::concat(indent, mapdef, treealias, ";%n;");
+    }
+   
     abort; %% Non supported collection type!
 }
 
@@ -1871,19 +1958,6 @@ function emitConstMemberForwardDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Cont
     let rtype, fullname = getConstMemberBase(cmd, nctx);   
     
     return String::concat(indent, "inline ", rtype, " ", fullname, "();%n;");
-}
-
-function emitSomeTypeDecl(std: CPPAssembly::SomeTypeDecl, ctx: Context, indent: String): String {
-    let nctx = ctx.updateCurrentNamespace(std.declaredInNS, std.fullns);
-    
-    let full_indent = String::concat("    ", indent);
-    let sometype = emitTypeKey(std.tkey, false, nctx);
-    let ttype = emitTypeSignature(std.oftype, true, nctx);
-
-    let std_tinfo = emitTypeInfo(nctx.asm.typeinfos.get(std.tkey), some(std@<CPPAssembly::AbstractNominalTypeDecl>), nctx, indent);
-
-    let value = String::concat(sometype, " {%n;", full_indent, ttype, " value;%n;", indent);
-    return String::concat(std_tinfo, indent, "struct ", value, "};%n;");
 }
 
 function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, ctx: Context, indent: String): String {
