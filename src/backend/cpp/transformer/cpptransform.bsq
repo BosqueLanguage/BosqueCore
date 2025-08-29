@@ -1043,6 +1043,21 @@ entity CPPTransformer {
         });
     }
 
+    %% Useful for determining sizes of our constructable types
+    method getCorrectSizeAndMask(ti: FieldInfo): CString, Nat, Nat { %% (|ptrmask, slotsize, typesize|)
+        var ptrmask = ti.ptrmask;
+        var slotsize = ti.slotsize;
+        var typesize = ti.typesize;
+
+        if(typesize > reftypeThreshold) {
+            ptrmask = '1';
+            slotsize = 1n;
+            typesize = 1n * slotSizeInBits;
+        }
+
+        return ptrmask, slotsize, typesize;
+    }
+
     %% Explore all subtypes and find largest possible field slot size (generating subtype tinfo when necessary)
     method findLargestSubtypeAndTag(cur: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): Nat, CPPAssembly::Tag, TypeInfoContext {
         let basetag = this.determineTag(some(cur.tkey), none);
@@ -1139,6 +1154,10 @@ entity CPPTransformer {
                 });
     }
 
+    %%
+    %% TODO: Eventually it would be a good idea to move the typeinfo generation
+    %% logic off to its own file as to not clutter the transformer
+    %%
     recursive method generateTypeInfo(typekey: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
             let cpptkey = CPPTransformNameManager::convertTypeKey(typekey);
             if(tic.tinfos.has(cpptkey)) {
@@ -1189,43 +1208,24 @@ entity CPPTransformer {
                         let oftypeinfo, ntic = this.generateFieldInfo(some($ant.oftype), none, false, tic);
                         var sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypeinfo.typesize, oftypeinfo.slotsize, oftypeinfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
  
-                        if(oftypeinfo.slotsize > reftypeThreshold) {
-                            sometinfo = CPPAssembly::TypeInfo{ ntic.tid, 1n * slotSizeInBits, 1n, '1', cpptkey, CPPAssembly::Tag#Value }; 
-                        }
+                        let oftypemask, oftypeslots, oftypesize = this.getCorrectSizeAndMask(oftypeinfo);
+                        sometinfo = CPPAssembly::TypeInfo{ ntic.tid, oftypesize, oftypeslots, oftypemask, cpptkey, CPPAssembly::Tag#Value }; 
                         
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
                     if(ant)@<BSQAssembly::MapEntryTypeDecl> {
-                        %%
-                        %% NOTE: I have this explicitly accounting for the keys size too here!
-                        %%       Not totally sure if this is necessary!
-                        %%
                         let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
                         let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
 
                         %% Lets make this a method!
-                        var ktypemask = ktypeinfo.ptrmask;
-                        var ktypesize = ktypeinfo.slotsize;
-                        if(ktypesize > reftypeThreshold) {
-                            ktypemask = '1';
-                            ktypesize = slotSizeInBits;
-                        }
-
-                        var vtypemask = vtypeinfo.ptrmask;
-                        var vtypesize = vtypeinfo.slotsize;
-                        if(vtypesize > reftypeThreshold) {
-                            vtypemask = '1';
-                            vtypesize = slotSizeInBits;
-                        }
+                        let ktypemask, ktypeslots, ktypesize = this.getCorrectSizeAndMask(ktypeinfo);
+                        let vtypemask, vtypeslots, vtypesize = this.getCorrectSizeAndMask(vtypeinfo); 
 
                         let ptrmask = CString::concat(ktypemask, vtypemask);
-                        let slotsize = ktypesize + vtypesize;
+                        let typesize = ktypesize + vtypesize;
+                        let slotsize = ktypeslots + vtypeslots;
 
-                        %%
-                        %% TODO: We should really check this out and make sure its somewhat logical
-                        %% im not super confident on making always value but it might work well
-                        %%
-                        let metinfo = CPPAssembly::TypeInfo{ nntic.tid, slotsize * slotSizeInBits, slotsize, ptrmask, cpptkey, CPPAssembly::Tag#Value };
+                        let metinfo = CPPAssembly::TypeInfo{ nntic.tid, typesize, slotsize, ptrmask, cpptkey, CPPAssembly::Tag#Value };
 
                         return metinfo, nntic.update(cpptkey, metinfo);
                     }
