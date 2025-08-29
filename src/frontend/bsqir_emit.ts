@@ -548,18 +548,21 @@ class BSQIREmitter {
 
     private emitSpecialConstructableConstructor(cdecl: ConstructableTypeDecl, exp: ConstructorPrimaryExpression): string {
         const cbase = this.emitConstructorPrimaryExpressionBase(exp);
-        const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
         
         if(cdecl instanceof SomeTypeDecl) {
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[0]);
             const oftype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
 
             return `BSQAssembly::ConstructorPrimarySpecialSomeExpression{ ${cbase}, value=${vexp}, ofttype=${oftype} }`;
         }
-        if(cdecl instanceof MapEntryTypeDecl) {
+        else if(cdecl instanceof MapEntryTypeDecl) {
+            const kexp = this.emitSimpleSingleArgument(exp.args.args[0]);
+            const vexp = this.emitSimpleSingleArgument(exp.args.args[1]);
+
             const keytype = this.emitTypeSignature(exp.ctype.alltermargs[0]);
             const valuetype = this.emitTypeSignature(exp.ctype.alltermargs[1]);
 
-            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, keytype=${keytype}, valuetype=${valuetype} }`;
+            return `BSQAssembly::ConstructorPrimarySpecialMapEntryExpression{ ${cbase}, value=${vexp}, key=${kexp}, keytype=${keytype}, valuetype=${valuetype} }`;
         }
         else {
             assert(false, "Not implemented -- SpecialConstructableConstructor");
@@ -2205,16 +2208,16 @@ class BSQIREmitter {
         assert(false, "Not implemented -- emitSetTypeDecl");
     }
 
-    // Pretty sure this can be identitical to emitMapEntryTypeDecl(..)
     private emitMapTypeDecl(ns: FullyQualifiedNamespace, tdecl: MapTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
+        // Not sure how correct this line is
         const childsigs = [...this.emitChildrenTypes(tsig.alltermargs[0])];
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[1])}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitEventListTypeDecl(ns: FullyQualifiedNamespace, tdecl: EventListTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {

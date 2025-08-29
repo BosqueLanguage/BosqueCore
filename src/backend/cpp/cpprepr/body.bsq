@@ -317,6 +317,22 @@ BinKeyEqNoneExpression {
 }
 ;
 
+entity KeyCmpEqualExpression provides Expression {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
+entity KeyCmpLessExpression provides Expression {
+    field ktype: TypeSignature;
+    field opertype: TypeSignature;
+
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
 datatype BinaryNumericExpression provides Expression using {
     field lhs: Expression;
     field rhs: Expression;
@@ -340,6 +356,11 @@ BinLogicAndExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
 ;
+
+entity MapEntryConstructorExpression provides Expression {
+    field kexp: Expression;
+    field vexp: Expression;
+}
 
 entity LambdaInvokeArgumentInfo {
     field name: Identifier;
@@ -401,6 +422,12 @@ ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
     field ofetype: TypeSignature;
 }
+| ConstructorPrimarySpecialMapEntryExpression {
+    field key: Expression;
+    
+    field keytype: TypeSignature;
+    field valuetype: TypeSignature;
+} 
 ;
 
 datatype PostfixOperation using {
