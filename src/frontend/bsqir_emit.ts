@@ -2209,11 +2209,12 @@ class BSQIREmitter {
         const tsig = BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, undefined);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
 
+        // Not sure how correct this line is
         const childsigs = [...this.emitChildrenTypes(tsig.alltermargs[0])];
 
         this.typegraph.set(EmitNameManager.generateTypeKey(tsig), childsigs);
 
-        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[0])}, ktype=${this.emitTypeSignature(tsig.alltermargs[1])}, vtype=${this.emitTypeSignature(tsig.alltermargs[2])} }`];
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::MapTypeDecl{ ${ibase}, oftype=${this.emitTypeSignature(tsig.alltermargs[1])}, ktype=${this.emitTypeSignature(tsig.alltermargs[0])}, vtype=${this.emitTypeSignature(tsig.alltermargs[1])} }`];
     }
 
     private emitEventListTypeDecl(ns: FullyQualifiedNamespace, tdecl: EventListTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
