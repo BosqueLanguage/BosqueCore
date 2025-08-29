@@ -133,6 +133,31 @@ CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept {
     return cb;
 }
 
+static inline Bool cbuf_memcmp(CChar b1[maxCCharBufferSize], CChar b2[maxCCharBufferSize]) noexcept {
+    static_assert(maxCCharBufferSize * sizeof(CChar) == sizeof(uintptr_t));
+    
+    return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
+}
+
+Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
+    return cbuf_memcmp(cb1.chars, cb2.chars);
+}
+
+Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
+    if(cbuf_memcmp(cb1.chars, cb2.chars)) {
+        return false;
+    }
+    else {
+        for(int i = 0; i < maxCCharBufferSize; i++) {
+            if(cb1.chars[i] < cb2.chars[i]) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
 }

@@ -10,7 +10,6 @@ namespace UnicodeCharBufferOps {
     function size(ub: UnicodeCharBuffer): Nat = unicodecharbuffer_size;
     function getMaxSize(): Nat = unicodecharbuffer_maxsize;
     function equal(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): Bool = unicodecharbuffer_equal;
-    function less(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): Bool = unicodecharbuffer_less;
     function mergeUnicodeBuffers(ub1: UnicodeCharBuffer, ub2: UnicodeCharBuffer): UnicodeCharBuffer = unicodecharbuffer_merge;
     function remainder(ub: UnicodeCharBuffer, split: Nat): UnicodeCharBuffer = unicodecharbuffer_remainder;
 
@@ -62,10 +61,6 @@ namespace UnicodeRopeOps {
 
     function s_unicoderope_equal(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
         return equal(ur1.value, ur2.value);
-    }
-
-    function s_unicoderope_less(ur1: UnicodeRope, ur2: UnicodeRope): Bool {
-        return less(ur1.value, ur2.value);
     }
 
     enum Color {
@@ -424,16 +419,9 @@ namespace UnicodeRopeOps {
         return false;
     }
 
-    function less(r1: Rope, r2: Rope): Bool {
-        return Rope::compare(r1, r2, 
-            fn(ub1, ub2) => {    
-                if(UnicodeRopeOps::less(ub1, ub2)) {
-                    return true;
-                }
-                return false
-            }
-        );
-    }
+    %%
+    %% TODO: lexicographic less comparison! (see crope)
+    %%
 
     datatype Rope of 
         BBLeaf { }
@@ -462,20 +450,6 @@ namespace UnicodeRopeOps {
                     return Rope::getCharacterCount($rope.l) + Rope::getCharacterCount($rope.r);
                 }
             }
-        }
-
-        function compare(l: Rope, r: Rope, comp: fn(UnicodeCharBuffer, UnicodeCharBuffer) -> Bool): Bool {
-            %% Do this traversal in order is very akward :/
-
-            if(l?<Leaf> && r?<Leaf>) {
-                let nl = l@<Leaf>;
-                let nr  r@<Leaf>;
-
-                return comp(nl.buf, nr.buf);
-            }
-
-            %% This abort is probably not right
-            abort;
         }
     }
 } %% namespace UnicodeRopeOps

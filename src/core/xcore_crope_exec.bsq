@@ -65,6 +65,10 @@ namespace CRopeOps {
         return equal(cr1.value, cr2.value);
     }
 
+    function s_crope_less(cr1: CRope, cr2: CRope): Bool {
+        return less(cr1.value, cr2.value);
+    }
+
     function s_nat_to_crope(v: Nat): CRope {
         %% TODO: Once invariant is added to cpp emitter lets use that instead
         assert CCharBufferOps::getMaxSize() == 8n;
@@ -444,6 +448,50 @@ namespace CRopeOps {
         }
     
         return false;
+    }
+
+    function less(r1: Rope, r2: Rope): Bool {
+        return less_helper(r1, r2, 0n);
+    }
+
+    function less_helper(r1: Rope, r2: Rope, idx: Nat): Bool {
+        let ub1 = get_buffer(r1, idx);
+        let ub2 = get_buffer(r2, idx);
+
+        if(ub1?<None> || ub2?<None> ) {
+            return false;
+        }
+
+        %% I think to explicitly ensure we continue processin on the equal case
+        %% we should explicitly check first, then move to the less case once we know
+        %% for sure they are not equal. This will happen only one time so not too 
+        %% cumbersome i believe
+        let isless = CCharBufferOps::less(ub1@some, ub2@some);
+        if(isless === true) {
+            return true;
+        }
+        else {
+            return less_helper[recursive](r1, r2, idx + CCharBufferOps::getMaxSize());
+        }
+    }
+
+    recursive function get_buffer(r: Rope, idx: Nat): Option<CCharBuffer> {
+        if(r?<BBLeaf>) {
+            return none;
+        }
+        elif(r?<Leaf>) {
+            let nr = r@<Leaf>;
+            return some(nr.buf);
+        }
+        else { 
+            let nr = r@<Node>;
+            if(idx < nr.w) {
+                return get_buffer[recursive](nr.l, idx);
+            }
+            else {
+                return get_buffer[recursive](nr.r, idx);
+            }
+        }
     }
 
     datatype Rope of 
