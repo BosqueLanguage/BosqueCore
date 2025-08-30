@@ -454,44 +454,36 @@ namespace CRopeOps {
         return less_helper(r1, r2, 0n);
     }
 
-    function less_helper(r1: Rope, r2: Rope, idx: Nat): Bool {
+    recursive function less_helper(r1: Rope, r2: Rope, idx: Nat): Bool {
         let ub1 = get_buffer(r1, idx);
         let ub2 = get_buffer(r2, idx);
 
-        if(ub1?<None> || ub2?<None> ) {
-            return false;
+        let maxbufsize = CCharBufferOps::getMaxSize();
+        if(ub1.size() != maxbufsize || ub2.size() != maxbufsize) {
+            return CCharBufferOps::less(ub1, ub2);
         }
 
-        %% I think to explicitly ensure we continue processin on the equal case
-        %% we should explicitly check first, then move to the less case once we know
-        %% for sure they are not equal. This will happen only one time so not too 
-        %% cumbersome i believe
-        let isless = CCharBufferOps::less(ub1@some, ub2@some);
-        if(isless === true) {
-            return true;
+        %% Pretty sure this detects if we are larger than r2 so maube rewrite a bit
+        if(CCharBufferOps::equal(ub1, ub2)) {
+            return less_helper[recursive](r1, r2, idx + maxbufsize);
         }
         else {
-            return less_helper[recursive](r1, r2, idx + CCharBufferOps::getMaxSize());
-        }
+            return false;
+        } 
     }
 
-    recursive function get_buffer(r: Rope, idx: Nat): Option<CCharBuffer> {
-        if(r?<BBLeaf>) {
-            return none;
+    recursive function get_buffer(r: Rope, idx: Nat): CCharBuffer {
+        if(r)@<Leaf> {
+            return $r.buf;
         }
-        elif(r?<Leaf>) {
-            let nr = r@<Leaf>;
-            return some(nr.buf);
+        
+        let nr = r@<Node>;
+        if(idx <= nr.w) {
+            return get_buffer[recursive](nr.l, idx);
         }
-        else { 
-            let nr = r@<Node>;
-            if(idx < nr.w) {
-                return get_buffer[recursive](nr.l, idx);
-            }
-            else {
-                return get_buffer[recursive](nr.r, idx);
-            }
-        }
+        else {
+            return get_buffer[recursive](nr.r, idx);
+        } 
     }
 
     datatype Rope of 

@@ -144,18 +144,12 @@ Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 }
 
 Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    if(cbuf_memcmp(cb1.chars, cb2.chars)) {
-        return false;
-    }
-    else {
-        for(int i = 0; i < maxCCharBufferSize; i++) {
-            if(cb1.chars[i] < cb2.chars[i]) {
-                return true;
-            }
+    for(int i = 0; i < maxCCharBufferSize; i++) {
+        if(cb1.chars[i] < cb2.chars[i]) {
+            return true;
         }
-
-        return false;
     }
+    return false;
 }
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
