@@ -145,8 +145,8 @@ Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 
 Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
     for(int i = 0; i < maxCCharBufferSize; i++) {
-        if(cb1.chars[i] < cb2.chars[i]) {
-            return true;
+        if(cb1.chars[i] != cb2.chars[i]) {
+            return cb1.chars[i] < cb2.chars[i];
         }
     }
     return false;

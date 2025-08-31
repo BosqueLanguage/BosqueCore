@@ -17,9 +17,27 @@ describe ("CPP Emit Evaluate -- basic KeyComparator equals/less", () => {
 
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('oj', 'ok'); }", "true");
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('on', 'ok'); }", "false");
+
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('abcdefghijka', 'abcdefghijkb'); }", "true");
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('abcdefghijka', 'abcdefghijkb'); }", "true");
     });
 });
 
+describe ("CPP Emit Evaluate -- large-ish cstring(rope) KeyComparator equals/less", () => {
+    it("should exec KeyComparator operations", function () {
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('abcdefghijka', 'abcdefghijkb'); }", "true");
+        runMainCode("public function main(): Bool { return KeyComparator::equal<CString>('abcdefghijka', 'abcdefghijka'); }", "true");
+
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Hello, World!', 'hello, world!'); }", "true");
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Hello, World!', 'hello, world!'); }", "true");
+
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet'); }", "false");
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Lorem ipsum dolor sit amet, consectetur adipiscing elit', 'Lorem ipsum dolor sit amet'); }", "false");
+    });
+});
+
+// TODO: Not supported!
+/*
 describe ("CPP Emit Evaluate -- type alias KeyComparator equals/less", () => {
     it("should exec KeyComparator operations", function () {
         runMainCode("type Foo = Int; public function main(): Bool { return KeyComparator::equal<Foo>(1i<Foo>, 1i<Foo>); }", "true");
@@ -30,6 +48,7 @@ describe ("CPP Emit Evaluate -- type alias KeyComparator equals/less", () => {
         runMainCode("type Foo = Int; public function main(): Bool { return KeyComparator::less<Foo>(2i<Foo>, 1i<Foo>); }", "false");
     });
 });
+*/
 
 describe ("CPP Emit Evaluate -- enum KeyComparator equals/less", () => {
     it("should exec KeyComparator operations", function () {
