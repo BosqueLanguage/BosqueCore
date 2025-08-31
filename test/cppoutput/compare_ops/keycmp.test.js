@@ -31,6 +31,7 @@ describe ("CPP Emit Evaluate -- large-ish cstring(rope) KeyComparator equals/les
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Hello, World!', 'hello, world!'); }", "true");
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Hello, World!', 'hello, world!'); }", "true");
 
+        runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'); }", "true");
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Lorem ipsum dolor sit amet', 'Lorem ipsum dolor sit amet'); }", "false");
         runMainCode("public function main(): Bool { return KeyComparator::less<CString>('Lorem ipsum dolor sit amet, consectetur adipiscing elit', 'Lorem ipsum dolor sit amet'); }", "false");
     });
