@@ -676,16 +676,8 @@ CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &base
 CCharBuffer cbufferFromNat(Nat v) noexcept;
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
 CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept;
-
-inline Bool cbuf_memcmp(CChar b1[maxCCharBufferSize], CChar b2[maxCCharBufferSize]) noexcept {
-    static_assert(maxCCharBufferSize * sizeof(CChar) == sizeof(uintptr_t));
-    
-    return *reinterpret_cast<uintptr_t*>(b1) - *reinterpret_cast<uintptr_t*>(b2) == 0;
-}
-
-inline Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
-    return cbuf_memcmp(cb1.chars, cb2.chars);
-}
+Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
+Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
 
 const int maxUnicodeCharBufferSize = 8;
 struct UnicodeCharBuffer {

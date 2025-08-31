@@ -1032,11 +1032,17 @@ function emitBinaryKeyEqExpression(exp: CPPAssembly::BinaryKeyEqExpression, ctx:
 }
 
 function emitKeyCmpEqualExpression(exp: CPPAssembly::KeyCmpEqualExpression, ctx: Context): String {
-    return "";
+    let lhs = emitExpression(exp.lhs, ctx);
+    let rhs = emitExpression(exp.rhs, ctx);
+
+    return String::concat(lhs, " == ", rhs);
 }
 
 function emitKeyCmpLessExpression(exp: CPPAssembly::KeyCmpLessExpression, ctx: Context): String {
-    return "";
+    let lhs = emitExpression(exp.lhs, ctx);
+    let rhs = emitExpression(exp.rhs, ctx);
+
+    return String::concat(lhs, " < ", rhs);
 }
 
 function emitLambdaParameters(p: List<CPPAssembly::LambdaParameterSignature>, ctx: Context): String {
@@ -1502,6 +1508,7 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "ccharbuffer_size" => { return String::concat(indent, "    return cb.size;%n;"); }
         | "ccharbuffer_maxsize" => { return String::concat(indent, "    return __CoreCpp::Nat(__CoreCpp::maxCCharBufferSize);%n;"); }
         | "ccharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::cbufferEqual(cb1, cb2);%n;"); }
+        | "ccharbuffer_less" => { return String::concat(indent, "    return __CoreCpp::cbufferLess(cb1, cb2);%n;"); }
         | "nat_to_ccharbuffer" => { return String::concat(indent, "    return __CoreCpp::cbufferFromNat(v);%n;"); }
         | "ccharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::cbufferMerge(cb1, cb2);%n;"); }
         | "ccharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::cbufferRemainder(cb, split);%n;"); }
@@ -2166,8 +2173,14 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_equal'))) {
         overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }");
     }
+    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_less'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_less(lhs, rhs); }");
+    }
     if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_equal'))) {
         overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }");
+    }
+    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_less'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); }");   
     }
 
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp

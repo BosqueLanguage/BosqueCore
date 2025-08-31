@@ -10,6 +10,7 @@ namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
     function equal(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_equal;
+    function less(cb1: CCharBuffer, cb2: CCharBuffer): Bool = ccharbuffer_less;
     function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
     function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
     function remainder(cb: CCharBuffer, split: Nat): CCharBuffer = ccharbuffer_remainder;
@@ -62,6 +63,10 @@ namespace CRopeOps {
 
     function s_crope_equal(cr1: CRope, cr2: CRope): Bool {
         return equal(cr1.value, cr2.value);
+    }
+
+    function s_crope_less(cr1: CRope, cr2: CRope): Bool {
+        return less(cr1.value, cr2.value);
     }
 
     function s_nat_to_crope(v: Nat): CRope {
@@ -421,7 +426,7 @@ namespace CRopeOps {
         else {
             return tt;
         }
-    }    
+    }     
 
     function equal(r1: Rope, r2: Rope): Bool {
         if(r1?<Leaf> && r2?<Leaf>) {
@@ -443,6 +448,41 @@ namespace CRopeOps {
         }
     
         return false;
+    }
+
+    function less(r1: Rope, r2: Rope): Bool {
+        return less_helper(r1, r2, 0n);
+    }
+
+    recursive function less_helper(r1: Rope, r2: Rope, idx: Nat): Bool {
+        let cb1 = get_buffer(r1, idx);
+        let cb2 = get_buffer(r2, idx);
+
+        let maxbufsize = CCharBufferOps::getMaxSize();
+        if(cb1.size() < maxbufsize) {
+            return CCharBufferOps::less(cb1, cb2);
+        }
+
+        if(CCharBufferOps::equal(cb1, cb2)) {
+            return less_helper[recursive](r1, r2, idx + maxbufsize);
+        }
+        else {
+            return CCharBufferOps::less(cb1, cb2);
+        } 
+    }
+
+    recursive function get_buffer(r: Rope, idx: Nat): CCharBuffer {
+        if(r)@<Leaf> {
+            return $r.buf;
+        }
+        
+        let nr = r@<Node>;
+        if(idx < nr.w) {
+            return get_buffer[recursive](nr.l, idx);
+        }
+        else {
+            return get_buffer[recursive](nr.r, idx - nr.w);
+        } 
     }
 
     datatype Rope of 
