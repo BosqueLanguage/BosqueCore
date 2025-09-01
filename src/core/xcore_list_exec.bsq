@@ -861,8 +861,11 @@ namespace ListOps {
 
                 return ntt;
             }
-            | _ => { 
+            | Leaf<T> => { 
                 return nt; 
+            }
+            | BBLeaf<T> => {
+                return nt;
             }
         }
     }
