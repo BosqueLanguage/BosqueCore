@@ -18,9 +18,9 @@ describe ("CPP Emit Evaluate -- Map construct empty and isEmpty", () => {
 
 describe ("Map -- immediate and size", () => {
     it("should create and size", function () {
-        runMainCode('public function main(): Nat { return Map<Int, Int>{}.size(); }', "0n"); 
-        runMainCode('public function main(): Nat { return Map<Int, Int>{1i => 2i}.size(); }', "1n"); 
-        runMainCode('public function main(): Nat { return Map<Int, Int>{1i => 2i, 3i => 4i}.size(); }', "2n"); 
+        runMainCode('public function main(): Nat { return Map<Int, Int>{}.size(); }', "0_n"); 
+        runMainCode('public function main(): Nat { return Map<Int, Int>{1i => 2i}.size(); }', "1_n"); 
+        runMainCode('public function main(): Nat { return Map<Int, Int>{1i => 2i, 3i => 4i}.size(); }', "2_n"); 
     });
 });
 

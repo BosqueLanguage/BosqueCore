@@ -1057,7 +1057,7 @@ entity CPPTransformer {
         var slotsize = ti.slotsize;
         var typesize = ti.typesize;
 
-        if(typesize > reftypeThreshold) {
+        if(slotsize > reftypeThreshold) {
             ptrmask = '1';
             slotsize = 1n;
             typesize = 1n * slotSizeInBits;
@@ -1222,14 +1222,9 @@ entity CPPTransformer {
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
                     if(ant)@<BSQAssembly::MapEntryTypeDecl> {
-                        %%
-                        %% TODO: FIX THIS SHIT!!!! It is not right, it emitted 
-                        %% ints and bools as reftypes
-                        %%
                         let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
                         let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
 
-                        %% Lets make this a method!
                         let ktypemask, ktypeslots, ktypesize = this.getCorrectSizeAndMask(ktypeinfo);
                         let vtypemask, vtypeslots, vtypesize = this.getCorrectSizeAndMask(vtypeinfo); 
 

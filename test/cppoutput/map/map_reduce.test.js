@@ -14,10 +14,10 @@ describe ("CPP Emit Evaluate -- Map reduce simple", () => {
     });
 
     it("should do simple int reduce", function () {
-        runMainCode('public function main(): Int { return Map<Int, Int>{}.reduce<Int>(0i, fn(acc, k, v) => acc + v); }', "0i");
-        runMainCode('public function main(): Int { return Map<Int, Int>{}.reduce<Int>(5i, fn(acc, k, v) => acc + v); }', "5i");
+        runMainCode('public function main(): Int { return Map<Int, Int>{}.reduce<Int>(0i, fn(acc, k, v) => acc + v); }', "0_i");
+        runMainCode('public function main(): Int { return Map<Int, Int>{}.reduce<Int>(5i, fn(acc, k, v) => acc + v); }', "5_i");
 
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 3i => 0i}.reduce<Int>(0i, fn(acc, k, v) => acc + k); }', "4i");
-        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 3i => 0i}.reduce<Int>(0i, fn(acc, k, v) => acc + v); }', "2i");
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 3i => 0i}.reduce<Int>(0i, fn(acc, k, v) => acc + k); }', "4_i");
+        runMainCode('public function main(): Int { return Map<Int, Int>{1i => 2i, 3i => 0i}.reduce<Int>(0i, fn(acc, k, v) => acc + v); }', "2_i");
     });
 });

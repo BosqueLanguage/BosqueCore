@@ -2047,7 +2047,7 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
 
     let subns_fwddecls = nsdecl.subns
-        .reduce<String>(ns, fn(acc, name, decl) => {
+        .reduce<String>("", fn(acc, name, decl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls[recursive](decl, ctx, full_indent));
     });
 
@@ -2061,13 +2061,13 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
 
     let collections = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.collections.has(tk))
-        .reduce<String>(ant_fwddecls, fn(acc, tk) => {
+        .reduce<String>("", fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitCollectionTypeDecl(ant@<CPPAssembly::CollectionTypeDecl>, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     });
 
-    return String::concat(subns_fwddecls, collections, indent, "}%n;");
+    return String::concat(ns, ant_fwddecls, subns_fwddecls, collections, indent, "}%n;");
 }
 
 %%
@@ -2077,15 +2077,10 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
     let full_indent = String::concat("    ", indent);
     let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
 
-    let subns = nsdecl.subns
-        .reduce<String>(ns, fn(acc, name, decl) => {
-            return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
-    });
-
     %% Emit enums first
     let enums = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.enums.has(tk))
-        .reduce<String>(String::concat(subns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
+        .reduce<String>(String::concat(ns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
             return String::concat(acc, def);
@@ -2115,7 +2110,12 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
     });
 
-    return String::concat(method_fwddecls, indent, "}%n;");
+    let subns = nsdecl.subns
+        .reduce<String>(method_fwddecls, fn(acc, name, decl) => {
+            return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
+    });
+
+    return String::concat(subns, indent, "}%n;");
 }
 
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
