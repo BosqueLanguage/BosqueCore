@@ -1603,7 +1603,9 @@ entity CPPTransformer {
                     fn(decl) => {
                         let npconcepts = decl.pconcepts.pushBack(cpptk);
                         let nalltypes = decl.alltypes.pushBack(cpptk);
-                        return decl[pconcepts=npconcepts, alltypes=nalltypes];
+                        let ndecl = transformer.updateNSMethods(decl, cpppc@<CPPAssembly::AbstractNominalTypeDecl>);
+
+                        return ndecl[pconcepts=npconcepts, alltypes=nalltypes];
                     });                     
             }); 
 
@@ -1619,7 +1621,9 @@ entity CPPTransformer {
                     fn(decl) => {
                         let nconstructables = decl.constructables.pushBack(cpptk);
                         let nalltypes = decl.alltypes.pushBack(cpptk);
-                        return decl[constructables=nconstructables, alltypes=nalltypes];
+                        let ndecl = transformer.updateNSMethods(decl, cppctd@<CPPAssembly::AbstractNominalTypeDecl>);
+
+                        return ndecl[constructables=nconstructables, alltypes=nalltypes];
                     });                     
             });
 
@@ -1635,7 +1639,9 @@ entity CPPTransformer {
                     fn(decl) => {
                         let ncollections = decl.collections.pushBack(cpptk);
                         let nalltypes = decl.alltypes.pushBack(cpptk);
-                        return decl[collections=ncollections, alltypes=nalltypes];
+                        let ndecl = transformer.updateNSMethods(decl, cppctd@<CPPAssembly::AbstractNominalTypeDecl>);
+
+                        return ndecl[collections=ncollections, alltypes=nalltypes];
                     });                     
             });
 

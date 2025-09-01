@@ -678,6 +678,8 @@ CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
 CCharBuffer& cbufferRemainder(CCharBuffer& cb, Nat split) noexcept;
 Bool cbufferEqual(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
 Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
+Bool cbufferIsPrefix(CCharBuffer cb, CCharBuffer& pre) noexcept;
+CCharBuffer& cbufferRemove(CCharBuffer& cb1, CCharBuffer& pre) noexcept;
 
 const int maxUnicodeCharBufferSize = 8;
 struct UnicodeCharBuffer {

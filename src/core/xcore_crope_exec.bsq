@@ -14,6 +14,8 @@ namespace CCharBufferOps {
     function natToCBuffer(v: Nat): CCharBuffer = nat_to_ccharbuffer;
     function mergeCBuffers(cb1: CCharBuffer, cb2: CCharBuffer): CCharBuffer = ccharbuffer_merge;
     function remainder(cb: CCharBuffer, split: Nat): CCharBuffer = ccharbuffer_remainder;
+    function remove(cb: CCharBuffer, pre: CCharBuffer): CCharBuffer = ccharbuffer_remove;
+    function isPrefix(cb: CCharBuffer, pre: CCharBuffer): Bool = ccharbuffer_isprefix;
 
     function mergeCBuffers2(cb1: CCharBuffer, cb2: CCharBuffer): (|CCharBuffer, CCharBuffer|) {
         let cb1size = getMaxSize() - cb1.size();
@@ -45,6 +47,14 @@ namespace CRopeOps {
         return XCore::s_createDirect<Rope, CRope>(append(r.value, buf));
     }
 
+    function s_crope_prepend(r1: CRope, r2: CRope): CRope {
+        return XCore::s_createDirect<Rope, CRope>(prepend(r1.value, r2.value));
+    }
+
+    function s_crope_remove_prefix_crope(r: CRope, pre: CRope): CRope {
+        return XCore::s_createDirect<Rope, CRope>(removepre(r.value, pre.value));
+    }
+
     function s_crope_empty(cr: CRope): Bool {
         return cr.value?<BBLeaf>;
     }
@@ -67,6 +77,10 @@ namespace CRopeOps {
 
     function s_crope_less(cr1: CRope, cr2: CRope): Bool {
         return less(cr1.value, cr2.value);
+    }
+
+    function s_crope_starts_with_crope(cr: CRope, pre: CRope): Bool {
+        return startsWithRope(cr.value, pre.value);
     }
 
     function s_nat_to_crope(v: Nat): CRope {
@@ -358,6 +372,10 @@ namespace CRopeOps {
         return Rope::createNode(c, tleft, tright);
     }
 
+    function length(r: Rope): Nat {
+        return Rope::getCharacterCount(r);
+    }
+
     %% We keep track of the closest buffer (current nodes parents left child) for merging
     recursive function append_helper(t: Rope, l: Rope, v: CCharBuffer): Rope {
         match(t)@ {
@@ -370,11 +388,6 @@ namespace CRopeOps {
 
                 %% Merge chars from v into t.buf until t.buf is full
                 if($t.buf.size() < CCharBufferOps::getMaxSize()) {
-
-                    %%
-                    %% TODO: once multi assignment is supported for emission lets one line this
-                    %%
-
                     let tmp = CCharBufferOps::mergeCBuffers2($t.buf, v);
                     let cb1 = tmp.0;
                     let cb2 = tmp.1;
@@ -391,98 +404,160 @@ namespace CRopeOps {
     }
 
     function append(t: Rope, v: CCharBuffer): Rope {
-        var tt: Rope;
         match(t)@ {
             BBLeaf => { 
-                tt = Rope::createLeaf(v); 
+                return Rope::createLeaf(v); 
             }
             | Leaf => {
-                tt = append_helper(t, t, v);
+                return append_helper(t, t, v);
             }
             | Node => {
-                tt = append_helper(t, $t.l, v);
+                return append_helper(t, $t.l, v);
             }
         }
-        
-        let nt = tt@<Node>;    
-        let ntt = if(nt.c === Color#Red) 
-            then Rope::createNode(Color#Black, nt.l, nt.r) 
-            else nt;
-    
-        return ntt;
-        
     }
 
-    function concat(l: Rope, r: Rope): Rope {
-        let nn = Rope::createNode(Color#Red, l, r);
-        let tt = balance(nn.c, nn.l, nn.r);
+    function prepend(r1: Rope, r2: Rope): Rope {
+        return concat(r2, r1);
+    }
 
-        if(tt)@<Node> {
-            let nt = if($tt.c === Color#Red) 
-                then Rope::createNode(Color#Black, $tt.l, $tt.r) 
-                else $tt;
-            return nt;
+    recursive function concat_helper(l: Rope, r: Rope): Rope {
+        let buffers = get_buffers(r);
+        let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
+        
+        return nl;
+    }
+
+    %% Append R to L buffer by buffer to ensure buffers are full (if possible) 
+    function concat(l: Rope, r: Rope): Rope {
+        return concat_helper(l, r);
+    }
+
+    recursive function startsWithRope_helper(rbuffers: List<CCharBuffer>, prebuffers: List<CCharBuffer>): Bool {
+        let rbuf, nrbuffers = rbuffers.popFront();
+        let prebuf, nprebuffers = prebuffers.popFront();
+
+        if(prebuf.size() < CCharBufferOps::getMaxSize()) {
+            return CCharBufferOps::isPrefix(rbuf, prebuf);
         }
         else {
-            return tt;
+            return startsWithRope_helper[recursive](nrbuffers, nprebuffers);
         }
-    }     
+    }
+
+    function startsWithRope(r: Rope, pre: Rope): Bool {
+        return startsWithRope_helper(get_buffers(r), get_buffers(pre));
+    }
+
+    function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {
+        let baserope: Rope = Rope::createLeaf(basebuffer);
+    
+        let res = buffers.reduce<(|Rope, Nat|)>((|baserope, 0n|), fn(acc, buf) => {
+            let current_rope = acc.0;
+            let current_index = acc.1;
+
+            if(current_index >= split) {
+                return append(current_rope, buf), current_index + 1n;
+            }
+            else {
+                return current_rope, current_index + 1n;
+            }
+        }).0;
+
+        return res;
+    }
+
+    function removepre_helper(r: Rope, pre: Rope): Rope {
+        let rbuffers = get_buffers(r);
+        let prebuffers = get_buffers(pre);
+
+        let lastbuffer_idx = prebuffers.size() - 1n;
+
+        let last_prebuffer = prebuffers.back();
+        let last_rbuffer = rbuffers.get(lastbuffer_idx);
+ 
+        let nbuffer = CCharBufferOps::remove(last_rbuffer, last_prebuffer);
+        return removepre_rebuild(nbuffer, rbuffers, lastbuffer_idx + 1n);
+    }
+
+    %% Eventually we will want to turn this into a generic delete function
+    function removepre(r: Rope, pre: Rope): Rope {
+        return removepre_helper(r, pre);
+    }
+
+    recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
+        if(r1buffers.size() == 0n) {
+            return true;
+        }
+
+        let b1, nr1buffers = r1buffers.popFront();
+        let b2, nr2buffers = r2buffers.popFront();
+
+        if(!CCharBufferOps::equal(b1, b2)) {
+            return false;
+        }
+        else {
+            return equal_helper[recursive](nr1buffers, nr2buffers);
+        }
+    }
 
     function equal(r1: Rope, r2: Rope): Bool {
-        if(r1?<Leaf> && r2?<Leaf>) {
-            let nr1 = r1@<Leaf>;
-            let nr2 = r2@<Leaf>;
+        let r1buffers = get_buffers(r1);
+        let r2buffers = get_buffers(r2);
 
-            return CCharBufferOps::equal(nr1.buf, nr2.buf);
+        if(r1buffers.size() != r2buffers.size()) {
+            return false;
+        } 
+
+        return equal_helper(r1buffers, r2buffers);
+    }
+
+    recursive function less_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
+        let size1 = r1buffers.size();
+        let size2 = r2buffers.size();
+
+        %% No buffers left in either, must be equal
+        if(size1 == 0n && size2 == 0n) {
+            return false;
         }
 
-        if(r1?<Node> && r2?<Node>) {
-            let nr1 = r1@<Node>;
-            let nr2 = r2@<Node>;
-
-            if(nr1.w != nr2.w) {
-                return false;
-            }
-
-            return equal(nr1.l, nr2.l) && equal(nr1.r, nr2.r);
+        %% All characters of r1 match r2 but r1 is shorter string
+        if(size1 == 0n) {
+            return true;
         }
-    
-        return false;
+        
+        %% All characters of r2 match r1 but r1 is longer string
+        if(size2 == 0n) {
+            return false;
+        }
+
+        let cb1, nr1buffers = r1buffers.popFront();
+        let cb2, nr2buffers = r2buffers.popFront();
+        if(CCharBufferOps::equal(cb1, cb2)) {
+            return less_helper[recursive](nr1buffers, nr2buffers);
+        }
+        else {
+            return CCharBufferOps::less(cb1, cb2);
+        } 
     }
 
     function less(r1: Rope, r2: Rope): Bool {
-        return less_helper(r1, r2, 0n);
+        return less_helper(get_buffers(r1), get_buffers(r2));
+    }
+    
+    recursive function get_buffers_helper(r: Rope, acc: List<CCharBuffer>): List<CCharBuffer> {
+        match(r)@ {
+            BBLeaf => { return acc; }
+            | Leaf => { return acc.pushBack($r.buf); }
+            | Node => {  
+                let left_buffers = get_buffers_helper[recursive]($r.l, acc);   
+                return get_buffers_helper[recursive]($r.r, left_buffers);
+            }
+        }
     }
 
-    recursive function less_helper(r1: Rope, r2: Rope, idx: Nat): Bool {
-        let cb1 = get_buffer(r1, idx);
-        let cb2 = get_buffer(r2, idx);
-
-        let maxbufsize = CCharBufferOps::getMaxSize();
-        if(cb1.size() < maxbufsize) {
-            return CCharBufferOps::less(cb1, cb2);
-        }
-
-        if(CCharBufferOps::equal(cb1, cb2)) {
-            return less_helper[recursive](r1, r2, idx + maxbufsize);
-        }
-        else {
-            return CCharBufferOps::less(cb1, cb2);
-        } 
-    }
-
-    recursive function get_buffer(r: Rope, idx: Nat): CCharBuffer {
-        if(r)@<Leaf> {
-            return $r.buf;
-        }
-        
-        let nr = r@<Node>;
-        if(idx < nr.w) {
-            return get_buffer[recursive](nr.l, idx);
-        }
-        else {
-            return get_buffer[recursive](nr.r, idx - nr.w);
-        } 
+    function get_buffers(r: Rope): List<CCharBuffer> {
+        return get_buffers_helper(r, List<CCharBuffer>{});
     }
 
     datatype Rope of 
@@ -490,10 +565,8 @@ namespace CRopeOps {
         | Leaf { buf: CCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
-        function createEmpty(): BBLeaf {
-            return BBLeaf{ };
-        }
-
+        const emptyRope: Rope = BBLeaf{};
+    
         function createLeaf(buf: CCharBuffer): Leaf {
             return Leaf{ buf };
         }
