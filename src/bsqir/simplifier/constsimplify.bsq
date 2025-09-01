@@ -808,6 +808,13 @@ entity ConstantSimplification {
         }
     }
 
+    recursive method processMapEntryConstructorExpression(e: MapEntryConstructorExpression): Expression {
+        let nkexp = this.processExpression[recursive](e.kexp);
+        let nvexp = this.processExpression[recursive](e.vexp);
+
+        return e[kexp=nkexp, vexp=nvexp];
+    }
+
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -848,7 +855,7 @@ entity ConstantSimplification {
             | KeyCmpLessExpression => { return this.processKeyCmpLessExpression[recursive]($e); }
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e); }
             | BinLogicExpression => { return this.processBinLogicExpression[recursive]($e); }
-            | MapEntryConstructorExpression => { abort; }
+            | MapEntryConstructorExpression => { return this.processMapEntryConstructorExpression[recursive]($e); }
             | IfExpression => { return this.processIfExpression[recursive]($e); }
         }
     }

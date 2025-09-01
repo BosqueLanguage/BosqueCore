@@ -420,7 +420,7 @@ recursive function emitBinaryArithExpression(e: CPPAssembly::BinaryArithExpressi
 
 recursive function emitPrefixNotOpExpression(notop: CPPAssembly::PrefixNotOpExpression, ctx: Context): String {
     let expr = emitExpression[recursive](notop.expr, ctx);
-    return String::concat("!", expr);
+    return String::concat("!(", expr, ")");
 }
 
 recursive function emitPrefixNegateOpExpression(negop: CPPAssembly::PrefixNegateOpExpression, ctx: Context): String {
@@ -511,15 +511,15 @@ recursive function emitBinLogicImpliesExpression(e: CPPAssembly::BinLogicImplies
     let lhs = emitExpression[recursive](e.lhs, ctx);
     let rhs = emitExpression[recursive](e.rhs, ctx);  
 
-    let implies: String = String::concat("!", lhs, " || ", rhs);
+    let implies: String = String::concat("!(", lhs, ") || ", rhs);
     return String::concat("(", implies ,")");
 }
 
 recursive function emitBinLogicIFFExpression(e: CPPAssembly::BinLogicIFFExpression, ctx: Context): String {
     let lhs = emitExpression[recursive](e.lhs, ctx);
     let rhs = emitExpression[recursive](e.rhs, ctx); 
-    let nlhs: String = String::concat("!", lhs);
-    let nrhs: String = String::concat("!", rhs);
+    let nlhs: String = String::concat("!(", lhs, ")");
+    let nrhs: String = String::concat("!(", rhs, ")");
 
     let first: String = String::concat("(", lhs, " && ", rhs, ")");
     let second: String = String::concat("(", nlhs, " && ", nrhs, ")");
@@ -773,7 +773,7 @@ function emitConstructorPrimarySpecialMapEntryExpression(cpsmee: CPPAssembly::Co
     let value = emitExpression(cpsmee.value, ctx);
     let metype = emitTypeSignature(cpsmee.ctype, false, ctx);
 
-    return String::concat(metype, "{ ", key, ", ", value, " }");
+    return String::concat(metype, "{ ", key, ",", value, " }");
 }
 
 function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): String {    
@@ -859,7 +859,7 @@ function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimar
     let resolvedktype = removeCppPrefix(ktype);
     let resolvedvtype = removeCppPrefix(vtype);
     
-    let template = String::concat("ᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ");
+    let template = String::concat("ᐸ", resolvedktype, "ᐧ", resolvedvtype, "ᐳ");
 
     switch(exp.args.size()) {
         0n =>   { return String::concat(ns, "s_map_create_empty", template, "()"); }
@@ -1921,7 +1921,7 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
         let resolvedvtype = removeCppPrefix(vtype);
 
         let treealias = emitTypeKey($ctd.tkey, false, nctx);
-        let mapdef = String::concat("typedef MapOps::Treeᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ ");
+        let mapdef = String::concat("typedef MapOps::Treeᐸ", resolvedktype, "ᐧ", resolvedvtype, "ᐳ ");
         return String::concat(indent, mapdef, treealias, ";%n;");
     }
    
@@ -2091,7 +2091,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, def);
     });
 
-    %% Value types
+    %% Value type, ")"s
     let values = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(enums, fn(acc, tk) => {

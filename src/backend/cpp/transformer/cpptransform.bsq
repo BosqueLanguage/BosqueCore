@@ -695,6 +695,14 @@ entity CPPTransformer {
         return CPPAssembly::LiteralUnicodeCharExpression{ etype, exp.value };
     }
 
+    method transformMapEntryConstructorExpression(exp: BSQAssembly::MapEntryConstructorExpression): CPPAssembly::MapEntryConstructorExpression {
+        let etype = this.convertTypeSignature(exp.etype);       
+        let kexp = this.transformExpressionToCpp(exp.kexp);
+        let vexp = this.transformExpressionToCpp(exp.vexp);
+
+        return CPPAssembly::MapEntryConstructorExpression{ etype, kexp, vexp };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
@@ -741,7 +749,7 @@ entity CPPTransformer {
             | BSQAssembly::KeyCmpLessExpression => { return this.transformKeyCmpLessExpression($expr); } 
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
-            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::MapEntryConstructorExpression => { return this.transformMapEntryConstructorExpression($expr); }
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
         }
     }
@@ -1214,6 +1222,10 @@ entity CPPTransformer {
                         return sometinfo, ntic.update(cpptkey, sometinfo);
                     }
                     if(ant)@<BSQAssembly::MapEntryTypeDecl> {
+                        %%
+                        %% TODO: FIX THIS SHIT!!!! It is not right, it emitted 
+                        %% ints and bools as reftypes
+                        %%
                         let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
                         let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
 
