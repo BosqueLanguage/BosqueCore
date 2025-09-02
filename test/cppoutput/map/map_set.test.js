@@ -13,7 +13,7 @@ describe ("CPP Emit Evaluate -- Map set", () => {
     });
 
     it("should fail set NOT exists", function () {
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{}.set(3i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?");
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.set(3i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{}.set(3i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?\n");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.set(3i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?\n");
     });
 });

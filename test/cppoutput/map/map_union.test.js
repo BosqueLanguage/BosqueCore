@@ -31,8 +31,8 @@ describe ("CPP Emit Evaluate -- Map union", () => {
     });
 
     it("should union fail (duplicates)", function () {
-        runMainCodeError("public function main(): Nat { return Map<Int, CString>::union(Map<Int, CString>{1i => 'a'}, Map<Int, CString>{2i => 'a'}, Map<Int, CString>{1i => 'c'}).size(); }", "Assertion failed! Or perhaps over/underflow?");
+        runMainCodeError("public function main(): Nat { return Map<Int, CString>::union(Map<Int, CString>{1i => 'a'}, Map<Int, CString>{2i => 'a'}, Map<Int, CString>{1i => 'c'}).size(); }", "Assertion failed! Or perhaps over/underflow?\n");
 
-        runMainCodeError("public function main(): Nat { return Map<Int, CString>::unionAll(List<Map<Int, CString>>{Map<Int, CString>{1i => 'a'}, Map<Int, CString>{2i => 'a'}, Map<Int, CString>{1i => 'c'}}).size(); }", "Assertion failed! Or perhaps over/underflow?");
+        runMainCodeError("public function main(): Nat { return Map<Int, CString>::unionAll(List<Map<Int, CString>>{Map<Int, CString>{1i => 'a'}, Map<Int, CString>{2i => 'a'}, Map<Int, CString>{1i => 'c'}}).size(); }", "Assertion failed! Or perhaps over/underflow?\n");
     });
 });

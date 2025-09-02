@@ -321,6 +321,9 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
             return eexp;
         }
+        if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::MapTypeDecl> {
+            return eexp;
+        }
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::CRopeTypeDecl> {
             return eexp;
         }
@@ -1341,6 +1344,12 @@ function emitIfElifElseStatement(stmt: CPPAssembly::IfElifElseStatement, ctx: Co
     return String::concat(ifcond, ifbody, elifs, elseblock);
 }
 
+function emitAbortStatement(stmt: CPPAssembly::AbortStatement, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+
+    return String::concat(full_indent, "𝐚𝐛𝐨𝐫𝐭;");
+}
+
 function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
     let cond = emitExpression(stmt.cond, ctx);
@@ -1370,7 +1379,6 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
     let expr = emitExpression(stmt.sval, ctx);
     let accessor = generateAccess(stmt.sval.etype.tkeystr, ctx);
     let sval = String::concat(expr, accessor, "typeinfo == &");
-    var bind: String;
 
     let matchflow = stmt.matchflow.mapIdx<String>(fn(mf, ii) => {
         let bind = tryGenerateBindType(stmt.bindInfo, expr, stmt.sval.etype.tkeystr, mf.0.tkeystr, ctx, full_indent);
@@ -1381,7 +1389,13 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
             return String::concat(full_indent, "if(", sval, ts, "Type) {%n;", block);
         }
         else {
-            return String::concat(full_indent, "else if(", sval, ts, "Type) {%n;", block);
+            %% Match everything case
+            if(mf.0.tkeystr === stmt.sval.etype.tkeystr) {
+                return String::concat(full_indent, "else if(true) {%n;", block);               
+            }
+            else {
+                return String::concat(full_indent, "else if(", sval, ts, "Type) {%n;", block);
+            }
         }
     });
 
@@ -1481,7 +1495,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
         | CPPAssembly::IfElifElseStatement => { return emitIfElifElseStatement($stmt, ctx, indent); }
         | CPPAssembly::SwitchStatement => { return emitSwitchStatement($stmt, ctx, indent); }
         | CPPAssembly::MatchStatement => { return emitMatchStatement($stmt, ctx, indent); }
-        %%| CPPAssembly::AbortStatement => { abort; }
+        | CPPAssembly::AbortStatement => { return emitAbortStatement($stmt, ctx, indent); }
         | CPPAssembly::AssertStatement => { return emitAssertStatement($stmt, ctx, indent); }
         %%| CPPAssembly::ValidateStatement => { abort; }
         %%| CPPAssembly::DebugStatement => { abort; }

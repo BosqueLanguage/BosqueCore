@@ -38,6 +38,27 @@ concept AbstractCoreDecl provides AbstractDecl {
     field name: Identifier;
 }
 
+%%
+%% TODO: We 100% want to support condition decls
+%%
+datatype ConditionDecl provides AbstractDecl using {
+%%    field diagnosticTag: Option<CString>;
+    field ikey: InvokeKey;
+    field exp: Expression;
+}
+of
+PreConditionDecl {
+    field issoft: Bool;
+}
+| PostConditionDecl {
+    field issoft: Bool;
+}
+| InvariantDecl {
+}
+| ValidateDecl {
+}
+;
+
 entity MemberFieldDecl provides AbstractCoreDecl {
     field declaredInType: NominalTypeSignature; %% What entity is this field in?
     

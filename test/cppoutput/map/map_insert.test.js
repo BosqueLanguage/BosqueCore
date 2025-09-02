@@ -26,6 +26,6 @@ describe ("CPP Emit Evaluate -- Map insert", () => {
     });
 
     it("should fail insert exists", function () {
-        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.insert(2i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?");
+        runMainCodeError('public function main(): Int { return Map<Int, Int>{1i => 0i, 2i => 2i}.insert(2i, 5i).get(1i); }', "Assertion failed! Or perhaps over/underflow?\n");
     });
 });
