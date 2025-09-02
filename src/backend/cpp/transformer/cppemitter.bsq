@@ -583,22 +583,27 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     if(ctx.asm.isNominalTypeConcept(op.baseType.tkeystr)) {
         let e = ctx.asm.lookupNominalTypeDeclaration(op.baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
         let canresolve, offset = canUseDirectFieldAccess(e, op.name, ctx);
-        let ftype = emitTypeSignature(op.ftype, true, ctx);
+        let fieldaccessor = generateAccess(op.ftype.tkeystr, ctx);
+        let fieldaccess = String::concat(fieldaccessor, ident);
+        let accessType = getAccessor(op.baseType.tkeystr, op.ftype.tkeystr, ctx);
         
-        let accessor = getAccessor(op.ftype.tkeystr, op.ftype.tkeystr, ctx);
         if(canresolve) {
-            return String::concat(accessor, "<", ftype, ", ", String::fromCString(offset.toCString()), ">()");
+            %% Subtype here does not matter as all agree on this fields position
+            let anysubtype = emitTypeKey(e.subtypes.front(), false, ctx);
+            return String::concat(accessType, "<", anysubtype, ">()", fieldaccess);
         }
         else {
+            let ftype = emitTypeSignature(op.ftype, true, ctx);
             let declaredInType = emitTypeSignature(op.declaredInType, false, ctx);
             let enumentry = String::concat(", ", declaredInType, "_entries::", declaredInType, "_", ident);
-            let args = String::concat(declaredInType, "Type.vtable)");
-            return String::concat(accessor, "vlookup<", ftype, enumentry, ">(", args); 
+            let args = String::concat(declaredInType, "Type.vtable)", fieldaccess);
+            return String::concat(accessType, "vlookup<", ftype, enumentry, ">(", args); 
         }
     }
-    
-    let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
-    return String::concat(accessor, ident);
+    else {
+        let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
+        return String::concat(accessor, ident);
+    }
 }
 
 %% Assumes access type is elist (I believe this is the only type accessable via postfix index)
@@ -1143,10 +1148,10 @@ function emitAccessNamespaceConstantExpression(exp: CPPAssembly::AccessNamespace
     let resolvedns = emitResolvedNamespace(ctx.fullns_list, ns);
 
     if(resolvedns === "") {
-        return String::concat(resolvedns, name);
+        return String::concat(resolvedns, name, "()");
     }
     else {
-        return String::concat(resolvedns, "::", name);
+        return String::concat(resolvedns, "::", name, "()");
     }
 }
 
@@ -1727,6 +1732,14 @@ function emitDatatypeTypeDecl(dt: CPPAssembly::DatatypeTypeDecl, ctx: Context, i
     return String::concat(dm_enum, dm_vtable, emitTypeInfo(dm_tinfo, some(dt@<CPPAssembly::AbstractNominalTypeDecl>), ctx, indent));
 }
 
+function emitConceptTypeDecl(ctd: CPPAssembly::ConceptTypeDecl, ctx: Context, indent: String): String {
+    let ctd_enum = generateEntriesEnum(ctd@<CPPAssembly::AbstractNominalTypeDecl>, ctd.fields, ctx, indent);
+    let ctd_vtable = generateVTable(ctd@<CPPAssembly::AbstractNominalTypeDecl>, ctd.fields, ctx, indent);
+    let ctd_tinfo = ctx.asm.typeinfos.get(ctd.tkey);
+    
+    return String::concat(ctd_enum, ctd_vtable, emitTypeInfo(ctd_tinfo, some(ctd@<CPPAssembly::AbstractNominalTypeDecl>), ctx, indent));   
+}
+
 function emitEnumTypeDecl(etd: CPPAssembly::EnumTypeDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
 
@@ -1940,14 +1953,16 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
         return String::concat(ropedef, string_alias);
     }
     if(ctd)@<CPPAssembly::ListTypeDecl> {
-        let ttype = emitTypeSignature(ctd.oftype, false, nctx);
-        let resolvedttype = emitResolvedTemplates(removeCppPrefix(ttype));
+        let ttype = emitTypeSignature($ctd.oftype, false, nctx);
+        let resolvedttype = emitSpecialTemplate(removeCppPrefix(ttype));
 
         return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
     }
     if(ctd)@<CPPAssembly::MapTypeDecl> {
-        let ktype = emitResolvedTemplates(some($ctd.ktype), none, nctx);
-        let vtype = emitResolvedTemplates(some($ctd.vtype), none, nctx);
+        let ktype = emitTypeSignature($ctd.ktype, false, nctx);
+        let vtype = emitTypeSignature($ctd.vtype, false, nctx);
+        let resolvedktype = emitSpecialTemplate(removeCppPrefix(ktype));
+        let resolvedvtype = emitSpecialTemplate(removeCppPrefix(vtype));
 
         let treealias = emitTypeKey($ctd.tkey, false, nctx);
         let mapdef = String::concat("typedef MapOps::Treeᐸ", resolvedktype, "ᐧ", resolvedvtype, "ᐳ ");
@@ -1966,15 +1981,26 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
         | CPPAssembly::CollectionTypeDecl => { return emitTypeInfo(ctx.asm.typeinfos.get($ant.tkey), some($ant), ctx, indent); } %% Collection typedef done with fwd decls
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
+        | CPPAssembly::ConceptTypeDecl => { return emitConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
         | CPPAssembly::PrimitiveEntityTypeDecl => { return ""; } %% We just need PrimitiveEntityTypeDecl's methods
     }
 }
 
-function getConstMemberBase(cmd: CPPAssembly::ConstMemberDecl, ctx: Context): String, String {    
-    let rtype = emitTypeSignature(cmd.declaredType, true, ctx);
+function getConstDeclBase(declaredType: CPPAssembly::TypeSignature, resolvedname: String, ctx: Context): String, String {    
+    let rtype = emitTypeSignature(declaredType, true, ctx);
 
-    return rtype, emitSpecialTemplate(emitResolvedNamespace(ctx.fullns_list, cmd.resolvedname)); 
+    return rtype, emitSpecialTemplate(emitResolvedNamespace(ctx.fullns_list, resolvedname)); 
+}
+
+function emitNamespaceConstDecl(cnsd: CPPAssembly::NamespaceConstDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(cnsd.declaredInNS, cnsd.fullns);
+
+    let exp = emitExpression(cnsd.value, nctx);
+    let rtype, fullname = getConstDeclBase(cnsd.declaredType, cnsd.resolvedname, nctx);
+
+    let pre = String::concat(indent, "inline ", rtype, " ", fullname, "() { return ");
+    return String::concat(pre, exp, "; }%n;");
 }
 
 %% These two are good cantidates for force inline
@@ -1982,7 +2008,7 @@ function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, in
     let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);
     
     let exp = emitExpression(cmd.value, nctx);
-    let rtype, fullname = getConstMemberBase(cmd, nctx);
+    let rtype, fullname = getConstDeclBase(cmd.declaredType, cmd.resolvedname, nctx);
 
     let pre = String::concat(indent, "inline ", rtype, " ", fullname, "() { return ");
     return String::concat(pre, exp, "; }%n;");
@@ -1991,7 +2017,15 @@ function emitConstMemberDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, in
 function emitConstMemberForwardDecl(cmd: CPPAssembly::ConstMemberDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(cmd.declaredInNS, cmd.fullns);
     
-    let rtype, fullname = getConstMemberBase(cmd, nctx);   
+    let rtype, fullname = getConstDeclBase(cmd.declaredType, cmd.resolvedname, nctx);   
+    
+    return String::concat(indent, "inline ", rtype, " ", fullname, "();%n;");
+}
+
+function emitNamespaceConstForwardDecl(cnsd: CPPAssembly::NamespaceConstDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(cnsd.declaredInNS, cnsd.fullns);
+    
+    let rtype, fullname = getConstDeclBase(cnsd.declaredType, cnsd.resolvedname, nctx);   
     
     return String::concat(indent, "inline ", rtype, " ", fullname, "();%n;");
 }
@@ -2031,18 +2065,34 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
     });
 
-    %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let consts_fwddecls = nsdecl.typeconsts
-        .reduce<String>(String::concat(subns, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
+    let nsconsts_fwddecls = nsdecl.nsconsts
+        .reduce<String>(String::concat(subns, "//%n;// Constants%n;//%n;"), 
+        fn(acc, s) => {
+            let nsc = ctx.asm.nsconsts.get(s);
+            let def = emitNamespaceConstForwardDecl(nsc, ctx, full_indent);
+            return String::concat(acc, def);
+        }
+    );
+
+    let typeconsts_fwddecls = nsdecl.typeconsts
+        .reduce<String>(nsconsts_fwddecls, fn(acc, s) => {
             let tc = ctx.asm.typeconsts.get(s);
             let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
     });
 
+    let nsconsts = nsdecl.nsconsts
+        .reduce<String>(String::concat(typeconsts_fwddecls, "//%n;// Constants%n;//%n;"),
+        fn(acc, s) => {
+            let tc = ctx.asm.nsconsts.get(s);
+            let def = emitNamespaceConstDecl(tc, ctx, full_indent);
+            return String::concat(acc, def);
+        }
+    );
 
     %% Will need nsdecl consts too, this is just ConstMemberDecls 
-    let consts = nsdecl.typeconsts
-        .reduce<String>(String::concat(consts_fwddecls, "//%n;// Constants%n;//%n;"), fn(acc, s) => {
+    let typeconsts = nsdecl.typeconsts
+        .reduce<String>(nsconsts, fn(acc, s) => {
             let tc = ctx.asm.typeconsts.get(s);
             let def = emitConstMemberDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
@@ -2050,7 +2100,7 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
 
     %% Emit methods after all type defintions to prevent types not being fully defined but used
     let methods = nsdecl.alltypes
-        .reduce<String>(consts, fn(acc, tk) => {
+        .reduce<String>(typeconsts, fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let func = emitMethods(ant, tk, ctx, full_indent);
             return String::concat(acc, func);

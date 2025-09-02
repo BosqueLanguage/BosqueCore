@@ -66,6 +66,12 @@ entity MemberFieldDecl provides AbstractCoreDecl {
     field defaultval: Option<Expression>;
 }
 
+entity NamespaceConstDecl provides AbstractCoreDecl {
+    field resolvedname: String;
+    field declaredType: TypeSignature;
+    field value: Expression;
+}
+
 entity ConstMemberDecl provides AbstractCoreDecl {
     field resolvedname: String;
     field declaredInType: NominalTypeSignature;
@@ -229,6 +235,7 @@ entity NamespaceDecl {
     field nsname: CString;
     field subns: Map<CString, NamespaceDecl>;
 
+    field nsconsts: List<String>;
     field typeconsts: List<String>;
 
     field nsfuncs: List<InvokeKey>;
@@ -241,6 +248,7 @@ entity NamespaceDecl {
     field datamembers: List<TypeKey>;
 
     field datatypes: List<TypeKey>;
+    field concepts: List<TypeKey>;
 
     field pconcepts: List<TypeKey>;
 
@@ -258,6 +266,7 @@ entity NamespaceDecl {
 entity Assembly {
     field nsdecls: Map<CString, NamespaceDecl>; %% Toplevel decls, traverse to find lower level decls
     
+    field nsconsts: Map<String, NamespaceConstDecl>;
     field typeconsts: Map<String, ConstMemberDecl>;
 
     field allfuncs: List<FunctionDecl>;

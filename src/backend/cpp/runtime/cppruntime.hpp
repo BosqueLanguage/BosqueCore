@@ -8,7 +8,8 @@
 #include <csetjmp>
 #include <variant> // TODO: Need to remove dependency!
 
-#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
+//#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
+#define 𝐚𝐛𝐨𝐫𝐭 (assert(false))
 #define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
 
 namespace __CoreCpp {
@@ -280,10 +281,10 @@ public:
 do {                                                                \
     VAL_TYPE tmp = 0;                                               \
     if(__builtin_##TYPE##_overflow(this->value, rhs.value, &tmp)) { \
-        std::longjmp(info.error_handler, true);                     \
+        𝐚𝐛𝐨𝐫𝐭;                     \
     }                                                               \
     if(!is_valid_##BSQ_TYPE(tmp)) {                                 \
-        std::longjmp(info.error_handler, true);                     \
+        𝐚𝐛𝐨𝐫𝐭;                     \
     }                                                               \
     this->value = tmp;                                              \
     return *this;                                                   \
@@ -292,7 +293,7 @@ do {                                                                \
 #define do_safe_division()                      \
 do {                                            \
     if(rhs.value == 0) {                        \
-        std::longjmp(info.error_handler, true); \
+        𝐚𝐛𝐨𝐫𝐭; \
     }                                           \
     this->value /= rhs.value;                   \
     return *this;                               \
@@ -302,7 +303,7 @@ do {                                            \
 do {                                            \
     double res = this->value OP rhs.value;      \
     if(!std::isfinite(res)) {                   \
-        std::longjmp(info.error_handler, true); \
+        𝐚𝐛𝐨𝐫𝐭; \
     }                                           \
     this->value = res;                          \
     return *this;                               \
@@ -315,7 +316,7 @@ public:
     constexpr Int() noexcept : value(0) {};
     constexpr explicit Int(int64_t val) noexcept : value(val){ 
         if(!is_valid_Int(val)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     };
     constexpr int64_t get() const noexcept { return value; } 
@@ -338,7 +339,7 @@ public:
     }
     constexpr Int operator-() noexcept { // dont want to modify value here
         if(this->value == MIN_BSQ_INT) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
         return Int(-value);
     }
@@ -417,14 +418,14 @@ public:
     // Used when constructing from bosque code
     constexpr explicit BigInt(const char* val) noexcept : value(string_to_t<__int128_t>(val)) {
         if(!is_valid_BigInt(value)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     };
 
     // Used for negation
     constexpr explicit BigInt(__int128_t val) noexcept : value(val) {
         if(!is_valid_BigInt(val)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     };
     constexpr __int128_t get() const noexcept { return value; }
@@ -447,7 +448,7 @@ public:
     }
     constexpr BigInt operator-() noexcept { // dont want to modify value here
         if(this->value == MIN_BSQ_BIGINT) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
         return BigInt(-value);
     }
@@ -482,7 +483,7 @@ public:
     constexpr Nat() noexcept : value(0) {};
     constexpr explicit Nat(uint64_t val) noexcept : value(val) {
         if(!is_valid_Nat(val)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     };
     constexpr uint64_t get() const noexcept { return value; } 
@@ -536,14 +537,14 @@ public:
     // Used when constructing from bosque code
     constexpr explicit BigNat(const char* val) noexcept : value(string_to_t<__uint128_t>(val)) {
         if(!is_valid_BigNat(value)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     }; 
 
     // Used with negation 
     constexpr explicit BigNat(__uint128_t val) noexcept : value(val) {
         if(!is_valid_BigNat(val)) {
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         }
     };
     constexpr __uint128_t get() const noexcept { return value; }
@@ -595,7 +596,7 @@ public:
     constexpr Float() noexcept : value(0) {};
      constexpr explicit Float(double val) noexcept : value(val) { 
         if(!std::isfinite(val)) { 
-            std::longjmp(info.error_handler, true);
+            𝐚𝐛𝐨𝐫𝐭;
         } 
     }
     constexpr double get() const noexcept { return value; }
