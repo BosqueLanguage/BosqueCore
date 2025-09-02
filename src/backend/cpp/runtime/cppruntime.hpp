@@ -74,10 +74,7 @@ public:
 
     template<typename T, uintptr_t I=0>
     constexpr T* access_ref() noexcept {
-        T* access = reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + I);   
-        //𝐚𝐬𝐬𝐞𝐫𝐭(access != nullptr);
-
-        return access;
+        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + I);   
     }
 
     template<typename T, uintptr_t I=0>
@@ -121,11 +118,7 @@ public:
 
     template<typename T, uintptr_t I=0>
     constexpr T* access_ref() noexcept {
-        T* access = reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   
-        //𝐚𝐬𝐬𝐞𝐫𝐭(access != nullptr);
-
-        return access; 
-    
+        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   
     }
 
     template<typename T, uintptr_t I=0>
