@@ -695,6 +695,14 @@ entity CPPTransformer {
         return CPPAssembly::LiteralUnicodeCharExpression{ etype, exp.value };
     }
 
+    method transformAccessNamespaceConstantExpression(exp: BSQAssembly::AccessNamespaceConstantExpression): CPPAssembly::AccessNamespaceConstantExpression {
+        let etype = this.convertTypeSignature(exp.etype);
+        let ns = CPPTransformNameManager::convertNamespaceKey(exp.ns);
+        let name = CPPTransformNameManager::convertIdentifier(exp.name);
+
+        return CPPAssembly::AccessNamespaceConstantExpression{ etype, ns, name };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
@@ -708,7 +716,7 @@ entity CPPTransformer {
             | BSQAssembly::LiteralCRegexExpression => { abort; }
             | BSQAssembly::LiteralRegexExpression => { abort; }
             | BSQAssembly::LiteralTypeDeclValueExpression => { abort; }
-            | BSQAssembly::AccessNamespaceConstantExpression => { abort; }
+            | BSQAssembly::AccessNamespaceConstantExpression => { return this.transformAccessNamespaceConstantExpression($expr); }
             | BSQAssembly::AccessStaticFieldExpression => { return this.transformAccessStaticFieldExpression($expr); }
             | BSQAssembly::AccessEnumExpression => { return this.transformAccessEnumExpression($expr); }
             | BSQAssembly::AccessVariableExpression => { return this.transformAccessVariableExpression($expr); }

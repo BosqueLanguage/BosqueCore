@@ -1134,6 +1134,19 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
+function emitAccessNamespaceConstantExpression(exp: CPPAssembly::AccessNamespaceConstantExpression, ctx: Context): String {
+    let name = emitIdentifier(exp.name);
+    let ns = emitNamespaceKey(exp.ns);
+    let resolvedns = emitResolvedNamespace(ctx.fullns_list, ns);
+
+    if(resolvedns === "") {
+        return String::concat(resolvedns, name);
+    }
+    else {
+        return String::concat(resolvedns, "::", name);
+    }
+}
+
 function emitMapEntryConstructorExpression(exp: CPPAssembly::MapEntryConstructorExpression, ctx: Context): String {
     let key = emitExpression(exp.kexp, ctx);
     let value = emitExpression(exp.vexp, ctx);
@@ -1155,7 +1168,7 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::LiteralCRegexExpression => { abort; }
         %%| CPPAssembly::LiteralRegexExpression => { abort; }
         %%| CPPAssembly::LiteralTypeDeclValueExpression => { abort; }
-        %%| CPPAssembly::AccessNamespaceConstantExpression => { abort; }
+        | CPPAssembly::AccessNamespaceConstantExpression => { return emitAccessNamespaceConstantExpression($e, ctx); }
         | CPPAssembly::AccessStaticFieldExpression => { return emitAccessStaticFieldExpression($e, ctx); } 
         | CPPAssembly::AccessEnumExpression => { return emitAccessEnumExpression($e, ctx); }
         | CPPAssembly::AccessVariableExpression => { return emitAccessVariableExpression($e, ctx); }
@@ -1494,7 +1507,7 @@ function emitStatement(stmt: CPPAssembly::Statement, ctx: Context, indent: Strin
 
 function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementation, ctx: Context, indent: String): String {
     switch(String::fromCString(body.builtin)) {
-        "s_float_power" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
+        "s_float_pow" => { return String::concat(indent, "    ", "return __CoreCpp::Float(powf64(a.get(), b.get()));%n;"); }
         | "s_float_sqrt" => { return String::concat(indent, "    ", "return __CoreCpp::Float(sqrtf64(a.get()));%n;"); }
         | "ccharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_empty();%n;"); }
         | "ccharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::CCharBuffer::create_3(c1);%n;"); }
@@ -1909,16 +1922,13 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
     }
     if(ctd)@<CPPAssembly::ListTypeDecl> {
         let ttype = emitTypeSignature(ctd.oftype, false, nctx);
-        let resolvedttype = removeCppPrefix(ttype);
+        let resolvedttype = emitResolvedTemplates(removeCppPrefix(ttype));
 
         return String::concat(indent, "typedef ListOps::Treeᐸ", resolvedttype, "ᐳ ", emitTypeKey(ctd.tkey, false, nctx), ";%n;");
     }
     if(ctd)@<CPPAssembly::MapTypeDecl> {
-        let ktype = emitTypeSignature($ctd.ktype, false, nctx);
-        let resolvedktype = removeCppPrefix(ktype);
-
-        let vtype = emitTypeSignature($ctd.vtype, false, nctx);
-        let resolvedvtype = removeCppPrefix(vtype);
+        let ktype = emitResolvedTemplates(some($ctd.ktype), none, nctx);
+        let vtype = emitResolvedTemplates(some($ctd.vtype), none, nctx);
 
         let treealias = emitTypeKey($ctd.tkey, false, nctx);
         let mapdef = String::concat("typedef MapOps::Treeᐸ", resolvedktype, ", ", resolvedvtype, "ᐳ ");

@@ -241,6 +241,11 @@ entity LiteralUnicodeCharExpression provides Expression {
     field value: UnicodeChar;
 }
 
+entity AccessNamespaceConstantExpression provides Expression {
+    field ns: NamespaceKey;
+    field name: Identifier;
+}
+
 entity LogicActionAndExpression provides Expression {
     field args: List<Expression>;
 }
