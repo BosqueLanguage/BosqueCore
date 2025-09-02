@@ -16,7 +16,11 @@ describe ("CPP Emit Evaluate -- entity is/as", () => {
 
         runMainCode('concept Foo { field f: Int; } concept Baz {} entity Bar provides Foo, Baz { } public function main(): Int { return Bar{3i}@<Foo>.f; }', "3i"); 
     });
-/*  
+
+    //
+    // TODO: Our access method on boxed types is lacking checks ensuring the type we are accessing is actually there
+    //
+    /*  
     it("should fail exec simple entity as", function () {
         runMainCodeError('concept Foo { field f: Int; } concept Baz { field g: Int; } entity Bar provides Foo { } entity Goo provides Foo, Baz { } public function main(): Int { let bb: Foo = Bar{3i}; return bb@<Baz>.g; }', "Error -- expected subtytype of Main::Baz @ test.bsq:3"); 
     });

@@ -76,8 +76,9 @@ function generateAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
         | CPPAssembly::Tag#Ref => { return "->"; }
         | CPPAssembly::Tag#Tagged => { return "."; } 
     }
- }
+}
 
+%% Might want to get this running without the need for explicit access_ref
 function getAccessor(basetk: CPPAssembly::TypeKey, accessingtk: CPPAssembly::TypeKey, ctx: Context): String {
     let accessor = generateAccess(basetk, ctx);
     return if(ctx.asm.typeinfos.get(accessingtk).tag === CPPAssembly::Tag#Ref) 
@@ -669,79 +670,64 @@ recursive function conceptProvidesConcept(lhs: CPPAssembly::AbstractConceptTypeD
     return providesRHS;
 }
 
+function emitBooleanBasedOnCondition(cond: Bool): String {
+    return if(cond)
+        then "true"
+        else "false";
+}
+
+function emitBooleanWithMaybeUnusedVariable(cond: Bool, arg: String): String {
+    return if(cond)
+        then String::concat("__CoreCpp::True(", arg, ")")
+        else String::concat("__CoreCpp::False(", arg, ")");
+}
+
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr) && ctx.asm.isNominalTypeConcrete(baseType.tkeystr)) {
         let areTypesSame = ctx.asm.areTypesSame(it.ttype, baseType);
-        if(it.isnot) {
-            return if(!areTypesSame) then "true" else "false";
-        } 
-        else {
-            return if(areTypesSame) then "true" else "false";
-        }
+        return if(it.isnot) 
+            then emitBooleanBasedOnCondition(!areTypesSame)
+            else emitBooleanBasedOnCondition(areTypesSame);
     }
     else {
         let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
-        if(ctx.asm.isNominalTypeConcrete(baseType.tkeystr) && ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
-            if(it.isnot) {
-                return if(ctx.asm.isSubtypeOf(baseType, it.ttype)) 
-                    then "false"
-                    else "true";
-            }
-            else {
-                return if(ctx.asm.isSubtypeOf(baseType, it.ttype)) 
-                    then "true"
-                    else "false";
-            }
-        }
-        elif(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
-            %% Can probably do this solely in the compiler
+        if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
             let ttype = emitTypeSignature(it.ttype, false, ctx);
             return if(it.isnot) 
                 then String::concat(acc, accessor, " != &", ttype, "Type")
                 else String::concat(acc, accessor, " == &", ttype, "Type");
         }
         else {
-
-            %%
-            %% We will want to add a macro that takes in whatever identifier represents
-            %% LHS so we dont have bugs with a variable being unused
-            %%
-
-            %% LHS is concrete
             let lhs = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
-            if(it.isnot) {
-                return if(conceptProvidesConcept(lhs, it.ttype, ctx)) 
-                    then "false"
-                    else "true";
+            if(conceptProvidesConcept(lhs, it.ttype, ctx)) {
+                return emitBooleanWithMaybeUnusedVariable(!it.isnot, acc);
             }
             else {
-                return if(conceptProvidesConcept(lhs, it.ttype, ctx)) 
-                    then "true"
-                    else "false";
+                return emitBooleanWithMaybeUnusedVariable(it.isnot, acc);
             }
         }
     }
 }
 
-function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
     return if(it.isnot) 
-        then String::concat(accessor, " == &NoneType") 
-        else String::concat(accessor, " != &NoneType");
+        then String::concat(acc, accessor, " == &NoneType") 
+        else String::concat(acc, accessor, " != &NoneType");
 }
 
-function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
+function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     let accessor = String::concat(generateAccess(baseType.tkeystr, ctx), "typeinfo");
     return if(it.isnot) 
-        then String::concat(accessor, " != &NoneType") 
-        else String::concat(accessor, " == &NoneType");
+        then String::concat(acc, accessor, " != &NoneType") 
+        else String::concat(acc, accessor, " == &NoneType");
 }
 
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     match(it)@ {
         CPPAssembly::ITestType => { return emitITestType($it, baseType, acc, ctx); }
-        | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, ctx); }
-        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, ctx); }
+        | CPPAssembly::ITestNone => { return emitITestNone($it, baseType, acc, ctx); }
+        | CPPAssembly::ITestSome => { return emitITestSome($it, baseType, acc, ctx); }
         | CPPAssembly::ITestOk => { abort; }
         | CPPAssembly::ITestFail => { abort; }
     }
@@ -803,7 +789,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
         match(op)@ {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
-            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, pop.rootExp.etype, acc, ctx); }
+            | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType, acc, ctx); }
             | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType.tkeystr, none, ctx).0); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, acc, ctx); } 
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }

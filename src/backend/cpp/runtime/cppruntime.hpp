@@ -34,6 +34,15 @@ public:
 };
 extern ThreadLocalInfo& info;
 
+// When conditions are simplified some variables may be left unused
+constexpr Bool False(...) noexcept {
+    return false;
+}
+
+constexpr Bool True(...) noexcept {
+    return true;
+}
+
 template <size_t N>
 inline void __attribute__((no_sanitize_address)) 
 memcpy(uintptr_t* dst, const uintptr_t* src) noexcept {
