@@ -635,6 +635,13 @@ entity ExplicitifyTransform {
         }
     }
 
+    recursive method processMapEntryConstructorExpression(e: MapEntryConstructorExpression, vmap: VarMapping): Expression {
+        let nkexp = this.processExpression[recursive](e.kexp, vmap);
+        let nvexp = this.processExpression[recursive](e.vexp, vmap);
+
+        return e[kexp=nkexp, vexp=nvexp];
+    }
+
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
             LiteralNoneExpression => { return e; }
@@ -675,7 +682,7 @@ entity ExplicitifyTransform {
             | KeyCmpLessExpression => { return this.processKeyCmpLessExpression[recursive]($e, vmap); }
             | BinaryNumericExpression => { return this.processBinaryNumericExpression[recursive]($e, vmap); }
             | BinLogicExpression => { return this.processBinLogicExpression[recursive]($e, vmap); }
-            | MapEntryConstructorExpression => { abort; }
+            | MapEntryConstructorExpression => { return this.processMapEntryConstructorExpression($e, vmap); }
             | IfExpression => { return this.processIfExpression[recursive]($e, vmap); }
         }
     }

@@ -695,6 +695,14 @@ entity CPPTransformer {
         return CPPAssembly::LiteralUnicodeCharExpression{ etype, exp.value };
     }
 
+    method transformMapEntryConstructorExpression(exp: BSQAssembly::MapEntryConstructorExpression): CPPAssembly::MapEntryConstructorExpression {
+        let etype = this.convertTypeSignature(exp.etype);       
+        let kexp = this.transformExpressionToCpp(exp.kexp);
+        let vexp = this.transformExpressionToCpp(exp.vexp);
+
+        return CPPAssembly::MapEntryConstructorExpression{ etype, kexp, vexp };
+    }
+
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
             BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
@@ -741,7 +749,7 @@ entity CPPTransformer {
             | BSQAssembly::KeyCmpLessExpression => { return this.transformKeyCmpLessExpression($expr); } 
             | BSQAssembly::BinaryNumericExpression => { return this.transformBinaryNumericCompareExpression[recursive]($expr); }
             | BSQAssembly::BinLogicExpression => { return this.transformBinLogicExpression[recursive]($expr); }
-            | BSQAssembly::MapEntryConstructorExpression => { abort; }
+            | BSQAssembly::MapEntryConstructorExpression => { return this.transformMapEntryConstructorExpression($expr); }
             | BSQAssembly::IfExpression => { return this.transformIfExpression($expr); }
         }
     }
@@ -819,6 +827,10 @@ entity CPPTransformer {
             (|this.transformExpressionToCpp[recursive](block.0), this.transformBlockStatement(block.1)|));
     
         return CPPAssembly::IfElifElseStatement{ ifcond, ifflow, condflow, elseflow };
+    }
+
+    method transformAbortStatement(stmt: BSQAssembly::AbortStatement): CPPAssembly::AbortStatement {
+        return CPPAssembly::AbortStatement{ };
     }
 
     method transformAssertStatement(stmt: BSQAssembly::AssertStatement): CPPAssembly::AssertStatement {
@@ -918,7 +930,7 @@ entity CPPTransformer {
             | BSQAssembly::IfElifElseStatement => { return this.transformIfElifElseStatement[recursive]($stmt); }
             | BSQAssembly::SwitchStatement => { return this.transformSwitchStatement($stmt); }
             | BSQAssembly::MatchStatement => { return this.transformMatchStatement($stmt); }
-            | BSQAssembly::AbortStatement => { abort; }
+            | BSQAssembly::AbortStatement => { return this.transformAbortStatement($stmt); }
             | BSQAssembly::AssertStatement => { return this.transformAssertStatement($stmt); } 
             | BSQAssembly::ValidateStatement => { abort; }
             | BSQAssembly::DebugStatement => { abort; }
@@ -1049,7 +1061,7 @@ entity CPPTransformer {
         var slotsize = ti.slotsize;
         var typesize = ti.typesize;
 
-        if(typesize > reftypeThreshold) {
+        if(slotsize > reftypeThreshold) {
             ptrmask = '1';
             slotsize = 1n;
             typesize = 1n * slotSizeInBits;
@@ -1217,7 +1229,6 @@ entity CPPTransformer {
                         let ktypeinfo, ntic = this.generateFieldInfo(some($ant.ktype), none, false, tic);
                         let vtypeinfo, nntic = this.generateFieldInfo(some($ant.vtype), none, false, ntic);
 
-                        %% Lets make this a method!
                         let ktypemask, ktypeslots, ktypesize = this.getCorrectSizeAndMask(ktypeinfo);
                         let vtypemask, vtypeslots, vtypesize = this.getCorrectSizeAndMask(vtypeinfo); 
 
