@@ -652,7 +652,6 @@ function emitPostfixAccessSomeValue(op: CPPAssembly::PostfixAccessSomeValue, acc
 }
 
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, ctx: Context): String {
-    %% For now we only support ITests where both types are concrete
     if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr) && ctx.asm.isNominalTypeConcrete(baseType.tkeystr)) {
         let areTypesSame = ctx.asm.areTypesSame(it.ttype, baseType);
         return if(it.isnot) then (if(!areTypesSame) then "true" else "false")
@@ -667,7 +666,24 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
                 else String::concat(accessor, " == &", ttype, "Type");
         }
         else {
-            abort; %% Handle case where both are abstract (vtable lookup likely)
+            %% 
+            %% I think in this case what we should do is FIRST write a case for LHS
+            %% being concrete already (as we just do a subtype check) then for the case
+            %% where LHS is concept we will traverse the subtypes (likely recursively to ensure all are checked?)
+            %% and if we happen to find a singular subtype of LHS that provides it.ttype we return true.
+            %% Also, we need to not make this build up a string in the emitPostfixOp whatever, we should
+            %% pass acc in here like we did for a few other tests.
+            %%
+            if(it.isnot) {
+                return if(ctx.asm.isSubtypeOf(baseType, it.ttype)) 
+                    then "false"
+                    else "true";
+            }
+            else {
+                return if(ctx.asm.isSubtypeOf(baseType, it.ttype)) 
+                    then "true"
+                    else "false";
+            }
         }
     }
 }
@@ -752,7 +768,11 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
         match(op)@ {
             CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
-            | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, $op.baseType, ctx)); }
+
+            %%
+            %% Lets make this take acc as an argument
+            %%
+            | CPPAssembly::PostfixIsTest => { return String::concat(acc, emitITestAsTest($op.ttest, pop.rootExp.etype, ctx)); }
             | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType.tkeystr, none, ctx).0); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, acc, ctx); } 
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }

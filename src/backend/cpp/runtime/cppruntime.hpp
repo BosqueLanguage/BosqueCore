@@ -8,8 +8,7 @@
 #include <csetjmp>
 #include <variant> // TODO: Need to remove dependency!
 
-//#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
-#define 𝐚𝐛𝐨𝐫𝐭 (assert(false))
+#define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
 #define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
 
 namespace __CoreCpp {
@@ -281,10 +280,10 @@ public:
 do {                                                                \
     VAL_TYPE tmp = 0;                                               \
     if(__builtin_##TYPE##_overflow(this->value, rhs.value, &tmp)) { \
-        𝐚𝐛𝐨𝐫𝐭;                     \
+        𝐚𝐛𝐨𝐫𝐭;                                                       \
     }                                                               \
     if(!is_valid_##BSQ_TYPE(tmp)) {                                 \
-        𝐚𝐛𝐨𝐫𝐭;                     \
+        𝐚𝐛𝐨𝐫𝐭;                                                       \
     }                                                               \
     this->value = tmp;                                              \
     return *this;                                                   \
@@ -293,7 +292,7 @@ do {                                                                \
 #define do_safe_division()                      \
 do {                                            \
     if(rhs.value == 0) {                        \
-        𝐚𝐛𝐨𝐫𝐭; \
+        𝐚𝐛𝐨𝐫𝐭;                                   \
     }                                           \
     this->value /= rhs.value;                   \
     return *this;                               \
@@ -303,7 +302,7 @@ do {                                            \
 do {                                            \
     double res = this->value OP rhs.value;      \
     if(!std::isfinite(res)) {                   \
-        𝐚𝐛𝐨𝐫𝐭; \
+        𝐚𝐛𝐨𝐫𝐭;                                   \
     }                                           \
     this->value = res;                          \
     return *this;                               \
