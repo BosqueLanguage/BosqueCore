@@ -3,15 +3,13 @@
 import { runMainCode, runMainCodeError } from "../../../bin/test/cppoutput/cppemit_nf.js"
 import { describe, it } from "node:test";
 
-/*
 describe ("Exec -- simple abort", () => {
     it("should exec simple abort", function () {
-        runMainCode("public function main(): Int { if(false) { abort; } return 1i; }", "1i");
+        runMainCode("public function main(): Int { if(false) { abort; } return 1i; }", "1_i");
 
-        runMainCodeError("public function main(): Int { if(true) { abort; } return 1i; }", "Error -- abort @ test.bsq:3");
+        runMainCodeError("public function main(): Int { if(true) { abort; } return 1i; }", "Assertion failed! Or perhaps over/underflow?\n");
     });
 });
-*/
 
 describe ("CPP Emit Evaluate -- simple assert", () => {
     it("should exec simple assert", function () {

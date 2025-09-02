@@ -214,6 +214,14 @@ class InstantiationPropagator {
                     const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_empty") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, emptydecl, []);
                 }
+                if(fkey.endsWith("startsWithString")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_starts_with_crope") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
+                if(fkey.endsWith("removePrefixString")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_remove_prefix_crope") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
             }
         } 
 
@@ -227,6 +235,14 @@ class InstantiationPropagator {
                 }
                 if(fkey.endsWith("s_empty")) {
                     const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_empty") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
+                if(fkey.endsWith("startsWithString")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_starts_with_unicoderope") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                }
+                if(fkey.endsWith("removePrefixString")) {
+                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_remove_prefix_unicoderope") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, emptydecl, []);
                 }
             }

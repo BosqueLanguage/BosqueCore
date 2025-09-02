@@ -41,6 +41,18 @@ describe ("CPP Emit Evaluate -- builtin methods", () => {
         runMainCode("public function main(): Bool { return 4611686018427387902n.toCString() === '4611686018427387903'; }", "false");
         runMainCode("public function main(): Bool { return 2048n.toCString() === '1234'; }", "false");
     });
+
+    it("should exec cstring(rope) prepend builtin", function () {
+        runMainCode("public function main(): Bool { return ', World!'.prepend('Hello') === 'Hello, World!'; }", "true");
+        runMainCode("public function main(): Bool { return '.14159'.prepend('3') === '3.14159'; }", "true");
+        runMainCode("public function main(): Bool { return ''.prepend('') === ''; }", "true");
+    });
+
+    it("should exec cstring(rope) removePrefixString builtin", function () {
+        runMainCode("public function main(): Bool { return 'HelloHello, World!'.removePrefixString('Hello') === 'Hello, World!'; }", "true");
+        runMainCode("public function main(): Bool { return '3.141593.14159'.removePrefixString('3.14159') === '3.14159'; }", "true");
+        runMainCode("public function main(): Bool { return 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'.removePrefixString('Lorem ipsum dolor sit amet, ') === 'consectetur adipiscing elit'; }", "true");
+    });
 });
 
 describe ("CPP Emit Evaluate -- eADT methods", () => {

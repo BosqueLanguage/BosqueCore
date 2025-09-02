@@ -279,6 +279,9 @@ IfSimpleExpression { }
 }
 ;
 
+entity AbortStatement provides Statement {
+}
+
 entity AssertStatement provides Statement {
     field cond: Expression;
 }

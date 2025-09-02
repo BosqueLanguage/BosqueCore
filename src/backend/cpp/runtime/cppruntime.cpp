@@ -152,6 +152,39 @@ Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
     return false;
 }
 
+Bool cbufferIsPrefix(CCharBuffer cb, CCharBuffer& pre) noexcept {
+    assert(pre.size <= cb.size);   
+
+    const uint64_t presize = pre.size.get();
+
+    for(uint64_t i = 0; i < presize; i++) {
+        if(cb.chars[i] != pre.chars[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// Removes prefix from cb1, invariant is cb1 starts with pre
+CCharBuffer& cbufferRemove(CCharBuffer& cb, CCharBuffer& pre) noexcept {
+    assert(pre.size <= cb.size);
+    
+    const uint64_t remove_count = pre.size.get();
+    
+    // Shift chars not in pre then nuke whats left
+    for(uint64_t i = 0; i < cb.size.get() - remove_count; i++) {
+        cb.chars[i] = cb.chars[i + remove_count];
+    }
+    for(uint64_t i = cb.size.get() - remove_count; i < static_cast<uint64_t>(maxCCharBufferSize); i++) {
+        cb.chars[i] = 0;
+    }
+    
+    cb.size -= Nat(remove_count);
+    return cb;
+}
+
+
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
 }
