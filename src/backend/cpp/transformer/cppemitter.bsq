@@ -2007,11 +2007,26 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
-%%
-%% TODO: Need to figure our how we want to emit these!
-%%
-function emitTypedeclStringOfTypeDecl(ctd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
-    return "";
+function emitTypedeclStringOfTypeDecl(tdstd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(tdstd.declaredInNS, tdstd.fullns);
+    let full_indent = String::concat("    ", indent);
+
+    let tdstdtype = emitTypeKey(tdstd.tkey, false, nctx);
+    let valuetype = emitTypeSignature(tdstd.valuetype, true, nctx);
+
+    %%
+    %% TODO: We will need to handle the ofcheck here! right now we 
+    %% assume all regex pass
+    %%
+
+    let tdstd_tinfo = nctx.asm.typeinfos.get(tdstd.tkey);
+    let e_tdstd_tinfo = emitTypeInfo(tdstd_tinfo, some(tdstd), nctx, indent);
+
+    let base = String::concat(indent, "struct ", tdstdtype, " {%n;");
+    let value = String::concat(full_indent, valuetype, " value;%n;");
+    let def = String::concat(base, value, indent, "}%n;");
+
+    return String::concat(e_tdstd_tinfo, def);
 }
 
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {

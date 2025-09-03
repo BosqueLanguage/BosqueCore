@@ -1362,13 +1362,12 @@ entity CPPTransformer {
 
                     abort;
                 }
-                %%
-                %% Maybe this guy should alias CString?
-                %%
                 elif(this.bsqasm.stringoftypedecls.has(typekey)) {
-                    let std_tinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
+                    %% StringOf is just an alias for CRope (Maybe need to handle UnicodeRope case?)
+                    let crinfo, ntic = this.generateTypeInfo[recursive](BSQAssembly::TypeKey::from('CRope'), tic);                    
+                    let std_tinfo = CPPAssembly::TypeInfo{ ntic.tid, crinfo.typesize, crinfo.slotsize, crinfo.ptrmask, cpptkey, crinfo.tag };
 
-                    return std_tinfo, tic.update(cpptkey, std_tinfo);
+                    return std_tinfo, ntic.update(cpptkey, std_tinfo);
                 }
                 elif(this.bsqasm.enums.has(typekey)) { %% For now we will assume our enums cannot exceed 8 bytes 
                     let etdtinfo = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value };
