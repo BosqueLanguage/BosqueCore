@@ -1157,11 +1157,12 @@ function emitLiteralRegexExpression(exp: CPPAssembly::LiteralRegexExpression): S
     return "";
 }
 
-%%
-%% TODO: Need to figure out necessary representation!
-%%
+%% Extracting values from a typedecl requires literal '.value' access 
+%% so for now we construct the type to make value access easier
 function emitLiteralTypeDeclValueExpression(exp: CPPAssembly::LiteralTypeDeclValueExpression, ctx: Context): String {
-    return "";
+    let constype = emitTypeSignature(exp.constype, false, ctx);
+
+    return String::concat(constype, "{ ", emitExpression(exp.value, ctx), " }");
 }
 
 function emitCStringAsLiteral(s: CString): String {
@@ -2024,7 +2025,7 @@ function emitTypedeclStringOfTypeDecl(tdstd: CPPAssembly::TypedeclStringOfTypeDe
 
     let base = String::concat(indent, "struct ", tdstdtype, " {%n;");
     let value = String::concat(full_indent, valuetype, " value;%n;");
-    let def = String::concat(base, value, indent, "}%n;");
+    let def = String::concat(base, value, indent, "};%n;");
 
     return String::concat(e_tdstd_tinfo, def);
 }
@@ -2064,6 +2065,23 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
     abort; %% Non supported collection type!
 }
 
+function emitPrimitiveEntityTypeDecl(petd: CPPAssembly::PrimitiveEntityTypeDecl, ctx: Context, indent: String): String {
+    %%
+    %% Currently the cpp emitter has no proper support for regex 
+    %% so we will emit as void
+    %%
+    if(petd.tkey.value === 'CRegex') {
+        return String::concat(indent, "typedef void CRegex;%n;");
+    }
+    elif(petd.tkey.value === 'Regex') {
+        return String::concat(indent, "typedef void Regex;%n;");
+    }
+    else {
+        %% Only Regex needs explicit representation right now, others exist in runtime files
+        return "";
+    }
+}
+
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     match(ant)@ {
         CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl($ant, declaredIn, ctx, indent); }
@@ -2075,7 +2093,7 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::ConceptTypeDecl => { return emitConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
         | CPPAssembly::TypedeclStringOfTypeDecl => { return emitTypedeclStringOfTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::PrimitiveEntityTypeDecl => { return ""; } %% We just need PrimitiveEntityTypeDecl's methods
+        | CPPAssembly::PrimitiveEntityTypeDecl => { return emitPrimitiveEntityTypeDecl($ant, ctx, indent); } 
     }
 }
 
@@ -2298,9 +2316,17 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             else acc;
     }); 
 
+    let primitives = asm.primitives
+        .reduce<String>(primitive_typeinfos,
+        fn(acc, tk, petd) => {
+            let def = emitAbstractNominalTypeDecl(petd, tk, ctx, "");
+            return String::concat(acc, def);
+        }
+    );
+
     %% Non-value type forward decls
     let fwddecls = asm.nsdecls
-        .reduce<String>(String::concat(primitive_typeinfos, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
+        .reduce<String>(String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
         fn(acc, nsname, nsdecl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
     });

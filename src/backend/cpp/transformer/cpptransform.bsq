@@ -66,6 +66,7 @@ namespace CPPTransformNameManager {
         let typeconsts =        List<String>{};
         let nsfuncs =           List<CPPAssembly::InvokeKey>{};
         let typefuncs =         List<CPPAssembly::InvokeKey>{};
+        let primitives =        List<CPPAssembly::TypeKey>{};
         let constructables =    List<CPPAssembly::TypeKey>{};
         let collections =       List<CPPAssembly::TypeKey>{};
         let entities =          List<CPPAssembly::TypeKey>{};
@@ -83,9 +84,9 @@ namespace CPPTransformNameManager {
         let alltypes =          List<CPPAssembly::TypeKey>{};
 
         return CPPAssembly::NamespaceDecl{ 
-            name, subns, nsconsts, typeconsts, nsfuncs, typefuncs, constructables, collections, 
-            entities, datamembers, datatypes, concepts, pconcepts, staticmethods, virtmethods, 
-            absmethods, overmethods, enums, typedecls, stringoftypedecls, alltypes 
+            name, subns, nsconsts, typeconsts, nsfuncs, typefuncs, primitives, constructables, 
+            collections, entities, datamembers, datatypes, concepts, pconcepts, staticmethods, 
+            virtmethods, absmethods, overmethods, enums, typedecls, stringoftypedecls, alltypes 
         };
     }
 
@@ -1855,9 +1856,10 @@ entity CPPTransformer {
                 return CPPTransformNameManager::getNamespaceDeclMapping(cppetd.fullns, acc,
                     fn(decl) => {
                         let nalltypes = decl.alltypes.pushBack(cpptk);
+                        let nprimitives = decl.primitives.pushBack(cpptk);
                         let ndecl = transformer.updateNSMethods(decl, cppetd@<CPPAssembly::AbstractNominalTypeDecl>);
                         
-                        return ndecl[alltypes=nalltypes];
+                        return ndecl[primitives=nprimitives, alltypes=nalltypes];
                     });                     
             }); 
 

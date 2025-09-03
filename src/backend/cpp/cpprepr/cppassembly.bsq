@@ -250,6 +250,7 @@ entity NamespaceDecl {
     field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
 
+    field primitives: List<TypeKey>;
     field constructables: List<TypeKey>;
     field collections: List<TypeKey>;
 
