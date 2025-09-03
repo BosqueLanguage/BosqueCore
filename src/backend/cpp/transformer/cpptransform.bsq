@@ -1260,6 +1260,12 @@ entity CPPTransformer {
             %% NOTE: If we decide to make our char buffers support 16 characters this will break
             %%
             if(this.bsqasm.isPrimtitiveType(typekey)) {
+                
+                %%
+                %% TODO: We need to add proper support for regex! Right now we have
+                %% them always accepting and their type is just void
+                %%                
+
                 var matchedType: CPPAssembly::TypeInfo;
                 switch(typekey) {
                     'None'<BSQAssembly::TypeKey> =>     { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
@@ -1274,11 +1280,7 @@ entity CPPTransformer {
                     | 'UnicodeChar'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'CString'<BSQAssembly::TypeKey> => { matchedType = this.generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic).0; }
-                    | 'String'<BSQAssembly::TypeKey> => { matchedType = this.generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic).0; }
-                    %%
-                    %% TODO: Regex needs a proper representation! Right now we have it always accepting.
-                    %% (This might become problematic in our oppass)
-                    %%                    
+                    | 'String'<BSQAssembly::TypeKey> => { matchedType = this.generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic).0; }                
                     | 'CRegex'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                     | 'Regex'<BSQAssembly::TypeKey> =>  { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                     | _ => { abort; } %% Not supported by cpp emitter yet!
@@ -1381,9 +1383,9 @@ entity CPPTransformer {
             elif(this.bsqasm.isNominalTypeConcept(typekey)) {
                 if(this.bsqasm.concepts.has(typekey) || this.bsqasm.datatypes.has(typekey)) {
                     %%
-                    %% The placeholder typeinfo exists here to prevent infinite
-                    %% self recursion on concepts containing themselfs as a field
-                    %% in one of their subtypes (look at TypeSignature in body.bsq)
+                    %% If a concept references itself as a field in a member who provides
+                    %% a definition of said concept infinite recursion can occur. We probably
+                    %% need a better answer than my placeholder idea...
                     %%
                     let placeholder = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '1', cpptkey, CPPAssembly::Tag#Ref };
                     let placeholder_tic = tic.update(cpptkey, placeholder);
