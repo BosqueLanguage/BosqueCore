@@ -571,6 +571,19 @@ function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpressi
     return String::concat(name, "(", args, ")");
 }
 
+function emitCallTypeFunctionSpecialExpression(e: CPPAssembly::CallTypeFunctionSpecialExpression, ctx: Context): String {
+%*
+    let typefunc = ctx.asm.typefuncs.get(e.ikey);
+    let name = emitInvokeKey(typefunc.ikey, ctx);
+    let args = emitArguments(e.args, ctx); 
+*%
+    %%
+    %% TODO: name and exp and how to properly emit
+    %%
+
+    return "";
+}
+
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): String {
     let op_tinfo = ctx.asm.typeinfos.get(op.declaredInType.tkeystr);
     let base_tinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
@@ -605,6 +618,11 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
         let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
         return String::concat(accessor, ident);
     }
+}
+
+%% Probably just struct.field = val
+function emitPostfixAssignFields(op: CPPAssembly::PostfixAssignFields, rootexp: String, ctx: Context): String {
+    return "";
 }
 
 %% Assumes access type is elist (I believe this is the only type accessable via postfix index)
@@ -792,6 +810,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             | CPPAssembly::PostfixIsTest => { return emitITestAsTest($op.ttest, $op.baseType, acc, ctx); }
             | CPPAssembly::PostfixAsConvert => { return String::concat(acc, emitITestAsConvert($op.ttest.isnot, $op.ttest, $op.baseType.tkeystr, none, ctx).0); }
             | CPPAssembly::PostfixInvokeStatic => { return emitPostfixInvokeStatic($op, acc, ctx); } 
+            | CPPAssembly::PostfixAssignFields => { return emitPostfixAssignFields($op, acc, ctx); }
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
             | CPPAssembly::PostfixAccessSomeValue => { return emitPostfixAccessSomeValue($op, acc, pop.rootExp.etype, ctx); }
         }
@@ -1130,6 +1149,22 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
     return String::concat("U'", String::fromUnicodeChar(exp.value), "'");
 }
 
+function emitLiteralCRegexExpression(exp: CPPAssembly::LiteralCRegexExpression): String {
+    return "";
+}
+
+function emitLiteralRegexExpression(exp: CPPAssembly::LiteralRegexExpression): String {
+    return "";
+}
+
+%% Extracting values from a typedecl requires literal '.value' access 
+%% so for now we construct the type to make value access easier
+function emitLiteralTypeDeclValueExpression(exp: CPPAssembly::LiteralTypeDeclValueExpression, ctx: Context): String {
+    let constype = emitTypeSignature(exp.constype, false, ctx);
+
+    return String::concat(constype, "{ ", emitExpression(exp.value, ctx), " }");
+}
+
 function emitCStringAsLiteral(s: CString): String {
     let formatted = s.replaceAllStringOccurrences('%n;', '\n');
     
@@ -1204,15 +1239,13 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
     match(e)@ {
         CPPAssembly::LiteralNoneExpression => { return emitLiteralNoneExpression($e, ctx); }
         | CPPAssembly::LiteralSimpleExpression => { return emitLiteralSimpleExpression($e); }
-        %%| CPPAssembly::LiteralCCharExpression => { abort; }
-        %%| CPPAssembly::LiteralUnicodeCharExpression => { abort; }
         | CPPAssembly::LiteralCCharExpression => { return emitLiteralCCharExpression($e); }
         | CPPAssembly::LiteralUnicodeCharExpression => { return emitLiteralUnicodeCharExpression($e); }
         | CPPAssembly::LiteralCStringExpression => { return emitLiteralCStringExpression($e); }
         | CPPAssembly::LiteralStringExpression => { return emitLiteralStringExpression($e); }
-        %%| CPPAssembly::LiteralCRegexExpression => { abort; }
-        %%| CPPAssembly::LiteralRegexExpression => { abort; }
-        %%| CPPAssembly::LiteralTypeDeclValueExpression => { abort; }
+        | CPPAssembly::LiteralCRegexExpression => { return emitLiteralCRegexExpression($e); }
+        | CPPAssembly::LiteralRegexExpression => { return emitLiteralRegexExpression($e); }
+        | CPPAssembly::LiteralTypeDeclValueExpression => { return emitLiteralTypeDeclValueExpression($e, ctx); }
         | CPPAssembly::AccessNamespaceConstantExpression => { return emitAccessNamespaceConstantExpression($e, ctx); }
         | CPPAssembly::AccessStaticFieldExpression => { return emitAccessStaticFieldExpression($e, ctx); } 
         | CPPAssembly::AccessEnumExpression => { return emitAccessEnumExpression($e, ctx); }
@@ -1227,7 +1260,8 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::LetExpression => { abort; }
         | CPPAssembly::LambdaInvokeExpression => { return emitLambdaInvokeExpression($e, ctx); } 
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
-        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }      
+        | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }
+        | CPPAssembly::CallTypeFunctionSpecialExpression => { return emitCallTypeFunctionSpecialExpression($e, ctx); }
         %%| CPPAssembly::CallRefInvokeStaticResolveExpression => { abort; }
         %%| CPPAssembly::CallRefInvokeVirtualExpression => { abort; } 
         | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
@@ -1974,6 +2008,28 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
+function emitTypedeclStringOfTypeDecl(tdstd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(tdstd.declaredInNS, tdstd.fullns);
+    let full_indent = String::concat("    ", indent);
+
+    let tdstdtype = emitTypeKey(tdstd.tkey, false, nctx);
+    let valuetype = emitTypeSignature(tdstd.valuetype, true, nctx);
+
+    %%
+    %% TODO: We will need to handle the ofcheck here! right now we 
+    %% assume all regex pass
+    %%
+
+    let tdstd_tinfo = nctx.asm.typeinfos.get(tdstd.tkey);
+    let e_tdstd_tinfo = emitTypeInfo(tdstd_tinfo, some(tdstd), nctx, indent);
+
+    let base = String::concat(indent, "struct ", tdstdtype, " {%n;");
+    let value = String::concat(full_indent, valuetype, " value;%n;");
+    let def = String::concat(base, value, indent, "};%n;");
+
+    return String::concat(e_tdstd_tinfo, def);
+}
+
 function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
 
@@ -2009,8 +2065,24 @@ function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Conte
     abort; %% Non supported collection type!
 }
 
+function emitPrimitiveEntityTypeDecl(petd: CPPAssembly::PrimitiveEntityTypeDecl, ctx: Context, indent: String): String {
+    %%
+    %% Currently the cpp emitter has no proper support for regex 
+    %% so we will emit as void
+    %%
+    if(petd.tkey.value === 'CRegex') {
+        return String::concat(indent, "typedef void CRegex;%n;");
+    }
+    elif(petd.tkey.value === 'Regex') {
+        return String::concat(indent, "typedef void Regex;%n;");
+    }
+    else {
+        %% Only Regex needs explicit representation right now, others exist in runtime files
+        return "";
+    }
+}
+
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
-    %% The entries who need a vtable should manually do it
     match(ant)@ {
         CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
@@ -2020,7 +2092,8 @@ function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, 
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::ConceptTypeDecl => { return emitConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::PrimitiveEntityTypeDecl => { return ""; } %% We just need PrimitiveEntityTypeDecl's methods
+        | CPPAssembly::TypedeclStringOfTypeDecl => { return emitTypedeclStringOfTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::PrimitiveEntityTypeDecl => { return emitPrimitiveEntityTypeDecl($ant, ctx, indent); } 
     }
 }
 
@@ -2243,9 +2316,17 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             else acc;
     }); 
 
+    let primitives = asm.primitives
+        .reduce<String>(primitive_typeinfos,
+        fn(acc, tk, petd) => {
+            let def = emitAbstractNominalTypeDecl(petd, tk, ctx, "");
+            return String::concat(acc, def);
+        }
+    );
+
     %% Non-value type forward decls
     let fwddecls = asm.nsdecls
-        .reduce<String>(String::concat(primitive_typeinfos, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
+        .reduce<String>(String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
         fn(acc, nsname, nsdecl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
     });

@@ -199,6 +199,15 @@ entity CallTypeFunctionExpression provides Expression {
     field args: List<Expression>;
 }
 
+entity CallTypeFunctionSpecialExpression provides Expression {
+    field ikey: InvokeKey;
+    field ttype: NominalTypeSignature;
+    field resolvedDeclType: NominalTypeSignature;
+
+    field name: Identifier;
+    field exp: Expression;
+}
+
 entity AccessVariableExpression provides Expression {
     field vname: VarIdentifier;
     field layouttype: TypeSignature;
@@ -239,6 +248,22 @@ entity LiteralCCharExpression provides Expression {
 
 entity LiteralUnicodeCharExpression provides Expression {
     field value: UnicodeChar;
+}
+
+%% 
+%% NOTE: We have these regex always accepting currently!
+%%
+entity LiteralCRegexExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralRegexExpression provides Expression {
+    field value: CString;
+}
+
+entity LiteralTypeDeclValueExpression provides Expression {
+    field value: Expression;
+    field constype: NominalTypeSignature;
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
@@ -455,6 +480,10 @@ PostfixAccessFromName {
 }
 | PostfixAsConvert {
     field ttest: ITest;
+}
+| PostfixAssignFields {
+    field declOnType: NominalTypeSignature;
+    field updates: List<(|NominalTypeSignature, Identifier, NominalTypeSignature, Expression|)>; %%(|declaredInType, fname, ftype, update|)
 }
 | PostfixInvokeStatic { 
     field resolvedType: NominalTypeSignature;

@@ -146,6 +146,15 @@ entity EnumTypeDecl provides AbstractEntityTypeDecl {
     field members: List<CString>;
 }
 
+entity TypedeclTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: NominalTypeSignature;
+}
+
+entity TypedeclStringOfTypeDecl provides AbstractEntityTypeDecl {
+    field valuetype: NominalTypeSignature;
+    field ofcheck: Expression;
+}
+
 entity DatatypeMemberEntityTypeDecl provides AbstractEntityTypeDecl {
     field fields: List<MemberFieldDecl>;
     field parentTypeDecl: NominalTypeSignature;
@@ -241,6 +250,7 @@ entity NamespaceDecl {
     field nsfuncs: List<InvokeKey>;
     field typefuncs: List<InvokeKey>;
 
+    field primitives: List<TypeKey>;
     field constructables: List<TypeKey>;
     field collections: List<TypeKey>;
 
@@ -252,14 +262,17 @@ entity NamespaceDecl {
 
     field pconcepts: List<TypeKey>;
 
-    field staticmethods: List<(|InvokeKey, TypeKey|)>; %% Tuple is convient for fwd decls here
+     %% Tuple is convient for fwd decls here
+    field staticmethods: List<(|InvokeKey, TypeKey|)>;
     field virtmethods: List<(|InvokeKey, TypeKey|)>;
     field absmethods: List<(|InvokeKey, TypeKey|)>;
     field overmethods: List<(|InvokeKey, TypeKey|)>; 
 
     field enums: List<TypeKey>;
+    field typedecls: List<TypeKey>;
+    field stringoftypedecls: List<TypeKey>;
 
-    field alltypes: List<TypeKey>; %%Very useful in emission
+    field alltypes: List<TypeKey>; 
 }
 
 %% Will need expanding
@@ -279,6 +292,8 @@ entity Assembly {
     field overmethods: Map<InvokeKey, MethodDeclOverride>;
 
     field enums: Map<TypeKey, EnumTypeDecl>;
+    field typedecls: Map<TypeKey, TypedeclTypeDecl>;
+    field stringoftypedecls: Map<TypeKey, TypedeclStringOfTypeDecl>;
 
     field primitives: Map<TypeKey, PrimitiveEntityTypeDecl>;
     field constructables: Map<TypeKey, ConstructableTypeDecl>;
@@ -319,6 +334,12 @@ entity Assembly {
         }
         elif(this.enums.has(tkey)) {
             return this.enums.get(tkey);
+        }
+        elif(this.typedecls.has(tkey)) {
+            return this.typedecls.get(tkey);
+        }
+        elif(this.stringoftypedecls.has(tkey)) {
+            return this.stringoftypedecls.get(tkey);
         }
         elif(this.concepts.has(tkey)) {
             return this.concepts.get(tkey);

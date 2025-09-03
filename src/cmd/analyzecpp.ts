@@ -134,7 +134,10 @@ function runCPPEmit(outname: string): [string, string] {
     let res = ["", ""];
     try {
         const fname = path.join(nndir, "bsqir.bsqon");
-        let exec = execSync(`node ${cpp_transform_bin_path} --file ${fname}`).toString();
+        let exec = execSync(`node ${cpp_transform_bin_path} --file ${fname}`, {
+            maxBuffer: 1024 * 1024 * 50, // 50MB buffer
+            encoding: 'utf-8'
+        }).toString();        
         const boldstr = "𝐬𝐫𝐜";
         const boldidx = exec.indexOf(boldstr);
         
