@@ -17,17 +17,30 @@
 #define ALLOC_DEBUG_CANARY_VALUE 0xDEADBEEFDEADBEEFul
 
 #ifdef MEM_STATS
-#define MEM_STATS_START() auto start = std::chrono::high_resolution_clock::now()
-#define MEM_STATS_END(BUCKETS)                                                         \
-do {                                                                                   \
-    auto end = std::chrono::high_resolution_clock::now();                              \
-    double duration_ms = std::chrono::                                                 \
-        duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
-    update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
-}while(0)
+
+#define MEM_STATS_START() \
+    auto start = std::chrono::high_resolution_clock::now()
+#define MEM_STATS_END(BUCKETS)                                                             \
+    do {                                                                                   \
+        auto end = std::chrono::high_resolution_clock::now();                              \
+        double duration_ms = std::chrono::                                                 \
+            duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
+        update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
+    }while(0)
+#define UPDATE_MEMSTATS()                                 \
+    do {                                                  \
+        for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
+            GCAllocator* alloc = gtl_info.g_gcallocs[i];  \
+            if(alloc != nullptr) {                        \
+                alloc->updateMemStats();                  \
+            }                                             \
+        }                                                 \
+    } while(0)
+
 #else
 #define MEM_STATS_START()
 #define MEM_STATS_END(BUCKETS)
+#define UPDATE_MEMSTATS()
 #endif
 
 // Allows us to correctly determine pointer offsets

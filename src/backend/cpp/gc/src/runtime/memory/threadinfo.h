@@ -41,18 +41,23 @@ struct RegisterContents
 
 #ifdef MEM_STATS
 
-// Buckets store 0.2ms variance, final entry is for outliers (hopefully never any values present there)
+// Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there)
 #define MAX_MEMSTATS_BUCKETS 100 + 1
 struct MemStats {
-    uint64_t num_allocs = 0;
-    uint64_t total_gc_pages = 0;
-    uint64_t total_empty_gc_pages = 0;
-    uint64_t total_live_bytes = 0; //doesnt include canary or metadata size
+    size_t total_alloc_count  = 0;
+    size_t total_alloc_memory = 0;
 
-    uint64_t collection_times[MAX_MEMSTATS_BUCKETS] = {};
-    uint64_t marking_times[MAX_MEMSTATS_BUCKETS] = {};
-    uint64_t evacuation_times[MAX_MEMSTATS_BUCKETS] = {};
-    uint64_t decrement_times[MAX_MEMSTATS_BUCKETS] = {};
+    size_t total_collections = 0;
+
+    double min_collection_time = 0;
+    double max_collection_time = 0;    
+
+    size_t max_live_heap = 0;
+
+    size_t collection_times[MAX_MEMSTATS_BUCKETS] { 0 };
+    size_t marking_times[MAX_MEMSTATS_BUCKETS]    { 0 };
+    size_t evacuation_times[MAX_MEMSTATS_BUCKETS] { 0 };
+    size_t decrement_times[MAX_MEMSTATS_BUCKETS]  { 0 };
 };
 #else
 struct MemStats {};
@@ -143,63 +148,105 @@ struct BSQMemoryTheadLocalInfo
     void unloadNativeRootSet() noexcept;
 };
 
+//
+// OOF, this shit breaks my tests as we do not
+// calculate total live bytes anymore :(
+//
+// Lets think about this after a good nights rest!
+//
 #ifdef MEM_STATS
-    #include <iostream>
-    
-    #define BUCKET_VARIANCE 0.05
-    #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
+#include <iostream>
 
-    #define NUM_ALLOCS(E)           (E).mstats.num_allocs
-    #define TOTAL_GC_PAGES(E)       (E).mstats.total_gc_pages
-    #define TOTAL_EMPTY_GC_PAGES(E) (E).mstats.total_empty_gc_pages
-    #define TOTAL_LIVE_BYTES(E)     (E).mstats.total_live_bytes
+#define BUCKET_VARIANCE 0.05
+#define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
-    #define UPDATE_NUM_ALLOCS(E, OP, ...)           NUM_ALLOCS((E)) OP __VA_ARGS__
-    #define UPDATE_TOTAL_GC_PAGES(E, OP, ...)       TOTAL_GC_PAGES((E)) OP __VA_ARGS__
-    #define UPDATE_TOTAL_EMPTY_GC_PAGES(E, OP, ...) TOTAL_EMPTY_GC_PAGES((E)) OP __VA_ARGS__
-    #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)     TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
+#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
+#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
+#define TOTAL_COLLECTIONS(E)      (E).mstats.total_collections
+#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
+#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
+#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
 
-    inline void update_bucket(uint64_t* bucket, double time) noexcept {
-        int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
-        if(index > MAX_MEMSTATS_BUCKETS) { // Outlier
-            bucket[MAX_MEMSTATS_BUCKETS - 1]++;
-        }
-        else {
-            bucket[index]++;
-        }
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)      TOTAL_COLLECTIONS((E)) OP __VA_ARGS__
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
+
+inline void update_bucket(uint64_t* bucket, double time) noexcept 
+{
+    int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
+    if(index >= MAX_MEMSTATS_BUCKETS) { 
+        bucket[MAX_MEMSTATS_BUCKETS - 1]++;
     }
+    else {
+        bucket[index]++;
+    }
+}
 
-    double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
-    std::string generate_formatted_memstats(MemStats& ms) noexcept;
+double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
+std::string generate_formatted_memstats(MemStats& ms) noexcept;
 
-    #define PRINT_COLLECTION_TIME(E) (std::cout << "Average Collection Time: " << compute_average_time((E).collection_times) << "ms\n")
-    #define PRINT_MARKING_TIME(E) (std::cout << "Average Marking Time: " << compute_average_time((E).marking_times) << "ms\n")
-    #define PRINT_EVACUATION_TIME(E) (std::cout << "Average Evacuation Time: " << compute_average_time((E).evacuation_times) << "ms\n")
-    #define PRINT_DECREMENT_TIME(E) (std::cout << "Average Decrement Time: " << compute_average_time((E).decrement_times) << "ms\n")
-
-    #define MEM_STATS_DUMP(E)     \
-    do {                          \
-        PRINT_COLLECTION_TIME(E); \
-        PRINT_MARKING_TIME(E);    \
-        PRINT_EVACUATION_TIME(E); \
-        PRINT_DECREMENT_TIME(E);  \
+#define PRINT_COLLECTION_TIME(E)                                                                                 \
+    do{                                                                                                          \
+        std::cout << "Average Collection Time: " << compute_average_time((E).mstats.collection_times) << "ms\n"; \
+        std::cout << "Min Collection Time: " << (E).mstats.min_collection_time << "ms\n";                        \
+        std::cout << "Max Collection Time: " << (E).mstats.max_collection_time << "ms\n";                        \
     } while(0)
+
+#define PRINT_MARKING_TIME(E) \
+    (std::cout << "Average Marking Time: " << compute_average_time((E).mstats.marking_times) << "ms\n")
+
+#define PRINT_EVACUATION_TIME(E) \
+    (std::cout << "Average Evacuation Time: " << compute_average_time((E).mstats.evacuation_times) << "ms\n")
+
+#define PRINT_DECREMENT_TIME(E) \
+    (std::cout << "Average Decrement Time: " << compute_average_time((E).mstats.decrement_times) << "ms\n")
+
+#define PRINT_TOTAL_COLLECTIONS(E) \
+    (std::cout << "Total Collections: " << (E).mstats.total_collections << "\n")
+
+#define PRINT_ALLOC_INFO(E)                                                                     \
+    do {                                                                                        \
+        std::cout << "Total Alloc Count: " << (E).mstats.total_alloc_count << "\n";             \
+        std::cout << "Total Allocated Memory: " << (E).mstats.total_alloc_memory << " bytes\n"; \
+    } while(0)
+
+#define PRINT_MAX_HEAP(E) \
+    (std::cout << "Max Live Heap Size: " << (E).mstats.max_live_heap << " bytes\n")
+
+#define MEM_STATS_DUMP(E)           \
+    do {                            \
+        PRINT_COLLECTION_TIME(E);   \
+        PRINT_MARKING_TIME(E);      \
+        PRINT_EVACUATION_TIME(E);   \
+        PRINT_DECREMENT_TIME(E);    \
+        PRINT_TOTAL_COLLECTIONS(E); \
+        PRINT_ALLOC_INFO(E);        \
+        PRINT_MAX_HEAP(E);          \
+    } while(0)
+
 #else
-    #define NUM_ALLOCS(E)           0 
-    #define TOTAL_GC_PAGES(E)       0
-    #define TOTAL_EMPTY_GC_PAGES(E) 0
-    #define TOTAL_LIVE_BYTES(E)     0
+#define TOTAL_ALLOC_COUNT(E)      0
+#define TOTAL_ALLOC_MEMORY(E)     0
+#define TOTAL_COLLECTIONS(E)      0
+#define MIN_COLLECTION_TIME(E)    0
+#define MAX_COLLECTION_TIME(E)    0
+#define MAX_LIVE_HEAP(E)          0
 
-    #define UPDATE_NUM_ALLOCS(OP, ...)
-    #define UPDATE_TOTAL_GC_PAGES(OP, ...)
-    #define UPDATE_TOTAL_EMPTY_GC_PAGES(OP, ...)
-    #define UPDATE_TOTAL_LIVE_BYTES(OP, ...)
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
+#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
 
-    #define update_bucket (void)sizeof
-    #define compute_average_time(B) 0
-    #define generate_formatted_memstats(MS) ""
+#define update_bucket (void)sizeof
+#define compute_average_time(B) 0
+#define generate_formatted_memstats(MS) ""
 
-    #define MEM_STATS_DUMP(E)
+#define MEM_STATS_DUMP(E)
 #endif // MEM_STATS
 
 extern thread_local BSQMemoryTheadLocalInfo gtl_info;
