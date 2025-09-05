@@ -463,7 +463,8 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 }
 
 void collect() noexcept
-{   
+{
+    UPDATE_TOTAL_COLLECTIONS(gtl_info, +=, 1);
     MEM_STATS_START();
 
     static bool should_reset_pending_decs = true;
@@ -492,7 +493,6 @@ void collect() noexcept
         GCAllocator* alloc = gtl_info.g_gcallocs[i];
         if(alloc != nullptr) {
             alloc->processCollectorPages();
-            alloc->updateMemStats();
         }
     }
 
@@ -510,4 +510,5 @@ void collect() noexcept
     gtl_info.newly_filled_pages_count = 0;
 
     MEM_STATS_END(collection_times);
+    UPDATE_MEMSTATS();
 }
