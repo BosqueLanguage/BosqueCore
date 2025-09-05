@@ -270,6 +270,10 @@ void GCAllocator::updateMemStats() noexcept
     for(int i = 0; i < NUM_LOW_UTIL_BUCKETS; i++) {
         traverseBST(this->low_util_buckets[i]);
     }
+
+    if(TOTAL_LIVE_BYTES(gtl_info) > MAX_LIVE_HEAP(gtl_info)) {
+        UPDATE_MAX_LIVE_HEAP(gtl_info, =, TOTAL_LIVE_BYTES(gtl_info));
+    }
 }
 
 #endif
