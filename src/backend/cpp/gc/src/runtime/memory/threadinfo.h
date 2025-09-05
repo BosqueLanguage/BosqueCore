@@ -170,7 +170,7 @@ inline void update_collection_extrema(MemStats& ms, double time) noexcept
     if(time > ms.max_collection_time) { 
         ms.max_collection_time = time;  
     }
-    if(time < ms.min_collection_time) { 
+    if(time < ms.min_collection_time || ms.min_collection_time < 1e-10) { 
         ms.min_collection_time = time;
     }
 } 

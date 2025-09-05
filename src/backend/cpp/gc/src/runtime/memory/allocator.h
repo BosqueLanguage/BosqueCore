@@ -287,9 +287,15 @@ private:
     PageInfo* getFreshPageForEvacuation() noexcept;
 
 public:
+#ifdef MEM_STATS
     GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
         resetBuckets();
     }
+#else 
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
+        resetBuckets();
+    }
+#endif
 
     // Each "bucket" is a binary tree storing 5% of variance in approx_utiliation
     PageInfo* low_util_buckets[NUM_LOW_UTIL_BUCKETS]; // Pages with 1-60% utilization (does not hold fully empty)
@@ -300,11 +306,14 @@ public:
         return this->allocsize;
     }
 
+#ifdef MEM_STATS
     inline void updateAllocInfo(uint32_t memory) noexcept
     {
         this->alloc_count++;
         this->alloc_memory += static_cast<size_t>(memory);
     }
+#else 
+#endif
 
     inline void resetBuckets() noexcept 
     {
