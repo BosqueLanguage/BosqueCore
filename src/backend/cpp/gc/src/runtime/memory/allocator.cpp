@@ -66,7 +66,6 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
         this->empty_pages = this->empty_pages->next;
 
         pp = PageInfo::initialize(page, entrysize, realsize);
-        UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, --);
     }
     else {
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
@@ -84,7 +83,6 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
         this->pagetable.pagetable_insert(page);
 
         pp = PageInfo::initialize(page, entrysize, realsize);
-        UPDATE_TOTAL_GC_PAGES(gtl_info, ++);
     }
 
     GC_MEM_LOCK_RELEASE();
@@ -94,9 +92,7 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
 void GCAllocator::processPage(PageInfo* p) noexcept
 {
     if(p->entrycount == p->freecount) {
-        GlobalPageGCManager::g_gc_page_manager.addNewPage(p);
-        UPDATE_TOTAL_EMPTY_GC_PAGES(gtl_info, ++);
-
+        GlobalPageGCManager::g_gc_page_manager.addNewPage(p); 
         return ;
     }
     
@@ -254,6 +250,10 @@ static void traverseBST(PageInfo* node) noexcept
 
 void GCAllocator::updateMemStats() noexcept
 {
+    UPDATE_TOTAL_ALLOC_COUNT(gtl_info, +=, GET_ALLOC_COUNT(this));
+    UPDATE_TOTAL_ALLOC_MEMORY(gtl_info, +=, GET_ALLOC_MEMORY(this));
+    RESET_ALLOC_STATS(this);
+
     //compute stats for filled pages
     PageInfo* filled_it = this->filled_pages;
     while(filled_it != nullptr) {

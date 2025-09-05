@@ -255,3 +255,37 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!((META)->meta & ISALLOC_MASK) || (!((META)->meta & ISROOT_MASK) && (((META)->meta & RC_MASK) == 0UL)))
 #endif
+
+#ifdef MEM_STATS
+#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
+#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
+#define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
+#define TOTAL_COLLECTIONS(E)      (E).mstats.total_collections
+#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
+#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
+#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
+
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)      TOTAL_COLLECTIONS((E)) OP __VA_ARGS__
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
+#else 
+#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
+#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
+#define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
+#define TOTAL_COLLECTIONS(E)      (E).mstats.total_collections
+#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
+#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
+#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
+
+#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)      TOTAL_COLLECTIONS((E)) OP __VA_ARGS__
+#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
+#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
+#endif

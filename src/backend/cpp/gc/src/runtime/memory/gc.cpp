@@ -463,7 +463,8 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 }
 
 void collect() noexcept
-{   
+{
+    UPDATE_TOTAL_COLLECTIONS(gtl_info, +=, 1);
     MEM_STATS_START();
 
     static bool should_reset_pending_decs = true;

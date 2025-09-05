@@ -46,8 +46,8 @@ struct RegisterContents
 struct MemStats {
     size_t total_alloc_count  = 0;
     size_t total_alloc_memory = 0;
-
-    size_t total_collections = 0;
+    size_t total_live_bytes   = 0;
+    size_t total_collections  = 0;
 
     double min_collection_time = 0;
     double max_collection_time = 0;    
@@ -148,33 +148,13 @@ struct BSQMemoryTheadLocalInfo
     void unloadNativeRootSet() noexcept;
 };
 
-//
-// OOF, this shit breaks my tests as we do not
-// calculate total live bytes anymore :(
-//
-// Lets think about this after a good nights rest!
-//
 #ifdef MEM_STATS
 #include <iostream>
 
 #define BUCKET_VARIANCE 0.05
 #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
-#define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
-#define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
-#define TOTAL_COLLECTIONS(E)      (E).mstats.total_collections
-#define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
-#define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
-#define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
-
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)      TOTAL_ALLOC_COUNT((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
-#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)      TOTAL_COLLECTIONS((E)) OP __VA_ARGS__
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
-
-inline void update_bucket(uint64_t* bucket, double time) noexcept 
+inline void update_bucket(size_t* bucket, double time) noexcept 
 {
     int index = static_cast<int>((time * (1.0 / BUCKET_VARIANCE)) + 0.5);
     if(index >= MAX_MEMSTATS_BUCKETS) { 
@@ -185,7 +165,17 @@ inline void update_bucket(uint64_t* bucket, double time) noexcept
     }
 }
 
-double compute_average_time(uint64_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
+inline void update_collection_extrema(MemStats& ms, double time) noexcept 
+{
+    if(time > ms.max_collection_time) { 
+        ms.max_collection_time = time;  
+    }
+    if(time < ms.min_collection_time) { 
+        ms.min_collection_time = time;
+    }
+} 
+
+double compute_average_time(size_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
 std::string generate_formatted_memstats(MemStats& ms) noexcept;
 
 #define PRINT_COLLECTION_TIME(E)                                                                                 \
@@ -228,20 +218,6 @@ std::string generate_formatted_memstats(MemStats& ms) noexcept;
     } while(0)
 
 #else
-#define TOTAL_ALLOC_COUNT(E)      0
-#define TOTAL_ALLOC_MEMORY(E)     0
-#define TOTAL_COLLECTIONS(E)      0
-#define MIN_COLLECTION_TIME(E)    0
-#define MAX_COLLECTION_TIME(E)    0
-#define MAX_LIVE_HEAP(E)          0
-
-#define UPDATE_TOTAL_ALLOC_COUNT(E, OP, ...)
-#define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
-#define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)
-#define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
-#define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
-
 #define update_bucket (void)sizeof
 #define compute_average_time(B) 0
 #define generate_formatted_memstats(MS) ""

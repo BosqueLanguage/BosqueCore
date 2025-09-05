@@ -25,6 +25,7 @@
         auto end = std::chrono::high_resolution_clock::now();                              \
         double duration_ms = std::chrono::                                                 \
             duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
+        update_collection_extrema(gtl_info.mstats, duration_ms);                           \
         update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
     }while(0)
 #define UPDATE_MEMSTATS()                                 \
@@ -235,6 +236,27 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define NUM_LOW_UTIL_BUCKETS 12
 #define NUM_HIGH_UTIL_BUCKETS 6
 
+
+#ifdef MEM_STATS
+#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE) \
+    (ALLOC)->updateAllocInfo(MEMORY_SIZE)
+    
+#define RESET_ALLOC_STATS(ALLOC)   \
+    do {                           \
+        (ALLOC)->alloc_count = 0;  \
+        (ALLOC)->alloc_memory = 0; \
+    } while(0)
+
+#define GET_ALLOC_COUNT(ALLOC)  ((ALLOC)->alloc_count)
+#define GET_ALLOC_MEMORY(ALLOC) ((ALLOC)->alloc_memory)
+
+#else
+#define UPDATE_ALLOC_STATS(ALLOC, MEMORY_SIZE)
+#define RESET_ALLOC_STATS(ALLOC)
+#define GET_ALLOC_COUNT(ALLOC) (0)
+#define GET_ALLOC_MEMORY(ALLOC) (0)
+#endif
+
 class GCAllocator
 {
 private:
@@ -252,13 +274,20 @@ private:
     PageInfo* filled_pages; // Pages with over 90% utilization (no need for buckets here)
     //completely empty pages go back to the global pool
 
+#ifdef MEM_STATS
+    // These two get zeroed at a collection
+    size_t alloc_count;
+    size_t alloc_memory;
+#else 
+#endif
+
     void (*collectfp)();
 
     PageInfo* getFreshPageForAllocator() noexcept; 
     PageInfo* getFreshPageForEvacuation() noexcept;
 
 public:
-    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), collectfp(collect) {
+    GCAllocator(uint16_t objsize, uint16_t fullsize, void (*collect)()) noexcept : freelist(nullptr), evacfreelist(nullptr), alloc_page(nullptr), evac_page(nullptr), allocsize(objsize), realsize(fullsize), pendinggc_pages(nullptr), filled_pages(nullptr), alloc_count(0), alloc_memory(0), collectfp(collect) {
         resetBuckets();
     }
 
@@ -269,6 +298,12 @@ public:
     inline size_t getAllocSize() const noexcept
     {
         return this->allocsize;
+    }
+
+    inline void updateAllocInfo(uint32_t memory) noexcept
+    {
+        this->alloc_count++;
+        this->alloc_memory += static_cast<size_t>(memory);
     }
 
     inline void resetBuckets() noexcept 
@@ -319,6 +354,8 @@ public:
         
         SET_ALLOC_LAYOUT_HANDLE_CANARY(entry, type);
         SETUP_ALLOC_INITIALIZE_FRESH_META(SETUP_ALLOC_LAYOUT_GET_META_PTR(entry), type);
+
+        UPDATE_ALLOC_STATS(this, type->type_size);
 
         return SETUP_ALLOC_LAYOUT_GET_OBJ_PTR(entry);
     }
