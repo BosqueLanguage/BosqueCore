@@ -185,7 +185,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #ifdef VERBOSE_HEADER
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
+#define RESET_METADATA_FOR_OBJECT(M, FP) ((*(M)) = { .type=nullptr, .isalloc=false, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=FP, .ref_count=0 })
 #define ZERO_METADATA(M) ((*(M)) = {})
 
 #define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
@@ -214,12 +214,12 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_YOUNG_MARK(META) { (META)->isyoung = false; }
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || (!(META)->isroot && (META)->ref_count == 0))
+#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->isyoung && (META)->forward_index == NON_FORWARDED))
 
 #else
 // Resets an objects metadata and updates with index into forward table
-#define RESET_METADATA_FOR_OBJECT(M, FP) (((M)->meta) &= (~FORWARD_MASK | FP))
 #define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
+#define RESET_METADATA_FOR_OBJECT(M, FP) SET_FORWARD_INDEX(M, FP)
 
 #define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O)->meta & ISMARKED_MASK) != 0UL)
 #define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O)->meta & ISYOUNG_MASK) != 0UL)
@@ -253,7 +253,12 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ~ISYOUNG_MASK) 
 #define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) &= ~(ISROOT_MASK | ISYOUNG_MASK)) 
 
-#define GC_SHOULD_FREE_LIST_ADD(META) (!((META)->meta & ISALLOC_MASK) || (!((META)->meta & ISROOT_MASK) && (((META)->meta & RC_MASK) == 0UL)))
+#define GC_SHOULD_FREE_LIST_ADD(META) ( \
+    !((META)->meta & ISALLOC_MASK) || ( \
+        ((META)->meta & ISYOUNG_MASK) && \
+        (static_cast<uint32_t>(((META)->meta & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT) == NON_FORWARDED) \
+    ) \
+)
 #endif
 
 #ifdef MEM_STATS

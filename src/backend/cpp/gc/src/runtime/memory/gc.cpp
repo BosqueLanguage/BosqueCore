@@ -294,8 +294,10 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         updatePointers((void**)obj, tinfo);
 
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        GC_CLEAR_YOUNG_MARK(m);
+        if(GC_IS_ROOT(obj)) {
+            MetaData* m = GC_GET_META_DATA_ADDR(obj);
+            GC_CLEAR_YOUNG_MARK(m);
+        }
     }
 
     MEM_STATS_END(evacuation_times);
