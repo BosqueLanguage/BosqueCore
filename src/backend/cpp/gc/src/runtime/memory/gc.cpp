@@ -51,7 +51,9 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         
         if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            pushPendingDecs(tinfo, cur_oldroot);
+            if(GC_REF_COUNT(cur_oldroot) == 0) {
+                pushPendingDecs(tinfo, cur_oldroot);
+            }
             oldroots_idx++;
             continue;
         }
@@ -63,7 +65,9 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         } 
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
-            pushPendingDecs(tinfo, cur_oldroot);
+            if(GC_REF_COUNT(cur_oldroot) == 0) {
+                pushPendingDecs(tinfo, cur_oldroot);
+            }
             oldroots_idx++;
         } 
         else {
@@ -210,15 +214,17 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
+    CHECK_INITIALIZED(*obj);
+
     void* ptr = *obj;
-    int32_t fwd_index = GC_FWD_INDEX(ptr);
 
     // Root points to root case (may be a false root)
-    if(GC_IS_ROOT(ptr)) [[unlikely]] {
+    if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
         INC_REF_COUNT(ptr);
         return ;
     }
 
+    int32_t fwd_index = GC_FWD_INDEX(ptr);
     if(fwd_index == NON_FORWARDED ) {
         *obj = forward(ptr, tinfo); 
     }
@@ -501,6 +507,7 @@ void collect() noexcept
 
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
         GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
+        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
 
         gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];
     }

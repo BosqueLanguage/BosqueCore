@@ -99,16 +99,9 @@ void GCAllocator::processPage(PageInfo* p) noexcept
     if(insertPageInBucket(this, p)) {
         return ;
     }
-    
-    // Full page
-    if(p == this->evac_page) {
-        p->next = this->filled_pages;
-        filled_pages = p;
-    }
-    else {
-        p->next = this->pendinggc_pages;
-        pendinggc_pages = p;
-    } 
+     
+    p->next = this->filled_pages;
+    filled_pages = p;
 }
 
 void GCAllocator::processCollectorPages() noexcept
