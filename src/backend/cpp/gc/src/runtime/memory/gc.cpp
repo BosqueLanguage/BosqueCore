@@ -214,9 +214,8 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
-    CHECK_INITIALIZED(*obj);
-
     void* ptr = *obj;
+    CHECK_INITIALIZED(ptr);
 
     // Root points to root case (may be a false root)
     if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
@@ -368,6 +367,8 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
+    CHECK_INITIALIZED(*slots);
+
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     GC_INVARIANT_CHECK(meta != nullptr);
 
