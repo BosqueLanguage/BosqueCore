@@ -2348,6 +2348,8 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
     });
 
+    let typeinfossize = asm.typeinfos.size();
+
     %% Various size allocators needed for the GC
     var allocs, allocslist, allocmap = asm.typeinfos
         .reduce<(|String, List<String>, Map<Nat, String>|)>((|"", List<String>{}, Map<Nat, String>{}|), fn(acc, tk, ti) => {
