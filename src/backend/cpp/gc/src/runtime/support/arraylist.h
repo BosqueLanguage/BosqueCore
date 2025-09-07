@@ -52,30 +52,42 @@ private:
     {
         DSA_INVARIANT_CHECK(this->head == this->head_max);
 
-        ArrayListSegment<T>* xseg = this->head_segment;
-        this->head_segment = this->head_segment->next;
-        this->head_segment->prev = nullptr;
-
-        this->head_min = this->head_segment->data;
-        this->head_max = (T*)((uint8_t*)this->head_segment + BSQ_BLOCK_ALLOCATION_SIZE);
-        this->head = this->head_min;
-
-        XAllocPageManager::g_page_manager.freePage(xseg);
+        if(this->head_segment == this->tail_segment) {
+            this->head = this->head_min;
+            this->tail = this->tail_min;
+        } 
+        else {
+            ArrayListSegment<T>* xseg = this->head_segment;
+            this->head_segment = this->head_segment->next;
+            this->head_segment->prev = nullptr;
+    
+            this->head_min = this->head_segment->data;
+            this->head_max = (T*)((uint8_t*)this->head_segment + BSQ_BLOCK_ALLOCATION_SIZE);
+            this->head = this->head_min;
+    
+            XAllocPageManager::g_page_manager.freePage(xseg);
+        }
     }
 
     void shift_back_slow() noexcept
     {
         DSA_INVARIANT_CHECK(this->tail == this->tail_min);
 
-        ArrayListSegment<T>* xseg = this->tail_segment;
-        this->tail_segment = this->tail_segment->prev;
-        this->tail_segment->next = nullptr;
+        if(this->head_segment == this->tail_segment) {
+            this->head = this->head_min;
+            this->tail = this->tail_min;
+        } 
+        else {
+            ArrayListSegment<T>* xseg = this->tail_segment;
+            this->tail_segment = this->tail_segment->prev;
+            this->tail_segment->next = nullptr;
 
-        this->tail_min = this->tail_segment->data;
-        this->tail_max = (T*)((uint8_t*)this->tail_segment + BSQ_BLOCK_ALLOCATION_SIZE);
-        this->tail = this->tail_max;
+            this->tail_min = this->tail_segment->data;
+            this->tail_max = (T*)((uint8_t*)this->tail_segment + BSQ_BLOCK_ALLOCATION_SIZE);
+            this->tail = this->tail_max;
 
-        XAllocPageManager::g_page_manager.freePage(xseg);
+            XAllocPageManager::g_page_manager.freePage(xseg);
+        }
     }
 
 public:

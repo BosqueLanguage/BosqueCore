@@ -51,7 +51,9 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         
         if(roots_idx >= tinfo.roots_count) {
             // Was dropped from roots
-            pushPendingDecs(tinfo, cur_oldroot);
+            if(GC_REF_COUNT(cur_oldroot) == 0) {
+                pushPendingDecs(tinfo, cur_oldroot);
+            }
             oldroots_idx++;
             continue;
         }
@@ -63,7 +65,9 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
         } 
         else if(cur_oldroot < cur_root) {
             // Was dropped from roots
-            pushPendingDecs(tinfo, cur_oldroot);
+            if(GC_REF_COUNT(cur_oldroot) == 0) {
+                pushPendingDecs(tinfo, cur_oldroot);
+            }
             oldroots_idx++;
         } 
         else {
@@ -211,14 +215,15 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj;
-    int32_t fwd_index = GC_FWD_INDEX(ptr);
+    CHECK_INITIALIZED(ptr);
 
     // Root points to root case (may be a false root)
-    if(GC_IS_ROOT(ptr)) [[unlikely]] {
+    if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
         INC_REF_COUNT(ptr);
         return ;
     }
 
+    int32_t fwd_index = GC_FWD_INDEX(ptr);
     if(fwd_index == NON_FORWARDED ) {
         *obj = forward(ptr, tinfo); 
     }
@@ -289,8 +294,10 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
         updatePointers((void**)obj, tinfo);
 
-        MetaData* m = GC_GET_META_DATA_ADDR(obj);
-        GC_CLEAR_YOUNG_MARK(m);
+        if(GC_IS_ROOT(obj)) {
+            MetaData* m = GC_GET_META_DATA_ADDR(obj);
+            GC_CLEAR_YOUNG_MARK(m);
+        }
     }
 
     MEM_STATS_END(evacuation_times);
@@ -362,6 +369,8 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
+    CHECK_INITIALIZED(*slots);
+
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     GC_INVARIANT_CHECK(meta != nullptr);
 
@@ -501,6 +510,7 @@ void collect() noexcept
 
     for(int32_t i = 0; i < gtl_info.roots_count; i++) {
         GC_CLEAR_ROOT_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
+        GC_CLEAR_YOUNG_MARK(GC_GET_META_DATA_ADDR(gtl_info.roots[i]));
 
         gtl_info.old_roots[gtl_info.old_roots_count++] = gtl_info.roots[i];
     }

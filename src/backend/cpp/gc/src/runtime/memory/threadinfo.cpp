@@ -33,7 +33,7 @@ void BSQMemoryTheadLocalInfo::initialize(size_t ntl_id, void** caller_rbp) noexc
     xmem_zerofill(this->old_roots, BSQ_MAX_ROOTS);
 
     this->forward_table = forward_table_array;
-    this->forward_table_index = 0;
+    this->forward_table_index = FWD_TABLE_START;
     xmem_zerofill(this->forward_table, BSQ_MAX_FWD_TABLE_ENTRIES);
 
     this->g_gcallocs = g_gcallocs_array;

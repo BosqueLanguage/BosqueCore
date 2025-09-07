@@ -211,7 +211,7 @@ public:
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #else
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); ((META)->meta |= (ISALLOC_MASK | ISYOUNG_MASK)); } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->meta = ((META)->meta & ~ISYOUNG_MASK) | ISALLOC_MASK; }
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->meta |= ISALLOC_MASK; }
 #endif
 
 template<typename T>
@@ -331,18 +331,19 @@ public:
         if(p == alloc_page || p == evac_page) {
             return nullptr;
         }
-
+    
         PageInfo* prev = nullptr;
         PageInfo* cur = this->filled_pages;
         while(cur != nullptr) {
             if(cur == p) {
                 if(prev == nullptr) {
-                    this->filled_pages = nullptr;
+                    this->filled_pages = cur->next;
                 }
                 else {
                     prev->next = cur->next;
-                    return p;
                 }
+                cur->next = nullptr;
+                return p;
             }
             prev = cur;
             cur = cur->next;
