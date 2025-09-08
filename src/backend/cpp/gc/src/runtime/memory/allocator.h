@@ -210,8 +210,8 @@ public:
 #define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=true, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) (*(META)) = { .type=(T), .isalloc=true, .isyoung=false, .ismarked=false, .isroot=false, .forward_index=NON_FORWARDED, .ref_count=0 }
 #else
-#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); ((META)->meta |= (ISALLOC_MASK | ISYOUNG_MASK)); } 
-#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->meta |= ISALLOC_MASK; }
+#define SETUP_ALLOC_INITIALIZE_FRESH_META(META, T)       { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 1; } 
+#define SETUP_ALLOC_INITIALIZE_CONVERT_OLD_META(META, T) { ZERO_METADATA(META); SET_TYPE_PTR(META, T); (META)->bits.isalloc = 1; (META)->bits.isyoung = 0; }
 #endif
 
 template<typename T>

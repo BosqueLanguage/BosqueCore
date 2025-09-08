@@ -209,6 +209,8 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
     tinfo.forward_table[tinfo.forward_table_index] = nptr;
     tinfo.forward_table_index++;
 
+    UPDATE_TOTAL_PROMOTIONS(gtl_info, +=, 1);
+
     return nptr;
 }
 

@@ -134,28 +134,12 @@ public:
 //   meaning it is stored in the programs data segment. We can take advantage of these objects
 //   residing in the same location by capturing the high order 32 bits of a typeinfo address
 //   then the variant low 32 bits will be stored inside metadata
-//
-// (We could pack these better but this should get the job done!)
-// If we are in the RC old space:
-// - high [RC - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits - 32]
-//
-// If we are in the nursery:
-// - high [Forward Index - 28][Allocated - 1][Young - 1][Root - 1][Marked - 1][Type Ptr Low Bits -32]
+// - When we are in the nursery the rc_fwd field will store an index into our forward table
+// - When we are in the old space the rc_fwd field will store a reference count
 //
 
 #define NUM_TYPEPTR_BITS 32
-
-#define TYPE_PTR_MASK 0x0000'0000'FFFF'FFFFUL
-#define RC_MASK       0xFFFF'FFF0'0000'0000UL
-#define FORWARD_MASK  0xFFFF'FFF0'0000'0000UL
-
-#define ISALLOC_MASK  0x0000'0008'0000'0000UL
-#define ISYOUNG_MASK  0x0000'0004'0000'0000UL
-#define ISROOT_MASK   0x0000'0002'0000'0000UL
-#define ISMARKED_MASK 0x0000'0001'0000'0000UL
-
-#define NUM_BIT_FLAGS 4
-#define RC_AND_FORWARD_SHIFT (NUM_TYPEPTR_BITS + NUM_BIT_FLAGS)
+#define TYPEPTR_MASK 0x0000'0000'FFFF'FFFFUL
 
 #ifdef VERBOSE_HEADER
 struct MetaData 
@@ -174,7 +158,17 @@ struct MetaData
 typedef struct MetaData 
 {
     //!!!! alloc info is valid even when this is in a free-list so we need to make sure it is a 0 bit in the pointer value (low 3) !!!!
-    uint64_t meta; //8 byte bit vector
+    union {
+        uint64_t raw;
+        struct {
+            uint64_t typeptr_low : 32;
+            uint64_t isalloc : 1;
+            uint64_t isyoung : 1;
+            uint64_t ismarked : 1;
+            uint64_t isroot : 1;
+            uint64_t rc_fwd : 28;
+        } bits;
+    };
 } MetaData;
 static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #endif
@@ -218,47 +212,49 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 
 #else
 // Resets an objects metadata and updates with index into forward table
-#define ZERO_METADATA(M) (((M)->meta) = 0x0UL)
-#define RESET_METADATA_FOR_OBJECT(M, FP) SET_FORWARD_INDEX(M, FP)
+#define ZERO_METADATA(M) ((M)->raw = 0x0UL)
+#define RESET_METADATA_FOR_OBJECT(M, FP) \
+    do { \
+        ZERO_METADATA(M); \
+        (M)->bits.isyoung = 1; \
+        (M)->bits.rc_fwd = FP; \
+    } while(0); 
 
-#define GC_IS_MARKED(O)    ((GC_GET_META_DATA_ADDR(O)->meta & ISMARKED_MASK) != 0UL)
-#define GC_IS_YOUNG(O)     ((GC_GET_META_DATA_ADDR(O)->meta & ISYOUNG_MASK) != 0UL)
-#define GC_IS_ALLOCATED(O) ((GC_GET_META_DATA_ADDR(O)->meta & ISALLOC_MASK) != 0UL)
-#define GC_IS_ROOT(O)      ((GC_GET_META_DATA_ADDR(O)->meta & ISROOT_MASK) != 0UL)
+#define GC_IS_MARKED(O)    (GC_GET_META_DATA_ADDR(O)->bits.ismarked)
+#define GC_IS_YOUNG(O)     (GC_GET_META_DATA_ADDR(O)->bits.isyoung)
+#define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O)->bits.isalloc)
+#define GC_IS_ROOT(O)      (GC_GET_META_DATA_ADDR(O)->bits.isroot)
 
-#define GC_FWD_INDEX(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT))
-#define GC_REF_COUNT(O)    (static_cast<uint32_t>((GC_GET_META_DATA_ADDR(O)->meta & RC_MASK) >> RC_AND_FORWARD_SHIFT))
+#define GC_FWD_INDEX(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
+#define GC_REF_COUNT(O)    (GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
 
-#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->meta & TYPE_PTR_MASK) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
+#define GET_TYPE_PTR(O)    ((GC_GET_META_DATA_ADDR(O)->bits.typeptr_low) | (gtl_info.typeptr_high32 << NUM_TYPEPTR_BITS)) 
 #define GC_TYPE(O)         (reinterpret_cast<__CoreGC::TypeInfoBase*>(GET_TYPE_PTR(O)))
 
-#define SET_REF_COUNT(O, COUNT)     (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~RC_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & RC_MASK))
-#define SET_FORWARD_INDEX(O, COUNT) (GC_GET_META_DATA_ADDR(O)->meta = (GC_GET_META_DATA_ADDR(O)->meta & ~FORWARD_MASK) | ((static_cast<uintptr_t>(COUNT) << RC_AND_FORWARD_SHIFT) & FORWARD_MASK))
-
 // Sets low 32 bits of ptr in meta
-#define SET_TYPE_PTR(META, PTR) ((META)->meta = ((META)->meta & ~TYPE_PTR_MASK) | (reinterpret_cast<uintptr_t>(PTR) & TYPE_PTR_MASK))
+#define SET_TYPE_PTR(META, PTR) ((META)->bits.typeptr_low = reinterpret_cast<uintptr_t>(PTR) & TYPEPTR_MASK)
+        
+#define INC_REF_COUNT(O) (++GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
+#define DEC_REF_COUNT(O) (--GC_GET_META_DATA_ADDR(O)->bits.rc_fwd)
 
-#define INC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) + 1UL))
-#define DEC_REF_COUNT(O) (SET_REF_COUNT(O, GC_REF_COUNT(O) - 1UL))
+#define GC_RESET_ALLOC(META)  ((META)->bits.isalloc = 0) 
+#define GC_SHOULD_VISIT(META) ((META)->bits.isyoung && !(META)->bits.ismarked)
 
-#define GC_RESET_ALLOC(META)  (((META)->meta) &= ~ISALLOC_MASK) 
-#define GC_SHOULD_VISIT(META) ((((META)->meta) & ISYOUNG_MASK) && !(((META)->meta) & ISMARKED_MASK))
+#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((META)->bits.isalloc && !(META)->bits.isroot)
+#define GC_SHOULD_PROCESS_AS_YOUNG(META) ((META)->bits.isyoung)
 
-#define GC_SHOULD_PROCESS_AS_ROOT(META)  ((((META)->meta) & ISALLOC_MASK) && !(((META)->meta) & ISROOT_MASK))
-#define GC_SHOULD_PROCESS_AS_YOUNG(META) (((META)->meta) & ISYOUNG_MASK)
+#define GC_MARK_AS_ROOT(META)   ((META)->bits.isroot = 1)
+#define GC_MARK_AS_MARKED(META) ((META)->bits.ismarked = 1)
 
-#define GC_MARK_AS_ROOT(META)   (((META)->meta) |= ISROOT_MASK)
-#define GC_MARK_AS_MARKED(META) (((META)->meta) |= ISMARKED_MASK)
+#define GC_CLEAR_YOUNG_MARK(META) ((META)->bits.isyoung = 0) 
+#define GC_CLEAR_ROOT_MARK(META) \
+    do { \
+        (META)->bits.isroot = 0; \
+        (META)->bits.ismarked = 0; \
+    } while(0)
 
-#define GC_CLEAR_YOUNG_MARK(META) (((META)->meta) &= ~ISYOUNG_MASK) 
-#define GC_CLEAR_ROOT_MARK(META)  (((META)->meta) &= ~(ISROOT_MASK | ISYOUNG_MASK)) 
+#define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->bits.isalloc || ((META)->bits.isyoung && (META)->bits.rc_fwd == NON_FORWARDED ))
 
-#define GC_SHOULD_FREE_LIST_ADD(META) ( \
-    !((META)->meta & ISALLOC_MASK) || ( \
-        ((META)->meta & ISYOUNG_MASK) && \
-        (static_cast<uint32_t>(((META)->meta & FORWARD_MASK) >> RC_AND_FORWARD_SHIFT) == NON_FORWARDED) \
-    ) \
-)
 #endif
 
 #ifdef MEM_STATS
@@ -266,6 +262,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
 #define TOTAL_LIVE_BYTES(E)       (E).mstats.total_live_bytes
 #define TOTAL_COLLECTIONS(E)      (E).mstats.total_collections
+#define TOTAL_PROMOTIONS(E)       (E).mstats.total_promotions
 #define MIN_COLLECTION_TIME(E)    (E).mstats.min_collection_time
 #define MAX_COLLECTION_TIME(E)    (E).mstats.max_collection_time
 #define MAX_LIVE_HEAP(E)          (E).mstats.max_live_heap
@@ -274,6 +271,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)     TOTAL_ALLOC_MEMORY((E)) OP __VA_ARGS__
 #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)       TOTAL_LIVE_BYTES((E)) OP __VA_ARGS__
 #define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)      TOTAL_COLLECTIONS((E)) OP __VA_ARGS__
+#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)      TOTAL_PROMOTIONS((E)) OP __VA_ARGS__
 #define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)    MIN_COLLECTION_TIME((E)) OP __VA_ARGS__
 #define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)    MAX_COLLECTION_TIME((E)) OP __VA_ARGS__
 #define UPDATE_MAX_LIVE_HEAP(E, OP, ...)          MAX_LIVE_HEAP((E)) OP __VA_ARGS__
@@ -290,6 +288,7 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define UPDATE_TOTAL_ALLOC_MEMORY(E, OP, ...)
 #define UPDATE_TOTAL_LIVE_BYTES(E, OP, ...)
 #define UPDATE_TOTAL_COLLECTIONS(E, OP, ...)
+#define UPDATE_TOTAL_PROMOTIONS(E, OP, ...)
 #define UPDATE_MIN_COLLECTION_TIME(E, OP, ...)
 #define UPDATE_MAX_COLLECTION_TIME(E, OP, ...)
 #define UPDATE_MAX_LIVE_HEAP(E, OP, ...)
