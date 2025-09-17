@@ -1350,35 +1350,60 @@ entity CPPTransformer {
             this.convertTypeSignature(decl.resultType), this.transformBodyToCpp(decl.body)|);
     }
 
+    method transformPreConditionDecl(decl: BSQAssembly::PreConditionDecl): CPPAssembly::PreConditionDecl {
+        let declaredInNS = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
+        let exp = this.transformExpressionToCpp(decl.exp);
+        
+        return CPPAssembly::PreConditionDecl{ declaredInNS, decl.fullns, decl.diagnosticTag, ikey, exp, decl.issoft };
+    }
+
+    method transformPostConditionDecl(decl: BSQAssembly::PostConditionDecl): CPPAssembly::PostConditionDecl {
+        let declaredInNS = CPPTransformNameManager::convertNamespaceKey(decl.declaredInNS);
+        let ikey = CPPTransformNameManager::convertInvokeKey(decl.ikey);
+        let exp = this.transformExpressionToCpp(decl.exp);
+        
+        return CPPAssembly::PostConditionDecl{ declaredInNS, decl.fullns, decl.diagnosticTag, ikey, exp, decl.issoft };
+    }
+
+    method transformExplicitInvokeDecl(decl: BSQAssembly::ExplicitInvokeDecl): (|CPPAssembly::NamespaceKey, List<CString>, CString, CPPAssembly::InvokeKey,
+        List<CPPAssembly::ParameterDecl>, CPPAssembly::TypeSignature, CPPAssembly::BodyImplementation, List<CPPAssembly::PreConditionDecl>, List<CPPAssembly::PostConditionDecl>|) {
+            let base = this.transformAbstractInvokeDecl(decl);
+            let preconds = decl.preconditions.map<CPPAssembly::PreConditionDecl>(fn(pcd) => this.transformPreConditionDecl(pcd));
+            let postconds = decl.postconditions.map<CPPAssembly::PostConditionDecl>(fn(pcd) => this.transformPostConditionDecl(pcd));
+
+            return (|base.0, base.1, base.2, base.3, base.4, base.5, base.6, preconds, postconds |);
+        }
+
     method transformStaticMethodDecl(m: BSQAssembly::MethodDeclStatic): CPPAssembly::MethodDeclStatic {
-        let base = this.transformAbstractInvokeDecl(m);
-        return CPPAssembly::MethodDeclStatic{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(m);
+        return CPPAssembly::MethodDeclStatic{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8 };
     }
 
     %% Virtual, abstract, and override methods should not emit for now
     method transformVirtualMethodDecl(m: BSQAssembly::MethodDeclVirtual): CPPAssembly::MethodDeclVirtual {
-        let base = this.transformAbstractInvokeDecl(m);
-        return CPPAssembly::MethodDeclVirtual{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(m);
+        return CPPAssembly::MethodDeclVirtual{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8 };
     }
 
     method transformAbstractMethodDecl(m: BSQAssembly::MethodDeclAbstract): CPPAssembly::MethodDeclAbstract {
-        let base = this.transformAbstractInvokeDecl(m);
-        return CPPAssembly::MethodDeclAbstract{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(m);
+        return CPPAssembly::MethodDeclAbstract{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 , base.7, base.8};
     }
 
     method transformOverrideMethodDecl(m: BSQAssembly::MethodDeclOverride): CPPAssembly::MethodDeclOverride {
-        let base = this.transformAbstractInvokeDecl(m);
-        return CPPAssembly::MethodDeclOverride{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(m);
+        return CPPAssembly::MethodDeclOverride{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8 };
     }
 
     method transformNamespaceFunctionDeclToCpp(decl: BSQAssembly::NamespaceFunctionDecl): CPPAssembly::NamespaceFunctionDecl {
-        let base = this.transformAbstractInvokeDecl(decl);
-        return CPPAssembly::NamespaceFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(decl);
+        return CPPAssembly::NamespaceFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8 };
     }  
 
     method transformTypeFunctionDeclToCpp(decl: BSQAssembly::TypeFunctionDecl): CPPAssembly::TypeFunctionDecl {
-        let base = this.transformAbstractInvokeDecl(decl);
-        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6 };
+        let base = this.transformExplicitInvokeDecl(decl);
+        return CPPAssembly::TypeFunctionDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8 };
     } 
 
     method transformNamespaceConstDeclToCpp(decl: BSQAssembly::NamespaceConstDecl): CPPAssembly::NamespaceConstDecl {
