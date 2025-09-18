@@ -38,11 +38,8 @@ concept AbstractCoreDecl provides AbstractDecl {
     field name: Identifier;
 }
 
-%%
-%% TODO: We 100% want to support condition decls
-%%
 datatype ConditionDecl provides AbstractDecl using {
-%%    field diagnosticTag: Option<CString>;
+    field diagnosticTag: Option<CString>;
     field ikey: InvokeKey;
     field exp: Expression;
 }
@@ -91,15 +88,19 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field tkey: TypeKey;
     field name: CString;
 
+    %%
+    %% TODO: Lets get these two up and running!
+    %%
+    %%field invariants: List<InvariantDecl>;
+    %%field validates: List<ValidateDecl>;
+
     field staticmethods: List<InvokeKey>;
     field virtmethods: List<InvokeKey>;
     field absmethods: List<InvokeKey>;
     field overmethods: List<InvokeKey>;
     
     field saturatedProvides: List<NominalTypeSignature>;
-    field saturatedBFieldInfo: List<SaturatedFieldInfo>;
-    
-    %% invariants, validates, as well
+    field saturatedBFieldInfo: List<SaturatedFieldInfo>;    
 }
 
 concept AbstractInvokeDecl provides AbstractDecl {
@@ -108,6 +109,14 @@ concept AbstractInvokeDecl provides AbstractDecl {
     field params: List<ParameterDecl>;
     field resultType: TypeSignature;
     field body: BodyImplementation;
+}
+
+concept ExplicitInvokeDecl provides AbstractInvokeDecl {
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<PostConditionDecl>;
+}
+
+concept FunctionInvokeDecl provides ExplicitInvokeDecl {
 }
 
 concept AbstractEntityTypeDecl provides AbstractNominalTypeDecl {
@@ -212,7 +221,7 @@ entity TypeInfo {
     field tag: Tag;
 }
 
-datatype MethodDecl provides AbstractInvokeDecl using {
+datatype MethodDecl provides ExplicitInvokeDecl using {
 }
 of
 MethodDeclStatic { }
@@ -229,10 +238,10 @@ entity ParameterDecl {
     %% TODO: Support ref/rest param
 }
 
-entity NamespaceFunctionDecl provides AbstractInvokeDecl {
+entity NamespaceFunctionDecl provides FunctionInvokeDecl {
 }
 
-entity TypeFunctionDecl provides AbstractInvokeDecl {
+entity TypeFunctionDecl provides FunctionInvokeDecl {
 }
 
 %% This is not actively being used but MAY prove some use as the emitter expands so ill leave it 
