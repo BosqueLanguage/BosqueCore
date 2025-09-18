@@ -1698,6 +1698,12 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
     return String::concat("[[maybe_unused]] ", resolved_type);
 }
 
+function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: Context, indent: String): String {    
+    return preconds.reduce<String>("", fn(acc, pc) => {
+        return String::concat(indent, "𝐫𝐞𝐪𝐮𝐢𝐫𝐞𝐬(", emitExpression(pc.exp, ctx), ");%n;");
+    });    
+}
+
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     let full_indent = String::concat("    ", indent);
@@ -1719,7 +1725,13 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
         params_impl = String::concat(base, emitSpecialThis(), ", ", params, ") noexcept");           
     }
 
-    return String::concat(pre, params_impl, " {%n;", emitBodyImplementation(m.body, nctx, indent), indent, "}%n;");
+    let body = emitBodyImplementation(m.body, nctx, indent);
+    let preconds = emitPreConditions(m.preconditions, nctx, full_indent);
+%%  let postconds = emitPostConditions(m.postconditions);
+
+    let fullbody = String::concat(preconds, body);
+
+    return String::concat(pre, params_impl, " {%n;", fullbody, indent, "}%n;");
 }
 
 function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1736,10 +1748,11 @@ function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPA
 }
 
 %% Type funcs are fully resolved before cpp emission so we can group them with nsfuncs
-function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, indent: String): String {
+function emitFunctionDecl(func: CPPAssembly::FunctionInvokeDecl, ctx: Context, indent: String): String {
     let ikey = func.ikey;   
     let ns = func.fullns;
     let nctx = ctx.updateCurrentNamespace(func.declaredInNS, ns);
+    let full_indent = String::concat("    ", indent);
 
     var name = emitInvokeKey(ikey, nctx);
     let params, templates = emitParameters(func.params, nctx);
@@ -1749,7 +1762,13 @@ function emitFunctionDecl(func: CPPAssembly::AbstractInvokeDecl, ctx: Context, i
     let pre: String = String::concat(template, indent, rtype, " ", name );
     let params_impl: String = String::concat("(", params, ") noexcept ");
 
-    return String::concat(pre, params_impl, " {%n;", emitBodyImplementation(func.body, nctx, indent), indent, "}%n;");
+    let body = emitBodyImplementation(func.body, nctx, indent);
+    let preconds = emitPreConditions(func.preconditions, nctx, full_indent);
+%%  let postconds = emitPostConditions(func.postconditions);
+
+    let fullbody = String::concat(preconds, body);
+
+    return String::concat(pre, params_impl, " {%n;", fullbody, indent, "}%n;");
 }
 
 function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Context, indent: String): String {
@@ -2218,11 +2237,15 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
 
     %% Emit functions in current namespace
     let nsfuncs = nsdecl.nsfuncs.reduce<String>(methods , fn(acc, ikey) => {
-        return String::concat(acc, emitFunctionDecl(ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
+        let func = ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::FunctionInvokeDecl>;
+        let efunc = emitFunctionDecl(func, ctx, full_indent);
+        return String::concat(acc, efunc); 
     });
 
     let typefuncs = nsdecl.typefuncs.reduce<String>(nsfuncs, fn(acc, ikey) => {
-        return String::concat(acc, emitFunctionDecl(ctx.asm.typefuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, full_indent)); 
+        let func = ctx.asm.typefuncs.get(ikey)@<CPPAssembly::FunctionInvokeDecl>;
+        let efunc = emitFunctionDecl(func, ctx, full_indent);
+        return String::concat(acc, efunc); 
     });
 
     return String::concat(typefuncs, indent, "}%n;");
