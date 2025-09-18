@@ -3,19 +3,6 @@
 namespace __CoreCpp {
 
 ThreadLocalInfo& info = ThreadLocalInfo::get();
-    
-PathStack PathStack::create() {
-    return {0, 0};
-}
-PathStack PathStack::left() const {
-    return { bits << 1, index + 1 };
-}
-PathStack PathStack::right() const {
-    return { bits << 1 | 1, index + 1 };
-}
-PathStack PathStack::up() const {
-    return { bits >> 1, index - 1 };
-}
 
 CCharBuffer CCharBuffer::create_empty() {
     return {{}, 0_n};
@@ -268,6 +255,22 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     }
 
     return ub;
+}
+
+//
+// TODO: We need to better understand reference semantics here
+// to figure out in what cases we can prevent copying
+//
+
+template<typename Rope>
+Rope RopeStack<Rope>::top() noexcept {
+    return this->stack[this->index - 1];
+}
+
+CCharBuffer CRopeIterator::pop() noexcept {
+    __CRope leaf = this->stack.top();
+
+    return leaf.access<CCharBuffer>();
 }
 
 std::string to_string(MainType v) noexcept {

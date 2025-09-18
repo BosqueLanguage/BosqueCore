@@ -604,7 +604,7 @@ class Float {
     double value;
 public:
     constexpr Float() noexcept : value(0) {};
-     constexpr explicit Float(double val) noexcept : value(val) { 
+    constexpr explicit Float(double val) noexcept : value(val) { 
         if(!std::isfinite(val)) { 
             𝐚𝐛𝐨𝐫𝐭;
         } 
@@ -656,17 +656,6 @@ public:
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
 
-// Useful for keeping track of path in tree iteration
-struct PathStack {
-    uint64_t bits;
-    int index;
-
-    static PathStack create();
-    PathStack left() const;
-    PathStack right() const;
-    PathStack up() const;
-};
-
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufferSize = 8;
 struct CCharBuffer {
@@ -683,6 +672,7 @@ struct CCharBuffer {
     static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
     static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
+
 CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &basestr) noexcept;
 CCharBuffer cbufferFromNat(Nat v) noexcept;
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
@@ -735,6 +725,45 @@ inline Bool ubuf_memcmp(UnicodeChar b1[maxUnicodeCharBufferSize], UnicodeChar b2
 inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept {
     return ubuf_memcmp(ub1.chars, ub2.chars);
 }
+
+//
+// May want to do some funny reference semantics with the stack to ensure we dont
+// accidentally copy every node of a tree into the stack, but also need to be 
+// careful that we do not possibly modify any nodes of a rope
+//
+template<typename Rope>
+class RopeStack {
+    Rope stack[64];
+    uint32_t index;
+    bool isleft;
+public:
+    RopeStack() = default;
+    
+    Rope top() noexcept;
+    void next() noexcept;
+    bool hasNext() noexcept;
+};
+
+typedef Boxed<sizeof(CCharBuffer) / 8> __CRope;
+typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
+
+class CRopeIterator {
+    RopeStack<__CRope> stack;
+public:
+    CRopeIterator(__CRope& r) {
+    };
+
+    CCharBuffer pop() noexcept;
+};
+
+class UnicodeRopeIterator {
+    RopeStack<__UnicodeRope> stack;
+public:
+    UnicodeRopeIterator(__UnicodeRope& r) {
+    };
+
+    UnicodeCharBuffer pop() noexcept;
+};
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 

@@ -6,6 +6,9 @@ __internal entity CCharBuffer {
     }
 }
 
+__internal entity CRopeIterator {
+}
+
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
@@ -83,9 +86,9 @@ namespace CRopeOps {
         return startsWithRope(cr.value, pre.value);
     }
 
-    function s_nat_to_crope(v: Nat): CRope {
-        %% TODO: Once invariant is added to cpp emitter lets use that instead
-        assert CCharBufferOps::getMaxSize() == 8n;
+    function s_nat_to_crope(v: Nat): CRope
+        requires CCharBufferOps::getMaxSize() == 8n;
+    {
       
         let maxNatSizeForBuffer = 99999999n;
         let remainder = 100000000n;
@@ -433,7 +436,7 @@ namespace CRopeOps {
         return concat_helper(l, r);
     }
 
-    recursive function startsWithRope_helper(rbuffers: List<CCharBuffer>, prebuffers: List<CCharBuffer>): Bool {
+    recursive function startsWithRope_helper(rit: CRopeIterator, preit: CRopeIterator): Bool {
         let rbuf, nrbuffers = rbuffers.popFront();
         let prebuf, nprebuffers = prebuffers.popFront();
 
@@ -446,6 +449,9 @@ namespace CRopeOps {
     }
 
     function startsWithRope(r: Rope, pre: Rope): Bool {
+        let rit = CRopeIterator::initialize(r);
+        let preit = CRopeIterator::initialize(pre);
+
         return startsWithRope_helper(get_buffers(r), get_buffers(pre));
     }
 
