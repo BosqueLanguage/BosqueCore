@@ -755,7 +755,7 @@ public:
 
 template<typename Rope>
 class RopeStack {
-    Rope* stack[64];
+    Rope stack[64];
     size_t index;
 public:
     RopeStack() : stack(), index(0) {};
@@ -764,15 +764,15 @@ public:
         return index == 0;
     }
     
-    inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = &r;
+    inline void push(Rope r) noexcept {
+        this->stack[this->index++] = r;
     }
 
-    inline Rope& pop() noexcept {
-        return *this->stack[--this->index];
+    inline Rope pop() noexcept {
+        return this->stack[--this->index];
     }
 
-    inline Rope& top() const noexcept {
+    inline Rope top() const noexcept {
         return this->stack[this->index - 1];
     }
 };
@@ -791,14 +791,14 @@ class CRopeIterator {
         return this->stack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    __CRope& getLeft() noexcept;
-    __CRope& getRight() noexcept;
+    __CRope getLeft() noexcept;
+    __CRope getRight() noexcept;
 public:    
     CRopeIterator(__CRope& r) noexcept : stack(), path() {
         this->front(r);
     };
 
-    CCharBuffer& next() noexcept;
+    CCharBuffer next() noexcept;
 };
 
 class UnicodeRopeIterator {
@@ -810,7 +810,7 @@ public:
     UnicodeCharBuffer pop() noexcept;
 };
 
-Bool startsWithCRope(__CRope& s, __CRope& prefix) noexcept;
+Bool startsWithCRope(__CRope s, __CRope prefix) noexcept;
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
