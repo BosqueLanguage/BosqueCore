@@ -257,20 +257,69 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
+void PathStack::left() noexcept {
+    this->path << 1;
+}
+
+void PathStack::right() noexcept {
+    this->path << 1 | 1ull;
+}
+
+void PathStack::up() noexcept {
+    this->path >> 1;
+}
+
 //
 // TODO: We need to better understand reference semantics here
 // to figure out in what cases we can prevent copying
 //
 
-template<typename Rope>
-Rope RopeStack<Rope>::top() noexcept {
-    return this->stack[this->index - 1];
+void CRopeIterator::front(__CRope& r) noexcept {
+    __CRope cur = r;
+    while(true) {
+        stack.push(cur);
+        
+        if(cur.typeinfo->tag == __CoreGC::Tag::Ref) {
+            this->getLeft();
+        }
+        else {
+            // Hit first char buffer
+            break;
+        }
+    }
 }
 
-CCharBuffer CRopeIterator::pop() noexcept {
-    __CRope leaf = this->stack.top();
+__CRope CRopeIterator::getLeft() noexcept {
+    uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
+    this->path.left();
+    __CRope left = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::ltype_offset]);
 
-    return leaf.access<CCharBuffer>();
+    return left;
+}
+
+__CRope CRopeIterator::getRight() noexcept {
+    uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
+    this->path.right();
+    __CRope left = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::rtype_offset]);
+
+    return left;
+}
+
+CCharBuffer CRopeIterator::next() noexcept {
+    __CRope leaf = this->stack.pop();
+    CCharBuffer result = leaf.access<CCharBuffer>();
+    
+    if(!this->stack.empty()) {
+        if(path.isLeft()) {
+            stack.push(this->getRight());
+
+            while(!this->isLeaf()) {
+                stack.push(this->getLeft());
+            }
+        }
+    }
+
+    return result;
 }
 
 std::string to_string(MainType v) noexcept {

@@ -731,36 +731,81 @@ inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcep
 // accidentally copy every node of a tree into the stack, but also need to be 
 // careful that we do not possibly modify any nodes of a rope
 //
-template<typename Rope>
-class RopeStack {
-    Rope stack[64];
-    uint32_t index;
-    bool isleft;
-public:
-    RopeStack() = default;
-    
-    Rope top() noexcept;
-    void next() noexcept;
-    bool hasNext() noexcept;
-};
 
 typedef Boxed<sizeof(CCharBuffer) / 8> __CRope;
 typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
 
+// Path we have taken during tree walking
+class Path {
+    uint64_t path;
+
+    static const uint64_t left  = 0ull;
+    static const uint64_t top_mask = 0x1ull; 
+public:
+    Path() = default;
+
+    inline bool isLeft() const noexcept {
+        return this->path & top_mask == Path::left;
+    }
+
+    void left() noexcept;
+    void right() noexcept;
+    void up() noexcept;
+};
+
+template<typename Rope>
+class RopeStack {
+    Rope stack[64];
+    size_t index;
+public:
+    RopeStack() = default;
+
+    inline bool empty() const noexcept {
+        return index == 0;
+    }
+    
+    inline void push(Rope r) noexcept {
+        this->stack[this->index++] = r;
+    }
+
+    inline Rope pop() noexcept {
+        return this->stack[--this->index];
+    }
+
+    inline Rope top() noexcept {
+        return this->stack[this->index - 1];
+    }
+};
+
 class CRopeIterator {
     RopeStack<__CRope> stack;
-public:
-    CRopeIterator(__CRope& r) {
+    Path path;
+
+    // Probably want to actually compute these using the pointer mask
+    static const size_t ltype_offset = 2;
+    static const size_t rtype_offset = ltype_offset + 2;
+
+    void front(__CRope& r) noexcept;
+
+    inline bool isLeaf() const noexcept {
+        return stack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    }
+
+    __CRope getLeft() noexcept;
+    __CRope getRight() noexcept;
+public:    
+    CRopeIterator(__CRope& r) noexcept {
+        this->front(r);
     };
 
-    CCharBuffer pop() noexcept;
+    CCharBuffer next() noexcept;
 };
 
 class UnicodeRopeIterator {
     RopeStack<__UnicodeRope> stack;
+    Path path;
 public:
-    UnicodeRopeIterator(__UnicodeRope& r) {
-    };
+    UnicodeRopeIterator(__UnicodeRope& r) {};
 
     UnicodeCharBuffer pop() noexcept;
 };
