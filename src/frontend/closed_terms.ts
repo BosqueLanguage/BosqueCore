@@ -214,10 +214,12 @@ class InstantiationPropagator {
                     const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_empty") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, emptydecl, []);
                 }
+                /*
                 if(fkey.endsWith("startsWithString")) {
                     const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_starts_with_crope") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, emptydecl, []);
                 }
+                */
                 if(fkey.endsWith("removePrefixString")) {
                     const emptydecl = nns.functions.find((tt) => tt.name === "s_crope_remove_prefix_crope") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, emptydecl, []);

@@ -6,8 +6,10 @@ __internal entity CCharBuffer {
     }
 }
 
+%*
 __internal entity CRopeIterator {
 }
+*%
 
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
@@ -80,10 +82,6 @@ namespace CRopeOps {
 
     function s_crope_less(cr1: CRope, cr2: CRope): Bool {
         return less(cr1.value, cr2.value);
-    }
-
-    function s_crope_starts_with_crope(cr: CRope, pre: CRope): Bool {
-        return startsWithRope(cr.value, pre.value);
     }
 
     function s_nat_to_crope(v: Nat): CRope
@@ -424,6 +422,9 @@ namespace CRopeOps {
         return concat(r2, r1);
     }
 
+    %%
+    %% Ouch, concat really needs some love
+    %%
     recursive function concat_helper(l: Rope, r: Rope): Rope {
         let buffers = get_buffers(r);
         let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
@@ -434,25 +435,6 @@ namespace CRopeOps {
     %% Append R to L buffer by buffer to ensure buffers are full (if possible) 
     function concat(l: Rope, r: Rope): Rope {
         return concat_helper(l, r);
-    }
-
-    recursive function startsWithRope_helper(rit: CRopeIterator, preit: CRopeIterator): Bool {
-        let rbuf, nrbuffers = rbuffers.popFront();
-        let prebuf, nprebuffers = prebuffers.popFront();
-
-        if(prebuf.size() < CCharBufferOps::getMaxSize()) {
-            return CCharBufferOps::isPrefix(rbuf, prebuf);
-        }
-        else {
-            return startsWithRope_helper[recursive](nrbuffers, nprebuffers);
-        }
-    }
-
-    function startsWithRope(r: Rope, pre: Rope): Bool {
-        let rit = CRopeIterator::initialize(r);
-        let preit = CRopeIterator::initialize(pre);
-
-        return startsWithRope_helper(get_buffers(r), get_buffers(pre));
     }
 
     function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {

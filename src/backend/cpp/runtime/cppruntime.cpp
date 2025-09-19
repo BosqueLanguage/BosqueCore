@@ -140,10 +140,11 @@ Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 }
 
 Bool cbufferIsPrefix(CCharBuffer cb, CCharBuffer& pre) noexcept {
-    assert(pre.size <= cb.size);   
-
     const uint64_t presize = pre.size.get();
-
+    if(presize > cb.size.get()) {
+        return false;
+    }
+    
     for(uint64_t i = 0; i < presize; i++) {
         if(cb.chars[i] != pre.chars[i]) {
             return false;
@@ -170,7 +171,6 @@ CCharBuffer& cbufferRemove(CCharBuffer& cb, CCharBuffer& pre) noexcept {
     cb.size -= Nat(remove_count);
     return cb;
 }
-
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
@@ -257,37 +257,22 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
-void PathStack::left() noexcept {
-    this->path << 1;
+void Path::left() noexcept {
+    this->path <<= 1;
 }
 
-void PathStack::right() noexcept {
-    this->path << 1 | 1ull;
+void Path::right() noexcept {
+    this->path <<= 1 | 1ull;
 }
 
-void PathStack::up() noexcept {
-    this->path >> 1;
+void Path::up() noexcept {
+    this->path >>= 1;
 }
 
 //
 // TODO: We need to better understand reference semantics here
 // to figure out in what cases we can prevent copying
 //
-
-void CRopeIterator::front(__CRope& r) noexcept {
-    __CRope cur = r;
-    while(true) {
-        stack.push(cur);
-        
-        if(cur.typeinfo->tag == __CoreGC::Tag::Ref) {
-            this->getLeft();
-        }
-        else {
-            // Hit first char buffer
-            break;
-        }
-    }
-}
 
 __CRope CRopeIterator::getLeft() noexcept {
     uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
@@ -300,9 +285,9 @@ __CRope CRopeIterator::getLeft() noexcept {
 __CRope CRopeIterator::getRight() noexcept {
     uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
     this->path.right();
-    __CRope left = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::rtype_offset]);
+    __CRope right = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::rtype_offset]);
 
-    return left;
+    return right;
 }
 
 CCharBuffer CRopeIterator::next() noexcept {
@@ -320,6 +305,39 @@ CCharBuffer CRopeIterator::next() noexcept {
     }
 
     return result;
+}
+
+void CRopeIterator::front(__CRope& r) noexcept {
+    __CRope cur = r;
+    while(true) {
+        stack.push(cur);
+        
+        if(cur.typeinfo->tag == __CoreGC::Tag::Ref) {
+            cur = this->getLeft();
+        }
+        else {
+            // Hit first char buffer
+            break;
+        }
+    }
+}
+
+Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {
+    CRopeIterator sit{ s };
+    CRopeIterator pit{ prefix };
+
+    CCharBuffer s_cb = sit.next();
+    CCharBuffer p_cb = pit.next();   
+    while(true) {
+        if(!cbufferEqual(s_cb, p_cb)) {
+            break;
+        }
+
+        s_cb = sit.next();
+        p_cb = pit.next();
+    }
+
+    return cbufferIsPrefix(s_cb, p_cb);
 }
 
 std::string to_string(MainType v) noexcept {

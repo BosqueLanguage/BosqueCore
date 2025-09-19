@@ -739,13 +739,13 @@ typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
 class Path {
     uint64_t path;
 
-    static const uint64_t left  = 0ull;
+    static const uint64_t path_left  = 0ull;
     static const uint64_t top_mask = 0x1ull; 
 public:
     Path() = default;
 
     inline bool isLeft() const noexcept {
-        return this->path & top_mask == Path::left;
+        return (this->path & top_mask) == Path::path_left;
     }
 
     void left() noexcept;
@@ -758,7 +758,7 @@ class RopeStack {
     Rope stack[64];
     size_t index;
 public:
-    RopeStack() = default;
+    RopeStack() : stack(), index(0) {};
 
     inline bool empty() const noexcept {
         return index == 0;
@@ -772,7 +772,7 @@ public:
         return this->stack[--this->index];
     }
 
-    inline Rope top() noexcept {
+    inline Rope top() const noexcept {
         return this->stack[this->index - 1];
     }
 };
@@ -783,18 +783,18 @@ class CRopeIterator {
 
     // Probably want to actually compute these using the pointer mask
     static const size_t ltype_offset = 2;
-    static const size_t rtype_offset = ltype_offset + 2;
+    static const size_t rtype_offset = ltype_offset + 3;
 
     void front(__CRope& r) noexcept;
 
     inline bool isLeaf() const noexcept {
-        return stack.top().typeinfo->tag == __CoreGC::Tag::Value;
+        return this->stack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
     __CRope getLeft() noexcept;
     __CRope getRight() noexcept;
 public:    
-    CRopeIterator(__CRope& r) noexcept {
+    CRopeIterator(__CRope& r) noexcept : stack(), path() {
         this->front(r);
     };
 
@@ -805,10 +805,12 @@ class UnicodeRopeIterator {
     RopeStack<__UnicodeRope> stack;
     Path path;
 public:
-    UnicodeRopeIterator(__UnicodeRope& r) {};
+    UnicodeRopeIterator(__UnicodeRope& r) : stack(), path() {};
 
     UnicodeCharBuffer pop() noexcept;
 };
+
+Bool startsWithCRope(__CRope s, __CRope prefix) noexcept;
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
