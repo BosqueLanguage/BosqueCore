@@ -258,11 +258,11 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
 }
 
 void Path::left() noexcept {
-    this->path <<= 1;
+    this->path <<= 1 | Path::path_left;
 }
 
 void Path::right() noexcept {
-    this->path <<= 1 | 1ull;
+    this->path <<= 1;
 }
 
 void Path::up() noexcept {
@@ -274,32 +274,32 @@ void Path::up() noexcept {
 // to figure out in what cases we can prevent copying
 //
 
-__CRope CRopeIterator::getLeft() noexcept {
+__CRope& CRopeIterator::getLeft() noexcept {
     uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
     this->path.left();
-    __CRope left = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::ltype_offset]);
+    __CRope& left = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::ltype_offset]);
 
     return left;
 }
 
-__CRope CRopeIterator::getRight() noexcept {
+__CRope& CRopeIterator::getRight() noexcept {
     uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
     this->path.right();
-    __CRope right = *reinterpret_cast<__CRope*>(nodeptr[CRopeIterator::rtype_offset]);
+    __CRope& right = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::rtype_offset]);
 
     return right;
 }
 
-CCharBuffer CRopeIterator::next() noexcept {
-    __CRope leaf = this->stack.pop();
+CCharBuffer& CRopeIterator::next() noexcept {
+    __CRope& leaf = this->stack.pop();
     CCharBuffer result = leaf.access<CCharBuffer>();
     
     if(!this->stack.empty()) {
-        if(path.isLeft()) {
-            stack.push(this->getRight());
+        if(this->path.isLeft()) {
+            this->stack.push(this->getRight());
 
             while(!this->isLeaf()) {
-                stack.push(this->getLeft());
+                this->stack.push(this->getLeft());
             }
         }
     }
@@ -308,12 +308,13 @@ CCharBuffer CRopeIterator::next() noexcept {
 }
 
 void CRopeIterator::front(__CRope& r) noexcept {
-    __CRope cur = r;
+    __CRope* cur = &r;
     while(true) {
-        stack.push(cur);
+        this->stack.push(*cur);
         
-        if(cur.typeinfo->tag == __CoreGC::Tag::Ref) {
-            cur = this->getLeft();
+        if(cur->typeinfo->tag == __CoreGC::Tag::Ref) {
+            __CRope& left = this->getLeft();
+            cur = &left;
         }
         else {
             // Hit first char buffer
@@ -326,10 +327,16 @@ Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {
     CRopeIterator sit{ s };
     CRopeIterator pit{ prefix };
 
+    //
+    // I think we should add a function into bosque rope that 
+    // calls size for us to make sure prefix is <= s size before calling this,
+    // as that would take care of one easy case
+    //
+
     CCharBuffer s_cb = sit.next();
     CCharBuffer p_cb = pit.next();   
     while(true) {
-        if(!cbufferEqual(s_cb, p_cb)) {
+        if(!cbufferEqual(s_cb, p_cb) || p_cb.size.get() < maxCCharBufferSize) {
             break;
         }
 

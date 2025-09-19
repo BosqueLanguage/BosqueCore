@@ -60,6 +60,14 @@ namespace CRopeOps {
         return XCore::s_createDirect<Rope, CRope>(removepre(r.value, pre.value));
     }
 
+    function s_crope_starts_with_crope(cr: CRope, pre: CRope): Bool {
+        if(length(pre.value) > length(cr.value)) {
+            return false;
+        }
+
+        return startsWithRope(cr.value, pre.value);
+    }
+
     function s_crope_empty(cr: CRope): Bool {
         return cr.value?<BBLeaf>;
     }
@@ -472,6 +480,8 @@ namespace CRopeOps {
     function removepre(r: Rope, pre: Rope): Rope {
         return removepre_helper(r, pre);
     }
+
+    function startsWithRope(r: Rope, pre: Rope): Bool = crope_starts_with_crope;
 
     recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
         if(r1buffers.size() == 0n) {
