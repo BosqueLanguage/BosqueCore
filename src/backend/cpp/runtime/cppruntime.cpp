@@ -257,83 +257,62 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
-void Path::left() noexcept {
-    this->path <<= 1 | Path::path_left;
-}
-
-void Path::right() noexcept {
-    this->path <<= 1;
-}
-
-void Path::up() noexcept {
-    this->path >>= 1;
-}
-
 //
 // TODO: We need to better understand reference semantics here
 // to figure out in what cases we can prevent copying
 //
 
-__CRope CRopeIterator::getLeft() noexcept {
-    uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
-    this->path.left();
+void CRopeIterator::goLeft() noexcept {
+    uintptr_t* nodeptr = this->pathstack.top().access_ref<uintptr_t>();
     __CRope left = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::ltype_offset]);
-
-    return left;
+    this->pathstack.left(left);
 }
 
-__CRope CRopeIterator::getRight() noexcept {
-    uintptr_t* nodeptr = stack.top().access_ref<uintptr_t>();
-    this->path.right();
+void CRopeIterator::goRight() noexcept {
+    uintptr_t* nodeptr = this->pathstack.top().access_ref<uintptr_t>();
     __CRope right = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::rtype_offset]);
-
-    return right;
+    this->pathstack.right(right);
 }
 
 //
-// Unfortunately this does a very poor job at actively reflecting where we are in the 
-// tree, specifically when we need to go up to a higher node. Going to need some 
-// rework...
+// This is looking much better but we do still lack proper handling
+// for comparison of buffers that are the same length. I suspect this
+// function is fine, but the startsWithString function needs a 
+// `hasNext` function that is checked before calling next.
 //
 CCharBuffer CRopeIterator::next() noexcept {
-    __CRope leaf = this->stack.pop();
-    this->path.up();
+    __CRope leaf = this->pathstack.pop(); 
     CCharBuffer result = leaf.access<CCharBuffer>();
-    
-    if(!this->stack.empty()) {
-        if(this->path.isLeft()) {
-            this->stack.push(this->getRight());
 
-            while(!this->isLeaf()) {
-                this->stack.push(this->getLeft());
-            }
+    // Pop all fully visited nodes
+    while(!this->pathstack.wasLeft()) {
+        // Walk is finished
+        if(this->pathstack.empty()) {
+            return result;
         }
-        else {
-            this->stack.pop();
-            this->path.up();
-            __CRope grandparent = this->stack.top();
-            front(grandparent);
-        }
+
+        this->pathstack.pop();
+    }
+
+    // Go right as we have finished left sub tree
+    this->goRight();
+
+    // Find first buffer of left sub tree
+    while(!this->isLeaf()) {
+        this->goLeft();
     }
 
     return result;
 }
 
 //
-// This is poorly named...
+// Front probably is a shitty name here
 //
 void CRopeIterator::front(__CRope& r) noexcept {
-    __CRope cur = r;
-    while(true) {
-        this->stack.push(cur);
-        
-        if(cur.typeinfo->tag == __CoreGC::Tag::Ref) {
-            cur = this->getLeft();
-        }
-        else {
-            // Hit first char buffer
-            break;
-        }
+    this->pathstack.push(r);
+
+    while(!this->isLeaf()) {
+        this->goLeft();
     }
 }
 

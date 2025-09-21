@@ -739,36 +739,72 @@ typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
 class Path {
     uint64_t path;
 
-    static const uint64_t path_left  = 1ull;
-    static const uint64_t top_mask = 0x1ull; 
+    static const uint64_t path_left = 1ull;
+    static const uint64_t top_mask  = 0x1ull; 
 public:
     Path() = default;
 
-    inline bool isLeft() const noexcept {
-        return (this->path & top_mask) == Path::path_left;
+    inline bool isleft() noexcept {
+        return (path & top_mask) == path_left;
     }
 
-    void left() noexcept;
-    void right() noexcept;
-    void up() noexcept;
+    // Going left pushes a 1
+    inline void left() noexcept {
+        this->path <<= 1;
+        this->path |= Path::path_left;
+    }
+
+    // Going right pushes a 0
+    inline void right() noexcept {
+        this->path <<= 1;
+    }
+
+    inline void up() noexcept {
+        this->path >>= 1;
+    }
 };
 
 template<typename Rope>
-class RopeStack {
+class PathStack {
     Rope stack[64];
     size_t index;
+    
+    Path path;
+    bool wasleft;
+
+    inline void storeLastDirection() noexcept {
+        this->wasleft = this->path.isleft();
+    }
 public:
-    RopeStack() : stack(), index(0) {};
+    PathStack() : stack(), index(0), path(), wasleft(false) {};
 
     inline bool empty() const noexcept {
         return index == 0;
     }
     
-    inline void push(Rope r) noexcept {
+    inline bool wasLeft() noexcept {
+        return this->wasleft;
+    }
+
+    inline void push(Rope& r) noexcept {
         this->stack[this->index++] = r;
     }
 
+    inline void left(Rope& r) noexcept {
+        this->storeLastDirection();
+        this->push(r);
+        this->path.left();
+    }
+
+    inline void right(Rope& r) noexcept {
+        this->storeLastDirection();
+        this->push(r);
+        this->path.right();
+    }
+
     inline Rope pop() noexcept {
+        this->storeLastDirection();
+        this->path.up();
         return this->stack[--this->index];
     }
 
@@ -778,23 +814,23 @@ public:
 };
 
 class CRopeIterator {
-    RopeStack<__CRope> stack;
-    Path path;
+    PathStack<__CRope> pathstack;
 
     // Probably want to actually compute these using the pointer mask
+    // Should do so in the constructor
     static const size_t ltype_offset = 2;
     static const size_t rtype_offset = ltype_offset + 3;
 
     void front(__CRope& r) noexcept;
 
     inline bool isLeaf() const noexcept {
-        return this->stack.top().typeinfo->tag == __CoreGC::Tag::Value;
+        return this->pathstack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    __CRope getLeft() noexcept;
-    __CRope getRight() noexcept;
+    void goLeft() noexcept;
+    void goRight() noexcept;
 public:    
-    CRopeIterator(__CRope& r) noexcept : stack(), path() {
+    CRopeIterator(__CRope& r) noexcept : pathstack() {
         this->front(r);
     };
 
@@ -802,10 +838,9 @@ public:
 };
 
 class UnicodeRopeIterator {
-    RopeStack<__UnicodeRope> stack;
-    Path path;
+    PathStack<__UnicodeRope> stack;
 public:
-    UnicodeRopeIterator(__UnicodeRope& r) : stack(), path() {};
+    UnicodeRopeIterator(__UnicodeRope& r) : stack() {};
 
     UnicodeCharBuffer pop() noexcept;
 };
