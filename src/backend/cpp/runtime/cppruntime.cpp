@@ -262,6 +262,11 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
 // to figure out in what cases we can prevent copying
 //
 
+//
+// These two are 100% the source of our current bug. I do not believe
+// they correctly access the underlying value, causing two pushes.
+// Not quite sure what this should look like though...
+//
 void CRopeIterator::goLeft() noexcept {
     uintptr_t* nodeptr = this->pathstack.top().access_ref<uintptr_t>();
     __CRope left = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::ltype_offset]);
