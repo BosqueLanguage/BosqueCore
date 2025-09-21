@@ -835,6 +835,10 @@ public:
     };
 
     CCharBuffer next() noexcept;
+
+    inline bool hasNext() noexcept {
+        return !this->pathstack.empty();
+    }
 };
 
 class UnicodeRopeIterator {

@@ -275,10 +275,9 @@ void CRopeIterator::goRight() noexcept {
 }
 
 //
-// This is looking much better but we do still lack proper handling
-// for comparison of buffers that are the same length. I suspect this
-// function is fine, but the startsWithString function needs a 
-// `hasNext` function that is checked before calling next.
+// Sadly there is still a big bug with our stack overflowing, 
+// it appears that we are not properly decrementing index somewhere
+// which causes us to run out of stack space for large strings
 //
 CCharBuffer CRopeIterator::next() noexcept {
     __CRope leaf = this->pathstack.pop(); 
@@ -323,7 +322,7 @@ Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {
     CCharBuffer s_cb = sit.next();
     CCharBuffer p_cb = pit.next();   
     while(true) {
-        if(p_cb.size.get() < maxCCharBufferSize || !cbufferEqual(s_cb, p_cb)) {
+        if(!pit.hasNext() || !cbufferEqual(s_cb, p_cb)) {
             break;
         }
 
