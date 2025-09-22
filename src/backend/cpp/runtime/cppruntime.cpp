@@ -3,19 +3,6 @@
 namespace __CoreCpp {
 
 ThreadLocalInfo& info = ThreadLocalInfo::get();
-    
-PathStack PathStack::create() {
-    return {0, 0};
-}
-PathStack PathStack::left() const {
-    return { bits << 1, index + 1 };
-}
-PathStack PathStack::right() const {
-    return { bits << 1 | 1, index + 1 };
-}
-PathStack PathStack::up() const {
-    return { bits >> 1, index - 1 };
-}
 
 CCharBuffer CCharBuffer::create_empty() {
     return {{}, 0_n};
@@ -153,10 +140,11 @@ Bool cbufferLess(CCharBuffer& cb1, CCharBuffer& cb2) noexcept {
 }
 
 Bool cbufferIsPrefix(CCharBuffer cb, CCharBuffer& pre) noexcept {
-    assert(pre.size <= cb.size);   
-
     const uint64_t presize = pre.size.get();
-
+    if(presize > cb.size.get()) {
+        return false;
+    }
+    
     for(uint64_t i = 0; i < presize; i++) {
         if(cb.chars[i] != pre.chars[i]) {
             return false;
@@ -183,7 +171,6 @@ CCharBuffer& cbufferRemove(CCharBuffer& cb, CCharBuffer& pre) noexcept {
     cb.size -= Nat(remove_count);
     return cb;
 }
-
 
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
@@ -268,6 +255,69 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     }
 
     return ub;
+}
+
+void CRopeIterator::traverseLeft() noexcept {
+    __CRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    __CRope& leftChild = *reinterpret_cast<__CRope*>(&nodePtr[LEFT_CHILD_OFFSET]);
+    this->traversalStack.left(leftChild);
+}
+
+void CRopeIterator::traverseRight() noexcept {
+    __CRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    __CRope& rightChild = *reinterpret_cast<__CRope*>(&nodePtr[RIGHT_CHILD_OFFSET]);
+    this->traversalStack.right(rightChild);
+}
+
+void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
+    this->traversalStack.push(root);
+
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
+    }
+}
+
+CCharBuffer CRopeIterator::next() noexcept {
+    __CRope& leaf = this->traversalStack.pop(); 
+    CCharBuffer result = leaf.access<CCharBuffer>();
+
+    // Pop all fully visited nodes (nodes where we've visited both children)
+    while(!this->traversalStack.wasLeft()) {
+        if(this->traversalStack.empty()) {
+            return result;
+        }
+        this->traversalStack.pop();
+    }
+
+    // We've finished the left subtree, now traverse right
+    this->traverseRight();
+
+    // Find first leaf in the new subtree (leftmost leaf)
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
+    }
+
+    return result;
+}
+
+Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {
+    CRopeIterator sit{ s };
+    CRopeIterator pit{ prefix };
+
+    CCharBuffer s_cb = sit.next();
+    CCharBuffer p_cb = pit.next();   
+    while(true) {
+        if(!pit.hasNext() || !cbufferEqual(s_cb, p_cb)) {
+            break;
+        }
+
+        s_cb = sit.next();
+        p_cb = pit.next();
+    }
+
+    return cbufferIsPrefix(s_cb, p_cb);
 }
 
 std::string to_string(MainType v) noexcept {

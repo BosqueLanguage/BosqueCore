@@ -604,7 +604,7 @@ class Float {
     double value;
 public:
     constexpr Float() noexcept : value(0) {};
-     constexpr explicit Float(double val) noexcept : value(val) { 
+    constexpr explicit Float(double val) noexcept : value(val) { 
         if(!std::isfinite(val)) { 
             𝐚𝐛𝐨𝐫𝐭;
         } 
@@ -656,17 +656,6 @@ public:
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
 
-// Useful for keeping track of path in tree iteration
-struct PathStack {
-    uint64_t bits;
-    int index;
-
-    static PathStack create();
-    PathStack left() const;
-    PathStack right() const;
-    PathStack up() const;
-};
-
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufferSize = 8;
 struct CCharBuffer {
@@ -683,6 +672,7 @@ struct CCharBuffer {
     static CCharBuffer create_7(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7);
     static CCharBuffer create_8(CChar c1, CChar c2, CChar c3, CChar c4, CChar c5, CChar c6, CChar c7, CChar c8);
 };
+
 CCharBuffer cbufferFromStringLiteral(size_t ptr, size_t size, const CChar* &basestr) noexcept;
 CCharBuffer cbufferFromNat(Nat v) noexcept;
 CCharBuffer& cbufferMerge(CCharBuffer& cb1, CCharBuffer& cb2) noexcept;
@@ -735,6 +725,129 @@ inline Bool ubuf_memcmp(UnicodeChar b1[maxUnicodeCharBufferSize], UnicodeChar b2
 inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept {
     return ubuf_memcmp(ub1.chars, ub2.chars);
 }
+
+// Since nodes are always ref the size of a rope is dependant 
+// on the buffers size, so this can be safely computed
+typedef Boxed<sizeof(CCharBuffer) / 8> __CRope;
+typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
+
+// Path we have taken during tree walking
+class Path {
+    uint64_t pathBits;
+
+    static const uint64_t PATH_LEFT = 1ull;
+    static const uint64_t LSB_MASK  = 0x1ull; 
+    
+public:
+    Path() : pathBits(0) {}
+
+    inline bool isleft() const noexcept {
+        return (pathBits & LSB_MASK) == PATH_LEFT;
+    }
+
+    // Going left pushes a 1
+    inline void left() noexcept {
+        this->pathBits <<= 1;
+        this->pathBits |= PATH_LEFT;
+    }
+
+    // Going right pushes a 0
+    inline void right() noexcept {
+        this->pathBits <<= 1;
+    }
+
+    inline void up() noexcept {
+        this->pathBits >>= 1;
+    }
+};
+
+template<typename Rope>
+class PathStack {
+    Rope* stack[64];
+    size_t index;
+
+    Path path;
+    bool wasLeftDirection;
+
+    inline void storeLastDirection() noexcept {
+        this->wasLeftDirection = this->path.isleft();
+    }
+public:
+    PathStack() : stack(), index(0), path(), wasLeftDirection(false) {};
+
+    inline bool empty() const noexcept {
+        return index == 0;
+    }
+    
+    inline bool wasLeft() noexcept {
+        return this->wasLeftDirection;
+    }
+
+    inline void push(Rope& r) noexcept {
+        this->stack[this->index++] = &r;
+    }
+
+    inline void left(Rope& r) noexcept {
+        this->storeLastDirection();
+        this->push(r);
+        this->path.left();
+    }
+
+    inline void right(Rope& r) noexcept {
+        this->storeLastDirection();
+        this->push(r);
+        this->path.right();
+    }
+
+    inline Rope& pop() noexcept {
+        this->storeLastDirection();
+        this->path.up();
+        return *this->stack[--this->index];
+    }
+
+    inline Rope& top() const noexcept {
+        return *this->stack[this->index - 1];
+    }
+};
+
+class CRopeIterator {
+    PathStack<__CRope> traversalStack;
+
+    // We will eventually want to compute these via ptr mask in constructor
+    static const size_t LEFT_CHILD_OFFSET = 2;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 3;
+
+    void initializeTraversal(__CRope& root) noexcept;
+
+    inline bool isAtLeaf() const noexcept {
+        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    }
+
+    void traverseLeft() noexcept;
+    void traverseRight() noexcept;
+public:    
+    CRopeIterator(__CRope& root) noexcept : traversalStack() {
+        this->initializeTraversal(root);
+    };
+
+    CCharBuffer next() noexcept;
+
+    inline bool hasNext() noexcept {
+        return !this->traversalStack.empty();
+    }
+};
+
+/*
+class UnicodeRopeIterator {
+    PathStack<__UnicodeRope> stack;
+public:
+    UnicodeRopeIterator(__UnicodeRope& r) : stack() {};
+
+    UnicodeCharBuffer pop() noexcept;
+};
+*/
+
+Bool startsWithCRope(__CRope s, __CRope prefix) noexcept;
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 

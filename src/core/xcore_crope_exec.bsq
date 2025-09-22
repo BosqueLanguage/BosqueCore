@@ -6,6 +6,11 @@ __internal entity CCharBuffer {
     }
 }
 
+%*
+__internal entity CRopeIterator {
+}
+*%
+
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
@@ -55,6 +60,14 @@ namespace CRopeOps {
         return XCore::s_createDirect<Rope, CRope>(removepre(r.value, pre.value));
     }
 
+    function s_crope_starts_with_crope(cr: CRope, pre: CRope): Bool {
+        if(length(pre.value) > length(cr.value)) {
+            return false;
+        }
+
+        return startsWithRope(cr.value, pre.value);
+    }
+
     function s_crope_empty(cr: CRope): Bool {
         return cr.value?<BBLeaf>;
     }
@@ -79,13 +92,9 @@ namespace CRopeOps {
         return less(cr1.value, cr2.value);
     }
 
-    function s_crope_starts_with_crope(cr: CRope, pre: CRope): Bool {
-        return startsWithRope(cr.value, pre.value);
-    }
-
-    function s_nat_to_crope(v: Nat): CRope {
-        %% TODO: Once invariant is added to cpp emitter lets use that instead
-        assert CCharBufferOps::getMaxSize() == 8n;
+    function s_nat_to_crope(v: Nat): CRope
+        requires CCharBufferOps::getMaxSize() == 8n;
+    {
       
         let maxNatSizeForBuffer = 99999999n;
         let remainder = 100000000n;
@@ -376,44 +385,45 @@ namespace CRopeOps {
         return Rope::getCharacterCount(r);
     }
 
-    %% We keep track of the closest buffer (current nodes parents left child) for merging
-    recursive function append_helper(t: Rope, l: Rope, v: CCharBuffer): Rope {
-        match(t)@ {
+    recursive function append_helper(r: Rope, v: CCharBuffer): Rope {
+        match(r)@ {
             Leaf => { 
-                %% Merge all of v into t.buf
-                if($t.buf.size() + v.size() <= CCharBufferOps::getMaxSize()) {
-                    let merge = CCharBufferOps::mergeCBuffers($t.buf, v);
+                %% Try to merge buffers
+                if($r.buf.size() + v.size() <= CCharBufferOps::getMaxSize()) {
+                    let merge = CCharBufferOps::mergeCBuffers($r.buf, v);
                     return Rope::createLeaf(merge);
                 }
 
-                %% Merge chars from v into t.buf until t.buf is full
-                if($t.buf.size() < CCharBufferOps::getMaxSize()) {
-                    let tmp = CCharBufferOps::mergeCBuffers2($t.buf, v);
-                    let cb1 = tmp.0;
-                    let cb2 = tmp.1;
+                if($r.buf.size() < CCharBufferOps::getMaxSize()) {
+                    let cb1, cb2 = CCharBufferOps::mergeCBuffers2($r.buf, v);
                     return balance(Color#Red, Rope::createLeaf(cb1), Rope::createLeaf(cb2)); 
-                }
+                } 
 
-                return balance(Color#Red, $t, Rope::createLeaf(v)); 
+                %% Otherwise create a new node with the original leaf and new leaf
+                return balance(Color#Red, $r, Rope::createLeaf(v));
             }
             | Node => { 
-                let nr = append_helper[recursive]($t.r, $t.l, v);
-                return balance($t.c, $t.l, nr); 
+                %% Recurse on the right child, then balance
+                let nr = append_helper[recursive]($r.r, v);
+                return balance($r.c, $r.l, nr); 
             }
         }
     }
 
-    function append(t: Rope, v: CCharBuffer): Rope {
-        match(t)@ {
-            BBLeaf => { 
-                return Rope::createLeaf(v); 
-            }
-            | Leaf => {
-                return append_helper(t, t, v);
-            }
-            | Node => {
-                return append_helper(t, $t.l, v);
-            }
+    function append(r: Rope, v: CCharBuffer): Rope {
+        if(r)<BBLeaf> {
+            return Rope::createLeaf(v); 
+        }
+            
+        let nr = append_helper(r, v);
+        if(nr)@!<Node> {
+            return nr;
+        }
+        else {
+            return if($nr.c === Color#Red) 
+                then Rope::createNode(Color#Black, $nr.l, $nr.r)
+                else $nr;
+            
         }
     }
 
@@ -421,6 +431,9 @@ namespace CRopeOps {
         return concat(r2, r1);
     }
 
+    %%
+    %% Ouch, concat really needs some love
+    %%
     recursive function concat_helper(l: Rope, r: Rope): Rope {
         let buffers = get_buffers(r);
         let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
@@ -431,22 +444,6 @@ namespace CRopeOps {
     %% Append R to L buffer by buffer to ensure buffers are full (if possible) 
     function concat(l: Rope, r: Rope): Rope {
         return concat_helper(l, r);
-    }
-
-    recursive function startsWithRope_helper(rbuffers: List<CCharBuffer>, prebuffers: List<CCharBuffer>): Bool {
-        let rbuf, nrbuffers = rbuffers.popFront();
-        let prebuf, nprebuffers = prebuffers.popFront();
-
-        if(prebuf.size() < CCharBufferOps::getMaxSize()) {
-            return CCharBufferOps::isPrefix(rbuf, prebuf);
-        }
-        else {
-            return startsWithRope_helper[recursive](nrbuffers, nprebuffers);
-        }
-    }
-
-    function startsWithRope(r: Rope, pre: Rope): Bool {
-        return startsWithRope_helper(get_buffers(r), get_buffers(pre));
     }
 
     function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {
@@ -484,6 +481,8 @@ namespace CRopeOps {
     function removepre(r: Rope, pre: Rope): Rope {
         return removepre_helper(r, pre);
     }
+
+    function startsWithRope(r: Rope, pre: Rope): Bool = crope_starts_with_crope;
 
     recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
         if(r1buffers.size() == 0n) {
