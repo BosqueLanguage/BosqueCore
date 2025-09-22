@@ -257,67 +257,49 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
-//
-// TODO: We need to better understand reference semantics here
-// to figure out in what cases we can prevent copying
-//
-
-//
-// These two are 100% the source of our current bug. I do not believe
-// they correctly access the underlying value, causing two pushes.
-// Not quite sure what this should look like though...
-//
-void CRopeIterator::goLeft() noexcept {
-    uintptr_t* nodeptr = this->pathstack.top().access_ref<uintptr_t>();
-    __CRope left = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::ltype_offset]);
-    this->pathstack.left(left);
+void CRopeIterator::traverseLeft() noexcept {
+    __CRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    __CRope& leftChild = *reinterpret_cast<__CRope*>(&nodePtr[LEFT_CHILD_OFFSET]);
+    this->traversalStack.left(leftChild);
 }
 
-void CRopeIterator::goRight() noexcept {
-    uintptr_t* nodeptr = this->pathstack.top().access_ref<uintptr_t>();
-    __CRope right = *reinterpret_cast<__CRope*>(&nodeptr[CRopeIterator::rtype_offset]);
-    this->pathstack.right(right);
+void CRopeIterator::traverseRight() noexcept {
+    __CRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    __CRope& rightChild = *reinterpret_cast<__CRope*>(&nodePtr[RIGHT_CHILD_OFFSET]);
+    this->traversalStack.right(rightChild);
 }
 
-//
-// Sadly there is still a big bug with our stack overflowing, 
-// it appears that we are not properly decrementing index somewhere
-// which causes us to run out of stack space for large strings
-//
+void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
+    this->traversalStack.push(root);
+
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
+    }
+}
+
 CCharBuffer CRopeIterator::next() noexcept {
-    __CRope leaf = this->pathstack.pop(); 
+    __CRope& leaf = this->traversalStack.pop(); 
     CCharBuffer result = leaf.access<CCharBuffer>();
 
-    // Pop all fully visited nodes
-    while(!this->pathstack.wasLeft()) {
-        // Walk is finished
-        if(this->pathstack.empty()) {
+    // Pop all fully visited nodes (nodes where we've visited both children)
+    while(!this->traversalStack.wasLeft()) {
+        if(this->traversalStack.empty()) {
             return result;
         }
-
-        this->pathstack.pop();
+        this->traversalStack.pop();
     }
 
-    // Go right as we have finished left sub tree
-    this->goRight();
+    // We've finished the left subtree, now traverse right
+    this->traverseRight();
 
-    // Find first buffer of left sub tree
-    while(!this->isLeaf()) {
-        this->goLeft();
+    // Find first leaf in the new subtree (leftmost leaf)
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
     }
 
     return result;
-}
-
-//
-// Front probably is a shitty name here
-//
-void CRopeIterator::front(__CRope& r) noexcept {
-    this->pathstack.push(r);
-
-    while(!this->isLeaf()) {
-        this->goLeft();
-    }
 }
 
 Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {

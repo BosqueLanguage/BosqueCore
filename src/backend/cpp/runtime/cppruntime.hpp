@@ -726,68 +726,65 @@ inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcep
     return ubuf_memcmp(ub1.chars, ub2.chars);
 }
 
-//
-// May want to do some funny reference semantics with the stack to ensure we dont
-// accidentally copy every node of a tree into the stack, but also need to be 
-// careful that we do not possibly modify any nodes of a rope
-//
-
+// Since nodes are always ref the size of a rope is dependant 
+// on the buffers size, so this can be safely computed
 typedef Boxed<sizeof(CCharBuffer) / 8> __CRope;
 typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
 
 // Path we have taken during tree walking
 class Path {
-    uint64_t path;
+    uint64_t pathBits;
 
-    static const uint64_t path_left = 1ull;
-    static const uint64_t top_mask  = 0x1ull; 
+    static const uint64_t PATH_LEFT = 1ull;
+    static const uint64_t LSB_MASK  = 0x1ull; 
+    
 public:
-    Path() = default;
+    Path() : pathBits(0) {}
 
-    inline bool isleft() noexcept {
-        return (path & top_mask) == path_left;
+    inline bool isleft() const noexcept {
+        return (pathBits & LSB_MASK) == PATH_LEFT;
     }
 
     // Going left pushes a 1
     inline void left() noexcept {
-        this->path <<= 1;
-        this->path |= Path::path_left;
+        this->pathBits <<= 1;
+        this->pathBits |= PATH_LEFT;
     }
 
     // Going right pushes a 0
     inline void right() noexcept {
-        this->path <<= 1;
+        this->pathBits <<= 1;
     }
 
     inline void up() noexcept {
-        this->path >>= 1;
+        this->pathBits >>= 1;
     }
 };
 
 template<typename Rope>
 class PathStack {
-    Rope stack[64];
+    Rope* stack[64];
     size_t index;
-    
+
     Path path;
-    bool wasleft;
+    bool wasLeftDirection;
 
     inline void storeLastDirection() noexcept {
-        this->wasleft = this->path.isleft();
+        this->wasLeftDirection = this->path.isleft();
     }
 public:
-    PathStack() : stack(), index(0), path(), wasleft(false) {};
+    PathStack() : stack(), index(0), path(), wasLeftDirection(false) {};
 
     inline bool empty() const noexcept {
         return index == 0;
     }
     
     inline bool wasLeft() noexcept {
-        return this->wasleft;
+        return this->wasLeftDirection;
     }
 
     inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = r;
+        this->stack[this->index++] = &r;
     }
 
     inline void left(Rope& r) noexcept {
@@ -802,45 +799,45 @@ public:
         this->path.right();
     }
 
-    inline Rope pop() noexcept {
+    inline Rope& pop() noexcept {
         this->storeLastDirection();
         this->path.up();
-        return this->stack[--this->index];
+        return *this->stack[--this->index];
     }
 
-    inline Rope top() const noexcept {
-        return this->stack[this->index - 1];
+    inline Rope& top() const noexcept {
+        return *this->stack[this->index - 1];
     }
 };
 
 class CRopeIterator {
-    PathStack<__CRope> pathstack;
+    PathStack<__CRope> traversalStack;
 
-    // Probably want to actually compute these using the pointer mask
-    // Should do so in the constructor
-    static const size_t ltype_offset = 2;
-    static const size_t rtype_offset = ltype_offset + 3;
+    // We will eventually want to compute these via ptr mask in constructor
+    static const size_t LEFT_CHILD_OFFSET = 2;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 3;
 
-    void front(__CRope& r) noexcept;
+    void initializeTraversal(__CRope& root) noexcept;
 
-    inline bool isLeaf() const noexcept {
-        return this->pathstack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    inline bool isAtLeaf() const noexcept {
+        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    void goLeft() noexcept;
-    void goRight() noexcept;
+    void traverseLeft() noexcept;
+    void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& r) noexcept : pathstack() {
-        this->front(r);
+    CRopeIterator(__CRope& root) noexcept : traversalStack() {
+        this->initializeTraversal(root);
     };
 
     CCharBuffer next() noexcept;
 
     inline bool hasNext() noexcept {
-        return !this->pathstack.empty();
+        return !this->traversalStack.empty();
     }
 };
 
+/*
 class UnicodeRopeIterator {
     PathStack<__UnicodeRope> stack;
 public:
@@ -848,6 +845,7 @@ public:
 
     UnicodeCharBuffer pop() noexcept;
 };
+*/
 
 Bool startsWithCRope(__CRope s, __CRope prefix) noexcept;
 
