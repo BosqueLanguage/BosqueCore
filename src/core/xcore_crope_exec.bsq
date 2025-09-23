@@ -435,6 +435,17 @@ namespace CRopeOps {
     %% Ouch, concat really needs some love
     %%
     recursive function concat_helper(l: Rope, r: Rope): Rope {
+        %% Something like this should be nice and performant
+%*      let rit = CRopeIterator::initialize();
+        
+        return Algorithm::while<Rope>(l, 
+            pred(rit.hasNext()), 
+            fn(rope) => {
+                return append(rope, rit.next());
+            }  
+        );
+*%
+
         let buffers = get_buffers(r);
         let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
         

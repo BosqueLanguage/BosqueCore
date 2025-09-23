@@ -13,6 +13,8 @@
 #define 𝐫𝐞𝐪𝐮𝐢𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 #define 𝐞𝐧𝐬𝐮𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 
+#define 𝐰𝐡𝐢𝐥𝐞(s, guard, op) [&]() { auto state = s; while(guard(state)) { state = op(state); } return state; }()
+
 namespace __CoreCpp {
 
 typedef uintptr_t None;
