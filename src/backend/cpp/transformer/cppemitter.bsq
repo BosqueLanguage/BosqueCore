@@ -2029,6 +2029,7 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     match(ctd)@ {
         CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
         | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::CRopeIteratorTypeDecl => { return ""; }
     }
 }
 
@@ -2303,7 +2304,7 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
             return String::concat(acc, def);
     });
 
-    %% Value type, ")"s
+    %% Value types
     let values = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(enums, fn(acc, tk) => {

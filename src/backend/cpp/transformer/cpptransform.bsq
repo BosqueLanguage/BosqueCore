@@ -392,8 +392,12 @@ namespace TypeInfoGenerator {
                 }
                 if(ant)@<BSQAssembly::CRopeIteratorTypeDecl> {
                     %% Ignore these, not visible to GC 
-                    let nonetk = BSQAssembly::TypeKey::from('None');
-                    return generateTypeInfo[recursive](nonetk, tic, transformer);
+
+                    %%
+                    %% We should see if there is any way to completely avoid generating these 
+                    %%
+                    let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
+                    return crittinfo, tic.update(cpptkey, crittinfo);
                 }
 
                 abort;
