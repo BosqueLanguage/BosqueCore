@@ -437,9 +437,7 @@ namespace CRopeOps {
         
         return Algorithm::while<Rope>(l, 
             pred(rit.hasNext()), 
-            fn(rope) => {
-                return append(rope, rit.next());
-            }  
+            fn(rope) => append(rope, rit.next())
         );
 *%
 
