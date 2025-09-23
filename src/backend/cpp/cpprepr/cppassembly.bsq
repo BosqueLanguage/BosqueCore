@@ -133,7 +133,8 @@ datatype ConstructableTypeDecl provides InternalEntityTypeDecl
 of
 SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
-; %% TODO: Other ConstructableTypeDecls!
+| CRopeIteratorTypeDecl { }
+; 
 
 datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
     field oftype: TypeSignature;

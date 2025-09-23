@@ -6,11 +6,6 @@ __internal entity CCharBuffer {
     }
 }
 
-%*
-__internal entity CRopeIterator {
-}
-*%
-
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
@@ -43,6 +38,26 @@ namespace CCharBufferOps {
 }
 
 #if CPP_CORE
+__internal entity CRopeIterator {
+    function initialize(r: CRopeOps::Rope): CRopeIterator {
+        return CRopeIteratorOps::initialize(r);
+    }
+
+    method next(): CCharBuffer {
+        return CRopeIteratorOps::next(this);
+    }
+
+    method hasNext(): Bool {
+        return CRopeIteratorOps::hasNext(this);
+    }
+}
+
+namespace CRopeIteratorOps {
+    function initialize(r: CRopeOps::Rope): CRopeIterator = crope_iterator_initialize;
+    function next(it: CRopeIterator): CCharBuffer = crope_iterator_next;
+    function hasNext(it: CRopeIterator): Bool = crope_iterator_hasnext;
+}
+
 namespace CRopeOps {
     function s_crope_create(buf: CCharBuffer): CRope {        
         return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));       
@@ -430,26 +445,14 @@ namespace CRopeOps {
     function prepend(r1: Rope, r2: Rope): Rope {
         return concat(r2, r1);
     }
-
-    recursive function concat_helper(l: Rope, r: Rope): Rope {
-        %% Something like this should be nice and performant
-%*      let rit = CRopeIterator::initialize();
-        
-        return Algorithm::while<Rope>(l, 
-            pred(rit.hasNext()), 
-            fn(rope) => append(rope, rit.next())
-        );
-*%
-
-        let buffers = get_buffers(r);
-        let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
-        
-        return nl;
-    }
-
-    %% Append R to L buffer by buffer to ensure buffers are full (if possible) 
+    
     function concat(l: Rope, r: Rope): Rope {
-        return concat_helper(l, r);
+        %% This looks a bit sloppy, might want to declare iterator
+        %% outside and declare it as var
+        return Algorithm::while<(|Rope, CRopeIterator|)>((|l, CRopeIterator::initialize(r)|), 
+            pred(it) => it.1.hasNext(), 
+            fn(it) => (|append(it.0, it.1.next()), it.1|)
+        ).0;
     }
 
     function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {

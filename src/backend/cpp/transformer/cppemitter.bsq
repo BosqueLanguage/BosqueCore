@@ -1638,6 +1638,9 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "cstring_prepend" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_prepend(s, prefix);%n;"); }
         | "cstring_starts_with_string" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_starts_with_crope(s, prefix);%n;"); }
         | "crope_starts_with_crope" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
+        | "crope_iterator_initialize" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
+        | "crope_iterator_next" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
+        | "crope_iterator_hasnext" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
         | "string_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_concat2(s1, s2);%n;"); }
         | "string_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_empty(s);%n;"); }
         | "s_nat_to_cstring" => { return String::concat(indent, "    return Core::CRopeOps::s_nat_to_crope(v);%n;"); }
