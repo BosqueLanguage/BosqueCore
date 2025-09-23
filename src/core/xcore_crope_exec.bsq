@@ -431,9 +431,6 @@ namespace CRopeOps {
         return concat(r2, r1);
     }
 
-    %%
-    %% Ouch, concat really needs some love
-    %%
     recursive function concat_helper(l: Rope, r: Rope): Rope {
         %% Something like this should be nice and performant
 %*      let rit = CRopeIterator::initialize();
