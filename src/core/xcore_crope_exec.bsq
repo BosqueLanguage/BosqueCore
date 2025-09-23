@@ -39,20 +39,16 @@ namespace CCharBufferOps {
 
 #if CPP_CORE
 __internal entity CRopeIterator {
-    function initialize(r: CRopeOps::Rope): CRopeIterator {
-        return CRopeIteratorOps::initialize(r);
-    }
-
-    method next(): CCharBuffer {
-        return CRopeIteratorOps::next(this);
-    }
-
-    method hasNext(): Bool {
-        return CRopeIteratorOps::hasNext(this);
-    }
+    function initialize(r: CRopeOps::Rope): CRopeIterator = crope_iterator_initialize;
+    method next(): CCharBuffer = crope_iterator_next;
+    method hasNext(): Bool = crope_iterator_hasnext;
 }
 
 namespace CRopeIteratorOps {
+    %%
+    %% Making these the actual builtins with zero overhead of having a dedicated 
+    %% ops namespace SHOULD work. Lets experiment tomorrow.
+    %%
     function initialize(r: CRopeOps::Rope): CRopeIterator = crope_iterator_initialize;
     function next(it: CRopeIterator): CCharBuffer = crope_iterator_next;
     function hasNext(it: CRopeIterator): Bool = crope_iterator_hasnext;
