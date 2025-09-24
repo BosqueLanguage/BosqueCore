@@ -6,11 +6,6 @@ __internal entity CCharBuffer {
     }
 }
 
-%*
-__internal entity CRopeIterator {
-}
-*%
-
 namespace CCharBufferOps {
     function size(cb: CCharBuffer): Nat = ccharbuffer_size;
     function getMaxSize(): Nat = ccharbuffer_maxsize;
@@ -43,6 +38,12 @@ namespace CCharBufferOps {
 }
 
 #if CPP_CORE
+__internal entity CRopeIterator {
+    function initialize(r: CRopeOps::Rope): CRopeIterator = crope_iterator_initialize;
+    method next(): CCharBuffer = crope_iterator_next;
+    method hasNext(): Bool = crope_iterator_hasnext;
+}
+
 namespace CRopeOps {
     function s_crope_create(buf: CCharBuffer): CRope {        
         return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));       
@@ -430,26 +431,13 @@ namespace CRopeOps {
     function prepend(r1: Rope, r2: Rope): Rope {
         return concat(r2, r1);
     }
-
-    recursive function concat_helper(l: Rope, r: Rope): Rope {
-        %% Something like this should be nice and performant
-%*      let rit = CRopeIterator::initialize();
-        
-        return Algorithm::while<Rope>(l, 
-            pred(rit.hasNext()), 
-            fn(rope) => append(rope, rit.next())
+    
+    function concat(r1: Rope, r2: Rope): Rope {
+        var rit = CRopeIterator::initialize(r2);
+        return Algorithm::while<Rope>(r1, 
+            pred(r) => rit.hasNext(),
+            fn(r) => append(r, rit.next())
         );
-*%
-
-        let buffers = get_buffers(r);
-        let nl = buffers.reduce<Rope>(l, fn(acc, buf) => append(acc, buf));
-        
-        return nl;
-    }
-
-    %% Append R to L buffer by buffer to ensure buffers are full (if possible) 
-    function concat(l: Rope, r: Rope): Rope {
-        return concat_helper(l, r);
     }
 
     function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {
@@ -488,7 +476,15 @@ namespace CRopeOps {
         return removepre_helper(r, pre);
     }
 
-    function startsWithRope(r: Rope, pre: Rope): Bool = crope_starts_with_crope;
+    function startsWithRope(r: Rope, pre: Rope): Bool {
+        var rit = CRopeIterator::initialize(r);
+        var preit = CRopeIterator::initialize(pre);
+
+        return Algorithm::while<Bool>(true,
+            pred(cond) => preit.hasNext(),
+            fn(acc) => acc && CCharBufferOps::isPrefix(rit.next(), preit.next())
+        );
+    }
 
     recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
         if(r1buffers.size() == 0n) {

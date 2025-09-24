@@ -187,6 +187,7 @@ OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | APISuccessTypeDecl { }
 | SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
+| CRopeIteratorTypeDecl { }
 ;
 
 datatype CollectionTypeDecl provides InternalEntityTypeDecl using {

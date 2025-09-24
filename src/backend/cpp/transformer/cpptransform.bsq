@@ -390,6 +390,11 @@ namespace TypeInfoGenerator {
 
                     return metinfo, nntic.update(cpptkey, metinfo);
                 }
+                if(ant)@<BSQAssembly::CRopeIteratorTypeDecl> {
+                    %% Ignore these, not visible to GC
+                    let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
+                    return crittinfo, tic.update(cpptkey, crittinfo);
+                }
 
                 abort;
             }
@@ -1519,10 +1524,17 @@ entity CPPTransformer {
         return CPPAssembly::MapEntryTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9, ktype, vtype };
     }
 
+    method transformCRopeIteratorTypeDecl(crittd: BSQAssembly::CRopeIteratorTypeDecl): CPPAssembly::CRopeIteratorTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(crittd@<BSQAssembly::AbstractNominalTypeDecl>);       
+
+        return CPPAssembly::CRopeIteratorTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9 };
+    }   
+
     method transformConstructableTypeDecl(ctd: BSQAssembly::ConstructableTypeDecl): CPPAssembly::ConstructableTypeDecl {
         match(ctd)@ {
             BSQAssembly::SomeTypeDecl => { return this.transformSomeTypeDecl($ctd); }
             | BSQAssembly::MapEntryTypeDecl => { return this.transformMapEntryTypeDecl($ctd); }
+            | BSQAssembly::CRopeIteratorTypeDecl => { return this.transformCRopeIteratorTypeDecl($ctd); }
             | _ => { abort; }
         }
     }

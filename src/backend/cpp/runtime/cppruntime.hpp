@@ -849,8 +849,6 @@ public:
 };
 */
 
-Bool startsWithCRope(__CRope s, __CRope prefix) noexcept;
-
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
 
