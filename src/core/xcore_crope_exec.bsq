@@ -440,40 +440,34 @@ namespace CRopeOps {
         );
     }
 
-    function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {
-        let baserope: Rope = Rope::createLeaf(basebuffer);
-    
-        let res = buffers.reduce<(|Rope, Nat|)>((|baserope, 0n|), fn(acc, buf) => {
-            let current_rope = acc.0;
-            let current_index = acc.1;
-
-            if(current_index >= split) {
-                return append(current_rope, buf), current_index + 1n;
-            }
-            else {
-                return current_rope, current_index + 1n;
-            }
-        }).0;
-
-        return res;
-    }
-
-    function removepre_helper(r: Rope, pre: Rope): Rope {
-        let rbuffers = get_buffers(r);
-        let prebuffers = get_buffers(pre);
-
-        let lastbuffer_idx = prebuffers.size() - 1n;
-
-        let last_prebuffer = prebuffers.back();
-        let last_rbuffer = rbuffers.get(lastbuffer_idx);
- 
-        let nbuffer = CCharBufferOps::remove(last_rbuffer, last_prebuffer);
-        return removepre_rebuild(nbuffer, rbuffers, lastbuffer_idx + 1n);
-    }
-
     %% Eventually we will want to turn this into a generic delete function
     function removepre(r: Rope, pre: Rope): Rope {
-        return removepre_helper(r, pre);
+        var rit = CRopeIterator::initialize(r);
+        var preit = CRopeIterator::initialize(pre);       
+
+        return Algorithm::while<Rope>(Rope::emptyRope,
+            pred(cond) => rit.hasNext(),
+            fn(nr) => {
+                let rbuf = rit.next();
+                let prebuf = preit.next();
+
+                %%
+                %% We need to be a bit careful here with how we remove buffers,
+                %% we need some way to know when we are at the final buffer of pre
+                %%
+                if(!preit.hasNext()) {
+                    if(nr?<BBLeaf>) {
+                        let start = CCharBufferOps::remove(rbuf, pre);
+                        return Rope::createLeaf(start);
+                    }
+                    else {
+                        return append(nr, rbuf);
+                    }
+                }
+
+                return nr;
+            }
+        );
     }
 
     function startsWithRope(r: Rope, pre: Rope): Bool {
