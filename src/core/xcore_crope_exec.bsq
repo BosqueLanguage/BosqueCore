@@ -44,16 +44,6 @@ __internal entity CRopeIterator {
     method hasNext(): Bool = crope_iterator_hasnext;
 }
 
-namespace CRopeIteratorOps {
-    %%
-    %% Making these the actual builtins with zero overhead of having a dedicated 
-    %% ops namespace SHOULD work. Lets experiment tomorrow.
-    %%
-    function initialize(r: CRopeOps::Rope): CRopeIterator = crope_iterator_initialize;
-    function next(it: CRopeIterator): CCharBuffer = crope_iterator_next;
-    function hasNext(it: CRopeIterator): Bool = crope_iterator_hasnext;
-}
-
 namespace CRopeOps {
     function s_crope_create(buf: CCharBuffer): CRope {        
         return XCore::s_createDirect<Rope, CRope>(Rope::createLeaf(buf));       
@@ -486,7 +476,15 @@ namespace CRopeOps {
         return removepre_helper(r, pre);
     }
 
-    function startsWithRope(r: Rope, pre: Rope): Bool = crope_starts_with_crope;
+    function startsWithRope(r: Rope, pre: Rope): Bool {
+        var rit = CRopeIterator::initialize(r);
+        var preit = CRopeIterator::initialize(pre);
+
+        return Algorithm::while<Bool>(true,
+            pred(cond) => preit.hasNext(),
+            fn(acc) => acc && CCharBufferOps::isPrefix(rit.next(), preit.next())
+        );
+    }
 
     recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
         if(r1buffers.size() == 0n) {

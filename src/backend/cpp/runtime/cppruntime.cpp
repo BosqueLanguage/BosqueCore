@@ -302,24 +302,6 @@ CCharBuffer CRopeIterator::next() noexcept {
     return result;
 }
 
-Bool startsWithCRope(__CRope s, __CRope prefix) noexcept {
-    CRopeIterator sit{ s };
-    CRopeIterator pit{ prefix };
-
-    CCharBuffer s_cb = sit.next();
-    CCharBuffer p_cb = pit.next();   
-    while(true) {
-        if(!pit.hasNext() || !cbufferEqual(s_cb, p_cb)) {
-            break;
-        }
-
-        s_cb = sit.next();
-        p_cb = pit.next();
-    }
-
-    return cbufferIsPrefix(s_cb, p_cb);
-}
-
 std::string to_string(MainType v) noexcept {
     if(std::holds_alternative<bool>(v)) {
         bool res = std::get<bool>(v);
