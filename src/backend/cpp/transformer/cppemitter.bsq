@@ -1713,8 +1713,7 @@ function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: C
     });    
 }
 
-%% This name sucks lol
-function emitThisMaybeCRopeIterator(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
+function emitThisForType(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
     return if(ctx.asm.lookupNominalTypeDeclaration(declaredIn))<CPPAssembly::CRopeIteratorTypeDecl>
         then emitThisReference()
         else emitSpecialThis();
@@ -1724,7 +1723,7 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     let full_indent = String::concat("    ", indent);
 
-    let ethis = emitThisMaybeCRopeIterator(declaredIn, ctx);
+    let ethis = emitThisForType(declaredIn, ctx);
 
     let name = generateMethodName(m.ikey, declaredIn, nctx);
     let params, templates = emitParameters(m.params, nctx);
@@ -1880,7 +1879,7 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
 function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
 
-    let ethis = emitThisMaybeCRopeIterator(declaredIn, ctx);
+    let ethis = emitThisForType(declaredIn, ctx);
     
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let name = generateMethodName(m.ikey, declaredIn, nctx);

@@ -2353,12 +2353,6 @@ class BSQIREmitter {
                 else if(tt instanceof CRopeIteratorTypeDecl) {
                     const [tkey, decl] = this.emitCRopeIteratorTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allconcretetypes.push(tkey);
-
-                    //
-                    // Lets run with storing these guys with the constructables,
-                    // but keep an eye out for a better location before we make a PR
-                    //
-
                     this.constructables.push(decl);
                 }
                 else if(tt instanceof OkTypeDecl) {
