@@ -68,6 +68,10 @@ function emitSpecialThis(): String {
     return "𝐭𝐡𝐢𝐬";
 }    
 
+function emitThisReference(): String {
+    return String::concat("&", emitSpecialThis());
+}
+
 %% Probably should name this better
 function generateAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
     let tag = ctx.asm.typeinfos.tryGet(tk)@some.tag;
@@ -1638,9 +1642,9 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "cstring_prepend" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_prepend(s, prefix);%n;"); }
         | "cstring_starts_with_string" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_starts_with_crope(s, prefix);%n;"); }
         | "crope_starts_with_crope" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
-        | "crope_iterator_initialize" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
-        | "crope_iterator_next" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
-        | "crope_iterator_hasnext" => { return String::concat(indent, "    return __CoreCpp::startsWithCRope(r, pre);%n;"); }
+        | "crope_iterator_initialize" => { return String::concat(indent, "    return __CoreCpp::CRopeIterator{ r };%n;"); }
+        | "crope_iterator_next" => { return String::concat(indent, "    return ", emitSpecialThis(), ".next();%n;"); }
+        | "crope_iterator_hasnext" => { return String::concat(indent, "    return ", emitSpecialThis(), ".hasNext();%n;"); }
         | "string_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_concat2(s1, s2);%n;"); }
         | "string_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_unicoderope_empty(s);%n;"); }
         | "s_nat_to_cstring" => { return String::concat(indent, "    return Core::CRopeOps::s_nat_to_crope(v);%n;"); }
@@ -1709,9 +1713,18 @@ function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: C
     });    
 }
 
+%% This name sucks lol
+function emitThisMaybeCRopeIterator(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
+    return if(ctx.asm.lookupNominalTypeDeclaration(declaredIn))<CPPAssembly::CRopeIteratorTypeDecl>
+        then emitThisReference()
+        else emitSpecialThis();
+}
+
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
     let full_indent = String::concat("    ", indent);
+
+    let ethis = emitThisMaybeCRopeIterator(declaredIn, ctx);
 
     let name = generateMethodName(m.ikey, declaredIn, nctx);
     let params, templates = emitParameters(m.params, nctx);
@@ -1723,11 +1736,11 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
 
     var params_impl: String;
     if(params === "") {
-        params_impl = String::concat("(", this_type, " ", emitSpecialThis(), ") noexcept");
+        params_impl = String::concat("(", this_type, " ", ethis, ") noexcept");
     }
     else {
         let base = String::concat("(", this_type, " ");
-        params_impl = String::concat(base, emitSpecialThis(), ", ", params, ") noexcept");           
+        params_impl = String::concat(base, ethis, ", ", params, ") noexcept");           
     }
 
     let body = emitBodyImplementation(m.body, nctx, indent);
@@ -1856,12 +1869,19 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
         return String::concat(indent, "typedef __CoreCpp::Boxed<", k, "> ", emitTypeKey($e.tkey, false, nctx), ";%n;");
     }
 
+    %% CRope Iterators only exist in cpp runtime files
+    if(e)<CPPAssembly::CRopeIteratorTypeDecl> {
+        return "";
+    }
+
     return String::concat(indent, "struct ", tkey, ";%n;");
 }
 
 function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(m.declaredInNS, m.fullns);
 
+    let ethis = emitThisMaybeCRopeIterator(declaredIn, ctx);
+    
     if(m)@<CPPAssembly::MethodDeclStatic> {
         let name = generateMethodName(m.ikey, declaredIn, nctx);
         let rtype = emitTypeSignature(m.resultType, true, nctx);
@@ -1873,11 +1893,11 @@ function emitMethodForwardDeclaration(m: CPPAssembly::MethodDecl, declaredIn: CP
 
         if(params === "") {
             let tmp = String::concat(template, first);
-            return String::concat(tmp, this_type, " ", emitSpecialThis(), params, ") noexcept;%n;");
+            return String::concat(tmp, this_type, " ", ethis, params, ") noexcept;%n;");
         }
         else {
             let base = String::concat(first, this_type, " ");
-            return String::concat(template, base, emitSpecialThis(), ", ", params, ") noexcept;%n;");           
+            return String::concat(template, base, ethis, ", ", params, ") noexcept;%n;");           
         }
     }
     else {
@@ -2025,11 +2045,18 @@ function emitMapEntryTypeDecl(mtd: CPPAssembly::MapEntryTypeDecl, ctx: Context, 
 
 }
 
+function emitCRopeIteratorTypeDecl(crittd: CPPAssembly::CRopeIteratorTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(crittd.declaredInNS, crittd.fullns);
+    let tk = emitTypeKey(crittd.tkey, false, nctx);
+
+    return String::concat(indent, "typedef __CoreCpp::CRopeIterator ", tk, ";%n;");
+}
+
 function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
     match(ctd)@ {
         CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
         | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::CRopeIteratorTypeDecl => { return ""; }
+        | CPPAssembly::CRopeIteratorTypeDecl => { return emitCRopeIteratorTypeDecl($ctd, ctx, indent); }
     }
 }
 
