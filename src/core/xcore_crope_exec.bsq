@@ -445,29 +445,30 @@ namespace CRopeOps {
         var rit = CRopeIterator::initialize(r);
         var preit = CRopeIterator::initialize(pre);       
 
-        return Algorithm::while<Rope>(Rope::emptyRope,
+        let init: CCharBuffer = preit.next();
+        let post = Algorithm::while<(|Rope, CCharBuffer|)>(
+            (|Rope::emptyRope, init|),
             pred(cond) => rit.hasNext(),
             fn(nr) => {
                 let rbuf = rit.next();
-                let prebuf = preit.next();
-
-                %%
-                %% We need to be a bit careful here with how we remove buffers,
-                %% we need some way to know when we are at the final buffer of pre
-                %%
+                let cr = nr.0;
+                let prev_prebuf = nr.1;
                 if(!preit.hasNext()) {
-                    if(nr?<BBLeaf>) {
-                        let start = CCharBufferOps::remove(rbuf, pre);
-                        return Rope::createLeaf(start);
+                    if(cr)<BBLeaf> {
+                        let start = CCharBufferOps::remove(rbuf, prev_prebuf);
+                        return Rope::createLeaf(start), prev_prebuf;
                     }
                     else {
-                        return append(nr, rbuf);
+                        return append(cr, rbuf), prev_prebuf;
                     }
                 }
-
-                return nr;
+                else {
+                    return cr, preit.next();
+                }
             }
-        );
+        ).0;
+
+        return post;
     }
 
     function startsWithRope(r: Rope, pre: Rope): Bool {
