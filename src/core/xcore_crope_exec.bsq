@@ -481,31 +481,17 @@ namespace CRopeOps {
         );
     }
 
-    recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
-        if(r1buffers.size() == 0n) {
-            return true;
-        }
-
-        let b1, nr1buffers = r1buffers.popFront();
-        let b2, nr2buffers = r2buffers.popFront();
-
-        if(!CCharBufferOps::equal(b1, b2)) {
-            return false;
-        }
-        else {
-            return equal_helper[recursive](nr1buffers, nr2buffers);
-        }
-    }
-
     function equal(r1: Rope, r2: Rope): Bool {
-        let r1buffers = get_buffers(r1);
-        let r2buffers = get_buffers(r2);
-
-        if(r1buffers.size() != r2buffers.size()) {
+        if(length(r1) != length(r2)) {
             return false;
         } 
 
-        return equal_helper(r1buffers, r2buffers);
+        let r1_it = CRopeIterator::initialize(r1);
+        let r2_it = CRopeIterator::initialize(r2);
+        return Algorithm::while<Bool>(true,
+            pred(cond) => r1_it.hasNext(),
+            fn(acc) => acc && CCharBufferOps::equal(r1.next(), r2.next())
+        );
     }
 
     recursive function less_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
