@@ -445,6 +445,10 @@ namespace CRopeOps {
         var rit = CRopeIterator::initialize(r);
         var preit = CRopeIterator::initialize(pre);       
 
+        %%
+        %% TODO: Once we add indexing in some form we should modify this
+        %% to just merge buffers after the end of pre
+        %%
         let post = Algorithm::while<(|Rope, CCharBuffer|)>(
             (|Rope::emptyRope, preit.next()|),
             pred(cond) => rit.hasNext(),
