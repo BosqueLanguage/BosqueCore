@@ -489,8 +489,8 @@ namespace CRopeOps {
             return false;
         } 
 
-        let r1_it = CRopeIterator::initialize(r1);
-        let r2_it = CRopeIterator::initialize(r2);
+        var r1_it = CRopeIterator::initialize(r1);
+        var r2_it = CRopeIterator::initialize(r2);
         return Algorithm::while<Bool>(true,
             pred(cond) => r1_it.hasNext(),
             fn(acc) => acc && CCharBufferOps::equal(r1_it.next(), r2_it.next())
@@ -498,8 +498,8 @@ namespace CRopeOps {
     }
 
     function less(r1: Rope, r2: Rope): Bool {
-        let r1_it = CRopeIterator::initialize(r1);
-        let r2_it = CRopeIterator::initialize(r2);
+        var r1_it = CRopeIterator::initialize(r1);
+        var r2_it = CRopeIterator::initialize(r2);
 
         let r1_last, r2_last = Algorithm::while<(|CCharBuffer, CCharBuffer|)>(
             (|r1_it.next(), r2_it.next()|),
