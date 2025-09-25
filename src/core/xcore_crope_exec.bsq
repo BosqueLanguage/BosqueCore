@@ -445,9 +445,8 @@ namespace CRopeOps {
         var rit = CRopeIterator::initialize(r);
         var preit = CRopeIterator::initialize(pre);       
 
-        let init: CCharBuffer = preit.next();
         let post = Algorithm::while<(|Rope, CCharBuffer|)>(
-            (|Rope::emptyRope, init|),
+            (|Rope::emptyRope, preit.next()|),
             pred(cond) => rit.hasNext(),
             fn(nr) => {
                 let rbuf = rit.next();
@@ -490,56 +489,21 @@ namespace CRopeOps {
         let r2_it = CRopeIterator::initialize(r2);
         return Algorithm::while<Bool>(true,
             pred(cond) => r1_it.hasNext(),
-            fn(acc) => acc && CCharBufferOps::equal(r1.next(), r2.next())
+            fn(acc) => acc && CCharBufferOps::equal(r1_it.next(), r2_it.next())
         );
     }
 
-    recursive function less_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
-        let size1 = r1buffers.size();
-        let size2 = r2buffers.size();
-
-        %% No buffers left in either, must be equal
-        if(size1 == 0n && size2 == 0n) {
-            return false;
-        }
-
-        %% All characters of r1 match r2 but r1 is shorter string
-        if(size1 == 0n) {
-            return true;
-        }
-        
-        %% All characters of r2 match r1 but r1 is longer string
-        if(size2 == 0n) {
-            return false;
-        }
-
-        let cb1, nr1buffers = r1buffers.popFront();
-        let cb2, nr2buffers = r2buffers.popFront();
-        if(CCharBufferOps::equal(cb1, cb2)) {
-            return less_helper[recursive](nr1buffers, nr2buffers);
-        }
-        else {
-            return CCharBufferOps::less(cb1, cb2);
-        } 
-    }
-
     function less(r1: Rope, r2: Rope): Bool {
-        return less_helper(get_buffers(r1), get_buffers(r2));
-    }
-    
-    recursive function get_buffers_helper(r: Rope, acc: List<CCharBuffer>): List<CCharBuffer> {
-        match(r)@ {
-            BBLeaf => { return acc; }
-            | Leaf => { return acc.pushBack($r.buf); }
-            | Node => {  
-                let left_buffers = get_buffers_helper[recursive]($r.l, acc);   
-                return get_buffers_helper[recursive]($r.r, left_buffers);
-            }
-        }
-    }
+        let r1_it = CRopeIterator::initialize(r1);
+        let r2_it = CRopeIterator::initialize(r2);
 
-    function get_buffers(r: Rope): List<CCharBuffer> {
-        return get_buffers_helper(r, List<CCharBuffer>{});
+        let r1_last, r2_last = Algorithm::while<(|CCharBuffer, CCharBuffer|)>(
+            (|r1_it.next(), r2_it.next()|),
+            pred(bufs) => r1_it.hasNext() && r2_it.hasNext() && CCharBufferOps::equal(bufs.0, bufs.1),
+            fn(acc) => (|r1_it.next(), r2_it.next()|)
+        );
+
+        return CCharBufferOps::less(r1_last, r2_last);
     }
 
     datatype Rope of 
