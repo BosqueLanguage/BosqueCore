@@ -440,40 +440,38 @@ namespace CRopeOps {
         );
     }
 
-    function removepre_rebuild(basebuffer: CCharBuffer, buffers: List<CCharBuffer>, split: Nat): Rope {
-        let baserope: Rope = Rope::createLeaf(basebuffer);
-    
-        let res = buffers.reduce<(|Rope, Nat|)>((|baserope, 0n|), fn(acc, buf) => {
-            let current_rope = acc.0;
-            let current_index = acc.1;
-
-            if(current_index >= split) {
-                return append(current_rope, buf), current_index + 1n;
-            }
-            else {
-                return current_rope, current_index + 1n;
-            }
-        }).0;
-
-        return res;
-    }
-
-    function removepre_helper(r: Rope, pre: Rope): Rope {
-        let rbuffers = get_buffers(r);
-        let prebuffers = get_buffers(pre);
-
-        let lastbuffer_idx = prebuffers.size() - 1n;
-
-        let last_prebuffer = prebuffers.back();
-        let last_rbuffer = rbuffers.get(lastbuffer_idx);
- 
-        let nbuffer = CCharBufferOps::remove(last_rbuffer, last_prebuffer);
-        return removepre_rebuild(nbuffer, rbuffers, lastbuffer_idx + 1n);
-    }
-
     %% Eventually we will want to turn this into a generic delete function
     function removepre(r: Rope, pre: Rope): Rope {
-        return removepre_helper(r, pre);
+        var rit = CRopeIterator::initialize(r);
+        var preit = CRopeIterator::initialize(pre);       
+
+        %%
+        %% TODO: Once we add indexing in some form we should modify this
+        %% to just merge buffers after the end of pre
+        %%
+        let post = Algorithm::while<(|Rope, CCharBuffer|)>(
+            (|Rope::emptyRope, preit.next()|),
+            pred(cond) => rit.hasNext(),
+            fn(nr) => {
+                let rbuf = rit.next();
+                let cr = nr.0;
+                let prev_prebuf = nr.1;
+                if(!preit.hasNext()) {
+                    if(cr)<BBLeaf> {
+                        let start = CCharBufferOps::remove(rbuf, prev_prebuf);
+                        return Rope::createLeaf(start), prev_prebuf;
+                    }
+                    else {
+                        return append(cr, rbuf), prev_prebuf;
+                    }
+                }
+                else {
+                    return cr, preit.next();
+                }
+            }
+        ).0;
+
+        return post;
     }
 
     function startsWithRope(r: Rope, pre: Rope): Bool {
@@ -486,79 +484,30 @@ namespace CRopeOps {
         );
     }
 
-    recursive function equal_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
-        if(r1buffers.size() == 0n) {
-            return true;
-        }
-
-        let b1, nr1buffers = r1buffers.popFront();
-        let b2, nr2buffers = r2buffers.popFront();
-
-        if(!CCharBufferOps::equal(b1, b2)) {
-            return false;
-        }
-        else {
-            return equal_helper[recursive](nr1buffers, nr2buffers);
-        }
-    }
-
     function equal(r1: Rope, r2: Rope): Bool {
-        let r1buffers = get_buffers(r1);
-        let r2buffers = get_buffers(r2);
-
-        if(r1buffers.size() != r2buffers.size()) {
+        if(length(r1) != length(r2)) {
             return false;
         } 
 
-        return equal_helper(r1buffers, r2buffers);
-    }
-
-    recursive function less_helper(r1buffers: List<CCharBuffer>, r2buffers: List<CCharBuffer>): Bool {
-        let size1 = r1buffers.size();
-        let size2 = r2buffers.size();
-
-        %% No buffers left in either, must be equal
-        if(size1 == 0n && size2 == 0n) {
-            return false;
-        }
-
-        %% All characters of r1 match r2 but r1 is shorter string
-        if(size1 == 0n) {
-            return true;
-        }
-        
-        %% All characters of r2 match r1 but r1 is longer string
-        if(size2 == 0n) {
-            return false;
-        }
-
-        let cb1, nr1buffers = r1buffers.popFront();
-        let cb2, nr2buffers = r2buffers.popFront();
-        if(CCharBufferOps::equal(cb1, cb2)) {
-            return less_helper[recursive](nr1buffers, nr2buffers);
-        }
-        else {
-            return CCharBufferOps::less(cb1, cb2);
-        } 
+        var r1_it = CRopeIterator::initialize(r1);
+        var r2_it = CRopeIterator::initialize(r2);
+        return Algorithm::while<Bool>(true,
+            pred(cond) => r1_it.hasNext(),
+            fn(acc) => acc && CCharBufferOps::equal(r1_it.next(), r2_it.next())
+        );
     }
 
     function less(r1: Rope, r2: Rope): Bool {
-        return less_helper(get_buffers(r1), get_buffers(r2));
-    }
-    
-    recursive function get_buffers_helper(r: Rope, acc: List<CCharBuffer>): List<CCharBuffer> {
-        match(r)@ {
-            BBLeaf => { return acc; }
-            | Leaf => { return acc.pushBack($r.buf); }
-            | Node => {  
-                let left_buffers = get_buffers_helper[recursive]($r.l, acc);   
-                return get_buffers_helper[recursive]($r.r, left_buffers);
-            }
-        }
-    }
+        var r1_it = CRopeIterator::initialize(r1);
+        var r2_it = CRopeIterator::initialize(r2);
 
-    function get_buffers(r: Rope): List<CCharBuffer> {
-        return get_buffers_helper(r, List<CCharBuffer>{});
+        let r1_last, r2_last = Algorithm::while<(|CCharBuffer, CCharBuffer|)>(
+            (|r1_it.next(), r2_it.next()|),
+            pred(bufs) => r1_it.hasNext() && r2_it.hasNext() && CCharBufferOps::equal(bufs.0, bufs.1),
+            fn(acc) => (|r1_it.next(), r2_it.next()|)
+        );
+
+        return CCharBufferOps::less(r1_last, r2_last);
     }
 
     datatype Rope of 
