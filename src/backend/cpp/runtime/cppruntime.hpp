@@ -765,7 +765,7 @@ public:
 
 template<typename Rope>
 class PathStack {
-    Rope* stack[64];
+    Rope stack[64];
     size_t index;
 
     Path path;
@@ -786,7 +786,7 @@ public:
     }
 
     inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = &r;
+        this->stack[this->index++] = r;
     }
 
     inline void left(Rope& r) noexcept {
@@ -801,14 +801,14 @@ public:
         this->path.right();
     }
 
-    inline Rope& pop() noexcept {
+    inline Rope pop() noexcept {
         this->storeLastDirection();
         this->path.up();
-        return *this->stack[--this->index];
+        return this->stack[--this->index];
     }
 
-    inline Rope& top() const noexcept {
-        return *this->stack[this->index - 1];
+    inline Rope top() const noexcept {
+        return this->stack[this->index - 1];
     }
 };
 
