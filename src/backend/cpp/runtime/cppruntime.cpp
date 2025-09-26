@@ -273,8 +273,8 @@ void CRopeIterator::traverseRight() noexcept {
 
 void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
     if(root.typeinfo->tag == __CoreGC::Tag::Value) {
-        this->inlineRope = root;
-        this->isSingle = true;
+        this->inlineString = root;
+        this->isInline = true;
     }
 
     this->traversalStack.push(root);
@@ -285,8 +285,8 @@ void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
 }
 
 CCharBuffer CRopeIterator::next() noexcept {
-    if(this->isSingle) {
-        return this->inlineRope.access<CCharBuffer>();
+    if(this->isInline) {
+        return this->inlineString.access<CCharBuffer>();
     }
 
     __CRope& leaf = this->traversalStack.pop(); 

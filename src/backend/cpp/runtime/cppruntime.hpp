@@ -816,8 +816,8 @@ public:
 class CRopeIterator {
     PathStack<__CRope> traversalStack;
     
-    __CRope inlineRope;
-    bool isSingle;
+    __CRope inlineString;
+    bool isInline;
 
     // We will eventually want to compute these via ptr mask in constructor
     static const size_t LEFT_CHILD_OFFSET = 2;
@@ -832,14 +832,14 @@ class CRopeIterator {
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineRope(), isSingle(false) {
+    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
     CCharBuffer next() noexcept;
 
     inline bool hasNext() noexcept {
-        return !this->traversalStack.empty() || this->isSingle;
+        return !this->traversalStack.empty() || this->isInline;
     }
 };
 
