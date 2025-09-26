@@ -765,7 +765,7 @@ public:
 
 template<typename Rope>
 class PathStack {
-    Rope stack[64];
+    Rope* stack[64];
     size_t index;
 
     Path path;
@@ -786,7 +786,7 @@ public:
     }
 
     inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = r;
+        this->stack[this->index++] = &r;
     }
 
     inline void left(Rope& r) noexcept {
@@ -801,19 +801,23 @@ public:
         this->path.right();
     }
 
-    inline Rope pop() noexcept {
+    inline Rope& pop() noexcept {
         this->storeLastDirection();
         this->path.up();
-        return this->stack[--this->index];
+            
+        return *this->stack[--this->index];
     }
 
-    inline Rope top() const noexcept {
-        return this->stack[this->index - 1];
+    inline Rope& top() const noexcept {
+        return *this->stack[this->index - 1];
     }
 };
 
 class CRopeIterator {
     PathStack<__CRope> traversalStack;
+    
+    __CRope inlineRope;
+    bool isSingle;
 
     // We will eventually want to compute these via ptr mask in constructor
     static const size_t LEFT_CHILD_OFFSET = 2;
@@ -828,14 +832,14 @@ class CRopeIterator {
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& root) noexcept : traversalStack() {
+    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineRope(), isSingle(false) {
         this->initializeTraversal(root);
     };
 
     CCharBuffer next() noexcept;
 
     inline bool hasNext() noexcept {
-        return !this->traversalStack.empty();
+        return !this->traversalStack.empty() || this->isSingle;
     }
 };
 
