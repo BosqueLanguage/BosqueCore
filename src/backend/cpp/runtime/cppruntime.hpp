@@ -804,6 +804,7 @@ public:
     inline Rope& pop() noexcept {
         this->storeLastDirection();
         this->path.up();
+            
         return *this->stack[--this->index];
     }
 
@@ -814,6 +815,9 @@ public:
 
 class CRopeIterator {
     PathStack<__CRope> traversalStack;
+    
+    __CRope inlineString;
+    bool isInline;
 
     // We will eventually want to compute these via ptr mask in constructor
     static const size_t LEFT_CHILD_OFFSET = 2;
@@ -828,14 +832,14 @@ class CRopeIterator {
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& root) noexcept : traversalStack() {
+    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
     CCharBuffer next() noexcept;
 
     inline bool hasNext() noexcept {
-        return !this->traversalStack.empty();
+        return !this->traversalStack.empty() || this->isInline;
     }
 };
 
