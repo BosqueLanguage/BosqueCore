@@ -10,8 +10,6 @@
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
-#define CHECK_INITIALIZED(O) { if((O) == nullptr) [[unlikely]] { return ; } }
-
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
@@ -82,8 +80,6 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 
 static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    CHECK_INITIALIZED(*slots);
-
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -217,7 +213,6 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj;
-    CHECK_INITIALIZED(ptr);
 
     // Root points to root case (may be a false root)
     if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
@@ -238,8 +233,6 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    CHECK_INITIALIZED(*slots);
-
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -371,8 +364,6 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
-    CHECK_INITIALIZED(*slots);
-
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
     GC_INVARIANT_CHECK(meta != nullptr);
 
@@ -384,8 +375,6 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 { 
-    CHECK_INITIALIZED(*slots);
-    
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {

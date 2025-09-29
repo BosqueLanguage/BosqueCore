@@ -6,7 +6,6 @@ GlobalDataStorage GlobalDataStorage::g_global_data{};
 
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
-    xmem_zerofillpage(block);
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
