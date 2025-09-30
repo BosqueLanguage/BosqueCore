@@ -10,6 +10,12 @@
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
+#ifdef ALLOC_DEBUG_CANARY
+#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
+#else 
+#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData)) 
+#endif
+
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
@@ -299,13 +305,20 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     GC_REFCT_LOCK_RELEASE();
 }
 
+inline bool pointsToObjectStart(void* addr) noexcept 
+{
+    uintptr_t offset = *reinterpret_cast<uintptr_t*>(addr) & PAGE_MASK;
+    PageInfo* p = PageInfo::extractPageFromPointer(addr);
+    bool isStart = GET_SLOT_START_FROM_OFFSET(offset);
+
+    return isStart % p->realsize == 0;
+}
+
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    uintptr_t page_offset = (uintptr_t)addr & PAGE_OFFSET_MASK;
-
-    bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) || ptrToPageMetaData) {
-        return ;
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) 
+        || !pointsToObjectStart(addr)) {
+            return ;
     }
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
