@@ -308,8 +308,7 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static inline bool pointsToObjectStart(void* addr) noexcept 
 {
     uintptr_t offset = *reinterpret_cast<uintptr_t*>(addr) & PAGE_MASK;
-    bool pointsToPageInfo = offset < sizeof(PageInfo);
-    if(!pointsToPageInfo) {
+    if(offset < sizeof(PageInfo)) {
         return false;
     }
 
@@ -383,8 +382,8 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
-    GC_INVARIANT_CHECK(meta != nullptr);
-
+    GC_CHECK_BOOL_BYTES(meta);
+    
     if(GC_SHOULD_VISIT(meta)) { 
         GC_MARK_AS_MARKED(meta);
         tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});

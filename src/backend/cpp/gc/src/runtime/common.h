@@ -183,8 +183,12 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define ZERO_METADATA(M) ((*(M)) = {})
 
 #define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
+
 #define GC_IS_YOUNG(O) (GC_GET_META_DATA_ADDR(O))->isyoung
+#define GC_IS_YOUNG_M(M) (M->isyoung)
+
 #define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O))->isalloc
+
 #define GC_IS_ROOT(O) (GC_GET_META_DATA_ADDR(O))->isroot
 
 #define GC_FWD_INDEX(O) (GC_GET_META_DATA_ADDR(O))->forward_index
@@ -209,6 +213,18 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define GC_CLEAR_ROOT_MARK(META) { (META)->ismarked = false; (META)->isroot = false; }
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->isalloc || ((META)->isyoung && (META)->forward_index == NON_FORWARDED))
+
+#define GC_CHECK_BOOL_BYTES(M) \
+do { \
+    int8_t isalloc_byte = *reinterpret_cast<const int8_t*>(&(M)->isalloc); \
+    int8_t isyoung_byte = *reinterpret_cast<const int8_t*>(&(M)->isyoung); \
+    int8_t ismarked_byte = *reinterpret_cast<const int8_t*>(&(M)->ismarked); \
+    int8_t isroot_byte = *reinterpret_cast<const int8_t*>(&(M)->isroot); \
+    GC_INVARIANT_CHECK(isalloc_byte == 0 || isalloc_byte == 1); \
+    GC_INVARIANT_CHECK(isyoung_byte == 0 || isyoung_byte == 1); \
+    GC_INVARIANT_CHECK(ismarked_byte == 0 || ismarked_byte == 1); \
+    GC_INVARIANT_CHECK(isroot_byte == 0 || isroot_byte == 1); \
+} while(0)
 
 #else
 // Resets an objects metadata and updates with index into forward table
@@ -254,6 +270,14 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
     } while(0)
 
 #define GC_SHOULD_FREE_LIST_ADD(META) (!(META)->bits.isalloc || ((META)->bits.isyoung && (META)->bits.rc_fwd == NON_FORWARDED ))
+
+#define GC_CHECK_BOOL_BYTES(M) \
+do { \
+    GC_INVARIANT_CHECK((M)->bits.isalloc == 0 || (M)->bits.isalloc == 1); \
+    GC_INVARIANT_CHECK((M)->bits.isyoung == 0 || (M)->bits.isyoung == 1); \
+    GC_INVARIANT_CHECK((M)->bits.ismarked == 0 || (M)->bits.ismarked == 1); \
+    GC_INVARIANT_CHECK((M)->bits.isroot == 0 || (M)->bits.isroot == 1); \
+} while(0)
 
 #endif
 
