@@ -305,9 +305,14 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     GC_REFCT_LOCK_RELEASE();
 }
 
-inline bool pointsToObjectStart(void* addr) noexcept 
+static inline bool pointsToObjectStart(void* addr) noexcept 
 {
     uintptr_t offset = *reinterpret_cast<uintptr_t*>(addr) & PAGE_MASK;
+    bool pointsToPageInfo = offset < sizeof(PageInfo);
+    if(!pointsToPageInfo) {
+        return false;
+    }
+
     PageInfo* p = PageInfo::extractPageFromPointer(addr);
     bool isStart = GET_SLOT_START_FROM_OFFSET(offset);
 

@@ -229,17 +229,6 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
 #endif
 
-/*
-    Our bug here is related to how placement new inserts the values associated
-    with an allocated object. The issue is it will first completely finish
-    the outer most allocation (i.e. Alloc1(Alloc2()), Alloc1 completes first)
-    then goes and evaluates our args where it encounters other allocs. The thing is
-    the outer most alloc _will_ end up on the stack as a root or pointed to by something.
-    When we go and walk the pointer of said alloc, it'll point to garbage as its data
-    is just whatever was left behind from old allocations. Not really sure of a good way
-    to handle this that is clean and fast. We need to be very careful to not introduce
-    much extra complexity ESPECIALLY inside our hot path allocations.
-*/
 #define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (new (GC_ALLOC_OBJECT(A, L)) T(__VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
