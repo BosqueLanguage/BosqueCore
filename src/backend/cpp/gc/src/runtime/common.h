@@ -183,12 +183,8 @@ static_assert(sizeof(MetaData) == 8, "MetaData size is not 8 bytes");
 #define ZERO_METADATA(M) ((*(M)) = {})
 
 #define GC_IS_MARKED(O) (GC_GET_META_DATA_ADDR(O))->ismarked
-
 #define GC_IS_YOUNG(O) (GC_GET_META_DATA_ADDR(O))->isyoung
-#define GC_IS_YOUNG_M(M) (M->isyoung)
-
 #define GC_IS_ALLOCATED(O) (GC_GET_META_DATA_ADDR(O))->isalloc
-
 #define GC_IS_ROOT(O) (GC_GET_META_DATA_ADDR(O))->isroot
 
 #define GC_FWD_INDEX(O) (GC_GET_META_DATA_ADDR(O))->forward_index
