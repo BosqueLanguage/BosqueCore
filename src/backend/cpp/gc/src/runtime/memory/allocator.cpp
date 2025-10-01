@@ -4,8 +4,17 @@
 
 GlobalDataStorage GlobalDataStorage::g_global_data{};
 
+/*
+#ifdef ALLOC_DEBUG_CANARY
+#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(reinterpret_cast<uint8_t*>(E) + ALLOC_DEBUG_CANARY_SIZE));
+#else
+#define RESET_META_FROM_FREELIST(E) ZERO_METADATA(reinterpret_cast<MetaData*>(reinterpret_cast<uint8_t*>(entry)));
+#endif
+*/
+
 PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsize) noexcept
 {
+    xmem_zerofillpage(block);
     PageInfo* pp = (PageInfo*)block;
 
     pp->freelist = nullptr;
@@ -23,6 +32,7 @@ PageInfo* PageInfo::initialize(void* block, uint16_t allocsize, uint16_t realsiz
 
     for(int64_t i = pp->entrycount - 1; i >= 0; i--) {
         FreeListEntry* entry = pp->getFreelistEntryAtIndex(i);
+        //RESET_META_FROM_FREELIST(entry);
         entry->next = pp->freelist;
         pp->freelist = entry;
     }
@@ -108,7 +118,7 @@ void GCAllocator::processPage(PageInfo* p) noexcept
 
 void GCAllocator::processCollectorPages() noexcept
 {
-    if(this->alloc_page != nullptr && this->freelist == nullptr) {
+    if(this->alloc_page != nullptr) {
         this->alloc_page->rebuild();
         this->processPage(this->alloc_page);
 
@@ -116,7 +126,7 @@ void GCAllocator::processCollectorPages() noexcept
         this->freelist = nullptr;
     }
     
-    if(this->evac_page != nullptr && this->evacfreelist == nullptr) {
+    if(this->evac_page != nullptr) {
         this->evac_page->rebuild();
         this->processPage(this->evac_page);
 
