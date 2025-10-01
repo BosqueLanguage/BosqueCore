@@ -229,7 +229,7 @@ T* MEM_ALLOC_CHECK(T* alloc)
 #define GC_ALLOC_OBJECT(A, L) MEM_ALLOC_CHECK((A).allocate((L)))
 #endif
 
-#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (new (GC_ALLOC_OBJECT(A, L)) T(__VA_ARGS__))
+#define 𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞(T, A, L, ...) (allocTypeImpl<T>(A, L, __VA_ARGS__))
 
 #define CALC_APPROX_UTILIZATION(P) 1.0f - ((float)P->freecount / (float)P->entrycount)
 
@@ -406,3 +406,9 @@ public:
     //Get new page for evacuation, append old to filled pages
     void allocatorRefreshEvacuationPage() noexcept;
 };
+
+template<typename T, typename... Args>
+inline T* allocTypeImpl(GCAllocator& alloc, __CoreGC::TypeInfoBase* typeinfo, Args... args) 
+{
+    return new (GC_ALLOC_OBJECT(alloc, typeinfo)) T(args...);
+}
