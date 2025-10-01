@@ -10,7 +10,11 @@
 // Used to determine if a pointer points into the data segment of an object
 #define POINTS_TO_DATA_SEG(P) P >= (void*)PAGE_FIND_OBJ_BASE(P) && P < (void*)((char*)PAGE_FIND_OBJ_BASE(P) + PAGE_MASK_EXTRACT_PINFO(P)->entrysize)
 
-#define CHECK_INITIALIZED(O) { if((O) == nullptr) [[unlikely]] { return ; } }
+#ifdef ALLOC_DEBUG_CANARY
+#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData) - ALLOC_DEBUG_CANARY_SIZE) 
+#else 
+#define GET_SLOT_START_FROM_OFFSET(O) (O - sizeof(PageInfo) - sizeof(MetaData)) 
+#endif
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
 static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
@@ -82,8 +86,6 @@ static void computeDeadRootsForDecrement(BSQMemoryTheadLocalInfo& tinfo) noexcep
 
 static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 {
-    CHECK_INITIALIZED(*slots);
-
     __CoreGC::TypeInfoBase* tagged_typeinfo = (__CoreGC::TypeInfoBase*)*slots;
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -217,7 +219,6 @@ static void* forward(void* ptr, BSQMemoryTheadLocalInfo& tinfo)
 static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     void* ptr = *obj;
-    CHECK_INITIALIZED(ptr);
 
     // Root points to root case (may be a false root)
     if(GC_IS_ROOT(ptr) || !GC_IS_YOUNG(ptr)) {
@@ -238,8 +239,6 @@ static inline void updateRef(void** obj, BSQMemoryTheadLocalInfo& tinfo)
 
 static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
-    CHECK_INITIALIZED(*slots);
-
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
@@ -306,13 +305,24 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     GC_REFCT_LOCK_RELEASE();
 }
 
+static inline bool pointsToObjectStart(void* addr) noexcept 
+{
+    uintptr_t offset = reinterpret_cast<uintptr_t>(addr) & PAGE_MASK;
+    if(offset < sizeof(PageInfo)) {
+        return false;
+    }
+
+    PageInfo* p = PageInfo::extractPageFromPointer(addr);
+    uintptr_t start = GET_SLOT_START_FROM_OFFSET(offset);
+
+    return start % p->realsize == 0;
+}
+
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    uintptr_t page_offset = (uintptr_t)addr & PAGE_OFFSET_MASK;
-
-    bool ptrToPageMetaData = page_offset < sizeof(PageInfo);
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) || ptrToPageMetaData) {
-        return ;
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) 
+        || !pointsToObjectStart(addr)) {
+            return ;
     }
 
     MetaData* meta = PageInfo::getObjectMetadataAligned(addr);
@@ -371,11 +381,9 @@ static void walkStack(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
 static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 {
-    CHECK_INITIALIZED(*slots);
-
     MetaData* meta = GC_GET_META_DATA_ADDR(*slots);
-    GC_INVARIANT_CHECK(meta != nullptr);
-
+    GC_CHECK_BOOL_BYTES(meta);
+    
     if(GC_SHOULD_VISIT(meta)) { 
         GC_MARK_AS_MARKED(meta);
         tinfo.visit_stack.push_back({*slots, MARK_STACK_NODE_COLOR_GREY});
@@ -384,8 +392,6 @@ static void markRef(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept
 
 static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slots) noexcept 
 { 
-    CHECK_INITIALIZED(*slots);
-    
     __CoreGC::TypeInfoBase* tagged_typeinfo = static_cast<__CoreGC::TypeInfoBase*>(*slots);
     switch(tagged_typeinfo->tag) {
         case __CoreGC::Tag::Ref: {
