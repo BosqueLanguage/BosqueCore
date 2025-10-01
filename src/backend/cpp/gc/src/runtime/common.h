@@ -277,6 +277,15 @@ do { \
 
 #endif
 
+/*
+Closes #317.
+
+This adds verification that potential roots point to the start of an object (not sure how I made it this far without this check!) and the resetting of metadata when initializing a page to ensure we don't try to access garbage metadata left behind by a page's previous owner. Also added some metadata invariant logic.
+
+There are still likely a few bugs left in the GC and I believe there are still a few subtle logic errors hanging around in the ropes, but this should have all the hacky bandages gone.
+*/
+
+
 #ifdef MEM_STATS
 #define TOTAL_ALLOC_COUNT(E)      (E).mstats.total_alloc_count
 #define TOTAL_ALLOC_MEMORY(E)     (E).mstats.total_alloc_memory
