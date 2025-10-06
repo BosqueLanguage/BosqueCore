@@ -196,11 +196,6 @@ entity ConstructorLambdaExpression provides Expression {
     field body: BodyImplementation;
 }
 
-entity LetExpression provides Expression {
-    field decls: List<(|VarIdentifier, TypeSignature, Expression|)>;
-    field body: Expression;
-}
-
 entity LambdaInvokeExpression provides Expression {
     field isCapturedLambda: Bool;
     field lambda: LambdaTypeSignature;

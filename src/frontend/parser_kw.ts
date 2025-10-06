@@ -64,7 +64,6 @@ const KW_namespace = "namespace";
 const KW_of = "of";
 const KW_provides = "provides";
 const KW_requires = "requires";
-const KW_in = "in";
 const KW_task = "task";
 const KW_datatype = "datatype";
 const KW_using = "using";
@@ -110,7 +109,6 @@ const KeywordStrings = [
     KW_function,
     KW_if,
     KW_implements,
-    KW_in,
     KW_invariant,
     KW_let,
     KW_match,
@@ -347,7 +345,6 @@ export {
     KW_function,
     KW_if,
     KW_implements,
-    KW_in,
     KW_invariant,
     KW_let,
     KW_match,

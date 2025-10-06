@@ -322,7 +322,6 @@ entity BSQToSMTCallGraphBuilder {
             | BSQAssembly::AccessCapturedVariableExpression => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::ConstructorExpression => { return this.processConstructorExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive](current, $e); }
-            | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { return this.processLambdaInvokeArgumentInfo[recursive](current, $e.argsinfo); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive](current, $e); }
             | BSQAssembly::CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive](current, $e); }
@@ -709,7 +708,6 @@ entity MayErrorAnalysis {
             | BSQAssembly::AccessCapturedVariableExpression => { return false; }
             | BSQAssembly::ConstructorExpression => { return this.processConstructorExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e, cerrors, lerrors); }
-            | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { return lerrors.tryGet($e.fname) === true || this.processLambdaInvokeArgumentInfo[recursive]($e.argsinfo, cerrors, lerrors); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, cerrors, lerrors); }

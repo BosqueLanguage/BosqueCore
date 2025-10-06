@@ -1251,7 +1251,6 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         %%| CPPAssembly::ConstructorTypeDeclExpression => { abort; }
         %%| CPPAssembly::ConstructorTypeDeclStringExpression => { abort; } 
         | CPPAssembly::ConstructorLambdaExpression => { return emitConstructorLambdaExpression($e, ctx); }
-        %%| CPPAssembly::LetExpression => { abort; }
         | CPPAssembly::LambdaInvokeExpression => { return emitLambdaInvokeExpression($e, ctx); } 
         | CPPAssembly::CallNamespaceFunctionExpression => { return emitCallNamespaceFunctionExpression($e, ctx); }
         | CPPAssembly::CallTypeFunctionExpression => { return emitCallTypeFunctionExpression($e, ctx); }

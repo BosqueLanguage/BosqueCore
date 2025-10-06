@@ -1077,7 +1077,6 @@ entity CPPTransformer {
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
             | BSQAssembly::ConstructorTypeDeclStringExpression => { abort; }
             | BSQAssembly::ConstructorLambdaExpression => { return this.transformConstructorLambdaExpression($expr); }
-            | BSQAssembly::LetExpression => { abort; }
             | BSQAssembly::LambdaInvokeExpression => { return this.transformLambdaInvokeExpression($expr); }
             | BSQAssembly::CallNamespaceFunctionExpression => { return this.transformCallNamespaceFunctionExpression($expr); } 
             | BSQAssembly::CallTypeFunctionExpression => { return this.transformCallTypeFunctionExpression($expr); }

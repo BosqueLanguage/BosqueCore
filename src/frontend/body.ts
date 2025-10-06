@@ -211,8 +211,6 @@ enum ExpressionTag {
     ConstructorEListExpression = "ConstructorEListExpression",
     ConstructorLambdaExpression = "ConstructorLambdaExpression",
 
-    LetExpression = "LetExpression",
-
     LambdaInvokeExpression = "LambdaInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     SpecialConverterExpression = "SpecialConverterExpression",
@@ -540,22 +538,6 @@ class ConstructorLambdaExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.invoke.emit(fmt);
-    }
-}
-
-class LetExpression extends Expression {
-    readonly decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[];
-    readonly body: Expression;
-
-    constructor(sinfo: SourceInfo, decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[], body: Expression) {
-        super(ExpressionTag.LetExpression, sinfo);
-        this.decls = decls;
-        this.body = body;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)},`).join(", ");
-        return `(let ${dds} in ${this.body.emit(true, fmt)})`;
     }
 }
 
@@ -2371,7 +2353,6 @@ export {
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
-    LetExpression,
     LambdaInvokeExpression,
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
