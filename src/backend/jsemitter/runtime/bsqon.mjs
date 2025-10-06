@@ -167,13 +167,11 @@ const KeywordStrings = [
 const SYM_lbrack = "[";
 const SYM_lparen = "(";
 const SYM_lbrace = "{";
-const SYM_lbrackbar = "[|";
 const SYM_lparenbar = "(|";
 
 const SYM_rbrack = "]";
 const SYM_rparen = ")";
 const SYM_rbrace = "}";
-const SYM_rbrackbar = "|]";
 const SYM_rparenbar = "|)";
 const SYM_langle = "<";
 const SYM_rangle = ">";
@@ -204,7 +202,6 @@ const ParenSymbols = [
     SYM_lbrack,
     SYM_lparen,
     SYM_lbrace,
-    SYM_lbrackbar,
     SYM_lparenbar,
     SYM_langle,
 
@@ -212,7 +209,6 @@ const ParenSymbols = [
     SYM_rparen,
     SYM_rbrace,
     SYM_rparenbar,
-    SYM_rbrackbar,
     SYM_rangle
 
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
