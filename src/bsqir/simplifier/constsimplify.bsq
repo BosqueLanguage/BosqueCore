@@ -10,7 +10,7 @@ entity ConstantSimplification {
     const falseExp: Expression = LiteralSimpleExpression{ SourceInfo{0n, 0n, 0n, 0n}, NominalTypeSignature{SourceInfo{0n, 0n, 0n, 0n}, 'Bool'<TypeKey>}, 'false' };
 
     function isTerminalStatement(stmt: Statement): Bool {
-        return \/(stmt?<ReturnVoidStatement>, stmt?<ReturnSingleStatement>, stmt?<ReturnMultiStatement>, stmt?<AbortStatement>);
+        return stmt?<ReturnVoidStatement> || stmt?<ReturnSingleStatement> || stmt?<ReturnMultiStatement> || stmt?<AbortStatement>;
     }
 
     method processITestTypeAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITestType): PostfixOperation {
@@ -329,54 +329,6 @@ entity ConstantSimplification {
     recursive method processCallTypeFunctionSpecialExpression(e: CallTypeFunctionSpecialExpression): Expression {
         let nexp = this.processUnaryArg[recursive](e.exp);
         return e[exp=nexp];
-    }
-
-    recursive method processLogicActionAndExpression(e: LogicActionAndExpression): Expression {
-        let nargs = this.processArgs(e.args);
-
-        let cfalse = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'false');
-        if(cfalse) {
-            return ConstantSimplification::falseExp;
-        }
-        else {
-            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
-            
-            if(sargs.empty()) {
-                return ConstantSimplification::falseExp;
-            }
-            else {
-                if(sargs.isSingle()) {
-                    return sargs.single();
-                }
-                else {
-                    return e[args=sargs];
-                }
-            }
-        }
-    }
-
-    recursive method processLogicActionOrExpression(e: LogicActionOrExpression): Expression {
-        let nargs = this.processArgs(e.args);
-
-        let ctrue = nargs.someOf(pred(arg) => arg?<LiteralSimpleExpression> && arg@<LiteralSimpleExpression>.value === 'true');
-        if(ctrue) {
-            return ConstantSimplification::trueExp;
-        }
-        else {
-            let sargs = nargs.filter(pred(arg) => arg?!<LiteralSimpleExpression>);
-
-            if(sargs.empty()) {
-                return ConstantSimplification::falseExp;
-            }
-            else {
-                if(sargs.isSingle()) {
-                    return sargs.single();
-                }
-                else {
-                    return e[args=sargs];
-                }
-            }
-        }
     }
 
     recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression): Expression {
@@ -840,8 +792,6 @@ entity ConstantSimplification {
             | CallTypeFunctionSpecialExpression => { return this.processCallTypeFunctionSpecialExpression[recursive]($e); }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
-            | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e); }
-            | LogicActionOrExpression => { return this.processLogicActionOrExpression[recursive]($e); }
             | TypeDeclPrimitiveFieldAccessExpression => { return this.processTypeDeclPrimitiveFieldAccessExpression[recursive]($e); }
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e); }

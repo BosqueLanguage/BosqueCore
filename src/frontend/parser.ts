@@ -3,10 +3,10 @@ import assert from "node:assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, LogicActionAndExpression, LogicActionOrExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lbrackbar, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, SYM_land, SYM_lor } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -49,8 +49,6 @@ const TokenStrings = {
     CString: "[LITERAL_EX_STRING]",
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
     TemplateCString: "[LITERAL_TEMPLATE_EX_STRING]",
-
-    BSQONLiteralImplicitType: "[LITERAL_BSQON_IMPLICIT_TYPE]",
 
     Regex: "[LITERAL_REGEX]",
     PathItem: "[LITERAL_PATH_ITEM]",
@@ -704,35 +702,6 @@ class Lexer {
         }
     }
 
-    private tryLexBSQONLiteral(): boolean {
-        let ncpos = this.jsStrPos;
-        if(this.input.startsWith("bsqon`", this.jsStrPos)) {
-            ncpos += 6;
-        }
-        else {
-            return false;
-        }
-
-        let jepos = this.input.indexOf("`", ncpos); //TODO: this is a bit of a hack for closed parens -- might be ok, just require internal escaping or maybe we rework a bit
-        if(jepos === -1) {
-            this.pushError(new SourceInfo(this.cline, this.linestart, this.jsStrPos, this.jsStrEnd - this.jsStrPos), "Unterminated bsqon literal");
-            this.recordLexToken(this.jsStrEnd, TokenStrings.Error);
-
-            return true;
-        }
-        else {            
-            jepos += 2;
-            let strval = this.input.slice(this.jsStrPos, jepos);
-
-            //TODO we should validate that the string is valid BSQON here
-
-            this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, TokenStrings.BSQONLiteralImplicitType, strval);
-
-            return true;
-        }
-    }
-
     private tryLexCharLike() {
         const cc = this.tryLexCChar();
         if(cc) {
@@ -754,11 +723,6 @@ class Lexer {
 
         const as = this.tryLexCString();
         if(as) {
-            return true;
-        }
-
-        const bsqon = this.tryLexBSQONLiteral();
-        if(bsqon) {
             return true;
         }
 
@@ -3216,36 +3180,6 @@ class Parser {
         return new ConstructorEListExpression(this.peekToken().getSourceInfo(), argl);
     }
 
-    private parseLogicActionAndExpression(): Expression {
-        const sinfo = this.peekToken().getSourceInfo();
-        this.ensureAndConsumeTokenAlways(SYM_land, "logical and expression");
-
-        const aargs = this.parseListOf<Expression>("logical and expression", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            return this.parseExpression();
-        });
-
-        if(aargs.length === 0) {
-            this.recordErrorGeneral(sinfo, "empty logical and-expression is not allowed");
-        }
-
-        return aargs.length === 1 ? aargs[0] : new LogicActionAndExpression(sinfo, aargs);
-    }
-
-    private parseLogicActionOrExpression(): Expression {
-        const sinfo = this.peekToken().getSourceInfo();
-        this.ensureAndConsumeTokenAlways(SYM_lor, "logical or expression");
-
-        const aargs = this.parseListOf<Expression>("logical or expression", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            return this.parseExpression();
-        });
-
-        if(aargs.length === 0) {
-            this.recordErrorGeneral(sinfo, "empty logical or-expression is not allowed");
-        }
-
-        return aargs.length === 1 ? aargs[0] : new LogicActionOrExpression(sinfo, aargs);
-    }
-
     private parseParseAsTypeExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
@@ -3437,12 +3371,6 @@ class Parser {
         else if(tk === SYM_lparenbar) {
             return this.parseEListConstructorExpression();
         }
-        else if(tk === SYM_land) {
-            return this.parseLogicActionAndExpression();
-        }
-        else if (tk === SYM_lor) {
-            return this.parseLogicActionOrExpression();
-        }
         else if(tk === SYM_langle) {
             return this.parseParseAsTypeExpression();
         }
@@ -3522,9 +3450,6 @@ class Parser {
                 else {
                     ops.push(new PostfixAssignFields(sinfo, updates));
                 }
-            }
-            else if(this.testToken(SYM_lbrackbar)) {
-                assert(false, "Not implemented yet -- literal key access");
             }
             else {
                 this.ensureAndConsumeTokenAlways(SYM_dot, "postfix access/update/invoke");
@@ -6003,11 +5928,6 @@ class Parser {
                         this.consumeToken();
                         tdecl.resourceImpactInfo = "{}";
                     }
-                    else if(this.testFollows(SYM_lbrace, SYM_wildcard, SYM_rbrace)) {
-                        this.consumeToken();
-                        tdecl.resourceImpactInfo = this.consumeTokenAndGetValue() as "**";
-                        this.consumeToken();
-                    }
                     else if(this.testFollows(SYM_lbrace, SYM_question, SYM_lbrace)) {
                         this.consumeToken();
                         tdecl.resourceImpactInfo = this.consumeTokenAndGetValue() as "?";
@@ -6116,11 +6036,6 @@ class Parser {
                         this.consumeToken();
                         this.consumeToken();
                         resouceinfo = "{}";
-                    }
-                    else if(this.testFollows(SYM_lbrace, SYM_wildcard, SYM_rbrace)) {
-                        this.consumeToken();
-                        resouceinfo = this.consumeTokenAndGetValue() as "**";
-                        this.consumeToken();
                     }
                     else {
                         resouceinfo = this.parseListOf<ResourceInformation>("task resource section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {

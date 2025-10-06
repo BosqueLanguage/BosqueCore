@@ -154,7 +154,7 @@ namespace CRopeOps {
             let islred = if(t.l)@<Node> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node> then $_.c === Color#Red  else false;
 
-            return !\/(islred, isrred);
+            return !(islred || isrred);
         }
         
         return checkRBChildColorInvariant[recursive](t.l) && checkRBChildColorInvariant[recursive](t.r);
@@ -188,7 +188,7 @@ namespace CRopeOps {
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
     function balanceHelper_RR_LL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -200,8 +200,8 @@ namespace CRopeOps {
         if(lleft)@@!<Node> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lleft.c !== Color#Red) {
             return none;
         }
 
@@ -212,7 +212,7 @@ namespace CRopeOps {
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
     function balanceHelper_RR_LR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -224,8 +224,8 @@ namespace CRopeOps {
         if(lright)@@!<Node> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lright.c !== Color#Red) {
             return none;
         }
 
@@ -236,7 +236,7 @@ namespace CRopeOps {
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
     function balanceHelper_RR_RL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -248,8 +248,8 @@ namespace CRopeOps {
         if(rleft)@@!<Node> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rleft.c !== Color#Red) {
             return none;
         }
 
@@ -260,7 +260,7 @@ namespace CRopeOps {
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
     function balanceHelper_RR_RR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -272,8 +272,8 @@ namespace CRopeOps {
         if(rright)@@!<Node> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rright.c !== Color#Red) {
             return none;
         }
 
@@ -306,7 +306,7 @@ namespace CRopeOps {
             return none;
         }
 
-        if(\/(lleft.c !== Color#Black, lright.c !== Color#Black)) {
+        if(lleft.c !== Color#Black || lright.c !== Color#Black) {
             return none;
         }
 
@@ -339,7 +339,7 @@ namespace CRopeOps {
             return none;
         }
 
-        if(\/(rleft.c !== Color#Black, rright.c !== Color#Black)) {
+        if(rleft.c !== Color#Black || rright.c !== Color#Black) {
             return none;
         }
 

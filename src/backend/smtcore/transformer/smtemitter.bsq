@@ -1040,7 +1040,7 @@ recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, eev: SMT
 }
 
 function doLetIndent(enext: SMTAssembly::Operation): Bool {
-    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetsOperation>, enext?<SMTAssembly::LetOperationWError>, enext?<SMTAssembly::LetWErrorsOperation>);
+    return !(enext?<SMTAssembly::LetOperation> || enext?<SMTAssembly::LetsOperation> || enext?<SMTAssembly::LetOperationWError> || enext?<SMTAssembly::LetWErrorsOperation>);
 }
 
 recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {

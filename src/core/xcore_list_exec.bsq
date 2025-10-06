@@ -70,7 +70,7 @@ namespace ListOps {
 
     function s_sorted_key_merge<T: keytype>(l1: List<T>, l2: List<T>): List<T> {
         let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|List<T>{}, l1, l2|), 
-            pred(state) => !/\(ListOps::s_list_empty<T>(state.1), ListOps::s_list_empty<T>(state.2)),  
+            pred(state) => !(ListOps::s_list_empty<T>(state.1) && ListOps::s_list_empty<T>(state.2)),  
             fn(state) => {
                 %% l1 is empty, append l2
                 if(ListOps::s_list_empty<T>(state.1)) {
@@ -115,7 +115,7 @@ namespace ListOps {
 
     function s_sorted_key_merge_unique<T: keytype>(l1: List<T>, l2: List<T>): List<T> {
         let res, _, _ = Algorithm::while<(|List<T>, List<T>, List<T>|)>((|List<T>{}, l1, l2|), 
-            pred(state) => !/\(ListOps::s_list_empty<T>(state.1), ListOps::s_list_empty<T>(state.2)),  
+            pred(state) => !(ListOps::s_list_empty<T>(state.1) && ListOps::s_list_empty<T>(state.2)),  
             fn(state) => {
                 %% l1 is empty, append l2
                 if(ListOps::s_list_empty<T>(state.1)) {
@@ -392,7 +392,7 @@ namespace ListOps {
             let islred = if(t.l)@<Node<T>> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node<T>> then $_.c === Color#Red  else false;
 
-            return !\/(islred, isrred);
+            return !(islred || isrred);
         }
         
         return checkRBChildColorInvariant[recursive]<T>(t.l) && checkRBChildColorInvariant[recursive]<T>(t.r);
@@ -446,7 +446,7 @@ namespace ListOps {
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
     function balanceHelper_RR_LL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -458,8 +458,8 @@ namespace ListOps {
         if(lleft)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lleft.c !== Color#Red) {
             return none;
         }
 
@@ -470,7 +470,7 @@ namespace ListOps {
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
     function balanceHelper_RR_LR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -482,8 +482,8 @@ namespace ListOps {
         if(lright)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lright.c !== Color#Red) {
             return none;
         }
 
@@ -494,7 +494,7 @@ namespace ListOps {
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
     function balanceHelper_RR_RL<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -506,8 +506,8 @@ namespace ListOps {
         if(rleft)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rleft.c !== Color#Red) {
             return none;
         }
 
@@ -518,7 +518,7 @@ namespace ListOps {
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
     function balanceHelper_RR_RR<T>(c: Color, tleft: Tree<T>, tright: Tree<T>): Option<Node<T>> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -530,8 +530,8 @@ namespace ListOps {
         if(rright)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rright.c !== Color#Red) {
             return none;
         }
 
@@ -564,7 +564,7 @@ namespace ListOps {
             return none;
         }
 
-        if(\/(lleft.c !== Color#Black, lright.c !== Color#Black)) {
+        if(lleft.c !== Color#Black || lright.c !== Color#Black) {
             return none;
         }
 
@@ -597,7 +597,7 @@ namespace ListOps {
             return none;
         }
 
-        if(\/(rleft.c !== Color#Black, rright.c !== Color#Black)) {
+        if(rleft.c !== Color#Black || rright.c !== Color#Black) {
             return none;
         }
 

@@ -82,7 +82,7 @@ entity LambdaGeneratorInfo {
     field largerrors: List<(|BSQAssembly::Identifier, Bool|)>;
 
     function isame(lg1: LambdaGeneratorInfo, lg2: LambdaGeneratorInfo): Bool {
-        if(\/(lg1.invoke !== lg2.invoke, lg1.largerrors.size() !== lg2.largerrors.size())) {
+        if(lg1.invoke !== lg2.invoke || lg1.largerrors.size() !== lg2.largerrors.size()) {
             return false;
         } 
         
@@ -317,7 +317,7 @@ entity SMTTransformer {
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, ttags);
                 
                 let eeid = cctx.errCtr;
-                if(/\(ttags.allOf(pred(aa) => !aa), !this.errinvokes.get(iiv.ikey))) {
+                if(ttags.allOf(pred(aa) => !aa) && !this.errinvokes.get(iiv.ikey)) {
                     return cctx.addError(iiv.exp.sinfo), (|SMTAssembly::CallFunctionSafeExpression{smtikey, args}, eeid|);
                 }
                 else {
@@ -346,7 +346,7 @@ entity SMTTransformer {
             return ctx, this.wrapOperationResult(etype, iilc, binds);
         }
         
-        if(/\(preconds.empty(), postconds.empty())) {
+        if(preconds.empty() && postconds.empty()) {
             if(exp)@<SMTAssembly::CallFunctionSafeExpression> {
                 return ctx, this.wrapOperationResult(etype, $exp, binds);
             }
@@ -599,7 +599,7 @@ entity SMTTransformer {
     recursive method transformCallNamespaceFunctionExpression(e: BSQAssembly::CallNamespaceFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
         if($cinv = ctx.sccCheckInvoke)@some {
-            sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(e.ikey)));
+            sccerr = this.callg.sccs.someOf(pred(scc) => scc.contains($cinv) && scc.contains(e.ikey));
         }
 
         if(sccerr) {
@@ -625,9 +625,9 @@ entity SMTTransformer {
             .filter(pred(aa) => aa?some)
             .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
 
-            let specialrec = /\(sccerr, !ctx.isSCCInternal);
+            let specialrec = sccerr && !ctx.isSCCInternal;
             let fctx = if(!largs.empty()) then nctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{e.ikey, largs})] else nctx;
-            if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(e.ikey))) {
+            if(largs.allOf(pred(aa) => !aa.1) && !this.errinvokes.get(e.ikey)) {
                 let smtikey = TransformNameManager::convertInvokeKeyPlusRecInfo(e.ikey, specialrec, List<Bool>{});
                 let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
 
@@ -646,7 +646,7 @@ entity SMTTransformer {
     recursive method transformCallTypeFunctionExpression(e: BSQAssembly::CallTypeFunctionExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
         if($cinv = ctx.sccCheckInvoke)@some {
-            sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(e.ikey)));
+            sccerr = this.callg.sccs.someOf(pred(scc) => scc.contains($cinv) && scc.contains(e.ikey));
         }
 
         if(sccerr) {
@@ -672,9 +672,9 @@ entity SMTTransformer {
             .filter(pred(aa) => aa?some)
             .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
 
-            let specialrec = /\(sccerr, !ctx.isSCCInternal);
+            let specialrec = sccerr && !ctx.isSCCInternal;
             let fctx = if(!largs.empty()) then nctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{e.ikey, largs})] else nctx;
-            if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(e.ikey))) {
+            if(largs.allOf(pred(aa) => !aa.1) && !this.errinvokes.get(e.ikey)) {
                 let smtikey = TransformNameManager::convertInvokeKeyPlusRecInfo(e.ikey, specialrec, List<Bool>{});
                 let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
 
@@ -688,22 +688,6 @@ entity SMTTransformer {
                 return this.wrapPreAndPostCondidtionsOperationResult(fctx, ikeylmap, aargs, e.etype, callop, obinds, optinline, fdecl.preconditions, fdecl.postconditions);
             }
         }
-    }
-
-    recursive method transformLogicActionAndExpression(e: BSQAssembly::LogicActionAndExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
-        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
-
-        let logicop = SMTAssembly::LogicActionAndExpression{aargs};
-        return nctx, this.wrapOperationResult(e.etype, logicop, obinds);
-    }
-
-    recursive method transformLogicActionOrExpression(e: BSQAssembly::LogicActionOrExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
-        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
-
-        let logicop = SMTAssembly::LogicActionOrExpression{aargs};
-        return nctx, this.wrapOperationResult(e.etype, logicop, obinds); 
     }
 
     recursive method transformTypeDeclPrimitiveFieldAccessExpression(e: BSQAssembly::TypeDeclPrimitiveFieldAccessExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -990,11 +974,11 @@ entity SMTTransformer {
     recursive method processPostfixInvokeStatic(op: BSQAssembly::PostfixInvokeStatic, ctx: SMTTransformerCtx, bexp: SMTExpTransformResult): SMTTransformerCtx, SMTExpTransformResult {
         var sccerr = false;
         if($cinv = ctx.sccCheckInvoke)@some {
-            sccerr = this.callg.sccs.someOf(pred(scc) => /\(scc.contains($cinv), scc.contains(op.resolvedTrgt)));
+            sccerr = this.callg.sccs.someOf(pred(scc) => scc.contains($cinv) && scc.contains(op.resolvedTrgt));
         }
         
         let smdecl = this.assembly.tryLookupInvokeImplDeclaration(op.resolvedTrgt)@some;
-        if(/\(sccerr, ctx.isSCCInternal)) {
+        if(sccerr && ctx.isSCCInternal) {
             let abtop = SMTAssembly::AbortExpression{this.transformStdTypeToSMT(smdecl.resultType), SMTEmitter::s_invalidErrTrgt};
             return ctx, ErrorResult{this.transformStdTypeToSMT(smdecl.resultType), abtop};
         }
@@ -1034,9 +1018,9 @@ entity SMTTransformer {
             .filter(pred(aa) => aa?some)
             .map<(|BSQAssembly::Identifier, Bool|)>(fn(aa) => aa@some);
         
-            let specialrec = /\(sccerr, !ctx.isSCCInternal);
+            let specialrec = sccerr && !ctx.isSCCInternal;
             let smctx = if(!largs.empty()) then scnctx[lambdagen=$lambdagen.pushBack(LambdaGeneratorInfo{op.resolvedTrgt, largs})] else scnctx;
-            if(/\(largs.allOf(pred(aa) => !aa.1), !this.errinvokes.get(op.resolvedTrgt))) {
+            if(largs.allOf(pred(aa) => !aa.1) && !this.errinvokes.get(op.resolvedTrgt)) {
                 let smtikey = TransformNameManager::convertInvokeKeyPlusRecInfo(op.resolvedTrgt, specialrec, List<Bool>{});
                 let callop = SMTAssembly::CallFunctionSafeExpression{smtikey, aargs};
 
@@ -1529,12 +1513,6 @@ entity SMTTransformer {
             }
             | BSQAssembly::CallTypeFunctionExpression => { 
                 return this.transformCallTypeFunctionExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::LogicActionAndExpression => { 
-                return this.transformLogicActionAndExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::LogicActionOrExpression => { 
-                return this.transformLogicActionOrExpression[recursive]($exp, ctx);
             }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { 
                 return this.transformTypeDeclPrimitiveFieldAccessExpression[recursive]($exp, ctx);
@@ -2125,7 +2103,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2172,7 +2150,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2237,7 +2215,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2304,7 +2282,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2380,7 +2358,7 @@ entity SMTTransformer {
                     params = params.pushBack(SMTAssembly::InvokeParameterDecl{'$return'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(idecl.resultType)});
                 }
 
-                let mayerr = \/(this.errinvokes.get(cond.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(cond.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2607,7 +2585,7 @@ entity SMTTransformer {
         if(bsqnsdecl)@some {
             let isinline = $bsqnsdecl.attributes.someOf(pred(a) => a.name === '__inline'<BSQAssembly::Identifier>);
 
-            if(/\(!isinline, $bsqnsdecl.body?<BSQAssembly::StandardBodyImplementation>)) {
+            if(!isinline && $bsqnsdecl.body?<BSQAssembly::StandardBodyImplementation>) {
                 let ffinfo = this.transformNamespaceFunctionDeclToSMT($bsqnsdecl, lambdainvs);
                 return some(ffinfo);
             }
@@ -2620,7 +2598,7 @@ entity SMTTransformer {
         if(bsqtfdecl)@some {
             let isinline = $bsqtfdecl.attributes.someOf(pred(a) => a.name === '__inline'<BSQAssembly::Identifier>);
 
-            if(/\(!isinline, $bsqtfdecl.body?<BSQAssembly::StandardBodyImplementation>)) {
+            if(!isinline && $bsqtfdecl.body?<BSQAssembly::StandardBodyImplementation>) {
                 let ffinfo = this.transformTypeFunctionDeclToSMT($bsqtfdecl, lambdainvs);
                 return some(ffinfo);
             }
@@ -2846,7 +2824,7 @@ entity SMTTransformer {
         let smtsometype = TransformNameManager::convertTypeKey(tdecl.someType.tkeystr);
         let vvaraccess = SMTAssembly::AccessVariableExpression{SMTTransformer::vvariable};
 
-        if(/\(!isroot, this.assembly.typetopo.isTypeInSCC(tdecl.someType.tkeystr))) {
+        if(!isroot && this.assembly.typetopo.isTypeInSCC(tdecl.someType.tkeystr)) {
             let ntest = SMTAssembly::BinKeyEqNoneExpression{vvaraccess};
             return SMTAssembly::Body{ SMTAssembly::ReturnOperation{ntest}, List<SMTAssembly::ErrorInfo>{} };
         }
@@ -2961,7 +2939,7 @@ entity SMTTransformer {
     }
 
     function isConstDeclARegex(tt: BSQAssembly::TypeSignature): Bool {
-        return \/(tt.tkeystr === 'Regex'<BSQAssembly::TypeKey> || tt.tkeystr === 'CRegex'<BSQAssembly::TypeKey>);
+        return tt.tkeystr === 'Regex'<BSQAssembly::TypeKey> || tt.tkeystr === 'CRegex'<BSQAssembly::TypeKey>;
     }
 
     method transformAssemblyCodeToSMT(): SMTAssembly::Assembly {

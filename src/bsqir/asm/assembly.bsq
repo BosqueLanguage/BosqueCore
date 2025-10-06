@@ -147,7 +147,7 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field allValidates: List<SaturatedInvariantInfo>;
 
     method hasValidates(): Bool {
-        return \/(!this.allInvariants.empty(), !this.allValidates.empty());
+        return !this.allInvariants.empty() || !this.allValidates.empty();
     }
 
     method hasInvariants(): Bool {
@@ -584,11 +584,11 @@ entity Assembly {
     recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
         match(exp)@ {
             AccessNamespaceConstantExpression => {
-                let cc = this.nsconsts.find(pred(nsconst) => /\(nsconst.name === $exp.name, nsconst.declaredInNS === $exp.ns));
+                let cc = this.nsconsts.find(pred(nsconst) => nsconst.name === $exp.name && nsconst.declaredInNS === $exp.ns);
                 return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
             }
             | AccessStaticFieldExpression => {
-                let cc = this.typeconsts.find(pred(tconst) => /\(tconst.name === $exp.name, tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr));
+                let cc = this.typeconsts.find(pred(tconst) => tconst.name === $exp.name && tconst.declaredInType.tkeystr === $exp.resolvedDeclType.tkeystr);
                 return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
             }
             | AccessEnumExpression => {

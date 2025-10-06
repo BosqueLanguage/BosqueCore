@@ -222,9 +222,6 @@ enum ExpressionTag {
     CallRefThisExpression = "CallRefThisExpression",
     CallRefSelfExpression = "CallRefSelfExpression",
     CallTaskActionExpression = "CallTaskActionExpression",
-    
-    LogicActionAndExpression = "LogicActionAndExpression",
-    LogicActionOrExpression = "LogicActionOrExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
     SafeConvertExpression = "SafeConvertExpression",
@@ -772,32 +769,6 @@ class CallTaskActionExpression extends Expression {
         }
 
         return `do self.${this.name}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class LogicActionAndExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionAndExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `/\\(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
-    }
-}
-
-class LogicActionOrExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionOrExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `\\/(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
     }
 }
 
@@ -2409,7 +2380,6 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
-    LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,

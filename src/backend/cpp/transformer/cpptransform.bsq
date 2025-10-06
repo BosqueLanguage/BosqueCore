@@ -627,20 +627,6 @@ entity CPPTransformer {
         }
     }
 
-    recursive method transformLogicActionAndExpression(expr: BSQAssembly::LogicActionAndExpression): CPPAssembly::LogicActionAndExpression {
-        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
-        let cpptype = this.convertTypeSignature(expr.etype);
-
-        return CPPAssembly::LogicActionAndExpression{cpptype, args};
-    }
-
-    recursive method transformLogicActionOrExpression(expr: BSQAssembly::LogicActionOrExpression): CPPAssembly::LogicActionOrExpression {
-        let args = expr.args.map<CPPAssembly::Expression>(fn(e) => this.transformExpressionToCpp(e));
-        let cpptype = this.convertTypeSignature(expr.etype);
-
-        return CPPAssembly::LogicActionOrExpression{cpptype, args};
-    }
-
     method transformArguments(al: Option<List<BSQAssembly::Expression>>): List<CPPAssembly::Expression> { 
         if(al)@none {
             return List<CPPAssembly::Expression>{};
@@ -1098,8 +1084,6 @@ entity CPPTransformer {
             | BSQAssembly::CallTypeFunctionSpecialExpression => { return this.transformCallTypeFunctionSpecialExpression($expr); }
             | BSQAssembly::CallRefInvokeStaticResolveExpression => { abort; }
             | BSQAssembly::CallRefInvokeVirtualExpression => { abort; }
-            | BSQAssembly::LogicActionAndExpression => { return this.transformLogicActionAndExpression[recursive]($expr); }
-            | BSQAssembly::LogicActionOrExpression => { return this.transformLogicActionOrExpression[recursive]($expr); }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
             | BSQAssembly::CoerceWidenTypeExpression => { return this.transformCoerceWidenTypeExpression($expr); }   
             | BSQAssembly::CoerceNarrowTypeExpression => { return this.transformCoerceNarrowTypeExpression($expr); }
