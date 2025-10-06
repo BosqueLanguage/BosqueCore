@@ -271,14 +271,6 @@ entity AccessNamespaceConstantExpression provides Expression {
     field name: Identifier;
 }
 
-entity LogicActionAndExpression provides Expression {
-    field args: List<Expression>;
-}
-
-entity LogicActionOrExpression provides Expression {
-    field args: List<Expression>;
-}
-
 datatype UnaryExpression provides Expression using {
     field expr: Expression;
 }

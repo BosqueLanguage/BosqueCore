@@ -42,17 +42,17 @@ entity Board {
 
     method checkWinner(player: PlayerMark): Bool {
         %%check rows across
-        if(\/(this.check3(0n, 0n, 0n, 1n, 0n, 2n, player), this.check3(1n, 0n, 1n, 1n, 1n, 2n, player), this.check3(2n, 0n, 2n, 1n, 2n, 2n, player))) {
+        if(this.check3(0n, 0n, 0n, 1n, 0n, 2n, player) || this.check3(1n, 0n, 1n, 1n, 1n, 2n, player) || this.check3(2n, 0n, 2n, 1n, 2n, 2n, player)) {
             return true;
         }
 
         %%check columns down
-        if(\/(this.check3(0n, 0n, 1n, 0n, 2n, 0n, player), this.check3(0n, 1n, 1n, 1n, 2n, 1n, player), this.check3(0n, 2n, 1n, 2n, 2n, 2n, player))) {
+        if(this.check3(0n, 0n, 1n, 0n, 2n, 0n, player) || this.check3(0n, 1n, 1n, 1n, 2n, 1n, player) || this.check3(0n, 2n, 1n, 2n, 2n, 2n, player)) {
             return true;
         }
 
         %%check diagonals
-        if(\/(this.check3(0n, 0n, 1n, 1n, 2n, 2n, player), this.check3(0n, 2n, 1n, 1n, 2n, 0n, player))) {
+        if(this.check3(0n, 0n, 1n, 1n, 2n, 2n, player) || this.check3(0n, 2n, 1n, 1n, 2n, 0n, player)) {
             return true;
         }
 

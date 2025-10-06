@@ -83,7 +83,7 @@ enum ExpertiseLevel {
 }
 
 function decide(forecast: Forecast, rentalinfo: RentalAvailabilityInfo, requestedQuantity: Nat, allowPartials: Bool): (|Nat, Reason|) {
-    let isClosed = \/(categorizeWinds(forecast.winds.max) === WindCategory#dangerous, forecast.info === ForecastDetail#thunderstorms);
+    let isClosed = categorizeWinds(forecast.winds.max) === WindCategory#dangerous || forecast.info === ForecastDetail#thunderstorms;
     let availability = (rentalinfo.inventory + rentalinfo.returns) - rentalinfo.reservations;
     
     if(isClosed) {

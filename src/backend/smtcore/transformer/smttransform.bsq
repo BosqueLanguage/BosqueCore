@@ -82,7 +82,7 @@ entity LambdaGeneratorInfo {
     field largerrors: List<(|BSQAssembly::Identifier, Bool|)>;
 
     function isame(lg1: LambdaGeneratorInfo, lg2: LambdaGeneratorInfo): Bool {
-        if(\/(lg1.invoke !== lg2.invoke, lg1.largerrors.size() !== lg2.largerrors.size())) {
+        if(lg1.invoke !== lg2.invoke || lg1.largerrors.size() !== lg2.largerrors.size()) {
             return false;
         } 
         
@@ -688,22 +688,6 @@ entity SMTTransformer {
                 return this.wrapPreAndPostCondidtionsOperationResult(fctx, ikeylmap, aargs, e.etype, callop, obinds, optinline, fdecl.preconditions, fdecl.postconditions);
             }
         }
-    }
-
-    recursive method transformLogicActionAndExpression(e: BSQAssembly::LogicActionAndExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
-        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
-
-        let logicop = SMTAssembly::LogicActionAndExpression{aargs};
-        return nctx, this.wrapOperationResult(e.etype, logicop, obinds);
-    }
-
-    recursive method transformLogicActionOrExpression(e: BSQAssembly::LogicActionOrExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
-        let tctx, subexps = e.args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
-        let aargs, nctx, obinds = this.unpackExpressionErrors(subexps, tctx);
-
-        let logicop = SMTAssembly::LogicActionOrExpression{aargs};
-        return nctx, this.wrapOperationResult(e.etype, logicop, obinds); 
     }
 
     recursive method transformTypeDeclPrimitiveFieldAccessExpression(e: BSQAssembly::TypeDeclPrimitiveFieldAccessExpression, ctx: SMTTransformerCtx): SMTTransformerCtx, SMTExpTransformResult {
@@ -1530,12 +1514,6 @@ entity SMTTransformer {
             | BSQAssembly::CallTypeFunctionExpression => { 
                 return this.transformCallTypeFunctionExpression[recursive]($exp, ctx);
             }
-            | BSQAssembly::LogicActionAndExpression => { 
-                return this.transformLogicActionAndExpression[recursive]($exp, ctx);
-            }
-            | BSQAssembly::LogicActionOrExpression => { 
-                return this.transformLogicActionOrExpression[recursive]($exp, ctx);
-            }
             | BSQAssembly::TypeDeclPrimitiveFieldAccessExpression => { 
                 return this.transformTypeDeclPrimitiveFieldAccessExpression[recursive]($exp, ctx);
             }
@@ -2125,7 +2103,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2172,7 +2150,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2237,7 +2215,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2304,7 +2282,7 @@ entity SMTTransformer {
                     return SMTAssembly::InvokeParameterDecl{SMTAssembly::Identifier::from(p.pname.value), this.transformParamTypeToSMT(p.ptype, islerr)};
                 });
 
-                let mayerr = \/(this.errinvokes.get(decl.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(decl.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2380,7 +2358,7 @@ entity SMTTransformer {
                     params = params.pushBack(SMTAssembly::InvokeParameterDecl{'$return'<SMTAssembly::Identifier>, this.transformStdTypeToSMT(idecl.resultType)});
                 }
 
-                let mayerr = \/(this.errinvokes.get(cond.ikey), lgi.largerrors.someOf(pred(gg) => gg.1));
+                let mayerr = this.errinvokes.get(cond.ikey) || lgi.largerrors.someOf(pred(gg) => gg.1);
                 let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
@@ -2961,7 +2939,7 @@ entity SMTTransformer {
     }
 
     function isConstDeclARegex(tt: BSQAssembly::TypeSignature): Bool {
-        return \/(tt.tkeystr === 'Regex'<BSQAssembly::TypeKey> || tt.tkeystr === 'CRegex'<BSQAssembly::TypeKey>);
+        return tt.tkeystr === 'Regex'<BSQAssembly::TypeKey> || tt.tkeystr === 'CRegex'<BSQAssembly::TypeKey>;
     }
 
     method transformAssemblyCodeToSMT(): SMTAssembly::Assembly {

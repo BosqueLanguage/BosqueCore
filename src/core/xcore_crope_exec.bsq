@@ -154,7 +154,7 @@ namespace CRopeOps {
             let islred = if(t.l)@<Node> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node> then $_.c === Color#Red  else false;
 
-            return !\/(islred, isrred);
+            return !(islred || isrred);
         }
         
         return checkRBChildColorInvariant[recursive](t.l) && checkRBChildColorInvariant[recursive](t.r);
@@ -200,8 +200,8 @@ namespace CRopeOps {
         if(lleft)@@!<Node> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lleft.c !== Color#Red) {
             return none;
         }
 
@@ -224,8 +224,8 @@ namespace CRopeOps {
         if(lright)@@!<Node> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lright.c !== Color#Red) {
             return none;
         }
 
@@ -248,8 +248,8 @@ namespace CRopeOps {
         if(rleft)@@!<Node> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rleft.c !== Color#Red) {
             return none;
         }
 
@@ -272,8 +272,8 @@ namespace CRopeOps {
         if(rright)@@!<Node> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rright.c !== Color#Red) {
             return none;
         }
 
@@ -306,7 +306,7 @@ namespace CRopeOps {
             return none;
         }
 
-        if(\/(lleft.c !== Color#Black, lright.c !== Color#Black)) {
+        if(lleft.c !== Color#Black || lright.c !== Color#Black) {
             return none;
         }
 
@@ -339,7 +339,7 @@ namespace CRopeOps {
             return none;
         }
 
-        if(\/(rleft.c !== Color#Black, rright.c !== Color#Black)) {
+        if(rleft.c !== Color#Black || rright.c !== Color#Black) {
             return none;
         }
 

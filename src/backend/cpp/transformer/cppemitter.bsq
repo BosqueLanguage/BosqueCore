@@ -544,16 +544,6 @@ recursive function emitBinLogicExpression(e: CPPAssembly::BinLogicExpression, ct
     }
 }
 
-recursive function emitLogicActionAndExpression(e: CPPAssembly::LogicActionAndExpression, ctx: Context): String {
-    let args = e.args.map<String>(fn(expr) => emitExpression[recursive](expr, ctx));
-    return String::concat("(", String::joinAll(" && ", args), ")");
-}
-
-recursive function emitLogicActionOrExpression(e: CPPAssembly::LogicActionOrExpression, ctx: Context): String {
-    let args = e.args.map<String>(fn(expr) => emitExpression[recursive](expr, ctx));
-    return String::concat("(", String::joinAll(" || ", args), ")");
-}
-
 function emitArguments(al: List<CPPAssembly::Expression>, ctx: Context): String {
     let emit_al = al.map<String>(fn(arg) => emitExpression(arg, ctx));
     return String::joinAll(", ", emit_al);
@@ -1268,8 +1258,6 @@ function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
         | CPPAssembly::CallTypeFunctionSpecialExpression => { return emitCallTypeFunctionSpecialExpression($e, ctx); }
         %%| CPPAssembly::CallRefInvokeStaticResolveExpression => { abort; }
         %%| CPPAssembly::CallRefInvokeVirtualExpression => { abort; } 
-        | CPPAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, ctx); }
-        | CPPAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, ctx); }       
         %%| CPPAssembly::TypeDeclPrimitiveFieldAccessExpression => { abort; }
         | CPPAssembly::CoerceWidenTypeExpression => { return emitWidenedTypeExpression($e, ctx); }
         | CPPAssembly::CoerceNarrowTypeExpression => { return emitNarrowedTypeExpression($e, ctx); }

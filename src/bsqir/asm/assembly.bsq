@@ -147,7 +147,7 @@ concept AbstractNominalTypeDecl provides AbstractDecl {
     field allValidates: List<SaturatedInvariantInfo>;
 
     method hasValidates(): Bool {
-        return \/(!this.allInvariants.empty(), !this.allValidates.empty());
+        return !this.allInvariants.empty() || !this.allValidates.empty();
     }
 
     method hasInvariants(): Bool {

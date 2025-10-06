@@ -392,7 +392,7 @@ namespace ListOps {
             let islred = if(t.l)@<Node<T>> then $_.c === Color#Red  else false;
             let isrred = if(t.r)@<Node<T>> then $_.c === Color#Red  else false;
 
-            return !\/(islred, isrred);
+            return !(islred || isrred);
         }
         
         return checkRBChildColorInvariant[recursive]<T>(t.l) && checkRBChildColorInvariant[recursive]<T>(t.r);
@@ -458,8 +458,8 @@ namespace ListOps {
         if(lleft)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lleft.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lleft.c !== Color#Red) {
             return none;
         }
 
@@ -482,8 +482,8 @@ namespace ListOps {
         if(lright)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tleft.c !== Color#Red, lright.c !== Color#Red)) {
+
+        if(tleft.c !== Color#Red || lright.c !== Color#Red) {
             return none;
         }
 
@@ -506,8 +506,8 @@ namespace ListOps {
         if(rleft)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rleft.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rleft.c !== Color#Red) {
             return none;
         }
 
@@ -530,8 +530,8 @@ namespace ListOps {
         if(rright)@@!<Node<T>> {
             return none;
         }
-            
-        if(\/(tright.c !== Color#Red, rright.c !== Color#Red)) {
+
+        if(tright.c !== Color#Red || rright.c !== Color#Red) {
             return none;
         }
 
@@ -564,7 +564,7 @@ namespace ListOps {
             return none;
         }
 
-        if(\/(lleft.c !== Color#Black, lright.c !== Color#Black)) {
+        if(lleft.c !== Color#Black || lright.c !== Color#Black) {
             return none;
         }
 
@@ -597,7 +597,7 @@ namespace ListOps {
             return none;
         }
 
-        if(\/(rleft.c !== Color#Black, rright.c !== Color#Black)) {
+        if(rleft.c !== Color#Black || rright.c !== Color#Black) {
             return none;
         }
 

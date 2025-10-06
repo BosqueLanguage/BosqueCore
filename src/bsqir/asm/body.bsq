@@ -259,14 +259,6 @@ CallRefVariableVirtualExpression { }
 | CallRefSelfVirtualExpression { }
 ;
 
-entity LogicActionAndExpression provides Expression {
-    field args: List<Expression>;
-}
-
-entity LogicActionOrExpression provides Expression {
-    field args: List<Expression>;
-}
-
 entity TypeDeclPrimitiveFieldAccessExpression provides Expression {
     field exp: Expression;
 }

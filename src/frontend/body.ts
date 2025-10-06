@@ -222,9 +222,6 @@ enum ExpressionTag {
     CallRefThisExpression = "CallRefThisExpression",
     CallRefSelfExpression = "CallRefSelfExpression",
     CallTaskActionExpression = "CallTaskActionExpression",
-    
-    LogicActionAndExpression = "LogicActionAndExpression",
-    LogicActionOrExpression = "LogicActionOrExpression",
 
     ParseAsTypeExpression = "ParseAsTypeExpression",
     SafeConvertExpression = "SafeConvertExpression",

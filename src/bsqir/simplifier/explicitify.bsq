@@ -343,32 +343,6 @@ entity ExplicitifyTransform {
         return e[exp=cexp];
     }
 
-    recursive method processLogicActionAndExpression(e: LogicActionAndExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
-
-        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
-        if(restype)@!<TypedeclTypeDecl> {
-            return e[args=nargs];            
-        }
-        else {
-            let nbop = e[etype=$restype.valuetype, args=nargs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
-        }
-    }
-
-    recursive method processLogicActionOrExpression(e: LogicActionOrExpression, vmap: VarMapping): Expression {
-        let nargs = this.processArgs(e.args, vmap).map<Expression>(fn(ee) => this.processExplicitBoolConvertAsNeeded(ee));
-
-        let restype = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr);
-        if(restype)@!<TypedeclTypeDecl> {
-            return e[args=nargs];            
-        }
-        else {
-            let nbop = e[etype=$restype.valuetype, args=nargs];
-            return ConstructorTypeDeclExpression{ e.sinfo, e.etype, e.etype@<NominalTypeSignature>, nbop, $restype.valuetype };
-        }
-    }
-
     recursive method processTypeDeclPrimitiveFieldAccessExpression(e: TypeDeclPrimitiveFieldAccessExpression, vmap: VarMapping): Expression {
         let nexp = this.processUnaryArg[recursive](e.exp, vmap);
 
@@ -667,8 +641,6 @@ entity ExplicitifyTransform {
             | CallTypeFunctionSpecialExpression => { return this.processCallTypeFunctionSpecialExpression[recursive]($e, vmap); }
             | CallRefInvokeStaticResolveExpression => { abort; }
             | CallRefInvokeVirtualExpression => { abort; }
-            | LogicActionAndExpression => { return this.processLogicActionAndExpression[recursive]($e, vmap); }
-            | LogicActionOrExpression => { return this.processLogicActionOrExpression[recursive]($e, vmap); }
             | TypeDeclPrimitiveFieldAccessExpression => { return this.processTypeDeclPrimitiveFieldAccessExpression[recursive]($e, vmap); }
             | CoerceNarrowTypeExpression => { return this.processCoerceNarrowTypeExpression[recursive]($e, vmap); }
             | CoerceWidenTypeExpression => { return this.processCoerceWidenTypeExpression[recursive]($e, vmap); }

@@ -801,8 +801,6 @@ recursive function emitSafeExpression(e: SMTAssembly::SafeExpression, eev: SMTEm
         | SMTAssembly::CallForceInlineExpression => { return emitCallForceInlineExpression[recursive]($e, eev); }
         | SMTAssembly::CallFunctionSafeExpression => { return emitCallFunctionSafeExpression[recursive]($e, eev); }
         | SMTAssembly::CallLambdaFunctionSafeExpression => { return emitCallLambdaFunctionSafeExpression[recursive]($e, eev); }
-        | SMTAssembly::LogicActionAndExpression => { return emitLogicActionAndExpression[recursive]($e, eev); }
-        | SMTAssembly::LogicActionOrExpression => { return emitLogicActionOrExpression[recursive]($e, eev); }
         | SMTAssembly::UnwrapTypeDeclToPrimitiveExpression => { return emitUnwrapTypeDeclToPrimitiveExpression($e, eev); }
         | SMTAssembly::AccessFromNameResolvedExpression => { return emitAccessFromNameResolvedExpression[recursive]($e, eev); }
         | SMTAssembly::AccessFromNameVirtualExpression => { return emitAccessFromNameVirtualExpression[recursive]($e, eev); }
@@ -1040,7 +1038,7 @@ recursive function emitAssumeOperation(e: SMTAssembly::AssumeOperation, eev: SMT
 }
 
 function doLetIndent(enext: SMTAssembly::Operation): Bool {
-    return !\/(enext?<SMTAssembly::LetOperation>, enext?<SMTAssembly::LetsOperation>, enext?<SMTAssembly::LetOperationWError>, enext?<SMTAssembly::LetWErrorsOperation>);
+    return !(enext?<SMTAssembly::LetOperation> || enext?<SMTAssembly::LetsOperation> || enext?<SMTAssembly::LetOperationWError> || enext?<SMTAssembly::LetWErrorsOperation>);
 }
 
 recursive function emitLetOperation(e: SMTAssembly::LetOperation, eev: SMTEmitterEnv, indent: Option<CString>): CString {
