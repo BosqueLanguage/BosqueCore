@@ -785,7 +785,6 @@ entity ConstantSimplification {
             | AccessCapturedVariableExpression => { return e; }
             | ConstructorExpression => { return this.processConstructorExpression[recursive]($e); }
             | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e); }
-            | LetExpression => { abort; }
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e); }
             | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e); }

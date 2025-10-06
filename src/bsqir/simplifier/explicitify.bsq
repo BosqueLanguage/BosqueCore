@@ -634,7 +634,6 @@ entity ExplicitifyTransform {
             | AccessCapturedVariableExpression => { return this.processAccessCapturedVariableExpression($e, vmap); }
             | ConstructorExpression => { return this.processConstructorExpression[recursive]($e, vmap); }
             | ConstructorLambdaExpression => { return this.processConstructorLambdaExpression[recursive]($e, vmap); }
-            | LetExpression => { abort; }
             | LambdaInvokeExpression => { return this.processLambdaInvokeExpression[recursive]($e, vmap); }
             | CallNamespaceFunctionExpression => { return this.processCallNamespaceFunctionExpression[recursive]($e, vmap); }
             | CallTypeFunctionExpression => { return this.processCallTypeFunctionExpression[recursive]($e, vmap); }
