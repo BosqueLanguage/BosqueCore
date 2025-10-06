@@ -171,6 +171,7 @@ const GeneralAttributes = [
 
 const APIDeclAttributes = [
     "export",
+    "pure",
     "deterministic",
     "idempotent",
 ];
@@ -178,7 +179,7 @@ const APIDeclAttributes = [
 const InvokeAttributes = [
     "abstract",
     "override",
-    "virtual",
+    "virtual"
 ];
 
 const AllAttributes = [
@@ -200,10 +201,7 @@ const CoreOnlyAttributes = [
 
 const TermRestrictions = [
     "keytype",
-    "numeric",
-    "revalidator",
-    "crevalidator",
-    "pathvalidator",
+    "numeric"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -36,7 +36,7 @@ namespace AlgorithmOps {
 }
 
 namespace Algorithm {
-    __intrinsic_error recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = s_algo_while;
+    recursive? function while<T>(s: T, guard: recursive? pred(T) -> Bool, op: recursive? fn(T) -> T): T = s_algo_while;
 
     recursive? function worklist<S, T: keytype>(s: S, init: List<T>, proc: recursive? fn(S, T) -> (|S, List<T>|)): S {
         let wl = init;
