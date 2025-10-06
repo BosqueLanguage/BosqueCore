@@ -234,8 +234,6 @@ const SYM_dot = ".";
 const SYM_eq = "=";
 const SYM_semicolon = ";";
 const SYM_question = "?";
-const SYM_land = "/\\";
-const SYM_lor = "\\/";
 const SYM_dotdotdot = "...";
 const SYM_HOLE = "$?_";
 
@@ -260,10 +258,6 @@ const SYM_gteq = " >= ";
 const SYM_minus = " - ";
 const SYM_times = " * ";
 const SYM_div = " // ";
-const SYM_wildcard = "**";
-
-//Reserved
-const SYM_questionquestion = "??";
 
 const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lparenbar, SYM_lbracebar, SYM_langle];
 const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rparenbar, SYM_rbracebar, SYM_rangle];
@@ -280,15 +274,11 @@ const StandardSymbols = [
     SYM_eq,
     SYM_semicolon,
     SYM_question,
-    SYM_land,
-    SYM_lor,
     SYM_dotdotdot,
     SYM_HOLE,
-    SYM_wildcard,
-
+    
     SYM_atat,
-    SYM_hash,
-    SYM_questionquestion
+    SYM_hash
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const SpaceRequiredSymbols = [
@@ -429,12 +419,9 @@ export {
     SYM_eq,
     SYM_semicolon,
     SYM_question,
-    SYM_land,
-    SYM_lor,
     SYM_dotdotdot,
     SYM_HOLE,
-    SYM_wildcard,
-
+    
     SYM_positive,
     SYM_negate,
 

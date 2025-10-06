@@ -425,7 +425,7 @@ __internal __typedeclable __typebase entity DateTime provides Some {
     __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneString): DateTime = datetime_create;
 
     function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneString): DateTime
-        requires /\(1900n <= year, year <= 2200n);
+        requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
@@ -440,7 +440,7 @@ __internal __typedeclable __typebase entity UTCDateTime provides Some, KeyType {
     __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime = utcdatetime_create;
 
     function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime
-        requires /\(1900n <= year, year <= 2200n);
+        requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
@@ -455,7 +455,7 @@ __internal __typedeclable __typebase entity PlainDate provides Some, KeyType {
     __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): PlainDate = plaindate_create;
 
     function create(year: Nat, month: Nat, day: Nat): PlainDate
-        requires /\(1900n <= year, year <= 2200n);
+        requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
     {
@@ -500,7 +500,7 @@ __internal __typedeclable __typebase entity ISOTimeStamp provides Some, KeyType 
     __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp = isotimestamp_create;
 
     function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp
-        requires /\(1900n <= year, year <= 2200n);
+        requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;

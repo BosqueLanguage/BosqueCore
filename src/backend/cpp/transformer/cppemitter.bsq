@@ -2366,7 +2366,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
     let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
-        return if(/\(asm.isPrimtitiveType(tk), tk.value !== 'CString', tk.value !== 'String')) 
+        return if(asm.isPrimtitiveType(tk) && tk.value !== 'CString' && tk.value !== 'String') 
             then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) 
             else acc;
     }); 

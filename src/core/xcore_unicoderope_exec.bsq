@@ -133,7 +133,7 @@ namespace UnicodeRopeOps {
 
     %% Case where we have a double red violation on LL side -- tleft = Node{Red, _, Node{Red, _ a, b}, c}
     function balanceHelper_RR_LL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -157,7 +157,7 @@ namespace UnicodeRopeOps {
 
     %% Case where we have a double red violation on LR side -- tleft = Node{Red, _, a, Node{Red, _, b, c}}
     function balanceHelper_RR_LR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -181,7 +181,7 @@ namespace UnicodeRopeOps {
 
     %% Case where we have a double red violation on RL side -- tright = Node{Red, _, Node{Red, _, b, c}, d}
     function balanceHelper_RR_RL(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 
@@ -205,7 +205,7 @@ namespace UnicodeRopeOps {
 
     %% Case where we have a double red violation on RR side -- tright = Node{Red, _, b, Node{Red, _, c, d}}
     function balanceHelper_RR_RR(c: Color, tleft: Rope, tright: Rope): Option<Node> {
-        if(/\(c !== Color#Black, c !== Color#BB)) {
+        if(c !== Color#Black && c !== Color#BB) {
             return none;
         }
 

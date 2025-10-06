@@ -775,32 +775,6 @@ class CallTaskActionExpression extends Expression {
     }
 }
 
-class LogicActionAndExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionAndExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `/\\(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
-    }
-}
-
-class LogicActionOrExpression extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.LogicActionOrExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `\\/(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
-    }
-}
-
 class ParseAsTypeExpression extends Expression {
     readonly exp: Expression;
     readonly ttype: TypeSignature;
@@ -2409,7 +2383,6 @@ export {
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
-    LogicActionAndExpression, LogicActionOrExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,

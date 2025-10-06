@@ -322,20 +322,6 @@ Foo::f(1i, 2i) //returns -1i
 
 The declaration of an operator is a virtual or abstract definition which may have Concept or Union typed arguments. Each dispatch implementation must have only unique (non-entity and non-union) typed arguments and must be defined in the same namespace as the operator (this prevents resolution ambiguity and accidental overloading). Arguments may also use literal value dispatch on one argument in the operator. If these are used then each dispatch implementation must provide a literal value for this argument.
 
-## Logical And/Or 
-Bosque provides pure logical and/or as expressions of the form `/\(e1, ..., ek)` and `\/(e1, ..., ek)`. These evaluate all arguments *before* computing the logical result, e.g. they do not short circuit evaluation. 
-
-Examples include:
-```none
-/\(true) //error -- should not be empty or have single argument
-/\(true, 1i == 1i, 2i == 2i) //returns true
-/\(true, false) //returns false
-
-\/(true) //error -- should not be empty or have single argument
-\/(false, 1i == 1i, 2i == 3i) //returns true
-\/(false, 2i == 3i) //returns false
-```
-
 ## Tuple Index Access
 Tuples are indexed using the syntax `e.i` where `i` is a literal integer value. 
 
