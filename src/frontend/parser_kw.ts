@@ -11,9 +11,6 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
-const KW_bsqon = "bsqon";
-const KW_dollarbsqon = "$bsqon";
-const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
@@ -40,8 +37,7 @@ const KW_true = "true";
 const KW_type = "type";
 const KW_var = "var";
 const KW_yield = "yield";
-const KW_contine = "continue";
-const KW_break = "break";
+const KW_continue = "continue";
 const KW_under = "_";
 
 const KW_debug = "debug";
@@ -86,7 +82,6 @@ const KW_example = "example";
 
 //reserved
 const KW_operator = "operator";
-const KW_variant = "variant";
 
 const KeywordStrings = [
     KW_recursive_q,
@@ -95,10 +90,7 @@ const KeywordStrings = [
     KW_api,
     KW_as,
     KW_action,
-    KW_bsqon,
-    KW_dollarbsqon,
     KW__debug,
-    KW_do,
     KW_abort,
     KW_assert,
     KW_concept,
@@ -151,12 +143,10 @@ const KeywordStrings = [
     KW_datatype,
     KW_using,
     KW_validate,
-    KW_variant,
     KW_var,
     KW_when,
     KW_yield,
-    KW_contine,
-    KW_break,
+    KW_continue,
     KW_under,
     KW_event,
     KW_status,
@@ -351,10 +341,7 @@ export {
     KW_api,
     KW_as,
     KW_action,
-    KW_bsqon,
-    KW_dollarbsqon,
     KW__debug,
-    KW_do,
     KW_abort,
     KW_assert,
     KW_concept,
@@ -407,12 +394,10 @@ export {
     KW_datatype,
     KW_using,
     KW_validate,
-    KW_variant,
     KW_var,
     KW_when,
     KW_yield,
-    KW_contine,
-    KW_break,
+    KW_continue,
     KW_under,
     KW_event,
     KW_resource,
