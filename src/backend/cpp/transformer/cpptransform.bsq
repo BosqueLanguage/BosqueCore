@@ -15,7 +15,7 @@ namespace CPPTransformNameManager {
 
     function convertTypeKey(tk: BSQAssembly::TypeKey): CPPAssembly::TypeKey {
         switch(tk.value) {
-            'None' => { return CPPAssembly::TypeKey::from('__CoreCpp::None'); }
+            | 'None' => { return CPPAssembly::TypeKey::from('__CoreCpp::None'); }
             | 'Bool' => { return CPPAssembly::TypeKey::from('__CoreCpp::Bool'); }
             | 'Nat' => { return CPPAssembly::TypeKey::from('__CoreCpp::Nat'); }
             | 'Int' => { return CPPAssembly::TypeKey::from('__CoreCpp::Int'); }
@@ -33,7 +33,7 @@ namespace CPPTransformNameManager {
     %% Necessary when generating typeinfos for containers
     function revertTypeKey(tk: CPPAssembly::TypeKey): BSQAssembly::TypeKey {
         switch(tk.value) {
-            'None' => { return BSQAssembly::TypeKey::from('None'); }
+            | 'None' => { return BSQAssembly::TypeKey::from('None'); }
             | '__CoreCpp::Bool' => { return BSQAssembly::TypeKey::from('Bool'); }
             | '__CoreCpp::Nat' => { return BSQAssembly::TypeKey::from('Nat'); }
             | '__CoreCpp::Int' => { return BSQAssembly::TypeKey::from('Int'); }
@@ -336,7 +336,7 @@ namespace TypeInfoGenerator {
 
             var matchedType: CPPAssembly::TypeInfo;
             switch(typekey) {
-                'None'<BSQAssembly::TypeKey> =>     { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+                | 'None'<BSQAssembly::TypeKey> =>     { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Bool'<BSQAssembly::TypeKey> =>   { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Nat'<BSQAssembly::TypeKey> =>    { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
                 | 'Int'<BSQAssembly::TypeKey> =>    { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
@@ -585,7 +585,7 @@ entity CPPTransformer {
         let expr = this.transformExpressionToCpp[recursive](uexpr.exp);
 
         match(uexpr)@ {
-            BSQAssembly::PrefixNotOpExpression => { return CPPAssembly::PrefixNotOpExpression{ expr.etype, expr }; }
+            | BSQAssembly::PrefixNotOpExpression => { return CPPAssembly::PrefixNotOpExpression{ expr.etype, expr }; }
             | BSQAssembly::PrefixNegateOpExpression => { return CPPAssembly::PrefixNegateOpExpression{ expr.etype, expr }; }
             | BSQAssembly::PrefixPlusOpExpression => { return CPPAssembly::PrefixPlusOpExpression{ expr.etype, expr }; }
         }
@@ -594,7 +594,7 @@ entity CPPTransformer {
     %% I think we can simplify this and remove the transform functions, just match our bsqasm type then return transform type
     recursive method transformBinaryArithExpression(binarith: BSQAssembly::BinaryArithExpression): CPPAssembly::BinaryArithExpression {
         match(binarith)@ {
-            BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
+            | BSQAssembly::BinAddExpression => { return this.transformBinAddExpressionToCpp[recursive]($binarith); }
             | BSQAssembly::BinSubExpression => { return this.transformBinSubExpressionToCpp[recursive]($binarith); }           
             | BSQAssembly::BinDivExpression => { return this.transformBinDivExpressionToCpp[recursive]($binarith); }
             | BSQAssembly::BinMultExpression => { return this.transformBinMultExpressionToCpp[recursive]($binarith); }
@@ -606,7 +606,7 @@ entity CPPTransformer {
 
         let cpptype = this.convertTypeSignature(expr.etype);
         match(expr)@ {
-            BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::NumericEqExpression => { return CPPAssembly::NumericEqExpression { cpptype, cpplhs, cpprhs }; }
             | BSQAssembly::NumericNeqExpression => { return CPPAssembly::NumericNeqExpression{ cpptype, cpplhs, cpprhs }; }
             | BSQAssembly::NumericLessExpression => { return CPPAssembly::NumericLessExpression{ cpptype, cpplhs, cpprhs}; }
             | BSQAssembly::NumericLessEqExpression => { return CPPAssembly::NumericLessEqExpression{ cpptype, cpplhs, cpprhs }; }
@@ -620,7 +620,7 @@ entity CPPTransformer {
         let cpptype = this.convertTypeSignature(expr.etype);
 
         match(expr)@ {
-            BSQAssembly::BinLogicAndExpression => { return CPPAssembly::BinLogicAndExpression{ cpptype, cpplhs, cpprhs }; }
+            | BSQAssembly::BinLogicAndExpression => { return CPPAssembly::BinLogicAndExpression{ cpptype, cpplhs, cpprhs }; }
             | BSQAssembly::BinLogicOrExpression => { return CPPAssembly::BinLogicOrExpression{ cpptype, cpplhs, cpprhs }; }
             | BSQAssembly::BinLogicImpliesExpression => { return CPPAssembly::BinLogicImpliesExpression{ cpptype, cpplhs, cpprhs }; }
             | BSQAssembly::BinLogicIFFExpression => { return CPPAssembly::BinLogicIFFExpression{ cpptype, cpplhs, cpprhs }; }
@@ -717,7 +717,7 @@ entity CPPTransformer {
     method transformITestAsTest(itest: BSQAssembly::ITest): CPPAssembly::ITest {
         let isnot = itest.isnot;
         match(itest)@ {
-            BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
+            | BSQAssembly::ITestType => { return this.transformITestType($itest, isnot); }
             | BSQAssembly::ITestNone => { return this.transformITestNone(isnot); }
             | BSQAssembly::ITestSome => { return this.transformITestSome(isnot); }
             | BSQAssembly::ITestOk => { abort; }
@@ -728,7 +728,7 @@ entity CPPTransformer {
     method transformPostfixOpImpl(op: BSQAssembly::PostfixOperation): CPPAssembly::PostfixOperation {
         let baseType = this.convertTypeSignature(op.baseType);
         match(op)@ {
-            BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, baseType); }
+            | BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, baseType); }
             | BSQAssembly::PostfixProjectFromNames => { abort; }
             | BSQAssembly::PostfixAccessFromIndex => { return CPPAssembly::PostfixAccessFromIndex{ baseType, $op.idxk }; }
             | BSQAssembly::PostfixIsTest => { return CPPAssembly::PostfixIsTest{ baseType, this.transformITestAsTest($op.ttest) }; }
@@ -791,7 +791,7 @@ entity CPPTransformer {
 
     method transformConstructorPrimarySpecialConstructableExpression(cpsce: BSQAssembly::ConstructorPrimarySpecialConstructableExpression): CPPAssembly::ConstructorPrimarySpecialConstructableExpression {
         match(cpsce)@ {
-            BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($cpsce); }
+            | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.transformConstructorPrimarySpecialSomeExpression($cpsce); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { return this.transformConstructorPrimarySpecialOkExpression($cpsce); }
             | BSQAssembly::ConstructorPrimarySpecialFailExpression => { return this.transformConstructorPrimarySpecialFailExpression($cpsce); }
             | BSQAssembly::ConstructorPrimarySpecialMapEntryExpression => { return this.transformConstructorPrimarySpecialMapEntryExpression($cpsce); }    
@@ -834,14 +834,14 @@ entity CPPTransformer {
 
     method transformConstructorPrimaryCollectionSingletonsExpression(cpcse: BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression): CPPAssembly::ConstructorPrimaryCollectionSingletonsExpression {
         match(cpcse)@ {
-            BSQAssembly::ConstructorPrimaryListExpression => { return this.transformConstructorPrimaryListExpression($cpcse); }
+            | BSQAssembly::ConstructorPrimaryListExpression => { return this.transformConstructorPrimaryListExpression($cpcse); }
             | BSQAssembly::ConstructorPrimaryMapExpression => { return this.transformConstructorPrimaryMapExpression($cpcse); }
         }
     }
 
     method transformConstructorPrimaryExpression(cpe: BSQAssembly::ConstructorPrimaryExpression): CPPAssembly::ConstructorPrimaryExpression {
         match(cpe)@ {
-            BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($cpe); }
+            | BSQAssembly::ConstructorStdExpression => { return this.transformConstructorStdExpression($cpe); }
             | BSQAssembly::ConstructorPrimarySpecialConstructableExpression => { return this.transformConstructorPrimarySpecialConstructableExpression($cpe); }
             | BSQAssembly::ConstructorPrimaryCollectionSingletonsExpression => { return this.transformConstructorPrimaryCollectionSingletonsExpression($cpe); }
             | BSQAssembly::ConstructorTypeDeclExpression => { abort; }
@@ -851,7 +851,7 @@ entity CPPTransformer {
 
     method transformConstructorExpression(ce: BSQAssembly::ConstructorExpression): CPPAssembly::ConstructorExpression {
         match(ce)@ {
-            BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($ce); }
+            | BSQAssembly::ConstructorPrimaryExpression => { return this.transformConstructorPrimaryExpression($ce); }
             | BSQAssembly::ConstructorEListExpression => { return this.transformConstructorEListExpression($ce); }
         }
     }
@@ -864,7 +864,7 @@ entity CPPTransformer {
         let elseexp = this.transformExpressionToCpp(exp.elseexp);
 
         match(exp)@ {
-            BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
+            | BSQAssembly::IfSimpleExpression => { return CPPAssembly::IfSimpleExpression{ etype, texp, thenexp, elseexp }; }
             | BSQAssembly::IfTestExpression => { return CPPAssembly::IfTestExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest) }; }
             | BSQAssembly::IfBinderExpression => { return CPPAssembly::IfBinderExpression{ etype, texp, thenexp, elseexp, this.transformITestAsTest($exp.itest), this.transformBinderInfo($exp.binder) };}
         }
@@ -928,7 +928,7 @@ entity CPPTransformer {
         let opertype = this.convertTypeSignature(exp.opertype);
         
         match(exp)@ {
-            BSQAssembly::BinKeyEqNoneExpression => { return CPPAssembly::BinKeyEqNoneExpression{ etype, opertype, this.transformExpressionToCpp($exp.exp) }; }
+            | BSQAssembly::BinKeyEqNoneExpression => { return CPPAssembly::BinKeyEqNoneExpression{ etype, opertype, this.transformExpressionToCpp($exp.exp) }; }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return CPPAssembly::BinKeyNotEqNoneExpression{ etype, opertype, this.transformExpressionToCpp($exp.exp) }; }
             | BSQAssembly::BinKeySomeEqExpression => { 
                 return CPPAssembly::BinKeySomeEqExpression{ 
@@ -1055,7 +1055,7 @@ entity CPPTransformer {
 
     recursive method transformExpressionToCpp(expr: BSQAssembly::Expression): CPPAssembly::Expression {
         match(expr)@ {
-            BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
+            | BSQAssembly::LiteralNoneExpression => { return this.transformLiteralNoneExpression($expr); }
             | BSQAssembly::LiteralSimpleExpression => { return this.transformLiteralSimpleExpression($expr); }
             | BSQAssembly::LiteralCCharExpression => { return this.transformLiteralCCharExpression($expr); }
             | BSQAssembly::LiteralUnicodeCharExpression => { return this.transformLiteralUnicodeCharExpression($expr); }
@@ -1141,7 +1141,7 @@ entity CPPTransformer {
         let trueBlock = this.transformBlockStatement(stmt.trueBlock);
 
         match(stmt)@ {
-            BSQAssembly::IfSimpleStatement => { return CPPAssembly::IfSimpleStatement{ cond, trueBlock }; }
+            | BSQAssembly::IfSimpleStatement => { return CPPAssembly::IfSimpleStatement{ cond, trueBlock }; }
             | BSQAssembly::IfTestStatement => { return CPPAssembly::IfTestStatement{ cond, trueBlock, this.transformITestAsTest($stmt.itest) }; }
             | BSQAssembly::IfBinderStatement => { return this.transformIfBinderStatement($stmt, cond, trueBlock); }
         }
@@ -1160,7 +1160,7 @@ entity CPPTransformer {
         let falseBlock = this.transformBlockStatement(stmt.falseBlock);
 
         match(stmt)@ {
-            BSQAssembly::IfElseSimpleStatement => { return CPPAssembly::IfElseSimpleStatement{ cond, trueBlock, falseBlock }; }
+            | BSQAssembly::IfElseSimpleStatement => { return CPPAssembly::IfElseSimpleStatement{ cond, trueBlock, falseBlock }; }
             | BSQAssembly::IfElseTestStatement => { return CPPAssembly::IfElseTestStatement{ cond, trueBlock, falseBlock, this.transformITestAsTest($stmt.itest) }; }
             | BSQAssembly::IfElseBinderStatement => { return this.transformIfElseBinderStatement($stmt, cond, trueBlock, falseBlock); } %% TODO: Not Implemented
         }
@@ -1260,7 +1260,7 @@ entity CPPTransformer {
 
     method transformStatementToCpp(stmt: BSQAssembly::Statement): CPPAssembly::Statement {
         match(stmt)@ {
-            BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
+            | BSQAssembly::EmptyStatement => { return CPPAssembly::EmptyStatement{ }; }
             | BSQAssembly::VariableDeclarationStatement => { return this.transformVariableDeclarationStatement($stmt); }
             | BSQAssembly::VariableMultiDeclarationStatement => { abort; }
             | BSQAssembly::VariableInitializationStatement => { return this.transformVariableInitializationStatementToCpp($stmt); }
@@ -1300,7 +1300,7 @@ entity CPPTransformer {
 
     method transformDefaultVal(val: Option<BSQAssembly::Expression>): Option<CPPAssembly::Expression> {
         match(val)@ {
-            None => { return none; }
+            | None => { return none; }
             | _ => { return some(this.transformExpressionToCpp[recursive]($val.value)); }
         }
     }
@@ -1317,7 +1317,7 @@ entity CPPTransformer {
 
     method transformBodyToCpp(body: BSQAssembly::BodyImplementation): CPPAssembly::BodyImplementation {
         match(body)@ {
-            BSQAssembly::AbstractBodyImplementation => { abort; }
+            | BSQAssembly::AbstractBodyImplementation => { abort; }
             | BSQAssembly::PredicateUFBodyImplementation => { abort; }
             | BSQAssembly::BuiltinBodyImplementation => { return CPPAssembly::BuiltinBodyImplementation{ $body.builtin }; }
             | BSQAssembly::SynthesisBodyImplementation => { abort; } 
@@ -1516,7 +1516,7 @@ entity CPPTransformer {
 
     method transformConstructableTypeDecl(ctd: BSQAssembly::ConstructableTypeDecl): CPPAssembly::ConstructableTypeDecl {
         match(ctd)@ {
-            BSQAssembly::SomeTypeDecl => { return this.transformSomeTypeDecl($ctd); }
+            | BSQAssembly::SomeTypeDecl => { return this.transformSomeTypeDecl($ctd); }
             | BSQAssembly::MapEntryTypeDecl => { return this.transformMapEntryTypeDecl($ctd); }
             | BSQAssembly::CRopeIteratorTypeDecl => { return this.transformCRopeIteratorTypeDecl($ctd); }
             | _ => { abort; }
@@ -1558,7 +1558,7 @@ entity CPPTransformer {
 
     method transformCollectionTypeDecl(ctd: BSQAssembly::CollectionTypeDecl): CPPAssembly::CollectionTypeDecl {
         match(ctd)@ {
-            BSQAssembly::ListTypeDecl =>    { return this.transformListTypeDecl($ctd); }
+            | BSQAssembly::ListTypeDecl =>    { return this.transformListTypeDecl($ctd); }
             | BSQAssembly::CRopeTypeDecl => { return this.transformCRopeTypeDecl($ctd); }
             | BSQAssembly::UnicodeRopeTypeDecl => { return this.transformUnicodeRopeTypeDecl($ctd); }
             | BSQAssembly::StackTypeDecl => { return this.transformStackTypeDecl($ctd); }
@@ -1605,7 +1605,7 @@ entity CPPTransformer {
 
     method transformPrimitiveConceptDeclToCpp(pc: BSQAssembly::PrimitiveConceptTypeDecl): CPPAssembly::PrimitiveConceptTypeDecl {
         match(pc)@ {
-            BSQAssembly::OptionTypeDecl =>      { return this.transformOptionTypeDecl($pc); }
+            | BSQAssembly::OptionTypeDecl =>      { return this.transformOptionTypeDecl($pc); }
             | BSQAssembly::ResultTypeDecl =>    { return this.transformResultTypeDecl($pc); }
             | BSQAssembly::APIResultTypeDecl => { return this.transformAPIResultTypeDecl($pc); }
         }

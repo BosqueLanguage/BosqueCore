@@ -4579,6 +4579,7 @@ class Parser {
         let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
+        this.ensureAndConsumeTokenAlways(SYM_bar, "switch statement entry");
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
         const svalue = this.parseScopedBlockStatement();
@@ -4608,6 +4609,7 @@ class Parser {
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
 
+        this.ensureAndConsumeTokenAlways(SYM_bar, "match statement entry");
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
         const mvalue = this.parseScopedBlockStatement();
@@ -5815,13 +5817,8 @@ class Parser {
             return;
         }
 
-        let firstMember = true;
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
-            if(!firstMember) {
-                this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
-            }
-            firstMember = false;
-
+            this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 

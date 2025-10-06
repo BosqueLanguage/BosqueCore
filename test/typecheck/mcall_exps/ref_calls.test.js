@@ -18,6 +18,6 @@ describe ("Checker -- entity ref methods", () => {
 
 describe ("Checker -- eADT ref methods", () => {
     it("should check simple eADT ref methods", function () {
-        checkTestFunctionInFile('datatype Foo of Foo1 { field f: Int; ref method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { var x = Foo1{3i}; return ref x.foo(1i); }'); 
+        checkTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; ref method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { var x = Foo1{3i}; return ref x.foo(1i); }'); 
     });
 });

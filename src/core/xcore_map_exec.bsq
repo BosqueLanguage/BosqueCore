@@ -149,7 +149,7 @@ namespace MapOps {
 
     function computeColor<K: keytype, V>(t: Tree<K, V>): Color {
         match(t)@ {
-            BBLeaf<K, V> => { return Color#Black; }
+            | BBLeaf<K, V> => { return Color#Black; }
             | Leaf<K, V> => { return Color#Black; }
             | Node<K, V> => { return $t.c; }
         }
@@ -201,7 +201,7 @@ namespace MapOps {
         assert c !== Color#BB;
 
         switch(c) {
-            Color#Black => { return Color#BB; }
+            | Color#Black => { return Color#BB; }
             | Color#Red => { return Color#Black; }
             | _         => { return Color#Red; }
         }
@@ -211,7 +211,7 @@ namespace MapOps {
         assert c !== Color#NB;
 
         switch(c) {
-            Color#BB      => { return Color#Black; }
+            | Color#BB      => { return Color#Black; }
             | Color#Black => { return Color#Red; }
             | _           => { return Color#NB; }
         }
@@ -427,7 +427,7 @@ namespace MapOps {
 
     function size<K: keytype, V>(t: Tree<K, V>): Nat {
         match(t)@ {
-            BBLeaf<K, V> => { return 0n; }
+            | BBLeaf<K, V> => { return 0n; }
             | Leaf<K, V> => { return 1n; }
             | Node<K, V> => { return $t.count; }
         }
@@ -471,7 +471,7 @@ namespace MapOps {
 
     recursive function has<K: keytype, V>(t: Tree<K, V>, k: K): Bool {
         match(t)@ {
-            Leaf<K, V> => { return KeyComparator::equal<K>($t.v.key, k); }
+            | Leaf<K, V> => { return KeyComparator::equal<K>($t.v.key, k); }
             | BBLeaf<K, V> => { return false; }
             | Node<K, V> => {
                 let nn = XCore::s_safeas<Tree<K, V>, Node<K, V>>(t);
@@ -493,7 +493,7 @@ namespace MapOps {
 
     recursive function get_direct<K: keytype, V>(t: Tree<K, V>, k: K): V {
         match(t)@ {
-            BBLeaf<K, V> => { abort; } %% No value
+            | BBLeaf<K, V> => { abort; } %% No value
             | Leaf<K, V> => {
                 assert KeyComparator::equal<K>($t.v.key, k);
             
@@ -519,7 +519,7 @@ namespace MapOps {
 
     recursive function get_option<K: keytype, V>(t: Tree<K, V>, k: K): Option<V> {
         match(t)@ {
-            BBLeaf<K, V> => { return none; }
+            | BBLeaf<K, V> => { return none; }
             | Leaf<K, V> => {
                 if(!KeyComparator::equal<K>($t.v.key, k)) {
                     return none;
@@ -548,7 +548,7 @@ namespace MapOps {
 
     recursive function insert_helper<K: keytype, V>(t: Tree<K, V>, k: K, v: V): Tree<K, V> {
         match(t)@ {
-            BBLeaf<K, V> => {
+            | BBLeaf<K, V> => {
                 return Tree<K, V>::createLeaf(MapEntry<K, V>{k, v});               
             }
             | Leaf<K, V> => {
@@ -617,7 +617,7 @@ namespace MapOps {
     %% Replace target node with empty tree
     recursive function delete_helper<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         match(t)@ {
-            Leaf<K, V> => {             
+            | Leaf<K, V> => {             
                 return Tree<K, V>::emptyTree;
             }
             | Node<K, V> => {
@@ -637,7 +637,7 @@ namespace MapOps {
     function delete<K: keytype, V>(t: Tree<K, V>, k: K): Tree<K, V> {
         let nt = delete_helper[recursive]<K, V>(t, k);
         match(nt)@ {
-            Node<K, V> => {
+            | Node<K, V> => {
                 let ntt = if($nt.c === Color#Red) 
                     then Tree<K, V>::createNode(Color#Black, $nt.l, $nt.r) 
                     else nt;
@@ -651,7 +651,7 @@ namespace MapOps {
     }
 
     datatype Tree<K: keytype, V> of 
-        BBLeaf {}
+        | BBLeaf {}
         | Leaf { v: MapEntry<K, V> }
         | Node { c: Color, count: Nat, mink: K, maxk: K, l: Tree<K, V>, r: Tree<K, V> }
     & {
@@ -671,7 +671,7 @@ namespace MapOps {
 
         recursive? function map<U>(t: Tree<K, V>, f: recursive? fn(K, V) -> U): Tree<K, U> {
             match(t)@ {
-                Leaf<K, V> => { 
+                | Leaf<K, V> => { 
                     let u = f[recursive?]($t.v.key, $t.v.value); 
                     return Tree<K, U>::createLeaf(MapEntry<K, U>{$t.v.key, u}); 
                 }
@@ -685,7 +685,7 @@ namespace MapOps {
 
         recursive function reduce<U>(t: Tree<K, V>, acc: U, f: recursive? fn(U, K, V) -> U): U {
             match(t)@ {
-                Leaf<K, V> => { 
+                | Leaf<K, V> => { 
                     return f[recursive?](acc, $t.v.key, $t.v.value);
                 }
                 | Node<K, V> => {

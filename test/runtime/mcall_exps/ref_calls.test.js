@@ -11,6 +11,6 @@ describe ("Exec -- entity ref methods", () => {
 
 describe ("Exec -- eADT ref methods", () => {
     it("should exec simple eADT ref methods", function () {
-        runMainCode('datatype Foo of Foo1 { field f: Int; ref method foo(x: Int): Int { let b = this.f; ref this[f = 2i]; return b + x; }} ; public function main(): Int { var x = Foo1{3i}; return ref x.foo(1i); }', "4i"); 
+        runMainCode('datatype Foo of | Foo1 { field f: Int; ref method foo(x: Int): Int { let b = this.f; ref this[f = 2i]; return b + x; }} ; public function main(): Int { var x = Foo1{3i}; return ref x.foo(1i); }', "4i"); 
     });
 });

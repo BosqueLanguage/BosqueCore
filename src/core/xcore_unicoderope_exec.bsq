@@ -74,7 +74,7 @@ namespace UnicodeRopeOps {
         assert c !== Color#BB;
 
         switch(c) {
-            Color#Black => { return Color#BB; }
+            | Color#Black => { return Color#BB; }
             | Color#Red => { return Color#Black; }
             | _         => { return Color#Red; }
         }
@@ -84,7 +84,7 @@ namespace UnicodeRopeOps {
         assert c !== Color#NB;
 
         switch(c) {
-            Color#BB      => { return Color#Black; }
+            | Color#BB      => { return Color#Black; }
             | Color#Black => { return Color#Red; }
             | _           => { return Color#NB; }
         }
@@ -330,7 +330,7 @@ namespace UnicodeRopeOps {
     %% We keep track of the closest buffer (current nodes parents left child) for merging
     recursive function append_helper(t: Rope, l: Rope, v: UnicodeCharBuffer): Rope {
         match(t)@ {
-            Leaf => { 
+            | Leaf => { 
                 %% Merge all of v into t.buf
                 if($t.buf.size() + v.size() <= UnicodeCharBufferOps::getMaxSize()) {
                     let merge = UnicodeCharBufferOps::mergeUnicodeBuffers($t.buf, v);
@@ -362,7 +362,7 @@ namespace UnicodeRopeOps {
     function append(t: Rope, v: UnicodeCharBuffer): Rope {
         var tt: Rope;
         match(t)@ {
-            BBLeaf => { 
+            | BBLeaf => { 
                 tt = Rope::createLeaf(v); 
             }
             | Leaf => {
@@ -424,7 +424,7 @@ namespace UnicodeRopeOps {
     %%
 
     datatype Rope of 
-        BBLeaf { }
+        | BBLeaf { }
         | Leaf { buf: UnicodeCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
@@ -443,7 +443,7 @@ namespace UnicodeRopeOps {
 
         function getCharacterCount(rope: Rope): Nat {
             match(rope)@ {
-                Leaf => {
+                | Leaf => {
                     return $rope.buf.size();
                 }
                 | Node => {

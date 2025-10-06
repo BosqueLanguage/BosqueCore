@@ -1976,10 +1976,8 @@ class SwitchStatement extends Statement {
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.exp.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iil = fmt.indent(ttmf[0]);
-        const iir = ttmf.slice(1).map((cc) => fmt.indent("| " + cc));
-
-        return `${mheader} {\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
+        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
@@ -2007,10 +2005,8 @@ class MatchStatement extends Statement {
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
-        const iil = fmt.indent(ttmf[0]);
-        const iir = ttmf.slice(1).map((cc) => fmt.indent("| " + cc));
-
-        return `${mheader} {\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
+        const iir = ttmf.map((cc) => fmt.indent("| " + cc));
+        return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 

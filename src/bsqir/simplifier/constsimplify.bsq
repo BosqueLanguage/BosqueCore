@@ -92,7 +92,7 @@ entity ConstantSimplification {
 
     method processITestAsTest(sinfo: SourceInfo, srctype: TypeSignature, itest: ITest): PostfixOperation {
         match(itest)@ {
-            ITestType => { return this.processITestTypeAsTest(sinfo, srctype, $itest); }
+            | ITestType => { return this.processITestTypeAsTest(sinfo, srctype, $itest); }
             | ITestNone => { return this.processITestNoneAsTest(sinfo, srctype, $itest); }
             | ITestSome => { return this.processITestSomeAsTest(sinfo, srctype, $itest); }
             | ITestOk => { return this.processITestOkAsTest(sinfo, srctype, $itest); }
@@ -185,7 +185,7 @@ entity ConstantSimplification {
 
     method processITestAsConvert(sinfo: SourceInfo, srctype: TypeSignature, itest: ITest): PostfixOperation {
         match(itest)@ {
-            ITestType => { return this.processITestTypeAsConvert(sinfo, srctype, $itest); }
+            | ITestType => { return this.processITestTypeAsConvert(sinfo, srctype, $itest); }
             | ITestNone => { return this.processITestNoneAsConvert(sinfo, srctype, $itest); }
             | ITestSome => { return this.processITestSomeAsConvert(sinfo, srctype, $itest); }
             | ITestOk => { return this.processITestOkAsConvert(sinfo, srctype, $itest); }
@@ -292,7 +292,7 @@ entity ConstantSimplification {
 
     recursive method processConstructorExpression(e: ConstructorExpression): Expression {
         match(e)@ {
-            ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e); }
+            | ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e); }
             | ConstructorPrimaryMapExpression => { return this.processConstructorPrimaryMapExpression[recursive]($e); }
             | ConstructorPrimarySpecialMapEntryExpression => { return this.processConstructorPrimarySpecialMapEntryExpression[recursive]($e); }
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e); }
@@ -376,7 +376,7 @@ entity ConstantSimplification {
         let ebase = this.processUnaryArg[recursive](e.rootExp);
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
             match(op)@ {
-                PostfixAccessFromName => { return $op; }
+                | PostfixAccessFromName => { return $op; }
                 | PostfixProjectFromNames => { return $op; }
                 | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return this.processITestAsTest($op.sinfo, $op.baseType, $op.ttest); }
@@ -436,7 +436,7 @@ entity ConstantSimplification {
 
     function processPrefixNotOpExpression(e: PrefixNotOpExpression, ee: Expression): Expression {
         match(ee)@ {
-            LiteralSimpleExpression => {
+            | LiteralSimpleExpression => {
                 return ConstantSimplification::negateLiteralBoolean($ee.value, e.sinfo, e.opertype);
             }
             | PrefixNotOpExpression => {
@@ -450,7 +450,7 @@ entity ConstantSimplification {
 
     function processPrefixNegateOpExpression(e: PrefixNegateOpExpression, ee: Expression): Expression {
         match(ee)@ {
-            LiteralSimpleExpression => {
+            | LiteralSimpleExpression => {
                 return ConstantSimplification::negateLiteralNumber($ee.value, e.sinfo, e.opertype);
             }
             | PrefixNegateOpExpression => {
@@ -470,7 +470,7 @@ entity ConstantSimplification {
         let ee = this.processUnaryArg(e.exp);
 
         match(e)@ {
-            PrefixNotOpExpression => { return ConstantSimplification::processPrefixNotOpExpression($e, ee); }
+            | PrefixNotOpExpression => { return ConstantSimplification::processPrefixNotOpExpression($e, ee); }
             | PrefixNegateOpExpression => { return ConstantSimplification::processPrefixNegateOpExpression($e, ee); }
             | PrefixPlusOpExpression => { return ConstantSimplification::processPrefixPlusOpExpression($e, ee); }
         }
@@ -570,7 +570,7 @@ entity ConstantSimplification {
 
     recursive method processBinaryKeyEqExpression(e: BinaryKeyEqExpression): Expression {
         match(e)@ {
-            BinKeyEqNoneExpression => { return this.processBinKeyEqNoneExpression[recursive]($e); }
+            | BinKeyEqNoneExpression => { return this.processBinKeyEqNoneExpression[recursive]($e); }
             | BinKeyNotEqNoneExpression => { return this.processBinKeyNotEqNoneExpression[recursive]($e); }
             | BinKeySomeEqExpression => { return this.processBinKeySomeEqExpression[recursive]($e); }
             | BinKeyNotSomeEqExpression => { return this.processBinKeyNotSomeEqExpression[recursive]($e); }
@@ -684,7 +684,7 @@ entity ConstantSimplification {
         let nlhs, nrhs = this.processBinaryArgs[recursive](e.lhs, e.rhs);
         
         match(e)@ {
-            BinLogicAndExpression => { return this.simplifyBinAnd($e, nlhs, nrhs); }
+            | BinLogicAndExpression => { return this.simplifyBinAnd($e, nlhs, nrhs); }
             | BinLogicOrExpression => { return this.simplifyBinOr($e, nrhs, nlhs); } 
             | BinLogicImpliesExpression => { return this.simplifyBinImplies($e, nlhs, nrhs); }
             | BinLogicIFFExpression => { return this.simplifyBinIFF($e, nlhs, nrhs); }
@@ -754,7 +754,7 @@ entity ConstantSimplification {
 
     recursive method processIfExpression(e: IfExpression): Expression {
         match(e)@ {
-            IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e); }
+            | IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e); }
             | IfTestExpression => { return this.processIfTestExpression[recursive]($e); }
             | IfBinderExpression => { return this.processIfBinderExpression[recursive]($e); }
         }
@@ -769,7 +769,7 @@ entity ConstantSimplification {
 
     recursive method processExpression(e: Expression): Expression {
         match(e)@ {
-            LiteralNoneExpression => { return e; }
+            | LiteralNoneExpression => { return e; }
             | LiteralSimpleExpression => { return e; }
             | LiteralCStringExpression => { return e; }
             | LiteralStringExpression => { return e; }
@@ -881,7 +881,7 @@ entity ConstantSimplification {
 
     recursive method processIfStatement(s: IfStatement): Statement {
         match(s)@ {
-            IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s); }
+            | IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s); }
             | IfTestStatement => { return this.processIfTestStatement[recursive]($s); }
             | IfBinderStatement => { return this.processIfBinderStatement[recursive]($s); }
         }
@@ -945,7 +945,7 @@ entity ConstantSimplification {
 
     recursive method processIfElseStatement(s: IfElseStatement): Statement {
         match(s)@ {
-            IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s); }
+            | IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s); }
             | IfElseTestStatement => { return this.processIfElseTestStatement[recursive]($s); }
             | IfElseBinderStatement => { return this.processIfElseBinderStatement[recursive]($s); }
         }
@@ -1039,7 +1039,7 @@ entity ConstantSimplification {
 
     recursive method processStatement(s: Statement): Statement {
         match(s)@ {
-            EmptyStatement => { 
+            | EmptyStatement => { 
                 return s; 
             }
             | VariableDeclarationStatement => {
@@ -1170,7 +1170,7 @@ entity ConstantSimplification {
 
     method processBodyImpl(body: BodyImplementation): BodyImplementation {
         match(body)@ {
-            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp) }; }
+            | ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp) }; }
             | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements) }; }
             | _ => { return body; }
         }
@@ -1429,7 +1429,7 @@ entity ConstantSimplification {
 
     method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
         match(pconcept)@ {
-            OptionTypeDecl => { return this.processOptionTypeDecl($pconcept); }
+            | OptionTypeDecl => { return this.processOptionTypeDecl($pconcept); }
             | ResultTypeDecl => { abort; }
             | APIResultTypeDecl => { abort; }
         }

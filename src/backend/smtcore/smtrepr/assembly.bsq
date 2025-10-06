@@ -31,7 +31,7 @@ datatype ResultType using {
     field rtype: TypeKey;
 }
 of
-SafeResult { }
+| SafeResult { }
 | ErrorResult { }
 %% TODO -- later add inf on ref (etc.) stuff
 ;
@@ -116,7 +116,7 @@ datatype ConstructableTypeDecl using {
     field tkey: TypeKey;
 }
 of
-OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
+| OkTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 | FailTypeDecl { field ttype: TypeKey; field etype: TypeKey; }
 | APIRejectedTypeDecl { }
 | APIFailedTypeDecl { }
@@ -131,7 +131,7 @@ datatype CollectionTypeDecl using {
     field oftype: TypeKey;
 }
 of
-ListTypeDecl { }
+| ListTypeDecl { }
 | StackTypeDecl { }
 | QueueTypeDecl { }
 | SetTypeDecl { }
@@ -149,7 +149,7 @@ datatype PrimitiveConceptTypeDecl using {
     field tkey: TypeKey;
 }
 of
-OptionTypeDecl {
+| OptionTypeDecl {
     field someType: TypeKey;
  }
 | ResultTypeDecl {

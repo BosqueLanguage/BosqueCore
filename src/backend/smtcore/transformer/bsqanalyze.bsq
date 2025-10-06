@@ -187,7 +187,7 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processConstructorExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::ConstructorExpression): BSQCCInfo {
         match(e)@ {
-            BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive](current, $e); }
+            | BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive](current, $e); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
@@ -266,7 +266,7 @@ entity BSQToSMTCallGraphBuilder {
         
         let opsinfo = e.ops.map[recursive]<BSQCCInfo>(recursive fn(op) => {
             match(op)@ {
-                BSQAssembly::PostfixAccessFromName => { return BSQCCInfo::emptyinfo; }
+                | BSQAssembly::PostfixAccessFromName => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixProjectFromNames => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixAccessFromIndex => { return BSQCCInfo::emptyinfo; }
                 | BSQAssembly::PostfixIsTest => { return BSQCCInfo::emptyinfo; }
@@ -289,7 +289,7 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processBinaryKeyEqExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::BinaryKeyEqExpression): BSQCCInfo {
         match(e)@ {
-            BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
+            | BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive](current, $e.exp); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
             | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive](current, $e.eqoption, $e.eqval); }
@@ -308,7 +308,7 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processExpression(current: BSQAssembly::InvokeKey, e: BSQAssembly::Expression): BSQCCInfo {
         match(e)@ {
-            BSQAssembly::LiteralNoneExpression => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::LiteralNoneExpression => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::LiteralSimpleExpression => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::LiteralCStringExpression => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::LiteralStringExpression => { return BSQCCInfo::emptyinfo; }
@@ -386,7 +386,7 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processStatement(current: BSQAssembly::InvokeKey, s: BSQAssembly::Statement): BSQCCInfo {
         match(s)@ {
-            BSQAssembly::EmptyStatement => { return BSQCCInfo::emptyinfo; }
+            | BSQAssembly::EmptyStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::VariableDeclarationStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::VariableMultiDeclarationStatement => { return BSQCCInfo::emptyinfo; }
             | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive](current, $s.exp); }
@@ -427,7 +427,7 @@ entity BSQToSMTCallGraphBuilder {
 
     recursive method processBodyImpl(current: BSQAssembly::InvokeKey, body: BSQAssembly::BodyImplementation): BSQCCInfo {
         match(body)@ {
-            BSQAssembly::ExpressionBodyImplementation => { return this.processExpression[recursive](current, $body.exp); }
+            | BSQAssembly::ExpressionBodyImplementation => { return this.processExpression[recursive](current, $body.exp); }
             | BSQAssembly::StandardBodyImplementation => { return this.processBodyStatementList[recursive](current, $body.statements); }
             | _ => { return BSQCCInfo::emptyinfo; }
         }
@@ -574,7 +574,7 @@ entity MayErrorAnalysis {
 
     recursive method processConstructorExpression(e: BSQAssembly::ConstructorExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(e)@ {
-            BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, cerrors, lerrors); }
+            | BSQAssembly::ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorPrimaryMapExpression => { abort; }
             | BSQAssembly::ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, cerrors, lerrors); }
             | BSQAssembly::ConstructorPrimarySpecialOkExpression => { abort; }
@@ -638,7 +638,7 @@ entity MayErrorAnalysis {
         
         return e.ops.someOf[recursive](recursive pred(op) => {
             match(op)@ {
-                BSQAssembly::PostfixAccessFromName => { return false; }
+                | BSQAssembly::PostfixAccessFromName => { return false; }
                 | BSQAssembly::PostfixProjectFromNames => { return false; }
                 | BSQAssembly::PostfixAccessFromIndex => { return false; }
                 | BSQAssembly::PostfixIsTest => { return false; }
@@ -680,7 +680,7 @@ entity MayErrorAnalysis {
 
     recursive method processBinaryKeyEqExpression(e: BSQAssembly::BinaryKeyEqExpression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(e)@ {
-            BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
+            | BSQAssembly::BinKeyEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotEqNoneExpression => { return this.processUnaryArg[recursive]($e.exp, cerrors, lerrors); }
             | BSQAssembly::BinKeySomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
             | BSQAssembly::BinKeyNotSomeEqExpression => { return this.processBinaryArgs[recursive]($e.eqoption, $e.eqval, cerrors, lerrors); }
@@ -695,7 +695,7 @@ entity MayErrorAnalysis {
 
     recursive method processExpression(e: BSQAssembly::Expression, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(e)@ {
-            BSQAssembly::LiteralNoneExpression => { return false; }
+            | BSQAssembly::LiteralNoneExpression => { return false; }
             | BSQAssembly::LiteralSimpleExpression => { return false; }
             | BSQAssembly::LiteralCStringExpression => { return false; }
             | BSQAssembly::LiteralStringExpression => { return false; }
@@ -766,7 +766,7 @@ entity MayErrorAnalysis {
 
     recursive method processStatement(s: BSQAssembly::Statement, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(s)@ {
-            BSQAssembly::EmptyStatement => { return false; }
+            | BSQAssembly::EmptyStatement => { return false; }
             | BSQAssembly::VariableDeclarationStatement => { return false; }
             | BSQAssembly::VariableMultiDeclarationStatement => { return false; }
             | BSQAssembly::VariableInitializationStatement => { return this.processExpression[recursive]($s.exp, cerrors, lerrors); }
@@ -808,7 +808,7 @@ entity MayErrorAnalysis {
 
     recursive method processBodyImpl(body: BSQAssembly::BodyImplementation, cerrors: Map<BSQAssembly::InvokeKey, Bool>, lerrors: Map<BSQAssembly::Identifier, Bool>): Bool {
         match(body)@ {
-            BSQAssembly::ExpressionBodyImplementation => { return this.processExpression($body.exp, cerrors, lerrors); }
+            | BSQAssembly::ExpressionBodyImplementation => { return this.processExpression($body.exp, cerrors, lerrors); }
             | BSQAssembly::StandardBodyImplementation => { return this.processBodyStatementList($body.statements, cerrors, lerrors); }
             | _ => { return false; }
         }

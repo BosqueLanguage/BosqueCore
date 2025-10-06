@@ -8,7 +8,7 @@ concept SafeExpression provides Expression {
 
 datatype ConstantExpression provides SafeExpression
 of
-LiteralNoneExpression { }
+| LiteralNoneExpression { }
 | LiteralSimpleExpression {
     field vtype: TypeKey;
     field value: CString;
@@ -79,7 +79,7 @@ datatype ConstructorPrimaryExpression provides SafeExpression using {
     field constype: TypeKey;
 }
 of 
-ConstructorListSingletonExpression { 
+| ConstructorListSingletonExpression { 
     field oftype: TypeKey;
     field args: List<SafeExpression>;
 }
@@ -243,7 +243,7 @@ datatype UnaryExpression provides SafeExpression using {
     field usefp: Bool;
 }
 of
-PrefixNotOpExpression { }
+| PrefixNotOpExpression { }
 | PrefixNegateOpExpression { }
 | PrefixPlusOpExpression { }
 ;
@@ -254,7 +254,7 @@ datatype BinaryArithExpression provides SafeExpression using {
     field usefp: Bool;
 }
 of
-BinAddExpression { }
+| BinAddExpression { }
 | BinSubExpression { }
 | BinMultExpression { }
 | BinDivExpression { }
@@ -262,7 +262,7 @@ BinAddExpression { }
 
 datatype BinaryKeyEqExpression provides SafeExpression 
 of
-BinKeyEqNoneExpression { 
+| BinKeyEqNoneExpression { 
     field exp: SafeExpression;
 }
 | BinKeyNotEqNoneExpression { 
@@ -314,7 +314,7 @@ datatype BinaryNumericCompareExpression provides SafeExpression using {
     field usefp: Bool;
 }
 of
-NumericEqExpression { }
+| NumericEqExpression { }
 | NumericNeqExpression { }
 | NumericLessExpression { }
 | NumericLessEqExpression { }

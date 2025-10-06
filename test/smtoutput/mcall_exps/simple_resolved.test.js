@@ -44,33 +44,33 @@ describe ("SMT -- entity methods (Pre/Post)", () => {
 
 describe ("SMT -- eADT methods", () => {
     it("should smt exec simple eADT methods", function () {
-        runishMainCodeUnsat('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
-        runishMainCodeUnsat('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "(assert (not (= 4 Main@main)))");
+        runishMainCodeUnsat('datatype Foo of | Foo1 { field f: Int; method foo(): Int { return this.f; }} ; public function main(): Int { return Foo1{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo of | Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; public function main(): Int { return Foo1{3i}.foo(1i); }', "(assert (not (= 4 Main@main)))");
     });
 
     it("should smt exec simple eADT methods with template", function () {
-        runishMainCodeUnsat('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }', "(assert Main@main)");
-        runishMainCodeUnsat('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }', "(assert (not Main@main))");
+        runishMainCodeUnsat('datatype Foo of | Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }', "(assert Main@main)");
+        runishMainCodeUnsat('datatype Foo of | Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; public function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }', "(assert (not Main@main))");
     });
 
     it("should smt exec simple eADT methods with type template", function () {
-        runishMainCodeUnsat('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; public function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }', "(assert (not (= 2 Main@main)))");
+        runishMainCodeUnsat('datatype Foo<T> of | Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; public function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }', "(assert (not (= 2 Main@main)))");
     });
 
     it("should smt exec simple ROOT eADT methods", function () {
-        runishMainCodeUnsat('datatype Foo of F1 { } | F2 { } & { method foo(): Int { return if(this)<F1> then 1i else 0i; } } public function main(): Int { return F1{}.foo(); }', "(assert (not (= 1 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo of | F1 { } | F2 { } & { method foo(): Int { return if(this)<F1> then 1i else 0i; } } public function main(): Int { return F1{}.foo(); }', "(assert (not (= 1 Main@main)))"); 
 
-        runishMainCodeUnsat('datatype Foo of F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo of | F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
 
-        runishMainCodeUnsat('datatype Foo of F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g + 1i; } } } public function main(): Int { let x: Foo = F1{3i}; return x.foo(); }', "(assert (not (= 3 Main@main)))"); 
-        runishMainCodeUnsat('datatype Foo of F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g + 1i; } } } public function main(): Int { let x: Foo = F2{3i}; return x.foo(); }', "(assert (not (= 4 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo of | F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g + 1i; } } } public function main(): Int { let x: Foo = F1{3i}; return x.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo of | F1 { f: Int } | F2 { g: Int } & { method foo(): Int { if(this)@<F1> { return $this.f; } else { return $this.g + 1i; } } } public function main(): Int { let x: Foo = F2{3i}; return x.foo(); }', "(assert (not (= 4 Main@main)))"); 
     });
 
     it("should smt exec template ROOT eADT methods", function () {
-        runishMainCodeUnsat('datatype Foo<T> of F1 { } | F2 { } & { method foo(): Int { return if(this)<F1<T>> then 1i else 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "(assert (not (= 1 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo<T> of | F1 { } | F2 { } & { method foo(): Int { return if(this)<F1<T>> then 1i else 0i; } } public function main(): Int { return F1<Bool>{}.foo(); }', "(assert (not (= 1 Main@main)))"); 
 
-        runishMainCodeUnsat('datatype Foo<T> of F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
-        runishMainCodeUnsat('datatype Foo<T> of F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { let x: Foo<Int> = F1<Int>{3i}; return x.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo<T> of | F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { return F1<Int>{3i}.foo(); }', "(assert (not (= 3 Main@main)))"); 
+        runishMainCodeUnsat('datatype Foo<T> of | F1 { f: T } | F2 { g: T } & { method foo(): T { if(this)@<F1<T>> { return $this.f; } else { return $this.g; } } } public function main(): Int { let x: Foo<Int> = F1<Int>{3i}; return x.foo(); }', "(assert (not (= 3 Main@main)))"); 
     });
 });
 

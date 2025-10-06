@@ -38,17 +38,17 @@ describe ("Parser -- entity methods", () => {
 
 describe ("Parser -- eADT methods", () => {
     it("should parse simple eADT methods", function () {
-        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo(): Int { return this.f; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(); }'); 
-        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(1i); }'); 
+        parseTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; method foo(): Int { return this.f; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(); }'); 
+        parseTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; [FUNC]', 'function main(): Int { return Foo1{3i}.foo(1i); }'); 
     });
 
     it("should parse simple eADT methods with template", function () {
-        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }'); 
-        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }'); 
+        parseTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Nat>(); }'); 
+        parseTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; method foo<T>(): Bool { return this.f?<T>; }} ; [FUNC]', 'function main(): Bool { let x = Foo1{3i}; return x.foo<Int>(); }'); 
     });
 
     it("should parse simple eADT methods with type template", function () {
-        parseTestFunctionInFile('datatype Foo<T> of Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; [FUNC]', 'function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }'); 
+        parseTestFunctionInFile('datatype Foo<T> of | Foo1 { field f: T; method foo(x: T): T { return if (true) then x else this.f; }} ; [FUNC]', 'function main(): Int { let x = Foo1<Int>{3i}; return x.foo(2i); }'); 
     });
 });
 

@@ -206,7 +206,7 @@ PartID{SystemID::from("ABC-123")} //constructs a PartID value with the value ABC
 datatype BoolOp using {
     line: Nat
 } of
-LConst { val: Bool }
+| LConst { val: Bool }
 | NotOp { arg: BoolOp }
 | AndOp { larg: BoolOp, rarg: BoolOp }
 | OrOp { larg: BoolOp, rarg: BoolOp }

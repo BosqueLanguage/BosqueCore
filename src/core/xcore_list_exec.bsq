@@ -377,7 +377,7 @@ namespace ListOps {
 
     function computeColor<T>(t: Tree<T>): Color {
         match(t)@ {
-            BBLeaf<T> => { return Color#Black; }
+            | BBLeaf<T> => { return Color#Black; }
             | Leaf<T> => { return Color#Black; }
             | Node<T> => { return $t.c; }
         }
@@ -428,7 +428,7 @@ namespace ListOps {
         assert c !== Color#BB;
 
         switch(c) {
-            Color#Black => { return Color#BB; }
+            | Color#Black => { return Color#BB; }
             | Color#Red => { return Color#Black; }
             | _         => { return Color#Red; }
         }
@@ -438,7 +438,7 @@ namespace ListOps {
         assert c !== Color#NB;
 
         switch(c) {
-            Color#BB      => { return Color#Black; }
+            | Color#BB      => { return Color#Black; }
             | Color#Black => { return Color#Red; }
             | _           => { return Color#NB; }
         }
@@ -654,7 +654,7 @@ namespace ListOps {
 
     function size<T>(t: Tree<T>): Nat {
         match(t)@ {
-            BBLeaf<T> => { return 0n; }
+            | BBLeaf<T> => { return 0n; }
             | Leaf<T> => { return 1n; }
             | Node<T> => { return $t.count; }
         }
@@ -742,7 +742,7 @@ namespace ListOps {
 
     recursive function pushBack_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            Leaf<T> => { return balance<T>(Color#Red, $t, Tree<T>::createLeaf(v)); }
+            | Leaf<T> => { return balance<T>(Color#Red, $t, Tree<T>::createLeaf(v)); }
             | Node<T> => { 
                 let nr = pushBack_helper[recursive]<T>($t.r, v);
                 return balance<T>($t.c, $t.l, nr); 
@@ -767,7 +767,7 @@ namespace ListOps {
 
     recursive function pushFront_helper<T>(t: Tree<T>, v: T): Tree<T> {
         match(t)@ {
-            Leaf<T> => { return balance<T>(Color#Red, Tree<T>::createLeaf(v), $t); }
+            | Leaf<T> => { return balance<T>(Color#Red, Tree<T>::createLeaf(v), $t); }
             | Node<T> => { 
                 let nr = pushFront_helper[recursive]<T>($t.l, v);
                 return balance<T>($t.c, nr, $t.r); 
@@ -792,7 +792,7 @@ namespace ListOps {
 
     recursive function insert_helper<T>(t: Tree<T>, idx: Nat, v: T): Tree<T> {
         match(t)@ {
-            BBLeaf<T> => {
+            | BBLeaf<T> => {
                 return Tree<T>::createLeaf(v);
             }
             | Leaf<T> => { 
@@ -834,7 +834,7 @@ namespace ListOps {
 
     recursive function delete_helper<T>(t: Tree<T>, idx: Nat): Tree<T> {
         match(t)@ {
-            Leaf<T> => { 
+            | Leaf<T> => { 
                 return Tree<T>::emptyTree; 
             }
             | Node<T> => {
@@ -854,7 +854,7 @@ namespace ListOps {
     function delete<T>(t: Tree<T>, idx: Nat): Tree<T> {
         let nt = delete_helper<T>(t, idx); 
         match(nt)@ {
-            Node<T> => {
+            | Node<T> => {
                 let ntt = if($nt.c === Color#Red)
                     then Tree<T>::createNode(Color#Black, $nt.l, $nt.r)
                     else nt;
@@ -871,7 +871,7 @@ namespace ListOps {
     }
 
     datatype Tree<T> of 
-        BBLeaf {}
+        | BBLeaf {}
         | Leaf { v: T }
         | Node { c: Color, count: Nat, l: Tree<T>, r: Tree<T> }
     & {
@@ -887,7 +887,7 @@ namespace ListOps {
 
         recursive function reverse(t: Tree<T>): Tree<T> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return t; 
                 }
                 | Leaf<T> => { return t; }
@@ -901,7 +901,7 @@ namespace ListOps {
 
         recursive function allof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return true; 
                 }
                 | Leaf<T> => { return p[recursive?]($t.v); }
@@ -920,7 +920,7 @@ namespace ListOps {
 
         recursive function noneof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return true; 
                 }
                 | Leaf<T> => { return !p[recursive?]($t.v); }
@@ -939,7 +939,7 @@ namespace ListOps {
 
         recursive function someof(t: Tree<T>, p: recursive? pred(T) -> Bool): Bool {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return false; 
                 }
                 | Leaf<T> => { return p[recursive?]($t.v); }
@@ -958,7 +958,7 @@ namespace ListOps {
 
         recursive function map<U>(t: Tree<T>, f: recursive? fn(T) -> U): Tree<U> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return BBLeaf<U>{}; 
                 }
                 | Leaf<T> => { return Leaf<U>{f[recursive?]($t.v)}; }
@@ -972,7 +972,7 @@ namespace ListOps {
 
         recursive function mapidx<U>(t: Tree<T>, cidx: Nat, f: recursive? fn(T, Nat) -> U): Tree<U> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return BBLeaf<U>{};
                 }
                 | Leaf<T> => { return Leaf<U>{f[recursive?]($t.v, cidx)}; }
@@ -986,7 +986,7 @@ namespace ListOps {
 
         recursive function find(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return none; 
                 }
                 | Leaf<T> => { 
@@ -1012,7 +1012,7 @@ namespace ListOps {
 
         recursive function findlast(t: Tree<T>, p: recursive? pred(T) -> Bool): Option<T> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return none; 
                 }
                 | Leaf<T> => { 
@@ -1038,7 +1038,7 @@ namespace ListOps {
 
         function {when T: keytype} contains(t: Tree<T>, v: T): Bool {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return false; 
                 }
                 | Leaf<T> => { 
@@ -1052,7 +1052,7 @@ namespace ListOps {
 
         recursive function filter(t: Tree<T>, ct: Tree<T>, p: recursive? pred(T) -> Bool): Tree<T> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return ct; 
                 }
                 | Leaf<T> => { 
@@ -1072,7 +1072,7 @@ namespace ListOps {
 
         recursive function filteridx(t: Tree<T>, ct: Tree<T>, cidx: Nat, p: recursive? pred(T, Nat) -> Bool): Tree<T> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return ct; 
                 }
                 | Leaf<T> => { 
@@ -1092,7 +1092,7 @@ namespace ListOps {
 
         recursive function reduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return acc; %% empty tree, return accumulator
                 }
                 | Leaf<T> => { 
@@ -1106,7 +1106,7 @@ namespace ListOps {
 
         recursive function lreduce<U>(t: Tree<T>, acc: U, f: recursive? fn(U, T) -> U): U {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return acc; %% empty tree, return accumulator
                 }
                 | Leaf<T> => { 
@@ -1120,7 +1120,7 @@ namespace ListOps {
 
         recursive function transduce<E, U>(t: Tree<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, Tree<U> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return (|environment, BBLeaf<U>{}|); %% empty tree, return empty tree
                 }
                 | Leaf<T> => { 
@@ -1137,7 +1137,7 @@ namespace ListOps {
 
         recursive function ltransduce<E, U>(t: Tree<T>, environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, Tree<U> {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return (|environment, BBLeaf<U>{}|); %% empty tree, return empty tree
                 }
                 | Leaf<T> => { 
@@ -1154,7 +1154,7 @@ namespace ListOps {
 
         recursive function {when T: numeric} sum(t: Tree<T>, acc: T): T {
             match(t)@ {
-                BBLeaf<T> => { 
+                | BBLeaf<T> => { 
                     return acc; %% empty tree, return accumulator
                 }
                 | Leaf<T> => { 

@@ -43,7 +43,7 @@ entity Format {
 
 datatype DatabaseOperation
 of
-NumRecordsOp { }
+| NumRecordsOp { }
 | EndOp { }
 | ListOp { }
 | GotoRecordOp { field ridx: Nat; }
@@ -231,7 +231,7 @@ entity Database {
 
     method processDatabaseOperation(op: DatabaseOperation): CString, Database {
         match(op)@ {
-            NumRecordsOp => { return this.processNumRecords($op), this; }
+            | NumRecordsOp => { return this.processNumRecords($op), this; }
             | EndOp => { return this.processEnd($op); }
             | ListOp => { return this.processList($op); }
             | GotoRecordOp => { return this.processGotoRecord($op); }
