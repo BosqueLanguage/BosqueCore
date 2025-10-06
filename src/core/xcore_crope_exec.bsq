@@ -511,7 +511,7 @@ namespace CRopeOps {
     }
 
     datatype Rope of 
-        BBLeaf { }
+        | BBLeaf { }
         | Leaf { buf: CCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {

@@ -12,7 +12,7 @@ datatype TypeSignature using {
     field tkeystr: TypeKey;
 } 
 of 
-VoidTypeSignature { }
+| VoidTypeSignature { }
 | NominalTypeSignature { }
 | EListTypeSignature {
     field entries: List<TypeSignature>;

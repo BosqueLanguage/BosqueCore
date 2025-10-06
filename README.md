@@ -209,7 +209,7 @@ restrict(some(5n))  %%15n
 ```
 datatype BoolOp
 of
-Const { val: Bool }
+| Const { val: Bool }
 | NotOp { arg: BoolOp }
 | AndOp { larg: BoolOp, rarg: BoolOp }
 | OrOp { larg: BoolOp, rarg: BoolOp }

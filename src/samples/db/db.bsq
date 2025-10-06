@@ -43,7 +43,7 @@ entity Format {
 
 datatype DatabaseOperation
 of
-NumRecordsOp { }
+| NumRecordsOp { }
 | EndOp { }
 | ListOp { }
 | GotoRecordOp { field ridx: Nat; }

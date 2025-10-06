@@ -6,7 +6,7 @@ namespace Core;
 namespace ListOps {
     datatype Vector<T>
     of
-    Vector0 { }
+    | Vector0 { }
     | Vector1 { field i0: T; }
     | Vector2 { field i0: T; field i1: T; }
     | Vector3 { field i0: T; field i1: T; field i2: T; }

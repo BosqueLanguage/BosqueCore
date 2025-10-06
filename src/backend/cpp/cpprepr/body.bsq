@@ -10,7 +10,7 @@ datatype TypeSignature using {
     field tkeystr: TypeKey;
 }
 of
-VoidTypeSignature { }
+| VoidTypeSignature { }
 | NominalTypeSignature { }
 | LambdaTypeSignature {
     field isPredLambda: Bool;
@@ -44,7 +44,7 @@ datatype ITest using {
     field isnot: Bool;
 }
 of
-ITestType { field ttype: TypeSignature; }
+| ITestType { field ttype: TypeSignature; }
 | ITestNone { }
 | ITestSome { }
 | ITestOk { }
@@ -81,7 +81,7 @@ datatype IfStatement provides Statement using {
     field trueBlock: BlockStatement;
 }
 of
-IfSimpleStatement { }
+| IfSimpleStatement { }
 | IfTestStatement {
     field itest: ITest;
 }
@@ -97,7 +97,7 @@ datatype IfElseStatement provides Statement using {
     field falseBlock: BlockStatement;
 }
 of
-IfElseSimpleStatement { }
+| IfElseSimpleStatement { }
 | IfElseTestStatement { 
     field itest: ITest;
 }
@@ -275,7 +275,7 @@ datatype UnaryExpression provides Expression using {
     field expr: Expression;
 }
 of
-PrefixNotOpExpression { }
+| PrefixNotOpExpression { }
 | PrefixNegateOpExpression { }
 | PrefixPlusOpExpression { }
 ;
@@ -286,7 +286,7 @@ datatype IfExpression provides Expression using {
     field elseexp: Expression;
 }
 of
-IfSimpleExpression { }
+| IfSimpleExpression { }
 | IfTestExpression { 
     field itest: ITest;
 }
@@ -308,7 +308,7 @@ datatype BinaryArithExpression provides Expression using {
     field rhs: Expression;
 }
 of
-BinAddExpression { }
+| BinAddExpression { }
 | BinSubExpression { }
 | BinDivExpression { }
 | BinMultExpression { }
@@ -318,7 +318,7 @@ datatype BinaryKeyEqExpression provides Expression using {
     field opertype: TypeSignature;
 }
 of
-BinKeyEqNoneExpression { 
+| BinKeyEqNoneExpression { 
     field exp: Expression;
 }
 | BinKeyNotEqNoneExpression { 
@@ -363,7 +363,7 @@ datatype BinaryNumericExpression provides Expression using {
     field rhs: Expression;
 }
 of
-NumericEqExpression { }
+| NumericEqExpression { }
 | NumericNeqExpression { }
 | NumericLessExpression { }
 | NumericLessEqExpression { }
@@ -376,7 +376,7 @@ datatype BinLogicExpression provides Expression using {
     field rhs: Expression;
 }
 of
-BinLogicAndExpression { }
+| BinLogicAndExpression { }
 | BinLogicOrExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
@@ -428,7 +428,7 @@ datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPr
     field args: List<Expression>;
 }
 of
-ConstructorPrimaryListExpression { }
+| ConstructorPrimaryListExpression { }
 | ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
 ;
 
@@ -436,7 +436,7 @@ datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPr
     field value: Expression;
 }
 of
-ConstructorPrimarySpecialSomeExpression {
+| ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
 }
 | ConstructorPrimarySpecialOkExpression { %% TODO: Not Implemented
@@ -459,7 +459,7 @@ datatype PostfixOperation using {
     field baseType: TypeSignature;
 }
 of
-PostfixAccessFromName {
+| PostfixAccessFromName {
     field name: Identifier;
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
@@ -496,7 +496,7 @@ entity PostfixOp provides Expression {
 
 datatype BodyImplementation 
 of
-AbstractBodyImplementation { } %% N/A
+| AbstractBodyImplementation { } %% N/A
 | PredicateUFBodyImplementation { } %% N/A
 | BuiltinBodyImplementation { field builtin: CString; }
 | SynthesisBodyImplementation { } %% N/A

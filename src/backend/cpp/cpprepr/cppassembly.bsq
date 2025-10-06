@@ -44,7 +44,7 @@ datatype ConditionDecl provides AbstractDecl using {
     field exp: Expression;
 }
 of
-PreConditionDecl {
+| PreConditionDecl {
     field issoft: Bool;
 }
 | PostConditionDecl {
@@ -131,7 +131,7 @@ entity EntityTypeDecl provides AbstractEntityTypeDecl{
 
 datatype ConstructableTypeDecl provides InternalEntityTypeDecl
 of
-SomeTypeDecl { field oftype: TypeSignature; }
+| SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 | CRopeIteratorTypeDecl { }
 ; 
@@ -140,7 +140,7 @@ datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
     field oftype: TypeSignature;
 }
 of
-ListTypeDecl {  }
+| ListTypeDecl {  }
 | CRopeTypeDecl { }
 | UnicodeRopeTypeDecl { }
 | StackTypeDecl { }
@@ -180,7 +180,7 @@ entity ConceptTypeDecl provides AbstractConceptTypeDecl {
 
 datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
 of
-OptionTypeDecl { 
+| OptionTypeDecl { 
     field oftype: TypeSignature; 
     field someType: TypeSignature;
 }
@@ -225,7 +225,7 @@ entity TypeInfo {
 datatype MethodDecl provides ExplicitInvokeDecl using {
 }
 of
-MethodDeclStatic { }
+| MethodDeclStatic { }
 | MethodDeclAbstract {}
 | MethodDeclVirtual {}
 | MethodDeclOverride {}

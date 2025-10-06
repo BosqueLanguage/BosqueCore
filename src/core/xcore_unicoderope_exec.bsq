@@ -424,7 +424,7 @@ namespace UnicodeRopeOps {
     %%
 
     datatype Rope of 
-        BBLeaf { }
+        | BBLeaf { }
         | Leaf { buf: UnicodeCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {

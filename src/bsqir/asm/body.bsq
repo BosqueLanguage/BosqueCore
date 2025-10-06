@@ -9,7 +9,7 @@ datatype ITest using {
     field isnot: Bool;
 }
 of
-ITestType { field ttype: TypeSignature; }
+| ITestType { field ttype: TypeSignature; }
 | ITestNone { }
 | ITestSome { }
 | ITestOk { }
@@ -20,7 +20,7 @@ datatype ArgumentValue using {
     field exp: Expression;
 }
 of 
-RefArgumentValue { }
+| RefArgumentValue { }
 | PositionalArgumentValue { }
 | NamedArgumentValue { field name: VarIdentifier; }
 | SpreadArgumentValue { }
@@ -139,7 +139,7 @@ datatype ConstructorPrimaryCollectionSingletonsExpression provides ConstructorPr
     field args: List<ArgumentValue>;
 }
 of
-ConstructorPrimaryListExpression { }
+| ConstructorPrimaryListExpression { }
 | ConstructorPrimaryMapExpression { field keytype: TypeSignature; field valuetype: TypeSignature; }
 ;
 
@@ -150,7 +150,7 @@ datatype ConstructorPrimarySpecialConstructableExpression provides ConstructorPr
     field value: Expression;
 }
 of
-ConstructorPrimarySpecialSomeExpression {
+| ConstructorPrimarySpecialSomeExpression {
     field ofttype: TypeSignature;
 }
 | ConstructorPrimarySpecialOkExpression { 
@@ -242,7 +242,7 @@ datatype CallRefInvokeStaticResolveExpression provides Expression using {
     field argsinfo: InvokeArgumentInfo;
 }
 of
-CallRefVariableExpression { }
+| CallRefVariableExpression { }
 | CallRefThisExpression { }
 | CallRefSelfExpression { }
 ;
@@ -254,7 +254,7 @@ datatype CallRefInvokeVirtualExpression provides Expression using {
     field argsinfo: InvokeArgumentInfo;
 }
 of
-CallRefVariableVirtualExpression { }
+| CallRefVariableVirtualExpression { }
 | CallRefThisVirtualExpression { }
 | CallRefSelfVirtualExpression { }
 ;
@@ -292,7 +292,7 @@ datatype PostfixOperation using {
     field baseType: TypeSignature;
 }
 of 
-PostfixAccessFromName {
+| PostfixAccessFromName {
     field name: Identifier;
     field declaredInType: NominalTypeSignature;
     field ftype: TypeSignature;
@@ -357,7 +357,7 @@ datatype UnaryExpression provides Expression using {
     field opertype: TypeSignature;
 }
 of
-PrefixNotOpExpression { }
+| PrefixNotOpExpression { }
 | PrefixNegateOpExpression { }
 | PrefixPlusOpExpression { }
 ;
@@ -368,7 +368,7 @@ datatype BinaryArithExpression provides Expression using {
     field opertype: TypeSignature;
 }
 of
-BinAddExpression { }
+| BinAddExpression { }
 | BinSubExpression { }
 | BinMultExpression { }
 | BinDivExpression { }
@@ -378,7 +378,7 @@ datatype BinaryKeyEqExpression provides Expression using {
     field opertype: TypeSignature;
 }
 of
-BinKeyEqNoneExpression { 
+| BinKeyEqNoneExpression { 
     field exp: Expression;
 }
 | BinKeyNotEqNoneExpression { 
@@ -425,7 +425,7 @@ datatype BinaryNumericExpression provides Expression using {
     field rhs: Expression;
 }
 of
-NumericEqExpression { }
+| NumericEqExpression { }
 | NumericNeqExpression { }
 | NumericLessExpression { }
 | NumericLessEqExpression { }
@@ -438,7 +438,7 @@ datatype BinLogicExpression provides Expression using {
     field rhs: Expression;
 }
 of
-BinLogicAndExpression { }
+| BinLogicAndExpression { }
 | BinLogicOrExpression { }
 | BinLogicImpliesExpression { }
 | BinLogicIFFExpression { }
@@ -455,7 +455,7 @@ datatype IfExpression provides Expression using {
     field elseexp: Expression;
 }
 of
-IfSimpleExpression { }
+| IfSimpleExpression { }
 | IfTestExpression { 
     field itest: ITest;
 }
@@ -555,7 +555,7 @@ datatype IfStatement provides Statement using {
     field trueBlock: BlockStatement;
 }
 of
-IfSimpleStatement { }
+| IfSimpleStatement { }
 | IfTestStatement {
     field itest: ITest;
 }
@@ -571,7 +571,7 @@ datatype IfElseStatement provides Statement using {
     field falseBlock: BlockStatement;
 }
 of
-IfElseSimpleStatement { }
+| IfElseSimpleStatement { }
 | IfElseTestStatement {
     field itest: ITest;
 }
@@ -640,7 +640,7 @@ datatype UpdateDirectStatement provides Statement using {
     invariant $updates.size() == $updateinfo.size();
 }
 of
-VarUpdateDirectStatement { }
+| VarUpdateDirectStatement { }
 | ThisUpdateDirectStatement { }
 | SelfUpdateDirectStatement { }
 ;
@@ -656,7 +656,7 @@ datatype UpdateIndirectStatement provides Statement using {
     invariant $updates.size() == $updateinfo.size();
 }
 of
-VarUpdateIndirectStatement { }
+| VarUpdateIndirectStatement { }
 | ThisUpdateIndirectStatement { }
 ;
 
@@ -676,7 +676,7 @@ entity BinderBlockStatement provides Statement {
 
 datatype BodyImplementation 
 of
-AbstractBodyImplementation { }
+| AbstractBodyImplementation { }
 | PredicateUFBodyImplementation { }
 | BuiltinBodyImplementation { field builtin: CString; field binds: List<(|CString, TypeSignature|)>; }
 | SynthesisBodyImplementation { }

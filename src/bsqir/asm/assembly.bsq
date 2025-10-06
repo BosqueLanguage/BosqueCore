@@ -14,7 +14,7 @@ datatype ConditionDecl provides AbstractDecl using {
     field exp: Expression;
 }
 of
-PreConditionDecl {
+| PreConditionDecl {
     field issoft: Bool;
 }
 | PostConditionDecl {
@@ -83,7 +83,7 @@ datatype MethodDecl provides ExplicitInvokeDecl using {
     field ofrcvrtype: NominalTypeSignature; %%Type type that this method is defined in (as opposed to the declaration type which differs for overrides)
 }
 of
-MethodDeclStatic { }
+| MethodDeclStatic { }
 | MethodDeclAbstract {}
 | MethodDeclVirtual {}
 | MethodDeclOverride { 
@@ -179,7 +179,7 @@ entity PrimitiveEntityTypeDecl provides InternalEntityTypeDecl {
 
 datatype ConstructableTypeDecl provides InternalEntityTypeDecl 
 of
-OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
+| OkTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | FailTypeDecl { field oktype: TypeSignature; field failtype: TypeSignature; }
 | APIRejectedTypeDecl { }
 | APIFailedTypeDecl { }
@@ -194,7 +194,7 @@ datatype CollectionTypeDecl provides InternalEntityTypeDecl using {
     field oftype: TypeSignature;
 }
 of
-ListTypeDecl {  }
+| ListTypeDecl {  }
 | CRopeTypeDecl { }
 | UnicodeRopeTypeDecl { }
 | StackTypeDecl { }
@@ -217,7 +217,7 @@ concept AbstractConceptTypeDecl provides AbstractNominalTypeDecl {
 
 datatype PrimitiveConceptTypeDecl provides AbstractConceptTypeDecl 
 of
-OptionTypeDecl { 
+| OptionTypeDecl { 
     field oftype: TypeSignature; 
     field someType: TypeSignature;
 }

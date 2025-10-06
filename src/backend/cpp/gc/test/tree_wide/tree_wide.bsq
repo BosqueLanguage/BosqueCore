@@ -1,5 +1,5 @@
 datatype WideTree of 
-DeadTree { }
+| DeadTree { }
 | Leaf { v: Nat }
 | Node { 
     v: Nat, 

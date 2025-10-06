@@ -73,7 +73,7 @@ datatype SMTExpTransformResult using {
     field oftype: SMTAssembly::TypeKey;
 }
 of 
-SafeResult { field exp: SMTAssembly::SafeExpression; }
+| SafeResult { field exp: SMTAssembly::SafeExpression; }
 | ErrorResult { field exp: SMTAssembly::Expression; }
 ;
 

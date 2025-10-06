@@ -871,7 +871,7 @@ namespace ListOps {
     }
 
     datatype Tree<T> of 
-        BBLeaf {}
+        | BBLeaf {}
         | Leaf { v: T }
         | Node { c: Color, count: Nat, l: Tree<T>, r: Tree<T> }
     & {

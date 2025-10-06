@@ -651,7 +651,7 @@ namespace MapOps {
     }
 
     datatype Tree<K: keytype, V> of 
-        BBLeaf {}
+        | BBLeaf {}
         | Leaf { v: MapEntry<K, V> }
         | Node { c: Color, count: Nat, mink: K, maxk: K, l: Tree<K, V>, r: Tree<K, V> }
     & {

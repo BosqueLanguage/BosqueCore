@@ -17,6 +17,6 @@ describe ("Parser -- entity ref methods", () => {
 
 describe ("Parser -- eADT ref methods", () => {
     it("should parse simple eADT methods", function () {
-        parseTestFunctionInFile('datatype Foo of Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; [FUNC]', 'function main(): Int { let x = Foo{3i}; return ref x.foo(1i); }'); 
+        parseTestFunctionInFile('datatype Foo of | Foo1 { field f: Int; method foo(x: Int): Int { return this.f + x; }} ; [FUNC]', 'function main(): Int { let x = Foo{3i}; return ref x.foo(1i); }'); 
     });
 });

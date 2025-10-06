@@ -5815,13 +5815,8 @@ class Parser {
             return;
         }
 
-        let firstMember = true;
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
-            if(!firstMember) {
-                this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
-            }
-            firstMember = false;
-
+            this.ensureAndConsumeTokenAlways(SYM_bar, "datatype member");
             this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
