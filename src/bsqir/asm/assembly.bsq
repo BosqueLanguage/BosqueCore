@@ -583,7 +583,7 @@ entity Assembly {
 
     recursive method tryResolveExpAsLiteralExpression(exp: Expression): Option<Expression> {
         match(exp)@ {
-            AccessNamespaceConstantExpression => {
+            | AccessNamespaceConstantExpression => {
                 let cc = this.nsconsts.find(pred(nsconst) => nsconst.name === $exp.name && nsconst.declaredInNS === $exp.ns);
                 return this.tryResolveExpAsLiteralExpression[recursive](cc.value);
             }

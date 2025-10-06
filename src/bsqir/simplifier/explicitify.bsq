@@ -296,7 +296,7 @@ entity ExplicitifyTransform {
 
     recursive method processConstructorExpression(e: ConstructorExpression, vmap: VarMapping): Expression {
         match(e)@ {
-            ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, vmap); }
+            | ConstructorPrimaryListExpression => { return this.processConstructorPrimaryListExpression[recursive]($e, vmap); }
             | ConstructorPrimaryMapExpression => { return this.processConstructorPrimaryMapExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialMapEntryExpression => { return this.processConstructorPrimarySpecialMapEntryExpression[recursive]($e, vmap); }
             | ConstructorPrimarySpecialSomeExpression => { return this.processConstructorPrimarySpecialSomeExpression[recursive]($e, vmap); }
@@ -398,7 +398,7 @@ entity ExplicitifyTransform {
         let ebase = this.processUnaryArg[recursive](e.rootExp, vmap);
         let ops = e.ops.map[recursive]<PostfixOperation>(recursive fn(op) => {
             match(op)@ {
-                PostfixAccessFromName => { return $op; }
+                | PostfixAccessFromName => { return $op; }
                 | PostfixProjectFromNames => { return $op; }
                 | PostfixAccessFromIndex => { return $op; }
                 | PostfixIsTest => { return $op; }
@@ -492,7 +492,7 @@ entity ExplicitifyTransform {
 
     recursive method processBinaryKeyEqExpression(e: BinaryKeyEqExpression, vmap: VarMapping): Expression {
         match(e)@ {
-            BinKeyEqNoneExpression => { return this.procssBinKeyEqNoneExpression[recursive]($e, vmap); }
+            | BinKeyEqNoneExpression => { return this.procssBinKeyEqNoneExpression[recursive]($e, vmap); }
             | BinKeyNotEqNoneExpression => { return this.procssBinKeyNotEqNoneExpression[recursive]($e, vmap); }
             | BinKeySomeEqExpression => { return this.procssBinKeySomeEqExpression[recursive]($e, vmap); }
             | BinKeyNotSomeEqExpression => { return this.procssBinKeyNotSomeEqExpression[recursive]($e, vmap); }
@@ -603,7 +603,7 @@ entity ExplicitifyTransform {
 
     recursive method processIfExpression(e: IfExpression, vmap: VarMapping): Expression {
         match(e)@ {
-            IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e, vmap); }
+            | IfSimpleExpression => { return this.processIfSimpleExpression[recursive]($e, vmap); }
             | IfTestExpression => { return this.processIfTestExpression[recursive]($e, vmap); }
             | IfBinderExpression => { return this.processIfBinderExpression[recursive]($e, vmap); }
         }
@@ -618,7 +618,7 @@ entity ExplicitifyTransform {
 
     recursive method processExpression(e: Expression, vmap: VarMapping): Expression {
         match(e)@ {
-            LiteralNoneExpression => { return e; }
+            | LiteralNoneExpression => { return e; }
             | LiteralSimpleExpression => { return e; }
             | LiteralCStringExpression => { return e; }
             | LiteralStringExpression => { return e; }
@@ -687,7 +687,7 @@ entity ExplicitifyTransform {
 
     recursive method processIfStatement(s: IfStatement, vmap: VarMapping): Statement {
         match(s)@ {
-            IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s, vmap); }
+            | IfSimpleStatement => { return this.processIfSimpleStatement[recursive]($s, vmap); }
             | IfTestStatement => { return this.processIfTestStatement[recursive]($s, vmap); }
             | IfBinderStatement => { return this.processIfBinderStatement[recursive]($s, vmap); }
         }
@@ -726,7 +726,7 @@ entity ExplicitifyTransform {
 
     recursive method processIfElseStatement(s: IfElseStatement, vmap: VarMapping): Statement {
         match(s)@ {
-            IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s, vmap); }
+            | IfElseSimpleStatement => { return this.processIfElseSimpleStatement[recursive]($s, vmap); }
             | IfElseTestStatement => { return this.processIfElseTestStatement[recursive]($s, vmap); }
             | IfElseBinderStatement => { return this.processIfElseBinderStatement[recursive]($s, vmap); }
         }
@@ -763,7 +763,7 @@ entity ExplicitifyTransform {
 
     recursive method processStatement(s: Statement, vmap: VarMapping): Statement {
         match(s)@ {
-            EmptyStatement => {
+            | EmptyStatement => {
                 return s;
             }
             | VariableDeclarationStatement => {
@@ -906,7 +906,7 @@ entity ExplicitifyTransform {
 
     method processBodyImpl(body: BodyImplementation, vmap: VarMapping): BodyImplementation {
         match(body)@ {
-            ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, vmap) }; }
+            | ExpressionBodyImplementation => { return ExpressionBodyImplementation{ this.processExpression($body.exp, vmap) }; }
             | StandardBodyImplementation => { return StandardBodyImplementation{ this.processBodyStatementList($body.statements, vmap) }; }
             | _ => { return body; }
         }
@@ -1162,7 +1162,7 @@ entity ExplicitifyTransform {
 
     method processPrimitiveConceptTypeDecl(pconcept: PrimitiveConceptTypeDecl): PrimitiveConceptTypeDecl {
         match(pconcept)@ {
-            OptionTypeDecl => { return this.processOptionTypeDecl($pconcept); }
+            | OptionTypeDecl => { return this.processOptionTypeDecl($pconcept); }
             | ResultTypeDecl => { abort; }
             | APIResultTypeDecl => { abort; }
         }

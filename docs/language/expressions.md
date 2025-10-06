@@ -700,19 +700,19 @@ Examples of simple switch expressions include:
 let x: Int? = ...;
 
 switch (x) {
-    none => 0i
+    |none => 0i
     | 0i => 1i
     | _  => 2i
 } //Int
 
 let y: Bool = ...;
 switch (y) {
-    true    => 0n
+    | true    => 0n
     | false => 1n
 } //Nat
 
 let z: Int? = switch(x) {
-    none => 0i
+    | none => 0i
     | _  => 1i
 }; //Int?
 ```
@@ -722,13 +722,13 @@ Examples of switch expressions with binders include:
 let x: {f: Nat?, g: Int} = ...;
 
 switch (x.f) {
-    none => 0n
+    |none => 0n
     | _  => $ + 1n
 } //Int
 
 let y: Option<Nat> = ...;
 switch (y) {
-    nothing => 0n
+    | nothing => 0n
     | _  => $.value() + 1n
 } //Nat
 ```
@@ -743,13 +743,13 @@ Examples of simple match expressions include:
 let x: Int | Nat | None = ...;
 
 match (x) {
-    None  => 0i
+    | None  => 0i
     | Int => 1i
     | _   => 2i
 } //Int
 
 let z: Int? = match(x) {
-    None  => 0i
+    | None  => 0i
     | Int => 1i
 }; //Int?
 ```

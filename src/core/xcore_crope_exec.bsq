@@ -129,7 +129,7 @@ namespace CRopeOps {
         assert c !== Color#BB;
 
         switch(c) {
-            Color#Black => { return Color#BB; }
+            | Color#Black => { return Color#BB; }
             | Color#Red => { return Color#Black; }
             | _         => { return Color#Red; }
         }
@@ -139,7 +139,7 @@ namespace CRopeOps {
         assert c !== Color#NB;
 
         switch(c) {
-            Color#BB      => { return Color#Black; }
+            | Color#BB      => { return Color#Black; }
             | Color#Black => { return Color#Red; }
             | _           => { return Color#NB; }
         }
@@ -388,7 +388,7 @@ namespace CRopeOps {
 
     recursive function append_helper(r: Rope, v: CCharBuffer): Rope {
         match(r)@ {
-            Leaf => { 
+            | Leaf => { 
                 %% Try to merge buffers
                 if($r.buf.size() + v.size() <= CCharBufferOps::getMaxSize()) {
                     let merge = CCharBufferOps::mergeCBuffers($r.buf, v);
@@ -528,7 +528,7 @@ namespace CRopeOps {
 
         function getCharacterCount(rope: Rope): Nat {
             match(rope)@ {
-                Leaf => {
+                | Leaf => {
                     return $rope.buf.size();
                 }
                 | Node => {
