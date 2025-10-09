@@ -38,7 +38,7 @@ entity RayTracer{
     }
 
     method minIntersection(ray: Ray, scene: Scene): Option<ISect> {
-        return scene.things.reduce<Option<ISect>>(none, fn(min, obj) => {
+        return scene.things.reduce<Option<ISect>>(fn(min, obj) => {
             let isect = obj.intersect(ray);
             if(isect)@none {
                 return min;
@@ -56,7 +56,7 @@ entity RayTracer{
                     }
                 }
             }
-        });
+        }, none);
     }
 
     method testRay(ray: Ray, scene: Scene): Float {

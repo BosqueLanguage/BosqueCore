@@ -101,7 +101,7 @@ entity LambdaGeneratorState {
     }
 
     method mergeLambdaGeneratorInfo(lgeninfo: List<LambdaGeneratorInfo>): LambdaGeneratorState {
-        let nsmap = lgeninfo.reduce<Map<BSQAssembly::InvokeKey, List<LambdaGeneratorInfo>>>(this.smap, fn(mm, lgi) => {
+        let nsmap = lgeninfo.reduce<Map<BSQAssembly::InvokeKey, List<LambdaGeneratorInfo>>>(fn(mm, lgi) => {
             if(!mm.has(lgi.invoke)) {
                 return mm.insert(lgi.invoke, List<LambdaGeneratorInfo>{lgi});
             }
@@ -114,7 +114,7 @@ entity LambdaGeneratorState {
                     return mm.set(lgi.invoke, llist.pushBack(lgi));
                 }
             }
-        });
+        }, this.smap);
 
         return LambdaGeneratorState{nsmap};
     }
@@ -268,7 +268,7 @@ entity SMTTransformer {
     }
 
     recursive method processArgsInOrder(args: List<BSQAssembly::Expression>, ctx: SMTTransformerCtx): List<SMTAssembly::SafeExpression>, SMTTransformerCtx, Option<List<(|SMTAssembly::Expression, SMTAssembly::TypeKey, SMTAssembly::Identifier|)>> {
-        let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(ctx, recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx));
+        let nctx, subexps = args.transduce<SMTTransformerCtx, SMTExpTransformResult>(recursive fn(ctx, arg) => this.transformExpressionToSMT[recursive](arg, ctx), ctx);
 
         return this.unpackExpressionErrors(subexps, nctx);
     }
@@ -313,7 +313,7 @@ entity SMTTransformer {
             return ctx, exp;
         }
         else {
-            let rctx, iichecks = preconds.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(ctx, fn(cctx, iiv) => {
+            let rctx, iichecks = preconds.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, ttags);
                 
                 let eeid = cctx.errCtr;
@@ -323,7 +323,7 @@ entity SMTTransformer {
                 else {
                     return cctx.addError(iiv.exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, args}, eeid|);
                 }
-            });
+            }, ctx);
 
             let wwexp = if(exp)@<SMTAssembly::CallFunctionSafeExpression> then SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(etype), $exp} else exp;
             return rctx, SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(etype), iichecks, wwexp};
@@ -390,7 +390,7 @@ entity SMTTransformer {
             let chkargs = List<SMTAssembly::SafeExpression>{ larg };
             let createop = SMTAssembly::WrapIntoResultExpression{smttype, SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}};
 
-            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
@@ -401,7 +401,7 @@ entity SMTTransformer {
                 else {
                     return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
-            });
+            }, nctx);
 
             let createexp = SMTAssembly::AssertSetExpression{smttype, iichecks, createop};
             return rctx, this.wrapOperationResultWErr(exp.constype, createexp, obinds);
@@ -451,7 +451,7 @@ entity SMTTransformer {
             let chkargs = List<SMTAssembly::SafeExpression>{ larg };
             let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(exp.ctype), SMTAssembly::ConstructorTypeDeclExpression{smttype, larg}};
 
-            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
                 let eeid = cctx.errCtr;
@@ -461,7 +461,7 @@ entity SMTTransformer {
                 else {
                     return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
-            });
+            }, nctx);
 
             let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(exp.ctype), iichecks, createop};
             return rctx, this.wrapOperationResultWErr(exp.ctype, createexp, obinds);
@@ -487,7 +487,7 @@ entity SMTTransformer {
             return xctx, this.wrapOperationResultWErr(exp.ctype, SMTAssembly::AssertExpression{smttype, fmtchk, feid, createop}, obinds);
         }
         else {
-            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(xctx, fn(cctx, iiv) => {
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
                 let eeid = cctx.errCtr;
@@ -497,7 +497,7 @@ entity SMTTransformer {
                 else {
                     return cctx.addError(exp.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, chkargs}, eeid|);
                 }
-            });
+            }, xctx);
             
             let xichecks = List<(|SMTAssembly::Expression, Nat|)>::concat(List<(|SMTAssembly::Expression, Nat|)>{(|fmtchk, feid|)}, iichecks);
             let createexp = SMTAssembly::AssertSetExpression{smttype, xichecks, createop};
@@ -518,7 +518,7 @@ entity SMTTransformer {
         else {
             let createop = SMTAssembly::WrapIntoResultExpression{this.transformStdTypeToSMT(e.ctype), SMTAssembly::ConstructorStdExpression{smttype, aargs}};
 
-            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(nctx, fn(cctx, iiv) => {
+            let rctx, iichecks = tdecl.allInvariants.ltransduce<SMTTransformerCtx, (|SMTAssembly::Expression, Nat|)>(fn(cctx, iiv) => {
                 let iitypedecl = this.assembly.lookupNominalTypeDeclaration(iiv.declaredInType.tkeystr);
                 let smtikey = TransformNameManager::convertInvokeKey(iiv.ikey, List<Bool>{});
                 
@@ -530,7 +530,7 @@ entity SMTTransformer {
                 else {
                     return cctx.addError(e.sinfo), (|SMTAssembly::CallFunctionExpression{smtikey, sliceargs}, eeid|);
                 }
-            });
+            }, nctx);
 
             let createexp = SMTAssembly::AssertSetExpression{this.transformStdTypeToSMT(e.ctype), iichecks, createop};
             return rctx, this.wrapOperationResultWErr(e.ctype, createexp, obinds);
@@ -1102,7 +1102,7 @@ entity SMTTransformer {
         let ebase, nctx, obinds = this.processUnaryArg[recursive](exp.rootExp, ctx);
         let eexp = this.wrapOperationResult(exp.rootExp.etype, ebase, obinds);
 
-        let rres = exp.ops.reduce[recursive]<(|SMTTransformerCtx, SMTExpTransformResult|)>((|nctx, eexp|), recursive fn(pstate, op) => {
+        let rres = exp.ops.reduce[recursive]<(|SMTTransformerCtx, SMTExpTransformResult|)>(recursive fn(pstate, op) => {
             match(op)@ {
                 | BSQAssembly::PostfixAccessFromName => { return this.transformPostfixAccessFromName($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixProjectFromNames => { abort; }
@@ -1120,7 +1120,7 @@ entity SMTTransformer {
                 | BSQAssembly::PostfixAccessSomeValue => { return this.transformPostfixAccessSomeValue($op, pstate.0, pstate.1); }
                 | BSQAssembly::PostfixLiteralNoneValue => { return this.transformPostfixLiteralNoneValue($op, pstate.0, pstate.1); }
             }
-        });
+        }, (|nctx, eexp|));
 
         return rres;
     }
@@ -1896,7 +1896,7 @@ entity SMTTransformer {
     recursive method transformIfElifElseStatement(stmt: BSQAssembly::IfElifElseStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ectx, elseop = this.transformBlockStatement[recursive](stmt.elseflow, tail, ctx);
 
-        let octx, conds = stmt.condflow.reduce<(|SMTTransformerCtx, SMTAssembly::Operation|)>((|ectx, elseop@some|), recursive fn(acc, flow) => {
+        let octx, conds = stmt.condflow.reduce<(|SMTTransformerCtx, SMTAssembly::Operation|)>(recursive fn(acc, flow) => {
             let ntexp, cctx, cobinds = this.processUnaryArg[recursive](flow.0, acc.0);
             let nctx, nblock = this.transformBlockStatement[recursive](flow.1, tail, cctx);
 
@@ -1907,7 +1907,7 @@ entity SMTTransformer {
             else {
                 return nctx, SMTAssembly::LetWErrorsOperation{$cobinds, ifop};
             }
-        });
+        }, (|ectx, elseop@some|));
 
         let itexp, ictx, iobinds = this.processUnaryArg[recursive](stmt.ifcond, octx);
         let inctx, inblock = this.transformBlockStatement[recursive](stmt.ifflow, tail, ictx);
@@ -1924,7 +1924,7 @@ entity SMTTransformer {
     recursive method transformMatchStatement(stmt: BSQAssembly::MatchStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let ntexp, cctx, cobinds = this.processUnaryArg[recursive](stmt.sval, ctx);
         
-        var fctx, ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>((|cctx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|), recursive fn(acc, op) => {
+        var fctx, ops = stmt.matchflow.reduce<(|SMTTransformerCtx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>|)>(recursive fn(acc, op) => {
             let cctx, nblock = this.transformBlockStatement[recursive](op.1, tail, acc.0);
 
             var fblock: SMTAssembly::Operation = nblock@some;
@@ -1936,7 +1936,7 @@ entity SMTTransformer {
 
             let iscct = this.assembly.isTypeConcrete(op.0);
             return cctx, acc.1.pushBack((|!iscct, this.transformStdTypeToSMT(op.0), fblock|));
-        });
+        }, (|cctx, List<(|Bool, SMTAssembly::TypeKey, SMTAssembly::Operation|)>{}|));
 
         var mop: SMTAssembly::MatchOperation;
         if(stmt.mustExhaustive) {
@@ -2023,18 +2023,18 @@ entity SMTTransformer {
     }
 
     recursive method transformBlockStatement(stmt: BSQAssembly::BlockStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
-        return stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, tail|), recursive fn(acc, s) => {
+        return stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>(recursive fn(acc, s) => {
             return this.transformStatement[recursive](s, acc.1, acc.0);
-        });
+        }, (|ctx, tail|));
     }
 
     recursive method transformBinderBlockStatement(stmt: BSQAssembly::BinderBlockStatement, tail: Option<SMTAssembly::Operation>, ctx: SMTTransformerCtx): SMTTransformerCtx, Option<SMTAssembly::Operation> {
         let onarg, cctx, cobinds = this.processUnaryArg[recursive](stmt.bexp, ctx);
         let topt, _ = this.transformITestAsSafeConvertOptions(stmt.bexp.etype, stmt.itest, onarg);
         
-        let octx, ops = stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|cctx, tail|), recursive fn(acc, s) => {
+        let octx, ops = stmt.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>(recursive fn(acc, s) => {
             return this.transformStatement[recursive](s, acc.1, acc.0);
-        });
+        }, (|cctx, tail|));
 
         let bindname = SMTAssembly::Identifier::from(TransformNameManager::safeifyName(stmt.binder.srcname.value));
         let bindop = SMTAssembly::LetOperation{bindname, topt, ops@some};
@@ -2064,9 +2064,9 @@ entity SMTTransformer {
                 }
             }
             | BSQAssembly::StandardBodyImplementation => {
-                let rctx, smtop = $impl.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>((|ctx, none|), recursive fn(acc, s) => {
+                let rctx, smtop = $impl.statements.lreduce[recursive]<(|SMTTransformerCtx, Option<SMTAssembly::Operation>|)>(recursive fn(acc, s) => {
                     return this.transformStatement[recursive](s, acc.1, acc.0);
-                });
+                }, (|ctx, none|));
                 
                 return rctx, smtop@some;
             }
@@ -2154,7 +2154,7 @@ entity SMTTransformer {
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(fn(lemap, gg) => lemap.insert(gg.0, gg.1), Map<BSQAssembly::Identifier, Bool>{});
                 let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
@@ -2219,7 +2219,7 @@ entity SMTTransformer {
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(fn(lemap, gg) => lemap.insert(gg.0, gg.1), Map<BSQAssembly::Identifier, Bool>{});
                 let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
@@ -2286,7 +2286,7 @@ entity SMTTransformer {
                 let rtype = this.transformStdTypeToSMT(decl.resultType);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(fn(lemap, gg) => lemap.insert(gg.0, gg.1), Map<BSQAssembly::Identifier, Bool>{});
                 let ctx = SMTTransformerCtx{mayerr, lambdaerr, decl.file, some(decl.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, body = this.transformBodyToSMTBody(decl.body, ctx, decl.resultType);
 
@@ -2362,7 +2362,7 @@ entity SMTTransformer {
                 let rtype = this.transformStdTypeToSMT(SMTTransformer::booltype);
                 let artype = if(mayerr) then SMTAssembly::ErrorResult{ rtype } else SMTAssembly::SafeResult{ rtype };
 
-                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(Map<BSQAssembly::Identifier, Bool>{}, fn(lemap, gg) => lemap.insert(gg.0, gg.1));
+                let lambdaerr = lgi.largerrors.reduce<Map<BSQAssembly::Identifier, Bool>>(fn(lemap, gg) => lemap.insert(gg.0, gg.1), Map<BSQAssembly::Identifier, Bool>{});
                 let ctx = SMTTransformerCtx{mayerr, lambdaerr, cond.file, some(cond.ikey), some(ikey), false, 1n, 1n, List<SMTAssembly::ErrorInfo>{}, List<LambdaGeneratorInfo>{lgi}};
                 let rctx, smtexp = this.transformExpressionToSMT(cond.exp, ctx);
 
@@ -2950,11 +2950,10 @@ entity SMTTransformer {
             .mergeLambdaGeneratorInfo(List<LambdaGeneratorInfo>::concatAll(ttypeconstsinfo.map<List<LambdaGeneratorInfo>>(fn(tc) => tc.1)));
 
         let tnsfuncs, lgstatef, tnsinvkeys = this.callg.topoorder
-            .lreduce<(|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>, LambdaGeneratorState, List<SMTAssembly::InvokeKey>|)>((|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, lgstate, List<SMTAssembly::InvokeKey>{}|), 
-                fn(acc, ikey) => {
+            .lreduce<(|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>, LambdaGeneratorState, List<SMTAssembly::InvokeKey>|)>(fn(acc, ikey) => {
                     let fdinfo = this.transformInvokeToSMTFunction(ikey, acc.1.getLambdaGeneratorInfo(ikey));
                     if(fdinfo)@some {
-                        let nfm = $fdinfo.0.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(acc.0, fn(mm, f) => mm.insert(f.invokeKey, f));
+                        let nfm = $fdinfo.0.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>>(fn(mm, f) => mm.insert(f.invokeKey, f), acc.0);
                         let nlgen = acc.1.mergeLambdaGeneratorInfo($fdinfo.1);
                         let nlsort = acc.2.prepend($fdinfo.0.map<SMTAssembly::InvokeKey>(fn(f) => f.invokeKey));
 
@@ -2963,19 +2962,22 @@ entity SMTTransformer {
                     else {
                         return acc;
                     }
-                });
+                },
+                (|Map<SMTAssembly::InvokeKey, SMTAssembly::FunctionDecl>{}, lgstate, List<SMTAssembly::InvokeKey>{}|)
+            );
 
         let tnsfuncsbuiltin = this.callg.topoorder
-            .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>{}, 
-                fn(acc, ikey) => {
+            .lreduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(fn(acc, ikey) => {
                     let bidl = this.transformInvokeToSMTBuiltinFunction(ikey, lgstatef.getLambdaGeneratorInfo(ikey));
                     if(bidl)@some {
-                        return $bidl.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(acc, fn(mm, f) => mm.insert(f.invokeKey, f));
+                        return $bidl.reduce<Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>>(fn(mm, f) => mm.insert(f.invokeKey, f), acc);
                     }
                     else {
                         return acc;
                     }
-                });
+                },
+                Map<SMTAssembly::InvokeKey, SMTAssembly::BuiltinFunctionDecl>{}
+            );
 
         let tenums = this.assembly.allconcretetypes
             .filter(pred(tkey) => this.assembly.enums.has(tkey))

@@ -962,7 +962,7 @@ entity ConstantSimplification {
             return nifflow;
         }
         else {
-            return ncondflow.lreduce<Statement>(nelseflow, fn(acc, eb) => {
+            return ncondflow.lreduce<Statement>(fn(acc, eb) => {
                 let cur = eb.0;
                 if(cur)@!<LiteralSimpleExpression> {
                     return s[ifcond=nifcond, ifflow=nifflow, condflow=ncondflow, elseflow=nelseflow];
@@ -975,14 +975,14 @@ entity ConstantSimplification {
                         return acc;
                     }
                 }
-            });
+            }, nelseflow);
         }
     }
 
     recursive method processMatchStatement(s: MatchStatement): Statement {
         let nsv = this.processExpression[recursive](s.sval);
 
-        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|TypeSignature, BlockStatement|)>|)>((|true, List<(|TypeSignature, BlockStatement|)>{}|), recursive fn(acc, mb) => {
+        let nflow = s.matchflow.reduce[recursive]<(|Bool, List<(|TypeSignature, BlockStatement|)>|)>(recursive fn(acc, mb) => {
             if(!acc.0) {
                 return acc;
             }
@@ -997,7 +997,7 @@ entity ConstantSimplification {
                     return (|true, acc.1.pushBack((|mb.0, this.processBlockStatement[recursive](mb.1)|))|);
                 }
             }
-        });
+        }, (|true, List<(|TypeSignature, BlockStatement|)>{}|));
 
         if(nflow.1.empty()) {
             return AbortStatement{ s.sinfo };
@@ -1152,7 +1152,7 @@ entity ConstantSimplification {
     }
 
     recursive method processBodyStatementList(stmts: List<Statement>): List<Statement> {
-        let _, nstmts = stmts.reduce[recursive]<(|Bool, List<Statement>|)>((|false, List<Statement>{}|), recursive fn(rvi, stmt) => {
+        let _, nstmts = stmts.reduce[recursive]<(|Bool, List<Statement>|)>(recursive fn(rvi, stmt) => {
             if(rvi.0) {
                 return rvi;
             }
@@ -1162,7 +1162,7 @@ entity ConstantSimplification {
 
                 return (|done, rvi.1.pushBack(pcc)|);
             }
-        });
+        }, (|false, List<Statement>{}|));
 
         return nstmts;
     }

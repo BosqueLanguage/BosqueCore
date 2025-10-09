@@ -187,7 +187,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>("", fn(acc, s) => StringOps::s_concat2(acc, s));
+            return strs.reduce<String>(fn(acc, s) => StringOps::s_concat2(acc, s), "");
         }
     }
 
@@ -197,7 +197,7 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>("", fn(acc, s) => StringOps::s_concat2(acc, s));
+            return strs.reduce<String>(fn(acc, s) => StringOps::s_concat2(acc, s), "");
         }
     }
 
@@ -207,14 +207,14 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>("", fn(acc, s) => {
+            return strs.reduce<String>(fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }
                 else {
                     return StringOps::s_concat2(StringOps::s_concat2(acc, sep), s);
                 }
-            });
+            }, "");
         }
     }
 
@@ -224,14 +224,14 @@ __internal __typedeclable __keycomparable entity String {
             return "";
         }
         else {
-            return strs.reduce<String>("", fn(acc, s) => {
+            return strs.reduce<String>(fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }
                 else {
                     return StringOps::s_concat2(StringOps::s_concat2(acc, sep), s);
                 }
-            });
+            }, "");
         }
     }
 
@@ -321,7 +321,7 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            return strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
+            return strs.reduce<CString>(fn(acc, s) => CStringOps::s_concat2(acc, s), '');
         }
     }
 
@@ -331,7 +331,7 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            return strs.reduce<CString>('', fn(acc, s) => CStringOps::s_concat2(acc, s));
+            return strs.reduce<CString>(fn(acc, s) => CStringOps::s_concat2(acc, s), '');
         }
     }
 
@@ -341,14 +341,14 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            return strs.reduce<CString>('', fn(acc, s) => {
+            return strs.reduce<CString>(fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }
                 else {
                     return CStringOps::s_concat2(CStringOps::s_concat2(acc, sep), s);
                 }
-            });
+            }, '');
         }
     }
 
@@ -358,14 +358,14 @@ __internal __typedeclable __keycomparable entity CString {
             return '';
         }
         else {
-            return strs.reduce<CString>('', fn(acc, s) => {
+            return strs.reduce<CString>(fn(acc, s) => {
                 if(acc.empty()) {
                     return s;
                 }
                 else {
                     return CStringOps::s_concat2(CStringOps::s_concat2(acc, sep), s);
                 }
-            });
+            }, '');
         }
     }
 

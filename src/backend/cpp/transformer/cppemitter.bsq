@@ -105,7 +105,7 @@ function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, convert
 
 function findFieldOffset(tk: CPPAssembly::TypeKey, fname: CPPAssembly::Identifier, ctx: Context): Nat {
     return ctx.asm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo
-        .reduce<(|Nat, Bool|)>((|0n, false|), fn(acc, f) => {
+        .reduce<(|Nat, Bool|)>(fn(acc, f) => {
             if(acc.1 === false) {
                 let found = fname.value === f.fname.value;
                 let size = if(found) then 0n else ctx.asm.typeinfos.get(f.ftype.tkeystr).slotsize;
@@ -114,7 +114,7 @@ function findFieldOffset(tk: CPPAssembly::TypeKey, fname: CPPAssembly::Identifie
             else {
                 return acc;
             }
-        }).0;
+        }, (|0n, false|)).0;
 }
 
 function canUseDirectFieldAccess(act: CPPAssembly::AbstractConceptTypeDecl, fname: CPPAssembly::Identifier, ctx: Context): Bool, Nat {
@@ -123,9 +123,9 @@ function canUseDirectFieldAccess(act: CPPAssembly::AbstractConceptTypeDecl, fnam
     }
     
     let baseidx = findFieldOffset(act.subtypes.front(), fname, ctx);
-    let allsubtypessame = act.subtypes.reduce<Bool>(false, fn(acc, subtype) => {
+    let allsubtypessame = act.subtypes.reduce<Bool>(fn(acc, subtype) => {
         return baseidx == findFieldOffset(subtype, fname, ctx);
-    });
+    }, false);
 
     return allsubtypessame, baseidx;
 }
@@ -343,7 +343,7 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
 function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): String {
-    return fullns_list.reduce<String>(fullns, fn(acc, s) => {
+    return fullns_list.reduce<String>(fn(acc, s) => {
         let val = String::fromCString(s);
         if(acc.startsWithString(val)) {
             let nopre = acc.removePrefixString(val);
@@ -357,7 +357,7 @@ function emitResolvedNamespace(fullns_list: List<CString>, fullns: String): Stri
         else {
             return acc;
         }
-    });
+    }, fullns);
 }
 
 function emitLiteralSimpleExpression(exp: CPPAssembly::LiteralSimpleExpression): String {
@@ -666,7 +666,7 @@ function emitPostfixAccessSomeValue(op: CPPAssembly::PostfixAccessSomeValue, acc
 
 recursive function conceptProvidesConcept(lhs: CPPAssembly::AbstractConceptTypeDecl, rhs: CPPAssembly::TypeSignature, ctx: Context): Bool {
     %% Walk subtypes of lhs to find if any provide rhs
-    let providesRHS = lhs.subtypes.reduce<Bool>(false, 
+    let providesRHS = lhs.subtypes.reduce<Bool>( 
         fn(acc, subtype) => {
             if(ctx.asm.isNominalTypeConcrete(subtype)) {
                 let lhs = ctx.asm.lookupNominalTypeDeclaration(subtype)@<CPPAssembly::AbstractEntityTypeDecl>;
@@ -676,7 +676,8 @@ recursive function conceptProvidesConcept(lhs: CPPAssembly::AbstractConceptTypeD
                 let lhs = ctx.asm.lookupNominalTypeDeclaration(subtype)@<CPPAssembly::AbstractConceptTypeDecl>;
                 return conceptProvidesConcept[recursive](lhs, rhs, ctx);
             }
-        }
+        }, 
+        false
     );
 
     return providesRHS;
@@ -797,7 +798,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
     let rootExp = emitExpression(pop.rootExp, ctx);
     let rootType = emitTypeSignature(pop.rootExp.etype, false, ctx);
 
-    return pop.ops.reduce<String>(rootExp, fn(acc, op) => {
+    return pop.ops.reduce<String>(fn(acc, op) => {
         match(op)@ {
             | CPPAssembly::PostfixAccessFromName => { return String::concat(acc, emitPostfixAccessFromName($op, ctx)); }
             | CPPAssembly::PostfixAccessFromIndex => { return emitPostfixAccessFromIndex($op, acc, ctx); }
@@ -808,7 +809,7 @@ function emitPostfixOp(pop: CPPAssembly::PostfixOp, ctx: Context): String {
             | CPPAssembly::PostfixBoolConstant => { return if($op.value === true) then "true" else "false"; }
             | CPPAssembly::PostfixAccessSomeValue => { return emitPostfixAccessSomeValue($op, acc, pop.rootExp.etype, ctx); }
         }
-    });
+    }, rootExp);
 }
 
 function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::ConstructorPrimarySpecialSomeExpression, ctx: Context): String {
@@ -1530,7 +1531,7 @@ function emitVariableMultiInitilizationImplicitStatement(vmii: CPPAssembly::Vari
 
     %% (| decls, assignment, elist index |)
     let decls = vmii.decls
-        .reduce<(|String, String, Nat|)>((|"", String::concat(full_indent, "{%n;", rhsinit), 0n|), fn(acc, decl) => {
+        .reduce<(|String, String, Nat|)>(fn(acc, decl) => {
             let name = emitIdentifier(decl.0);
             let stype = String::concat("[[maybe_unused]] ", emitTypeSignature(decl.1, true, ctx));
 
@@ -1540,7 +1541,7 @@ function emitVariableMultiInitilizationImplicitStatement(vmii: CPPAssembly::Vari
             let assignment = String::concat(acc.1, fullfull_indent, name, " = elist", access, ";%n;");
 
             return edecl, assignment, acc.2 + 1n;
-        });
+        }, (|"", String::concat(full_indent, "{%n;", rhsinit), 0n|));
 
     return String::concat(decls.0, decls.1, full_indent, "}%n;");
 }
@@ -1671,10 +1672,10 @@ function emitParameters(params: List<CPPAssembly::ParameterDecl>, ctx: Context):
 
     let lambdatypes = params
         .filter(pred(p) => p.ptype?<CPPAssembly::LambdaTypeSignature>)
-        .reduce<List<String>>(List<String>{}, fn(acc, param) => {
+        .reduce<List<String>>(fn(acc, param) => {
             let name = emitIdentifier(param.pname);
             return acc.pushBack(String::concat("typename ", emitTypeSignature(param.ptype, true, ctx), "_", name));
-    });
+    }, List<String>{});
 
     return String::joinAll(", ", all_params), String::joinAll(", ", lambdatypes);
 }
@@ -1695,9 +1696,9 @@ function emitThisType(tk: CPPAssembly::TypeKey, ctx: Context): String {
 }
 
 function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: Context, indent: String): String {    
-    return preconds.reduce<String>("", fn(acc, pc) => {
+    return preconds.reduce<String>(fn(acc, pc) => {
         return String::concat(indent, "𝐫𝐞𝐪𝐮𝐢𝐫𝐞𝐬(", emitExpression(pc.exp, ctx), ");%n;");
-    });    
+    }, "");
 }
 
 function emitThisForType(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
@@ -1740,9 +1741,9 @@ function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::Typ
 
 function emitMethods(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let staticmethods = ant.staticmethods
-        .reduce<String>("", fn(acc, ik) => {
+        .reduce<String>(fn(acc, ik) => {
             return String::concat(acc, emitMethodDecl(ctx.asm.staticmethods.get(ik), declaredIn, ctx, indent));
-    });
+    }, "");
 
     %%
     %% TODO: Virtual, Abstract, and Override methods
@@ -1792,10 +1793,9 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, declaredIn: CPPAssem
 
     let base = String::concat(e_enum, e_vtable, e_tinfo);
 
-    let entries = e.saturatedBFieldInfo.reduce<String>(String::concat(base, indent, "struct ", tkey, " { %n;"), 
-        fn(acc, entry) => {
+    let entries = e.saturatedBFieldInfo.reduce<String>( fn(acc, entry) => {
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
-    });
+    }, String::concat(base, indent, "struct ", tkey, " { %n;"));
 
     return String::concat(entries, indent, "};%n;");
 }
@@ -1810,10 +1810,9 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
 
     let base = String::concat(dm_enum, dm_vtable, dm_tinfo);
 
-    let fields = dm.saturatedBFieldInfo.reduce<String>(String::concat(base, indent, "struct ", tkey, "{ %n;"), 
-        fn(acc, entry) => {
+    let fields = dm.saturatedBFieldInfo.reduce<String>(fn(acc, entry) => {
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
-    });
+    }, String::concat(base, indent, "struct ", tkey, "{ %n;"));
 
     return String::concat(fields, indent, "};%n;");
 }
@@ -2186,19 +2185,19 @@ function emitPrimtiveConceptTypeDecl(pc: CPPAssembly::PrimitiveConceptTypeDecl, 
 recursive function emitFuncForwardDeclarations(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
 
-    let subns_fwddecls = nsdecl.subns.reduce<String>("", fn(acc, nsname, subns) => {
+    let subns_fwddecls = nsdecl.subns.reduce<String>(fn(acc, nsname, subns) => {
         let ns = String::concat(indent, "namespace ", String::fromCString(nsname), " {%n;");
         return String::concat(acc, ns, emitFuncForwardDeclarations[recursive](subns, ctx, full_indent), indent, "}%n;");
-    });
+    }, "");
 
     %% Emit our method and func fwd decls
-    let nsfunc_fwddecls = nsdecl.nsfuncs.reduce<String>(subns_fwddecls, fn(acc, ikey) => {
+    let nsfunc_fwddecls = nsdecl.nsfuncs.reduce<String>(fn(acc, ikey) => {
         return String::concat(acc, emitFunctionForwardDeclaration(ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, indent));
-    });
+    }, subns_fwddecls);
 
-    let typefunc_fwddecls = nsdecl.typefuncs.reduce<String>(nsfunc_fwddecls, fn(acc, ikey) => {
+    let typefunc_fwddecls = nsdecl.typefuncs.reduce<String>(fn(acc, ikey) => {
         return String::concat(acc, emitFunctionForwardDeclaration(ctx.asm.typefuncs.get(ikey)@<CPPAssembly::AbstractInvokeDecl>, ctx, indent));
-    });
+    }, nsfunc_fwddecls);
 
     return typefunc_fwddecls;
 }
@@ -2209,63 +2208,63 @@ recursive function emitNamespaceDecl(nsdecl: CPPAssembly::NamespaceDecl, ctx: Co
     let full_indent = String::concat("    ", indent);
 
     %% Emit sub-namespace declarations
-    let subns = nsdecl.subns.reduce<String>(ns, fn(acc, name, decl) => {
+    let subns = nsdecl.subns.reduce<String>(fn(acc, name, decl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](decl, ctx, full_indent));
-    });
+    }, ns);
 
     let nsconsts_fwddecls = nsdecl.nsconsts
-        .reduce<String>(String::concat(subns, "//%n;// Constants%n;//%n;"), 
-        fn(acc, s) => {
+        .reduce<String>(fn(acc, s) => {
             let nsc = ctx.asm.nsconsts.get(s);
             let def = emitNamespaceConstForwardDecl(nsc, ctx, full_indent);
             return String::concat(acc, def);
-        }
+        },
+        String::concat(subns, "//%n;// Constants%n;//%n;")
     );
 
     let typeconsts_fwddecls = nsdecl.typeconsts
-        .reduce<String>(nsconsts_fwddecls, fn(acc, s) => {
+        .reduce<String>(fn(acc, s) => {
             let tc = ctx.asm.typeconsts.get(s);
             let def = emitConstMemberForwardDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
-    });
+    }, nsconsts_fwddecls);
 
     let nsconsts = nsdecl.nsconsts
-        .reduce<String>(String::concat(typeconsts_fwddecls, "//%n;// Constants%n;//%n;"),
-        fn(acc, s) => {
+        .reduce<String>(fn(acc, s) => {
             let tc = ctx.asm.nsconsts.get(s);
             let def = emitNamespaceConstDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
-        }
+        },
+        String::concat(typeconsts_fwddecls, "//%n;// Constants%n;//%n;")
     );
 
     %% Will need nsdecl consts too, this is just ConstMemberDecls 
     let typeconsts = nsdecl.typeconsts
-        .reduce<String>(nsconsts, fn(acc, s) => {
+        .reduce<String>(fn(acc, s) => {
             let tc = ctx.asm.typeconsts.get(s);
             let def = emitConstMemberDecl(tc, ctx, full_indent);
             return String::concat(acc, def);
-    });
+    }, nsconsts);
 
     %% Emit methods after all type defintions to prevent types not being fully defined but used
     let methods = nsdecl.alltypes
-        .reduce<String>(typeconsts, fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let func = emitMethods(ant, tk, ctx, full_indent);
             return String::concat(acc, func);
-    });
+    }, typeconsts);
 
     %% Emit functions in current namespace
-    let nsfuncs = nsdecl.nsfuncs.reduce<String>(methods , fn(acc, ikey) => {
+    let nsfuncs = nsdecl.nsfuncs.reduce<String>(fn(acc, ikey) => {
         let func = ctx.asm.nsfuncs.get(ikey)@<CPPAssembly::FunctionInvokeDecl>;
         let efunc = emitFunctionDecl(func, ctx, full_indent);
         return String::concat(acc, efunc); 
-    });
+    }, methods);
 
-    let typefuncs = nsdecl.typefuncs.reduce<String>(nsfuncs, fn(acc, ikey) => {
+    let typefuncs = nsdecl.typefuncs.reduce<String>(fn(acc, ikey) => {
         let func = ctx.asm.typefuncs.get(ikey)@<CPPAssembly::FunctionInvokeDecl>;
         let efunc = emitFunctionDecl(func, ctx, full_indent);
         return String::concat(acc, efunc); 
-    });
+    }, nsfuncs);
 
     return String::concat(typefuncs, indent, "}%n;");
 }
@@ -2278,25 +2277,25 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
 
     let subns_fwddecls = nsdecl.subns
-        .reduce<String>("", fn(acc, name, decl) => {
+        .reduce<String>(fn(acc, name, decl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls[recursive](decl, ctx, full_indent));
-    });
+    }, "");
 
     let ant_fwddecls = nsdecl.alltypes
         .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
-        .reduce<String>("", fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
             return String::concat(acc, fwddecl);
-    });
+    }, "");
 
     let collections = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.collections.has(tk))
-        .reduce<String>("", fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitCollectionTypeDecl(ant@<CPPAssembly::CollectionTypeDecl>, ctx, full_indent); 
             return String::concat(acc, fwddecl);
-    });
+    }, "");
 
     return String::concat(ns, ant_fwddecls, subns_fwddecls, collections, indent, "}%n;");
 }
@@ -2311,40 +2310,40 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
     %% Emit enums first
     let enums = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.enums.has(tk))
-        .reduce<String>(String::concat(ns, "//%n;// Value Type Definitions%n;//%n;"), fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
             return String::concat(acc, def);
-    });
+    }, String::concat(ns, "//%n;// Value Type Definitions%n;//%n;"));
 
     %% Value types
     let values = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag === CPPAssembly::Tag#Value && !ctx.asm.enums.has(tk) && !ctx.asm.collections.has(tk) && !ctx.asm.primitives.has(tk))
-        .reduce<String>(enums, fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
             return String::concat(acc, def);
-    });
+    }, enums);
 
     %% Ref and Tagged types
     let other = nsdecl.alltypes
         .filter(pred(tk) => ctx.asm.typeinfos.get(tk).tag !== CPPAssembly::Tag#Value)
-        .reduce<String>(String::concat(values, "//%n;// Ref and Tagged Type Definitions%n;//%n;"), fn(acc, tk) => {
+        .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let def = emitAbstractNominalTypeDecl(ant, tk, ctx, full_indent);
             return String::concat(acc, def);
-    });
+    }, String::concat(values, "//%n;// Ref and Tagged Type Definitions%n;//%n;"));
 
     %% Only support static methods for now
     let method_fwddecls = nsdecl.staticmethods
-        .reduce<String>(String::concat(other, "//%n;// All Methods%n;//%n;"), fn(acc, mtkey) => {
+        .reduce<String>(fn(acc, mtkey) => {
             return String::concat(acc, emitMethodForwardDeclaration(ctx.asm.staticmethods.get(mtkey.0), mtkey.1, ctx, full_indent));
-    });
+    }, String::concat(other, "//%n;// All Methods%n;//%n;"));
 
     let subns = nsdecl.subns
-        .reduce<String>(method_fwddecls, fn(acc, name, decl) => {
+        .reduce<String>(fn(acc, name, decl) => {
             return String::concat(acc, emitNamespaceDeclTypes[recursive](decl, ctx, full_indent));
-    });
+    }, method_fwddecls);
 
     return String::concat(subns, indent, "}%n;");
 }
@@ -2352,47 +2351,46 @@ function emitNamespaceDeclTypes(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context
 function emitAssembly(asm: CPPAssembly::Assembly): String {    
     let ctx: Context = Context{ asm, CPPAssembly::NamespaceKey::from('Tmp'), List<CString>{''} }; %% No known namespace yet
 
-    let primitive_typeinfos = asm.typeinfos.reduce<String>("//%n;// Primitive Types%n;//%n;", fn(acc, tk, ti) => {
+    let primitive_typeinfos = asm.typeinfos.reduce<String>(fn(acc, tk, ti) => {
         return if(asm.isPrimtitiveType(tk) && tk.value !== 'CString' && tk.value !== 'String') 
             then String::concat(acc, emitTypeInfo(ti, none, ctx, "")) 
             else acc;
-    }); 
+    }, "//%n;// Primitive Types%n;//%n;"); 
 
     let primitives = asm.primitives
-        .reduce<String>(primitive_typeinfos,
-        fn(acc, tk, petd) => {
+        .reduce<String>(fn(acc, tk, petd) => {
             let def = emitAbstractNominalTypeDecl(petd, tk, ctx, "");
             return String::concat(acc, def);
-        }
+        },
+        primitive_typeinfos
     );
 
     %% Non-value type forward decls
     let fwddecls = asm.nsdecls
-        .reduce<String>(String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"),
-        fn(acc, nsname, nsdecl) => {
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
-    });
+    }, String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"));
 
     %% Defintion of Value and Non-value types
-    let types = asm.nsdecls.reduce<String>(fwddecls, fn(acc, nsname, nsdecl) => {
+    let types = asm.nsdecls.reduce<String>(fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDeclTypes(nsdecl, ctx, ""));
-    });
+    }, fwddecls);
 
     %% Function forward decls
     let funcfwddecls = asm.nsdecls
-        .reduce<String>(String::concat(types, "//%n;// Namespace/Type Function Forward Declarations%n;//%n;"), fn(acc, nsname, nsdecl) => {
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
             let ns = String::concat("", "namespace ", String::fromCString(nsname), " {%n;");
             return String::concat(acc, ns, emitFuncForwardDeclarations(nsdecl, ctx, "    "), "}%n;");
-        });
+        }, String::concat(types, "//%n;// Namespace/Type Function Forward Declarations%n;//%n;"));
 
 
-    let ns_emission = asm.nsdecls.reduce<String>("//%n;// Emitted Functions/Methods%n;//%n;", fn(acc, nsname, nsdecl) => {
+    let ns_emission = asm.nsdecls.reduce<String>(fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDecl[recursive](nsdecl, ctx, ""));
-    });
+    }, "//%n;// Emitted Functions/Methods%n;//%n;");
 
     %% Various size allocators needed for the GC
     var allocs, allocslist, allocmap = asm.typeinfos
-        .reduce<(|String, List<String>, Map<Nat, String>|)>((|"", List<String>{}, Map<Nat, String>{}|), fn(acc, tk, ti) => {
+        .reduce<(|String, List<String>, Map<Nat, String>|)>(fn(acc, tk, ti) => {
             if(acc.2.has(ti.slotsize) || ti.slotsize == 0n) {
                 return acc;
             }
@@ -2402,7 +2400,7 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             let cons = String::concat(decl, "(", natToString(ti.typesize), ", REAL_ENTRY_SIZE(", natToString(ti.typesize), "), collect);%n;");
 
             return String::concat(acc.0, cons), acc.1.pushBack(String::concat("&", name)), acc.2.insert(ti.slotsize, name);
-        });
+        }, (|"", List<String>{}, Map<Nat, String>{}|));
     let nallocslist = String::concat("GCAllocator* allocs[", natToString(allocmap.size()), "] = {", String::joinAll(", ", allocslist), "};%n;%n;");
 
     let gcinfo = String::concat(allocs, nallocslist);

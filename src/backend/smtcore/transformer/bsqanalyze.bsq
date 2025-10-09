@@ -51,10 +51,11 @@ entity BSQCCInfo {
             let rcallees = callees.sortKeyUniqueify();
             let calleemap = Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{current => rcallees};
         
-            let callermap = rcallees.reduce<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}, 
-                fn(callermap, callee) => {
+            let callermap = rcallees.reduce<Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>>(fn(callermap, callee) => {
                     return callermap.insert(callee, List<BSQAssembly::InvokeKey>{current});                      
-                });
+                },
+                Map<BSQAssembly::InvokeKey, List<BSQAssembly::InvokeKey>>{}
+            );
         
             return BSQCCInfo{calleemap, callermap};
         }
@@ -837,9 +838,9 @@ entity MayErrorAnalysis {
     function generateInvokeErrorInfo(assembly: BSQAssembly::Assembly, callg: BSQToSMTCallGraph): Map<BSQAssembly::InvokeKey, Bool> {
         let erranalysis = MayErrorAnalysis{assembly, callg};
 
-        let ierrors = callg.invokeinfo.reachable.reduce<Map<BSQAssembly::InvokeKey, Bool>>(Map<BSQAssembly::InvokeKey, Bool>{}, fn(emap, ikey) => {
+        let ierrors = callg.invokeinfo.reachable.reduce<Map<BSQAssembly::InvokeKey, Bool>>(fn(emap, ikey) => {
             return emap.insert(ikey, false);
-        });
+        }, Map<BSQAssembly::InvokeKey, Bool>{});
 
         let ferrors = Algorithm::worklist<Map<BSQAssembly::InvokeKey, Bool>, BSQAssembly::InvokeKey>(ierrors, callg.topoorder, fn(emap, ikey) => {
             let sccerror = callg.sccs.someOf(pred(scc) => scc.contains(ikey));

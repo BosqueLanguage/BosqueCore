@@ -127,7 +127,7 @@ __internal entity List<T> {
                 return ll.single();
             }
             else {
-                return ll.reduce<List<T>>(List<T>{}, fn(acc, l) => ListOps::s_concat2<T>(acc, l));
+                return ll.reduce<List<T>>(fn(acc, l) => ListOps::s_concat2<T>(acc, l), List<T>{});
             }
         }
     }
@@ -141,7 +141,7 @@ __internal entity List<T> {
                 return ll.single();
             }
             else {
-                return ll.reduce<List<T>>(List<T>{}, fn(acc, l) => ListOps::s_concat2<T>(acc, l));
+                return ll.reduce<List<T>>(fn(acc, l) => ListOps::s_concat2<T>(acc, l), List<T>{});
             }
         }
     }
@@ -306,7 +306,7 @@ TODO: this should work (I think)
 
     %% we need to some more flavors here like refduce and reduceIdx
 
-    recursive? method reduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
+    recursive? method reduce<U>(f: recursive? fn(U, T) -> U, init: U): U {
         if(ListOps::s_list_empty<T>(this)) {
             return init;
         }
@@ -315,7 +315,7 @@ TODO: this should work (I think)
         }
     }
 
-    recursive? method lreduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
+    recursive? method lreduce<U>(f: recursive? fn(U, T) -> U, init: U): U {
         if(ListOps::s_list_empty<T>(this)) {
             return init;
         }
@@ -324,7 +324,7 @@ TODO: this should work (I think)
         }
     }
 
-    recursive? method transduce<E, U>(environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
+    recursive? method transduce<E, U>(f: recursive? fn(E, T) -> (|E, U|), environment: E): E, List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return environment, List<U>{};
         }
@@ -333,7 +333,7 @@ TODO: this should work (I think)
         }
     }
 
-    recursive? method ltransduce<E, U>(environment: E, f: recursive? fn(E, T) -> (|E, U|)): E, List<U> {
+    recursive? method ltransduce<E, U>(f: recursive? fn(E, T) -> (|E, U|), environment: E): E, List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return environment, List<U>{};
         }
