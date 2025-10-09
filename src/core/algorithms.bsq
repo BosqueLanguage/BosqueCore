@@ -11,9 +11,9 @@ namespace AlgorithmOps {
         var pvmap = vmap.insert(t, false);
         let nexts = next[recursive?](t);
 
-        let nordered, nmap = nexts.reduce[recursive]<(|List<T>, Map<T, Bool>|)>((|ordered, pvmap|), recursive fn(acc, v) => {
+        let nordered, nmap = nexts.reduce[recursive]<(|List<T>, Map<T, Bool>|)>(recursive fn(acc, v) => {
             return AlgorithmOps::s_topologicalSort_single[recursive]<T>(v, acc.0, acc.1, next);
-        });
+        }, (|ordered, pvmap|));
 
         return nordered.pushBack(t), nmap.set(t, true);
     }
@@ -26,9 +26,9 @@ namespace AlgorithmOps {
             var pvmap = vmap.insert(t, false);
             let nexts = next[recursive?](t);
 
-            let tscc, nmap = nexts.reduce[recursive]<(|List<T>, Map<T, Bool>|)>((|scc, pvmap|), recursive fn(acc, v) => {
+            let tscc, nmap = nexts.reduce[recursive]<(|List<T>, Map<T, Bool>|)>(recursive fn(acc, v) => {
                 return AlgorithmOps::s_scc_visit[recursive]<T>(v, acc.0, acc.1, next);
-            });
+            }, (|scc, pvmap|));
 
             return tscc.pushBack(t), nmap.set(t, true);
         }
@@ -56,9 +56,9 @@ namespace Algorithm {
     }
 
     recursive? function topologicalSort<T: keytype>(init: List<T>, next: recursive? fn(T) -> List<T>): List<T> {
-        let ordered, _ = init.reduce[recursive?]<(|List<T>, Map<T, Bool>|)>((|List<T>{}, Map<T, Bool>{}|), recursive? fn(acc, t) => {
+        let ordered, _ = init.reduce[recursive?]<(|List<T>, Map<T, Bool>|)>(recursive? fn(acc, t) => {
             return AlgorithmOps::s_topologicalSort_single[recursive?]<T>(t, acc.0, acc.1, next);
-        });
+        }, (|List<T>{}, Map<T, Bool>{}|));
 
         return ordered;
     }
@@ -66,7 +66,7 @@ namespace Algorithm {
     recursive? function topologicalSortWComponents<T: keytype>(init: List<T>, next: recursive? fn(T) -> List<T>): List<T>, List<List<T>>  {
         let topol = Algorithm::topologicalSort<T>(init, next);
 
-        let sccs, _ = topol.reduce[recursive?]<(|List<List<T>>, Map<T, Bool>|)>((|List<List<T>>{}, Map<T, Bool>{}|), recursive? fn(acc, t) => {
+        let sccs, _ = topol.reduce[recursive?]<(|List<List<T>>, Map<T, Bool>|)>(recursive? fn(acc, t) => {
             if(acc.1.has(t)) {
                 return acc;
             }
@@ -86,7 +86,7 @@ namespace Algorithm {
                     return acc.0, nmap;
                 }
             }
-        });
+        }, (|List<List<T>>{}, Map<T, Bool>{}|));
 
         return topol, sccs;
     }

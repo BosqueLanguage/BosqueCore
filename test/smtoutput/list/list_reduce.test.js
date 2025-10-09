@@ -5,27 +5,27 @@ import { describe, it } from "node:test";
 
 describe ("SMT List -- reduce simple", () => {
     it("should do simple bool reduce smt", function () {
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.reduce<Bool>(true, fn(acc, x) => acc && x > 0i); }', "(assert (not Main@main))");
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.reduce<Bool>(false, fn(acc, x) => acc && x > 0i); }', "(assert Main@main)");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.reduce<Bool>(fn(acc, x) => acc && x > 0i, true); }', "(assert (not Main@main))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{}.reduce<Bool>(fn(acc, x) => acc && x > 0i, false); }', "(assert Main@main)");
 
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 3i}.reduce<Bool>(true, fn(acc, x) => acc && x > 0i); }', "(assert (not Main@main))");
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{2i, 0i, 3i}.reduce<Bool>(true, fn(acc, x) => acc && x > 0i); }', "(assert Main@main)");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 3i}.reduce<Bool>(fn(acc, x) => acc && x > 0i, true); }', "(assert (not Main@main))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{2i, 0i, 3i}.reduce<Bool>(fn(acc, x) => acc && x > 0i, true); }', "(assert Main@main)");
     });
 
     it("should do simple int reduce smt", function () {
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{}.reduce<Int>(0i, fn(acc, x) => acc + x); }', "(assert (not (= 0 Main@main)))");
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{}.reduce<Int>(5i, fn(acc, x) => acc + x); }', "(assert (not (= 5 Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{}.reduce<Int>(fn(acc, x) => acc + x, 0i); }', "(assert (not (= 0 Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{}.reduce<Int>(fn(acc, x) => acc + x, 5i); }', "(assert (not (= 5 Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{1i, 3i}.reduce<Int>(0i, fn(acc, x) => acc + x); }', "(assert (not (= 4 Main@main)))");
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 0i, 3i}.reduce<Int>(0i, fn(acc, x) => acc + x); }', "(assert (not (= 1 Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{1i, 3i}.reduce<Int>(fn(acc, x) => acc + x, 0i); }', "(assert (not (= 4 Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 0i, 3i}.reduce<Int>(fn(acc, x) => acc + x, 0i); }', "(assert (not (= 1 Main@main)))");
     });
 
     it("should do simple int reduce smt w/err", function () {
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 3i}.reduce<Bool>(true, fn(acc, x) => { assert x != 0i; return acc && x > 0i; }); }', "(assert (not (= (@Result-ok true) Main@main)))");
-        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.reduce<Bool>(true, fn(acc, x) => { assert x != 0i; return acc && x > 0i; }); }', "(assert (not (is-@Result-err Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 3i}.reduce<Bool>(fn(acc, x) => { assert x != 0i; return acc && x > 0i; }, true); }', "(assert (not (= (@Result-ok true) Main@main)))");
+        runishMainCodeUnsat('public function main(): Bool { return List<Int>{1i, 0i, 3i}.reduce<Bool>(fn(acc, x) => { assert x != 0i; return acc && x > 0i; }, true); }', "(assert (not (is-@Result-err Main@main)))");
 
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 3i}.reduce<Int>(0i, fn(acc, x) => { assert x != 0i; return acc + x; }); }', "(assert (not (= (@Result-ok 1) Main@main)))");
-        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 0i, 3i}.reduce<Int>(0i, fn(acc, x) => { assert x != 0i; return acc + x; }); }', "(assert (not (is-@Result-err Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 3i}.reduce<Int>(fn(acc, x) => { assert x != 0i; return acc + x; }, 0i); }', "(assert (not (= (@Result-ok 1) Main@main)))");
+        runishMainCodeUnsat('public function main(): Int { return List<Int>{-2i, 0i, 3i}.reduce<Int>(fn(acc, x) => { assert x != 0i; return acc + x; }, 0i); }', "(assert (not (is-@Result-err Main@main)))");
     });
 
 /*

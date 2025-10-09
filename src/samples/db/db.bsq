@@ -29,13 +29,13 @@ entity Format {
     invariant $vcount == $entries.map<Nat>(fn(ee) => ee.entries.size()).sum();
 
     method formatEntry(entry: Entry): CString {
-        let res, _ = this.entries.reduce<(|CString, List<CString>|)>((|'', entry.items|), fn(acc, fmt) => {
+        let res, _ = this.entries.reduce<(|CString, List<CString>|)>(fn(acc, fmt) => {
             let fargs = acc.1.firstK(fmt.entries.size());
             let rrest = acc.1.shiftK(fmt.entries.size());
 
             let formatted = CString::concat(acc.0, '%n;', fmt.format(fargs));
             return formatted, rrest;
-        });
+        }, (|'', entry.items|));
 
         return res;
     }
@@ -245,10 +245,10 @@ entity Database {
     }
 
     method processDB(ops: List<DatabaseOperation>): CString, Database {
-        let res, tdb = ops.reduce<(|List<CString>, Database|)>((|List<CString>{}, this|), fn(acc, op) => {
+        let res, tdb = ops.reduce<(|List<CString>, Database|)>(fn(acc, op) => {
             let opstr, ndb = acc.1.processDatabaseOperation(op);
             return acc.0.pushBack(opstr), ndb;
-        });
+        }, (|List<CString>{}, this|));
 
         return CString::joinAll('%n;', res), tdb;
     }

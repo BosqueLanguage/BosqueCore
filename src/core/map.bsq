@@ -117,7 +117,7 @@ __internal entity Map<K: keytype, V> {
                 return maps.single();
             }
             else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m));
+                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m), Map<K, V>{});
             }
         }
     }
@@ -131,7 +131,7 @@ __internal entity Map<K: keytype, V> {
                 return maps.single();
             }
             else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m));
+                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_union2<K, V>(acc, m), Map<K, V>{});
             }
         }
     }
@@ -145,7 +145,7 @@ __internal entity Map<K: keytype, V> {
         }
     }
 
-    recursive? method reduce<U>(init: U, f: recursive? fn(U, K, V) -> U): U {
+    recursive? method reduce<U>(f: recursive? fn(U, K, V) -> U, init: U): U {
         if(MapOps::s_map_empty<K, V>(this)) {
             return init;
         }
@@ -163,7 +163,7 @@ __internal entity Map<K: keytype, V> {
                 return maps.single();
             }
             else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m));
+                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m), Map<K, V>{});
             }
         }
     }
@@ -177,7 +177,7 @@ __internal entity Map<K: keytype, V> {
                 return maps.single();
             }
             else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m));
+                return maps.reduce<Map<K, V>>(fn(acc, m) => MapOps::s_map_mergei2<K, V>(acc, m), Map<K, V>{});
             }
         }
     }
@@ -191,7 +191,7 @@ __internal entity Map<K: keytype, V> {
                 return maps.single();
             }
             else {
-                return maps.reduce<Map<K, V>>(Map<K, V>{}, recursive? fn(acc, m) => MapOps::s_map_mergec2[recursive?]<K, V>(acc, m, merge));
+                return maps.reduce<Map<K, V>>(recursive? fn(acc, m) => MapOps::s_map_mergec2[recursive?]<K, V>(acc, m, merge), Map<K, V>{});
             }
         }
     }

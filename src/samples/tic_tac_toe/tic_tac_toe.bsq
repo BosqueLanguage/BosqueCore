@@ -86,7 +86,7 @@ entity Board {
 
 %*
 function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
-    let res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
+    let res = moves.reduce<Result<Board, String>>(fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
             if err (state) {
                 return state;
             }
@@ -102,7 +102,9 @@ function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> 
                     return ok(bb.setCellMark(move.0, move.1, move.2));
                 }
             }
-        });
+        },
+        Result<Board, String>::Ok{Board::createEmpty()}
+    );
 
     if err (res) {
         return err($);

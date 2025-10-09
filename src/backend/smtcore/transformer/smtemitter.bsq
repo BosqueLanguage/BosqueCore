@@ -711,7 +711,7 @@ function emitAssertExpression(e: SMTAssembly::AssertExpression, eev: SMTEmitterE
 
 function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEmitterEnv): CString {
     let exp = emitExpression[recursive](e.inexp, eev);
-    return e.aset.lreduce<CString>(exp, fn(expcc, chk) => {
+    return e.aset.lreduce<CString>(fn(expcc, chk) => {
         var err: CString;
         if(chk.1 == eev.errtrgt) {
             err = emitResultErrTrgtAs(e.etype);
@@ -738,7 +738,7 @@ function emitAssertSetExpression(e: SMTAssembly::AssertSetExpression, eev: SMTEm
 
         let bb = CString::concat('(not ', tt, ') ', errop, ' ', expcc);
         return CString::concat('(ite ', bb, ')');
-    });
+    }, exp);
 }
 
 recursive function emitUnwrapFromResultExpression(e: SMTAssembly::UnwrapFromResultExpression, eev: SMTEmitterEnv): CString {
@@ -771,7 +771,7 @@ recursive function emitLetGeneralExpression(e: SMTAssembly::LetGeneralExpression
 
 recursive function emitLetWErrorsExpression(e: SMTAssembly::LetWErrorsExpression, eev: SMTEmitterEnv): CString {
     let iiexp = emitExpression[recursive](e.inexp, eev);
-    let lbs = e.vvbind.lreduce<CString>(iiexp, fn(acc, vb) => {
+    let lbs = e.vvbind.lreduce<CString>(fn(acc, vb) => {
         let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, eev), '))');
         let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
 
@@ -779,7 +779,7 @@ recursive function emitLetWErrorsExpression(e: SMTAssembly::LetWErrorsExpression
 
         let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
         return CString::concat('(let ', vbind, ' ', wcheck, ')');
-    });
+    }, iiexp);
 
     return lbs;
 }
@@ -927,24 +927,24 @@ recursive function emitMatchOperation(e: SMTAssembly::MatchOperation, eev: SMTEm
     if(indent)@none {
         let dflt = emitOperation[recursive](e.defaultop, eev, none);
 
-        return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
+        return e.cases.lreduce[recursive]<CString>(fn(acc, c) => {
             let ttest = emitMatchTestTestableType(c.0, c.1, tst);
             let cbody = emitOperation[recursive](c.2, eev, none);
 
             let opts = CString::concat(' ', cbody, ' ', acc);
             return CString::concat('(ite ', ttest, opts, ')');
-        });
+        }, dflt);
     }
     else {
         let dflt = emitOperation[recursive](e.defaultop, eev, indent);
 
-        return e.cases.lreduce[recursive]<CString>(dflt, fn(acc, c) => {
+        return e.cases.lreduce[recursive]<CString>(fn(acc, c) => {
             let ttest = emitMatchTestTestableType(c.0, c.1, tst);
             let cbody = emitOperation[recursive](c.2, eev, indent);
 
             let opts = CString::concat('%n;', cbody, '%n;', $indent, acc);
             return CString::concat('(ite ', ttest, opts, ')');
-        });
+        }, dflt);
     }
 }
 
@@ -1081,10 +1081,10 @@ recursive function emitLetsOperation(e: SMTAssembly::LetsOperation, eev: SMTEmit
         inexp = CString::concat('%n;', emitOperation[recursive](e.inop, eev, some(iident)), tident);
     }
     
-    let lbs = e.vvbind.lreduce<CString>(inexp, fn(acc, vb) => {
+    let lbs = e.vvbind.lreduce<CString>(fn(acc, vb) => {
         let vbind = CString::concat('((', vb.2.value, ' ', emitSafeExpression[recursive](vb.0, eev), '))');
         return CString::concat('(let ', vbind, ' ', acc, ')');
-    });
+    }, inexp);
     
     if(indent)@none {
         return lbs;
@@ -1144,7 +1144,7 @@ recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, 
         inexp = CString::concat('%n;', emitOperation[recursive](e.inop, eev, some(iident)), tident);
     }
     
-    let lbs = e.vvbind.lreduce<CString>(inexp, fn(acc, vb) => {
+    let lbs = e.vvbind.lreduce<CString>(fn(acc, vb) => {
         let vbind = CString::concat('((', vb.2.value, ' ', emitExpression[recursive](vb.0, eev), '))');
         let chk = CString::concat('(not (is-@Result-ok ', vb.2.value, ')) ');
 
@@ -1152,7 +1152,7 @@ recursive function emitLetWErrorsOperation(e: SMTAssembly::LetWErrorsOperation, 
 
         let wcheck = CString::concat('(ite ', chk, errop, ' ', acc, ')');
         return CString::concat('(let ', vbind, ' ', wcheck, ')');
-    });
+    }, inexp);
     
     if(indent)@none {
         return lbs;
