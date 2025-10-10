@@ -257,6 +257,9 @@ enum ExpressionTag {
 
     IfExpression = "IfExpression",
 
+    ConditionalValueExpression = "ConditionalValueExpression",
+    ShortCircuitAssignRHSITestExpression = "ShortCircuitAssignRHSITestExpression",
+
     TaskRunExpression = "TaskRunExpression", //run single task
     TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
     TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first completion wins
@@ -1397,6 +1400,49 @@ class IfExpression extends Expression {
     }
 }
 
+class ConditionalValueExpression {
+    readonly exp: Expression;
+    readonly itestopt: ITest | undefined;
+    readonly binder: BinderInfo | undefined;
+
+    readonly trueValue: Expression
+    readonly falseValue: Expression;
+
+    trueBindType: TypeSignature | undefined = undefined;
+    falseBindType: TypeSignature | undefined = undefined
+
+    constructor(sinfo: SourceInfo, exp: Expression, itestopt: ITest | undefined, binder: BinderInfo | undefined, trueValue: Expression, falseValue: Expression) {
+        super(ExpressionTag.ConditionalValueExpression, sinfo);
+        this.exp = exp;
+        this.itestopt = itestopt;
+        this.binder = binder;
+        this.trueValue = trueValue;
+        this.falseValue = falseValue;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        let bexps: [string, string] = ["", ""];
+        if(this.binder !== undefined) {
+            bexps = this.binder.emit();
+        }
+
+        const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
+        
+        const ttest = `(${bexps[0]}${this.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+        const iif =  `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
+
+        return toplevel ? iif : `(${iif})`;
+    }
+}
+
+class ShortCircuitAssignRHSITestExpression {
+    readonly exp: Expression; //Can be a RHS expression too
+    readonly itest: ITest;
+    readonly failexp: Expression | undefined;
+
+    //exp ?@Itest [: failexp]
+}
+
 enum EnvironmentGenerationExpressionTag {
     ErrorEnvironmentExpresion = "ErrorEnvironmentExpresion",
     EmptyEnvironmentExpression = "EmptyEnvironmentExpression",
@@ -2371,7 +2417,7 @@ export {
     BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
     MapEntryConstructorExpression,
     IfTest,
-    IfExpression,
+    IfExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression,
     EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression,
     TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskAllExpression, TaskRaceExpression,
     BaseEnvironmentOpExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression, 
