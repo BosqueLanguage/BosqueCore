@@ -114,6 +114,7 @@ struct BSQMemoryTheadLocalInfo
 
 #ifdef BSQ_GC_CHECK_ENABLED
     bool disable_stack_refs_for_tests = false;
+    bool enable_global_rescan         = false;
 #endif
 
     BSQMemoryTheadLocalInfo() noexcept : tl_id(0), g_gcallocs(nullptr), native_stack_base(nullptr), native_stack_contents(), native_register_contents(), roots_count(0), roots(nullptr), old_roots_count(0), old_roots(nullptr), forward_table_index(FWD_TABLE_START), forward_table(nullptr), typeptr_high32(0), pending_roots(), visit_stack(), pending_young(), pending_decs(), max_decrement_count(BSQ_INITIAL_MAX_DECREMENT_COUNT), mstats() { }

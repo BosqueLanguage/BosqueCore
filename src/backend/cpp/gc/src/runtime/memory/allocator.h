@@ -64,6 +64,7 @@ class GlobalDataStorage
 public:
     void** native_global_storage = nullptr;
     void** native_global_storage_end = nullptr;
+    bool needs_scanning = false;
 
     GlobalDataStorage() noexcept = default;
 
@@ -73,6 +74,8 @@ public:
     {
         this->native_global_storage = data;
         this->native_global_storage_end = (void**)((uint8_t*)data + numbytes);
+
+        this->needs_scanning = true;
     }
 };
 
