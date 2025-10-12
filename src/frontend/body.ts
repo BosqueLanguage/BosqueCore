@@ -84,6 +84,40 @@ class ITestFail extends ITest {
     }
 }
 
+class ITestGuard {
+    readonly exp: Expression;
+    readonly itestopt: ITest | undefined;
+    readonly bindinfo: BinderInfo | undefined;
+
+    constructor(exp: Expression, itestopt: ITest | undefined, bindinfo: BinderInfo | undefined) {
+        this.exp = exp;
+        this.itestopt = itestopt;
+        this.bindinfo = bindinfo;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        let bexps: [string, string] = ["", ""];
+        if(this.bindinfo !== undefined) {
+            bexps = this.bindinfo.emit();
+        }
+        const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
+        
+        return `(${bexps[0]}${this.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+    }
+}
+
+class ITestGuardSet {
+    readonly guards: ITestGuard[];
+
+    constructor(guards: ITestGuard[]) {
+        this.guards = guards;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return this.guards.map((g) => g.emit(fmt)).join(" && ");
+    }
+}
+
 abstract class ArgumentValue {
     readonly exp: Expression;
 
@@ -250,15 +284,10 @@ enum ExpressionTag {
 
     BinLogicAndExpression = "BinLogicAndExpression",
     BinLogicOrExpression = "BinLogicOrExpression",
-    BinLogicImpliesExpression = "BinLogicImpliesExpression",
-    BinLogicIFFExpression = "BinLogicIFFExpression",
-
+    
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
     IfExpression = "IfExpression",
-
-    ConditionalValueExpression = "ConditionalValueExpression",
-    ShortCircuitAssignRHSITestExpression = "ShortCircuitAssignRHSITestExpression",
 
     TaskRunExpression = "TaskRunExpression", //run single task
     TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
@@ -1321,26 +1350,6 @@ class BinLogicOrExpression extends BinLogicExpression {
     }
 }
 
-class BinLogicImpliesExpression extends BinLogicExpression {
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicImpliesExpression, sinfo, lhs, rhs);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.blopEmit(toplevel, fmt, "==>");
-    }
-}
-
-class BinLogicIFFExpression extends BinLogicExpression {
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicIFFExpression, sinfo, lhs, rhs);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.blopEmit(toplevel, fmt, "<==>");
-    }
-}
-
 class MapEntryConstructorExpression extends Expression {
     readonly kexp: Expression;
     readonly vexp: Expression;
@@ -1400,10 +1409,27 @@ class IfExpression extends Expression {
     }
 }
 
+class ChkLogicImpliesExpression {
+    readonly sinfo: SourceInfo;
+
+    readonly lhs: ITestGuardSet;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
+        this.sinfo = sinfo;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.lhs.emit(fmt)} ==> ${this.rhs.emit(true, fmt)}`;
+    }
+}
+
 class ConditionalValueExpression {
-    readonly exp: Expression;
-    readonly itestopt: ITest | undefined;
-    readonly binder: BinderInfo | undefined;
+    readonly sinfo: SourceInfo;
+
+    readonly guardset: ITestGuardSet;
 
     readonly trueValue: Expression
     readonly falseValue: Expression;
@@ -1411,36 +1437,68 @@ class ConditionalValueExpression {
     trueBindType: TypeSignature | undefined = undefined;
     falseBindType: TypeSignature | undefined = undefined
 
-    constructor(sinfo: SourceInfo, exp: Expression, itestopt: ITest | undefined, binder: BinderInfo | undefined, trueValue: Expression, falseValue: Expression) {
-        super(ExpressionTag.ConditionalValueExpression, sinfo);
-        this.exp = exp;
-        this.itestopt = itestopt;
-        this.binder = binder;
+    constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
+        this.sinfo = sinfo;
+
+        this.guardset = guardset;
+
         this.trueValue = trueValue;
         this.falseValue = falseValue;
     }
 
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.binder !== undefined) {
-            bexps = this.binder.emit();
-        }
-
-        const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
-        
-        const ttest = `(${bexps[0]}${this.exp.emit(true, fmt)})${bexps[1]}${itest}`;
-        const iif =  `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
-
-        return toplevel ? iif : `(${iif})`;
+    emit(fmt: CodeFormatter): string {
+        const ttest = this.guardset.emit(fmt);
+        return `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
     }
 }
 
-class ShortCircuitAssignRHSITestExpression {
+enum ShortCircuitAssignRHSITestExpressionTag {
+    ShortCircuitAssignRHSExpressionFail = "ShortCircuitAssignRHSExpressionFail",
+    ShortCircuitAssignRHSExpressionReturn = "ShortCircuitAssignRHSExpressionReturn"
+}
+
+abstract class ShortCircuitAssignRHSITestExpression {
+    readonly tag: ShortCircuitAssignRHSITestExpressionTag;
+
     readonly exp: Expression; //Can be a RHS expression too
     readonly itest: ITest;
+
+    constructor(tag: ShortCircuitAssignRHSITestExpressionTag, exp: Expression, itest: ITest) {
+        this.tag = tag;
+
+        this.exp = exp;
+        this.itest = itest;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class ShortCircuitAssignRHSExpressionFail extends ShortCircuitAssignRHSITestExpression {
+    constructor(exp: Expression, itest: ITest) {
+        super(ShortCircuitAssignRHSITestExpressionTag.ShortCircuitAssignRHSExpressionFail, exp, itest);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.exp.emit(true, fmt)} @@${this.itest.emit(fmt)}`;
+    }
+}
+
+class ShortCircuitAssignRHSExpressionReturn extends ShortCircuitAssignRHSITestExpression {
     readonly failexp: Expression | undefined;
 
-    //exp ?@Itest [: failexp]
+    constructor(exp: Expression, itest: ITest, failexp: Expression | undefined) {
+        super(ShortCircuitAssignRHSITestExpressionTag.ShortCircuitAssignRHSExpressionReturn, exp, itest);
+        this.failexp = failexp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        if(this.failexp === undefined) {
+            return `${this.exp.emit(true, fmt)} @?${this.itest.emit(fmt)}`;
+        }
+        else {
+            return `${this.exp.emit(true, fmt)} @?${this.itest.emit(fmt)} : ${this.failexp.emit(true, fmt)}`;
+        }
+    }
 }
 
 enum EnvironmentGenerationExpressionTag {
@@ -1700,7 +1758,6 @@ enum StatementTag {
     EnvironmentBracketStatement = "EnvironmentBracketStatement",
 
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
-    TaskEventEmitStatement = "TaskEventEmitStatement", //Task::event(...)
 
     TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do)
 
@@ -2196,19 +2253,6 @@ class TaskStatusStatement extends Statement {
     }
 }
 
-class TaskEventEmitStatement extends Statement {
-    readonly exp: Expression;
-
-    constructor(sinfo: SourceInfo, exp: Expression) {
-        super(StatementTag.TaskEventEmitStatement, sinfo);
-        this.exp = exp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `Task::event(${this.exp.emit(true, fmt)});`;
-    }
-}
-
 class TaskYieldStatement extends Statement {
     readonly name: string;
     readonly terms: TypeSignature[];
@@ -2391,6 +2435,7 @@ class StandardBodyImplementation extends BodyImplementation {
 export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
+    ITestGuard, ITestGuardSet,
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
@@ -2414,10 +2459,11 @@ export {
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression, KeyCompareEqExpression, KeyCompareLessExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
-    BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
+    BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression,
     MapEntryConstructorExpression,
     IfTest,
-    IfExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression,
+    IfExpression, ConditionalValueExpression, ChkLogicImpliesExpression,
+    ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn,
     EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression,
     TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskAllExpression, TaskRaceExpression,
     BaseEnvironmentOpExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression, 
@@ -2429,7 +2475,7 @@ export {
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
-    TaskStatusStatement, TaskEventEmitStatement,
+    TaskStatusStatement,
     TaskYieldStatement,
     BlockStatement, 
     BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, SynthesisBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
