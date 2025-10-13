@@ -124,7 +124,7 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept = default;
 
     template<typename T>
-    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
+    Boxed(__CoreGC::TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
 
     // None constructor
     Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {};

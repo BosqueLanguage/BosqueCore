@@ -46,7 +46,10 @@ entity ExplicitifyTransform {
     field assembly: Assembly;
 
     method processCoerceTypeAsNeeded(e: Expression, into: TypeSignature): Expression {
-        if(this.assembly.areTypesSame(e.etype, into)) {
+        if(e.etype?<LambdaTypeSignature> || into?<LambdaTypeSignature>) {
+            return e;
+        }
+        elif(this.assembly.areTypesSame(e.etype, into)) {
             return e;
         }
         else {
