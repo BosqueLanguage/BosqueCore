@@ -324,18 +324,18 @@ type RecursiveAnnotation = "yes" | "no" | "cond";
 class LambdaParameterSignature {
     readonly name: string | undefined; //optional name for the parameter
     readonly type: TypeSignature;
-    readonly isRefParam: boolean;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;;
     readonly isRestParam: boolean;
 
-    constructor(name: string | undefined, type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
+    constructor(name: string | undefined, type: TypeSignature, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
-        this.isRefParam = isRefParam;
+        this.pkind = pkind;
         this.isRestParam = isRestParam;
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
+        return `${(this.pkind ? this.pkind + " " : "")}${this.isRestParam ? "..." : ""}${this.type.emit()}`;
     }
 }
 
@@ -354,7 +354,7 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
+        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.pkind, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
     }
 

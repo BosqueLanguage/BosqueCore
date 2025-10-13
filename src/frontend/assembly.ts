@@ -237,21 +237,21 @@ class InvokeParameterDecl {
     readonly name: string;
     readonly type: TypeSignature;
     readonly optDefaultValue: ConstantExpressionValue | undefined;
-    readonly isRefParam: boolean;
+    readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;
     readonly isRestParam: boolean;
 
-    constructor(name: string, type: TypeSignature, optDefaultValue: ConstantExpressionValue | undefined, isRefParam: boolean, isRestParam: boolean) {
+    constructor(name: string, type: TypeSignature, optDefaultValue: ConstantExpressionValue | undefined, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
         this.optDefaultValue = optDefaultValue;
-        this.isRefParam = isRefParam;
+        this.pkind = pkind;
         this.isRestParam = isRestParam;
     }
 
     emit(fmt: CodeFormatter): string {
         const tdecl = this.type instanceof AutoTypeSignature ? "" : `: ${this.type.emit()}`;
         const defv = this.optDefaultValue === undefined ? "" : ` = ${this.optDefaultValue.emit(true, fmt)}`;
-        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
+        return `${(this.pkind ? this.pkind + " " : "")}${this.isRestParam ? "..." : ""}${this.name}${tdecl}${defv}`;
     }
 }
 

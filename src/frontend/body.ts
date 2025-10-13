@@ -138,6 +138,35 @@ class RefArgumentValue extends ArgumentValue {
     }
 }
 
+class OutArgumentValue extends ArgumentValue {
+    constructor(exp: AccessVariableExpression) {
+        super(exp);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `out ${this.exp.emit(true, fmt)}`;
+    }
+}
+
+class OutCondArgumentValue extends ArgumentValue {
+    constructor(exp: AccessVariableExpression) {
+        super(exp);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `out? ${this.exp.emit(true, fmt)}`;
+    }
+}
+
+class InOutArgumentValue extends ArgumentValue {
+    constructor(exp: AccessVariableExpression) {
+        super(exp);
+    }
+    emit(fmt: CodeFormatter): string {
+        return `inout ${this.exp.emit(true, fmt)}`;
+    }
+}
+
 class PositionalArgumentValue extends ArgumentValue {
     constructor(exp: Expression) {
         super(exp);
@@ -1409,13 +1438,30 @@ class IfExpression extends Expression {
     }
 }
 
-class ChkLogicImpliesExpression {
+enum ChkLogicExpressionTag {
+    ChkLogicImpliesExpression = "ChkLogicImpliesExpression",
+    ChkLogicBaseExpression = "ChkLogicBaseExpression"
+}
+
+abstract class ChkLogicExpression {
+    readonly tag: ChkLogicExpressionTag;
+
+    constructor(tag: ChkLogicExpressionTag) {
+        this.tag = tag;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class ChkLogicImpliesExpression extends ChkLogicExpression {
     readonly sinfo: SourceInfo;
 
     readonly lhs: ITestGuardSet;
     readonly rhs: Expression;
 
     constructor(sinfo: SourceInfo, lhs: ITestGuardSet, rhs: Expression) {
+        super(ChkLogicExpressionTag.ChkLogicImpliesExpression);
+
         this.sinfo = sinfo;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -1426,7 +1472,38 @@ class ChkLogicImpliesExpression {
     }
 }
 
-class ConditionalValueExpression {
+class ChkLogicBaseExpression extends ChkLogicExpression {
+    readonly exp: Expression;
+    
+    constructor(exp: Expression) {
+        super(ChkLogicExpressionTag.ChkLogicBaseExpression);
+
+        this.exp = exp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return this.exp.emit(true, fmt);
+    }
+}
+
+enum RValueExpressionTag {
+    ConditionalValueExpression = "ConditionalValueExpression",
+    ShortCircuitAssignRHSExpressionFail = "ShortCircuitAssignRHSExpressionFail",
+    ShortCircuitAssignRHSExpressionReturn = "ShortCircuitAssignRHSExpressionReturn",
+    BaseExpression = "BaseExpression"
+}
+
+abstract class RValueExpression {
+    readonly tag: RValueExpressionTag;
+
+    constructor(tag: RValueExpressionTag) {
+        this.tag = tag;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+abstract class ConditionalValueExpression extends RValueExpression {
     readonly sinfo: SourceInfo;
 
     readonly guardset: ITestGuardSet;
@@ -1438,6 +1515,8 @@ class ConditionalValueExpression {
     falseBindType: TypeSignature | undefined = undefined
 
     constructor(sinfo: SourceInfo, guardset: ITestGuardSet, trueValue: Expression, falseValue: Expression) {
+        super(RValueExpressionTag.ConditionalValueExpression);
+
         this.sinfo = sinfo;
 
         this.guardset = guardset;
@@ -1452,30 +1531,21 @@ class ConditionalValueExpression {
     }
 }
 
-enum ShortCircuitAssignRHSITestExpressionTag {
-    ShortCircuitAssignRHSExpressionFail = "ShortCircuitAssignRHSExpressionFail",
-    ShortCircuitAssignRHSExpressionReturn = "ShortCircuitAssignRHSExpressionReturn"
-}
-
-abstract class ShortCircuitAssignRHSITestExpression {
-    readonly tag: ShortCircuitAssignRHSITestExpressionTag;
-
+abstract class ShortCircuitAssignRHSITestExpression extends RValueExpression {
     readonly exp: Expression; //Can be a RHS expression too
     readonly itest: ITest;
 
-    constructor(tag: ShortCircuitAssignRHSITestExpressionTag, exp: Expression, itest: ITest) {
-        this.tag = tag;
+    constructor(tag: RValueExpressionTag, exp: Expression, itest: ITest) {
+        super(tag);
 
         this.exp = exp;
         this.itest = itest;
     }
-
-    abstract emit(fmt: CodeFormatter): string;
 }
 
 class ShortCircuitAssignRHSExpressionFail extends ShortCircuitAssignRHSITestExpression {
     constructor(exp: Expression, itest: ITest) {
-        super(ShortCircuitAssignRHSITestExpressionTag.ShortCircuitAssignRHSExpressionFail, exp, itest);
+        super(RValueExpressionTag.ShortCircuitAssignRHSExpressionFail, exp, itest);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1487,17 +1557,31 @@ class ShortCircuitAssignRHSExpressionReturn extends ShortCircuitAssignRHSITestEx
     readonly failexp: Expression | undefined;
 
     constructor(exp: Expression, itest: ITest, failexp: Expression | undefined) {
-        super(ShortCircuitAssignRHSITestExpressionTag.ShortCircuitAssignRHSExpressionReturn, exp, itest);
+        super(RValueExpressionTag.ShortCircuitAssignRHSExpressionReturn, exp, itest);
         this.failexp = failexp;
     }
 
     emit(fmt: CodeFormatter): string {
         if(this.failexp === undefined) {
-            return `${this.exp.emit(true, fmt)} @?${this.itest.emit(fmt)}`;
+            return `${this.exp.emit(true, fmt)} ?@${this.itest.emit(fmt)}`;
         }
         else {
-            return `${this.exp.emit(true, fmt)} @?${this.itest.emit(fmt)} : ${this.failexp.emit(true, fmt)}`;
+            return `${this.exp.emit(true, fmt)} ?@${this.itest.emit(fmt)} : ${this.failexp.emit(true, fmt)}`;
         }
+    }
+}
+
+class BaseRValueExpression extends RValueExpression {
+    readonly exp: Expression;
+
+    constructor(exp: Expression) {
+        super(RValueExpressionTag.BaseExpression);
+
+        this.exp = exp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return this.exp.emit(true, fmt);
     }
 }
 
@@ -1825,47 +1909,45 @@ class VariableMultiDeclarationStatement extends Statement {
 }
 
 class VariableInitializationStatement extends Statement {
-    readonly isConst: boolean;
+    readonly vkind: "var" | "ref" | "let";
     readonly name: string;
     readonly vtype: TypeSignature; //maybe Auto
     actualtype: TypeSignature | undefined = undefined;
     readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, isConst: boolean, name: string, vtype: TypeSignature, exp: Expression) {
+    constructor(sinfo: SourceInfo, vkind: "var" | "ref" | "let", name: string, vtype: TypeSignature, exp: Expression) {
         super(StatementTag.VariableInitializationStatement, sinfo);
-        this.isConst = isConst;
+        this.vkind = vkind;
         this.name = name;
         this.vtype = vtype;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dc = this.isConst ? "let" : "var";
         const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit()}`;
 
-        return `${dc} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
+        return `${this.vkind} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
     }
 }
 
 class VariableMultiInitializationStatement extends Statement {
-    readonly isConst: boolean;
+    readonly vkind: "var" | "ref" | "let";
     readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
     actualtypes: TypeSignature[] = [];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
-    constructor(sinfo: SourceInfo, isConst: boolean, decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, vkind: "var" | "ref" | "let", decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
         super(StatementTag.VariableMultiInitializationStatement, sinfo);
-        this.isConst = isConst;
+        this.vkind = vkind;
         this.decls = decls;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dc = this.isConst ? "let" : "var";
         const ttdecls = this.decls.map((dd) => dd.name + (dd.vtype instanceof AutoTypeSignature ? "" : `: ${dd.vtype.emit()}`));
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
-        return `${dc} ${ttdecls.join(", ")} = ${ttexp};`;
+        return `${this.vkind} ${ttdecls.join(", ")} = ${ttexp};`;
     }
 }
 
@@ -2436,7 +2518,7 @@ export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
     ITestGuard, ITestGuardSet,
-    ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
+    ArgumentValue, RefArgumentValue, OutArgumentValue, OutCondArgumentValue, InOutArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
     LiteralTypeDeclValueExpression,
@@ -2462,8 +2544,9 @@ export {
     BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression,
     MapEntryConstructorExpression,
     IfTest,
-    IfExpression, ConditionalValueExpression, ChkLogicImpliesExpression,
-    ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn,
+    IfExpression, 
+    ChkLogicExpressionTag, ChkLogicExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression,
+    RValueExpressionTag, RValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, BaseRValueExpression,
     EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression,
     TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskAllExpression, TaskRaceExpression,
     BaseEnvironmentOpExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression, 

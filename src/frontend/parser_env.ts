@@ -5,21 +5,25 @@ import { SourceInfo } from "./build_decls.js";
 import { Assembly, NamespaceDeclaration } from "./assembly.js";
 import { TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type.js";
 
-class LocalVariableDefinitionInfo {
-    readonly isconst: boolean;
+function isDeclAssignable(declkind: "var" | "ref" | "let" | "out" | "out?" | "inout"): boolean {
+    return declkind === "var" || declkind === "out" || declkind === "out?" || declkind === "inout";
+}
+
+class VariableDefinitionInfo {
+    readonly vkind: "var" | "ref" | "let" | "out" | "out?" | "inout";
     readonly name: string;
 
 
-    constructor(isconst: boolean, name: string) {
-        this.isconst = isconst;
+    constructor(vkind: "var" | "ref" | "let" | "out" | "out?" | "inout", name: string) {
+        this.vkind = vkind;
         this.name = name;
     }
 }
 
 class BlockScopeInfo {
-    locals: LocalVariableDefinitionInfo[] = [];
+    locals: VariableDefinitionInfo[] = [];
 
-    lookupVariableInfo(name: string): LocalVariableDefinitionInfo | undefined {
+    lookupVariableInfo(name: string): VariableDefinitionInfo | undefined {
         return this.locals.find((nn) => nn.name === name);
     }
 }
@@ -27,12 +31,12 @@ class BlockScopeInfo {
 abstract class ParserScopeInfo {
     readonly resultingType: TypeSignature | undefined; //undefined if this is a void call or an expression we don't know the type of
     
-    readonly args: LocalVariableDefinitionInfo[];
+    readonly args: VariableDefinitionInfo[];
     readonly boundtemplates: Set<string>;
  
     readonly blockscope: BlockScopeInfo[];
 
-    constructor(args: LocalVariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: VariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         this.args = args;
         this.boundtemplates = boundtemplates;
         this.resultingType = rtype;
@@ -67,19 +71,15 @@ abstract class ParserScopeInfo {
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
             const vinfo = this.blockscope[i].lookupVariableInfo(name);
             if (vinfo !== undefined) {
-                return !vinfo.isconst;
+                return isDeclAssignable(vinfo.vkind);
             }
         }
 
         const argi = this.args.find((arg) => arg.name === name);
-        return argi !== undefined && !argi.isconst;
+        return argi !== undefined && isDeclAssignable(argi.vkind);
     }
 
     isDefinedVariable_helper(name: string): boolean{
-        if(name.startsWith("$")) {
-            return true; //assume binders are always defined
-        }
-
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
             const vv = this.blockscope[i].lookupVariableInfo(name);
             if(vv !== undefined) {
@@ -98,7 +98,7 @@ abstract class ParserScopeInfo {
 }
 
 class StandardScopeInfo extends ParserScopeInfo {
-    constructor(args: LocalVariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: VariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
     }
 
@@ -109,10 +109,9 @@ class StandardScopeInfo extends ParserScopeInfo {
 
 class LambdaScopeInfo extends ParserScopeInfo {
     readonly enclosing: ParserScopeInfo;
-
     readonly capturedVars: Set<string> = new Set<string>();
 
-    constructor(args: LocalVariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined, enclosing: ParserScopeInfo) {
+    constructor(args: VariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined, enclosing: ParserScopeInfo) {
         super(args, boundtemplates, rtype);
 
         this.enclosing = enclosing;
@@ -124,6 +123,8 @@ class LambdaScopeInfo extends ParserScopeInfo {
             return true;
         }
         else {
+            this.capturedVars.add(srcname);
+            
             return this.enclosing.isDefinedVariable(srcname);
         }
     }
@@ -173,7 +174,7 @@ class ParserEnvironment {
         return this.scope.isDefinedVariable(srcname);
     }
 
-    addVariable(name: string, isconst: boolean, ignoreok: boolean): boolean {
+    addVariable(name: string, vkind: "var" | "ref" | "let" | "out" | "out?" | "inout", ignoreok: boolean): boolean {
         assert(this.scope !== undefined);
 
         if(name === "_") {
@@ -184,7 +185,7 @@ class ParserEnvironment {
                 return false;
             }
 
-            this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new LocalVariableDefinitionInfo(isconst, name));
+            this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new VariableDefinitionInfo(vkind, name));
             return true;
         }
     }
@@ -206,7 +207,7 @@ class ParserEnvironment {
         return this.scope.boundtemplates.has(name);
     }
 
-    pushLambdaScope(args: LocalVariableDefinitionInfo[], rtype: TypeSignature | undefined) {
+    pushLambdaScope(args: VariableDefinitionInfo[], rtype: TypeSignature | undefined) {
         assert(this.scope !== undefined);
 
         this.scope = new LambdaScopeInfo(args, this.scope.boundtemplates, rtype, this.scope);
@@ -219,7 +220,7 @@ class ParserEnvironment {
         this.scope = (this.scope as LambdaScopeInfo).enclosing;
     }
 
-    pushStandardFunctionScope(args: LocalVariableDefinitionInfo[], terms: Set<string>, rtype: TypeSignature | undefined) {
+    pushStandardFunctionScope(args: VariableDefinitionInfo[], terms: Set<string>, rtype: TypeSignature | undefined) {
         assert(this.scope === undefined);
 
         this.scope = new StandardScopeInfo(args, terms, rtype);
@@ -234,7 +235,7 @@ class ParserEnvironment {
 }
 
 export { 
-    LocalVariableDefinitionInfo,
+    VariableDefinitionInfo,
     BlockScopeInfo,
     ParserScopeInfo, StandardScopeInfo, LambdaScopeInfo,
     ParserEnvironment 
