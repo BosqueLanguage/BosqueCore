@@ -1,12 +1,12 @@
 
 import assert from "node:assert";
 
-import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
+import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_fail, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, TermRestrictions, KW_out, KW_inout, KW_out_q } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -1728,6 +1728,25 @@ class Parser {
         }
     }
 
+    private parseVarDeclKind(): "let" | "ref" | "var" {
+        if(this.testToken(KW_let) || this.testToken(KW_ref) || this.testToken(KW_var)) {
+            return this.consumeTokenAndGetValue() as "let" | "ref" | "var";
+        }
+        else {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Expected let, ref or var for variable declaration");
+            return "let";
+        }
+    }
+
+    private parseParamDeclKind(): "ref" | "out" | "out?" | "inout" | undefined {
+        if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+            return this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
+        }
+        else {
+            return undefined;
+        }
+    }
+
     private parseAdditionalTypeDeclTag(): AdditionalTypeDeclTag {
         let isStatus = false;
         let isEvent = false;
@@ -1892,10 +1911,10 @@ class Parser {
         return undefined;
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, mutparams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
-        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new VariableDefinitionInfo("let", v)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -1916,7 +1935,7 @@ class Parser {
             }
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
             preconds.push(new PreConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
 
@@ -1926,11 +1945,11 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
 
-        const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo(true, "$" + v));
+        const refnames = [...mutparams].map((v) => new VariableDefinitionInfo("let", "$" + v));
 
-        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(true, v)), ...refnames, new LocalVariableDefinitionInfo(true, WELL_KNOWN_RETURN_VAR_NAME)];
+        const postvardecls = [...[...argnames].map((v) => new VariableDefinitionInfo("let", v)), ...refnames, new VariableDefinitionInfo("let", WELL_KNOWN_RETURN_VAR_NAME)];
         if(taskcond || apicond) {
-            postvardecls.push(new LocalVariableDefinitionInfo(true, WELL_KNOWN_EVENTS_VAR_NAME));
+            postvardecls.push(new VariableDefinitionInfo("let", WELL_KNOWN_EVENTS_VAR_NAME));
         }
 
         this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -1955,7 +1974,7 @@ class Parser {
             }
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
             postconds.push(new PostConditionDecl(this.env.currentFile, sinfo, tag, level, softcheck, exp));
 
@@ -1969,10 +1988,10 @@ class Parser {
     private parseLambdaSignatureParameter(): LambdaParameterSignature {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
+        if(pkind !== undefined && isrest) {
             this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
@@ -1984,7 +2003,7 @@ class Parser {
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new LambdaParameterSignature(undefined, ptype, isref, isrest);
+        return new LambdaParameterSignature(undefined, ptype, pkind, isrest);
     }
 
     private parseLambdaSignatureParameters(cinfo: SourceInfo): LambdaParameterSignature[] {
@@ -2004,10 +2023,10 @@ class Parser {
     private parseInvokeDeclParameter(boundtemplates: Set<string>): InvokeParameterDecl {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
+        if(pkind !== undefined && isrest) {
             this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
         }
 
@@ -2027,20 +2046,20 @@ class Parser {
             }
         }
 
-        let optDefaultExp: ConstantExpressionValue | undefined = undefined;
+        let optDefaultExp: Expression | undefined = undefined;
         if(this.testAndConsumeTokenIf(SYM_eq)) {
-            optDefaultExp = this.parseConstExpression(ptype, boundtemplates);
+            optDefaultExp = this.parseConstScopedExpression(ptype, boundtemplates);
         }
 
         if(isrest && optDefaultExp !== undefined) {
             this.recordErrorGeneral(cinfo, "Cannot have a default value for rest parameters");
         }
 
-        if(isref && optDefaultExp !== undefined) {
+        if(pkind !== undefined && optDefaultExp !== undefined) {
             this.recordErrorGeneral(cinfo, "Cannot have a default value for reference parameters");
         }
 
-        return new InvokeParameterDecl(pname, ptype, optDefaultExp, isref, isrest);
+        return new InvokeParameterDecl(pname, ptype, optDefaultExp, pkind, isrest);
     }
 
     private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
@@ -2053,8 +2072,8 @@ class Parser {
                 this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
 
-            if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
-                this.recordErrorGeneral(cinfo, "Cannot have more than one reference parameter");
+            if(!implicitRefAllowed && params.some((param) => param.pkind !== undefined)) {
+                this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
             }
 
             if(params[params.length - 1].isRestParam && params.some((param) => param.optDefaultValue !== undefined)) {
@@ -2068,6 +2087,7 @@ class Parser {
     private parseInvokeTemplateTermDecl(): InvokeTemplateTermDecl {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
+        const caninfer = this.testAndConsumeTokenIf(SYM_question);
 
         let ttype: TypeSignature | undefined = undefined;
         let tags: TemplateTermDeclExtraTag[] = [];
@@ -2086,7 +2106,7 @@ class Parser {
             }
         }
 
-        return new InvokeTemplateTermDecl(tname, tags, ttype);
+        return new InvokeTemplateTermDecl(tname, tags, ttype, caninfer);
     }
 
     private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
@@ -2109,11 +2129,11 @@ class Parser {
     private parseLambdaDeclParameter(): InvokeParameterDecl {
         const cinfo = this.peekToken().getSourceInfo();
 
-        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const pkind = this.parseParamDeclKind();
         const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isrest) {
-            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a rest");
+        if(pkind !== undefined && isrest) {
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a special passing and a rest");
         }
 
         const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
@@ -2130,7 +2150,7 @@ class Parser {
             this.parseExpression(); //try to eat the expression to recover nicely
         }
 
-        return new InvokeParameterDecl(pname, ptype, undefined, isref, isrest);
+        return new InvokeParameterDecl(pname, ptype, undefined, pkind, isrest);
     }
 
     private parseLambdaDeclParameters(cinfo: SourceInfo): InvokeParameterDecl[] {
@@ -2196,7 +2216,7 @@ class Parser {
             this.consumeToken();
         }
         
-        const lambdaargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
+        const lambdaargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
         this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
@@ -2258,10 +2278,10 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        const cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
         
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, functionkind === "predicate", false);
@@ -2309,25 +2329,25 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        let cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
         if(taskscope) {
             argNames.add("self");
-            cargs = [new LocalVariableDefinitionInfo(!isref, "self"), ...cargs];
+            cargs = [new VariableDefinitionInfo(isref ? "ref" : "let", "self"), ...cargs];
             if(isref) {
-                refparams.add("self");
+                mutparams.add("self");
             }
         }
         else {
             argNames.add("this");
-            cargs = [new LocalVariableDefinitionInfo(!isref, "this"), ...cargs];
+            cargs = [new VariableDefinitionInfo(!isref ? "let" : "ref", "this"), ...cargs];
             if(isref) {
-                refparams.add("this");
+                mutparams.add("this");
             }
         }
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, false, false);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
@@ -2368,15 +2388,15 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        let cargs = params.map((param) => new LocalVariableDefinitionInfo(!param.isRefParam, param.name));
-        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        let cargs = params.map((param) => new VariableDefinitionInfo(param.pkind || "let", param.name));
+        const mutparams = new Set<string>(params.filter((param) => param.pkind !== undefined).map((param) => param.name));
 
         argNames.add("self");
-        cargs = [new LocalVariableDefinitionInfo(true, "self"), ...cargs];
-        refparams.add("self");
-    
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
-    
+        cargs = [new VariableDefinitionInfo("ref", "self"), ...cargs];
+        mutparams.add("self");
+
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, mutparams, boundtemplates, fname === taskmain, false);
+
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
         this.env.popStandardFunctionScope();
@@ -2617,7 +2637,7 @@ class Parser {
         }
     }
 
-    private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
+    private parseSwitchLiteralGuard(): Expression | undefined {
         if (this.testAndConsumeTokenIf(KW_under)) {
             return undefined;
         }
@@ -2628,8 +2648,16 @@ class Parser {
                 this.recordErrorGeneral(exp.sinfo, "Expected literal expression")
             }
 
-            return new LiteralExpressionValue(exp);
+            return exp;
         }
+    }
+
+    private parseITypeTest(isnot: boolean): ITest {
+        this.consumeToken();
+        const ttype = this.parseStdTypeSignature();
+        this.ensureAndConsumeTokenAlways(SYM_rangle, "ITest");
+
+        return new ITestType(isnot, ttype);
     }
 
     private parseITest(): ITest | undefined {
@@ -2662,12 +2690,45 @@ class Parser {
         }
     }
 
-    private parseITypeTest(isnot: boolean): ITest {
-        this.consumeToken();
-        const ttype = this.parseStdTypeSignature();
-        this.ensureAndConsumeTokenAlways(SYM_rangle, "ITest");
+    private checkITestFirstToken(): boolean {
+        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
+    }
 
-        return new ITestType(isnot, ttype);
+    private parseITestGuard(): ITestGuard {
+        if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
+            xxxx;
+        }
+        else {
+            const isparened = this.testToken(SYM_lparen);
+            const bexp = this.parseExpression();
+            
+            if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
+                this.recordErrorGeneral(bexp.sinfo, "ITest guard expression is missing parentheses");
+            }
+
+            if(this.testToken(SYM_at)) {
+                xxxx;
+            }
+            else if(this.checkITestFirstToken()) {
+                const itest = this.parseITest();
+                return new ITestGuard(bexp, itest, new BinderInfo());
+            }
+            else {
+                return new ITestGuard(bexp, undefined, undefined);
+            }
+        }
+    }
+
+    private parseITestGuardSet(): ITestGuardSet {
+        const lg = this.parseITestGuard();
+        let guards = [lg];
+
+        while (this.testToken(SYM_ampamp)) {
+            this.consumeToken();
+            guards.push(this.parseITestGuard());
+        }
+
+        return new ITestGuardSet(guards);
     }
 
     private parseInvokeTemplateArguments() {
@@ -2892,16 +2953,6 @@ class Parser {
         }
 
         return new ConstructorLambdaExpression(sinfo, ldecl);
-    }
-
-    private parseConstExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): ConstantExpressionValue {
-        this.env.pushStandardFunctionScope([], boundtemplates, etype);
-        this.env.pushBlockScope();
-        const exp = this.parseExpression();
-        this.env.popBlockScope();
-        this.env.popStandardFunctionScope();
-
-        return new ConstantExpressionValue(exp);
     }
 
     private processTaggedLiteral(val: string): [string, TypeSignature] {
@@ -3786,7 +3837,35 @@ class Parser {
         }
     }
 
-    private parseRHSExpression(): Expression {
+    private parseConstScopedExpression(etype: TypeSignature | undefined, boundtemplates: Set<string>): Expression {
+        this.env.pushStandardFunctionScope([], boundtemplates, etype);
+        this.env.pushBlockScope();
+        const exp = this.parseExpression();
+        this.env.popBlockScope();
+        this.env.popStandardFunctionScope();
+
+        return exp;
+    }
+
+    private parseChkLogicExpression(): ChkLogicExpression {
+        xxxx;
+    }
+
+    private parseChkLogicScopedExpression(boundtemplates: Set<string>): ChkLogicExpression {
+        this.env.pushStandardFunctionScope([], boundtemplates, this.wellknownTypes.get("Bool"));
+        this.env.pushBlockScope();
+        const exp = this.parseChkLogicExpression();
+        this.env.popBlockScope();
+        this.env.popStandardFunctionScope();
+
+        return exp;
+    }
+
+    private parseRValueExpression(): RValueExpression {
+        xxxx;
+    }
+
+    private parseRHSExpressionXXX(): Expression {
         //TODO: later we need to parse trailing early returns/checks
 
         if(this.testToken(KW_ref)) {

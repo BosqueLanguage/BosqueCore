@@ -1,6 +1,6 @@
 
 import { FullyQualifiedNamespace, TypeSignature, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, LambdaParameterSignature, AutoTypeSignature, NominalTypeSignature } from "./type.js";
-import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression } from "./body.js";
+import { Expression, BodyImplementation, ExpressionTag, AccessNamespaceConstantExpression, LiteralRegexExpression, ChkLogicExpression } from "./body.js";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
@@ -53,12 +53,15 @@ class TypeTemplateTermDecl extends TemplateTermDecl {
 }
 
 class InvokeTemplateTermDecl extends TemplateTermDecl {
-    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined) {
+    readonly caninfer: boolean;
+
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature | undefined, caninfer: boolean) {
         super(name, tconstraint, tags);
+        this.caninfer = caninfer;
     }
 
     emit(): string {
-        return this.emitHelper();
+        return this.emitHelper() + (this.caninfer ? "?" : "");
     }
 }
 
@@ -125,9 +128,9 @@ abstract class ConditionDecl extends AbstractDecl {
 class PreConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly issoft: boolean;
-    readonly exp: Expression;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.level = level;
@@ -136,16 +139,16 @@ class PreConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class PostConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly issoft: boolean;
-    readonly exp: Expression;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.level = level;
@@ -154,16 +157,16 @@ class PostConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class InvariantDecl extends ConditionDecl {
     readonly ii: number;
     readonly level: BuildLevel;
-    readonly exp: ConstantExpressionValue;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, level: BuildLevel, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, level: BuildLevel, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.ii = ii;
@@ -172,15 +175,15 @@ class InvariantDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(fmt) + ";");
     }
 }
 
 class ValidateDecl extends ConditionDecl {
     readonly ii: number;
-    readonly exp: ConstantExpressionValue;
+    readonly exp: ChkLogicExpression;
 
-    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, exp: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, ii: number, tag: string | undefined, exp: ChkLogicExpression) {
         super(file, sinfo, tag);
 
         this.ii = ii;
@@ -188,7 +191,7 @@ class ValidateDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.emitDiagnosticTag() + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("validate" + this.emitDiagnosticTag() + " " + this.exp.emit(fmt) + ";");
     }
 }
 
@@ -236,11 +239,11 @@ abstract class AbstractCoreDecl extends AbstractDecl {
 class InvokeParameterDecl {
     readonly name: string;
     readonly type: TypeSignature;
-    readonly optDefaultValue: ConstantExpressionValue | undefined;
+    readonly optDefaultValue: Expression | undefined;
     readonly pkind: "ref" | "out" | "out?" | "inout" | undefined;
     readonly isRestParam: boolean;
 
-    constructor(name: string, type: TypeSignature, optDefaultValue: ConstantExpressionValue | undefined, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
+    constructor(name: string, type: TypeSignature, optDefaultValue: Expression | undefined, pkind: "ref" | "out" | "out?" | "inout" | undefined, isRestParam: boolean) {
         this.name = name;
         this.type = type;
         this.optDefaultValue = optDefaultValue;
@@ -292,6 +295,8 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
 class LambdaDecl extends AbstractInvokeDecl {
     readonly isAuto: boolean;
 
+    capturedVars: {name: string, type: TypeSignature}[] = [];
+
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: InvokeParameterDecl[], resultType: TypeSignature, body: BodyImplementation, isAuto: boolean) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body);
 
@@ -299,7 +304,7 @@ class LambdaDecl extends AbstractInvokeDecl {
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
-        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.isRefParam, p.isRestParam));
+        const lpsigs = this.params.map((p) => new LambdaParameterSignature(p.name, p.type, p.pkind, p.isRestParam));
         return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), lpsigs, this.resultType);
     }
 
@@ -484,9 +489,9 @@ class TaskActionDecl extends ExplicitInvokeDecl {
 
 class ConstMemberDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue;
+    readonly value: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: Expression) {
         super(file, sinfo, attributes, name);
 
         this.declaredType = dtype;
@@ -500,10 +505,10 @@ class ConstMemberDecl extends AbstractCoreDecl {
 
 class MemberFieldDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly defaultValue: ConstantExpressionValue | undefined;
+    readonly defaultValue: Expression | undefined;
     readonly isSpecialAccess: boolean;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined, isSpecialAccess: boolean) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: Expression | undefined, isSpecialAccess: boolean) {
         super(file, sinfo, attributes, name);
         
         this.declaredType = dtype;
@@ -649,7 +654,7 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
-    optofexp: LiteralExpressionValue | undefined; 
+    optofexp: Expression | undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
         super(file, sinfo, attributes, ns, name, etag);
@@ -1101,9 +1106,9 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
 class EnvironmentVariableInformation {
     readonly evname: string; //cstring
     readonly evtype: TypeSignature;
-    readonly optdefault: ConstantExpressionValue | undefined;
+    readonly optdefault: Expression | undefined;
 
-    constructor(evname: string, evtype: TypeSignature, optdefault: ConstantExpressionValue | undefined) {
+    constructor(evname: string, evtype: TypeSignature, optdefault: Expression | undefined) {
         this.evname = evname;
         this.evtype = evtype;
         this.optdefault = optdefault;
@@ -1142,10 +1147,10 @@ enum ResourceAccessModes {
 }
 
 class ResourceInformation {
-    readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype, or constant, or an environment variable
+    readonly pathglob: Expression; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype, or constant, or an environment variable
     readonly accessInfo: ResourceAccessModes[];
 
-    constructor(pathglob: ConstantExpressionValue, accessInfo: ResourceAccessModes[]) {
+    constructor(pathglob: Expression, accessInfo: ResourceAccessModes[]) {
         this.pathglob = pathglob;
         this.accessInfo = accessInfo;
     }
@@ -1325,9 +1330,9 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
 class NamespaceConstDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue;
+    readonly value: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: Expression) {
         super(file, sinfo, attributes, name);
 
         this.declaredType = dtype;
@@ -1576,11 +1581,11 @@ class Assembly {
             }
 
             const nnins = exp.ns.emit();
-            if(nsconst.value.exp instanceof LiteralRegexExpression) {
-                return [nsconst.value.exp.value, nnins];
+            if(nsconst.value instanceof LiteralRegexExpression) {
+                return [nsconst.value.value, nnins];
             }
-            else if(nsconst.value.exp instanceof AccessNamespaceConstantExpression) {
-                return this.resolveConstantRegexExpressionValue(nsconst.value.exp, nnins);
+            else if(nsconst.value instanceof AccessNamespaceConstantExpression) {
+                return this.resolveConstantRegexExpressionValue(nsconst.value, nnins);
             }
             else {
                 return [undefined, inns];
@@ -1596,7 +1601,7 @@ class Assembly {
                 return undefined;
             }
 
-            return this.resolveValidatorLiteral(nsconst.value.exp);
+            return this.resolveValidatorLiteral(nsconst.value);
         }
         else {
             if(exp.tag === ExpressionTag.LiteralUnicodeRegexExpression || exp.tag === ExpressionTag.LiteralCRegexExpression || exp.tag === ExpressionTag.LiteralGlobExpression) {
@@ -1636,7 +1641,7 @@ class Assembly {
                 return undefined;
             }
 
-            return this.tryReduceConstantExpressionToRE(nsresl.value.exp);
+            return this.tryReduceConstantExpressionToRE(nsresl.value);
         }
         else {
             return undefined;
@@ -1650,7 +1655,7 @@ class Assembly {
 
         const reinfos: NSRegexREInfoEntry[] = [];
         nsdecl.consts.forEach((c) => {
-            const re = this.tryReduceConstantExpressionToRE(c.value.exp);
+            const re = this.tryReduceConstantExpressionToRE(c.value);
             if(re !== undefined) {
                 reinfos.push({name: c.name, restr: re.value});
             }

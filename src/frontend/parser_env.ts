@@ -109,7 +109,6 @@ class StandardScopeInfo extends ParserScopeInfo {
 
 class LambdaScopeInfo extends ParserScopeInfo {
     readonly enclosing: ParserScopeInfo;
-    readonly capturedVars: Set<string> = new Set<string>();
 
     constructor(args: VariableDefinitionInfo[], boundtemplates: Set<string>, rtype: TypeSignature | undefined, enclosing: ParserScopeInfo) {
         super(args, boundtemplates, rtype);
@@ -123,8 +122,6 @@ class LambdaScopeInfo extends ParserScopeInfo {
             return true;
         }
         else {
-            this.capturedVars.add(srcname);
-            
             return this.enclosing.isDefinedVariable(srcname);
         }
     }
@@ -171,7 +168,7 @@ class ParserEnvironment {
     identifierResolvesAsVariable(srcname: string): boolean {
         assert(this.scope !== undefined);
 
-        return this.scope.isDefinedVariable(srcname);
+        return srcname.startsWith("$") || this.scope.isDefinedVariable(srcname);
     }
 
     addVariable(name: string, vkind: "var" | "ref" | "let" | "out" | "out?" | "inout", ignoreok: boolean): boolean {
