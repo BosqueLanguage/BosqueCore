@@ -82,59 +82,14 @@ function generateFieldAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
     }
 }
 
-%%
-%% We are going to scratch the getAccessor function in favour of access(...)
-%% 
-
-%% Might want to get this running without the need for explicit access_ref
-function getAccessor(basetk: CPPAssembly::TypeKey, accessingtk: CPPAssembly::TypeKey, ctx: Context): String {
-    let accessor = generateAccess(basetk, ctx);
-    return if(ctx.asm.typeinfos.get(accessingtk).tag === CPPAssembly::Tag#Ref) 
-        then String::concat(accessor, "access_ref")
-        else String::concat(accessor, "access");
-}
-
-function access(base: CPPAssembly::TypeKey, accessing: CPPAssembly::TypeKey, f: Option<String>, ctx: Context): String {
-    var fieldAccess: String = "";
-    if(f)@some {
-        let fieldAccessor = generateFieldAccess(base, ctx);
-        fieldAccess = String::concat(fieldAccessor, $f);
-    }
-
-    if(ctx.asm.isNominalTypeConcept(base)) {
-        %%
-        %% We wil want to get rid of access_ref it is annoying to use
-        %% access_ref should jsut be fetched implicitly
-        %%
-
-
-    }
-    else {
-        %% I THINK this works here, if we arent a concept then we have no reason
-        %% to do anything other than field access
-        return fieldAccess;
-    }
-}
-
-function removeCommonPrefix(name: String, prefix: String): String {
-    if(!name.startsWithString(prefix)) {
-        return "";
-    }
-    return name.removePrefixString(prefix);
-}
-
-function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, converttype: String, exp: String): String { 
-    let name = emitVarIdentifier(bname); 
-    let tbindtype = String::concat("[[maybe_unused]] ", converttype, " ");
-    return String::concat(tbindtype, name, " = ", exp, convert, "; ");
-}
-
-function findFieldOffset(tk: CPPAssembly::TypeKey, fname: CPPAssembly::Identifier, ctx: Context): Nat {
+function findFieldOffset(tk: CPPAssembly::TypeKey, fname: String, ctx: Context): Nat {
     return ctx.asm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo
         .reduce<(|Nat, Bool|)>(fn(acc, f) => {
             if(acc.1 === false) {
-                let found = fname.value === f.fname.value;
-                let size = if(found) then 0n else ctx.asm.typeinfos.get(f.ftype.tkeystr).slotsize;
+                let found = fname === f.fname.value;
+                let size = if(found) 
+                    then 0n 
+                    else ctx.asm.typeinfos.get(f.ftype.tkeystr).slotsize;
                 return (|acc.0 + size, found|);
             }
             else {
@@ -154,6 +109,64 @@ function canUseDirectFieldAccess(act: CPPAssembly::AbstractConceptTypeDecl, fnam
     }, false);
 
     return allsubtypessame, baseidx;
+}
+
+%% This probably isnt totally correct but ideas here
+function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKey, fname: String, ctx: Context): String {
+    let eftype = emitTypeSignature(ftype, true, ctx);
+    let baseType = emitTypeSignature(base, false, ctx);
+    let enumentry = String::concat(", ", baseType, "_entries::", baseType, "_", fname);
+    let args = String::concat(baseType, "Type.vtable)");
+    
+    return String::concat(".vlookup<", eftype, enumentry, ">(", args); 
+}
+
+%% Maybe we want to pass in an accumulator or something
+function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
+    var fieldAccess: String = "";
+    if(fname)@some {
+        let fieldAccessor = generateFieldAccess(base, ctx);
+        fieldAccess = String::concat(fieldAccessor, $f);
+    }
+
+    if(ctx.asm.isNominalTypeConcept(base)) {
+        var esubtype: String = "";
+        if(subtype)@none {
+            let def = ctx.asm.lookupNominalTypeDeclaration(base)@<CPPAssembly::AbstractConceptTypeDecl>;
+            let canresolve, _ = canUseDirectFieldAccess(def, fname@some, ctx);
+            if(canresolve) {
+                %% Subtype is irrelevant here as all agree on this fields pos
+                esubtype = emitTypeKey(def.subtypes.front(), true, ctx);
+            }
+            else {
+                let evtable = emitVTableLookup(base, ftype@some, fname@some, ctx);
+                return String::concat(evtable, fieldAccess);
+            }
+        }
+        else {
+            esubtype = emitTypeKey($subtype, true, ctx);
+        }
+
+        let subtype_access = String::concat(".access<", esubtype, ">()", fieldAccess);
+
+        return subtype_access;
+    }
+    else {
+        return fieldAccess;
+    }
+}
+
+function removeCommonPrefix(name: String, prefix: String): String {
+    if(!name.startsWithString(prefix)) {
+        return "";
+    }
+    return name.removePrefixString(prefix);
+}
+
+function emitBindVar(bname: CPPAssembly::VarIdentifier, convert: String, converttype: String, exp: String): String { 
+    let name = emitVarIdentifier(bname); 
+    let tbindtype = String::concat("[[maybe_unused]] ", converttype, " ");
+    return String::concat(tbindtype, name, " = ", exp, convert, "; ");
 }
 
 %% We dont want __CoreCpp prefix when emitting typeinfo field for primitives
@@ -605,39 +618,13 @@ function emitCallTypeFunctionSpecialExpression(e: CPPAssembly::CallTypeFunctionS
 }
 
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): String {
-    let op_tinfo = ctx.asm.typeinfos.get(op.declaredInType.tkeystr);
-    let base_tinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
-    let ident = emitIdentifier(op.name);
-
     %% We dont want to try to do ".value" on a collection/type (they just emit as the underlying datastructure)
     if(ctx.asm.collections.has(op.baseType.tkeystr) || ctx.asm.stringoftypedecls.has(op.baseType.tkeystr)) {
         return "";
     }
 
-    if(ctx.asm.isNominalTypeConcept(op.baseType.tkeystr)) {
-        let e = ctx.asm.lookupNominalTypeDeclaration(op.baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
-        let canresolve, offset = canUseDirectFieldAccess(e, op.name, ctx);
-        let fieldaccessor = generateAccess(op.ftype.tkeystr, ctx);
-        let fieldaccess = String::concat(fieldaccessor, ident);
-        let accessType = getAccessor(op.baseType.tkeystr, op.ftype.tkeystr, ctx);
-        
-        if(canresolve) {
-            %% Subtype here does not matter as all agree on this fields position
-            let anysubtype = emitTypeKey(e.subtypes.front(), false, ctx);
-            return String::concat(accessType, "<", anysubtype, ">()", fieldaccess);
-        }
-        else {
-            let ftype = emitTypeSignature(op.ftype, true, ctx);
-            let declaredInType = emitTypeSignature(op.declaredInType, false, ctx);
-            let enumentry = String::concat(", ", declaredInType, "_entries::", declaredInType, "_", ident);
-            let args = String::concat(declaredInType, "Type.vtable)", fieldaccess);
-            return String::concat(accessType, "vlookup<", ftype, enumentry, ">(", args); 
-        }
-    }
-    else {
-        let accessor = generateAccess(op.baseType.tkeystr, ctx);
-        return String::concat(accessor, ident);
-    }
+    let identifier = emitIdentifier(op.name);
+    return access(op.baseType.tkeystr, none, some(op.ftype.tkeystr), some(identifier));
 }
 
 %% Probably just struct.field = val
