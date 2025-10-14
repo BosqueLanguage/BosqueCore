@@ -2696,7 +2696,15 @@ class Parser {
 
     private parseITestGuard(): ITestGuard {
         if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
-            xxxx;
+            this.consumeToken();
+            const binfo = this.parseBinderInfo();
+            this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
+            const bexp = this.parseExpression();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
+
+            this.ensureAndConsumeTokenAlways(SYM_at, "binder in ITest guard");
+            const itest = this.parseITest();
+            return new ITestGuard(bexp, itest, new BinderInfo(binfo as string, false, false));
         }
         else {
             const isparened = this.testToken(SYM_lparen);
@@ -2707,11 +2715,18 @@ class Parser {
             }
 
             if(this.testToken(SYM_at)) {
-                xxxx;
+                let stdbindname = "$_";
+                if(bexp instanceof AccessVariableExpression) {
+                    stdbindname = "$" + bexp.srcname;
+                }
+
+                this.consumeToken();
+                const itest = this.parseITest();
+                return new ITestGuard(bexp, itest, new BinderInfo(stdbindname, true, false));
             }
             else if(this.checkITestFirstToken()) {
                 const itest = this.parseITest();
-                return new ITestGuard(bexp, itest, new BinderInfo());
+                return new ITestGuard(bexp, itest, undefined);
             }
             else {
                 return new ITestGuard(bexp, undefined, undefined);
