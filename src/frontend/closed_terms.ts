@@ -142,14 +142,13 @@ class InstantiationPropagator {
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, pushdecl, []);
 
-                    // Unicode rope comparison is not supported yet
-                    /*
                     const eqdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
                     this.instantiateNamespaceFunction(nns, eqdecl, []);
 
+                    // Not supported yet
+                    /*
                     const ldecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
                     this.instantiateNamespaceFunction(nns, ldecl, []);
-
                     */
                 }
             }
