@@ -2296,24 +2296,44 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     }, "");
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
+        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.stringoftypedecls.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     }, "");
 
-    %% To ensure a definition has been provided we emit collections last
-    let collections = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.collections.has(tk))
+    return String::concat(ns, ant_fwddecls, subns_fwddecls, indent, "}%n;");
+}
+
+%% These types depend on another forward decl being already declared
+function emitDependantNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+
+    %% Might want to turn some of this repeated logic into a function (we do this in many places)
+    let ctds = nsdecl.collections
         .reduce<String>(fn(acc, tk) => {
-            let ctd = ctx.asm.lookupNominalTypeDeclaration(tk)@<CPPAssembly::CollectionTypeDecl>;
-            let fwddecl = emitCollectionTypeDeclDef(ctd, ctx, full_indent); 
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     }, "");
 
+    return String::concat(ns, ctds, indent, "}%n;");
+}
 
-    return String::concat(ns, ant_fwddecls, subns_fwddecls, collections, indent, "}%n;");
+function emitDependantOnDependantNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+    
+    let stds = nsdecl.stringoftypedecls
+        .reduce<String>(fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
+            return String::concat(acc, fwddecl);
+    }, "");
+
+    return String::concat(ns, stds, indent, "}%n;");
 }
 
 %%
@@ -2387,10 +2407,21 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
     }, String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"));
 
+    %% I dont love the repetition here - might need some thought and redesign
+    let dfwddecls = asm.nsdecls
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
+            return String::concat(acc, emitDependantNamespaceDeclFwdDecls(nsdecl, ctx, ""));
+    }, fwddecls);
+
+    let ddfwddecls = asm.nsdecls
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
+            return String::concat(acc, emitDependantOnDependantNamespaceDeclFwdDecls(nsdecl, ctx, ""));
+    }, dfwddecls);
+
     %% Defintion of Value and Non-value types
     let types = asm.nsdecls.reduce<String>(fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDeclTypes(nsdecl, ctx, ""));
-    }, fwddecls);
+    }, ddfwddecls);
 
     %% Function forward decls
     let funcfwddecls = asm.nsdecls
