@@ -336,8 +336,8 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
             return eexp;
         }
         
-        return if(eexp === "") then String::concat(econstype, "{ &", ettype, " }")
-            else String::concat(econstype, "{ &", ettype, ", ", eexp, " }");
+        return if(eexp === "") then String::concat(econstype, "( &", ettype, " )")
+            else String::concat(econstype, "( &", ettype, ", ", eexp, " )");
         
 }
 
@@ -583,8 +583,8 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     let base_tinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
     let ident = emitIdentifier(op.name);
 
-    %% We dont want to try to access value on a collection (they just emit as the underlying datastructure)
-    if(ctx.asm.collections.has(op.baseType.tkeystr)) {
+    %% We dont want to try to do ".value" on a collection/type (they just emit as the underlying datastructure)
+    if(ctx.asm.collections.has(op.baseType.tkeystr) || ctx.asm.stringoftypedecls.has(op.baseType.tkeystr)) {
         return "";
     }
 
@@ -609,7 +609,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
         }
     }
     else {
-        let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
+        let accessor = generateAccess(op.baseType.tkeystr, ctx);
         return String::concat(accessor, ident);
     }
 }
@@ -816,7 +816,7 @@ function emitConstructorPrimarySpecialSomeExpression(cpsse: CPPAssembly::Constru
     let value = emitExpression(cpsse.value, ctx);
     let sometype = emitTypeSignature(cpsse.ctype, false, ctx);
 
-    return String::concat(sometype, "{ ", value, "}");
+    return String::concat(sometype, "( ", value, ")");
 }
 
 function emitConstructorPrimarySpecialOkExpression(cpsoe: CPPAssembly::ConstructorPrimarySpecialOkExpression, ctx: Context): String {
@@ -832,7 +832,7 @@ function emitConstructorPrimarySpecialMapEntryExpression(cpsmee: CPPAssembly::Co
     let value = emitExpression(cpsmee.value, ctx);
     let metype = emitTypeSignature(cpsmee.ctype, false, ctx);
 
-    return String::concat(metype, "{ ", key, ",", value, " }");
+    return String::concat(metype, "( ", key, ",", value, " )");
 }
 
 function emitConstructorPrimarySpecialConstructableExpression(exp: CPPAssembly::ConstructorPrimarySpecialConstructableExpression, ctx: Context): String {    
@@ -867,11 +867,11 @@ function emitConstructorStdExpression(exp: CPPAssembly::ConstructorStdExpression
             cons = "";
         }
         else {
-            cons = String::concat(name, "{ ", emitargs, " }");
+            cons = String::concat(name, "( ", emitargs, " )");
         }
     }
     else {
-        cons = String::concat(name, "{ ", emitargs, " }");
+        cons = String::concat(name, "( ", emitargs, " )");
     }
 
     if(tinfo.tag === CPPAssembly::Tag#Ref) {
@@ -1152,12 +1152,9 @@ function emitLiteralRegexExpression(exp: CPPAssembly::LiteralRegexExpression): S
     return "";
 }
 
-%% Extracting values from a typedecl requires literal '.value' access 
-%% so for now we construct the type to make value access easier
+%% Just a typedef of CString
 function emitLiteralTypeDeclValueExpression(exp: CPPAssembly::LiteralTypeDeclValueExpression, ctx: Context): String {
-    let constype = emitTypeSignature(exp.constype, false, ctx);
-
-    return String::concat(constype, "{ ", emitExpression(exp.value, ctx), " }");
+    return emitExpression(exp.value, ctx);
 }
 
 function emitCStringAsLiteral(s: CString): String {
@@ -1227,7 +1224,7 @@ function emitMapEntryConstructorExpression(exp: CPPAssembly::MapEntryConstructor
     let value = emitExpression(exp.vexp, ctx);
     let metype = emitTypeSignature(exp.etype, false, ctx);
 
-    return String::concat(metype, "{ ", key, ", ", value, " }");
+    return String::concat(metype, "( ", key, ", ", value, " )");
 }
 
 function emitExpression(e: CPPAssembly::Expression, ctx: Context): String {
@@ -1859,6 +1856,14 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
         return "";
     }
 
+    if(e)@<CPPAssembly::TypedeclStringOfTypeDecl> {
+        return emitTypedeclStringOfTypeDeclDef(e@<CPPAssembly::TypedeclStringOfTypeDecl>, ctx, indent);
+    }
+
+    if(e)@<CPPAssembly::CollectionTypeDecl> {
+        return emitCollectionTypeDeclDef($e, ctx, indent); 
+    }
+
     return String::concat(indent, "struct ", tkey, ";%n;");
 }
 
@@ -2045,29 +2050,14 @@ function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx:
     }
 }
 
-function emitTypedeclStringOfTypeDecl(tdstd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
+function emitTypedeclStringOfTypeDeclDef(tdstd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(tdstd.declaredInNS, tdstd.fullns);
-    let full_indent = String::concat("    ", indent);
 
     let tdstdtype = emitTypeKey(tdstd.tkey, false, nctx);
-    let valuetype = emitTypeSignature(tdstd.valuetype, true, nctx);
-
-    %%
-    %% TODO: We will need to handle the ofcheck here! right now we 
-    %% assume all regex pass
-    %%
-
-    let tdstd_tinfo = nctx.asm.typeinfos.get(tdstd.tkey);
-    let e_tdstd_tinfo = emitTypeInfo(tdstd_tinfo, some(tdstd), nctx, indent);
-
-    let base = String::concat(indent, "struct ", tdstdtype, " {%n;");
-    let value = String::concat(full_indent, valuetype, " value;%n;");
-    let def = String::concat(base, value, indent, "};%n;");
-
-    return String::concat(e_tdstd_tinfo, def);
+    return String::concat(indent, "typedef Core::CString ", tdstdtype, ";%n;");
 }
 
-function emitCollectionTypeDecl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
+function emitCollectionTypeDeclDef(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
 
     if(ctd)@<CPPAssembly::CRopeTypeDecl> {
@@ -2119,17 +2109,41 @@ function emitPrimitiveEntityTypeDecl(petd: CPPAssembly::PrimitiveEntityTypeDecl,
     }
 }
 
+%% Stringof and Collections are emitted with forward decls, so typeinfo only is needed to prevent lookup failures
+function emitTypedeclStringOfTypeDeclImpl(tdstd: CPPAssembly::TypedeclStringOfTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(tdstd.declaredInNS, tdstd.fullns);
+
+    %%
+    %% TODO: We will need to handle the ofcheck here! right now we 
+    %% assume all regex pass
+    %%
+
+    let tdstd_tinfo = nctx.asm.typeinfos.get(tdstd.tkey);
+    let e_tdstd_tinfo = emitTypeInfo(tdstd_tinfo, some(tdstd), nctx, indent);
+
+    return e_tdstd_tinfo;
+}
+
+function emitCollectionTypeDeclImpl(ctd: CPPAssembly::CollectionTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(ctd.declaredInNS, ctd.fullns);
+
+    let ctd_tinfo = nctx.asm.typeinfos.get(ctd.tkey);
+    let ectd_tinfo = emitTypeInfo(ctd_tinfo, some(ctd), nctx, indent);
+
+    return ectd_tinfo;
+}
+
 function emitAbstractNominalTypeDecl(ant: CPPAssembly::AbstractNominalTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     match(ant)@ {
         | CPPAssembly::EntityTypeDecl => { return emitEntityTypeDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::DatatypeMemberEntityTypeDecl => { return emitDatatypeMemberEntityDecl($ant, declaredIn, ctx, indent); }
         | CPPAssembly::PrimitiveConceptTypeDecl => { return emitPrimtiveConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::ConstructableTypeDecl => { return emitConstructableTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::CollectionTypeDecl => { return emitTypeInfo(ctx.asm.typeinfos.get($ant.tkey), some($ant), ctx, indent); } %% Collection typedef done with fwd decls
+        | CPPAssembly::CollectionTypeDecl => { return emitCollectionTypeDeclImpl($ant, ctx, indent); } 
         | CPPAssembly::DatatypeTypeDecl => { return emitDatatypeTypeDecl($ant, ctx, indent); } 
         | CPPAssembly::ConceptTypeDecl => { return emitConceptTypeDecl($ant, ctx, indent); }
         | CPPAssembly::EnumTypeDecl => { return emitEnumTypeDecl($ant, ctx, indent); }
-        | CPPAssembly::TypedeclStringOfTypeDecl => { return emitTypedeclStringOfTypeDecl($ant, ctx, indent); }
+        | CPPAssembly::TypedeclStringOfTypeDecl => { return emitTypedeclStringOfTypeDeclImpl($ant, ctx, indent); }
         | CPPAssembly::PrimitiveEntityTypeDecl => { return emitPrimitiveEntityTypeDecl($ant, ctx, indent); } 
     }
 }
@@ -2282,22 +2296,44 @@ function emitNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Cont
     }, "");
 
     let ant_fwddecls = nsdecl.alltypes
-        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
+        .filter(pred(tk) => !ctx.asm.collections.has(tk) && !ctx.asm.stringoftypedecls.has(tk) && !ctx.asm.enums.has(tk) && !ctx.asm.primitives.has(tk))
         .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
             let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     }, "");
 
-    let collections = nsdecl.alltypes
-        .filter(pred(tk) => ctx.asm.collections.has(tk))
+    return String::concat(ns, ant_fwddecls, subns_fwddecls, indent, "}%n;");
+}
+
+%% These types depend on another forward decl being already declared
+function emitDependantNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+
+    %% Might want to turn some of this repeated logic into a function (we do this in many places)
+    let ctds = nsdecl.collections
         .reduce<String>(fn(acc, tk) => {
             let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
-            let fwddecl = emitCollectionTypeDecl(ant@<CPPAssembly::CollectionTypeDecl>, ctx, full_indent); 
+            let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
             return String::concat(acc, fwddecl);
     }, "");
 
-    return String::concat(ns, ant_fwddecls, subns_fwddecls, collections, indent, "}%n;");
+    return String::concat(ns, ctds, indent, "}%n;");
+}
+
+function emitDependantOnDependantNamespaceDeclFwdDecls(nsdecl: CPPAssembly::NamespaceDecl, ctx: Context, indent: String): String {
+    let full_indent = String::concat("    ", indent);
+    let ns = String::concat(indent, "namespace ", String::fromCString(nsdecl.nsname), " {%n;");
+    
+    let stds = nsdecl.stringoftypedecls
+        .reduce<String>(fn(acc, tk) => {
+            let ant = ctx.asm.lookupNominalTypeDeclaration(tk);
+            let fwddecl = emitAbstractNominalForwardDeclaration(ant, ctx, full_indent); 
+            return String::concat(acc, fwddecl);
+    }, "");
+
+    return String::concat(ns, stds, indent, "}%n;");
 }
 
 %%
@@ -2371,10 +2407,21 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
             return String::concat(acc, emitNamespaceDeclFwdDecls(nsdecl, ctx, ""));
     }, String::concat(primitives, "//%n;// Ref and Tagged Type Forward Declarations (and collections)%n;//%n;"));
 
+    %% I dont love the repetition here - might need some thought and redesign
+    let dfwddecls = asm.nsdecls
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
+            return String::concat(acc, emitDependantNamespaceDeclFwdDecls(nsdecl, ctx, ""));
+    }, fwddecls);
+
+    let ddfwddecls = asm.nsdecls
+        .reduce<String>(fn(acc, nsname, nsdecl) => {
+            return String::concat(acc, emitDependantOnDependantNamespaceDeclFwdDecls(nsdecl, ctx, ""));
+    }, dfwddecls);
+
     %% Defintion of Value and Non-value types
     let types = asm.nsdecls.reduce<String>(fn(acc, nsname, nsdecl) => {
         return String::concat(acc, emitNamespaceDeclTypes(nsdecl, ctx, ""));
-    }, fwddecls);
+    }, ddfwddecls);
 
     %% Function forward decls
     let funcfwddecls = asm.nsdecls
@@ -2407,17 +2454,13 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     %% Checking for equality on our ropes needs to be overloaded in global namespace
     var overloads: String = "";
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_equal'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }");
+    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('CRope'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }%n;");
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_less(lhs, rhs); }%n;");
     }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_less'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_less(lhs, rhs); }");
-    }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_equal'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }");
-    }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_less'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); }");   
+    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('UnicodeRope'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }%n;");
+        %%overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); };%n;");   
     }
 
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp

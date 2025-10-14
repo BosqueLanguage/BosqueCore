@@ -78,7 +78,8 @@ public:
     }
 
     template<typename T>
-    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti) {
+    Boxed(__CoreGC::TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti) {
+        static_assert(sizeof(T) <= K * sizeof(uintptr_t), "Object too large for Boxed<K>");
         memcpy<K>(this->data, reinterpret_cast<uintptr_t*>(&d));
     };
 
@@ -124,7 +125,9 @@ public:
     Boxed& operator=(const Boxed& rhs) noexcept = default;
 
     template<typename T>
-    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { };
+    Boxed(__CoreGC::TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti), data(*reinterpret_cast<uintptr_t*>(&d)) { 
+        static_assert(sizeof(T) <= sizeof(uintptr_t), "Object too large for Boxed<1>");
+    };
 
     // None constructor
     Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {};
@@ -208,8 +211,11 @@ public:
     Tuple2& operator=(const Tuple2& rhs) noexcept = default;
 
     template<typename T0, typename T1>
-    Tuple2(T0 d0, T1 d1) noexcept 
-        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)) { }
+    Tuple2(T0&& d0, T1&& d1) noexcept 
+        : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)) {
+            static_assert(sizeof(T0) <= K0 * sizeof(uintptr_t), "Object T0 too large for Tuple");
+            static_assert(sizeof(T1) <= K1 * sizeof(uintptr_t), "Object T1 too large for Tuple");
+        }
 
     template<typename T, size_t I>
     constexpr T access() noexcept {
@@ -233,9 +239,13 @@ public:
     Tuple3& operator=(const Tuple3& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2>
-    Tuple3(T0 d0, T1 d1, T2 d2) noexcept 
+    Tuple3(T0&& d0, T1&& d1, T2&& d2) noexcept 
         : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
-          e2(reinterpret_cast<uintptr_t*>(&d2)) { }
+          e2(reinterpret_cast<uintptr_t*>(&d2)) {
+            static_assert(sizeof(T0) <= K0 * sizeof(uintptr_t), "Object T0 too large for Tuple");
+            static_assert(sizeof(T1) <= K1 * sizeof(uintptr_t), "Object T1 too large for Tuple");
+            static_assert(sizeof(T2) <= K2 * sizeof(uintptr_t), "Object T2 too large for Tuple");
+        }
 
     template<typename T, size_t I>
     constexpr T access() noexcept {
@@ -261,9 +271,14 @@ public:
     Tuple4& operator=(const Tuple4& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2, typename T3>
-    Tuple4(T0 d0, T1 d1, T2 d2, T3 d3) noexcept 
+    Tuple4(T0&& d0, T1&& d1, T2&& d2, T3&& d3) noexcept 
         : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
-          e2(reinterpret_cast<uintptr_t*>(&d2)), e3(reinterpret_cast<uintptr_t*>(&d3)) { }
+          e2(reinterpret_cast<uintptr_t*>(&d2)), e3(reinterpret_cast<uintptr_t*>(&d3)) {
+            static_assert(sizeof(T0) <= K0 * sizeof(uintptr_t), "Object T0 too large for Tuple");
+            static_assert(sizeof(T1) <= K1 * sizeof(uintptr_t), "Object T1 too large for Tuple");
+            static_assert(sizeof(T2) <= K2 * sizeof(uintptr_t), "Object T2 too large for Tuple");
+            static_assert(sizeof(T3) <= K3 * sizeof(uintptr_t), "Object T3 too large for Tuple");
+        }
 
     template<typename T, size_t I>
     constexpr T access() noexcept {
