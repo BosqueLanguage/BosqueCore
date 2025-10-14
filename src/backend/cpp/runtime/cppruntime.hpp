@@ -87,18 +87,8 @@ public:
     Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {}
 
     template<typename T, uintptr_t I=0>
-    constexpr T* access_ref() noexcept {
-        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data[0]) + I);   
-    }
-
-    template<typename T, uintptr_t I=0>
     constexpr T access() noexcept { 
-        if(this->typeinfo->tag == __CoreGC::Tag::Ref) {
-            return *access_ref<T, I>();
-        }
-        else {
-            return *reinterpret_cast<T*>(&this->data[I]);
-        }
+        return *reinterpret_cast<T*>(&this->data[I]);
     }
 
     constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
@@ -133,18 +123,8 @@ public:
     Boxed(__CoreGC::TypeInfoBase* ti) noexcept : typeinfo(ti) {};
 
     template<typename T, uintptr_t I=0>
-    constexpr T* access_ref() noexcept {
-        return reinterpret_cast<T*>(reinterpret_cast<uintptr_t*>(this->data) + I);   
-    }
-
-    template<typename T, uintptr_t I=0>
     constexpr T access() noexcept { 
-        if (this->typeinfo->tag == __CoreGC::Tag::Ref) {
-            return *access_ref<T, I>();
-        }
-        else {
-            return *reinterpret_cast<T*>(&this->data);
-        }
+        return *reinterpret_cast<T*>(&this->data);
     }
     
     constexpr uintptr_t accessnone() noexcept { return UINTPTR_MAX; }
