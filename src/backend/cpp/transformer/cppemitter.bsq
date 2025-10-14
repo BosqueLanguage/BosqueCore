@@ -73,7 +73,7 @@ function emitThisReference(): String {
 }
 
 %% Probably should name this better
-function generateAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
+function generateFieldAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
     let tag = ctx.asm.typeinfos.tryGet(tk)@some.tag;
     switch(tag) {
         | CPPAssembly::Tag#Value => { return "."; }
@@ -82,12 +82,38 @@ function generateAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
     }
 }
 
+%%
+%% We are going to scratch the getAccessor function in favour of access(...)
+%% 
+
 %% Might want to get this running without the need for explicit access_ref
 function getAccessor(basetk: CPPAssembly::TypeKey, accessingtk: CPPAssembly::TypeKey, ctx: Context): String {
     let accessor = generateAccess(basetk, ctx);
     return if(ctx.asm.typeinfos.get(accessingtk).tag === CPPAssembly::Tag#Ref) 
         then String::concat(accessor, "access_ref")
         else String::concat(accessor, "access");
+}
+
+function access(base: CPPAssembly::TypeKey, accessing: CPPAssembly::TypeKey, f: Option<String>, ctx: Context): String {
+    var fieldAccess: String = "";
+    if(f)@some {
+        let fieldAccessor = generateFieldAccess(base, ctx);
+        fieldAccess = String::concat(fieldAccessor, $f);
+    }
+
+    if(ctx.asm.isNominalTypeConcept(base)) {
+        %%
+        %% We wil want to get rid of access_ref it is annoying to use
+        %% access_ref should jsut be fetched implicitly
+        %%
+
+
+    }
+    else {
+        %% I THINK this works here, if we arent a concept then we have no reason
+        %% to do anything other than field access
+        return fieldAccess;
+    }
 }
 
 function removeCommonPrefix(name: String, prefix: String): String {
