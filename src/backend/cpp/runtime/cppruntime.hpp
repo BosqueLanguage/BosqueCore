@@ -78,7 +78,7 @@ public:
     }
 
     template<typename T>
-    Boxed(__CoreGC::TypeInfoBase* ti, T d) noexcept : typeinfo(ti) {
+    Boxed(__CoreGC::TypeInfoBase* ti, T&& d) noexcept : typeinfo(ti) {
         memcpy<K>(this->data, reinterpret_cast<uintptr_t*>(&d));
     };
 
@@ -208,7 +208,7 @@ public:
     Tuple2& operator=(const Tuple2& rhs) noexcept = default;
 
     template<typename T0, typename T1>
-    Tuple2(T0 d0, T1 d1) noexcept 
+    Tuple2(T0&& d0, T1&& d1) noexcept 
         : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)) { }
 
     template<typename T, size_t I>
@@ -233,7 +233,7 @@ public:
     Tuple3& operator=(const Tuple3& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2>
-    Tuple3(T0 d0, T1 d1, T2 d2) noexcept 
+    Tuple3(T0&& d0, T1&& d1, T2&& d2) noexcept 
         : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
           e2(reinterpret_cast<uintptr_t*>(&d2)) { }
 
@@ -261,7 +261,7 @@ public:
     Tuple4& operator=(const Tuple4& rhs) noexcept = default;
 
     template<typename T0, typename T1, typename T2, typename T3>
-    Tuple4(T0 d0, T1 d1, T2 d2, T3 d3) noexcept 
+    Tuple4(T0&& d0, T1&& d1, T2&& d2, T3&& d3) noexcept 
         : e0(reinterpret_cast<uintptr_t*>(&d0)), e1(reinterpret_cast<uintptr_t*>(&d1)),
           e2(reinterpret_cast<uintptr_t*>(&d2)), e3(reinterpret_cast<uintptr_t*>(&d3)) { }
 

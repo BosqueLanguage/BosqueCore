@@ -583,7 +583,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     let base_tinfo = ctx.asm.typeinfos.get(op.baseType.tkeystr);
     let ident = emitIdentifier(op.name);
 
-    %% We dont want to try to access value on a collection/type (they just emit as the underlying datastructure)
+    %% We dont want to try to do ".value" on a collection/type (they just emit as the underlying datastructure)
     if(ctx.asm.collections.has(op.baseType.tkeystr) || ctx.asm.stringoftypedecls.has(op.baseType.tkeystr)) {
         return "";
     }
@@ -609,7 +609,7 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
         }
     }
     else {
-        let accessor = generateAccess(op.declaredInType.tkeystr, ctx);
+        let accessor = generateAccess(op.baseType.tkeystr, ctx);
         return String::concat(accessor, ident);
     }
 }
