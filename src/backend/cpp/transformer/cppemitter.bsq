@@ -2454,17 +2454,13 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
 
     %% Checking for equality on our ropes needs to be overloaded in global namespace
     var overloads: String = "";
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_equal'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }");
+    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('CRope'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_equal(lhs, rhs); }%n;");
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_less(lhs, rhs); }%n;");
     }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::CRopeOps::s_crope_less'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::CString& lhs, const Core::CString& rhs) { return Core::CRopeOps::s_crope_less(lhs, rhs); }");
-    }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_equal'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }");
-    }
-    if(ctx.asm.nsfuncs.has(CPPAssembly::InvokeKey::from('Core::UnicodeRopeOps::s_unicoderope_less'))) {
-        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); }");   
+    if(ctx.asm.typeinfos.has(CPPAssembly::TypeKey::from('UnicodeRope'))) {
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator==(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_equal(lhs, rhs); }%n;");
+        overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); };%n;");   
     }
 
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp

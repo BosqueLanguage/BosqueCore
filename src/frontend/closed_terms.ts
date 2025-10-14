@@ -141,6 +141,16 @@ class InstantiationPropagator {
 
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_append") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, pushdecl, []);
+
+                    // Unicode rope comparison is not supported yet
+                    /*
+                    const eqdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
+                    this.instantiateNamespaceFunction(nns, eqdecl, []);
+
+                    const ldecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
+                    this.instantiateNamespaceFunction(nns, ldecl, []);
+
+                    */
                 }
             }
 
@@ -153,6 +163,12 @@ class InstantiationPropagator {
 
                     const pushdecl = nns.functions.find((tt) => tt.name === "s_crope_append") as NamespaceFunctionDecl;
                     this.instantiateNamespaceFunction(nns, pushdecl, []);
+
+                    const eqdecl = nns.functions.find((tt) => tt.name === "s_crope_equal") as NamespaceFunctionDecl;                    
+                    this.instantiateNamespaceFunction(nns, eqdecl, []);
+                
+                    const ldecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
+                    this.instantiateNamespaceFunction(nns, ldecl, []);
                 }
             }
 
@@ -238,12 +254,12 @@ class InstantiationPropagator {
                     this.instantiateNamespaceFunction(nns, emptydecl, []);
                 }
                 if(fkey.endsWith("startsWithString")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_starts_with_unicoderope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                    const startdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_starts_with_unicoderope") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, startdecl, []);
                 }
                 if(fkey.endsWith("removePrefixString")) {
-                    const emptydecl = nns.functions.find((tt) => tt.name === "s_unicoderope_remove_prefix_unicoderope") as NamespaceFunctionDecl;
-                    this.instantiateNamespaceFunction(nns, emptydecl, []);
+                    const predecl = nns.functions.find((tt) => tt.name === "s_unicoderope_remove_prefix_unicoderope") as NamespaceFunctionDecl;
+                    this.instantiateNamespaceFunction(nns, predecl, []);
                 }
             }
         } 
@@ -659,25 +675,6 @@ class InstantiationPropagator {
     }
 
     private instantiateBinKeyEqExpression(exp: BinKeyEqExpression) {
-        let ltkey = exp.lhs.getType()?.tkeystr;
-        if(ltkey === "CString") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {
-                const createdecl = nns.functions.find((tt) => tt.name === "s_crope_equal") as NamespaceFunctionDecl;                    
-                this.instantiateNamespaceFunction(nns, createdecl, []);
-            }
-        }
-        if(ltkey === "String") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {                
-                const createdecl = nns.functions.find((tt) => tt.name === "s_unicoderope_equal") as NamespaceFunctionDecl;                    
-                this.instantiateNamespaceFunction(nns, createdecl, []);
-            }
-        }
-
-
         this.instantiateExpression(exp.lhs);
         this.instantiateExpression(exp.rhs);
     }
@@ -692,23 +689,6 @@ class InstantiationPropagator {
 
         this.instantiateExpression(exp.lhs);
         this.instantiateExpression(exp.rhs);
-
-        if(exp.ktype.tkeystr === "CString") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {
-                const createdecl = nns.functions.find((tt) => tt.name === "s_crope_equal") as NamespaceFunctionDecl;                    
-                this.instantiateNamespaceFunction(nns, createdecl, []);
-            }
-        }
-
-        if(exp.ktype.tkeystr === "String") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {                
-                assert(false, "Not Implemented -- String key comparison");
-            } 
-        }
     }
 
     private instantiateKeyCompareLessExpression(exp: KeyCompareLessExpression) {
@@ -716,23 +696,6 @@ class InstantiationPropagator {
 
         this.instantiateExpression(exp.lhs);
         this.instantiateExpression(exp.rhs);
-
-        if(exp.ktype.tkeystr === "CString") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "CRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {
-                const createdecl = nns.functions.find((tt) => tt.name === "s_crope_less") as NamespaceFunctionDecl;                    
-                this.instantiateNamespaceFunction(nns, createdecl, []);
-            }
-        }
-
-        if(exp.ktype.tkeystr === "String") {
-            const nns = this.assembly.getCoreNamespace().subns.find((ns) => ns.name === "UnicodeRopeOps") as NamespaceDeclaration;
-
-            if(nns !== undefined) {                
-                assert(false, "Not Implemented -- String key comparison");
-            } 
-        }
     }
 
     private instantiateNumericEqExpression(exp: NumericEqExpression) {
