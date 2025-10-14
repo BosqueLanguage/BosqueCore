@@ -4,16 +4,22 @@ __Table of Contents:__
 
 - Type System
   1. Primitive Types
-  2. Structural Types
   3. Enum Types
-  4. Type Aliases
+  4. NewType Types
+    - NewType String Types
+  6. Format String Types
   5. Concept Types
   6. Entity Types
   7. Algebraic Types
-  8. Validator Types
-  9. Typed Strings
-  10. Path Types
+  10. EList Types
   11. Special Types
+    - Option
+    - Result
+    - APIResult
+  11. Lambda Types
+  11. Template Types
+    - Constraints
+    - Special Kinds
   12. Task Types
 - Type Checker
   1. Subtyping

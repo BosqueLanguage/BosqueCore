@@ -36,6 +36,12 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     29. If-Then-Else Expression
 - Bosque Expression Components
     1. ITests
+      - negation and binding
+      - Option -> none & some
+      - Result -> ok & fail
+      - APIResult -> success, error, rejected, failed
+      - Concept Type
+      - Datatype
     2. Arguments
     3. Binders
     4. Lambdas

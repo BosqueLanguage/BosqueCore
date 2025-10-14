@@ -371,10 +371,32 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
+class FormatStringTypeSignature extends TypeSignature {
+    readonly oftype: "String" | "CString";
+    readonly rtype: TypeSignature;
+    readonly terms: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: TypeSignature[]) {
+        super(sinfo, `F${oftype}<${[rtype, ...terms].map((tt) => tt.tkeystr).join(", ")}]>`);
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), this.terms.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    emit(): string {
+        return `F${this.oftype}<${[this.rtype, ...this.terms].map((tt) => tt.emit()).join(", ")}]>`;
+    }
+}
+
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature,
-    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
+    FormatStringTypeSignature
 };

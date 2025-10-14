@@ -14,7 +14,9 @@ const KW_assert = "assert";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
+const KW_error = "error";
 const KW_fail = "fail";
+const KW_failed = "failed";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
@@ -29,12 +31,14 @@ const KW_ref = "ref";
 const KW_out = "out";
 const KW_out_q = "out?";
 const KW_inout = "inout";
+const KW_rejected = "rejected";
 const KW_return = "return";
 const KW_result = "result";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
 const KW_switch = "switch";
+const KW_success = "success";
 const KW_then = "then";
 const KW_true = "true";
 const KW_type = "type";
@@ -105,7 +109,9 @@ const KeywordStrings = [
     KW_env,
     KW_entity,
     KW_ensures,
+    KW_error,
     KW_fail,
+    KW_failed,
     KW_false,
     KW_field,
     KW_fn,
@@ -126,6 +132,7 @@ const KeywordStrings = [
     KW_predicate,
     KW_provides,
     KW_ref,
+    KW_rejected,
     KW_out,
     KW_out_q,
     KW_inout,
@@ -138,6 +145,7 @@ const KeywordStrings = [
     KW_safety,
     KW_spec,
     KW_switch,
+    KW_success,
     KW_task,
     KW_test,
     KW_then,
@@ -346,7 +354,9 @@ export {
     KW_env,
     KW_entity,
     KW_ensures,
+    KW_error,
     KW_fail,
+    KW_failed,
     KW_false,
     KW_field,
     KW_fn,
@@ -370,6 +380,7 @@ export {
     KW_out,
     KW_out_q,
     KW_inout,
+    KW_rejected,
     KW_release,
     KW_return,
     KW_result,
@@ -379,6 +390,7 @@ export {
     KW_safety,
     KW_spec,
     KW_switch,
+    KW_success,
     KW_task,
     KW_test,
     KW_then,

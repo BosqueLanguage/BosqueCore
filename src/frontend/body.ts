@@ -8,16 +8,14 @@ import { LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration } from ".
 class BinderInfo {
     readonly srcname: string; //the name in the source code
     readonly implicitdef: boolean;
-    readonly refineonfollow: boolean;
 
     constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
         this.implicitdef = implicitdef;
-        this.refineonfollow = refineonfollow;
     }
 
-    emit(): [string, string] {
-        return [!this.implicitdef ? `${this.srcname} = ` : "", this.refineonfollow ? "@@" : "@"];
+    emitoptdef(): string {
+        return !this.implicitdef ? `${this.srcname} = ` : "";
     }
 }
 
@@ -84,25 +82,77 @@ class ITestFail extends ITest {
     }
 }
 
-class ITestGuard {
+class ITestRejected extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}rejected`;
+    }
+}
+
+class ITestFailed extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}failed`;
+    }
+}
+
+class ITestError extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}error`;
+    }
+}
+
+class ITestSuccess extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}success`;
+    }
+}
+
+abstract class ITestGuard {
     readonly exp: Expression;
+    
+    constructor(exp: Expression) {
+        this.exp = exp;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class ITestBinderGuard extends ITestGuard {
     readonly itestopt: ITest | undefined;
     readonly bindinfo: BinderInfo | undefined;
 
     constructor(exp: Expression, itestopt: ITest | undefined, bindinfo: BinderInfo | undefined) {
-        this.exp = exp;
+        super(exp);
         this.itestopt = itestopt;
         this.bindinfo = bindinfo;
     }
 
     emit(fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.bindinfo !== undefined) {
-            bexps = this.bindinfo.emit();
-        }
+        const bexp = this.bindinfo !== undefined ? this.bindinfo.emitoptdef() : "";
         const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
         
-        return `(${bexps[0]}${this.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+        return `(${bexp}${this.exp.emit(true, fmt)})${itest}`;
+    }
+}
+
+class ITestSimpleGuard extends ITestGuard {
+    emit(fmt: CodeFormatter): string {
+        return `${this.exp.emit(true, fmt)}`;
     }
 }
 
@@ -2466,8 +2516,8 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail,
-    ITestGuard, ITestGuardSet,
+    BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestFailed, ITestRejected, ITestError, ITestSuccess,
+    ITestGuard, ITestBinderGuard, ITestSimpleGuard, ITestGuardSet,
     ArgumentValue, RefArgumentValue, OutArgumentValue, OutCondArgumentValue, InOutArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression,
     LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,

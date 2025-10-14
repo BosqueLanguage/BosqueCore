@@ -410,10 +410,6 @@ __internal entity CRegex {
     __inline function accepts(re: CRegex, s: CString): Bool = cregex_accepts;
 }
 
-%** Primitive unicode regex value. **%
-__internal entity PathRegex {
-}
-
 %** Primitive path value. **%
 __internal __typedeclable __keycomparable entity Path {
 }
@@ -432,6 +428,25 @@ __internal concept Result<T, E> {
     }
 
     __internal entity Fail provides Result<T, E> {
+    }
+}
+
+%** APIResult type. **%
+__internal concept APIResult<T> {
+    %** Failed in validation/precondition checks -- additional information via failure enum **%
+    __internal entity Rejected provides APIResult<T> {
+    }
+
+    %** Failed in _soft_ validation/precondition/postcondition checks -- additional information in failure enum and T contains a value **%
+    __internal entity Failed provides APIResult<T> {
+    }
+
+    %** Failed internally or postcondition checks -- additional information in failure enum **%
+    __internal entity Error provides APIResult<T> {
+    }
+
+    %** Successful result T contains the value **%
+    __internal entity Success provides APIResult<T> {
     }
 }
 
