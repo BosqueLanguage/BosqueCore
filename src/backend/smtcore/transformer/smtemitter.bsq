@@ -1643,12 +1643,14 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly:
 			let builtin = asm.nsbuiltins.get(t);
 			if (builtin.specialname === 's_mockService'){
 				let ret_type = SMTNameManager::generateResultName(builtin.resultType);
-				let mock_const = CString::concat('(declare-const @retMock-',ret_type, ')');
+				let mock_var = CString::concat('@retMock-',ret_type);
+				let mock_const = CString::concat('(declare-const ', mock_var, ' ', ret_type, ')');
 
-				let mock_verify = '';
+				%%TODO: Find a way to generate the call to the Validator Function for the resultType
+				var verifier = CString::concat('@ValidateRoot-',ret_type);
+				let mock_verify = CString::concat('(assert (', verifier, ' ', mock_var, '))');
 
 				let mock_fun = emitBuiltinFunctionDecl(builtin,trgterr);
-
 				return CString::concat(mock_const, mock_verify, mock_fun);
 			}else{
 				return emitBuiltinFunctionDecl(builtin, trgterr);
