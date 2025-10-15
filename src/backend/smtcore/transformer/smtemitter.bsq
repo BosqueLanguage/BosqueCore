@@ -1638,8 +1638,21 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly:
             return emitFunctionDecl(asm.funcs.get(t), trgterr);
         }
 
+
         if(asm.nsbuiltins.has(t)) {
-            return emitBuiltinFunctionDecl(asm.nsbuiltins.get(t), trgterr);
+			let builtin = asm.nsbuiltins.get(t);
+			if (builtin.specialname === 's_mockService'){
+				let ret_type = SMTNameManager::generateResultName(builtin.resultType);
+				let mock_const = CString::concat('(declare-const @retMock-',ret_type, ')');
+
+				let mock_verify = '';
+
+				let mock_fun = emitBuiltinFunctionDecl(builtin,trgterr);
+
+				return CString::concat(mock_const, mock_verify, mock_fun);
+			}else{
+				return emitBuiltinFunctionDecl(builtin, trgterr);
+			}
         }
         
         abort;
