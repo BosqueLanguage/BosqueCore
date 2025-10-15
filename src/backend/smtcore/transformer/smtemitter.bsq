@@ -1295,6 +1295,9 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (
     elif(f.specialname === 's_blockingfailure') {
         body = emitResultErrOtherAs(f.resultType.rtype);
     }
+    elif(f.specialname === 's_mockService') {
+        body = CString::concat('@retMock-', SMTNameManager::generateResultName(f.resultType));
+    }
     else {
         _debug f.specialname;
         abort; %%Missing builtin function implementation
