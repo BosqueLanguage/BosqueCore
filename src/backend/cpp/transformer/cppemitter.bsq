@@ -101,15 +101,16 @@ function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKe
 
 %% Maybe we want to pass in an accumulator or something
 function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
-    %%
-    %% I think two cases are necessary here - if we are just accessing a field of 
-    %% concerete type then if we are accessin field of concept. So if subtype is 
-    %% present we should generateFieldAccess for the subtype not the basetype
-    %%
     var fieldAccess: String = "";
     if(fname)@some {
-        let fieldAccessor = generateFieldAccess(base, ctx);
-        fieldAccess = String::concat(fieldAccessor, $fname);
+        if(subtype)@none {
+            let fieldAccessor = generateFieldAccess(base, ctx);
+            fieldAccess = String::concat(fieldAccessor, $fname);
+        }
+        else {
+            let fieldAccessor = generateFieldAccess($subtype, ctx);
+            fieldAccess = String::concat(fieldAccessor, $fname);
+        }
     }
 
     if(ctx.asm.isNominalTypeConcept(base)) {
@@ -751,12 +752,15 @@ function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSign
     }
 }
 
+%%
+%% Not sure how much I really like returning the emitted type here. Might want to poke around with other approaches.
+%%
 function emitITestAsConvertNone(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx: Context): (|String, String|) {
     if(isnot) {
         return emitITestAsConvertSome(false, fromtype, ctx);
     }
-    else { %% I dont love this but it works
-        return (|access(fromtype, none, none, some("none()"), ctx), "__CoreCpp::None" |);
+    else {
+        return (|access(fromtype, none, none, some("accessnone()"), ctx), "__CoreCpp::None" |);
     }
 }
 
@@ -768,7 +772,7 @@ function emitITestAsConvertSome(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx
             return emitITestAsConvertNone(false, fromtype, ctx);
         }
         else {
-            return (|access(fromtype, some($ant.someType.tkeystr), none, some(".value"), ctx), emitTypeSignature($ant.oftype, true, ctx)|);
+            return (|access(fromtype, some($ant.someType.tkeystr), none, some("value"), ctx), emitTypeSignature($ant.oftype, true, ctx)|);
         }
     }
     else {
