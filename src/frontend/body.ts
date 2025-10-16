@@ -168,6 +168,39 @@ class ITestGuardSet {
     }
 }
 
+abstract class FormatStringComponent {
+    abstract emit(): string;
+}
+
+class FormatStringTextComponent extends FormatStringComponent {
+    readonly text: string;
+    resolvedValue: string | undefined = undefined; //after unescaping
+
+    constructor(text: string) {
+        super();
+        this.text = text;
+    }
+
+    emit(): string {
+        return this.text;
+    }
+}
+
+class FormatStringArgComponent extends FormatStringComponent {
+    readonly argIndex: number;
+    readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
+
+    constructor(argIndex: number, argType: TypeSignature) {
+        super();
+        this.argIndex = argIndex;
+        this.argType = argType;
+    }
+
+    emit(): string {
+        return `%{${this.argIndex}: ${this.argType.emit()}}`;
+    }
+}
+
 abstract class ArgumentValue {
     readonly exp: Expression;
 
@@ -176,45 +209,6 @@ abstract class ArgumentValue {
     }
 
     abstract emit(fmt: CodeFormatter): string;
-}
-
-class RefArgumentValue extends ArgumentValue {
-    constructor(exp: AccessVariableExpression) {
-        super(exp);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `ref ${this.exp.emit(true, fmt)}`;
-    }
-}
-
-class OutArgumentValue extends ArgumentValue {
-    constructor(exp: AccessVariableExpression) {
-        super(exp);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `out ${this.exp.emit(true, fmt)}`;
-    }
-}
-
-class OutCondArgumentValue extends ArgumentValue {
-    constructor(exp: AccessVariableExpression) {
-        super(exp);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `out? ${this.exp.emit(true, fmt)}`;
-    }
-}
-
-class InOutArgumentValue extends ArgumentValue {
-    constructor(exp: AccessVariableExpression) {
-        super(exp);
-    }
-    emit(fmt: CodeFormatter): string {
-        return `inout ${this.exp.emit(true, fmt)}`;
-    }
 }
 
 class PositionalArgumentValue extends ArgumentValue {
@@ -247,6 +241,19 @@ class SpreadArgumentValue extends ArgumentValue {
 
     emit(fmt: CodeFormatter): string {
         return `...${this.exp.emit(true, fmt)}`;
+    }
+}
+
+class PassingArgumentValue extends ArgumentValue {
+    readonly kind: "ref" | "out" | "out?" | "inout";
+
+    constructor(kind: "ref" | "out" | "out?" | "inout", exp: Expression) {
+        super(exp);
+        this.kind = kind;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.kind} ${this.exp.emit(true, fmt)}`;
     }
 }
 
@@ -300,21 +307,34 @@ enum ExpressionTag {
     LiteralUnicodeRegexExpression = "LiteralUnicodeRegexExpression",
     LiteralCRegexExpression = "LiteralCRegexExpression",
 
+    LiteralByteExpression = "LiteralByteExpression",
     LiteralCCharExpression = "LiteralCCharExpression",
     LiteralUnicodeCharExpression = "LiteralUnicodeCharExpression",
 
     LiteralStringExpression = "LiteralStringExpression",
     LiteralCStringExpression = "LiteralCStringExpression",
-    
+    LiteralFormatStringExpression = "LiteralFormatStringExpression",
+    LiteralFormatCStringExpression = "LiteralFormatCStringExpression",
+
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathItemExpression = "LiteralPathItemExpression",
     LiteralGlobExpression = "LiteralGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
+    LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralTypedCStringExpression = "LiteralTypedCStringExpression",
+    LiteralTypedFormatStringExpression = "LiteralTypedFormatStringExpression",
+    LiteralTypedFormatCStringExpression = "LiteralTypedFormatCStringExpression",
+
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
-    TaskAccessInfoExpression = "TaskAccessInfoExpression",
+
+    TaskAccessIDExpression = "TaskAccessIDExpression",
+    TaskAccessParentIDExpression = "TaskAccessParentIDExpression",
+    TaskCheckStatusExpression = "TaskCheckStatusExpression",
+    TaskCheckTerminateCaseExpression = "TaskCheckTerminateCaseExpression",
+
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessEnumExpression = "AccessEnumExpression",
@@ -326,7 +346,6 @@ enum ExpressionTag {
 
     LambdaInvokeExpression = "LambdaInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
-    SpecialConverterExpression = "SpecialConverterExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallTypeFunctionExpression = "CallTypeFunctionExpression",
     CallRefVariableExpression = "CallRefVariableExpression",
@@ -361,12 +380,13 @@ enum ExpressionTag {
     NumericGreaterExpression = "NumericGreaterExpression",
     NumericGreaterEqExpression = "NumericGreaterEqExpression",
 
-    BinLogicAndExpression = "BinLogicAndExpression",
-    BinLogicOrExpression = "BinLogicOrExpression",
+    LogicAndExpression = "LogicAndExpression",
+    LogicOrExpression = "LogicOrExpression",
     
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
-    IfExpression = "IfExpression",
+
+    xxxx;
 
     TaskRunExpression = "TaskRunExpression", //run single task
     TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
@@ -451,6 +471,76 @@ class LiteralSimpleExpression extends Expression {
     }
 }
 
+class LiteralStringExpression extends Expression {
+    readonly value: string;
+    resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralCStringExpression extends Expression {
+    readonly value: string;
+    resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralCStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralFormatStringExpression extends Expression {
+    readonly value: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralFormatStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `"${this.value.map((c) => c.emit()).join("")}"`;
+    }
+}
+
+class LiteralFormatCStringExpression extends Expression {
+    readonly value: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralFormatCStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `'${this.value.map((c) => c.emit()).join("")}'`;
+    }
+}
+
 class LiteralRegexExpression extends Expression {
     readonly value: string;
 
@@ -467,8 +557,6 @@ class LiteralRegexExpression extends Expression {
 class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
-    
-    optResolvedString: string | undefined = undefined;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
@@ -485,29 +573,113 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 }
 
+class LiteralTypedStringExpression extends Expression {
+    readonly value: string;
+    resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralTypedStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralTypedCStringExpression extends Expression {
+    readonly value: string;
+    resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralTypedCStringExpression, sinfo);
+        this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralTypedFormatStringExpression extends Expression {
+    readonly value: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralTypedFormatStringExpression, sinfo);
+        this.value = value;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `"${this.value.map((c) => c.emit()).join("")}"`;
+    }
+}
+
+class LiteralTypedFormatCStringExpression extends Expression {
+    readonly value: FormatStringComponent[];
+
+    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+        super(ExpressionTag.LiteralTypedFormatCStringExpression, sinfo);
+        this.value = value;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `'${this.value.map((c) => c.emit()).join("")}'`;
+    }
+}
+
 class AccessEnvValueExpression extends Expression {
+    readonly opname: "has" | "get" | "tryGet";
     readonly keyname: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, keyname: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, opname: "has" | "get" | "tryGet", keyname: string) {
         super(tag, sinfo);
+        this.opname = opname;
         this.keyname = keyname;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `env${this.tag === ExpressionTag.HasEnvValueExpression ? "?" : ""}[${this.keyname}]`;
+        return `env.${this.opname}(${this.keyname})`;
     }
 }
 
 class TaskAccessInfoExpression extends Expression {
     readonly name: string;
 
-    constructor(sinfo: SourceInfo, name: string) {
-        super(ExpressionTag.TaskAccessInfoExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
+        super(tag, sinfo);
         this.name = name;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `Task::${this.name}()`;
+    }
+}
+
+class TaskCheckStatusExpression extends Expression {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
+        super(ExpressionTag.TaskCheckStatusExpression, sinfo);
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `Task::runstate()`;
+    }
+}
+
+class TaskCheckTerminateCaseExpression extends Expression {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
+        super(ExpressionTag.TaskCheckTerminateCaseExpression, sinfo);
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `Task::terminate()`;
     }
 }
 
@@ -562,9 +734,6 @@ class AccessEnumExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-
-    specialaccess: { ttype: TypeSignature, specialaccess: string | undefined }[] = []; //field name to access to a special re-typed variable (specifically extracting an option or result value)
-    layouttype: TypeSignature | undefined = undefined; //if this was re-typed then this is the layout type -- while the type of the expression is the infered type
     isCaptured: boolean;
 
     constructor(sinfo: SourceInfo, srcname: string) {
@@ -627,28 +796,13 @@ class ConstructorLambdaExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "fail" | "some";
+    readonly rop: "ok" | "fail" | "some" | "rejected" | "failed" | "error" | "success";
     readonly arg: Expression;
 
     constype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "fail" | "some" | "rejected" | "failed" | "error" | "success", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
-        this.rop = rop;
-        this.arg = arg;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
-    }
-}
-
-class SpecialConverterExpression extends Expression {
-    readonly rop: "option" | "result";
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, rop: "option" | "result", arg: Expression) {
-        super(ExpressionTag.SpecialConverterExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
     }
@@ -2518,14 +2672,18 @@ export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestFailed, ITestRejected, ITestError, ITestSuccess,
     ITestGuard, ITestBinderGuard, ITestSimpleGuard, ITestGuardSet,
-    ArgumentValue, RefArgumentValue, OutArgumentValue, OutCondArgumentValue, InOutArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
+    FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
+    ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression,
-    LiteralNoneExpression, LiteralSimpleExpression, LiteralRegexExpression,
+    LiteralNoneExpression, LiteralSimpleExpression, 
+    LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression,
+    LiteralRegexExpression,
     LiteralTypeDeclValueExpression,
-    AccessEnvValueExpression, TaskAccessInfoExpression,
+    LiteralTypedCStringExpression, LiteralTypedStringExpression, LiteralTypedFormatStringExpression, LiteralTypedFormatCStringExpression,
+    AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression, TaskCheckTerminateCaseExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
-    ConstructorLambdaExpression, SpecialConstructorExpression, SpecialConverterExpression,
+    ConstructorLambdaExpression, SpecialConstructorExpression,
     LambdaInvokeExpression,
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, 
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 

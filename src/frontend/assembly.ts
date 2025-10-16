@@ -573,6 +573,9 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
     isSpecialAPIResultEntity(): boolean { return (this instanceof APIRejectedTypeDecl) || (this instanceof APIFailedTypeDecl) || (this instanceof APIErrorTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
+    isSpecialEventConcept(): boolean { return (this instanceof EventConceptTypeDecl); }
+    isSpecialEventListConcept(): boolean { return (this instanceof EventListConceptTypeDecl); }
+
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
     }

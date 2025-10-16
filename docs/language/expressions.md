@@ -6,34 +6,47 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 
 - Pure Bosque Expressions
     1. Literals
-    2. Parameters/Variables/Captures
-    3. Literal StringOf Expressions
-    4. Literal Typed Expressions
-    5. Namespace Constants
-    6. Member Constants
-    7. Tuple Constructors
-    8. Record Constructors
-    9. Entity Constructors
+      - None
+      - Boolean
+      - Int/Nat and BigInt/BigNat
+      - Float, Decimal, Rational, and Complex
+      - Decimal Degree and Latitude/Longitude
+      - Byte, CChar, and UnicodeChar
+      - UUIDv4 and UUIDv7
+      - SHAHash
+      - TZDateTime, TAIDateTime, PlainDate, and PlainTime
+      - LogicalTime
+      - ISOTimeStamp
+      - DeltaDataTime, DeltaISOTimeStamp, DeltaSeconds, DeltaLogicalTime
+      - ByteBuffer
+      - String and CString
+      - Regex and CRegex
+      - Path, PathItem, and Glob
+    2. Literal StringOf Expressions
+    2. Literal Format String Expressions
+    3. Literal Typed Expressions
+    4. Parameters/Variables/Captures
+    5. Namespace and Member Constants
+    6. Enumerations
+    8. Entity Constructors
+    7. EList Constructors
     10. Special Constructors
     11. Collection Constructors
     12. Namespace and Member Functions
     13. Namespace Operators
-    14. Logical And/Or 
-    15. Tuple Index Access
-    16. Record Property Access
-    17. Field Access
+    14. EList Index Access
+    16. Field Access
     18. ITest Check
     19. ITest As and Conversion
     20. Method Call
     21. Method Call Virtual
     22. Prefix `!` operator
-    23. Prefix numeric `-` operator
-    24. Binary numeric arithmetic, `+`/`-`/`*`/`/` operators
-    25. Binary numeric comparison `==`/`!=`/`<`/`<=`/`>`/`>=` operators
+    23. Prefix `-` operator
+    24. Binary arithmetic, `+`/`-`/`*`/`/` operators
+    25. Binary comparison `==`/`!=`/`<`/`<=`/`>`/`>=` operators
     26. Binary KeyType equality `===`/`!==` operators
-    27. Binary Logic `&&`/`||`/`==>` operators
+    27. Logic `&&`/`||` operators
     28. MapEntry Constructor `=>` operator
-    29. If-Then-Else Expression
 - Bosque Expression Components
     1. ITests
       - negation and binding
@@ -49,8 +62,8 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     6. Regular Expressions
     7. Path Expressions
 - Bosque Task Expressions
-    1. Format Arguments
-    2. Environment Variables
+    1. Environment Variables
+    2. Task Information
 
 # Pure Bosque Expressions
 
