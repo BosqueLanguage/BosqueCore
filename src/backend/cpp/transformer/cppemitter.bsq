@@ -1,32 +1,5 @@
 namespace CPPEmitter;
 
-%% CPP Pre-defined backend
-namespace PathStack {
-    function emitPathStackCreate(): String {
-        return "PathStack ps = PathStack::create();";
-    }
-
-    function emitPathStackLeft(): String {
-        return "ps.left();";
-    }
-
-    function emitPathStackRight(): String {
-        return "ps.right();";
-    }
-
-    function emitPathStackUp(): String {
-        return "ps.up();";
-    }
-}
-
-namespace CCharBuffer {
-    %% Emit c++ for buffer creation here
-}
-
-namespace UnicodeCharBuffer {
-    %% Emit c++ for buffer creation here
-}
-
 entity Context {
     field asm: CPPAssembly::Assembly;
     field fullns_key: CPPAssembly::NamespaceKey;
@@ -121,8 +94,18 @@ function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKe
     return String::concat(".vlookup<", eftype, enumentry, ">(", args); 
 }
 
+%%
+%% Im thinking with some clever programming we should be able to shrink the logic down in this bundle of
+%% functions pretty signifigantally - once we get everythng working again lets gve some thought
+%%
+
 %% Maybe we want to pass in an accumulator or something
 function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
+    %%
+    %% I think two cases are necessary here - if we are just accessing a field of 
+    %% concerete type then if we are accessin field of concept. So if subtype is 
+    %% present we should generateFieldAccess for the subtype not the basetype
+    %%
     var fieldAccess: String = "";
     if(fname)@some {
         let fieldAccessor = generateFieldAccess(base, ctx);
@@ -131,20 +114,25 @@ function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey
 
     if(ctx.asm.isNominalTypeConcept(base)) {
         var esubtype: String = "";
-        if(subtype)@none {
+
+        %% Accessing internal field of Boxed<K>
+        if(subtype?none && ftype?none) {
+            return fieldAccess;
+        }
+        elif(subtype?none) {
             let def = ctx.asm.lookupNominalTypeDeclaration(base)@<CPPAssembly::AbstractConceptTypeDecl>;
             let canresolve, _ = canUseDirectFieldAccess(def, fname@some, ctx);
             if(canresolve) {
                 %% Subtype is irrelevant here as all agree on this fields pos
                 esubtype = emitTypeKey(def.subtypes.front(), true, ctx);
             }
-            else {
+            else { 
                 let evtable = emitVTableLookup(base, ftype@some, fname@some, ctx);
                 return String::concat(evtable, fieldAccess);
             }
         }
         else {
-            esubtype = emitTypeKey($subtype, true, ctx);
+            esubtype = emitTypeKey(subtype@some, true, ctx);
         }
 
         let subtype_access = String::concat(".access<", esubtype, ">()", fieldAccess);
