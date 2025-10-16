@@ -1646,7 +1646,7 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly:
 				let mock_var = CString::concat('@retMock-',ret_type);
 				let mock_const = CString::concat('(declare-const ', mock_var, ' ', ret_type, ')');
 
-				%%TODO: Find a way to generate the call to the Validator Function for the resultType
+				%%TODO: Find a way to emit proper @ValidateRoot and @Validate
 				var verifier = CString::concat('@ValidateRoot-',ret_type);
 				let mock_verify = CString::concat('(assert (', verifier, ' ', mock_var, '))');
 

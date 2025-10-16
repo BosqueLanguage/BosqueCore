@@ -2362,6 +2362,11 @@ class JSEmitter {
             preop = `var state = s; while(guard(state)) { state = op(state); } `;
             bop = `state`;
         }
+		else if(bname == "s_mockService"){
+			preop = `var extracted = runSMTExtractor(../smtout/formula.smt2,./targettype.json,./typeinfo.json,-m);
+					 var val = _$parseBSQON(extracted.type,extracted.value);`;
+			bop = `val`;
+		}
         else {
             assert(false, `Unknown builtin function -- ${bname}`);
         }
