@@ -629,9 +629,21 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     return access(op.baseType.tkeystr, none, some(op.ftype.tkeystr), some(identifier), ctx);
 }
 
-%% Probably just struct.field = val
+%% Might be something better than lambda here
 function emitPostfixAssignFields(op: CPPAssembly::PostfixAssignFields, rootexp: String, ctx: Context): String {
-    return "";
+    let assignments = op.updates.reduce<String>(fn(acc, ops) => {
+        let fname = emitIdentifier(ops.1);
+        let accessor = access(op.declOnType.tkeystr, none, some(ops.2.tkeystr), some(fname), ctx);
+        let update = emitExpression(ops.3, ctx);
+
+        return String::concat(acc, rootexp, accessor, " = ", update, "; ");
+    }, "");
+
+    let declOnType = emitTypeSignature(op.declOnType, true, ctx);
+    let ret = String::concat("return ", rootexp, ";");
+    let exp = String::concat("[&]() -> ", declOnType, " {", assignments, ret, " }()");
+
+    return exp;
 }
 
 %% Assumes access type is elist (I believe this is the only type accessable via postfix index)
