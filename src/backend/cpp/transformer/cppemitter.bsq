@@ -58,6 +58,10 @@ function findFieldOffset(tk: CPPAssembly::TypeKey, fname: String, ctx: Context):
     return ctx.asm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo
         .reduce<(|Nat, Bool|)>(fn(acc, f) => {
             if(acc.1 === false) {
+                if(acc.1) { 
+                    return acc; 
+                } 
+                
                 let found = (fname === String::fromCString(f.fname.value));
                 let size = if(found) 
                     then 0n 
@@ -760,9 +764,6 @@ function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSign
     }
 }
 
-%%
-%% Not sure how much I really like returning the emitted type here. Might want to poke around with other approaches.
-%%
 function emitITestAsConvertNone(isnot: Bool, fromtype: CPPAssembly::TypeKey, ctx: Context): (|String, String|) {
     if(isnot) {
         return emitITestAsConvertSome(false, fromtype, ctx);
@@ -994,7 +995,8 @@ function doConvertMaybeSpecialCase(isnot: Bool, itest: CPPAssembly::ITest, fromt
                 .associatedMemberEntityDecls.find(
                     pred(ets) => !ctx.asm.areTypesSame(ets, itest@<CPPAssembly::ITestType>.ttype)).tkeystr;
 
-            return if(isnot === true) then emitITestAsConvert(false, itest, fromtype, some(othermember), ctx)
+            return if(isnot === true) 
+                then emitITestAsConvert(false, itest, fromtype, some(othermember), ctx)
                 else emitITestAsConvert(isnot, itest, fromtype, totype, ctx);         
         }
         else {
