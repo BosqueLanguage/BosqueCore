@@ -99,7 +99,6 @@ function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKe
 %% functions pretty signifigantally - once we get everythng working again lets gve some thought
 %%
 
-%% Maybe we want to pass in an accumulator or something
 function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
     var fieldAccess: String = "";
     if(fname)@some {
@@ -125,7 +124,13 @@ function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey
             let canresolve, _ = canUseDirectFieldAccess(def, fname@some, ctx);
             if(canresolve) {
                 %% Subtype is irrelevant here as all agree on this fields pos
-                esubtype = emitTypeKey(def.subtypes.front(), true, ctx);
+                let anysubtype = def.subtypes.front();
+                esubtype = emitTypeKey(anysubtype, true, ctx);
+
+                if(fname)@some {
+                    let fieldAccessor = generateFieldAccess(anysubtype, ctx);
+                    fieldAccess = String::concat(fieldAccessor, $fname);
+                }
             }
             else { 
                 let evtable = emitVTableLookup(base, ftype@some, fname@some, ctx);
