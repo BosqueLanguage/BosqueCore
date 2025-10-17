@@ -41,6 +41,10 @@ function emitSpecialThis(): String {
     return "𝐭𝐡𝐢𝐬";
 }    
 
+function emitTypeInfoName(typename: String): String {
+    return String::concat(typename, "𝐓𝐲𝐩𝐞");
+}
+
 function emitThisReference(): String {
     return String::concat("&", emitSpecialThis());
 }
@@ -92,7 +96,7 @@ function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKe
     let eftype = emitTypeKey(ftype, true, ctx);
     let baseType = emitTypeKey(base, false, ctx);
     let enumentry = String::concat(", ", baseType, "_entries::", baseType, "_", fname);
-    let args = String::concat(baseType, "Type.vtable)");
+    let args = String::concat(emitTypeInfoName(baseType), ".vtable)");
     
     return String::concat(".vlookup<", eftype, enumentry, ">(", args); 
 }
@@ -361,7 +365,8 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
-        let ettype = String::concat(removeCppPrefix(emitTypeSignature(ttype, false, ctx)), "Type");
+        let etypename = removeCppPrefix(emitTypeSignature(ttype, false, ctx));
+        let ettype = emitTypeInfoName(etypename);
         
         %% Since our collections are just alias for underlying data structure we dont need to emit explicit constructors 
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
@@ -629,11 +634,6 @@ function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: 
     return access(op.baseType.tkeystr, none, some(op.ftype.tkeystr), some(identifier), ctx);
 }
 
-%%
-%% This does not support reasignment of fields where we use the 
-%% field value itself and modify it (say we do f[x=$x + 1i])
-%%
-
 %% Might be something better than lambda here
 function emitPostfixAssignFields(op: CPPAssembly::PostfixAssignFields, rootexp: String, ctx: Context): String {
     let assignments = op.updates.reduce<String>(fn(acc, ops) => {
@@ -748,9 +748,10 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
         let accessor = generateBoxedTypeInfoAccess(baseType.tkeystr, ctx);
         if(ctx.asm.isNominalTypeConcrete(it.ttype.tkeystr)) {
             let ttype = emitTypeSignature(it.ttype, false, ctx);
+            let ttypeinfo = emitTypeInfoName(ttype);
             return if(it.isnot) 
-                then String::concat(acc, accessor, " != &", ttype, "Type")
-                else String::concat(acc, accessor, " == &", ttype, "Type");
+                then String::concat(acc, accessor, " != &", ttypeinfo)
+                else String::concat(acc, accessor, " == &", ttypeinfo);
         }
         else {
             let lhs = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
@@ -766,16 +767,18 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
 
 function emitITestSome(it: CPPAssembly::ITestSome, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     let accessor = generateBoxedTypeInfoAccess(baseType.tkeystr, ctx);
+    let nonetype = emitTypeInfoName("None");
     return if(it.isnot) 
-        then String::concat(acc, accessor, " == &NoneType") 
-        else String::concat(acc, accessor, " != &NoneType");
+        then String::concat(acc, accessor, " == &", nonetype)
+        else String::concat(acc, accessor, " != &", nonetype);
 }
 
 function emitITestNone(it: CPPAssembly::ITestNone, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
     let accessor = generateBoxedTypeInfoAccess(baseType.tkeystr, ctx);
+    let nonetype = emitTypeInfoName("None");
     return if(it.isnot) 
-        then String::concat(acc, accessor, " != &NoneType") 
-        else String::concat(acc, accessor, " == &NoneType");
+        then String::concat(acc, accessor, " != &", nonetype)
+        else String::concat(acc, accessor, " == &", nonetype);
 }
 
 function emitITestAsTest(it: CPPAssembly::ITest, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
@@ -891,7 +894,8 @@ function generateGCAlloc(ti: CPPAssembly::TypeInfo): String {
 
 function callGCAlloc(ti: CPPAssembly::TypeInfo, constype: String, cons: String): String {
     let alloc = generateGCAlloc(ti);
-    let body = String::concat(constype, ", ", alloc, ", &", constype, "Type");
+    let constypeinfo = emitTypeInfoName(constype);
+    let body = String::concat(constype, ", ", alloc, ", &", constypeinfo);
     
     return String::concat("𝐀𝐥𝐥𝐨𝐜𝐓𝐲𝐩𝐞( ", body, ", (", cons, ") )");
 }
@@ -1504,9 +1508,10 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
         let bind = tryGenerateBindType(stmt.bindInfo, expr, stmt.sval.etype.tkeystr, mf.0.tkeystr, ctx, full_indent);
         let block = String::concat(bind, emitBlockStatement(mf.1, ctx, full_indent), full_indent, "}%n;");
         let ts = removeCppPrefix(emitTypeSignature(mf.0, false, ctx));
+        let matchtypeinfo = emitTypeInfoName(ts);
 
         if(ii == 0n) {
-            return String::concat(full_indent, "if(", sval, ts, "Type) {%n;", block);
+            return String::concat(full_indent, "if(", sval, matchtypeinfo, ") {%n;", block);
         }
         else {
             %% Match everything case
@@ -1514,7 +1519,7 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
                 return String::concat(full_indent, "else if(true) {%n;", block);               
             }
             else {
-                return String::concat(full_indent, "else if(", sval, ts, "Type) {%n;", block);
+                return String::concat(full_indent, "else if(", sval, matchtypeinfo, ") {%n;", block);
             }
         }
     });
@@ -2029,7 +2034,7 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
         }
     }
 
-    let tinfo_name = String::concat(name, "Type");
+    let tinfo_name = emitTypeInfoName(name);
 
     let base = String::concat(indent, "__CoreGC::TypeInfoBase ", tinfo_name, " = {%n;");
     let id = String::concat(base, full_indent, ".type_id = ", String::fromCString(info.id.toCString()), ",%n;");
