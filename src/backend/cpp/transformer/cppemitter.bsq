@@ -144,6 +144,7 @@ function buildConceptAccess(base: CPPAssembly::TypeKey, subtype: Option<CPPAssem
     }        
 }
 
+%% Might be trying to access the `typeinfo` field of a Boxed<K>
 function isInternalBoxedFieldAccess(subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>): Bool {
     return subtype?none && ftype?none;
 }
