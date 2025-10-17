@@ -45,7 +45,6 @@ function emitThisReference(): String {
     return String::concat("&", emitSpecialThis());
 }
 
-%% Probably should name this better
 function generateFieldAccess(tk: CPPAssembly::TypeKey, ctx: Context): String {
     let tag = ctx.asm.typeinfos.tryGet(tk)@some.tag;
     switch(tag) {
@@ -59,7 +58,7 @@ function findFieldOffset(tk: CPPAssembly::TypeKey, fname: String, ctx: Context):
     return ctx.asm.lookupNominalTypeDeclaration(tk).saturatedBFieldInfo
         .reduce<(|Nat, Bool|)>(fn(acc, f) => {
             if(acc.1 === false) {
-                let found = fname === String::fromCString(f.fname.value);
+                let found = (fname === String::fromCString(f.fname.value));
                 let size = if(found) 
                     then 0n 
                     else ctx.asm.typeinfos.get(f.ftype.tkeystr).slotsize;
@@ -84,7 +83,7 @@ function canUseDirectFieldAccess(act: CPPAssembly::AbstractConceptTypeDecl, fnam
     return allsubtypessame, baseidx;
 }
 
-%% This probably isnt totally correct but ideas here
+%% Still needs more thorough testing
 function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKey, fname: String, ctx: Context): String {
     let eftype = emitTypeKey(ftype, true, ctx);
     let baseType = emitTypeKey(base, false, ctx);
@@ -94,60 +93,64 @@ function emitVTableLookup(base: CPPAssembly::TypeKey, ftype: CPPAssembly::TypeKe
     return String::concat(".vlookup<", eftype, enumentry, ">(", args); 
 }
 
-%%
-%% Im thinking with some clever programming we should be able to shrink the logic down in this bundle of
-%% functions pretty signifigantally - once we get everythng working again lets gve some thought
-%%
-
-function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
-    var fieldAccess: String = "";
-    if(fname)@some {
-        if(subtype)@none {
-            let fieldAccessor = generateFieldAccess(base, ctx);
-            fieldAccess = String::concat(fieldAccessor, $fname);
-        }
-        else {
-            let fieldAccessor = generateFieldAccess($subtype, ctx);
-            fieldAccess = String::concat(fieldAccessor, $fname);
-        }
+function buildFieldAccess(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
+    if(fname)@@none {
+        return "";
     }
 
-    if(ctx.asm.isNominalTypeConcept(base)) {
-        var esubtype: String = "";
-
-        %% Accessing internal field of Boxed<K>
-        if(subtype?none && ftype?none) {
-            return fieldAccess;
-        }
-        elif(subtype?none) {
-            let def = ctx.asm.lookupNominalTypeDeclaration(base)@<CPPAssembly::AbstractConceptTypeDecl>;
-            let canresolve, _ = canUseDirectFieldAccess(def, fname@some, ctx);
-            if(canresolve) {
-                %% Subtype is irrelevant here as all agree on this fields pos
-                let anysubtype = def.subtypes.front();
-                esubtype = emitTypeKey(anysubtype, true, ctx);
-
-                if(fname)@some {
-                    let fieldAccessor = generateFieldAccess(anysubtype, ctx);
-                    fieldAccess = String::concat(fieldAccessor, $fname);
-                }
-            }
-            else { 
-                let evtable = emitVTableLookup(base, ftype@some, fname@some, ctx);
-                return String::concat(evtable, fieldAccess);
-            }
-        }
-        else {
-            esubtype = emitTypeKey(subtype@some, true, ctx);
-        }
-
-        let subtype_access = String::concat(".access<", esubtype, ">()", fieldAccess);
-
-        return subtype_access;
+    if(subtype)@none {
+        let fieldAccessor = generateFieldAccess(base, ctx);
+        return String::concat(fieldAccessor, fname);
     }
     else {
+        let fieldAccessor = generateFieldAccess($subtype, ctx);
+        return String::concat(fieldAccessor, fname);
+    }
+}
+
+function generateBoxedAccessor(tk: CPPAssembly::TypeKey, fieldAccess: String, ctx: Context): String {
+    let etk = emitTypeKey(tk, true, ctx);
+
+    return String::concat(".access<", etk, ">()", fieldAccess);
+}
+
+%% Subtype is irrelevant here as all agree on this fields pos
+function handleDirectFieldAccess(anysubtype: CPPAssembly::TypeKey, fieldAccess: String, fname: Option<String>, ctx: Context): String {
+    var nfieldAccess: String = fieldAccess;
+    if(fname)@some {
+        nfieldAccess = String::concat(generateFieldAccess(anysubtype, ctx), $fname);
+    }
+    
+    return generateBoxedAccessor(anysubtype, nfieldAccess, ctx);
+}
+
+function buildConceptAccess(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, fieldAccess: String, ctx: Context): String {
+    if(subtype)@!none {
+        return generateBoxedAccessor($subtype, fieldAccess, ctx);
+    }
+    
+    let def = ctx.asm.lookupNominalTypeDeclaration(base)@<CPPAssembly::AbstractConceptTypeDecl>;
+    let canresolve, _ = canUseDirectFieldAccess(def, fname@some, ctx);
+    if(canresolve) {
+        return handleDirectFieldAccess(def.subtypes.front(), fieldAccess, fname, ctx);
+    }
+    else { 
+        let evtable = emitVTableLookup(base, ftype@some, fname@some, ctx);
+        return String::concat(evtable, fieldAccess);
+    }        
+}
+
+function isInternalBoxedFieldAccess(subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>): Bool {
+    return subtype?none && ftype?none;
+}
+
+function access(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembly::TypeKey>, ftype: Option<CPPAssembly::TypeKey>, fname: Option<String>, ctx: Context): String {
+    let fieldAccess = buildFieldAccess(base, subtype, fname, ctx);
+    if(ctx.asm.isNominalTypeConcrete(base) || isInternalBoxedFieldAccess(subtype, ftype)) {
         return fieldAccess;
     }
+
+    return buildConceptAccess(base, subtype, ftype, fname, fieldAccess, ctx);
 }
 
 function removeCommonPrefix(name: String, prefix: String): String {
