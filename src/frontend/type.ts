@@ -319,6 +319,23 @@ class EListTypeSignature extends TypeSignature {
     }
 }
 
+class DashResultTypeSignature extends TypeSignature {
+    readonly entries: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo, "DashResult<" + entries.map((tt) => tt.tkeystr).join(", ") + ">");
+        this.entries = entries;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new DashResultTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    emit(): string {
+        return `DashResult<${this.entries.map((tt) => tt.emit()).join(", ")}>`;
+    }
+}
+
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
 class LambdaParameterSignature {
@@ -397,6 +414,7 @@ export {
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     EListTypeSignature,
+    DashResultTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
     FormatStringTypeSignature
 };

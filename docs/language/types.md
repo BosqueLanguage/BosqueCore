@@ -16,6 +16,7 @@ __Table of Contents:__
     - Option
     - Result
     - APIResult
+    - DashResult
   11. Lambda Types
   11. Template Types
     - Constraints

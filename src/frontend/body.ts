@@ -357,6 +357,8 @@ enum ExpressionTag {
     SafeConvertExpression = "SafeConvertExpression",
     CreateDirectExpression = "CreateDirectExpression",
 
+    InterpolateFormatStringExpression = "InterpolateFormatStringExpression",
+
     PostfixOpExpression = "PostfixOpExpression",
 
     PrefixNotOpExpression = "PrefixNotOpExpression",
@@ -385,14 +387,13 @@ enum ExpressionTag {
     
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
-
-    xxxx;
-
     TaskRunExpression = "TaskRunExpression", //run single task
     TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
-    TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first completion wins
+    TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first (successful) completion wins
+    TaskDashAnyExpression = "TaskDashAnyExpression", //run multiple explicitly identified tasks -- first completion (successful or failing) wins
     TaskAllExpression = "TaskAllExpression", //run the same task on all args in a list -- complete all
-    TaskRaceExpression = "TaskRaceExpression" //run the same task on all args in a list -- first completion wins
+    TaskRaceExpression = "TaskRaceExpression", //run the same task on all args in a list -- first (successful) completion wins
+    TaskRaceAllExpression = "TaskRaceAllExpression" //run the same task on all args in a list -- first completion (successful or failing) wins
 }
 
 abstract class Expression {
@@ -636,24 +637,29 @@ class LiteralTypedFormatCStringExpression extends Expression {
 }
 
 class AccessEnvValueExpression extends Expression {
-    readonly opname: "has" | "get" | "tryGet";
+    readonly opname: "has" | "get" | "tryGet" | undefined;
     readonly keyname: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, opname: "has" | "get" | "tryGet", keyname: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, opname: "has" | "get" | "tryGet" | undefined, keyname: string) {
         super(tag, sinfo);
         this.opname = opname;
         this.keyname = keyname;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `env.${this.opname}(${this.keyname})`;
+        if(this.opname === undefined) {
+            return `env.${this.keyname}`;
+        }
+        else {
+            return `env.${this.opname}('${this.keyname}')`;
+        }
     }
 }
 
 class TaskAccessInfoExpression extends Expression {
-    readonly name: string;
+    readonly name: "currentID" | "parentID";
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: "currentID" | "parentID") {
         super(tag, sinfo);
         this.name = name;
     }
@@ -1042,6 +1048,27 @@ class CreateDirectExpression extends Expression {
     }
 }
 
+class InterpolateFormatStringExpression extends Expression {
+    readonly decloftype: TypeSignature | undefined;
+    readonly fmtString: Expression;
+    readonly args: Expression[];
+    
+    actualoftype: TypeSignature | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, decloftype: TypeSignature | undefined, fmtString: Expression, args: Expression[]) {
+        super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
+        this.decloftype = decloftype;
+        this.fmtString = fmtString;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const fmtStr = this.fmtString.emit(true, fmt);
+        const argsStr = this.args.map((a) => a.emit(true, fmt)).join(", ");
+        return `interpolate${this.decloftype !== undefined ? `<${this.decloftype.emit()}>` : ""}(${fmtStr}, ${argsStr})`;
+    }
+}
+
 enum PostfixOpTag {
     PostfixError = "PostfixError",
 
@@ -1055,8 +1082,9 @@ enum PostfixOpTag {
 
     PostfixAssignFields = "PostfixAssignFields",
 
-    PostfixInvoke = "PostfixInvoke",
-    PostfixLiteralKeyAccess = "PostfixLiteralKeyAccess"
+    PostfixOfOperator = "PostfixOfOperator",
+
+    PostfixInvoke = "PostfixInvoke"
 }
 
 abstract class PostfixOperation {
@@ -1210,6 +1238,19 @@ class PostfixAssignFields extends PostfixOperation {
     isdirect: boolean = false;
 }
 
+class PostfixOfOperator extends PostfixOperation {
+    readonly args: ArgumentList;
+
+    constructor(sinfo: SourceInfo, args: ArgumentList) {
+        super(sinfo, PostfixOpTag.PostfixOfOperator);
+        this.args = args;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `.of${this.args.emit(fmt, "(", ")")}`;
+    }
+}
+
 class PostfixInvoke extends PostfixOperation {
     readonly specificResolve: TypeSignature | undefined;
     readonly name: string;
@@ -1244,19 +1285,6 @@ class PostfixInvoke extends PostfixOperation {
         }
 
         return `.${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
-    }
-}
-
-class PostfixLiteralKeyAccess extends PostfixOperation {
-    readonly kexp: Expression;
-
-    constructor(sinfo: SourceInfo, kexp: Expression) {
-        super(sinfo, PostfixOpTag.PostfixLiteralKeyAccess);
-        this.kexp = kexp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `[${this.kexp.emit(true, fmt)}]`;
     }
 }
 
@@ -1519,27 +1547,24 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
     }
 }
 
-abstract class BinLogicExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+abstract class LogicExpression extends Expression {
+    readonly exps: Expression[];
     purebool: boolean = true;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, exps: Expression[]) {
         super(tag, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        this.exps = exps;
     }
 
     blopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
-        const ee = `${this.lhs.emit(false, fmt)} ${op} ${this.rhs.emit(false, fmt)}`;
+        const ee = this.exps.map((e) => e.emit(false, fmt)).join(` ${op} `);
         return toplevel ? ee : `(${ee})`;
     }
 }
 
-class BinLogicAndExpression extends BinLogicExpression {
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicAndExpression, sinfo, lhs, rhs);
+class LogicAndExpression extends LogicExpression {
+    constructor(sinfo: SourceInfo, exps: Expression[]) {
+        super(ExpressionTag.LogicAndExpression, sinfo, exps);
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -1547,9 +1572,9 @@ class BinLogicAndExpression extends BinLogicExpression {
     }
 }
 
-class BinLogicOrExpression extends BinLogicExpression {
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicOrExpression, sinfo, lhs, rhs);
+class LogicOrExpression extends LogicExpression {
+    constructor(sinfo: SourceInfo, exps: Expression[]) {
+        super(ExpressionTag.LogicOrExpression, sinfo, exps);
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -1574,46 +1599,226 @@ class MapEntryConstructorExpression extends Expression {
     }
 }
 
-class IfTest {
-    readonly exp: Expression;
-    readonly itestopt: ITest | undefined;
+enum EnvironmentGenerationExpressionTag {
+    ErrorEnvironmentExpression = "ErrorEnvironmentExpression",
+    EmptyEnvironmentExpression = "EmptyEnvironmentExpression",
+    InitializeEnvironmentExpression = "InitializeEnvironmentExpression",
+    CurrentEnvironmentExpression = "CurrentEnvironmentExpression"
+}
 
-    constructor(exp: Expression, itestopt: ITest | undefined) {
-        this.exp = exp;
-        this.itestopt = itestopt;
+abstract class EnvironmentGenerationExpression {
+    readonly tag: EnvironmentGenerationExpressionTag;
+    readonly sinfo: SourceInfo;
+
+    constructor(tag: EnvironmentGenerationExpressionTag, sinfo: SourceInfo) {
+        this.tag = tag;
+        this.sinfo = sinfo;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class ErrorEnvironmentExpression extends EnvironmentGenerationExpression {
+    constructor(sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.ErrorEnvironmentExpression, sinfo);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return "[!ERROR!]";
     }
 }
 
-class IfExpression extends Expression {
-    readonly test: IfTest;
-    readonly binder: BinderInfo | undefined;
-    readonly trueValue: Expression
-    readonly falseValue: Expression;
+class EmptyEnvironmentExpression extends EnvironmentGenerationExpression {
+    constructor(sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.EmptyEnvironmentExpression, sinfo);
+    }
 
-    trueBindType: TypeSignature | undefined = undefined;
-    falseBindType: TypeSignature | undefined = undefined
+    emit(fmt: CodeFormatter): string {
+        return "env{}";
+    }
+}
 
-    constructor(sinfo: SourceInfo, test: IfTest, binder: BinderInfo | undefined, trueValue: Expression, falseValue: Expression) {
-        super(ExpressionTag.IfExpression, sinfo);
-        this.test = test;
-        this.binder = binder;
-        this.trueValue = trueValue;
-        this.falseValue = falseValue;
+class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
+    readonly args: {envkey: string, value: Expression}[]; //literal is a cstring
+
+    constructor(sinfo: SourceInfo, args: {envkey: string, value: Expression}[]) {
+        super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
+        this.args = args;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg.envkey} = ${arg.value.emit(true, fmt)}`).join(", ");
+        return `env{ ${argl} }`;
+    }
+}
+
+class CurrentEnvironmentExpression extends EnvironmentGenerationExpression {
+    constructor (sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.CurrentEnvironmentExpression, sinfo);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return "env";
+    }
+}
+
+abstract class TaskInvokeExpression extends Expression {
+    readonly configs: {key: string, value: Expression}[];
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, configs: {key: string, value: Expression}[]) {
+        super(tag, sinfo);
+        this.configs = configs;
+    }
+
+    emitconfigs(fmt: CodeFormatter): string {
+        if(this.configs.length === 0) {
+            return "";
+        }
+        else {
+            const configstrs = this.configs.map((cfg) => `${cfg.key}=${cfg.value.emit(true, fmt)}`);
+            return `[${configstrs.join(", ")}]`;
+        }
+    }
+}
+
+class TaskRunExpression extends TaskInvokeExpression {
+    readonly task: TypeSignature;
+    readonly args: ArgumentList;
+    readonly envexp: EnvironmentGenerationExpression;
+
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.TaskRunExpression, sinfo, configs);
+        this.task = task;
+        this.args = args;
+        this.envexp = envexp;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.binder !== undefined) {
-            bexps = this.binder.emit();
-        }
-
-        const itest = this.test.itestopt !== undefined ? `${this.test.itestopt.emit(fmt)}` : "";
-        
-        const ttest = `(${bexps[0]}${this.test.exp.emit(true, fmt)})${bexps[1]}${itest}`;
-        const iif =  `if${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
-
-        return toplevel ? iif : `(${iif})`;
+        const configs = this.emitconfigs(fmt);
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::run<${this.task.emit()}${configs}>(${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
     }
+}
+
+class TaskMultiExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envexp: EnvironmentGenerationExpression;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.TaskMultiExpression, sinfo, config);
+        this.tasks = tasks;
+        this.args = args;
+        this.envexp = envexp;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskDashExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskDashExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+
+class TaskDashAnyExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskDashExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskAllExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskAllExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskRaceExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskRaceExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskRaceAnyExpression extends TaskInvokeExpression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskRaceExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class HTTPOpExpression extends Expression {
+    xxxx;
+}
+
+class RESTInvokeExpression extends Expression {
+    xxxx;
+}
+
+class APIInvokeExpression extends Expression {
+    xxxx;
 }
 
 enum ChkLogicExpressionTag {
@@ -1760,224 +1965,6 @@ class BaseRValueExpression extends RValueExpression {
 
     emit(fmt: CodeFormatter): string {
         return this.exp.emit(true, fmt);
-    }
-}
-
-enum EnvironmentGenerationExpressionTag {
-    ErrorEnvironmentExpresion = "ErrorEnvironmentExpresion",
-    EmptyEnvironmentExpression = "EmptyEnvironmentExpression",
-    InitializeEnvironmentExpression = "InitializeEnvironmentExpression",
-    CurrentEnvironmentExpression = "CurrentEnvironmentExpression",
-    PostfixEnvironmentOpExpression = "PostfixEnvironmentOpExpression"
-}
-
-abstract class EnvironmentGenerationExpression {
-    readonly tag: EnvironmentGenerationExpressionTag;
-    readonly sinfo: SourceInfo;
-
-    constructor(tag: EnvironmentGenerationExpressionTag, sinfo: SourceInfo) {
-        this.tag = tag;
-        this.sinfo = sinfo;
-    }
-
-    abstract emit(fmt: CodeFormatter): string;
-}
-
-class ErrorEnvironmentExpression extends EnvironmentGenerationExpression {
-    constructor(sinfo: SourceInfo) {
-        super(EnvironmentGenerationExpressionTag.ErrorEnvironmentExpresion, sinfo);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "[!ERROR!]";
-    }
-}
-
-abstract class BaseEnvironmentOpExpression extends EnvironmentGenerationExpression {
-    constructor(tag: EnvironmentGenerationExpressionTag, sinfo: SourceInfo) {
-        super(tag, sinfo);
-    }
-}
-
-class EmptyEnvironmentExpression extends BaseEnvironmentOpExpression {
-    constructor(sinfo: SourceInfo) {
-        super(EnvironmentGenerationExpressionTag.EmptyEnvironmentExpression, sinfo);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "env{}";
-    }
-}
-
-class InitializeEnvironmentExpression extends BaseEnvironmentOpExpression {
-    readonly args: {envkey: Expression, value: Expression}[]; //literal is a cstring
-
-    constructor(sinfo: SourceInfo, args: {envkey: Expression, value: Expression}[]) {
-        super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
-        this.args = args;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg.envkey.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
-        return `env{ ${argl} }`;
-    }
-}
-
-class CurrentEnvironmentExpression extends BaseEnvironmentOpExpression {
-    constructor (sinfo: SourceInfo) {
-        super(EnvironmentGenerationExpressionTag.CurrentEnvironmentExpression, sinfo);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "env";
-    }
-}
-
-enum PostfixEnvironmentOpTag {
-    PostfixEnvironmentOpError = "PostfixEnvironmentOpError",
-    PostfixEnvironmentOpSet = "PostfixEnvironmentOpSet"
-}
-
-abstract class PostfixEnvironmentOp {
-    readonly sinfo: SourceInfo;
-    readonly op: PostfixEnvironmentOpTag;
-
-    constructor(sinfo: SourceInfo, op: PostfixEnvironmentOpTag) {
-        this.sinfo = sinfo;
-        this.op = op;
-    }
-
-    abstract emit(fmt: CodeFormatter): string;
-}
-
-class PostFixEnvironmentOpError extends PostfixEnvironmentOp {
-    constructor(sinfo: SourceInfo) {
-        super(sinfo, PostfixEnvironmentOpTag.PostfixEnvironmentOpError);
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return "[!ERROR!]";
-    }
-}
-
-class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
-    readonly updates: {envkey: Expression, value: Expression}[]; //literal is a cstring
-
-    constructor(sinfo: SourceInfo, updates: {envkey: Expression, value: Expression}[]) {
-        super(sinfo, PostfixEnvironmentOpTag.PostfixEnvironmentOpSet);
-        this.updates = updates;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        const updatel = this.updates.map((arg) => `${arg.envkey.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
-        return `[| ${updatel} |]`;
-    }
-}
-
-class PostfixEnvironmentOpExpression extends EnvironmentGenerationExpression {
-    readonly baseenv: BaseEnvironmentOpExpression;
-    readonly followop: PostfixEnvironmentOp;
-
-    constructor(sinfo: SourceInfo, baseenv: BaseEnvironmentOpExpression, followop: PostfixEnvironmentOp) {
-        super(EnvironmentGenerationExpressionTag.PostfixEnvironmentOpExpression, sinfo);
-        this.baseenv = baseenv;
-        this.followop = followop;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.baseenv.emit(fmt)}${this.followop.emit(fmt)}`;
-    }
-}
-
-class TaskRunExpression extends Expression {
-    readonly task: TypeSignature;
-    readonly args: ArgumentList;
-    readonly envi: EnvironmentGenerationExpression | undefined;
-    readonly enva: EnvironmentGenerationExpression;
-
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envi: EnvironmentGenerationExpression | undefined, enva: EnvironmentGenerationExpression) {
-        super(ExpressionTag.TaskRunExpression, sinfo);
-        this.task = task;
-        this.args = args;
-        this.envi = envi;
-        this.enva = enva;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.emit(fmt, "", "");
-        return `Task::run<${this.task.emit() + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl}, ${this.enva.emit(fmt)})`;
-    }
-}
-
-class TaskMultiExpression extends Expression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
-
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskMultiExpression, sinfo);
-        this.tasks = tasks;
-        this.args = args;
-        this.envi = envi;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
-    }
-}
-
-class TaskDashExpression extends Expression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
-
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskDashExpression, sinfo);
-        this.tasks = tasks;
-        this.args = args;
-        this.envi = envi;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
-    }
-}
-
-class TaskAllExpression extends Expression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
-
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskAllExpression, sinfo);
-        this.tasks = tasks;
-        this.args = args;
-        this.envi = envi;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
-    }
-}
-
-class TaskRaceExpression extends Expression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
-
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskRaceExpression, sinfo);
-        this.tasks = tasks;
-        this.args = args;
-        this.envi = envi;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -2689,26 +2676,23 @@ export {
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
+    InterpolateFormatStringExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
+    PostfixOfOperator,
     PostfixInvoke,
-    PostfixLiteralKeyAccess,
     UnaryExpression, PrefixNotOpExpression, PrefixNegateOrPlusOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression, KeyCompareEqExpression, KeyCompareLessExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
-    BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression,
+    LogicExpression, LogicAndExpression, LogicOrExpression,
     MapEntryConstructorExpression,
-    IfTest,
-    IfExpression, 
     ChkLogicExpressionTag, ChkLogicExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression,
     RValueExpressionTag, RValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, BaseRValueExpression,
-    EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression,
-    TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskAllExpression, TaskRaceExpression,
-    BaseEnvironmentOpExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression, 
-    PostfixEnvironmentOpTag, PostfixEnvironmentOp, PostFixEnvironmentOpError, PostfixEnvironmentOpSet, PostfixEnvironmentOpExpression,
+    EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression,
+    TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskDashAnyExpression, TaskAllExpression, TaskRaceExpression, TaskRaceAnyExpression,
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
