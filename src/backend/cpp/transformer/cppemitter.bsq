@@ -194,9 +194,11 @@ function emitResolvedTemplates(tk: Option<CPPAssembly::TypeKey>, ik: Option<CPPA
     
     var resolvedik: Option<CPPAssembly::InvokeKey>;
     match(ik) {
-        | Some<CPPAssembly::InvokeKey> => { resolvedik = if(isTypeFunc) 
-            then some(ctx.asm.typefuncs.get(ik@some).ikey) 
-            else ik; }
+        | Some<CPPAssembly::InvokeKey> => { 
+            resolvedik = if(isTypeFunc) 
+                then some(ctx.asm.typefuncs.get(ik@some).ikey) 
+                else ik; 
+        }
         | None => { resolvedik = ik; }
     }
 
@@ -960,8 +962,8 @@ function emitConstructorPrimaryMapExpression(exp: CPPAssembly::ConstructorPrimar
     let ktype = String::fromCString(exp.keytype.tkeystr.value);
     let vtype = String::fromCString(exp.valuetype.tkeystr.value);
     
-    let resolvedktype = removeCppPrefix(ktype);
-    let resolvedvtype = removeCppPrefix(vtype);
+    let resolvedktype = emitSpecialTemplate(removeCppPrefix(ktype));
+    let resolvedvtype = emitSpecialTemplate(removeCppPrefix(vtype));
     
     let template = String::concat("ᐸ", resolvedktype, "ᐧ", resolvedvtype, "ᐳ");
 
