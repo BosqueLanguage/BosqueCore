@@ -384,7 +384,9 @@ enum ExpressionTag {
 
     LogicAndExpression = "LogicAndExpression",
     LogicOrExpression = "LogicOrExpression",
-    
+
+    HoleExpression = "HoleExpression",
+
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
     TaskRunExpression = "TaskRunExpression", //run single task
@@ -1582,6 +1584,37 @@ class LogicOrExpression extends LogicExpression {
     }
 }
 
+class HoleExpression extends Expression {
+    readonly hname: string | undefined;
+    readonly captures: TypeSignature[];
+    readonly explicittype: TypeSignature | undefined;
+    readonly doccomment: string | undefined;
+    readonly ensures: ChkLogicExpression[];
+    readonly samplesfile: string | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, hname: string | undefined, captures: TypeSignature[], explicittype: TypeSignature | undefined, doccomment: string | undefined, ensures: ChkLogicExpression[]) {
+        super(ExpressionTag.HoleExpression, sinfo);
+        this.hname = hname;
+        this.captures = captures;
+        this.explicittype = explicittype;
+        this.doccomment = doccomment;
+        this.ensures = ensures;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const etype = this.explicittype ? ` : ${this.explicittype.emit()}` : "";
+        let ebody = "";
+        if(this.doccomment !== undefined || this.ensures.length > 0 || this.samplesfile !== undefined) {
+            const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
+            const ensurestr = this.ensures.map((ens) => ` ensures ${ens.emit(fmt)};`).join("");
+            const samplstr = this.samplesfile !== undefined ? `example ${this.samplesfile};` : "";
+            ebody = ` { ${dcom}${ensurestr}${samplstr} }`;
+        }
+
+        return `?_[${this.captures.map((c) => c.emit()).join(", ")}]${etype}${ebody}`;
+    }
+}
+
 class MapEntryConstructorExpression extends Expression {
     readonly kexp: Expression;
     readonly vexp: Expression;
@@ -2705,6 +2738,7 @@ export {
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression, KeyCompareEqExpression, KeyCompareLessExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     LogicExpression, LogicAndExpression, LogicOrExpression,
+    HoleExpression,
     MapEntryConstructorExpression,
     ChkLogicExpressionTag, ChkLogicExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression,
     RValueExpressionTag, RValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, BaseRValueExpression,
