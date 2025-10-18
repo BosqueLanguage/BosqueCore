@@ -389,11 +389,11 @@ enum ExpressionTag {
 
     TaskRunExpression = "TaskRunExpression", //run single task
     TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
+    TaskAllExpression = "TaskAllExpression", //run the same task on all args in a list -- complete all
     TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first (successful) completion wins
     TaskDashAnyExpression = "TaskDashAnyExpression", //run multiple explicitly identified tasks -- first completion (successful or failing) wins
-    TaskAllExpression = "TaskAllExpression", //run the same task on all args in a list -- complete all
     TaskRaceExpression = "TaskRaceExpression", //run the same task on all args in a list -- first (successful) completion wins
-    TaskRaceAllExpression = "TaskRaceAllExpression" //run the same task on all args in a list -- first completion (successful or failing) wins
+    TaskRaceAnyExpression = "TaskRaceAnyExpression" //run the same task on all args in a list -- first completion (successful or failing) wins
 }
 
 abstract class Expression {
@@ -1663,19 +1663,16 @@ class CurrentEnvironmentExpression extends EnvironmentGenerationExpression {
 }
 
 abstract class TaskInvokeExpression extends Expression {
-    readonly configs: {key: string, value: Expression}[];
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, configs: {key: string, value: Expression}[]) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo) {
         super(tag, sinfo);
-        this.configs = configs;
     }
 
-    emitconfigs(fmt: CodeFormatter): string {
-        if(this.configs.length === 0) {
+    static emitconfigs(configs: {key: string, value: Expression}[], fmt: CodeFormatter): string {
+        if(configs.length === 0) {
             return "";
         }
         else {
-            const configstrs = this.configs.map((cfg) => `${cfg.key}=${cfg.value.emit(true, fmt)}`);
+            const configstrs = configs.map((cfg) => `${cfg.key}=${cfg.value.emit(true, fmt)}`);
             return `[${configstrs.join(", ")}]`;
         }
     }
@@ -1683,129 +1680,145 @@ abstract class TaskInvokeExpression extends Expression {
 
 class TaskRunExpression extends TaskInvokeExpression {
     readonly task: TypeSignature;
+    readonly configs: {key: string, value: Expression}[];
     readonly args: ArgumentList;
     readonly envexp: EnvironmentGenerationExpression;
 
     constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
-        super(ExpressionTag.TaskRunExpression, sinfo, configs);
+        super(ExpressionTag.TaskRunExpression, sinfo);
         this.task = task;
+        this.configs = configs;
         this.args = args;
         this.envexp = envexp;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const configs = this.emitconfigs(fmt);
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
         const argl = this.args.emit(fmt, "", "");
         return `Task::run<${this.task.emit()}${configs}>(${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
     }
 }
 
 class TaskMultiExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
+    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
     readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+
+    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
+        super(ExpressionTag.TaskMultiExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const taskstrs = this.tasks.map((tt) => {
+            const configs = TaskInvokeExpression.emitconfigs(tt[1], fmt);
+            return `${tt[0].emit()}${configs}`;
+        });
+
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
+        return `Task::multi<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskAllExpression extends TaskInvokeExpression {
+    readonly task: TypeSignature;
+    readonly configs: {key: string, value: Expression}[];
+    readonly args: ArgumentList;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], configs: {key: string, value: Expression}[]) {
-        super(ExpressionTag.TaskMultiExpression, sinfo, config);
-        this.tasks = tasks;
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.TaskAllExpression, sinfo);
+        this.task = task;
+        this.configs = configs;
         this.args = args;
         this.envexp = envexp;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::all<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
     }
 }
 
 class TaskDashExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
+    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
     readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
 
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashExpression, sinfo);
         this.tasks = tasks;
         this.args = args;
-        this.envi = envi;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        const taskstrs = this.tasks.map((tt) => {
+            const configs = TaskInvokeExpression.emitconfigs(tt[1], fmt);
+            return `${tt[0].emit()}${configs}`;
+        });
+
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
+        return `Task::dash<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
-
 
 class TaskDashAnyExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
+    readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
     readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
 
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskDashExpression, sinfo);
+    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
+        super(ExpressionTag.TaskDashAnyExpression, sinfo);
         this.tasks = tasks;
         this.args = args;
-        this.envi = envi;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
-    }
-}
+        const taskstrs = this.tasks.map((tt) => {
+            const configs = TaskInvokeExpression.emitconfigs(tt[1], fmt);
+            return `${tt[0].emit()}${configs}`;
+        });
 
-class TaskAllExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
-
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskAllExpression, sinfo);
-        this.tasks = tasks;
-        this.args = args;
-        this.envi = envi;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
+        return `Task::dashAny<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskRaceExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
+   readonly task: TypeSignature;
+    readonly configs: {key: string, value: Expression}[];
+    readonly args: ArgumentList;
+    readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.TaskRaceExpression, sinfo);
-        this.tasks = tasks;
+        this.task = task;
+        this.configs = configs;
         this.args = args;
-        this.envi = envi;
+        this.envexp = envexp;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::race<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
     }
 }
 
 class TaskRaceAnyExpression extends TaskInvokeExpression {
-    readonly tasks: TypeSignature[];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
-    readonly envi: EnvironmentGenerationExpression | undefined;
+    readonly task: TypeSignature;
+    readonly configs: {key: string, value: Expression}[];
+    readonly args: ArgumentList;
+    readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
-        super(ExpressionTag.TaskRaceExpression, sinfo);
-        this.tasks = tasks;
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.TaskRaceAnyExpression, sinfo);
+        this.task = task;
+        this.configs = configs;
         this.args = args;
-        this.envi = envi;
+        this.envexp = envexp;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        const argl = this.args.emit(fmt, "", "");
+        return `Task::raceAny<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
     }
 }
 
@@ -1818,6 +1831,10 @@ class RESTInvokeExpression extends Expression {
 }
 
 class APIInvokeExpression extends Expression {
+    xxxx;
+}
+
+class AgentInvokeExpression extends Expression {
     xxxx;
 }
 
