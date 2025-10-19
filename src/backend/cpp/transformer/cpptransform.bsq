@@ -498,17 +498,22 @@ namespace TypeInfoGenerator {
 %%
 entity TypeInfoContext {
     field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
+    field elists: Map<CPPAssembly::TypeKey, CPPAssembly::EListTypeSignature>;
     field inProgress: List<CPPAssembly::TypeKey>;
 
     field bsqasm: BSQAssembly;
     field tid: Nat;
 
-    method update(ntk: CPPAssembly::TypeKey, ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
+    method updateCache(ntk: CPPAssembly::TypeKey, ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
         return this[
-            tinfos = $tinfos.insert(ntk, ntinfo),
+            cache = $cache.insert(ntk, ntinfo),
             inProgress = $inProgress.remove(ntk), 
             tid = $tid + 1n
         ];
+    }
+
+    method updateELists(etk: CPPAssembly::TypeKey, elist: CPPAssembly::EListTypeSignature): TypeInfoContext {
+        return this[elists=$elists.insert(etk, elist)];
     }
 
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
@@ -516,19 +521,32 @@ entity TypeInfoContext {
     }
 }
 
+entity FieldsInfo {
+    field typesize: Nat;
+    field slotsize: Nat;
+    field ptrmask: CString;
+
+    method update(ntypesize: Nat, nslotsize: Nat, nptrmask: CString): FieldsInfo {
+        return this[
+            typesize=$typesize + ntypesize, 
+            slotsize=$slotsize + nslotsize, 
+            ptrmask=CString::concat($ptrmask, nptrmask)
+        ];
+    }
+}
+
 namespace TypeInfoGenerator {
+    function generateObjectSize(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
+        return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
+            var ntic = acc.1;
+            if(ts?<CPPAssembly::EListTypeSignature> && !acc.1.elists.has(tk)) {
+                ntic = acc.1.updateELists(ts.tkeystr, ts@<CPPAssembly::EListTypeSignature>);
+            }
 
-    %%
-    %% I am not a fan of how I had to handle the elists in the past - it was a total jumbled mess 
-    %% and just a real pain to work on as it introduced so many edge cases.
-    %% My new idea is to create "synthetic" elist typekeys that we can also cache and create
-    %% fake typeinfos for to allow lookup up fields to be easier. They wont survive to the emitter,
-    %% (which we want) and will allow for more explicit and direct handling (i think).
-    %%
-
-    %% To allow easy interop with elists, we might want this function to take in a List<TypeSignature>
-    %% instead of an abstract nominal.
-    function generateObjectSize
+            let tinfo, nntic = generateTypeInfo(ts.tkeystr, acc.1);
+            return acc.0.update(tinfo.typesize, tinfo.slotsize, tinfo.ptrmask), nntic;
+        }, (|FieldsInfo{0n, 0n, ''}, tic|));
+    }
 
     %% This may not be the most elagant solution but should work fine
     function generatePrimitiveTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -591,13 +609,16 @@ namespace TypeInfoGenerator {
         
     }
 
-    %% If my vision works this is all that would be needed for handling elits    
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let elist = tic.elists.get(tk);
-        let slotsize, ntic = generateObjectSize(elist.entries, tic);
+        let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
 
-        %% Fully synthetic to allow elists to easily be looked up
-        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ tic.tid, slotsize * slotSizeInBits, slotsize, WILL NEED PTRMASK, tk, CPPAssembly::Tag#Value };
+        let typesize = entriesinfo.typesize;
+        let slotsize = entriesinfo.slotsize;
+        let ptrmask = entriesinfo.ptrmask;
+
+        %% TID does not matter here (these never are seen in runtime code)
+        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, tk, CPPAssembly::Tag#Value };
 
         return synthetic_elist_tinfo, ntic.update(synthetic_elist_tinfo);
     }
@@ -629,7 +650,7 @@ namespace TypeInfoGenerator {
         }
 
         %% For elist typekeys we might be able to do something like 
-        if(bsqtk.value.startsWithString('(|')) {
+        if(bsqtk.value.startsWithString('(|') && bsqtk.value.endsWithString('|)')) {
             return generateEListTypeInfo(bsqtk, tic);
         }
 
@@ -2159,7 +2180,9 @@ entity CPPTransformer {
                 let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
                     return TypeInfoGenerator::generateTypeInfo(e, acc).1;
                 },
-                TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, List<CPPAssembly::TypeKey>{}, bsqasm, 1n }
+                TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
+                    Map<CPPAssembly::TypeKey, CPPAssembly::EListTypeSignature>{}, 
+                    List<CPPAssembly::TypeKey>{}, bsqasm, 1n }
             );
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
