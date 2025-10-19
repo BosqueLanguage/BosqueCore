@@ -526,16 +526,28 @@ entity FieldsInfo {
     field slotsize: Nat;
     field ptrmask: CString;
 
-    method update(ntypesize: Nat, nslotsize: Nat, nptrmask: CString): FieldsInfo {
+    method update(finfo: FieldsInfo): FieldsInfo {
         return this[
-            typesize=$typesize + ntypesize, 
-            slotsize=$slotsize + nslotsize, 
-            ptrmask=CString::concat($ptrmask, nptrmask)
+            typesize=$typesize + finfo.typesize, 
+            slotsize=$slotsize + finfo.slotsize, 
+            ptrmask=CString::concat($ptrmask, finfo.ptrmask)
         ];
     }
 }
 
 namespace TypeInfoGenerator {
+    const ptrmaskPointer: CString = '1';
+
+    %% We may need to add special case for self-recursive concept
+    function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
+        if(tinfo.tag === CPPAssembly::Tag#Ref) {
+            return FieldsInfo{ 1n * slotSizeInBits, 1n, ptrmaskPointer };
+        }
+        else {
+            return FieldsInfo{ tinfo.typesize, tinfo.slotsize, tinfo.ptrmask };
+        }
+    }
+
     function generateObjectSize(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
@@ -544,7 +556,9 @@ namespace TypeInfoGenerator {
             }
 
             let tinfo, nntic = generateTypeInfo(ts.tkeystr, acc.1);
-            return acc.0.update(tinfo.typesize, tinfo.slotsize, tinfo.ptrmask), nntic;
+            let finfo = determineSizeAsField(tinfo);
+
+            return acc.0.update(finfo), nntic;
         }, (|FieldsInfo{0n, 0n, ''}, tic|));
     }
 
@@ -574,7 +588,10 @@ namespace TypeInfoGenerator {
     }
     
     function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-
+        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, determineTag(...) };
+        
+        return einfo, ntic.update(cpptkey, einfo);
     }
     
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -2223,8 +2240,7 @@ entity CPPTransformer {
         let generated_typeinfos_concrete = bsqasm.allconcretetypes
             .reduce<TypeInfoContext>( 
                 fn(acc, tkey) => {
-                let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
-                    return TypeInfoGenerator::generateTypeInfo(e, acc).1;
+                    return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<CPPAssembly::TypeKey, CPPAssembly::EListTypeSignature>{}, 
