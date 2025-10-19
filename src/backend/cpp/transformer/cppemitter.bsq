@@ -822,8 +822,9 @@ function emitITestAsConvertType(isnot: Bool, fromtype: CPPAssembly::TypeKey, tot
     let ttype = if(isnot) then fromtype else totype;
     let emittotype = emitTypeKey(ttype, false, ctx);
 
-    %% We want to make sure we return the totype as a possible field here(our access method handles ref case)
-    return if(fromtype.value === ttype.value) then (|"", emitTypeKey(ttype, true, ctx)|) 
+    %% We want to make sure we return the totype as a possible field here
+    return if(fromtype.value === ttype.value) 
+        then (|"", emitTypeKey(ttype, true, ctx)|) 
         else (|access(fromtype, some(totype), none, none, ctx), emitTypeKey(ttype, true, ctx)|);
 }
 
@@ -998,9 +999,9 @@ function emitConstructorExpression(exp: CPPAssembly::ConstructorExpression, ctx:
 }
 
 function emitIfTestExpression(exp: CPPAssembly::IfTestExpression, i: String, t: String, e: String, ctx: Context): String {
-    let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, "", ctx)); %% Likely doesnt work if the itest is just bool
-
+    let itest = emitITestAsTest(exp.itest, exp.texp.etype, i, ctx); 
     let ite = String::concat(itest, " ? (", t, ") : (", e, ")");
+
     return String::concat("( ", ite, " )");
 }
 
@@ -1039,7 +1040,7 @@ function emitIfBinderExpression(exp: CPPAssembly::IfBinderExpression, i: String,
     let capture = String::concat("[&]() -> ", emitTypeKey(exp.etype.tkeystr, false, ctx), " { ");
     let etype = exp.texp.etype; 
 
-    let itest = String::concat(i, emitITestAsTest(exp.itest, exp.texp.etype, "", ctx));
+    let itest = emitITestAsTest(exp.itest, exp.texp.etype, i, ctx);
 
     let tconvert = doConvertMaybeSpecialCase(exp.itest.isnot, exp.itest, etype.tkeystr, none, ctx);
     let treassign = emitBindVar(exp.binder.srcname, tconvert.0, tconvert.1, i);
