@@ -498,7 +498,9 @@ namespace TypeInfoGenerator {
 %%
 entity TypeInfoContext {
     field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
-    field inProgress: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
+    field inProgress: List<CPPAssembly::TypeKey>;
+
+    field bsqasm: BSQAssembly;
     field tid: Nat;
 
     method update(ntk: CPPAssembly::TypeKey, ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
@@ -515,12 +517,46 @@ entity TypeInfoContext {
 }
 
 namespace TypeInfoGenerator {
+
+    %%
+    %% I am not a fan of how I had to handle the elists in the past - it was a total jumbled mess 
+    %% and just a real pain to work on as it introduced so many edge cases.
+    %% My new idea is to create "synthetic" elist typekeys that we can also cache and create
+    %% fake typeinfos for to allow lookup up fields to be easier. They wont survive to the emitter,
+    %% (which we want) and will allow for more explicit and direct handling (i think).
+    %%
+
+    %% To allow easy interop with elists, we might want this function to take in a List<TypeSignature>
+    %% instead of an abstract nominal.
+    function generateObjectSize
+
+    %% This may not be the most elagant solution but should work fine
     function generatePrimitiveTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        var matchedType: CPPAssembly::TypeInfo;
+        switch(typekey) {
+            | 'None'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'Bool'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'Nat'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'Int'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'BigNat'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'BigInt'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'Float'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'CChar'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'CCharBuffer'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'UnicodeChar'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'CString'<BSQAssembly::TypeKey> =>           { return generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic); }
+            | 'String'<BSQAssembly::TypeKey> =>            { return generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic); }
+            | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+            | _ =>                                         { abort; }
+        }
+
+        return matchedType, tic.update(cpptkey, matchedType);
     }
     
     function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+
     }
     
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -554,9 +590,16 @@ namespace TypeInfoGenerator {
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         
     }
-    
-    function generateEListInfo(elist: BSQAssembly::EListTypeSignature, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+
+    %% If my vision works this is all that would be needed for handling elits    
+    function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let elist = tic.elists.get(tk);
+        let slotsize, ntic = generateObjectSize(elist.entries, tic);
+
+        %% Fully synthetic to allow elists to easily be looked up
+        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ tic.tid, slotsize * slotSizeInBits, slotsize, WILL NEED PTRMASK, tk, CPPAssembly::Tag#Value };
+
+        return synthetic_elist_tinfo, ntic.update(synthetic_elist_tinfo);
     }
 
     function generateAbstractEntityTypeInfo(e: BSQAssembly::AbstractEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
@@ -579,13 +622,18 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function generateTypeInfo(e: BSQAssembly::AbstractNominalTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
-        let bsqtk = e.tkey;
+    function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
         let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
         if(tic.cache.has(cpptk)) {
             return tic.cache.get(cpptk), tic;
         }
 
+        %% For elist typekeys we might be able to do something like 
+        if(bsqtk.value.startsWithString('(|')) {
+            return generateEListTypeInfo(bsqtk, tic);
+        }
+
+        let e = bsqasm.lookupNominalTypeDeclaration(bsqtk);
         match(e)@ {
             | BSQAssembly::AbstractEntityTypeDecl =>  { return generateConcreteTypeInfo($e, tic); }
             | BSQAssembly::AbstractConceptTypeDecl => { return generateConceptTypeInfo($e, tic); }        
@@ -2111,13 +2159,12 @@ entity CPPTransformer {
                 let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
                     return TypeInfoGenerator::generateTypeInfo(e, acc).1;
                 },
-                TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 1n }
+                TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, List<CPPAssembly::TypeKey>{}, bsqasm, 1n }
             );
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
             .reduce<TypeInfoContext>(fn(acc, tkey) => {
-                let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
-                return TypeInfoGenerator::generateTypeInfo(e, acc).1;
+                return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
             },
             generated_typeinfos_concrete
         );
