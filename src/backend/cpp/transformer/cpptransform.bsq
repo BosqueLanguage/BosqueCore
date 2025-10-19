@@ -139,6 +139,7 @@ namespace CPPTransformNameManager {
     }
 }
 
+%*
 entity TypeInfoContext {
     field tinfos: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
     field tid: Nat;
@@ -487,6 +488,107 @@ namespace TypeInfoGenerator {
         }
         else {
             abort; %% TODO: Type not supported for generating typeinfo!
+        }
+    }
+}
+*%
+
+%%
+%% We may not want (or need) the inProgress map here, lets leave for now
+%%
+entity TypeInfoContext {
+    field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
+    field inProgress: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
+    field tid: Nat;
+
+    method update(ntk: CPPAssembly::TypeKey, ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
+        return this[
+            tinfos = $tinfos.insert(ntk, ntinfo),
+            inProgress = $inProgress.remove(ntk), 
+            tid = $tid + 1n
+        ];
+    }
+
+    method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
+        return this[inProgress = tic.inProgress.insert(tkey)];
+    }
+}
+
+namespace TypeInfoGenerator {
+    function generatePrimitiveTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateCollectionTypeInfo(e: BSQAssembly::CollectionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateEnumTypeInfo(e: BSQAssembly::EnumTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateStringOfTypeInfo(e: BSQAssembly::TypedeclStringOfTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+    
+    function generateEListInfo(elist: BSQAssembly::EListTypeSignature, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        
+    }
+
+    function generateAbstractEntityTypeInfo(e: BSQAssembly::AbstractEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
+        match(e)@ {
+            | BSQAssembly::PrimitiveEntityTypeDecl =>      { return generatePrimitiveTypeInfo($e, tic); }
+            | BSQAssembly::EntityTypeDecl =>               { return generateEntityTypeInfo($e, tic); }
+            | BSQAssembly::DatatypeMemberEntityTypeDecl => { return generateDatatypeMemberEntityTypeInfo($e, tic); }
+            | BSQAssembly::ConstructableTypeDecl =>        { return generateConstructableTypeInfo($e, tic); }
+            | BSQAssembly::CollectionTypeDecl =>           { return generateCollectionTypeInfo($e, tic); }
+            | BSQAssembly::EnumTypeDecl =>                 { return generateEnumTypeInfo($e, tic); }
+            | BSQAssembly::TypedeclStringOfTypeDecl =>     { return generateStringOfTypeInfo($e, tic); }
+        }
+    }
+
+    function generateAbstractConceptTypeInfo(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
+        match(e)@ {
+            | BSQAssembly::ConceptTypeDecl          => { return generateConceptTypeInfo($e, tic); }
+            | BSQAssembly::DatatypeTypeDecl         => { return generateDatatypeTypeInfo($e, tic); }
+            | BSQAssembly::PrimitiveConceptTypeDecl => { return generatePrimitiveConceptTypeInfo($e, tic); }
+        }
+    }
+
+    function generateTypeInfo(e: BSQAssembly::AbstractNominalTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
+        let bsqtk = e.tkey;
+        let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+        if(tic.cache.has(cpptk)) {
+            return tic.cache.get(cpptk), tic;
+        }
+
+        match(e)@ {
+            | BSQAssembly::AbstractEntityTypeDecl =>  { return generateConcreteTypeInfo($e, tic); }
+            | BSQAssembly::AbstractConceptTypeDecl => { return generateConceptTypeInfo($e, tic); }        
         }
     }
 }
@@ -2006,14 +2108,16 @@ entity CPPTransformer {
         let generated_typeinfos_concrete = bsqasm.allconcretetypes
             .reduce<TypeInfoContext>( 
                 fn(acc, tkey) => {
-                    return TypeInfoGenerator::generateTypeInfo(tkey, acc, transformer).1;
+                let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
+                    return TypeInfoGenerator::generateTypeInfo(e, acc).1;
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 1n }
             );
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
             .reduce<TypeInfoContext>(fn(acc, tkey) => {
-                return TypeInfoGenerator::generateTypeInfo(tkey, acc, transformer).1;
+                let e = transformer.bsqasm.lookupNominalTypeDeclaration(tkey);
+                return TypeInfoGenerator::generateTypeInfo(e, acc).1;
             },
             generated_typeinfos_concrete
         );
