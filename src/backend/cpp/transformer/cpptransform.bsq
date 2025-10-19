@@ -581,14 +581,53 @@ namespace TypeInfoGenerator {
         
     }
     
+    function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
+    function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
+    function generateCRopeIteratorTypeInfo(e: BSQAssembly::CRopeIteratorTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+    
     function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        match(e)@ {
+            | BSQAssembly::SomeTypeDecl          => { return generateSomeTypeInfo($e, tic); }
+            | BSQAssembly::MapEntryTypeDecl      => { return generateMapEntryTypeInfo($e, tic); }
+            | BSQAssembly::CRopeIteratorTypeDecl => { return generateCRopeIteratorTypeInfo($e, tic); }
+            | _ =>                                  { abort; }
+        }
     }
-    
+
+    function generateListTypeInfo(e: BSQAssembly::ListTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
+    function generateMapTypeInfo(e: BSQAssembly::MapTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
+    function generateCRopeTypeInfo(e: BSQAssembly::CRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
+    function generateUnicodeRopeTypeInfo(e: BSQAssembly::UnicodeRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
     function generateCollectionTypeInfo(e: BSQAssembly::CollectionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        match(e)@ {
+            | BSQAssembly::ListTypeDecl =>        { return generateListTypeInfo($e, tic); }
+            | BSQAssembly::MapTypeDecl =>         { return generateMapTypeInfo($e, tic); }
+            | BSQAssembly::CRopeTypeDecl =>       { return generateCRopeTypeInfo($e, tic); }
+            | BSQAssembly::UnicodeRopeTypeDecl => { return generateUnicodeRopeTypeInfo($e, tic); }
+            | _ =>                                { abort; }
+        }
     }
-    
+
     function generateEnumTypeInfo(e: BSQAssembly::EnumTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         
     }
@@ -604,9 +643,16 @@ namespace TypeInfoGenerator {
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         
     }
-    
+
+    function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+
+    }
+
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        match(e)@ {
+            | BSQAssembly::OptionTypeDecl => { return generateOptionTypeInfo($e, tic); }
+            | _ =>                           { abort; }
+        }
     }
 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
