@@ -259,14 +259,14 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
 
 void CRopeIterator::traverseLeft() noexcept {
     __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
     __CRope& leftChild = *reinterpret_cast<__CRope*>(&nodePtr[LEFT_CHILD_OFFSET]);
     this->traversalStack.left(leftChild);
 }
 
 void CRopeIterator::traverseRight() noexcept {
     __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access_ref<uintptr_t>();
+    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
     __CRope& rightChild = *reinterpret_cast<__CRope*>(&nodePtr[RIGHT_CHILD_OFFSET]);
     this->traversalStack.right(rightChild);
 }
