@@ -147,9 +147,9 @@ entity TypeInfoContext {
     field bsqasm: BSQAssembly;
     field tid: Nat;
 
-    method updateCache(ntk: CPPAssembly::TypeKey, ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
+    method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
         return this[
-            cache = $cache.insert(ntk, ntinfo),
+            cache = $cache.insert(ntinfo.typekey, ntinfo),
             inProgress = $inProgress.remove(ntk), 
             tid = $tid + 1n
         ];
@@ -160,7 +160,11 @@ entity TypeInfoContext {
     }
 
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = tic.inProgress.insert(tkey)];
+        return this[inProgress = $inProgress.insert(tkey)];
+    }
+
+    method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
+        return this[inProgress = $inProgress.delete(tkey)];
     }
 }
 
@@ -190,6 +194,24 @@ namespace TypeInfoGenerator {
         else {
             return FieldsInfo{ tinfo.typesize, tinfo.slotsize, tinfo.ptrmask };
         }
+    }
+
+    function determineTag(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
+        let tag = fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
+            if(acc.0 === CPPAssembly::Tag#Ref) {
+                return acc;
+            }
+
+            let fieldslotsize = tic.cache.get(f).slotsize;
+            if(acc.1 + fieldslotsize > reftypeThreshold) {
+                return CPPAssembly::Tag#Ref, acc.1;
+            }
+            else {
+                return acc.0, acc.1 + fieldslotsize;
+            }
+        }, (|CPPAssembly::Tag#Value, 0n|)).0;
+
+        return tag;
     }
 
     function generateObjectSize(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
@@ -227,63 +249,75 @@ namespace TypeInfoGenerator {
 
     %% This may not be the most elagant solution but should work fine
     function generatePrimitiveTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
         var matchedType: CPPAssembly::TypeInfo;
-        switch(typekey) {
-            | 'None'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'Bool'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'Nat'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'Int'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'BigNat'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'BigInt'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'Float'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'CChar'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'CCharBuffer'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n, '00', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'UnicodeChar'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptkey, CPPAssembly::Tag#Value }; }
+        switch(e.tkeystr) {
+            | 'None'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Bool'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Nat'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Int'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'BigNat'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'BigInt'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n,'00', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Float'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'CChar'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'CCharBuffer'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n, '00', cpptk, CPPAssembly::Tag#Value }; }
+            | 'UnicodeChar'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptk, CPPAssembly::Tag#Value }; }
             | 'CString'<BSQAssembly::TypeKey> =>           { return generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic); }
             | 'String'<BSQAssembly::TypeKey> =>            { return generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic); }
-            | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
-            | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value }; }
+            | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
             | _ =>                                         { abort; }
         }
 
-        return matchedType, tic.update(cpptkey, matchedType);
+        return matchedType, tic.updateCache(matchedType);
     }
     
     function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
         let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
-        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, determineTag(...) };
+        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
         
-        return einfo, ntic.update(cpptkey, einfo);
+        return einfo, ntic.updateCache(einfo);
     }
     
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+    
         let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
-        var dminfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, determineTag(...) };
+        var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
         
-        return dminfo, ntic.update(cpptkey, dminfo);       
+        return dmtinfo, ntic.updateCache(dmtinfo);       
     }
     
     %% I could see this not being totally correct
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
-        let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        return sometinfo, ntic.update(cpptkey, sometinfo);
+        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
+        let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
+
+        return sometinfo, ntic.updateCache(sometinfo);
     }
 
     %% If Ktype and Vtype are not in saturatedBField info this does NOT work
     function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+        
         let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
-        let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
+        let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
-        return metinfo, ntic.update(cpptkey, metinfo);
+        return metinfo, ntic.updateCache(metinfo);
     }
 
     %% Ignore these, not visible to GC
     function generateCRopeIteratorTypeInfo(e: BSQAssembly::CRopeIteratorTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
-        return crittinfo, tic.update(cpptkey, crittinfo);
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
+        let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value };
+        return crittinfo, tic;
     }
     
     function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -297,44 +331,48 @@ namespace TypeInfoGenerator {
 
     %% Alias of Tree<T>
     function generateListTypeInfo(e: BSQAssembly::ListTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
 
         let treeinfo, ntic = generateTypeInfo[recursive](treetk, tic);
-        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptk, treeinfo.tag };
 
-        return listinfo, ntic.update(cpptkey, listinfo);
+        return listinfo, ntic.updateCache(listinfo);
     }
 
     %% Alias of Tree<K, V>
     function generateMapTypeInfo(e: BSQAssembly::MapTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         let e_ktype = $ant.ktype.tkeystr.value;
         let e_vtype = $ant.vtype.tkeystr.value;
         let treetk = BSQAssembly::TypeKey::from(CString::concat('MapOps::Tree<', e_ktype, ', ', e_vtype, '>'));
 
         let treeinfo, ntic = generateTypeInfo(treetk, tic);
-        let mapinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+        let mapinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptk, treeinfo.tag };
 
-        return mapinfo, ntic.update(cpptkey, mapinfo);
+        return mapinfo, ntic.updateCache(mapinfo);
     }
 
     %% Alias of CRopeOps::Rope
     function generateCRopeTypeInfo(e: BSQAssembly::CRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         let ropetk = BSQAssembly::TypeKey::from('CRopeOps::Rope');
 
         let ropeinfo, ntic = generateTypeInfo(ropetk, tic);
-        let cropeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+        let cropeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptk, ropeinfo.tag };
 
-        return cropeinfo, ntic.update(cpptkey, cropeinfo);
+        return cropeinfo, ntic.updateCache(cropeinfo);
     }
 
     %% Alias of UnicodeRopeOps::Rope
     function generateUnicodeRopeTypeInfo(e: BSQAssembly::UnicodeRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         let ropetk = BSQAssembly::TypeKey::from('UnicodeRopeOps::Rope');
 
         let ropeinfo, ntic = generateTypeInfo(ropetk, tic);
-        let unicoderopeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+        let unicoderopeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptk, ropeinfo.tag };
     
-        return unicoderopeinfo, ntic.update(cpptkey, unicoderopeinfo);
+        return unicoderopeinfo, ntic.updateCache(unicoderopeinfo);
     }
 
     function generateCollectionTypeInfo(e: BSQAssembly::CollectionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -349,30 +387,35 @@ namespace TypeInfoGenerator {
 
     %% Assuming our enums wil never be > 8 bytes
     function generateEnumTypeInfo(e: BSQAssembly::EnumTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let etdtinfo = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value };
-        return etdtinfo, tic.update(cpptkey, etdtinfo);
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
+        let etdtinfo = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value };
+        return etdtinfo, tic.updateCache(cpptk, etdtinfo);
     }
     
     %% Alias of CRope (only handles case where we have `Type of CString` currently)
     function generateStringOfTypeInfo(e: BSQAssembly::TypedeclStringOfTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+        
         let crinfo, ntic = generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic);
-        let std_tinfo = CPPAssembly::TypeInfo{ ntic.tid, crinfo.typesize, crinfo.slotsize, crinfo.ptrmask, cpptkey, crinfo.tag };
+        let std_tinfo = CPPAssembly::TypeInfo{ ntic.tid, crinfo.typesize, crinfo.slotsize, crinfo.ptrmask, cpptk, crinfo.tag };
 
-        return std_tinfo, ntic.update(cpptkey, std_tinfo);
+        return std_tinfo, ntic.updateCache(std_tinfo);
     }
     
     %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         if(tic.inProgress.has(cpptk)) {
             return selfRecursiveTypeInfo, tic;
         }
 
-        let ntic = tic.markInProgress(cpptk);
+        var ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
+        let nnntic = nntic.unmarkInProgress(cpptk);
 
         let concepttinfo = CPPAssembly::TypeInfo { 
-            nntic.tid, 
+            nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
             '2' + largestInfo.ptrmask,  %% tag is not a pointer
@@ -380,7 +423,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged 
         };
 
-        return concepttinfo, nntic.updateCache(concepttinfo);
+        return concepttinfo, nnntic.updateCache(concepttinfo);
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -391,9 +434,10 @@ namespace TypeInfoGenerator {
 
         let ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
+        let nnntic = nntic.unmarkInProgress(cpptk);
 
         let datatypetinfo = CPPAssembly::TypeInfo { 
-            nntic.tid, 
+            nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
             '2' + largestInfo.ptrmask,  %% tag is not a pointer
@@ -401,7 +445,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged 
         };
 
-        return datatypetinfo, nntic.updateCache(datatypetinfo);
+        return datatypetinfo, nnntic.updateCache(datatypetinfo);
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -416,7 +460,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged 
         };
 
-        return pctinfo, ntic.update(cpptkey, pctinfo);
+        return pctinfo, ntic.updateCache(pctinfo);
     }
 
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -433,11 +477,20 @@ namespace TypeInfoGenerator {
         let typesize = entriesinfo.typesize;
         let slotsize = entriesinfo.slotsize;
         let ptrmask = entriesinfo.ptrmask;
+        let tag = elist.reduce<CPPAssembly::Tag>(fn(acc, e) => {
+            if(acc.0 === CPPAssembly::Tag#Ref) {
+                return acc;
+            }
+
+            return tic.cache.get(e).tag === CPPAssembly::Tag#Ref 
+                then CPPAssembly::Tag#Ref 
+                else CPPAssembly::Tag#Value;
+        }, CPPAssembly::Tag#Value);
 
         %% TID does not matter here (these never are seen in runtime code)
-        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, tk, CPPAssembly::Tag#Value };
+        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, tk, tag };
 
-        return synthetic_elist_tinfo, ntic.update(synthetic_elist_tinfo);
+        return synthetic_elist_tinfo, ntic.updateCache(synthetic_elist_tinfo);
     }
 
     function generateAbstractEntityTypeInfo(e: BSQAssembly::AbstractEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
@@ -473,8 +526,8 @@ namespace TypeInfoGenerator {
 
         let e = bsqasm.lookupNominalTypeDeclaration(bsqtk);
         match(e)@ {
-            | BSQAssembly::AbstractEntityTypeDecl =>  { return generateConcreteTypeInfo($e, tic); }
-            | BSQAssembly::AbstractConceptTypeDecl => { return generateConceptTypeInfo($e, tic); }        
+            | BSQAssembly::AbstractEntityTypeDecl =>  { return generateAbstractConcreteTypeInfo($e, tic); }
+            | BSQAssembly::AbstractConceptTypeDecl => { return generateAbstractConceptTypeInfo($e, tic); }        
         }
     }
 }
