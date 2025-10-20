@@ -129,7 +129,7 @@ abstract class ITestGuard {
         this.exp = exp;
     }
 
-    abstract emit(fmt: CodeFormatter): string;
+    abstract emit(mustparens: boolean, fmt: CodeFormatter): string;
 }
 
 class ITestBinderGuard extends ITestGuard {
@@ -142,17 +142,18 @@ class ITestBinderGuard extends ITestGuard {
         this.bindinfo = bindinfo;
     }
 
-    emit(fmt: CodeFormatter): string {
+    emit(mustparens: boolean, fmt: CodeFormatter): string {
         const bexp = this.bindinfo !== undefined ? this.bindinfo.emitoptdef() : "";
         const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
-        
-        return `(${bexp}${this.exp.emit(true, fmt)})${itest}`;
+
+        return `(${bexp}${this.exp.emit(true, fmt)})${this.bindinfo !== undefined ? "@" : ""}${itest}`;
     }
 }
 
 class ITestSimpleGuard extends ITestGuard {
-    emit(fmt: CodeFormatter): string {
-        return `${this.exp.emit(true, fmt)}`;
+    emit(mustparens: boolean, fmt: CodeFormatter): string {
+        let ee = this.exp.emit(true, fmt);
+        return mustparens ? `(${ee})` : ee;
     }
 }
 
@@ -164,7 +165,12 @@ class ITestGuardSet {
     }
 
     emit(fmt: CodeFormatter): string {
-        return this.guards.map((g) => g.emit(fmt)).join(" && ");
+        if(this.guards.length === 1) {
+            return this.guards[0].emit(true, fmt);
+        }
+        else {
+            return this.guards.map((g) => g.emit(false, fmt)).join(" && ");
+        }
     }
 }
 
@@ -526,7 +532,7 @@ class LiteralFormatStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `"${this.value.map((c) => c.emit()).join("")}"`;
+        return `$"${this.value.map((c) => c.emit()).join("")}"`;
     }
 }
 
@@ -543,7 +549,7 @@ class LiteralFormatCStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `'${this.value.map((c) => c.emit()).join("")}'`;
+        return `$'${this.value.map((c) => c.emit()).join("")}'`;
     }
 }
 
@@ -1593,7 +1599,7 @@ class HoleExpression extends Expression {
     readonly explicittype: TypeSignature | undefined;
     readonly doccomment: string | undefined;
     readonly samplesfile: string | undefined = undefined;
-
+    
     constructor(sinfo: SourceInfo, hname: string | undefined, captures: TypeSignature[], explicittype: TypeSignature | undefined, doccomment: string | undefined) {
         super(ExpressionTag.HoleExpression, sinfo);
         this.hname = hname;
@@ -1612,7 +1618,9 @@ class HoleExpression extends Expression {
             ebody = `(${dcom}$${samplstr})`;
         }
 
-        return `?_[${this.captures.map((c) => c.emit()).join(", ")}]${etype}${ebody}`;
+        const captures = this.captures.length !== 0 ? `[${this.captures.map((c) => c.emit()).join(", ")}]` : "";
+
+        return `?_${captures}${etype}${ebody}`;
     }
 }
 
@@ -1857,13 +1865,15 @@ class TaskRaceAnyExpression extends TaskInvokeExpression {
 }
 
 class APIInvokeExpression extends Expression {
+    readonly ns: FullyQualifiedNamespace;
     readonly api: string;
     readonly args: ArgumentList;
     readonly configs: {key: string, value: Expression}[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, api: string, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
+        this.ns = ns;
         this.api = api;
         this.args = args;
         this.envexp = envexp;
@@ -1871,20 +1881,23 @@ class APIInvokeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const nsstr = this.ns.emit() + "::";
         const argl = this.args.emit(fmt, "", "");
-        return `api ${this.api}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}(${argl}, ${this.envexp.emit(fmt)})`;
+        return `api ${nsstr !== "" ? (nsstr + "::") : ""}${this.api}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}(${argl}, ${this.envexp.emit(fmt)})`;
     }
 }
 
 class AgentInvokeExpression extends Expression {
+    readonly ns: FullyQualifiedNamespace;
     readonly agent: string;
     readonly optrestype: TypeSignature | undefined;
     readonly args: ArgumentList;
     readonly configs: {key: string, value: Expression}[];
     readonly envexp: EnvironmentGenerationExpression;
-    
-    constructor(sinfo: SourceInfo, agent: string, optrestype: TypeSignature | undefined, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
+        this.ns = ns;
         this.agent = agent;
         this.optrestype = optrestype;
         this.args = args;
@@ -1893,9 +1906,10 @@ class AgentInvokeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const nsstr = this.ns.emit() + "::";
         const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
         const argl = this.args.emit(fmt, "", "");
-        return `agent ${this.agent}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}${restypeStr}(${argl}, ${this.envexp.emit(fmt)})`;
+        return `agent ${nsstr !== "" ? (nsstr + "::") : ""}${this.agent}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}${restypeStr}(${argl}, ${this.envexp.emit(fmt)})`;
     }
 }
 
@@ -2267,63 +2281,42 @@ class ReturnMultiStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-    readonly cond: IfTest;
-    readonly binder: BinderInfo | undefined;
+    readonly cond: ITestGuardSet;
     readonly trueBlock: BlockStatement;
     
     trueBindType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement) {
+    constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement) {
         super(StatementTag.IfStatement, sinfo);
         this.cond = cond;
-        this.binder = binder;
         this.trueBlock = trueBlock;
     }
 
-    emit(fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.binder !== undefined) {
-            bexps = this.binder.emit();
-        }
-
-        const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
-        
-        const ttest = `(${bexps[0]}${this.cond.exp.emit(true, fmt)})${bexps[1]}${itest}`;
-        return `if${ttest} ${this.trueBlock.emit(fmt)}`;
+    emit(fmt: CodeFormatter): string {    
+        return `if ${this.cond.emit(fmt)} ${this.trueBlock.emit(fmt)}`;
     }
 }
 
 class IfElseStatement extends Statement {
-    readonly cond: IfTest;
-    readonly binder: BinderInfo | undefined;
+    readonly cond: ITestGuardSet;
     readonly trueBlock: BlockStatement;
     readonly falseBlock: BlockStatement;
 
     trueBindType: TypeSignature | undefined = undefined;
     falseBindType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, cond: IfTest, binder: BinderInfo | undefined, trueBlock: BlockStatement,falseBlock: BlockStatement) {
+    constructor(sinfo: SourceInfo, cond: ITestGuardSet, trueBlock: BlockStatement, falseBlock: BlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
         this.cond = cond;
-        this.binder = binder;
         this.trueBlock = trueBlock;
         this.falseBlock = falseBlock;
     }
 
     emit(fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.binder !== undefined) {
-            bexps = this.binder.emit();
-        }
-
-        const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
-        
-        const ttest = `(${bexps[0]}${this.cond.exp.emit(true, fmt)})${bexps[1]}${itest}`;
-        
         const ttif = this.trueBlock.emit(fmt);
         const ttelse = this.falseBlock.emit(fmt);
 
-        return [`if${ttest} ${ttif}`, `else ${ttelse}`].join("\n");
+        return [`if ${this.cond.emit(fmt)} ${ttif}`, `else ${ttelse}`].join("\n");
     }
 }
 
@@ -2386,18 +2379,39 @@ class MatchStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        let bexps: [string, string] = ["", ""];
-        if(this.sval[1] !== undefined) {
-            bexps = this.sval[1].emit();
-        }
+        const binfo = this.sval[1];
 
-        const mheader = `match(${bexps[0]}${this.sval[0].emit(true, fmt)})${bexps[1]}`;
+        const mheader = `match(${binfo !== undefined ? binfo.emitoptdef() : ""}${this.sval[0].emit(true, fmt)})${binfo !== undefined ? "@" : ""}`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
         const iir = ttmf.map((cc) => fmt.indent("| " + cc));
         return `${mheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
+    }
+}
+
+class DispatchStatement extends Statement {
+    readonly sval: Expression;
+    readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
+    //always must exhaustive
+
+    implicitFinalType: TypeSignature | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, sval: Expression, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
+        super(StatementTag.DispatchStatement, sinfo);
+        this.sval = sval;
+        this.dispatchflow = dispatchflow;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
+        fmt.indentPush();
+        const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx : "_"} => ${df.value.emit(fmt)}`);
+        fmt.indentPop();
+
+        const iir = ttdf.map((cc) => fmt.indent("| " + cc));
+        return `${dheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
@@ -2517,32 +2531,22 @@ class SelfUpdateStatement extends Statement {
     }
 }
 
-class EnvironmentUpdateStatement extends Statement {
-    readonly updates: [Expression, Expression][];
+class HoleStatement extends Statement {
+    readonly nvars: {name: string, tsig: TypeSignature}[];
+    readonly holeexp: HoleExpression;
+    readonly ensures: ChkLogicExpression[];
 
-    constructor(sinfo: SourceInfo, updates: [Expression, Expression][]) {
-        super(StatementTag.EnvironmentUpdateStatement, sinfo);
-        this.updates = updates;
+    constructor(sinfo: SourceInfo, nvars: {name: string, tsig: TypeSignature}[], holeexp: HoleExpression, ensures: ChkLogicExpression[]) {
+        super(StatementTag.HoleStatement, sinfo);
+        this.nvars = nvars;
+        this.holeexp = holeexp;
+        this.ensures = ensures;
     }
 
     emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name.emit(true, fmt)} = ${exp.emit(true, fmt)}`).join(", ");
-        return `env[|${updates}|];`;
-    }
-}
-
-class EnvironmentBracketStatement extends Statement {
-    readonly env: EnvironmentGenerationExpression;
-    readonly block: BlockStatement;
-
-    constructor(sinfo: SourceInfo, env: EnvironmentGenerationExpression, block: BlockStatement) {
-        super(StatementTag.EnvironmentBracketStatement, sinfo);
-        this.env = env;
-        this.block = block;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `${this.env.emit(fmt)} ${this.block.emit(fmt)}`;
+        const nvars = this.nvars.map((nv) => `${nv.name}: ${nv.tsig.emit()}`).join(", ");
+        const ensures = this.ensures.map((e) => `ensures ${e.emit(fmt)};`).join(" ");
+        return `hole ${nvars} ${this.holeexp.emit(true, fmt)}{${ensures}};`;
     }
 }
 
@@ -2579,10 +2583,6 @@ class TaskYieldStatement extends Statement {
 
         return `yield self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
     }
-}
-
-class HoleStatement extends Statement {
-    xxxx;
 }
 
 class BlockStatement extends Statement {
@@ -2662,6 +2662,24 @@ class BuiltinBodyImplementation extends BodyImplementation {
         else {
             return " = " + headerstr + this.builtin + ";";
         }
+    }
+}
+
+class HoleBodyImplementation extends BodyImplementation {
+    readonly holeexp: HoleExpression;
+
+    constructor(sinfo: SourceInfo, file: string, holeexp: HoleExpression) {
+        super(sinfo, file);
+        this.holeexp = holeexp;
+    }
+
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
+        let hstr = "";
+        if(headerstr !== undefined) {
+            hstr = " " + headerstr;
+        }
+
+        return `${hstr} { return ${this.holeexp.emit(true, fmt)}; }`;
     }
 }
 
@@ -2761,11 +2779,13 @@ export {
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
-    IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
+    IfStatement, IfElseStatement, IfElifElseStatement, 
+    SwitchStatement, MatchStatement, DispatchStatement,
+    AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
-    EnvironmentUpdateStatement, EnvironmentBracketStatement,
+    HoleStatement,
     TaskStatusStatement,
     TaskYieldStatement,
     BlockStatement, 
-    BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
+    BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, HoleBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
 };

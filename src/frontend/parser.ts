@@ -42,17 +42,17 @@ const TokenStrings = {
     UUIDValue: "[LITERAL_UUID]",
     ShaHashcode: "[LITERAL_SHA]",
 
+    Byte: "[LITERAL_BYTE]",
     CChar: "[LITERAL_CCHAR]",
     UnicodeChar: "[LITERAL_UNICODECHAR]",
 
     String: "[LITERAL_STRING]",
     CString: "[LITERAL_EX_STRING]",
-    TemplateString: "[LITERAL_TEMPLATE_STRING]",
-    TemplateCString: "[LITERAL_TEMPLATE_EX_STRING]",
+    FormatString: "[LITERAL_FORMAT_STRING]",
+    FormatCString: "[LITERAL_FORMAT_EX_STRING]",
 
     Regex: "[LITERAL_REGEX]",
     PathItem: "[LITERAL_PATH_ITEM]",
-    PathTemplateItem: "[LITERAL_TEMPLATE_PATH_ITEM]",
 
     TZDateTime: "[LITERAL_TZTIME]",
     TAITime: "[LITERAL_TAI_TIME]",
@@ -71,8 +71,6 @@ const TokenStrings = {
     IdentifierName: "[IDENTIFIER]",
     Attribute: "[ATTRIBUTE]",
 
-    ResourceUseMod: "[RESOURCE_USE_MOD]",
-
     EndOfStream: "[EOS]"
 };
 
@@ -82,10 +80,10 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "ByteBuffer", "UUIDv4", "UUIDv7", "SHAContentHash", 
     "TZDateTime", "TAITime", "PlainDate", "PlainTime", "LogicalTime", "ISOTimestamp",
     "DeltaDateTime", "DeltaSeconds", "DeltaLogicalTime", "DeltaISOTimestamp",
-    "CChar", "UnicodeChar",
+    "Byte", "CChar", "UnicodeChar",
     "CCharBuffer", "UnicodeCharBuffer",
-    "String", "CString", 
-    "Regex", "CRegex", "PathRegex",
+    "String", "CString",
+    "Regex", "CRegex",
     "Path", "PathItem", "Glob"
 ];
 
@@ -240,8 +238,6 @@ class Lexer {
             }
         }
     }
-    
-    private static readonly _s_resourceUseModRe = new RegExp('\[[?!+*-]+\]', 'y');
     
     private tryLexWS(): boolean {
         const arop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
@@ -533,6 +529,17 @@ class Lexer {
         return false;
     }
 
+    private static _s_byteRe = new RegExp('0x[0-9a-fA-F]{1,2}b', "y");
+    private tryLexByte(): boolean {
+        const m = this.trylex(Lexer._s_byteRe);
+        if(m !== null) {
+            this.recordLexTokenWData(this.jsStrPos + m.length, TokenStrings.Byte, m);
+            return true;
+        }
+
+        return false;
+    }
+
     private static _s_bytebufferRe = new RegExp('0x\\[[0-9a-fA-F]+\\]', "y");
     private tryLexByteBuffer(): boolean {
         const m = this.trylex(Lexer._s_bytebufferRe);
@@ -618,7 +625,7 @@ class Lexer {
             let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
+            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.FormatString : TokenStrings.String, strval);
             return true;
         }
     }
@@ -697,12 +704,17 @@ class Lexer {
             let strval = this.input.slice(this.jsStrPos, jepos);
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.TemplateCString : TokenStrings.CString, strval);
+            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.FormatCString : TokenStrings.CString, strval);
             return true;
         }
     }
 
     private tryLexCharLike() {
+        const bb = this.tryLexByte();
+        if(bb) {
+            return true;
+        }
+
         const cc = this.tryLexCChar();
         if(cc) {
             return true;
@@ -773,11 +785,6 @@ class Lexer {
             let jepos = this.jsStrPos + mpth[0].length;
             let pthval = mpth[0];
 
-            const istemplate = pthval.startsWith("$");
-            if(istemplate) {
-                pthval = pthval.slice(1);
-            }
-
             Lexer._s_literalPathTagRE.lastIndex = jepos;
             const mtag = Lexer._s_literalPathTagRE.exec(this.input);
             if(mtag !== null) {
@@ -785,7 +792,7 @@ class Lexer {
             }
 
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.PathTemplateItem : TokenStrings.PathItem, pthval);
+            this.recordLexTokenWData(jepos, TokenStrings.PathItem, pthval);
             return true;
         }
 
@@ -887,14 +894,9 @@ class Lexer {
     }
 
     private tryLexSymbol() {
-        const usemodop = this.trylex(Lexer._s_resourceUseModRe);
         const spaceop = this.trylexWSPlus(SpaceRequiredSymbols, Lexer._s_whitespaceRe);
         const frontop = this.trylexWSPlus(SpaceFrontSymbols, /[^0-9+-]/y);
-        if(usemodop !== null) {
-            this.recordLexTokenWData(this.jsStrPos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
-            return true;
-        }
-        else if(spaceop !== null) {
+        if(spaceop !== null) {
             const realstr = " " + spaceop.trim() + " ";
 
             this.recordLexToken(this.jsStrPos + spaceop.length, realstr);

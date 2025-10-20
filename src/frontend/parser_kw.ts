@@ -172,7 +172,7 @@ const KeywordStrings = [
 ////////////////////////////////////////////////////////////////////////////////
 //Attributes
 
-const GeneralAttributes = [ 
+const GeneralAttributes: string[] = [ 
     "private",
     "internal",
     "hidden",
@@ -181,14 +181,16 @@ const GeneralAttributes = [
     "sensitive"
 ];
 
-const APIDeclAttributes = [
-    "export",
+const APIDeclAttributes: string[] = [
     "pure",
     "deterministic",
     "idempotent",
 ];
 
-const InvokeAttributes = [
+const AgentDeclAttributes: string[] = [
+];
+
+const InvokeAttributes: string[] = [
     "abstract",
     "override",
     "virtual"
@@ -197,6 +199,7 @@ const InvokeAttributes = [
 const AllAttributes = [
     ...GeneralAttributes,
     ...APIDeclAttributes,
+    ...AgentDeclAttributes,
     ...InvokeAttributes
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
@@ -330,11 +333,12 @@ const ParenSymbols = [
 
 export {
     KeywordStrings,
-    GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
+    GeneralAttributes, APIDeclAttributes, AgentDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     TermRestrictions,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 
+    /*
     KW_recursive_q,
     KW_recursive,
     
@@ -463,4 +467,5 @@ export {
     SYM_minus,
     SYM_times,
     SYM_div
+    */
 };

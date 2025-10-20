@@ -573,9 +573,6 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     isSpecialResultEntity(): boolean { return (this instanceof OkTypeDecl) || (this instanceof FailTypeDecl); }
     isSpecialAPIResultEntity(): boolean { return (this instanceof APIRejectedTypeDecl) || (this instanceof APIFailedTypeDecl) || (this instanceof APIErrorTypeDecl) || (this instanceof APISuccessTypeDecl); }
 
-    isSpecialEventConcept(): boolean { return (this instanceof EventConceptTypeDecl); }
-    isSpecialEventListConcept(): boolean { return (this instanceof EventListConceptTypeDecl); }
-
     hasAttribute(aname: string): boolean {
         return this.attributes.find((attr) => attr.name === aname) !== undefined;
     }
@@ -1127,68 +1124,63 @@ class EnvironmentVariableInformation {
     }
 }
 
-////
-//  This is copied from BREX path_glob.h for reference here -- see how it works with the access modes
-//
-//  /x/y/*     <-- all files that are single extensions of the prefix
-//  /x/y/*/    <-- all directories that are single extensions of the prefix
-//
-//  /x/y/**   <-- all files that are extensions of the prefix
-//  /x/y/**/  <-- all directories that are extensions of the prefix
-//  
-//  /x/y/*.*     <-- all files that have an extension with a file extension
-//  /x/y/**/*.*  <-- all files that are an extension of the prefix and with a file extension
-//
-
-//Are all of these in effect idempotent???
-enum ResourceAccessModes {
-    get    = "?",  //no side effects and -- reads the value or list (elements) 
-    modify = "!",  //replaces an existing value
-    create = "+",  //creates a new value or list (that did not previously exist)
-    delete = "-",  //removes a value or list that may have previously existed
-    any =    "*"   //any possible of the above
-}
-
 class ResourceInformation {
-    readonly pathglob: Expression; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype, or constant, or an environment variable
-    readonly accessInfo: ResourceAccessModes[];
+    readonly pathglobs: { pg: Expression[], optas: Expression }[]; //Literal glob, constant refernence, or env var reference
 
-    constructor(pathglob: Expression, accessInfo: ResourceAccessModes[]) {
-        this.pathglob = pathglob;
-        this.accessInfo = accessInfo;
+    constructor(pathglobs: { pg: Expression[], optas: Expression }[]) {
+        this.pathglobs = pathglobs;
     }
 
-    emit(fmt: CodeFormatter): string {
-        const mstr = this.accessInfo.join("");
-        return fmt.indent(`${this.pathglob.emit(true, fmt)}@[${mstr}]`);
+    static emitSingleRInfo(fmt: CodeFormatter, pg: Expression[], optas: Expression): string {
+        if(optas === undefined) {
+            if(pg.length === 1) {
+                return fmt.indent(pg[0].emit(true, fmt));
+            }
+            else {
+                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}]`);
+            }
+        }
+        else {
+            if(pg.length === 1) {
+                return fmt.indent(`${pg[0].emit(true, fmt)} as ${optas.emit(true, fmt)}`);
+            }
+            else {
+                return fmt.indent(`[${pg.map((pge) => pge.emit(true, fmt)).join(", ")}] as ${optas.emit(true, fmt)}`);
+            }
+        }
     }
 }
 
 class APIDecl extends AbstractCoreDecl {
+    readonly configs: {key: string, value: Expression | undefined}[];
+
     readonly params: InvokeParameterDecl[];    
     readonly resultType: TypeSignature;
+    readonly eventType: TypeSignature | undefined;
 
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
-    readonly statusOutputs: TypeSignature[];
-    readonly envVarRequirements: EnvironmentVariableInformation[];
-    readonly resourceImpacts: ResourceInformation[] | "**" | "{}";
+    readonly statusupdates: TypeSignature[];
+    readonly envreqs: EnvironmentVariableInformation[];
+    readonly resourcereqs: ResourceInformation;
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: InvokeParameterDecl[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusOutputs: TypeSignature[], envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, configs: {key: string, value: Expression | undefined}[], params: InvokeParameterDecl[], resultType: TypeSignature, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusUpdates: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
         super(file, sinfo, attributes, name);
-        
+
+        this.configs = configs;
         this.params = params;
         this.resultType = resultType;
+        this.eventType = eventType;
 
         this.preconditions = preconds;
         this.postconditions = postconds
 
-        this.statusOutputs = statusOutputs;
-        this.envVarRequirements = envVarRequirements;
-        this.resourceImpacts = resourceImpacts;
+        this.statusupdates = statusUpdates;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
 
         this.body = body;
     }
@@ -1196,46 +1188,53 @@ class APIDecl extends AbstractCoreDecl {
     emitMetaInfo(fmt: CodeFormatter): string | undefined {
         fmt.indentPush();
 
+        let configs: string[] = [];
+        if(this.configs.length !== 0) {
+            const cs = this.configs.map((cfg) => {
+                if(cfg.value === undefined) {
+                    return cfg.key;
+                }
+                else {
+                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
+                }
+            });
+
+            configs = [fmt.indent(`configs { ${cs.join(", ")} }`)];
+        }
+
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
-            prec = this.preconditions.map((pc) => pc.emit(fmt));
+            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
         }
 
         let postc: string[] = [];
         if(this.postconditions.length !== 0) {
-            postc = this.postconditions.map((pc) => pc.emit(fmt));
+            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
         }
 
         let status: string[] = [];
-        if(this.statusOutputs.length !== 0) {
-            status = [`status {${this.statusOutputs.map((so) => so.emit()).join(", ")}}`];
+        if(this.statusupdates.length !== 0) {
+            status = [fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)];
         }
 
         let resources: string[] = [];
-        if(this.resourceImpacts === "**") {
-            resources = ["resource { ** }"];
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
         }
-        else if(this.resourceImpacts === "{}") {
-            resources = ["resource { }"];
-        }
-        else {
-            resources = [`resource { ${this.resourceImpacts.map((ri) => ri.emit(fmt)).join(", ")} }`];
-        }
-
-        const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
-
-        fmt.indentPush();
-        const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-        fmt.indentPop();
-
-        const evs = [`env{ ${vvs} ${fmt.indent("}")}`];
         
+        let evs: string[] = [];
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            evs = [fmt.indent(`env{ ${vvl.join(", ")} }`)];
+        }
+
         fmt.indentPop();
         if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
             return undefined;
         }
         else {
-            return [...prec, ...postc, ...status, ...evs, ...resources].join("\n");
+            return [...prec, ...postc, ...status, ...configs, ...evs, ...resources].join("\n");
         }
     }
 
@@ -1246,7 +1245,107 @@ class APIDecl extends AbstractCoreDecl {
         const result = this.resultType.emit();
 
         const minfo = this.emitMetaInfo(fmt);
-        return `${attrs}api ${this.name}(${params}): ${result} ${this.body.emit(fmt, minfo)}`;
+        return `${attrs}api ${this.name}(${params}): ${result}${this.eventType !== undefined ? ", " + this.eventType.emit() : ""} ${this.body.emit(fmt, minfo)}`;
+    }
+}
+
+class AgentDecl extends AbstractCoreDecl {
+    readonly configs: {key: string, value: Expression | undefined}[];
+    
+    readonly params: InvokeParameterDecl[];    
+    readonly resultType: TypeSignature | undefined; //This may be set on a per call-site basis
+    readonly eventType: TypeSignature | undefined;
+
+    readonly preconditions: PreConditionDecl[];
+    readonly postconditions: PostConditionDecl[];
+
+    readonly statusupdates: TypeSignature[];
+    readonly envreqs: EnvironmentVariableInformation[];
+    readonly resourcereqs: ResourceInformation;
+
+    readonly body: BodyImplementation;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, configs: {key: string, value: Expression | undefined}[], params: InvokeParameterDecl[], resultType: TypeSignature | undefined, eventType: TypeSignature | undefined, preconds: PreConditionDecl[], postconds: PostConditionDecl[], statusUpdates: TypeSignature[], envreqs: EnvironmentVariableInformation[], resourcereqs: ResourceInformation, body: BodyImplementation) {
+        super(file, sinfo, attributes, name);
+
+        this.configs = configs;
+        this.params = params;
+        this.resultType = resultType;
+        this.eventType = eventType;
+
+        this.preconditions = preconds;
+        this.postconditions = postconds
+
+        this.statusupdates = statusUpdates;
+        this.envreqs = envreqs;
+        this.resourcereqs = resourcereqs;
+
+        this.body = body;
+    }
+
+    emitMetaInfo(fmt: CodeFormatter): string | undefined {
+        fmt.indentPush();
+
+        let configs: string[] = [];
+        if(this.configs.length !== 0) {
+            const cs = this.configs.map((cfg) => {
+                if(cfg.value === undefined) {
+                    return cfg.key;
+                }
+                else {
+                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
+                }
+            });
+
+            configs = [fmt.indent(`configs { ${cs.join(", ")} }`)];
+        }
+
+        let prec: string[] = [];
+        if(this.preconditions.length !== 0) {
+            prec = this.preconditions.map((pc) => fmt.indent(pc.emit(fmt)));
+        }
+
+        let postc: string[] = [];
+        if(this.postconditions.length !== 0) {
+            postc = this.postconditions.map((pc) => fmt.indent(pc.emit(fmt)));
+        }
+
+        let status: string[] = [];
+        if(this.statusupdates.length !== 0) {
+            status = [fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)];
+        }
+
+        let resources: string[] = [];
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            resources = [fmt.indent(`resource { ${rrs.join(", ")} }`)];
+        }
+        
+        let evs: string[] = [];
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            evs = [fmt.indent(`env{ ${vvl.join(", ")} }`)];
+        }
+
+        fmt.indentPop();
+        if(prec.length === 0 && postc.length === 0 && status.length === 0 && evs.length === 0) {
+            return undefined;
+        }
+        else {
+            return [...prec, ...postc, ...status, ...configs, ...evs, ...resources].join("\n");
+        }
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        const params = this.params.map((p) => p.emit(fmt)).join(", ");
+        const iresult = this.resultType === undefined ? "<T>" : "";
+        const eresult = this.resultType !== undefined ? (": " + this.resultType.emit()) : "";
+        const eevent = this.eventType !== undefined ? (this.resultType !== undefined ? ", " : " ") + this.eventType.emit() : "";
+
+        const minfo = this.emitMetaInfo(fmt);
+        return `${attrs}agent ${this.name}${iresult}(${params})${eresult}${eevent} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
@@ -1255,13 +1354,12 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    eventsInfo: TypeSignature | undefined; //undefined means no events
-    statusInfo: TypeSignature[] | undefined; //undefined means no status
-    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; 
-    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //** means any possible resource impact -- ? means passthrough
-    
-    //If this is defined then the info is all taken from the API
-    implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
+    mainaction: TaskActionDecl | undefined = undefined;
+
+    configs: {key: string, value: Expression | undefined}[] = [];
+    statusupdates: TypeSignature[] = [];
+    envreqs: EnvironmentVariableInformation[] = [];
+    resourcereqs: ResourceInformation = new ResourceInformation([]);
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
         super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
@@ -1272,34 +1370,32 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const mg: string[][] = [];
-        if(this.eventsInfo !== undefined) {
-            mg.push([`event ${this.eventsInfo.emit()}`]);
-        }
-        if(this.statusInfo !== undefined) {
-            mg.push([`status {${this.statusInfo.map((so) => so.emit()).join(", ")}}`]);
-        }
-        if(this.envVarRequirementInfo !== undefined) {
-            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
+        
+        if(this.configs.length !== 0) {
+            const cs = this.configs.map((cfg) => {
+                if(cfg.value === undefined) {
+                    return cfg.key;
+                }
+                else {
+                    return `${cfg.key} = ${cfg.value.emit(true, fmt)}`;
+                }
+            });
 
-            fmt.indentPush();
-            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-            fmt.indentPop();
-
-            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
+            mg.push([fmt.indent(`configs { ${cs.join(", ")} }`)]);
         }
-        if(this.resourceImpactInfo !== undefined) {
-            if(this.resourceImpactInfo === "**") {
-                mg.push(["resource { ** }"]);
-            }
-            else if(this.resourceImpactInfo === "{}") {
-                mg.push(["resource { }"]);
-            }
-            else if(this.resourceImpactInfo === "?") {
-                mg.push(["resource { ? }"]);
-            }
-            else {
-                mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
-            }
+
+        if(this.statusupdates.length !== 0) {
+            mg.push([fmt.indent(`status {${this.statusupdates.map((so) => so.emit()).join(", ")}}`)]);
+        }
+
+        if(this.resourcereqs.pathglobs.length !== 0) {
+            const rrs = this.resourcereqs.pathglobs.map((rr) => ResourceInformation.emitSingleRInfo(fmt, rr.pg, rr.optas));
+            mg.push([fmt.indent(`resource { ${rrs.join(", ")} }`)]);
+        }
+        
+        if(this.envreqs.length !== 0) {
+            const vvl = this.envreqs.map((ev) => ev.emit(fmt));
+            mg.push([fmt.indent(`env{ ${vvl.join(", ")} }`)]);
         }
 
         if(this.fields.length !== 0) {
@@ -1314,9 +1410,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPop();
 
         let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
-        if(this.implementsapi !== undefined) {
-            rootdecl += `implements ${this.implementsapi[0].emit()}::${this.implementsapi[1]}`;
-        }
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
@@ -1324,7 +1417,7 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         let etail = "";
         if(bg.length !== 0) {
-            etail = " {\n" + this.joinBodyGroups([...bg, ...mg]) + fmt.indent("\n}");
+            etail = " {\n" + this.joinBodyGroups([...mg, ...bg]) + fmt.indent("\n}");
         }
 
         return `${rootdecl}${etail}`;
@@ -1396,11 +1489,12 @@ class NamespaceDeclaration {
 
     usings: NamespaceUsing[] = [];
     declaredNames: Set<string> = new Set<string>();
-    declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, and tasks
+    declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, tasks, agents
     declaredSubNSNames: Set<string> = new Set<string>();
     declaredConstNames: Set<string> = new Set<string>(); 
-    declaredFunctionNames: Set<string> = new Set<string>(); //functions, apis, and consts
-    declaredAPINames: Set<string> = new Set<string>(); //functions, apis, and consts
+    declaredFunctionNames: Set<string> = new Set<string>(); //function as name+TemplateFlag+refFlag+lambdaFlag
+    declaredAPINames: Set<string> = new Set<string>();
+    declaredAgentNames: Set<string> = new Set<string>();
 
     subns: NamespaceDeclaration[] = [];
 
@@ -1410,6 +1504,7 @@ class NamespaceDeclaration {
 
     apis: APIDecl[] = [];
     tasks: TaskDecl[] = [];
+    agents: AgentDecl[] = [];
 
     constructor(name: string, topnamespace: string, fullnamespace: FullyQualifiedNamespace) {
         this.name = name;
@@ -1514,6 +1609,13 @@ class NamespaceDeclaration {
             res += fmt.indent(a.emit(fmt) + "\n");
         });
         if(this.apis.length !== 0) {
+            res += "\n";
+        }
+
+        this.agents.forEach((a) => {
+            res += fmt.indent(a.emit(fmt) + "\n");
+        });
+        if(this.agents.length !== 0) {
             res += "\n";
         }
 
@@ -1697,7 +1799,8 @@ export {
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
-    EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
+    EnvironmentVariableInformation, ResourceInformation, 
+    APIDecl, AgentDecl,
     TaskDecl,
     NamespaceConstDecl, NamespaceUsing, NamespaceDeclaration,
     NSRegexInfo, NSRegexNameInfo, NSRegexREInfoEntry,
