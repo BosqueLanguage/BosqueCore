@@ -201,7 +201,8 @@ namespace TypeInfoGenerator {
                 return acc;
             }
 
-            let fieldslotsize = tic.cache.get(f.tkeystr).slotsize;
+            let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
+            let fieldslotsize = tic.cache.get(cpptk).slotsize;
             if(acc.1 + fieldslotsize > reftypeThreshold) {
                 return CPPAssembly::Tag#Ref, acc.1;
             }
@@ -288,17 +289,19 @@ namespace TypeInfoGenerator {
     function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
-        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
+        let converted = convertSaturatedFields(e.saturatedBFieldInfo);
+        let finfo, ntic = generateObjectSize(converted, tic);
+        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, tic) };
         
         return einfo, ntic.updateCache(einfo);
     }
     
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-    
+
+        let converted = convertSaturatedFields(e.saturatedBFieldInfo);   
         let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
-        var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
+        var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, tic) };
         
         return dmtinfo, ntic.updateCache(dmtinfo);       
     }
@@ -460,7 +463,7 @@ namespace TypeInfoGenerator {
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);       
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         let oftinfo, ntic = generateTypeInfo(e.oftype.tkeystr, tic);
         let ptrmask = CPPTransformNameManager::repeatCString('0', oftinfo.slotsize, '2');
@@ -484,6 +487,7 @@ namespace TypeInfoGenerator {
     }
 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
         let elist = tic.elists.get(tk);
         let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
 
@@ -501,7 +505,7 @@ namespace TypeInfoGenerator {
         }, CPPAssembly::Tag#Value);
 
         %% TID does not matter here (these never are seen in runtime code)
-        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, tk, tag };
+        let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, cpptk, tag };
 
         return synthetic_elist_tinfo, ntic.updateCache(synthetic_elist_tinfo);
     }
@@ -2063,7 +2067,7 @@ entity CPPTransformer {
                     return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
-                    Map<CPPAssembly::TypeKey, CPPAssembly::EListTypeSignature>{}, 
+                    Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
                     List<CPPAssembly::TypeKey>{}, bsqasm, 1n }
             );
 
