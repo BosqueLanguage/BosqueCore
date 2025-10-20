@@ -537,6 +537,7 @@ entity FieldsInfo {
 
 namespace TypeInfoGenerator {
     const ptrmaskPointer: CString = '1';
+    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::From('') , CPPAssembly::Tag#Ref }; 
 
     %% We may need to add special case for self-recursive concept
     function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
@@ -560,6 +561,32 @@ namespace TypeInfoGenerator {
 
             return acc.0.update(finfo), nntic;
         }, (|FieldsInfo{0n, 0n, ''}, tic|));
+    }
+
+     recursive function repeatCString(str: CString, n: Nat, acc: CString): CString {
+        if(n > 0n) {
+            return repeatCString[recursive](str, n - 1n, CString::concat(acc, str));
+        }
+        return acc;
+    }
+
+    %%
+    %% So long as out IR passes remove unnecessary unused concepts with no concrete 
+    %% subtype this will work fine
+    %%
+
+    %% Might want to donk around with returning a tag here as all subtypes being of the same tag means
+    %% the whole concept can have the same tag
+    function findLargestSubtype(e: CPPAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        return e.subtypes.reduce<CPPAssembly::TypeInfo, TypeInfoContext>(fn(acc, sub) => {
+            let subtinfo, ntic = generateTypeInfo(sub, acc.1);
+            if(subtinfo.slotsize > acc.0.slotsize) {
+                return subtinfo, ntic; 
+            }
+            else {
+                return acc.0, ntic;
+            }
+        }, (|e.subtypes.front(), tic|));
     }
 
     %% This may not be the most elagant solution but should work fine
@@ -595,19 +622,32 @@ namespace TypeInfoGenerator {
     }
     
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        var dminfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, determineTag(...) };
         
+        return dminfo, ntic.update(cpptkey, dminfo);       
     }
     
+    %% I could see this not being totally correct
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
+        let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
 
+        return sometinfo, ntic.update(cpptkey, sometinfo);
     }
 
+    %% If Ktype and Vtype are not in saturatedBField info this does NOT work
     function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
+        let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptkey, CPPAssembly::Tag#Value }; 
 
+        return metinfo, ntic.update(cpptkey, metinfo);
     }
 
+    %% Ignore these, not visible to GC
     function generateCRopeIteratorTypeInfo(e: BSQAssembly::CRopeIteratorTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-
+        let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptkey, CPPAssembly::Tag#Value };
+        return crittinfo, tic.update(cpptkey, crittinfo);
     }
     
     function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -619,20 +659,46 @@ namespace TypeInfoGenerator {
         }
     }
 
+    %% Alias of Tree<T>
     function generateListTypeInfo(e: BSQAssembly::ListTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
 
+        let treeinfo, ntic = generateTypeInfo[recursive](treetk, tic);
+        let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+
+        return listinfo, ntic.update(cpptkey, listinfo);
     }
 
+    %% Alias of Tree<K, V>
     function generateMapTypeInfo(e: BSQAssembly::MapTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let e_ktype = $ant.ktype.tkeystr.value;
+        let e_vtype = $ant.vtype.tkeystr.value;
+        let treetk = BSQAssembly::TypeKey::from(CString::concat('MapOps::Tree<', e_ktype, ', ', e_vtype, '>'));
 
+        let treeinfo, ntic = generateTypeInfo(treetk, tic);
+        let mapinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptkey, treeinfo.tag };
+
+        return mapinfo, ntic.update(cpptkey, mapinfo);
     }
 
+    %% Alias of CRopeOps::Rope
     function generateCRopeTypeInfo(e: BSQAssembly::CRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let ropetk = BSQAssembly::TypeKey::from('CRopeOps::Rope');
 
+        let ropeinfo, ntic = generateTypeInfo(ropetk, tic);
+        let cropeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+
+        return cropeinfo, ntic.update(cpptkey, cropeinfo);
     }
 
+    %% Alias of UnicodeRopeOps::Rope
     function generateUnicodeRopeTypeInfo(e: BSQAssembly::UnicodeRopeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let ropetk = BSQAssembly::TypeKey::from('UnicodeRopeOps::Rope');
 
+        let ropeinfo, ntic = generateTypeInfo(ropetk, tic);
+        let unicoderopeinfo = CPPAssembly::TypeInfo{ ntic.tid, ropeinfo.typesize, ropeinfo.slotsize, ropeinfo.ptrmask, cpptkey, ropeinfo.tag };
+    
+        return unicoderopeinfo, ntic.update(cpptkey, unicoderopeinfo);
     }
 
     function generateCollectionTypeInfo(e: BSQAssembly::CollectionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -645,24 +711,76 @@ namespace TypeInfoGenerator {
         }
     }
 
+    %% Assuming our enums wil never be > 8 bytes
     function generateEnumTypeInfo(e: BSQAssembly::EnumTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        let etdtinfo = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptkey, CPPAssembly::Tag#Value };
+        return etdtinfo, tic.update(cpptkey, etdtinfo);
     }
     
+    %% Alias of CRope (only handles case where we have `Type of CString` currently)
     function generateStringOfTypeInfo(e: BSQAssembly::TypedeclStringOfTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        let crinfo, ntic = generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic);
+        let std_tinfo = CPPAssembly::TypeInfo{ ntic.tid, crinfo.typesize, crinfo.slotsize, crinfo.ptrmask, cpptkey, crinfo.tag };
+
+        return std_tinfo, ntic.update(cpptkey, std_tinfo);
     }
     
+    %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+        if(tic.inProgress.has(cpptk)) {
+            return selfRecursiveTypeInfo, tic;
+        }
+
+        let ntic = tic.markInProgress(cpptk);
+        let largesttinfo, nntic = findLargestSubtype(e, ntic);
+
+        let concepttinfo = CPPAssembly::TypeInfo { 
+            nntic.tid, 
+            8n + largesttinfo.typesize,  %% tag + largest subtype
+            largesttinfo.slotsize + 1n,  %% +1 for tag
+            '2' + largestInfo.ptrmask,  %% tag is not a pointer
+            cpptkey, 
+            CPPAssembly::Tag#Tagged 
+        };
+
+        return concepttinfo, nntic.updateCache(concepttinfo);
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        
+        let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+        if(tic.inProgress.has(cpptk)) {
+            return selfRecursiveTypeInfo, tic;
+        }
+
+        let ntic = tic.markInProgress(cpptk);
+        let largesttinfo, nntic = findLargestSubtype(e, ntic);
+
+        let datatypetinfo = CPPAssembly::TypeInfo { 
+            nntic.tid, 
+            8n + largesttinfo.typesize,  %% tag + largest subtype
+            largesttinfo.slotsize + 1n,  %% +1 for tag
+            '2' + largestInfo.ptrmask,  %% tag is not a pointer
+            cpptkey, 
+            CPPAssembly::Tag#Tagged 
+        };
+
+        return datatypetinfo, nntic.updateCache(datatypetinfo);
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let oftinfo, ntic = generateTypeInfo($ant.oftype, tic);
+        let ptrmask = repeatCString('0', oftinfo.slotsize, '2');
+        let pcinfo = CPPAssembly::TypeInfo { 
+            nntic.tid, 
+            oftinfo.ptrmask.size() * slotSizeInBits,
+            oftinfo.ptrmask.size(),
+            oftinfo.ptrmask,
+            cpptkey, 
+            CPPAssembly::Tag#Tagged 
+        };
 
+        return pctinfo, ntic.update(cpptkey, pctinfo);
     }
 
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
