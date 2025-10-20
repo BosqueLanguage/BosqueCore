@@ -141,7 +141,7 @@ namespace CPPTransformNameManager {
 
 entity TypeInfoContext {
     field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
-    field elists: Map<CPPAssembly::TypeKey, CPPAssembly::EListTypeSignature>;
+    field elists: Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>;
     field inProgress: List<CPPAssembly::TypeKey>;
 
     field bsqasm: BSQAssembly;
@@ -154,7 +154,7 @@ entity TypeInfoContext {
         ];
     }
 
-    method updateELists(etk: CPPAssembly::TypeKey, elist: CPPAssembly::EListTypeSignature): TypeInfoContext {
+    method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
         return this[elists=$elists.insert(etk, elist)];
     }
 
@@ -195,7 +195,7 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function determineTag(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
+    function determineTag(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
         let tag = fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
             if(acc.0 === CPPAssembly::Tag#Ref) {
                 return acc;
@@ -213,11 +213,18 @@ namespace TypeInfoGenerator {
         return tag;
     }
 
-    function generateObjectSize(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
+    %%
+    %% We have some issues with this list here, we use saturatedBField info often here (and elists),
+    %% hoever we just accept a typekey. There are also likely issues with how we handle the caching of 
+    %% elists as I think we can only cache a BSQAssembly::EListTypeSignature, not a cpp, so it might
+    %% be better to instead store bsqtk
+    %%
+
+    function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
-            if(ts?<CPPAssembly::EListTypeSignature> && !acc.1.elists.has(ts.tkeystr)) {
-                ntic = acc.1.updateELists(ts.tkeystr, ts@<CPPAssembly::EListTypeSignature>);
+            if(ts?<BSQAssembly::EListTypeSignature> && !acc.1.elists.has(ts.tkeystr)) {
+                ntic = acc.1.updateELists(ts.tkeystr, ts@<BSQAssembly::EListTypeSignature>);
             }
 
             let tinfo, nntic = generateTypeInfo(ts.tkeystr, acc.1);
@@ -225,6 +232,10 @@ namespace TypeInfoGenerator {
 
             return acc.0.update(finfo), nntic;
         }, (|FieldsInfo{0n, 0n, ''}, tic|));
+    }
+
+    function convertSaturatedFields(fields: List<BSQAssembly::SaturatedFieldInfo>): List<BSQAssembly::TypeSignature> {
+        return fields.map<BSQAssembly::TypeSignature>(fn(f) => f.ftype);
     }
 
     %%
@@ -235,15 +246,16 @@ namespace TypeInfoGenerator {
     %% Might want to donk around with returning a tag here as all subtypes being of the same tag means
     %% the whole concept can have the same tag
     function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        return e.subtypes.reduce<CPPAssembly::TypeInfo, TypeInfoContext>(fn(acc, sub) => {
-            let subtinfo, ntic = generateTypeInfo(sub, acc.1);
+        let base, ntic = generateTypeInfo(e.subtypes.front(), tic);
+        return e.subtypes.reduce<(|CPPAssembly::TypeInfo, TypeInfoContext|)>(fn(acc, sub) => {
+            let subtinfo, nntic = generateTypeInfo(sub, acc.1);
             if(subtinfo.slotsize > acc.0.slotsize) {
-                return subtinfo, ntic; 
+                return subtinfo, nntic; 
             }
             else {
-                return acc.0, ntic;
+                return acc.0, nntic;
             }
-        }, (|e.subtypes.front(), tic|));
+        }, (|base, ntic|));
     }
 
     %% This may not be the most elagant solution but should work fine
@@ -276,7 +288,7 @@ namespace TypeInfoGenerator {
     function generateEntityTypeInfo(e: BSQAssembly::EntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
         var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
         
         return einfo, ntic.updateCache(einfo);
@@ -285,7 +297,7 @@ namespace TypeInfoGenerator {
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
     
-        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
         var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(e.saturatedBFieldInfo, tic) };
         
         return dmtinfo, ntic.updateCache(dmtinfo);       
@@ -295,7 +307,7 @@ namespace TypeInfoGenerator {
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
         let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return sometinfo, ntic.updateCache(sometinfo);
@@ -305,7 +317,7 @@ namespace TypeInfoGenerator {
     function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         
-        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
         let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return metinfo, ntic.updateCache(metinfo);
@@ -405,7 +417,7 @@ namespace TypeInfoGenerator {
     %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        if(tic.inProgress.has(cpptk)) {
+        if(tic.inProgress.contains(cpptk)) {
             return selfRecursiveTypeInfo, tic;
         }
 
@@ -450,7 +462,7 @@ namespace TypeInfoGenerator {
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);       
 
-        let oftinfo, ntic = generateTypeInfo(e.oftype, tic);
+        let oftinfo, ntic = generateTypeInfo(e.oftype.tkeystr, tic);
         let ptrmask = CPPTransformNameManager::repeatCString('0', oftinfo.slotsize, '2');
         let pctinfo = CPPAssembly::TypeInfo { 
             ntic.tid, 
@@ -2085,7 +2097,7 @@ entity CPPTransformer {
             pconcepts = transformer_pconcepts,
             concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = generated_typeinfos_abstract.tinfos
+            typeinfos = generated_typeinfos_abstract.cache
         };
     }
 }
