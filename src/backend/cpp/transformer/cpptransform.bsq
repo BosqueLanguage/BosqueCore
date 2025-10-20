@@ -159,11 +159,11 @@ entity TypeInfoContext {
     }
 
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.insert(tkey)];
+        return this[inProgress = $inProgress.pushBack(tkey)];
     }
 
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.delete(tkey)];
+        return this[inProgress = $inProgress.popBack().1];
     }
 }
 
@@ -254,7 +254,7 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         var matchedType: CPPAssembly::TypeInfo;
-        switch(e.tkeystr) {
+        switch(e.tkey) {
             | 'None'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
             | 'Bool'<BSQAssembly::TypeKey> =>              { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
             | 'Nat'<BSQAssembly::TypeKey> =>               { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
@@ -422,7 +422,7 @@ namespace TypeInfoGenerator {
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            '2' + largesttinfo.ptrmask,  %% tag is not a pointer
+            CString::concat('2', largesttinfo.ptrmask),
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
@@ -432,7 +432,7 @@ namespace TypeInfoGenerator {
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        if(tic.inProgress.has(cpptk)) {
+        if(tic.inProgress.contains(cpptk)) {
             return selfRecursiveTypeInfo, tic;
         }
 
@@ -444,7 +444,7 @@ namespace TypeInfoGenerator {
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            '2' + largesttinfo.ptrmask,  %% tag is not a pointer
+            CString::concat('2', largesttinfo.ptrmask),  %% tag is not a pointer
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
@@ -477,7 +477,6 @@ namespace TypeInfoGenerator {
     }
 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
         let elist = tic.elists.get(tk);
         let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
 
@@ -485,16 +484,18 @@ namespace TypeInfoGenerator {
         let slotsize = entriesinfo.slotsize;
         let ptrmask = entriesinfo.ptrmask;
         let tag = elist.entries.reduce<CPPAssembly::Tag>(fn(acc, e) => {
-            if(acc.0 === CPPAssembly::Tag#Ref) {
+            if(acc === CPPAssembly::Tag#Ref) {
                 return acc;
             }
-
-            return if(tic.cache.get(e).tag === CPPAssembly::Tag#Ref)
+            
+            let cpptk = CPPTransformNameManager::convertTypeKey(tk);
+            return if(tic.cache.get(cpptk).tag === CPPAssembly::Tag#Ref)
                 then CPPAssembly::Tag#Ref 
                 else CPPAssembly::Tag#Value;
         }, CPPAssembly::Tag#Value);
 
         %% TID does not matter here (these never are seen in runtime code)
+        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
         let synthetic_elist_tinfo = CPPAssembly::TypeInfo{ 0n, typesize, slotsize, ptrmask, cpptk, tag };
 
         return synthetic_elist_tinfo, ntic.updateCache(synthetic_elist_tinfo);
