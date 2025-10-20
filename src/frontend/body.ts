@@ -395,7 +395,10 @@ enum ExpressionTag {
     TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first (successful) completion wins
     TaskDashAnyExpression = "TaskDashAnyExpression", //run multiple explicitly identified tasks -- first completion (successful or failing) wins
     TaskRaceExpression = "TaskRaceExpression", //run the same task on all args in a list -- first (successful) completion wins
-    TaskRaceAnyExpression = "TaskRaceAnyExpression" //run the same task on all args in a list -- first completion (successful or failing) wins
+    TaskRaceAnyExpression = "TaskRaceAnyExpression", //run the same task on all args in a list -- first completion (successful or failing) wins
+
+    APIInvokeExpression = "APIInvokeExpression",
+    AgentInvokeExpression = "AgentInvokeExpression"
 }
 
 abstract class Expression {
@@ -1589,26 +1592,24 @@ class HoleExpression extends Expression {
     readonly captures: TypeSignature[];
     readonly explicittype: TypeSignature | undefined;
     readonly doccomment: string | undefined;
-    readonly ensures: ChkLogicExpression[];
     readonly samplesfile: string | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, hname: string | undefined, captures: TypeSignature[], explicittype: TypeSignature | undefined, doccomment: string | undefined, ensures: ChkLogicExpression[]) {
+    constructor(sinfo: SourceInfo, hname: string | undefined, captures: TypeSignature[], explicittype: TypeSignature | undefined, doccomment: string | undefined) {
         super(ExpressionTag.HoleExpression, sinfo);
         this.hname = hname;
         this.captures = captures;
         this.explicittype = explicittype;
         this.doccomment = doccomment;
-        this.ensures = ensures;
+        this.samplesfile = undefined;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const etype = this.explicittype ? ` : ${this.explicittype.emit()}` : "";
         let ebody = "";
-        if(this.doccomment !== undefined || this.ensures.length > 0 || this.samplesfile !== undefined) {
+        if(this.doccomment !== undefined || this.samplesfile !== undefined) {
             const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
-            const ensurestr = this.ensures.map((ens) => ` ensures ${ens.emit(fmt)};`).join("");
-            const samplstr = this.samplesfile !== undefined ? `example ${this.samplesfile};` : "";
-            ebody = ` { ${dcom}${ensurestr}${samplstr} }`;
+            const samplstr = this.samplesfile !== undefined ? `${this.samplesfile}` : "";
+            ebody = `(${dcom}$${samplstr})`;
         }
 
         return `?_[${this.captures.map((c) => c.emit()).join(", ")}]${etype}${ebody}`;
@@ -1831,7 +1832,7 @@ class TaskRaceExpression extends TaskInvokeExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.emit(fmt, "", "");
-        return `Task::race<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
+        return `Task::race<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>(${argl}, ${this.envexp.emit(fmt)})`;
     }
 }
 
@@ -1851,24 +1852,51 @@ class TaskRaceAnyExpression extends TaskInvokeExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.emit(fmt, "", "");
-        return `Task::raceAny<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
+        return `Task::raceAny<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>(${argl}, ${this.envexp.emit(fmt)})`;
     }
 }
 
-class HTTPOpExpression extends Expression {
-    xxxx;
-}
-
-class RESTInvokeExpression extends Expression {
-    xxxx;
-}
-
 class APIInvokeExpression extends Expression {
-    xxxx;
+    readonly api: string;
+    readonly args: ArgumentList;
+    readonly configs: {key: string, value: Expression}[];
+    readonly envexp: EnvironmentGenerationExpression;
+
+    constructor(sinfo: SourceInfo, api: string, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.APIInvokeExpression, sinfo);
+        this.api = api;
+        this.args = args;
+        this.envexp = envexp;
+        this.configs = configs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.emit(fmt, "", "");
+        return `api ${this.api}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}(${argl}, ${this.envexp.emit(fmt)})`;
+    }
 }
 
 class AgentInvokeExpression extends Expression {
-    xxxx;
+    readonly agent: string;
+    readonly optrestype: TypeSignature | undefined;
+    readonly args: ArgumentList;
+    readonly configs: {key: string, value: Expression}[];
+    readonly envexp: EnvironmentGenerationExpression;
+    
+    constructor(sinfo: SourceInfo, agent: string, optrestype: TypeSignature | undefined, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+        super(ExpressionTag.AgentInvokeExpression, sinfo);
+        this.agent = agent;
+        this.optrestype = optrestype;
+        this.args = args;
+        this.envexp = envexp;
+        this.configs = configs;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
+        const argl = this.args.emit(fmt, "", "");
+        return `agent ${this.agent}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}${restypeStr}(${argl}, ${this.envexp.emit(fmt)})`;
+    }
 }
 
 enum ChkLogicExpressionTag {
@@ -1933,7 +1961,7 @@ abstract class RValueExpression {
         this.tag = tag;
     }
 
-    abstract emit(fmt: CodeFormatter): string;
+    abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
 }
 
 abstract class ConditionalValueExpression extends RValueExpression {
@@ -1958,7 +1986,7 @@ abstract class ConditionalValueExpression extends RValueExpression {
         this.falseValue = falseValue;
     }
 
-    emit(fmt: CodeFormatter): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         const ttest = this.guardset.emit(fmt);
         return `${ttest} ? ${this.trueValue.emit(true, fmt)} : ${this.falseValue.emit(true, fmt)}`;
     }
@@ -1981,7 +2009,7 @@ class ShortCircuitAssignRHSExpressionFail extends ShortCircuitAssignRHSITestExpr
         super(RValueExpressionTag.ShortCircuitAssignRHSExpressionFail, exp, itest);
     }
 
-    emit(fmt: CodeFormatter): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.exp.emit(true, fmt)} @@${this.itest.emit(fmt)}`;
     }
 }
@@ -1994,7 +2022,7 @@ class ShortCircuitAssignRHSExpressionReturn extends ShortCircuitAssignRHSITestEx
         this.failexp = failexp;
     }
 
-    emit(fmt: CodeFormatter): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         if(this.failexp === undefined) {
             return `${this.exp.emit(true, fmt)} ?@${this.itest.emit(fmt)}`;
         }
@@ -2013,7 +2041,7 @@ class BaseRValueExpression extends RValueExpression {
         this.exp = exp;
     }
 
-    emit(fmt: CodeFormatter): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.exp.emit(true, fmt);
     }
 }
@@ -2031,7 +2059,6 @@ enum StatementTag {
     VariableAssignmentStatement = "VariableAssignmentStatement",
     VariableMultiAssignmentStatement = "VariableMultiAssignmentStatement",
 
-    VariableRetypeStatement = "VariableRetypeStatement",
     ReturnVoidStatement = "ReturnVoidStatement",
     ReturnSingleStatement = "ReturnSingleStatement",
     ReturnMultiStatement = "ReturnMultiStatement",
@@ -2041,6 +2068,7 @@ enum StatementTag {
     IfElifElseStatement = "IfElifElseStatement",
     SwitchStatement = "SwitchStatement",
     MatchStatement = "MatchStatement",
+    DispatchStatement = "DispatchStatement", //For handling Dash/Race return types, remember funny case of all failed -> _ where type of exp is Elist of failures
 
     AbortStatement = "AbortStatement",
     AssertStatement = "AssertStatement", //assert(x > 0)
@@ -2053,12 +2081,10 @@ enum StatementTag {
     ThisUpdateStatement = "ThisUpdateStatement",
     SelfUpdateStatement = "SelfUpdateStatement",
 
-    EnvironmentUpdateStatement = "EnvironmentUpdateStatement",
-    EnvironmentBracketStatement = "EnvironmentBracketStatement",
-
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
-
     TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do)
+
+    HoleStatement = "HoleStatement",
 
     BlockStatement = "BlockStatement"
 }
@@ -2141,7 +2167,7 @@ class VariableInitializationStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit()}`;
 
-        return `${this.vkind} ${this.name}${tt} = ${this.exp.emit(fmt)};`;
+        return `${this.vkind} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
     }
 }
 
@@ -2149,9 +2175,9 @@ class VariableMultiInitializationStatement extends Statement {
     readonly vkind: "var" | "ref" | "let";
     readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
     actualtypes: TypeSignature[] = [];
-    readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
+    readonly exp: RValueExpression | Expression[]; //could be a single expression of type EList or multiple expressions
 
-    constructor(sinfo: SourceInfo, vkind: "var" | "ref" | "let", decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, vkind: "var" | "ref" | "let", decls: {name: string, vtype: TypeSignature}[], exp: RValueExpression | Expression[]) {
         super(StatementTag.VariableMultiInitializationStatement, sinfo);
         this.vkind = vkind;
         this.decls = decls;
@@ -2178,16 +2204,16 @@ class VariableAssignmentStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.name} = ${this.exp.emit(fmt)};`;
+        return `${this.name} = ${this.exp.emit(true, fmt)};`;
     }
 }
 
 class VariableMultiAssignmentStatement extends Statement {
     readonly names: string[];
     vtypes: TypeSignature[] = [];
-    readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
+    readonly exp: RValueExpression | Expression[]; //could be a single expression of type EList or multiple expressions
 
-    constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, names: string[], exp: RValueExpression | Expression[]) {
         super(StatementTag.VariableMultiAssignmentStatement, sinfo);
         this.names = names;
         this.exp = exp;
@@ -2198,23 +2224,6 @@ class VariableMultiAssignmentStatement extends Statement {
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${ttname} = ${ttexp};`;
-    }
-}
-
-class VariableRetypeStatement extends Statement {
-    readonly name: string;
-    vtype: TypeSignature | undefined = undefined;
-    newvtype: TypeSignature | undefined = undefined;
-    readonly ttest: ITest;
-
-    constructor(sinfo: SourceInfo, name: string, ttest: ITest) {
-        super(StatementTag.VariableRetypeStatement, sinfo);
-        this.name = name;
-        this.ttest = ttest;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return `ref ${this.name}@${this.ttest.emit(fmt)};`;
     }
 }
 
@@ -2238,7 +2247,7 @@ class ReturnSingleStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `return ${this.value.emit(fmt)};`;
+        return `return ${this.value.emit(true, fmt)};`;
     }
 }
 
@@ -2572,6 +2581,10 @@ class TaskYieldStatement extends Statement {
     }
 }
 
+class HoleStatement extends Statement {
+    xxxx;
+}
+
 class BlockStatement extends Statement {
     readonly statements: Statement[];
     readonly isScoping: boolean;
@@ -2744,9 +2757,9 @@ export {
     RValueExpressionTag, RValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSITestExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, BaseRValueExpression,
     EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression,
     TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskDashAnyExpression, TaskAllExpression, TaskRaceExpression, TaskRaceAnyExpression,
+    APIInvokeExpression, AgentInvokeExpression,
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
-    VariableRetypeStatement,
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
