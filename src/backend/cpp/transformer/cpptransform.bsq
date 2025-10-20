@@ -183,7 +183,7 @@ entity FieldsInfo {
 
 namespace TypeInfoGenerator {
     const ptrmaskPointer: CString = '1';
-    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::From('') , CPPAssembly::Tag#Ref }; 
+    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::from('') , CPPAssembly::Tag#Ref }; 
 
     %% We may need to add special case for self-recursive concept
     function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
@@ -201,7 +201,7 @@ namespace TypeInfoGenerator {
                 return acc;
             }
 
-            let fieldslotsize = tic.cache.get(f).slotsize;
+            let fieldslotsize = tic.cache.get(f.tkeystr).slotsize;
             if(acc.1 + fieldslotsize > reftypeThreshold) {
                 return CPPAssembly::Tag#Ref, acc.1;
             }
@@ -216,7 +216,7 @@ namespace TypeInfoGenerator {
     function generateObjectSize(fields: List<CPPAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
-            if(ts?<CPPAssembly::EListTypeSignature> && !acc.1.elists.has(tk)) {
+            if(ts?<CPPAssembly::EListTypeSignature> && !acc.1.elists.has(ts.tkeystr)) {
                 ntic = acc.1.updateELists(ts.tkeystr, ts@<CPPAssembly::EListTypeSignature>);
             }
 
@@ -234,7 +234,7 @@ namespace TypeInfoGenerator {
 
     %% Might want to donk around with returning a tag here as all subtypes being of the same tag means
     %% the whole concept can have the same tag
-    function findLargestSubtype(e: CPPAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+    function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         return e.subtypes.reduce<CPPAssembly::TypeInfo, TypeInfoContext>(fn(acc, sub) => {
             let subtinfo, ntic = generateTypeInfo(sub, acc.1);
             if(subtinfo.slotsize > acc.0.slotsize) {
@@ -418,7 +418,7 @@ namespace TypeInfoGenerator {
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
             '2' + largesttinfo.ptrmask,  %% tag is not a pointer
-            cpptkey, 
+            cpptk, 
             CPPAssembly::Tag#Tagged 
         };
 
@@ -440,7 +440,7 @@ namespace TypeInfoGenerator {
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
             '2' + largesttinfo.ptrmask,  %% tag is not a pointer
-            cpptkey, 
+            cpptk, 
             CPPAssembly::Tag#Tagged 
         };
 
@@ -483,7 +483,7 @@ namespace TypeInfoGenerator {
                 return acc;
             }
 
-            return tic.cache.get(e).tag === CPPAssembly::Tag#Ref 
+            return if(tic.cache.get(e).tag === CPPAssembly::Tag#Ref)
                 then CPPAssembly::Tag#Ref 
                 else CPPAssembly::Tag#Value;
         }, CPPAssembly::Tag#Value);
@@ -525,7 +525,7 @@ namespace TypeInfoGenerator {
             return generateEListTypeInfo(bsqtk, tic);
         }
 
-        let e = bsqasm.lookupNominalTypeDeclaration(bsqtk);
+        let e = tic.bsqasm.lookupNominalTypeDeclaration(bsqtk);
         match(e)@ {
             | BSQAssembly::AbstractEntityTypeDecl =>  { return generateAbstractEntityTypeInfo($e, tic); }
             | BSQAssembly::AbstractConceptTypeDecl => { return generateAbstractConceptTypeInfo($e, tic); }        
