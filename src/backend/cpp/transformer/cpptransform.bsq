@@ -144,7 +144,7 @@ entity TypeInfoContext {
     field elists: Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>;
     field inProgress: List<CPPAssembly::TypeKey>;
 
-    field bsqasm: BSQAssembly;
+    field transformer: CPPTransformer;
     field tid: Nat;
 
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
@@ -214,13 +214,6 @@ namespace TypeInfoGenerator {
         return tag;
     }
 
-    %%
-    %% We have some issues with this list here, we use saturatedBField info often here (and elists),
-    %% hoever we just accept a typekey. There are also likely issues with how we handle the caching of 
-    %% elists as I think we can only cache a BSQAssembly::EListTypeSignature, not a cpp, so it might
-    %% be better to instead store bsqtk
-    %%
-
     function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
@@ -239,14 +232,11 @@ namespace TypeInfoGenerator {
         return fields.map<BSQAssembly::TypeSignature>(fn(f) => f.ftype);
     }
 
-    %%
-    %% So long as out IR passes remove unnecessary unused concepts with no concrete 
-    %% subtype this will work fine
-    %%
-
     %% Might want to donk around with returning a tag here as all subtypes being of the same tag means
     %% the whole concept can have the same tag
-    function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+    function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext 
+        requires !e.subtypes.empty(); 
+    {
         let base, ntic = generateTypeInfo(e.subtypes.front(), tic);
         return e.subtypes.reduce<(|CPPAssembly::TypeInfo, TypeInfoContext|)>(fn(acc, sub) => {
             let subtinfo, nntic = generateTypeInfo(sub, acc.1);
@@ -348,7 +338,7 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', e.oftype.tkeystr.value, '>'));
 
-        let treeinfo, ntic = generateTypeInfo[recursive](treetk, tic);
+        let treeinfo, ntic = generateTypeInfo(treetk, tic);
         let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptk, treeinfo.tag };
 
         return listinfo, ntic.updateCache(listinfo);
@@ -519,14 +509,16 @@ namespace TypeInfoGenerator {
             | BSQAssembly::CollectionTypeDecl =>           { return generateCollectionTypeInfo($e, tic); }
             | BSQAssembly::EnumTypeDecl =>                 { return generateEnumTypeInfo($e, tic); }
             | BSQAssembly::TypedeclStringOfTypeDecl =>     { return generateStringOfTypeInfo($e, tic); }
+            | _ =>                                         { abort; }
         }
     }
 
     function generateAbstractConceptTypeInfo(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
         match(e)@ {
-            | BSQAssembly::ConceptTypeDecl          => { return generateConceptTypeInfo($e, tic); }
-            | BSQAssembly::DatatypeTypeDecl         => { return generateDatatypeTypeInfo($e, tic); }
+            | BSQAssembly::ConceptTypeDecl =>          { return generateConceptTypeInfo($e, tic); }
+            | BSQAssembly::DatatypeTypeDecl =>         { return generateDatatypeTypeInfo($e, tic); }
             | BSQAssembly::PrimitiveConceptTypeDecl => { return generatePrimitiveConceptTypeInfo($e, tic); }
+            | _ =>                                     { abort; }
         }
     }
 
@@ -541,10 +533,11 @@ namespace TypeInfoGenerator {
             return generateEListTypeInfo(bsqtk, tic);
         }
 
-        let e = tic.bsqasm.lookupNominalTypeDeclaration(bsqtk);
+        let e = tic.transformer.bsqasm.lookupNominalTypeDeclaration(bsqtk);
         match(e)@ {
             | BSQAssembly::AbstractEntityTypeDecl =>  { return generateAbstractEntityTypeInfo($e, tic); }
-            | BSQAssembly::AbstractConceptTypeDecl => { return generateAbstractConceptTypeInfo($e, tic); }        
+            | BSQAssembly::AbstractConceptTypeDecl => { return generateAbstractConceptTypeInfo($e, tic); }
+            | _ =>                                    { abort; }
         }
     }
 }
@@ -2068,7 +2061,7 @@ entity CPPTransformer {
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
-                    List<CPPAssembly::TypeKey>{}, bsqasm, 1n }
+                    List<CPPAssembly::TypeKey>{}, transformer, 1n }
             );
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
