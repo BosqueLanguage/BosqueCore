@@ -150,7 +150,6 @@ entity TypeInfoContext {
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
         return this[
             cache = $cache.insert(ntinfo.typekey, ntinfo),
-            inProgress = $inProgress.remove(ntk), 
             tid = $tid + 1n
         ];
     }
@@ -296,7 +295,7 @@ namespace TypeInfoGenerator {
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
         let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return sometinfo, ntic.updateCache(sometinfo);
@@ -306,7 +305,7 @@ namespace TypeInfoGenerator {
     function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         
-        let finfo, ntic = generateFieldInfo(e.saturatedBFieldInfo, tic);
+        let finfo, ntic = generateObjectSize(e.saturatedBFieldInfo, tic);
         let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return metinfo, ntic.updateCache(metinfo);
@@ -332,7 +331,7 @@ namespace TypeInfoGenerator {
     %% Alias of Tree<T>
     function generateListTypeInfo(e: BSQAssembly::ListTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', $ant.oftype.tkeystr.value, '>'));
+        let treetk = BSQAssembly::TypeKey::from(CString::concat('ListOps::Tree<', e.oftype.tkeystr.value, '>'));
 
         let treeinfo, ntic = generateTypeInfo[recursive](treetk, tic);
         let listinfo = CPPAssembly::TypeInfo{ ntic.tid, treeinfo.typesize, treeinfo.slotsize, treeinfo.ptrmask, cpptk, treeinfo.tag };
@@ -343,8 +342,8 @@ namespace TypeInfoGenerator {
     %% Alias of Tree<K, V>
     function generateMapTypeInfo(e: BSQAssembly::MapTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        let e_ktype = $ant.ktype.tkeystr.value;
-        let e_vtype = $ant.vtype.tkeystr.value;
+        let e_ktype = e.ktype.tkeystr.value;
+        let e_vtype = e.vtype.tkeystr.value;
         let treetk = BSQAssembly::TypeKey::from(CString::concat('MapOps::Tree<', e_ktype, ', ', e_vtype, '>'));
 
         let treeinfo, ntic = generateTypeInfo(treetk, tic);
@@ -390,7 +389,7 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         let etdtinfo = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value };
-        return etdtinfo, tic.updateCache(cpptk, etdtinfo);
+        return etdtinfo, tic.updateCache(etdtinfo);
     }
     
     %% Alias of CRope (only handles case where we have `Type of CString` currently)
@@ -418,7 +417,7 @@ namespace TypeInfoGenerator {
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            '2' + largestInfo.ptrmask,  %% tag is not a pointer
+            '2' + largesttinfo.ptrmask,  %% tag is not a pointer
             cpptkey, 
             CPPAssembly::Tag#Tagged 
         };
@@ -427,7 +426,7 @@ namespace TypeInfoGenerator {
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
         if(tic.inProgress.has(cpptk)) {
             return selfRecursiveTypeInfo, tic;
         }
@@ -440,7 +439,7 @@ namespace TypeInfoGenerator {
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            '2' + largestInfo.ptrmask,  %% tag is not a pointer
+            '2' + largesttinfo.ptrmask,  %% tag is not a pointer
             cpptkey, 
             CPPAssembly::Tag#Tagged 
         };
@@ -449,14 +448,16 @@ namespace TypeInfoGenerator {
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
-        let oftinfo, ntic = generateTypeInfo($ant.oftype, tic);
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);       
+
+        let oftinfo, ntic = generateTypeInfo(e.oftype, tic);
         let ptrmask = CPPTransformNameManager::repeatCString('0', oftinfo.slotsize, '2');
-        let pcinfo = CPPAssembly::TypeInfo { 
-            nntic.tid, 
+        let pctinfo = CPPAssembly::TypeInfo { 
+            ntic.tid, 
             oftinfo.ptrmask.size() * slotSizeInBits,
             oftinfo.ptrmask.size(),
             oftinfo.ptrmask,
-            cpptkey, 
+            cpptk, 
             CPPAssembly::Tag#Tagged 
         };
 
@@ -477,7 +478,7 @@ namespace TypeInfoGenerator {
         let typesize = entriesinfo.typesize;
         let slotsize = entriesinfo.slotsize;
         let ptrmask = entriesinfo.ptrmask;
-        let tag = elist.reduce<CPPAssembly::Tag>(fn(acc, e) => {
+        let tag = elist.entries.reduce<CPPAssembly::Tag>(fn(acc, e) => {
             if(acc.0 === CPPAssembly::Tag#Ref) {
                 return acc;
             }
@@ -526,7 +527,7 @@ namespace TypeInfoGenerator {
 
         let e = bsqasm.lookupNominalTypeDeclaration(bsqtk);
         match(e)@ {
-            | BSQAssembly::AbstractEntityTypeDecl =>  { return generateAbstractConcreteTypeInfo($e, tic); }
+            | BSQAssembly::AbstractEntityTypeDecl =>  { return generateAbstractEntityTypeInfo($e, tic); }
             | BSQAssembly::AbstractConceptTypeDecl => { return generateAbstractConceptTypeInfo($e, tic); }        
         }
     }
