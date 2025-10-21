@@ -148,6 +148,16 @@ entity TypeInfoContext {
     field tid: Nat;
 
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
+        %%
+        %% Pretty sure this is a bandaid...
+        %% I believe we should aim for a design where this is not possible, 
+        %% no path should insert a type twice (or try to). Likely an issue of
+        %% the functionality of our inProgress list.
+        %%
+        if(this.cache.has(ntinfo.typekey)) {
+            return this;
+        }
+
         return this[
             cache = $cache.insert(ntinfo.typekey, ntinfo),
             tid = $tid + 1n
@@ -155,6 +165,9 @@ entity TypeInfoContext {
     }
 
     method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
+        if(this.elists.has(etk)) {
+            abort;
+        }
         return this[elists=$elists.insert(etk, elist)];
     }
 
@@ -183,7 +196,7 @@ entity FieldsInfo {
 
 namespace TypeInfoGenerator {
     const ptrmaskPointer: CString = '1';
-    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::from('') , CPPAssembly::Tag#Ref }; 
+    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Ref }; 
 
     %% We may need to add special case for self-recursive concept
     function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
@@ -202,7 +215,15 @@ namespace TypeInfoGenerator {
             }
 
             let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
-            let fieldslotsize = tic.cache.get(cpptk).slotsize;
+            
+            var fieldslotsize: Nat;
+            if(tic.inProgress.contains(cpptk)) {
+                fieldslotsize = selfRecursiveTypeInfo.slotsize;
+            }
+            else {
+                fieldslotsize = tic.cache.get(cpptk).slotsize;
+            }
+
             if(acc.1 + fieldslotsize > reftypeThreshold) {
                 return CPPAssembly::Tag#Ref, acc.1;
             }
@@ -217,11 +238,11 @@ namespace TypeInfoGenerator {
     function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
-            if(ts?<BSQAssembly::EListTypeSignature> && !acc.1.elists.has(ts.tkeystr)) {
-                ntic = acc.1.updateELists(ts.tkeystr, ts@<BSQAssembly::EListTypeSignature>);
+            if(ts?<BSQAssembly::EListTypeSignature> && !ntic.elists.has(ts.tkeystr)) {
+                ntic = ntic.updateELists(ts.tkeystr, ts@<BSQAssembly::EListTypeSignature>);
             }
 
-            let tinfo, nntic = generateTypeInfo(ts.tkeystr, acc.1);
+            let tinfo, nntic = generateTypeInfo(ts.tkeystr, ntic);
             let finfo = determineSizeAsField(tinfo);
 
             return acc.0.update(finfo), nntic;
@@ -280,18 +301,18 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         let converted = convertSaturatedFields(e.saturatedBFieldInfo);
-        let finfo, ntic = generateObjectSize(converted, tic);
-        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, tic) };
+        let finfo, ntic = generateObjectSize(converted, tic); 
+        var einfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, ntic) };
         
         return einfo, ntic.updateCache(einfo);
     }
-    
+
     function generateDatatypeMemberEntityTypeInfo(e: BSQAssembly::DatatypeMemberEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         let converted = convertSaturatedFields(e.saturatedBFieldInfo);   
-        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
-        var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, tic) };
+        let finfo, ntic = generateObjectSize(converted, tic);
+        var dmtinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, determineTag(converted, ntic) };
         
         return dmtinfo, ntic.updateCache(dmtinfo);       
     }
@@ -321,7 +342,7 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value };
-        return crittinfo, tic;
+        return crittinfo, tic.updateCache(crittinfo);
     }
     
     function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -476,6 +497,19 @@ namespace TypeInfoGenerator {
         }
     }
 
+    function determineEListTag(entries: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
+        return entries.reduce<CPPAssembly::Tag>(fn(acc, e) => {
+            if(acc === CPPAssembly::Tag#Ref) {
+                return acc;
+            }
+            
+            let cpptk = CPPTransformNameManager::convertTypeKey(e.tkeystr);
+            return if(tic.cache.get(cpptk).tag === CPPAssembly::Tag#Ref)
+                then CPPAssembly::Tag#Ref 
+                else CPPAssembly::Tag#Value;
+        }, CPPAssembly::Tag#Value);
+    }
+
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let elist = tic.elists.get(tk);
         let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
@@ -483,16 +517,7 @@ namespace TypeInfoGenerator {
         let typesize = entriesinfo.typesize;
         let slotsize = entriesinfo.slotsize;
         let ptrmask = entriesinfo.ptrmask;
-        let tag = elist.entries.reduce<CPPAssembly::Tag>(fn(acc, e) => {
-            if(acc === CPPAssembly::Tag#Ref) {
-                return acc;
-            }
-            
-            let cpptk = CPPTransformNameManager::convertTypeKey(tk);
-            return if(tic.cache.get(cpptk).tag === CPPAssembly::Tag#Ref)
-                then CPPAssembly::Tag#Ref 
-                else CPPAssembly::Tag#Value;
-        }, CPPAssembly::Tag#Value);
+        let tag = determineEListTag(elist.entries, ntic);
 
         %% TID does not matter here (these never are seen in runtime code)
         let cpptk = CPPTransformNameManager::convertTypeKey(tk);
