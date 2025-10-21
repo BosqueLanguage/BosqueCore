@@ -1492,14 +1492,14 @@ class NamespaceDeclaration {
     declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, tasks, agents
     declaredSubNSNames: Set<string> = new Set<string>();
     declaredConstNames: Set<string> = new Set<string>(); 
-    declaredFunctionNames: Set<string> = new Set<string>(); //function as name+TemplateFlag+refFlag+lambdaFlag
+    declaredFunctionNames: Set<string> = new Set<string>();
     declaredAPINames: Set<string> = new Set<string>();
     declaredAgentNames: Set<string> = new Set<string>();
 
     subns: NamespaceDeclaration[] = [];
 
     consts: NamespaceConstDecl[] = [];
-    functions: NamespaceFunctionDecl[] = [];
+    functions: NamespaceFunctionDecl[] = []; //function as name+TemplateFlag+refFlag+lambdaFlag
     typedecls: AbstractNominalTypeDecl[] = [];
 
     apis: APIDecl[] = [];
