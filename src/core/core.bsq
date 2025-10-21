@@ -415,7 +415,7 @@ __internal __typedeclable __keycomparable entity Path {
 }
 
 %** Primitive path item value. **%
-__internal __typedeclable __keycomparable entity PathItem {
+__internal __typedeclable __keycomparable entity PathFragment {
 }
 
 %** Primitive path glob value. **%

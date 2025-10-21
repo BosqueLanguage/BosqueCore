@@ -21,7 +21,7 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
       - ByteBuffer
       - String and CString
       - Regex and CRegex
-      - Path, PathItem, and Glob
+      - Path, PathFragment, and Glob
     2. Literal StringOf Expressions
     2. Literal Format String Expressions
     3. Literal Typed Expressions

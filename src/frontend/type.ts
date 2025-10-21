@@ -409,6 +409,27 @@ class FormatStringTypeSignature extends TypeSignature {
     }
 }
 
+class FormatPathTypeSignature extends TypeSignature {
+    readonly oftype: "Path" | "PathItem" | "PathGlob";
+    readonly rtype: TypeSignature;
+    readonly terms: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, oftype: "Path" | "PathItem" | "PathGlob", rtype: TypeSignature, terms: TypeSignature[]) {
+        super(sinfo, `F${oftype}<${[rtype, ...terms].map((tt) => tt.tkeystr).join(", ")}]>`);
+        this.oftype = oftype;
+        this.rtype = rtype;
+        this.terms = terms;
+    }
+
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), this.terms.map((tt) => tt.remapTemplateBindings(mapper)));
+    }
+
+    emit(): string {
+        return `F${this.oftype}<${[this.rtype, ...this.terms].map((tt) => tt.emit()).join(", ")}]>`;
+    }
+}
+
 export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
@@ -416,5 +437,5 @@ export {
     EListTypeSignature,
     DashResultTypeSignature,
     RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature,
-    FormatStringTypeSignature
+    FormatStringTypeSignature, FormatPathTypeSignature
 };

@@ -53,6 +53,7 @@ const TokenStrings = {
 
     Regex: "[LITERAL_REGEX]",
     PathItem: "[LITERAL_PATH_ITEM]",
+    FormatPathItem: "[LITERAL_FORMAT_PATH_ITEM]",
 
     TZDateTime: "[LITERAL_TZTIME]",
     TAITime: "[LITERAL_TAI_TIME]",
@@ -84,7 +85,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
     "CCharBuffer", "UnicodeCharBuffer",
     "String", "CString",
     "Regex", "CRegex",
-    "Path", "PathItem", "Glob"
+    "Path", "PathFragment", "Glob"
 ];
 
 class Token {
@@ -777,22 +778,22 @@ class Lexer {
     }
 
     private static _s_pathRe = /[$]?[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /[<]/y;
     private tryLexPath() {
-        Lexer._s_pathRe.lastIndex = this.jsStrPos;
+        let ncpos = this.jsStrPos;
+        let istemplate = false;
+        if(this.input.startsWith("$", this.jsStrPos)) {
+            ncpos += 1;
+            istemplate = true;
+        }
+
+        Lexer._s_pathRe.lastIndex = ncpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
         if(mpth !== null) {
-            let jepos = this.jsStrPos + mpth[0].length;
+            let jepos = ncpos + mpth[0].length;
             let pthval = mpth[0];
-
-            Lexer._s_literalPathTagRE.lastIndex = jepos;
-            const mtag = Lexer._s_literalPathTagRE.exec(this.input);
-            if(mtag !== null) {
-                pthval += "[T]";
-            }
-
+            
             this.updatePositionInfo(this.jsStrPos, jepos);
-            this.recordLexTokenWData(jepos, TokenStrings.PathItem, pthval);
+            this.recordLexTokenWData(jepos, istemplate ? TokenStrings.FormatPathItem : TokenStrings.PathItem, pthval);
             return true;
         }
 

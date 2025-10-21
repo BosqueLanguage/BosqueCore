@@ -323,8 +323,12 @@ enum ExpressionTag {
     LiteralFormatCStringExpression = "LiteralFormatCStringExpression",
 
     LiteralPathExpression = "LiteralPathExpression",
-    LiteralPathItemExpression = "LiteralPathItemExpression",
+    LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
     LiteralGlobExpression = "LiteralGlobExpression",
+
+    LiteralFormatPathExpression = "LiteralFormatPathExpression",
+    LiteralFormatPathFragmentExpression = "LiteralFormatPathFragmentExpression",
+    LiteralFormatGlobExpression = "LiteralFormatGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
@@ -332,6 +336,8 @@ enum ExpressionTag {
     LiteralTypedCStringExpression = "LiteralTypedCStringExpression",
     LiteralTypedFormatStringExpression = "LiteralTypedFormatStringExpression",
     LiteralTypedFormatCStringExpression = "LiteralTypedFormatCStringExpression",
+
+    //TODO: we probably want typed versions of paths and format paths as well (not sure about fragments and globs)
 
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
@@ -555,6 +561,32 @@ class LiteralFormatCStringExpression extends Expression {
 
 class LiteralRegexExpression extends Expression {
     readonly value: string;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
+        this.value = value;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralPathItemExpression extends Expression {
+    readonly value: string; //path, fragment, or glob (as in source)
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
+        this.value = value;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.value;
+    }
+}
+
+class LiteralFormatPathItemExpression extends Expression {
+    readonly value: string; //path, fragment, or glob (as in source)
 
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
@@ -2746,6 +2778,7 @@ export {
     LiteralNoneExpression, LiteralSimpleExpression, 
     LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression,
     LiteralRegexExpression,
+    LiteralPathItemExpression, LiteralFormatPathItemExpression,
     LiteralTypeDeclValueExpression,
     LiteralTypedCStringExpression, LiteralTypedStringExpression, LiteralTypedFormatStringExpression, LiteralTypedFormatCStringExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression, TaskCheckTerminateCaseExpression,

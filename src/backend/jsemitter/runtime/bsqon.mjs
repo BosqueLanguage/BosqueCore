@@ -62,7 +62,7 @@ const s_coreTypes = {
     "CRegex": true, 
     "PathRegex": true,
     "Path": true, 
-    "PathItem": true, 
+    "PathFragment": true, 
     "Glob": true
 };
 
@@ -116,6 +116,7 @@ const TokenStrings = {
     CString: "[LITERAL_EX_STRING]",
 
     Regex: "[LITERAL_REGEX]",
+
     PathItem: "[LITERAL_PATH_ITEM]",
     PathTemplateItem: "[LITERAL_TEMPLATE_PATH_ITEM]",
 
@@ -1282,8 +1283,8 @@ BSQONParser.prototype.parsePath = function() {
  * @returns {any}
  * @throws {ParserError}
  */
-BSQONParser.prototype.parsePathItem = function() {
-    NOT_IMPLEMENTED("parsePathItem");
+BSQONParser.prototype.parsePathFragment = function() {
+    NOT_IMPLEMENTED("parsePathFragment");
 }
 /**
  * @returns {any}
@@ -1403,8 +1404,8 @@ BSQONParser.prototype.parseValuePrimitive = function(tkey) {
     else if(tkey === "Path") {
         return this.parsePath();
     }
-    else if(tkey === "PathItem") {
-        return this.parsePathItem();
+    else if(tkey === "PathFragment") {
+        return this.parsePathFragment();
     }
     else if(tkey === "Glob") {
         return this.parseGlob();
@@ -2083,8 +2084,8 @@ BSQONEmitter.prototype.emitPath = function(v) {
  * @param {any} v
  * @returns {string}
  */
-BSQONEmitter.prototype.emitPathItem = function(v) {
-    NOT_IMPLEMENTED("emitPathItem");
+BSQONEmitter.prototype.emitPathFragment = function(v) {
+    NOT_IMPLEMENTED("emitPathFragment");
 }
 /**
  * @param {any} v
@@ -2204,8 +2205,8 @@ BSQONEmitter.prototype.emitValuePrimitive = function(tkey, v) {
     else if(tkey === "Path") {
         return this.emitPath(v);
     }
-    else if(tkey === "PathItem") {
-        return this.emitPathItem(v);
+    else if(tkey === "PathFragment") {
+        return this.emitPathFragment(v);
     }
     else if(tkey === "Glob") {
         return this.emitGlob(v);
