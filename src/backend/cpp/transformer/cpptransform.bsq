@@ -142,18 +142,16 @@ namespace CPPTransformNameManager {
 entity TypeInfoContext {
     field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
     field elists: Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>;
-    field inProgress: List<CPPAssembly::TypeKey>;
+    field inProgress: Map<CPPAssembly::TypeKey, None>;
 
     field transformer: CPPTransformer;
     field tid: Nat;
 
+    %%
+    %% Not sure how I feel about these short-circuit returns...
+    %%
+
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
-        %%
-        %% Pretty sure this is a bandaid...
-        %% I believe we should aim for a design where this is not possible, 
-        %% no path should insert a type twice (or try to). Likely an issue of
-        %% the functionality of our inProgress list.
-        %%
         if(this.cache.has(ntinfo.typekey)) {
             return this;
         }
@@ -166,17 +164,26 @@ entity TypeInfoContext {
 
     method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
         if(this.elists.has(etk)) {
-            abort;
+            return this;
         }
+
         return this[elists=$elists.insert(etk, elist)];
     }
 
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.pushBack(tkey)];
+        if(this.inProgress.has(tkey)) {
+            return this;
+        }
+
+        return this[inProgress = $inProgress.insert(tkey, none)];
     }
 
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.popBack().1];
+        if(!this.inProgress.has(tkey)) {
+            return this;
+        }
+
+        return this[inProgress = $inProgress.delete(tkey)];
     }
 }
 
@@ -217,11 +224,16 @@ namespace TypeInfoGenerator {
             let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
             
             var fieldslotsize: Nat;
-            if(tic.inProgress.contains(cpptk)) {
+            if(tic.inProgress.has(cpptk)) {
                 fieldslotsize = selfRecursiveTypeInfo.slotsize;
             }
             else {
-                fieldslotsize = tic.cache.get(cpptk).slotsize;
+                %%
+                %% OOf.... I dont like this!
+                %% I think this approach is forced, so lets probably return a tic too
+                %%
+
+                fieldslotsize = generateTypeInfo(f.tkeystr, tic).0.slotsize;
             }
 
             if(acc.1 + fieldslotsize > reftypeThreshold) {
@@ -261,6 +273,8 @@ namespace TypeInfoGenerator {
         let base, ntic = generateTypeInfo(e.subtypes.front(), tic);
         return e.subtypes.reduce<(|CPPAssembly::TypeInfo, TypeInfoContext|)>(fn(acc, sub) => {
             let subtinfo, nntic = generateTypeInfo(sub, acc.1);
+            
+            %% Need to handle ref case (8 bytes)
             if(subtinfo.slotsize > acc.0.slotsize) {
                 return subtinfo, nntic; 
             }
@@ -269,6 +283,24 @@ namespace TypeInfoGenerator {
             }
         }, (|base, ntic|));
     }
+
+    %% Alias of UnicodeRope
+    function generateStringTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+        let urtinfo, ntic = generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic);
+        let stinfo = CPPAssembly::TypeInfo{ ntic.tid, urtinfo.typesize, urtinfo.slotsize, urtinfo.ptrmask, cpptk, urtinfo.tag };
+
+        return stinfo, ntic.updateCache(stinfo);
+    } 
+
+    %% Alias of CRope
+    function generateCStringTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+        let crtinfo, ntic = generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic);
+        let cstinfo = CPPAssembly::TypeInfo{ ntic.tid, crtinfo.typesize, crtinfo.slotsize, crtinfo.ptrmask, cpptk, crtinfo.tag };
+        
+        return cstinfo, ntic.updateCache(cstinfo);
+    } 
 
     %% This may not be the most elagant solution but should work fine
     function generatePrimitiveTypeInfo(e: BSQAssembly::PrimitiveEntityTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -287,8 +319,8 @@ namespace TypeInfoGenerator {
             | 'CCharBuffer'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 16n, 2n, '00', cpptk, CPPAssembly::Tag#Value }; }
             | 'UnicodeChar'<BSQAssembly::TypeKey> =>       { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
             | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptk, CPPAssembly::Tag#Value }; }
-            | 'CString'<BSQAssembly::TypeKey> =>           { return generateTypeInfo(BSQAssembly::TypeKey::from('CRope'), tic); }
-            | 'String'<BSQAssembly::TypeKey> =>            { return generateTypeInfo(BSQAssembly::TypeKey::from('UnicodeRope'), tic); }
+            | 'CString'<BSQAssembly::TypeKey> =>           { return generateCStringTypeInfo(e, tic); }
+            | 'String'<BSQAssembly::TypeKey> =>            { return generateStringTypeInfo(e, tic); }
             | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
             | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
             | _ =>                                         { abort; }
@@ -431,10 +463,6 @@ namespace TypeInfoGenerator {
     %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        if(tic.inProgress.contains(cpptk)) {
-            return selfRecursiveTypeInfo, tic;
-        }
-
         var ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
         let nnntic = nntic.unmarkInProgress(cpptk);
@@ -453,10 +481,6 @@ namespace TypeInfoGenerator {
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        if(tic.inProgress.contains(cpptk)) {
-            return selfRecursiveTypeInfo, tic;
-        }
-
         let ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
         let nnntic = nntic.unmarkInProgress(cpptk);
@@ -480,9 +504,9 @@ namespace TypeInfoGenerator {
         let ptrmask = CPPTransformNameManager::repeatCString('0', oftinfo.slotsize, '2');
         let pctinfo = CPPAssembly::TypeInfo { 
             ntic.tid, 
-            oftinfo.ptrmask.size() * slotSizeInBits,
-            oftinfo.ptrmask.size(),
-            oftinfo.ptrmask,
+            ptrmask.size() * slotSizeInBits,
+            ptrmask.size(),
+            ptrmask,
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
@@ -504,13 +528,23 @@ namespace TypeInfoGenerator {
             }
             
             let cpptk = CPPTransformNameManager::convertTypeKey(e.tkeystr);
-            return if(tic.cache.get(cpptk).tag === CPPAssembly::Tag#Ref)
+
+            %%
+            %% Again. dont love doing this...
+            %%
+
+            let tag = generateTypeInfo(e.tkeystr, tic).0.tag;
+            return if(tag === CPPAssembly::Tag#Ref)
                 then CPPAssembly::Tag#Ref 
                 else CPPAssembly::Tag#Value;
         }, CPPAssembly::Tag#Value);
     }
 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        if(!tic.elists.has(tk)) {
+            abort;
+        }
+
         let elist = tic.elists.get(tk);
         let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
 
@@ -554,7 +588,10 @@ namespace TypeInfoGenerator {
             return tic.cache.get(cpptk), tic;
         }
 
-        %% For elist typekeys we might be able to do something like 
+        if(tic.inProgress.has(cpptk)) {
+            return selfRecursiveTypeInfo, tic;
+        }
+
         if(bsqtk.value.startsWithString('(|') && bsqtk.value.endsWithString('|)')) {
             return generateEListTypeInfo(bsqtk, tic);
         }
@@ -2087,7 +2124,7 @@ entity CPPTransformer {
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
-                    List<CPPAssembly::TypeKey>{}, transformer, 1n }
+                    Map<CPPAssembly::TypeKey, None>{}, transformer, 1n }
             );
 
         let generated_typeinfos_abstract = bsqasm.allabstracttypes
