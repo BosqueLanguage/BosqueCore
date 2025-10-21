@@ -34,7 +34,7 @@ function runSMTExtractor(smtfile, targettype, typeinfo, flag) {
 
 function parseExtractorOutput(output) {
   const lines = output.split("\n");
-  const result = { value: "", bsq_t: "" };
+  const result = { value: "", types: [] };
 
   const types = [];
 

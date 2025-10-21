@@ -13,6 +13,7 @@ const prefix =
 '\n' +
 'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
 'import { _$setnone_lit, _$parsemap, _$emitmap, _$parseBSQON, _$emitBSQON } from "./bsqon.mjs";\n' +
+'import { _$extractMock } from "./smtextract.mjs";\n' +
 '\n'
 ;
 
@@ -2363,8 +2364,9 @@ class JSEmitter {
             bop = `state`;
         }
 		else if(bname == "s_mockService"){
-			preop = `var extracted = runSMTExtractor(../smtout/formula.smt2,./targettype.json,./typeinfo.json,-m);
-					 var val = _$parseBSQON(extracted.type,extracted.value);`;
+			preop = `var extracted = _$extractMock();
+					 var val = _$parseBSQON(extracted.types,extracted.value)[0];
+					 `;
 			bop = `val`;
 		}
         else {
