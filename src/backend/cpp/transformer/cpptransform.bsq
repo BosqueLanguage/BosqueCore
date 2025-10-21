@@ -205,7 +205,6 @@ namespace TypeInfoGenerator {
     const ptrmaskPointer: CString = '1';
     const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Ref }; 
 
-    %% We may need to add special case for self-recursive concept
     function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
         if(tinfo.tag === CPPAssembly::Tag#Ref) {
             return FieldsInfo{ 1n * slotSizeInBits, 1n, ptrmaskPointer };
@@ -236,7 +235,9 @@ namespace TypeInfoGenerator {
                 fieldslotsize = generateTypeInfo(f.tkeystr, tic).0.slotsize;
             }
 
-            if(acc.1 + fieldslotsize > reftypeThreshold) {
+            %% We can just check the pointer mask here for a '1'! If it contains a '1' then we need to make 
+            %% type containing it ref
+            if(acc.1 + fieldslotsize > reftypeThreshold || ) {
                 return CPPAssembly::Tag#Ref, acc.1;
             }
             else {
@@ -275,7 +276,11 @@ namespace TypeInfoGenerator {
             let subtinfo, nntic = generateTypeInfo(sub, acc.1);
             
             %% Need to handle ref case (8 bytes)
-            if(subtinfo.slotsize > acc.0.slotsize) {
+            let slotsize = if(subtinfo.tag === CPPAssembly::Tag#Ref)
+                then 1n 
+                else subtinfo.slotsize;
+
+            if(slotsize > acc.0.slotsize) {
                 return subtinfo, nntic; 
             }
             else {
@@ -348,22 +353,24 @@ namespace TypeInfoGenerator {
         
         return dmtinfo, ntic.updateCache(dmtinfo);       
     }
-    
-    %% I could see this not being totally correct
+
+    %% We are not properly reflecting fields here (or in general) when they are ref 
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
+        %% Meh
+        let t = List<BSQAssembly::TypeSignature>{e.oftype};
+        let finfo, ntic = generateObjectSize(t, tic);
         let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return sometinfo, ntic.updateCache(sometinfo);
     }
 
-    %% If Ktype and Vtype are not in saturatedBField info this does NOT work
     function generateMapEntryTypeInfo(e: BSQAssembly::MapEntryTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
-        
-        let finfo, ntic = generateObjectSize(convertSaturatedFields(e.saturatedBFieldInfo), tic);
+
+        let kv = List<BSQAssembly::TypeSignature>{ e.ktype, e.vtype };
+        let finfo, ntic = generateObjectSize(kv, tic);
         let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
         return metinfo, ntic.updateCache(metinfo);
