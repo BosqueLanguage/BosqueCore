@@ -2,6 +2,8 @@ namespace CPPEmitter;
 
 const reftypeThreshold: Nat = 4n;
 const slotSizeInBits: Nat = 8n;
+const ptrmaskPointer: CString = '1';
+const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, ptrmaskPointer, CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Ref }; 
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -151,6 +153,22 @@ entity TypeInfoContext {
     %% Not sure how I feel about these short-circuit returns...
     %%
 
+    method has(tk: CPPAssembly::TypeKey): Bool {
+        return this.cache.has(tk) || this.inProgress.has(tk);
+    }
+
+    method get(tk: CPPAssembly::TypeKey): CPPAssembly::TypeInfo {
+        if(this.cache.has(tk)) {
+            return this.cache.get(tk);
+        }
+        elif(this.inProgress.has(tk)) {
+            return selfRecursiveTypeInfo;
+        }
+        else {
+            abort;
+        }
+    }
+
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
         if(this.cache.has(ntinfo.typekey)) {
             return this;
@@ -202,9 +220,6 @@ entity FieldsInfo {
 }
 
 namespace TypeInfoGenerator {
-    const ptrmaskPointer: CString = '1';
-    const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, '0', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Ref }; 
-
     function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
         if(tinfo.tag === CPPAssembly::Tag#Ref) {
             return FieldsInfo{ 1n * slotSizeInBits, 1n, ptrmaskPointer };
@@ -214,38 +229,41 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function determineTag(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
-        let tag = fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
-            if(acc.0 === CPPAssembly::Tag#Ref) {
-                return acc;
-            }
+    function isSimpleType(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): Bool {
+        return tic.transformer.bsqasm.isPrimtitiveType(tk) || tic.transformer.bsqasm.enums.has(tk);
+    }
 
-            let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
+    %% New types will be discovered in previous call to generateObjectSize so no need to return context
+    recursive? function determineTagHelper(fields: List<BSQAssembly::TypeSignature>, sizeacc: Nat, tic: TypeInfoContext): CPPAssembly::Tag, Nat {
+        return fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
+            let currentTag, currentSize = acc;
             
-            var fieldslotsize: Nat;
-            if(tic.inProgress.has(cpptk)) {
-                fieldslotsize = selfRecursiveTypeInfo.slotsize;
+            if(currentTag === CPPAssembly::Tag#Ref) {
+                return currentTag, currentSize;
+            }
+            
+            if(f)@<BSQAssembly::EListTypeSignature> {
+                return determineTagHelper[recursive]($f.entries, currentSize, tic);
+            }
+
+            let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr); 
+            let ftinfo: CPPAssembly::TypeInfo = tic.get(cpptk); 
+            let fieldSlots = if(ftinfo.tag === CPPAssembly::Tag#Ref) 
+                then 1n 
+                else ftinfo.slotsize;
+
+            let newSize = currentSize + fieldSlots;
+            if(newSize > reftypeThreshold || isSimpleType(f.tkeystr, tic)) {
+                return CPPAssembly::Tag#Ref, newSize;
             }
             else {
-                %%
-                %% OOf.... I dont like this!
-                %% I think this approach is forced, so lets probably return a tic too
-                %%
-
-                fieldslotsize = generateTypeInfo(f.tkeystr, tic).0.slotsize;
+                return currentTag, newSize;
             }
+        }, (|CPPAssembly::Tag#Value, 0n|));
+    }
 
-            %% We can just check the pointer mask here for a '1'! If it contains a '1' then we need to make 
-            %% type containing it ref
-            if(acc.1 + fieldslotsize > reftypeThreshold || ) {
-                return CPPAssembly::Tag#Ref, acc.1;
-            }
-            else {
-                return acc.0, acc.1 + fieldslotsize;
-            }
-        }, (|CPPAssembly::Tag#Value, 0n|)).0;
-
-        return tag;
+    function determineTag(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
+        return determineTagHelper(fields, 0n, tic).0;
     }
 
     function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
@@ -470,15 +488,18 @@ namespace TypeInfoGenerator {
     %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
         var ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
         let nnntic = nntic.unmarkInProgress(cpptk);
+
+        let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
         let concepttinfo = CPPAssembly::TypeInfo { 
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            CString::concat('2', largesttinfo.ptrmask),
+            ptrmask,
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
@@ -488,15 +509,18 @@ namespace TypeInfoGenerator {
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
         let ntic = tic.markInProgress(cpptk);
         let largesttinfo, nntic = findLargestSubtype(e, ntic);
         let nnntic = nntic.unmarkInProgress(cpptk);
+
+        let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
         let datatypetinfo = CPPAssembly::TypeInfo { 
             nnntic.tid, 
             8n + largesttinfo.typesize,  %% tag + largest subtype
             largesttinfo.slotsize + 1n,  %% +1 for tag
-            CString::concat('2', largesttinfo.ptrmask),  %% tag is not a pointer
+            ptrmask,
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
@@ -591,14 +615,9 @@ namespace TypeInfoGenerator {
 
     function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
         let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
-        if(tic.cache.has(cpptk)) {
-            return tic.cache.get(cpptk), tic;
+        if(tic.has(cpptk)) {
+            return tic.get(cpptk), tic;
         }
-
-        if(tic.inProgress.has(cpptk)) {
-            return selfRecursiveTypeInfo, tic;
-        }
-
         if(bsqtk.value.startsWithString('(|') && bsqtk.value.endsWithString('|)')) {
             return generateEListTypeInfo(bsqtk, tic);
         }
