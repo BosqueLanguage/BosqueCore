@@ -6,6 +6,8 @@ import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorT
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const prefix = 
 '"use strict";\n' +
@@ -16,6 +18,10 @@ const prefix =
 'import { _$extractMock } from "./smtextract.mjs";\n' +
 '\n'
 ;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const bosque_dir: string = path.join(__dirname, "../../../../");
+const smtextractor_path = path.join(bosque_dir,"build/include/z3/bin/smtextract");
 
 class JSEmitter {
     readonly assembly: Assembly;
@@ -2364,7 +2370,7 @@ class JSEmitter {
             bop = `state`;
         }
 		else if(bname == "s_mockService"){
-			preop = `var extracted = _$extractMock();
+			preop = `var extracted = _$extractMock("${smtextractor_path}");
 					 var val = _$parseBSQON(extracted.types,extracted.value)[0];`;
 			bop = `val`;
 		}

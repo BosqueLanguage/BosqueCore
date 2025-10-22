@@ -2,8 +2,8 @@ import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-function runSMTExtractor(smtfile, targettype, typeinfo, flag) {
-  const result = spawnSync("/home/karidus/work/BSQON/build/output/smtextract", [
+function runSMTExtractor(smtextractor_path,smtfile, targettype, typeinfo, flag) {
+  const result = spawnSync(smtextractor_path, [
     smtfile,
     targettype,
     typeinfo,
@@ -78,15 +78,16 @@ function scanDirectoryForMockMeta(base_dir) {
   return mock_meta;
 }
 
-export function _$extractMock() {
+export function _$extractMock(smtextractor_path) {
   const files = scanDirectoryForMockMeta(".");
 
   try {
     const output = runSMTExtractor(
-      files.smtfile,
-      files.targettype,
-      files.typeinfo,
-      files.flag
+		smtextractor_path,
+		files.smtfile,
+		files.targettype,
+		files.typeinfo,
+		files.flag
     );
 
     return parseExtractorOutput(output);
