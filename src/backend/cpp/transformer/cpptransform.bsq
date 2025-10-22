@@ -3,7 +3,7 @@ namespace CPPEmitter;
 const reftypeThreshold: Nat = 4n;
 const slotSizeInBits: Nat = 8n;
 const ptrmaskPointer: CString = '1';
-const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 8n, 1n, ptrmaskPointer, CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Ref }; 
+const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, '20', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Tagged }; 
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -149,10 +149,6 @@ entity TypeInfoContext {
     field transformer: CPPTransformer;
     field tid: Nat;
 
-    %%
-    %% Not sure how I feel about these short-circuit returns...
-    %%
-
     method has(tk: CPPAssembly::TypeKey): Bool {
         return this.cache.has(tk) || this.inProgress.has(tk);
     }
@@ -170,37 +166,30 @@ entity TypeInfoContext {
     }
 
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
-        if(this.cache.has(ntinfo.typekey)) {
-            return this;
+        %% Generating typeinfo for self-recursive concepts may generate temporary typeinfo
+        if(this.cache.has(ntinfo.typekey)) { 
+            return this[
+                cache = $cache.delete(ntinfo.typekey).insert(ntinfo.typekey, ntinfo),
+                tid = $tid + 1n
+            ];
         }
-
-        return this[
-            cache = $cache.insert(ntinfo.typekey, ntinfo),
-            tid = $tid + 1n
-        ];
+        else {
+            return this[
+                cache = $cache.insert(ntinfo.typekey, ntinfo),
+                tid = $tid + 1n
+            ];
+        }
     }
 
     method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
-        if(this.elists.has(etk)) {
-            return this;
-        }
-
         return this[elists=$elists.insert(etk, elist)];
     }
 
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        if(this.inProgress.has(tkey)) {
-            return this;
-        }
-
         return this[inProgress = $inProgress.insert(tkey, none)];
     }
 
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        if(!this.inProgress.has(tkey)) {
-            return this;
-        }
-
         return this[inProgress = $inProgress.delete(tkey)];
     }
 }
@@ -229,37 +218,32 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function isSimpleType(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): Bool {
+    function isSimpleType(tk: BSQAssembly::TypeKey, tag: CPPAssembly::Tag, tic: TypeInfoContext): Bool {
         return tic.transformer.bsqasm.isPrimtitiveType(tk) || tic.transformer.bsqasm.enums.has(tk);
     }
 
     %% New types will be discovered in previous call to generateObjectSize so no need to return context
-    recursive? function determineTagHelper(fields: List<BSQAssembly::TypeSignature>, sizeacc: Nat, tic: TypeInfoContext): CPPAssembly::Tag, Nat {
+    recursive? function determineTagHelper(fields: List<BSQAssembly::TypeSignature>, idx: Nat, tic: TypeInfoContext): CPPAssembly::Tag, Nat {
         return fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
-            let currentTag, currentSize = acc;
-            
+            let currentTag, currentIdx = acc;
             if(currentTag === CPPAssembly::Tag#Ref) {
-                return currentTag, currentSize;
+                return currentTag, currentIdx + 1n;
             }
             
             if(f)@<BSQAssembly::EListTypeSignature> {
-                return determineTagHelper[recursive]($f.entries, currentSize, tic);
+                return determineTagHelper[recursive]($f.entries, currentIdx, tic);
             }
 
             let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr); 
-            let ftinfo: CPPAssembly::TypeInfo = tic.get(cpptk); 
-            let fieldSlots = if(ftinfo.tag === CPPAssembly::Tag#Ref) 
-                then 1n 
-                else ftinfo.slotsize;
+            let ftinfo = tic.get(cpptk); 
 
-            let newSize = currentSize + fieldSlots;
-            if(newSize > reftypeThreshold || isSimpleType(f.tkeystr, tic)) {
-                return CPPAssembly::Tag#Ref, newSize;
+            if(currentIdx > reftypeThreshold || !isSimpleType(f.tkeystr, ftinfo.tag, tic)) {
+                return CPPAssembly::Tag#Ref, currentIdx + 1n;
             }
             else {
-                return currentTag, newSize;
+                return currentTag, currentIdx + 1n;
             }
-        }, (|CPPAssembly::Tag#Value, 0n|));
+        }, (|CPPAssembly::Tag#Value, idx|));
     }
 
     function determineTag(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
@@ -286,25 +270,26 @@ namespace TypeInfoGenerator {
 
     %% Might want to donk around with returning a tag here as all subtypes being of the same tag means
     %% the whole concept can have the same tag
-    function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext 
+    function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): FieldsInfo, TypeInfoContext 
         requires !e.subtypes.empty(); 
     {
-        let base, ntic = generateTypeInfo(e.subtypes.front(), tic);
-        return e.subtypes.reduce<(|CPPAssembly::TypeInfo, TypeInfoContext|)>(fn(acc, sub) => {
-            let subtinfo, nntic = generateTypeInfo(sub, acc.1);
-            
-            %% Need to handle ref case (8 bytes)
-            let slotsize = if(subtinfo.tag === CPPAssembly::Tag#Ref)
-                then 1n 
-                else subtinfo.slotsize;
+        let basetinfo, ntic = generateTypeInfo(e.subtypes.front(), tic);
+        let fieldbase = determineSizeAsField(basetinfo);
+        return e.subtypes.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, sub) => {
+            let largestSubType, currentTic = acc;            
 
-            if(slotsize > acc.0.slotsize) {
-                return subtinfo, nntic; 
+            let subtinfo, nntic = generateTypeInfo(sub, currentTic);
+            let currentType = determineSizeAsField(subtinfo);
+            let currentSlotSize = currentType.slotsize;
+            let largestSlotSize = largestSubType.slotsize;
+
+            if(currentSlotSize > largestSlotSize) {
+                return currentType, nntic; 
             }
             else {
-                return acc.0, nntic;
+                return largestSubType, nntic;
             }
-        }, (|base, ntic|));
+        }, (|fieldbase, ntic|));
     }
 
     %% Alias of UnicodeRope
@@ -372,12 +357,10 @@ namespace TypeInfoGenerator {
         return dmtinfo, ntic.updateCache(dmtinfo);       
     }
 
-    %% We are not properly reflecting fields here (or in general) when they are ref 
     function generateSomeTypeInfo(e: BSQAssembly::SomeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        %% Meh
-        let t = List<BSQAssembly::TypeSignature>{e.oftype};
+        let t = List<BSQAssembly::TypeSignature>{ e.oftype };
         let finfo, ntic = generateObjectSize(t, tic);
         let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, CPPAssembly::Tag#Value }; 
 
