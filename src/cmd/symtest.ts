@@ -423,7 +423,7 @@ function runSMTExtractor(assembly: Assembly,smtfile: string): string {
 
 	let extracted_val = ""
 	try {
-		extracted_val = execSync(`${smtextractor_bin} ${smtfile} ${path.join(json_dir,"targettype.json")} ${path.join(json_dir,"typeinfo.json")} --mock`,
+		extracted_val = execSync(`${smtextractor_bin} ${smtfile} ${path.join(json_dir,"targettype.json")} ${path.join(json_dir,"typeinfo.json")} --test`,
 			{encoding: 'utf8'}).toString().trim();
 	}
 	catch(e) {

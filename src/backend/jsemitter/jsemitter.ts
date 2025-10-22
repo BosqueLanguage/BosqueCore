@@ -6,6 +6,8 @@ import { AbstractCollectionTypeDecl, AbstractNominalTypeDecl, APIDecl, APIErrorT
 import { EListTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, TemplateNameMapper, TemplateTypeSignature, TypeSignature } from "../../frontend/type.js";
 import { BuildLevel, CodeFormatter, isBuildLevelEnabled, SourceInfo } from "../../frontend/build_decls.js";
 import { NamespaceInstantiationInfo, FunctionInstantiationInfo, MethodInstantiationInfo, TypeInstantiationInfo } from "../../frontend/instantiation_map.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const prefix = 
 '"use strict";\n' +
@@ -13,8 +15,13 @@ const prefix =
 '\n' +
 'import { $VRepr, _$softfails, _$supertypes, _$fisSubtype, _$fisNotSubtype, _$fasSubtype, _$fasNotSubtype, _$None, _$not, _$negate, _$add, _$sub, _$mult, _$div, _$bval, _$fkeq, _$fkeqopt, _$fkneq, _$fkneqopt, _$fkless, _$fnumeq, _$fnumless, _$fnumlesseq, _$exhaustive, _$abort, _$assert, _$formatchk, _$invariant, _$validate, _$precond, _$softprecond, _$postcond, _$softpostcond, _$memoconstval, _$accepts } from "./runtime.mjs";\n' +
 'import { _$setnone_lit, _$parsemap, _$emitmap, _$parseBSQON, _$emitBSQON } from "./bsqon.mjs";\n' +
+'import { _$extractMock } from "./smtextract.mjs";\n' +
 '\n'
 ;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const bosque_dir: string = path.join(__dirname, "../../../../");
+const smtextractor_path = path.join(bosque_dir,"build/include/z3/bin/smtextract");
 
 class JSEmitter {
     readonly assembly: Assembly;
@@ -2362,6 +2369,11 @@ class JSEmitter {
             preop = `var state = s; while(guard(state)) { state = op(state); } `;
             bop = `state`;
         }
+		else if(bname == "s_mockService"){
+			preop = `var extracted = _$extractMock("${smtextractor_path}");
+					 var val = _$parseBSQON(extracted.types,extracted.value)[0];`;
+			bop = `val`;
+		}
         else {
             assert(false, `Unknown builtin function -- ${bname}`);
         }
@@ -3889,7 +3901,7 @@ class JSEmitter {
 
         asminstantiation.elists.forEach((edef, elk) => {
             const elistargs = edef.entries.map((tt) => '"' + tt.tkeystr + '"');
-            const eemit = elistargs.map((ttk, i) => `emitter.emitValue(${ttk}, value[${i}])`);
+            const eemit = elistargs.map((ttk, i) => `emitter.emitValue(${ttk}, value[${i}]) ${(i !== 0) ? "": ` + ","`}`);
             
             allparsedecls.push(`_$parsemap["${elk}"] = (parser) => parser.parseEListArgs(${elistargs.join(", ")});`);
             allemitdecls.push(`_$emitmap["${elk}"] = (emitter, value) => "(|" + ${eemit.join(" + ")} + "|)";`);

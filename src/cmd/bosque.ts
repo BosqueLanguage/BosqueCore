@@ -14,6 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const bosque_dir: string = path.join(__dirname, "../../../");
 const runtime_code_path = path.join(bosque_dir, "bin/jsruntime/runtime.mjs");
 const bsqon_code_path = path.join(bosque_dir, "bin/jsruntime/bsqon.mjs");
+const smtextract_code_path = path.join(bosque_dir, "bin/jsruntime/smtextract.mjs");
 const modules_path = path.join(bosque_dir, "node_modules");
 
 let fullargs = [...process.argv].slice(2);
@@ -65,6 +66,7 @@ function buildExeCode(assembly: Assembly, mode: "release" | "debug", buildlevel:
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
         fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
+        fs.cpSync(smtextract_code_path, path.join(nndir, "smtextract.mjs"));
         fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
 
         for(let i = 0; i < jscode.length; ++i) {
@@ -107,6 +109,7 @@ function buildExeCodeTest(assembly: Assembly, outname: string) {
     try {
         fs.cpSync(runtime_code_path, path.join(nndir, "runtime.mjs"));
         fs.cpSync(bsqon_code_path, path.join(nndir, "bsqon.mjs"));
+        fs.cpSync(smtextract_code_path, path.join(nndir, "smtextract.mjs"));
         fs.cpSync(modules_path, path.join(nndir, "node_modules"), { recursive: true });
 
         for(let i = 0; i < jscode.length; ++i) {

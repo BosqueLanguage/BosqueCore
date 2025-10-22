@@ -1295,6 +1295,9 @@ function emitBuiltinFunctionDecl(f: SMTAssembly::BuiltinFunctionDecl, trgterr: (
     elif(f.specialname === 's_blockingfailure') {
         body = emitResultErrOtherAs(f.resultType.rtype);
     }
+    elif(f.specialname === 's_mockService') {
+        body = CString::concat('@retMock-', SMTNameManager::generateResultName(f.resultType));
+    }
     else {
         _debug f.specialname;
         abort; %%Missing builtin function implementation
@@ -1635,8 +1638,20 @@ function emitAssembly(asm: SMTAssembly::Assembly, trgterr: (|Option<SMTAssembly:
             return emitFunctionDecl(asm.funcs.get(t), trgterr);
         }
 
+
         if(asm.nsbuiltins.has(t)) {
-            return emitBuiltinFunctionDecl(asm.nsbuiltins.get(t), trgterr);
+			let builtin = asm.nsbuiltins.get(t);
+			if (builtin.specialname === 's_mockService'){
+				let ret_type = SMTNameManager::generateResultName(builtin.resultType);
+
+				let mock_var = CString::concat('@retMock-',ret_type);
+				let mock_const = CString::concat('(declare-const ', mock_var, ' ', ret_type, ')');
+
+				let mock_fun = emitBuiltinFunctionDecl(builtin,trgterr);
+				return CString::concat(mock_const, mock_fun);
+			}else{
+				return emitBuiltinFunctionDecl(builtin, trgterr);
+			}
         }
         
         abort;
