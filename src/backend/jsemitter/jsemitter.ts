@@ -2365,8 +2365,7 @@ class JSEmitter {
         }
 		else if(bname == "s_mockService"){
 			preop = `var extracted = _$extractMock();
-					 var val = _$parseBSQON(extracted.types,extracted.value)[0];
-					 `;
+					 var val = _$parseBSQON(extracted.types,extracted.value)[0];`;
 			bop = `val`;
 		}
         else {
@@ -3896,7 +3895,7 @@ class JSEmitter {
 
         asminstantiation.elists.forEach((edef, elk) => {
             const elistargs = edef.entries.map((tt) => '"' + tt.tkeystr + '"');
-            const eemit = elistargs.map((ttk, i) => `emitter.emitValue(${ttk}, value[${i}])`);
+            const eemit = elistargs.map((ttk, i) => `emitter.emitValue(${ttk}, value[${i}]) ${(i !== 0) ? "": ` + ","`}`);
             
             allparsedecls.push(`_$parsemap["${elk}"] = (parser) => parser.parseEListArgs(${elistargs.join(", ")});`);
             allemitdecls.push(`_$emitmap["${elk}"] = (emitter, value) => "(|" + ${eemit.join(" + ")} + "|)";`);

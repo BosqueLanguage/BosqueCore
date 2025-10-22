@@ -1,54 +1,40 @@
-import { spawn } from "child_process";
+import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
 function runSMTExtractor(smtfile, targettype, typeinfo, flag) {
-  return new Promise((resolve, reject) => {
-    const child = spawn("/home/karidus/work/BSQON/build/output/smtextract", [
-      smtfile,
-      targettype,
-      typeinfo,
-      flag,
-    ]);
+  const result = spawnSync("/home/karidus/work/BSQON/build/output/smtextract", [
+    smtfile,
+    targettype,
+    typeinfo,
+    flag,
+  ]);
 
-    let mock_res = "";
+  if (result.error) {
+    console.error("Error running smtextract:", result.error);
+    throw result.error;
+  }
 
-    child.stdout.on("data", (data) => {
-      mock_res += data.toString();
-    });
+  if (result.stderr && result.stderr.length > 0) {
+    console.error("stderr:", result.stderr.toString());
+  }
 
-    child.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-    });
+  console.log(`Process exited with code ${result.status}`);
 
-    child.on("close", (code) => {
-      console.log(`Process exited with code ${code}`);
-      resolve(mock_res); // Return the full output when done
-    });
-
-    child.on("error", (err) => {
-      reject(err); // In case spawn itself fails
-    });
-  });
+  return result.stdout.toString(); // Return full stdout text
 }
 
 function parseExtractorOutput(output) {
   const lines = output.split("\n");
   const result = { value: "", types: [] };
 
-  const types = [];
-
   for (const line of lines) {
     if (line.startsWith("Value:")) {
       result.value = line.replace("Value: ", "").trim();
-    }
-
-    if (line.startsWith("Type:")) {
-       types.push(line.replace("Type: ", "").trim());
+    } else if (line.startsWith("Type:")) {
+      result.types.push(line.replace("Type: ", "").trim());
     }
   }
-
-	result.types = types;
 
   return result;
 }
@@ -60,7 +46,7 @@ function scanDir(dir) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      results = results.concat(scanDir(fullPath)); // recursive call
+      results = results.concat(scanDir(fullPath));
     } else {
       results.push(fullPath);
     }
@@ -92,18 +78,22 @@ function scanDirectoryForMockMeta(base_dir) {
   return mock_meta;
 }
 
-export async function _$extractMock() {
+export function _$extractMock() {
   const files = scanDirectoryForMockMeta(".");
+
   try {
-    const output = await runSMTExtractor(
+    const output = runSMTExtractor(
       files.smtfile,
       files.targettype,
       files.typeinfo,
       files.flag
     );
+
     return parseExtractorOutput(output);
   } catch (err) {
     console.error("Error Running SMTExtractor:", err);
     return undefined;
   }
 }
+
+
