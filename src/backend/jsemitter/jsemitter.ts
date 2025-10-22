@@ -3341,7 +3341,7 @@ class JSEmitter {
         }));
 
         const parselookup = EmitNameManager.generateEnumNameLookupForParse(this.currentns as NamespaceDeclaration, rcvr, "ename");
-        const emitgen = "[" + tdecl.members.map((mm) => "mm").join(", ") + "][value.value]";
+        const emitgen = "[" + tdecl.members.map((mm) => `"${mm}"`).join(", ") + "][value.value]";
 
         decls.push(`$parseAPI: { value: (parser) => { parser.checkConsType("${rcvr.tkeystr}"); const ename = parser.parseEnumNameComponent(); return ${parselookup}; } }`);
         decls.push(`$emitAPI: { value: (emitter, value) => { return "${rcvr.tkeystr}" + "#" + ${emitgen}; } }`);
