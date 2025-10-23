@@ -1933,7 +1933,7 @@ class Parser {
             let softcheck = apicond && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
                 if(!apicond) {   
-                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API pre/post conditions");
+                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
 
@@ -1972,7 +1972,7 @@ class Parser {
             let softcheck = apicond && this.testToken(KW_softcheck);
             if(this.testAndConsumeTokenIf(KW_softcheck)) {
                 if(!apicond) {   
-                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API pre/post conditions");
+                    this.recordErrorGeneral(sinfo, "Softcheck is only allowed in API/Task pre/post conditions");
                 }
             }
 
@@ -2020,6 +2020,10 @@ class Parser {
             }
         }
 
+        if(params.filter((p) => p.pkind !== undefined).length > 1) {
+            this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+        }
+
         return params;
     }
 
@@ -2065,7 +2069,7 @@ class Parser {
         return new InvokeParameterDecl(pname, ptype, optDefaultExp, pkind, isrest);
     }
 
-    private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
+    private parseInvokeDeclParameters(cinfo: SourceInfo, argSpecialAllowed: boolean, boundtemplates: Set<string>): InvokeParameterDecl[] {
         const params = this.parseListOf<InvokeParameterDecl>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
             return this.parseInvokeDeclParameter(boundtemplates)
         });
@@ -2075,8 +2079,15 @@ class Parser {
                 this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
 
-            if(!implicitRefAllowed && params.some((param) => param.pkind !== undefined)) {
-                this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+            if(argSpecialAllowed) {
+                if(params.filter((p) => p.pkind !== undefined).length > 1) {
+                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                }
+            }
+            else {
+                if(params.some((param) => param.pkind !== undefined)) {
+                    this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
+                }
             }
 
             if(params[params.length - 1].isRestParam && params.some((param) => param.optDefaultValue !== undefined)) {
@@ -2165,6 +2176,10 @@ class Parser {
             if(params.slice(0, -1).some((param) => param.isRestParam)) {
                 this.recordErrorGeneral(cinfo, "Rest parameter must be the last parameter");
             }
+        }
+
+        if(params.filter((p) => p.pkind !== undefined).length > 1) {
+            this.recordErrorGeneral(cinfo, "Cannot have more than one special passing parameter");
         }
 
         return params;

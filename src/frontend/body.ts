@@ -2114,7 +2114,9 @@ enum StatementTag {
     IfElifElseStatement = "IfElifElseStatement",
     SwitchStatement = "SwitchStatement",
     MatchStatement = "MatchStatement",
-    DispatchStatement = "DispatchStatement", //For handling Dash/Race return types, remember funny case of all failed -> _ where type of exp is Elist of failures
+
+    DispatchPatternStatement = "DispatchPatternStatement", //For handling regex/glob on strings!
+    DispatchTaskStatement = "DispatchTaskStatement", //For handling Dash/Race return types, remember funny case of all failed -> _ where type of exp is Elist of failures
 
     AbortStatement = "AbortStatement",
     AssertStatement = "AssertStatement", //assert(x > 0)
@@ -2423,7 +2425,31 @@ class MatchStatement extends Statement {
     }
 }
 
-class DispatchStatement extends Statement {
+class DispatchPatternStatement extends Statement {
+    readonly sval: Expression;
+    readonly dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[];
+    //always must exhaustive
+
+    implicitFinalType: TypeSignature | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, sval: Expression, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
+        super(StatementTag.DispatchPatternStatement, sinfo);
+        this.sval = sval;
+        this.dispatchflow = dispatchflow;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
+        fmt.indentPush();
+        const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
+        fmt.indentPop();
+
+        const iir = ttdf.map((cc) => fmt.indent("| " + cc));
+        return `${dheader} {\n${iir.join("\n")}\n${fmt.indent("}")}`;
+    }
+}
+
+class DispatchTaskStatement extends Statement {
     readonly sval: Expression;
     readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
     //always must exhaustive
@@ -2431,7 +2457,7 @@ class DispatchStatement extends Statement {
     implicitFinalType: TypeSignature | undefined = undefined;
 
     constructor(sinfo: SourceInfo, sval: Expression, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
-        super(StatementTag.DispatchStatement, sinfo);
+        super(StatementTag.DispatchTaskStatement, sinfo);
         this.sval = sval;
         this.dispatchflow = dispatchflow;
     }
@@ -2813,7 +2839,7 @@ export {
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     ReturnVoidStatement, ReturnSingleStatement, ReturnMultiStatement,
     IfStatement, IfElseStatement, IfElifElseStatement, 
-    SwitchStatement, MatchStatement, DispatchStatement,
+    SwitchStatement, MatchStatement, DispatchPatternStatement, DispatchTaskStatement,
     AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     HoleStatement,

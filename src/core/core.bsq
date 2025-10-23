@@ -119,6 +119,10 @@ __internal __typedeclable entity LatLongCoordinate {
 __internal __typedeclable __numeric entity Complex {
 }
 
+%** Byte **%
+__internal __typedeclable __keycomparable entity Byte {
+}
+
 %** C-Style 8-bit ascii char. **%
 __internal __typedeclable __keycomparable entity CChar {
 }
@@ -400,6 +404,14 @@ __internal __typedeclable __keycomparable entity CString {
 #endif %% STRIPPED_CORE
 }
 
+%** Primitive FString Type. **%
+__internal __typedeclable entity FString {
+}
+
+%** Primitive FCString Type. **%
+__internal __typedeclable entity FCString {
+}
+
 %** Primitive unicode regex value. **%
 __internal entity Regex {
     __inline function accepts(re: Regex, s: String): Bool = regex_accepts;
@@ -420,6 +432,18 @@ __internal __typedeclable __keycomparable entity PathFragment {
 
 %** Primitive path glob value. **%
 __internal __typedeclable __keycomparable entity Glob {
+}
+
+%** Primitive FPath value. **%
+__internal __typedeclable entity __keycomparable FPath {
+}
+
+%** Primitive FPathFragment value. **%
+__internal __typedeclable entity __keycomparable FPathFragment {
+}
+
+%** Primitive FPathGlob value. **%
+__internal __typedeclable entity __keycomparable FPathGlob {
 }
 
 %** Result type. **%
@@ -448,6 +472,10 @@ __internal concept APIResult<T> {
     %** Successful result T contains the value **%
     __internal entity Success provides APIResult<T> {
     }
+}
+
+%** Special Dash Result type. **%
+__internal entity DashResult<T> {
 }
 
 namespace Interpolate {
