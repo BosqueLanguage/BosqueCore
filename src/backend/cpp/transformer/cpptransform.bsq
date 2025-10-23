@@ -3,7 +3,7 @@ namespace CPPEmitter;
 const reftypeThreshold: Nat = 4n;
 const slotSizeInBits: Nat = 8n;
 const ptrmaskPointer: CString = '1';
-const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, '20', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Tagged }; 
+const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, '20', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Tagged };
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -192,6 +192,16 @@ entity TypeInfoContext {
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
         return this[inProgress = $inProgress.delete(tkey)];
     }
+
+    %%
+    %% The current fundamental flaw with our original selfRecursiveTypeInfo idea is it does not 
+    %% grow depending ont he largest subtypes. It has become very stagnant - if a subtype is
+    %% larger than two slots it will NOT be reflected properly.
+    %%
+    %% Here is what we need to find. We want the LARGEST subtype that does NOT contain
+    %% our recursive concept. If a type contains the recursive concept, the subtype itself
+    %% must become ref as it contains a non-primitive type as a field. 
+    %%
 }
 
 entity FieldsInfo {
@@ -209,12 +219,12 @@ entity FieldsInfo {
 }
 
 namespace TypeInfoGenerator {
-    function determineSizeAsField(tinfo: CPPAssembly::TypeInfo): FieldsInfo {
-        if(tinfo.tag === CPPAssembly::Tag#Ref) {
-            return FieldsInfo{ 1n * slotSizeInBits, 1n, ptrmaskPointer };
+    function determineSizeAsField(tk: BSQAssembly::TypeKey, tinfo: CPPAssembly::TypeInfo, tic: TypeInfoContext): FieldsInfo {
+        if(tic.elists.has(tk) || tinfo.tag !== CPPAssembly::Tag#Ref) {
+            return FieldsInfo{ tinfo.typesize, tinfo.slotsize, tinfo.ptrmask };           
         }
         else {
-            return FieldsInfo{ tinfo.typesize, tinfo.slotsize, tinfo.ptrmask };
+            return FieldsInfo{ 1n * slotSizeInBits, 1n, ptrmaskPointer };
         }
     }
 
@@ -253,12 +263,13 @@ namespace TypeInfoGenerator {
     function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
-            if(ts?<BSQAssembly::EListTypeSignature> && !ntic.elists.has(ts.tkeystr)) {
-                ntic = ntic.updateELists(ts.tkeystr, ts@<BSQAssembly::EListTypeSignature>);
+            let bsqtk = ts.tkeystr;
+            if(ts?<BSQAssembly::EListTypeSignature> && !ntic.elists.has(bsqtk)) {
+                ntic = ntic.updateELists(bsqtk, ts@<BSQAssembly::EListTypeSignature>);
             }
 
-            let tinfo, nntic = generateTypeInfo(ts.tkeystr, ntic);
-            let finfo = determineSizeAsField(tinfo);
+            let tinfo, nntic = generateTypeInfo(bsqtk, ntic);
+            let finfo = determineSizeAsField(bsqtk, tinfo, ntic);
 
             return acc.0.update(finfo), nntic;
         }, (|FieldsInfo{0n, 0n, ''}, tic|));
@@ -274,12 +285,12 @@ namespace TypeInfoGenerator {
         requires !e.subtypes.empty(); 
     {
         let basetinfo, ntic = generateTypeInfo(e.subtypes.front(), tic);
-        let fieldbase = determineSizeAsField(basetinfo);
+        let fieldbase = determineSizeAsField(e.tkey, basetinfo, ntic);
         return e.subtypes.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, sub) => {
             let largestSubType, currentTic = acc;            
 
             let subtinfo, nntic = generateTypeInfo(sub, currentTic);
-            let currentType = determineSizeAsField(subtinfo);
+            let currentType = determineSizeAsField(sub, subtinfo, nntic);
             let currentSlotSize = currentType.slotsize;
             let largestSlotSize = largestSubType.slotsize;
 
@@ -468,7 +479,6 @@ namespace TypeInfoGenerator {
         return std_tinfo, ntic.updateCache(std_tinfo);
     }
     
-    %% These two are identical. Should we leave as is?
     function generateConceptTypeInfo(e: BSQAssembly::ConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
@@ -486,6 +496,14 @@ namespace TypeInfoGenerator {
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
+
+        %%
+        %% My idea is we will insert a barrier using a ptrmask of '3' that can easilu
+        %% be detected to represent a slot that contains a self referant type.
+        %% This gives us the flexibility to ignore the sizes of subtypes with self recursive types
+        %% until we exploreall subtypes - from here we can regenerate subtypes with the new 
+        %% knowledge of those that are non-selfrefrant sizes
+        %%
 
         return concepttinfo, nnntic.updateCache(concepttinfo);
     }
