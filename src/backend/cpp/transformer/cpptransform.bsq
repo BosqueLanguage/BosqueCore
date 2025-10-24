@@ -3,7 +3,7 @@ namespace CPPEmitter;
 const reftypeThreshold: Nat = 4n;
 const slotSizeInBits: Nat = 8n;
 const ptrmaskPointer: CString = '1';
-const selfRecursiveTypeInfo: CPPAssembly::TypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, '20', CPPAssembly::TypeKey::from('Tmp') , CPPAssembly::Tag#Tagged };
+const prematureField: CString = '3';
 
 %% Transform Bosque names into cpp representation
 namespace CPPTransformNameManager {
@@ -144,21 +144,26 @@ namespace CPPTransformNameManager {
 entity TypeInfoContext {
     field cache: Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>;
     field elists: Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>;
-    field inProgress: Map<CPPAssembly::TypeKey, None>;
 
     field transformer: CPPTransformer;
     field tid: Nat;
 
     method has(tk: CPPAssembly::TypeKey): Bool {
-        return this.cache.has(tk) || this.inProgress.has(tk);
+        return this.cache.has(tk);
     }
 
     method get(tk: CPPAssembly::TypeKey): CPPAssembly::TypeInfo {
         if(this.cache.has(tk)) {
             return this.cache.get(tk);
         }
-        elif(this.inProgress.has(tk)) {
-            return selfRecursiveTypeInfo;
+        else {
+            abort;
+        }
+    }
+
+    method delete(tk: CPPAssembly::TypeKey): TypeInfoContext {
+        if(this.cache.has(tk)) {
+            return this[cache = $cache.delete(tk)];
         }
         else {
             abort;
@@ -166,31 +171,25 @@ entity TypeInfoContext {
     }
 
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
-        %% Generating typeinfo for self-recursive concepts may generate temporary typeinfo
-        if(this.cache.has(ntinfo.typekey)) { 
-            return this[
-                cache = $cache.delete(ntinfo.typekey).insert(ntinfo.typekey, ntinfo),
-                tid = $tid + 1n
-            ];
-        }
-        else {
-            return this[
-                cache = $cache.insert(ntinfo.typekey, ntinfo),
-                tid = $tid + 1n
-            ];
-        }
+        return this[
+            cache = $cache.insert(ntinfo.typekey, ntinfo),
+            tid = $tid + 1n
+        ];
     }
 
     method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
         return this[elists=$elists.insert(etk, elist)];
     }
 
+    %% A prematureField has not finished generating its true typeinfo yet
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.insert(tkey, none)];
+        let selfRecursiveTypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, prematureField, tkey, CPPAssembly::Tag#Tagged };
+
+        return this[cache = $cache.insert(tkey, selfRecursiveTypeInfo)];
     }
 
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        return this[inProgress = $inProgress.delete(tkey)];
+        return this[cache = $cache.delete(tkey)];
     }
 
     %%
@@ -301,6 +300,19 @@ namespace TypeInfoGenerator {
                 return largestSubType, nntic;
             }
         }, (|fieldbase, ntic|));
+    }
+
+    function regeneratePreMatureTypeInfo(types: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
+        return types.reduce<TypeInfoContext>(fn(acc, t) => {
+            let cpptk = CPPTransformNameManager::convertTypeKey(t);
+            let tinfo = tic.get(cpptk);
+            if(tinfo.ptrmask.containsString(prematureField)) {
+                return generateTypeInfo(t, tic.delete(cpptk)).1;
+            }
+            else {
+                return tic;
+            }
+        }, tic);
     }
 
     %% Alias of UnicodeRope
@@ -505,7 +517,9 @@ namespace TypeInfoGenerator {
         %% knowledge of those that are non-selfrefrant sizes
         %%
 
-        return concepttinfo, nnntic.updateCache(concepttinfo);
+        let concepttic = nnntic.updateCache(concepttinfo);
+        let nconcepttic = regeneratePreMatureTypeInfo(e.subtypes, concepttic);
+        return concepttinfo, nconcepttic;
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -526,7 +540,9 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged 
         };
 
-        return datatypetinfo, nnntic.updateCache(datatypetinfo);
+        let datatypetic = nnntic.updateCache(datatypetinfo);
+        let ndatatypetic = regeneratePreMatureTypeInfo(e.subtypes, datatypetic);
+        return datatypetinfo, ndatatypetic;
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -614,7 +630,7 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
+    recursive? function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
         let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
         if(tic.has(cpptk)) {
             return tic.get(cpptk), tic;
@@ -2144,21 +2160,21 @@ entity CPPTransformer {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         });
 
-        let generated_typeinfos_concrete = bsqasm.allconcretetypes
+        let generated_typeinfos_abstract = bsqasm.allabstracttypes
             .reduce<TypeInfoContext>( 
                 fn(acc, tkey) => {
                     return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
                 },
                 TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
-                    Map<CPPAssembly::TypeKey, None>{}, transformer, 1n }
+                    transformer, 1n }
             );
 
-        let generated_typeinfos_abstract = bsqasm.allabstracttypes
+        let generated_typeinfos_concrete = bsqasm.allconcretetypes
             .reduce<TypeInfoContext>(fn(acc, tkey) => {
                 return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
             },
-            generated_typeinfos_concrete
+            generated_typeinfos_abstract
         );
 
         return CPPAssembly::Assembly {
@@ -2184,7 +2200,7 @@ entity CPPTransformer {
             pconcepts = transformer_pconcepts,
             concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = generated_typeinfos_abstract.cache
+            typeinfos = generated_typeinfos_concrete.cache
         };
     }
 }
