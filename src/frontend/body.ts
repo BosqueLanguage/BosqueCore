@@ -9,7 +9,7 @@ class BinderInfo {
     readonly srcname: string; //the name in the source code
     readonly implicitdef: boolean;
 
-    constructor(srcname: string, implicitdef: boolean, refineonfollow: boolean) {
+    constructor(srcname: string, implicitdef: boolean) {
         this.srcname = srcname;
         this.implicitdef = implicitdef;
     }
@@ -133,20 +133,30 @@ abstract class ITestGuard {
 }
 
 class ITestBinderGuard extends ITestGuard {
-    readonly itestopt: ITest | undefined;
-    readonly bindinfo: BinderInfo | undefined;
+    readonly itest: ITest;
+    readonly bindinfo: BinderInfo;
 
-    constructor(exp: Expression, itestopt: ITest | undefined, bindinfo: BinderInfo | undefined) {
+    constructor(exp: Expression, itest: ITest, bindinfo: BinderInfo ) {
         super(exp);
-        this.itestopt = itestopt;
+        this.itest = itest;
         this.bindinfo = bindinfo;
     }
 
     emit(mustparens: boolean, fmt: CodeFormatter): string {
-        const bexp = this.bindinfo !== undefined ? this.bindinfo.emitoptdef() : "";
-        const itest = this.itestopt !== undefined ? `${this.itestopt.emit(fmt)}` : "";
+        return `(${this.bindinfo.emitoptdef()}${this.exp.emit(true, fmt)})@${this.itest.emit(fmt)}`;
+    }
+}
 
-        return `(${bexp}${this.exp.emit(true, fmt)})${this.bindinfo !== undefined ? "@" : ""}${itest}`;
+class ITestTypeGuard extends ITestGuard {
+    readonly itest: ITest;
+
+    constructor(exp: Expression, itest: ITest) {
+        super(exp);
+        this.itest = itest;
+    }
+
+    emit(mustparens: boolean, fmt: CodeFormatter): string {
+        return `(${this.exp.emit(true, fmt)})${this.itest.emit(fmt)}`;
     }
 }
 
@@ -2817,7 +2827,7 @@ class StandardBodyImplementation extends BodyImplementation {
 export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestNone, ITestSome, ITestOk, ITestFail, ITestFailed, ITestRejected, ITestError, ITestSuccess,
-    ITestGuard, ITestBinderGuard, ITestSimpleGuard, ITestGuardSet,
+    ITestGuard, ITestBinderGuard, ITestTypeGuard, ITestSimpleGuard, ITestGuardSet,
     FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent,
     ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, PassingArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression,

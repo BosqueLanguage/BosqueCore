@@ -3,10 +3,10 @@ import assert from "node:assert";
 
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW_action, KW_chktest, KW_debug, KW_ensures, KW_errtest, KW_event, KW_example, KW_fn, KW_function, KW_inout, KW_let, KW_method, KW_out, KW_out_q, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_softcheck, KW_spec, KW_status, KW_test, KW_under, KW_var, KW_when, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, SYM_arrow, SYM_at, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_eq, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW_action, KW_chktest, KW_debug, KW_ensures, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_inout, KW_let, KW_method, KW_none, KW_ok, KW_out, KW_out_q, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_safety, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_test, KW_true, KW_under, KW_var, KW_when, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_eq, SYM_hash, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -2722,6 +2722,22 @@ class Parser {
                 this.consumeToken();
                 return new ITestFail(isnot);
             }
+            else if(this.testToken(KW_rejected)) {
+                this.consumeToken();
+                return new ITestRejected(isnot);
+            }
+            else if(this.testToken(KW_failed)) {
+                this.consumeToken();
+                return new ITestFailed(isnot);
+            }
+            else if(this.testToken(KW_error)) {
+                this.consumeToken();
+                return new ITestError(isnot);
+            }
+            else if(this.testToken(KW_success)) {
+                this.consumeToken();
+                return new ITestSuccess(isnot);
+            }
             else {
                 this.recordErrorGeneral(this.peekToken(), "Expected ITest");
                 return undefined;
@@ -2730,7 +2746,7 @@ class Parser {
     }
 
     private checkITestFirstToken(): boolean {
-        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail);
+        return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail) || this.testToken(KW_rejected) || this.testToken(KW_failed) || this.testToken(KW_error) || this.testToken(KW_success);
     }
 
     private parseITestGuard(): ITestGuard {
@@ -2742,8 +2758,8 @@ class Parser {
             this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
 
             this.ensureAndConsumeTokenAlways(SYM_at, "binder in ITest guard");
-            const itest = this.parseITest();
-            return new ITestGuard(bexp, itest, new BinderInfo(binfo as string, false, false));
+            const itest = this.parseITest() as ITest;
+            return new ITestBinderGuard(bexp, itest, new BinderInfo(binfo as string, false));
         }
         else {
             const isparened = this.testToken(SYM_lparen);
@@ -2760,15 +2776,15 @@ class Parser {
                 }
 
                 this.consumeToken();
-                const itest = this.parseITest();
-                return new ITestGuard(bexp, itest, new BinderInfo(stdbindname, true, false));
+                const itest = this.parseITest() as ITest;
+                return new ITestBinderGuard(bexp, itest, new BinderInfo(stdbindname, true));
             }
             else if(this.checkITestFirstToken()) {
-                const itest = this.parseITest();
-                return new ITestGuard(bexp, itest, undefined);
+                const itest = this.parseITest() as ITest;
+                return new ITestTypeGuard(bexp, itest);
             }
             else {
-                return new ITestGuard(bexp, undefined, undefined);
+                return new ITestSimpleGuard(bexp);
             }
         }
     }
@@ -2829,25 +2845,26 @@ class Parser {
             this.recordErrorGeneral(this.peekToken(), `Duplicate argument name ${duplicateNames}`);
         }
 
-        const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
+        const multiplerefs = args.filter((arg) => arg instanceof PassingArgumentValue).length > 1;
         if(multiplerefs) {
-            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
+            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple special passing arguments");
         }
     }
 
     private parseArgumentsCallStd(refok: boolean): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
+            if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
                 if(!refok) {
                     this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
                 }
-                this.consumeToken();
+
+                const pk = this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                return new PassingArgumentValue(pk, exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2876,18 +2893,18 @@ class Parser {
 
     private parseArgumentsCallLambda(refok: boolean): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
+            if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
                 if(!refok) {
-                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in this context");
                 }
 
-                this.consumeToken();
+                const pk = this.consumeTokenAndGetValue() as "ref" | "out" | "out?" | "inout";
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                return new PassingArgumentValue(pk, exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2918,16 +2935,17 @@ class Parser {
 
     private parseArgumentsConstructorStd(): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
-                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
-                
+            if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in this context");
+
                 this.consumeToken();
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                //Drop the special passing argument and treat as positional so we can continue to type checker
+                return new PositionalArgumentValue(exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -2956,16 +2974,17 @@ class Parser {
 
     private parseArgumentsCollection(mapargs: boolean): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-            if(this.testToken(KW_ref)) {
-                this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in collection constructor context");
+            if(this.testToken(KW_ref) || this.testToken(KW_out) || this.testToken(KW_out_q) || this.testToken(KW_inout)) {
+                this.recordErrorGeneral(this.peekToken(), "Cannot have a special passing argument in collection constructor context");
 
                 this.consumeToken();
                 const exp = this.parseExpression();
                 if(!(exp instanceof AccessVariableExpression)) {
-                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in special passing argument");
                 }
 
-                return new RefArgumentValue(exp as AccessVariableExpression);
+                //Drop the special passing argument and treat as positional so we can continue to type checker
+                return new PositionalArgumentValue(exp as AccessVariableExpression);
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 this.consumeToken();
@@ -3260,7 +3279,7 @@ class Parser {
 
     private parseSpecialConstructorExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-        const cons = this.consumeTokenAndGetValue() as "fail" | "ok" | "some";
+        const cons = this.consumeTokenAndGetValue() as "fail" | "ok" | "some" | "rejected" | "failed" | "error" | "success";
 
         this.ensureAndConsumeTokenAlways(SYM_lparen, "special constructor expression");
         const exp = this.parseExpression();
@@ -3302,6 +3321,7 @@ class Parser {
     private parsePrimaryExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
+        xxxx;
         const tk = this.peekTokenKind();
         if (tk === KW_none) {
             this.consumeToken();
@@ -3429,7 +3449,7 @@ class Parser {
 
             let ptag = ExpressionTag.LiteralPathExpression;
             if(!sstr.startsWith("\\")) {
-                ptag = sstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathItemExpression;
+                ptag = sstr.startsWith("g") ? ExpressionTag.LiteralGlobExpression : ExpressionTag.LiteralPathFragmentExpression;
             }
 
             return this.processSimplyTaggableLiteral(sinfo, ptag, sstr);
