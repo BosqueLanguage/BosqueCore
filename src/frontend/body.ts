@@ -567,6 +567,10 @@ class LiteralRegexExpression extends Expression {
         this.value = value;
     }
 
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
@@ -580,6 +584,10 @@ class LiteralPathItemExpression extends Expression {
         this.value = value;
     }
 
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
@@ -591,6 +599,10 @@ class LiteralFormatPathItemExpression extends Expression {
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
         this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -661,6 +673,10 @@ class LiteralTypedFormatStringExpression extends Expression {
         this.value = value;
     }
 
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `"${this.value.map((c) => c.emit()).join("")}"`;
     }
@@ -672,6 +688,10 @@ class LiteralTypedFormatCStringExpression extends Expression {
     constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
         super(ExpressionTag.LiteralTypedFormatCStringExpression, sinfo);
         this.value = value;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
