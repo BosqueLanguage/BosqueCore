@@ -153,7 +153,7 @@ entity TypeInfoContext {
     }
 
     method get(tk: CPPAssembly::TypeKey): CPPAssembly::TypeInfo {
-        if(this.cache.has(tk)) {
+        if(this.has(tk)) {
             return this.cache.get(tk);
         }
         else {
@@ -162,7 +162,7 @@ entity TypeInfoContext {
     }
 
     method delete(tk: CPPAssembly::TypeKey): TypeInfoContext {
-        if(this.cache.has(tk)) {
+        if(this.has(tk)) {
             return this[cache = $cache.delete(tk)];
         }
         else {
@@ -170,7 +170,11 @@ entity TypeInfoContext {
         }
     }
 
-    method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext { 
+    method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext {
+        if(this.has(ntinfo.typekey)) {
+            abort;
+        }
+
         return this[
             cache = $cache.insert(ntinfo.typekey, ntinfo),
             tid = $tid + 1n
@@ -178,6 +182,10 @@ entity TypeInfoContext {
     }
 
     method updateELists(etk: BSQAssembly::TypeKey, elist: BSQAssembly::EListTypeSignature): TypeInfoContext {
+        if(this.elists.has(etk)) {
+            abort;
+        }
+
         return this[elists=$elists.insert(etk, elist)];
     }
 
@@ -185,22 +193,20 @@ entity TypeInfoContext {
     method markInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
         let selfRecursiveTypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, prematureField, tkey, CPPAssembly::Tag#Tagged };
 
+        if(this.has(tkey)) {
+            abort;
+        }
+
         return this[cache = $cache.insert(tkey, selfRecursiveTypeInfo)];
     }
 
     method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
+        if(!this.has(tkey)) {
+            abort;
+        }
+
         return this[cache = $cache.delete(tkey)];
     }
-
-    %%
-    %% The current fundamental flaw with our original selfRecursiveTypeInfo idea is it does not 
-    %% grow depending ont he largest subtypes. It has become very stagnant - if a subtype is
-    %% larger than two slots it will NOT be reflected properly.
-    %%
-    %% Here is what we need to find. We want the LARGEST subtype that does NOT contain
-    %% our recursive concept. If a type contains the recursive concept, the subtype itself
-    %% must become ref as it contains a non-primitive type as a field. 
-    %%
 }
 
 entity FieldsInfo {
@@ -267,10 +273,11 @@ namespace TypeInfoGenerator {
                 ntic = ntic.updateELists(bsqtk, ts@<BSQAssembly::EListTypeSignature>);
             }
 
-            let tinfo, nntic = generateTypeInfo(bsqtk, ntic);
+            var tinfo: CPPAssembly::TypeInfo;
+            tinfo, ntic = generateTypeInfo(bsqtk, ntic);
             let finfo = determineSizeAsField(bsqtk, tinfo, ntic);
 
-            return acc.0.update(finfo), nntic;
+            return acc.0.update(finfo), ntic;
         }, (|FieldsInfo{0n, 0n, ''}, tic|));
     }
 
@@ -495,61 +502,60 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         var ntic = tic.markInProgress(cpptk);
-        let largesttinfo, nntic = findLargestSubtype(e, ntic);
-        let nnntic = nntic.unmarkInProgress(cpptk);
+        var largesttinfo: FieldsInfo;
+        largesttinfo, ntic = findLargestSubtype(e, ntic);
+        ntic = ntic.unmarkInProgress(cpptk);
 
         let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
         let concepttinfo = CPPAssembly::TypeInfo { 
-            nnntic.tid, 
-            8n + largesttinfo.typesize,  %% tag + largest subtype
-            largesttinfo.slotsize + 1n,  %% +1 for tag
+            ntic.tid, 
+            ptrmask.size() * slotSizeInBits,
+            ptrmask.size(),
             ptrmask,
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
 
-        %%
-        %% My idea is we will insert a barrier using a ptrmask of '3' that can easilu
-        %% be detected to represent a slot that contains a self referant type.
-        %% This gives us the flexibility to ignore the sizes of subtypes with self recursive types
-        %% until we exploreall subtypes - from here we can regenerate subtypes with the new 
-        %% knowledge of those that are non-selfrefrant sizes
-        %%
-
-        let concepttic = nnntic.updateCache(concepttinfo);
-        let nconcepttic = regeneratePreMatureTypeInfo(e.subtypes, concepttic);
-        return concepttinfo, nconcepttic;
+        ntic = ntic.updateCache(concepttinfo);
+        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
+        return concepttinfo, ntic;
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let ntic = tic.markInProgress(cpptk);
-        let largesttinfo, nntic = findLargestSubtype(e, ntic);
-        let nnntic = nntic.unmarkInProgress(cpptk);
+        var ntic = tic.markInProgress(cpptk);
+        var largesttinfo: FieldsInfo;
+        largesttinfo, ntic = findLargestSubtype(e, ntic);
+        ntic = ntic.unmarkInProgress(cpptk);
 
         let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
         let datatypetinfo = CPPAssembly::TypeInfo { 
-            nnntic.tid, 
-            8n + largesttinfo.typesize,  %% tag + largest subtype
-            largesttinfo.slotsize + 1n,  %% +1 for tag
+            ntic.tid, 
+            ptrmask.size() * slotSizeInBits,
+            ptrmask.size(),
             ptrmask,
             cpptk, 
             CPPAssembly::Tag#Tagged 
         };
 
-        let datatypetic = nnntic.updateCache(datatypetinfo);
-        let ndatatypetic = regeneratePreMatureTypeInfo(e.subtypes, datatypetic);
-        return datatypetinfo, ndatatypetic;
+        ntic = ntic.updateCache(datatypetinfo);
+        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
+        return datatypetinfo, ntic;
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
-        let oftinfo, ntic = generateTypeInfo(e.oftype.tkeystr, tic);
-        let ptrmask = CPPTransformNameManager::repeatCString('0', oftinfo.slotsize, '2');
+        var ntic = tic.markInProgress(cpptk);
+        var largesttinfo: FieldsInfo;
+        largesttinfo, ntic = findLargestSubtype(e, ntic);
+        ntic = ntic.unmarkInProgress(cpptk);
+
+        let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
+
         let pctinfo = CPPAssembly::TypeInfo { 
             ntic.tid, 
             ptrmask.size() * slotSizeInBits,
@@ -559,7 +565,9 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged 
         };
 
-        return pctinfo, ntic.updateCache(pctinfo);
+        ntic = ntic.updateCache(pctinfo);
+        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
+        return pctinfo, ntic;
     }
 
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -2165,16 +2173,26 @@ entity CPPTransformer {
                 fn(acc, tkey) => {
                     return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
                 },
-                TypeInfoContext{ Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
+                TypeInfoContext{ 
+                    Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
-                    transformer, 1n }
+                    transformer, 1n 
+                }
             );
+
+        %% Alias of a datatype so they need to gen before concrete
+        let generated_typeinfos_collections = bsqasm.allconcretetypes
+            .filter(pred(tk) => bsqasm.collections.has(tk) || bsqasm.pconcepts.has(tk))
+            .reduce<TypeInfoContext>(fn(acc, tkey) => {
+                return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
+            }, generated_typeinfos_abstract
+        );
 
         let generated_typeinfos_concrete = bsqasm.allconcretetypes
             .reduce<TypeInfoContext>(fn(acc, tkey) => {
                 return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
             },
-            generated_typeinfos_abstract
+            generated_typeinfos_collections
         );
 
         return CPPAssembly::Assembly {
