@@ -208,17 +208,6 @@ entity TypeInfoContext {
 
         return this[cache = $cache.insert(tkey, selfRecursiveTypeInfo)];
     }
-
-    %% Its possible when unmarking a deeper recursive case already finished creating the tinfo
-    method unmarkInProgress(tkey: CPPAssembly::TypeKey): TypeInfoContext {
-        let existing = this.get(tkey);
-        if(!(existing.tag === CPPAssembly::Tag#InProgress)) {
-            return this;
-        }
-        else {
-            return this[cache = $cache.delete(tkey)];
-        } 
-    }
 }
 
 entity FieldsInfo {
@@ -253,7 +242,7 @@ namespace TypeInfoGenerator {
     recursive? function determineTagHelper(fields: List<BSQAssembly::TypeSignature>, idx: Nat, tic: TypeInfoContext): CPPAssembly::Tag, Nat {
         return fields.reduce<(|CPPAssembly::Tag, Nat|)>(fn(acc, f) => {
             let currentTag, currentIdx = acc;
-            if(currentTag === CPPAssembly::Tag#Ref) {
+            if(currentTag === CPPAssembly::Tag#Ref || currentTag === CPPAssembly::Tag#InProgress) {
                 return currentTag, currentIdx + 1n;
             }
             
@@ -263,8 +252,12 @@ namespace TypeInfoGenerator {
 
             let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr); 
             let ftinfo = tic.get(cpptk); 
-
-            if(currentIdx > reftypeThreshold || !isSimpleType(f.tkeystr, ftinfo.tag, tic)) {
+            
+            %% If the type is InProgress it will be regenerated in regeneratePrematureTypeInfo 
+            if(ftinfo.tag === CPPAssembly::Tag#InProgress) {
+                return CPPAssembly::Tag#InProgress, currentIdx + 1n;
+            }
+            elif(currentIdx > reftypeThreshold || !isSimpleType(f.tkeystr, ftinfo.tag, tic)) {
                 return CPPAssembly::Tag#Ref, currentIdx + 1n;
             }
             else {
@@ -300,34 +293,38 @@ namespace TypeInfoGenerator {
     function findLargestSubtype(e: BSQAssembly::AbstractConceptTypeDecl, tic: TypeInfoContext): FieldsInfo, TypeInfoContext 
         requires !e.subtypes.empty(); 
     {
-        let basetinfo, ntic = generateTypeInfo(e.subtypes.front(), tic);
-        let fieldbase = determineSizeAsField(e.tkey, basetinfo, ntic);
         return e.subtypes.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, sub) => {
             let largestSubType, currentTic = acc;            
 
-            let subtinfo, nntic = generateTypeInfo(sub, currentTic);
-            let currentType = determineSizeAsField(sub, subtinfo, nntic);
+            let subtinfo, ntic = generateTypeInfo(sub, currentTic);
+
+            %% Boxed types will be constructed through a pointer if ref (and if inprogress will be ref due to object as field)
+            if(subtinfo.tag === CPPAssembly::Tag#Ref || subtinfo.tag === CPPAssembly::Tag#InProgress) {
+                return largestSubType, ntic;
+            }
+
+            let currentType = determineSizeAsField(sub, subtinfo, ntic);
             let currentSlotSize = currentType.slotsize;
             let largestSlotSize = largestSubType.slotsize;
 
             if(currentSlotSize > largestSlotSize) {
-                return currentType, nntic; 
+                return currentType, ntic; 
             }
             else {
-                return largestSubType, nntic;
+                return largestSubType, ntic;
             }
-        }, (|fieldbase, ntic|));
+        }, (|FieldsInfo{ 8n, 1n, '0' }, tic|));
     }
 
     function regeneratePreMatureTypeInfo(types: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
         return types.reduce<TypeInfoContext>(fn(acc, t) => {
             let cpptk = CPPTransformNameManager::convertTypeKey(t);
-            let tinfo = tic.get(cpptk);
+            let tinfo = acc.get(cpptk);
             if(tinfo.tag === CPPAssembly::Tag#InProgress) {
-                return generateTypeInfo(t, tic.delete(cpptk)).1;
+                return generateTypeInfo(t, acc.delete(cpptk)).1;
             }
             else {
-                return tic;
+                return acc;
             }
         }, tic);
     }
@@ -512,10 +509,8 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         var largesttinfo: FieldsInfo;
-        var tag: CPPAssembly::Tag;
         var ntic = tic.markInProgress(cpptk);
         largesttinfo, ntic = findLargestSubtype(e, ntic);
-        ntic = ntic.unmarkInProgress(cpptk);
 
         let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
@@ -537,10 +532,8 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         var largesttinfo: FieldsInfo;
-        var tag: CPPAssembly::Tag;
         var ntic = tic.markInProgress(cpptk);
         largesttinfo, ntic = findLargestSubtype(e, ntic);
-        ntic = ntic.unmarkInProgress(cpptk);
 
         let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
@@ -562,10 +555,8 @@ namespace TypeInfoGenerator {
         let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
 
         var largesttinfo: FieldsInfo;
-        var tag: CPPAssembly::Tag;
         var ntic = tic.markInProgress(cpptk);
         largesttinfo, ntic = findLargestSubtype(e, ntic);
-        ntic = ntic.unmarkInProgress(cpptk);
 
         let ptrmask = CPPTransformNameManager::repeatCString('0', largesttinfo.slotsize, '2');
 
