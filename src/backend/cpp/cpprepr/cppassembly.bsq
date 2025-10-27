@@ -209,7 +209,8 @@ entity DatatypeTypeDecl provides AbstractConceptTypeDecl {
 enum Tag {
     Value,
     Ref,
-    Tagged
+    Tagged,
+    InProgress
 }
 
 %% Info for the GC 

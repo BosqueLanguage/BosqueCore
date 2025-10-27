@@ -2012,9 +2012,10 @@ function generateEntriesEnum(ant: CPPAssembly::AbstractNominalTypeDecl, fields: 
 
 function convertTagEnumEntries(e: CPPAssembly::Tag): String {
     switch(e) {
-        | CPPAssembly::Tag#Value => { return "Value"; }
-        | CPPAssembly::Tag#Ref => { return "Ref"; }
-        | CPPAssembly::Tag#Tagged => { return "Tagged"; }    
+        | CPPAssembly::Tag#Value      => { return "Value"; }
+        | CPPAssembly::Tag#Ref        => { return "Ref"; }
+        | CPPAssembly::Tag#Tagged     => { return "Tagged"; }    
+        | CPPAssembly::Tag#InProgress => { abort; }
    }
 }
 
