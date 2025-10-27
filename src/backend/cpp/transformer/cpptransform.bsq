@@ -581,23 +581,22 @@ namespace TypeInfoGenerator {
         }
     }
 
-    function determineEListTag(entries: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
-        return entries.reduce<CPPAssembly::Tag>(fn(acc, e) => {
-            if(acc === CPPAssembly::Tag#Ref) {
+    function determineEListTag(entries: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag, TypeInfoContext {
+        return entries.reduce<(|CPPAssembly::Tag, TypeInfoContext|)>(fn(acc, e) => {
+            let currentTag, currentTic = acc;
+            if(currentTag === CPPAssembly::Tag#Ref) {
                 return acc;
             }
             
             let cpptk = CPPTransformNameManager::convertTypeKey(e.tkeystr);
-
-            %%
-            %% Again. dont love doing this...
-            %%
-
-            let tag = generateTypeInfo(e.tkeystr, tic).0.tag;
-            return if(tag === CPPAssembly::Tag#Ref)
+            let tinfo, ntic = generateTypeInfo(e.tkeystr, currentTic);
+            
+            let tag = if(tinfo.tag === CPPAssembly::Tag#Ref)
                 then CPPAssembly::Tag#Ref 
                 else CPPAssembly::Tag#Value;
-        }, CPPAssembly::Tag#Value);
+
+            return tag, ntic;
+        }, (|CPPAssembly::Tag#Value, tic|));
     }
 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -606,12 +605,17 @@ namespace TypeInfoGenerator {
         }
 
         let elist = tic.elists.get(tk);
-        let entriesinfo, ntic = generateObjectSize(elist.entries, tic);
+
+        var entriesinfo: FieldsInfo;
+        var ntic: TypeInfoContext;
+        entriesinfo, ntic = generateObjectSize(elist.entries, tic);
 
         let typesize = entriesinfo.typesize;
         let slotsize = entriesinfo.slotsize;
         let ptrmask = entriesinfo.ptrmask;
-        let tag = determineEListTag(elist.entries, ntic);
+
+        var tag: CPPAssembly::Tag;
+        tag, ntic = determineEListTag(elist.entries, ntic);
 
         %% TID does not matter here (these never are seen in runtime code)
         let cpptk = CPPTransformNameManager::convertTypeKey(tk);
