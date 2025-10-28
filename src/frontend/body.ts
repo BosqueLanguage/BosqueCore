@@ -203,17 +203,17 @@ class FormatStringTextComponent extends FormatStringComponent {
 }
 
 class FormatStringArgComponent extends FormatStringComponent {
-    readonly argIndex: number;
+    readonly argPos: string; // number | name
     readonly argType: TypeSignature; //can be AutoTypeSignature, string, or typed string
 
-    constructor(argIndex: number, argType: TypeSignature) {
+    constructor(argPos: string, argType: TypeSignature) {
         super();
-        this.argIndex = argIndex;
+        this.argPos = argPos;
         this.argType = argType;
     }
 
     emit(): string {
-        return `%{${this.argIndex}: ${this.argType.emit()}}`;
+        return `%{${this.argPos}: ${this.argType.emit()}}`;
     }
 }
 
@@ -347,8 +347,9 @@ enum ExpressionTag {
     LiteralTypedFormatStringExpression = "LiteralTypedFormatStringExpression",
     LiteralTypedFormatCStringExpression = "LiteralTypedFormatCStringExpression",
 
-    //TODO: we probably want typed versions of paths and format paths as well (not sure about fragments and globs)
-
+    LiteralTypedPathExpression = "LiteralTypedPathExpression",
+    LiteralTypedPathFormatExpression = "LiteralTypedPathFragmentExpression",
+    
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
 
@@ -536,11 +537,13 @@ class LiteralCStringExpression extends Expression {
 }
 
 class LiteralFormatStringExpression extends Expression {
-    readonly value: FormatStringComponent[];
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
 
-    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
         super(ExpressionTag.LiteralFormatStringExpression, sinfo);
         this.value = value;
+        this.fmts = fmts;
     }
 
     override isLiteralExpression(): boolean {
@@ -548,16 +551,18 @@ class LiteralFormatStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `$"${this.value.map((c) => c.emit()).join("")}"`;
+        return this.value
     }
 }
 
 class LiteralFormatCStringExpression extends Expression {
-    readonly value: FormatStringComponent[];
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
 
-    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
         super(ExpressionTag.LiteralFormatCStringExpression, sinfo);
         this.value = value;
+        this.fmts = fmts;
     }
 
     override isLiteralExpression(): boolean {
@@ -565,7 +570,7 @@ class LiteralFormatCStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `$'${this.value.map((c) => c.emit()).join("")}'`;
+        return this.value;
     }
 }
 
@@ -605,10 +610,12 @@ class LiteralPathItemExpression extends Expression {
 
 class LiteralFormatPathItemExpression extends Expression {
     readonly value: string; //path, fragment, or glob (as in source)
+    readonly fmts: FormatStringComponent[];
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, fmts: FormatStringComponent[]) {
         super(tag, sinfo);
         this.value = value;
+        this.fmts = fmts;
     }
 
     override isLiteralExpression(): boolean {
@@ -641,11 +648,14 @@ class LiteralTypeDeclValueExpression extends Expression {
 
 class LiteralTypedStringExpression extends Expression {
     readonly value: string;
+    readonly constype: TypeSignature;
+
     resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
 
-    constructor(sinfo: SourceInfo, value: string) {
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypedStringExpression, sinfo);
         this.value = value;
+        this.constype = constype;
     }
 
     override isLiteralExpression(): boolean {
@@ -653,17 +663,20 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
+        return `${this.value}<${this.constype.emit()}>`;
     }
 }
 
 class LiteralTypedCStringExpression extends Expression {
     readonly value: string;
+    readonly constype: TypeSignature;
+
     resolvedValue: string | undefined = undefined; //e.g. for string types after unescaping
 
-    constructor(sinfo: SourceInfo, value: string) {
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypedCStringExpression, sinfo);
         this.value = value;
+        this.constype = constype;
     }
 
     override isLiteralExpression(): boolean {
@@ -671,16 +684,20 @@ class LiteralTypedCStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
+        return `${this.value}<${this.constype.emit()}>`;
     }
 }
 
 class LiteralTypedFormatStringExpression extends Expression {
-    readonly value: FormatStringComponent[];
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
+    readonly constype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[], constype: TypeSignature) {
         super(ExpressionTag.LiteralTypedFormatStringExpression, sinfo);
         this.value = value;
+        this.fmts = fmts;
+        this.constype = constype;
     }
 
     override isLiteralExpression(): boolean {
@@ -688,16 +705,20 @@ class LiteralTypedFormatStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `"${this.value.map((c) => c.emit()).join("")}"`;
+        return `${this.value}<${this.constype.emit()}>`;
     }
 }
 
 class LiteralTypedFormatCStringExpression extends Expression {
-    readonly value: FormatStringComponent[];
+    readonly value: string;
+    readonly fmts: FormatStringComponent[];
+    readonly constype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: FormatStringComponent[]) {
+    constructor(sinfo: SourceInfo, value: string, fmts: FormatStringComponent[], constype: TypeSignature) {
         super(ExpressionTag.LiteralTypedFormatCStringExpression, sinfo);
         this.value = value;
+        this.fmts = fmts;
+        this.constype = constype;
     }
 
     override isLiteralExpression(): boolean {
@@ -705,7 +726,45 @@ class LiteralTypedFormatCStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `'${this.value.map((c) => c.emit()).join("")}'`;
+        return `'${this.value}'<${this.constype.emit()}>`;
+    }
+}
+
+class LiteralTypedPathExpression extends Expression {
+    readonly value: string; //path (no fragments or globs)
+    readonly constype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
+        super(ExpressionTag.LiteralTypedPathExpression, sinfo);
+        this.value = value;
+        this.constype = constype;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.value}<${this.constype.emit()}>`;
+    }
+}
+
+class LiteralTypedPathFormatExpression extends Expression {
+    readonly value: string; //path fragment
+    readonly constype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
+        super(ExpressionTag.LiteralTypedPathFormatExpression, sinfo);
+        this.value = value;
+        this.constype = constype;
+    }
+
+    override isLiteralExpression(): boolean {
+        return true;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.value}<${this.constype.emit()}>`;
     }
 }
 
@@ -2837,6 +2896,7 @@ export {
     LiteralPathItemExpression, LiteralFormatPathItemExpression,
     LiteralTypeDeclValueExpression,
     LiteralTypedCStringExpression, LiteralTypedStringExpression, LiteralTypedFormatStringExpression, LiteralTypedFormatCStringExpression,
+    LiteralTypedPathExpression, LiteralTypedPathFormatExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression, TaskCheckTerminateCaseExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,

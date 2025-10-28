@@ -391,42 +391,62 @@ class LambdaTypeSignature extends TypeSignature {
 class FormatStringTypeSignature extends TypeSignature {
     readonly oftype: "String" | "CString";
     readonly rtype: TypeSignature;
-    readonly terms: TypeSignature[];
+    readonly terms: {argpos: string, argtype: TypeSignature}[];
 
-    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: TypeSignature[]) {
-        super(sinfo, `F${oftype}<${[rtype, ...terms].map((tt) => tt.tkeystr).join(", ")}]>`);
+    private static buildkstr(oftype: "String" | "CString", rtype: TypeSignature, terms: {argpos: string, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            return `F${oftype}<${terms.map((tt) => tt.argpos + ": " + tt.argtype.emit()).join(", ")}, ${rtype.emit()}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "String" | "CString", rtype: TypeSignature, terms: {argpos: string, argtype: TypeSignature}[]) {
+        super(sinfo, FormatStringTypeSignature.buildkstr(oftype, rtype, terms));
         this.oftype = oftype;
         this.rtype = rtype;
         this.terms = terms;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), this.terms.map((tt) => tt.remapTemplateBindings(mapper)));
+        const ttrmp = this.terms.map((tt) => { return {argpos: tt.argpos, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatStringTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
     }
 
     emit(): string {
-        return `F${this.oftype}<${[this.rtype, ...this.terms].map((tt) => tt.emit()).join(", ")}]>`;
+        return this.tkeystr;
     }
 }
 
 class FormatPathTypeSignature extends TypeSignature {
     readonly oftype: "Path" | "PathItem" | "PathGlob";
     readonly rtype: TypeSignature;
-    readonly terms: TypeSignature[];
+    readonly terms: {argpos: string, argtype: TypeSignature}[];
 
-    constructor(sinfo: SourceInfo, oftype: "Path" | "PathItem" | "PathGlob", rtype: TypeSignature, terms: TypeSignature[]) {
-        super(sinfo, `F${oftype}<${[rtype, ...terms].map((tt) => tt.tkeystr).join(", ")}]>`);
+    private static buildkstr(oftype: "Path" | "PathItem" | "PathGlob", rtype: TypeSignature, terms: {argpos: string, argtype: TypeSignature}[]): string {
+        if(terms.length === 0) {
+            return `F${oftype}<${rtype.emit()}>`
+        }
+        else {
+            return `F${oftype}<${terms.map((tt) => tt.argpos + ": " + tt.argtype.emit()).join(", ")}, ${rtype.emit()}>`;
+        }
+    }
+
+    constructor(sinfo: SourceInfo, oftype: "Path" | "PathItem" | "PathGlob", rtype: TypeSignature, terms: {argpos: string, argtype: TypeSignature}[]) {
+        super(sinfo, FormatPathTypeSignature.buildkstr(oftype, rtype, terms));
         this.oftype = oftype;
         this.rtype = rtype;
         this.terms = terms;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), this.terms.map((tt) => tt.remapTemplateBindings(mapper)));
+        const ttrmp = this.terms.map((tt) => { return {argpos: tt.argpos, argtype: tt.argtype.remapTemplateBindings(mapper)}; });
+        return new FormatPathTypeSignature(this.sinfo, this.oftype, this.rtype.remapTemplateBindings(mapper), ttrmp);
     }
 
     emit(): string {
-        return `F${this.oftype}<${[this.rtype, ...this.terms].map((tt) => tt.emit()).join(", ")}]>`;
+        return this.tkeystr;
     }
 }
 

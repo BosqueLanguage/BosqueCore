@@ -103,10 +103,87 @@ Some examples include:
 ```
 
 ### Common Special Numerics
-xxxx
+A `DecimalDegree` literal is of the form `[+-][0-9]+[.][0-9]+dd` and represents a decimal degree value in the range [-180.0, 180.0]. A `LatLongCoordinate` literal is of the form `[+-]DDlatDDlong` and represents a pair of decimal degree values for latitude and longitude in the form `<latitude><longitude>` where latitude is in the range [-90.0, 90.0] and longitude is in the range [-180.0, 180.0]. 
+
+Some examples include:
+```none
+40.42dd               //40.42 as a DecimalDegree
+-3.7dd                //-3.7 as a DecimalDegree
+38.03lat-84.49long    //LatLongCoordinate for Lexington, KY
+```
+
+### Raw Data Literals
+The literals for `Byte` and `ByteBuffer` are based on `Byte` values. A `Byte` literal is of the form `0x[a-zA-Z0-9]{1,2}b` and represents an 8-bit unsigned integer value in the range [0, 255]. A `ByteBuffer` literal is a sequence of hexidecimal values separated by commas. 
+
+Some examples include:
+```none
+0x0                        //0 as a Byte
+0xFF                       //255 as a Byte
+0x{0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xA}  //ByteBuffer with 11 bytes
+```
+
+### UUIDv4 and UUIDv7 Literals
+UUIDv4 literals are of the form `uuid4{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}` where `x` is a hexidecimal digit and `y` is one of `8`, `9`, `A`, or `B`. UUIDv7 literals are of the form `uuid7{xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx}` where `x` is a hexidecimal digit and `y` is one of `8`, `9`, `A`, or `B`. 
+
+Some examples include:
+```none
+uuid4{550e8400-e29b-41d4-a716-446655440000}  //UUIDv4
+uuid7{550e8400-e29b-71d4-a716-446655440000}  //UUIDv7
+```
+
+### SHAHash Literals
+SHAHash literals are of the form `sha3{<hexstring>}` where the hash function use to compute the value is SHA3 256 with  and `<hexstring>` is the hexidecimal representation of the hash value.
+
+
+### Data and Time Literals
+Time and time values are complex, as such, Bosque provides a number of representations designed to appropriately capture common use cases. These include:
+- `TZDateTime` literals of the form `YYYY-MM-DDTHH:MM:SS[Zone]` representing a date/time with a timezone in ISO 8601 format where timezone is a string enclosed in `{...}` or is a standard `[A-Z]+` timezone abbreviation.
+- `TAIDateTime` literals of the form `YYYY-MM-DDTHH:MM:SS` representing a TAI (International Atomic Time) date/time at UTC.
+- `PlainDate` literals of the form `YYYY-MM-DD` representing a calendar date without any time (or timezone) information.
+- `PlainTime` literals of the form `HH:MM:SS` representing a time without any date (or timezone) information.
+- `ISOTimeStamp` literals of the form `YYYY-MM-DDTHH:MM:SS.sssZ` an ISO 8601 timestamp (including milliseconds).
+
+In addition, Bosque provides a logical tick-time representation as a monotonic counter:
+- `LogicalTime` literals of the form `Tl` where `T` is a positive numeric value.
+
+### Time and Date Delta Literals
+In addition to providing support for date/time instant literals, Bosque also provides delta representations for expressing time differences (or intervals) by adding a 
+sign `[+-]` specifier to indicate the direction of the delta. 
+
+These include:
+- `DeltaDateTime` literals of the form `[+-]YYYY-MM-DDTHH:MM:SS` representing a date/time delta with a timezone in ISO 8601 format and can be computed/applied to both timezone and TAI representations -- there are also date and time only variants of `[+-]YYYY-MM-DD` and `[+-]HH:MM:SS`.
+- `DeltaISOTimeStamp` literals of the form `[+-]YYYY-MM-DDTHH:MM:SS.sssZ` an ISO 8601 timestamp delta (including milliseconds).
+- `DeltaSeconds` literals of the form `[+-]N.sss` representing a delta in seconds (including milliseconds).
+- `DeltaLogicalTime` literals of the form `[+-]Nl` where `N` is a positive numeric value representing a delta in logical time ticks.
 
 ### String Literals
-xxx
+Bosque provides both explicitly Unicode strings (chars) and C-style strings (CChars) which are limited to printable ASCII values. Unicode String literals are enclosed in double quotes `"` and support numeric escape sequences of the form `%xYY;` where YY is the codepoint value in hexidecimal. Special named escapes are supported as well as described in the [BREX](https://github.com/BosqueLanguage/BREX) library. CChar literals are enclosed in single quotes `'` and support escape sequences as well.
+
+String literals by default can be multi-line and preserve whitespace using trailing backslashes `\` to indicate line continuation -- see [BREX](https://github.com/BosqueLanguage/BREX) for more details.
+
+## Regular Expression Literals
+To match strings Bosque provides regular expression literals for both Unicode strings and C-style strings. These literals are enclosed in slashes `/.../` and support the regex syntax described in [BREX](https://github.com/BosqueLanguage/BREX).
+
+## Path Literals
+In addition to string literals Bosque also provides path, path fragment, and glob literals for working with URI style resource paths. These literals are enclosed in backslashres `\...\`. They support arbitrary resource types and standard URI path syntax. 
+
+Examples include:
+```none
+\file:/path/to/resource
+f\resource/fragment\
+g\file:/path/**/glob/*.ext\
+
+\customresource:resource/path\
+```
+
+## Format String and Path Literals
+Strings and paths can be format literals as well. These are prefixed with a `$` and support embedded typed format components enclosed in `${...}`. These components include an argument index (starting at `0`) and the types of the format components can be specialized with an optional type after a colon `:`.
+
+```none
+$"Hello ${0}"
+$"Value is ${0:CStringOf<Temperature>}"
+$\file:/path/to/${0}/resource
+```
 
 ## Parameters/Variables/Captures
 Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are 
@@ -125,9 +202,19 @@ typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
 ```
 
 ## Literal Typed Expressions
-Typed literals provide a way to express structured information on other primitive data types, such as Bool, Int, Decimal, String, StringOf, UUID, DateTime, etc. These types are created using `typedecl` syntax (see [Type Aliases](types.md)) and literal values are constructed with the form `<literal>_<Type>`. Examples include:
+Typed literals provide a way to express structured information on other primitive data types, such as Bool, Int, Decimal, String, StringOf, UUID, DateTime, etc. These types are created using `type` syntax and literal values are constructed with the form `literal<Type>`. Examples include:
 
 ```none
+123i<Int>
+"abc"<Foo>
+2021-01-01<OrderDate>
+```
+
+In addition to primitives strings and paths (as well as format strings and paths) can also be typed literals:
+
+```none
+"Hello, World!"<Greeting>
+\file:/path/${0}/resource\<ConfigPath>
 ```
 
 ## Namespace Constants

@@ -404,14 +404,6 @@ __internal __typedeclable __keycomparable entity CString {
 #endif %% STRIPPED_CORE
 }
 
-%** Primitive FString Type. **%
-__internal __typedeclable entity FString {
-}
-
-%** Primitive FCString Type. **%
-__internal __typedeclable entity FCString {
-}
-
 %** Primitive unicode regex value. **%
 __internal entity Regex {
     __inline function accepts(re: Regex, s: String): Bool = regex_accepts;
@@ -432,18 +424,6 @@ __internal __typedeclable __keycomparable entity PathFragment {
 
 %** Primitive path glob value. **%
 __internal __typedeclable __keycomparable entity Glob {
-}
-
-%** Primitive FPath value. **%
-__internal __typedeclable entity __keycomparable FPath {
-}
-
-%** Primitive FPathFragment value. **%
-__internal __typedeclable entity __keycomparable FPathFragment {
-}
-
-%** Primitive FPathGlob value. **%
-__internal __typedeclable entity __keycomparable FPathGlob {
 }
 
 %** Result type. **%
