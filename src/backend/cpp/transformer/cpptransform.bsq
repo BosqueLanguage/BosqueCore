@@ -327,33 +327,42 @@ namespace TypeInfoGenerator {
         }
         else {
             let e = tic.transformer.bsqasm.lookupNominalTypeDeclaration(tk);
-            return convertSaturatedFields(e.saturatedBFieldInfo);
+            match(e)@ {
+                | BSQAssembly::EntityTypeDecl =>               { return convertSaturatedFields($e.saturatedBFieldInfo); }
+                | BSQAssembly::DatatypeMemberEntityTypeDecl => { return convertSaturatedFields($e.saturatedBFieldInfo); }
+                | BSQAssembly::SomeTypeDecl =>                 { return List<BSQAssembly::TypeSignature>{ $e.oftype }; }
+                | BSQAssembly::MapEntryTypeDecl =>             { return List<BSQAssembly::TypeSignature>{ $e.ktype, $e.vtype }; }
+                | BSQAssembly::ListTypeDecl =>                 { return List<BSQAssembly::TypeSignature>{ $e.oftype }; }
+                | BSQAssembly::MapTypeDecl =>                  { return List<BSQAssembly::TypeSignature>{ $e.ktype, $e.vtype }; }
+                | _ =>                                         { return List<BSQAssembly::TypeSignature>{}; }
+            }
         }
     }
 
     recursive function regeneratePreMatureTypeInfoHelper(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): TypeInfoContext {
         let fields = getFields(tk, tic);
-        return fields.reduce<TypeInfoContext>(fn(acc, f) => {
+        let fieldsTic = fields.reduce<TypeInfoContext>(fn(acc, f) => {
             let currentTic = acc;
 
-            let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
-            if(tic.get(cpptk).tag === CPPAssembly::Tag#InProgress) {
-                let regenFieldsTic = regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic);
-                let _, ntic = generateTypeInfo(f.tkeystr, regenFieldsTic);
-
-                return ntic;
+            let fcpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
+            if(currentTic.get(fcpptk).tag === CPPAssembly::Tag#InProgress) {
+                return regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic);
             }
             else {
                 return currentTic;
             }
         }, tic);
-    }
+    
+        %% Now that all fields have been regenerated we can regen tk
+        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
+        if(fieldsTic.has(cpptk) && fieldsTic.get(cpptk).tag === CPPAssembly::Tag#InProgress) {
+            let _, finalTic = generateTypeInfo(tk, fieldsTic.delete(cpptk));
+            return finalTic;
+        }
 
-    %% 
-    %% In complex cases this will fail (e.g., we have a previously inprogress type deeply nested as a
-    %% field in one of these subtypes) so we will need some manner to recursively regenerate types starting 
-    %% deepest possible primitives
-    %%
+        return fieldsTic;
+    }
+ 
     function regeneratePreMatureTypeInfo(subtypes: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
         return subtypes.reduce<TypeInfoContext>(fn(acc, t) => {
             let cpptk = CPPTransformNameManager::convertTypeKey(t);
