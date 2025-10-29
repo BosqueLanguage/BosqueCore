@@ -316,15 +316,55 @@ namespace TypeInfoGenerator {
         }, (|FieldsInfo{ 8n, 1n, '0' }, tic|));
     }
 
-    function regeneratePreMatureTypeInfo(types: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
-        return types.reduce<TypeInfoContext>(fn(acc, t) => {
-            let cpptk = CPPTransformNameManager::convertTypeKey(t);
-            let tinfo = acc.get(cpptk);
-            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
-                return generateTypeInfo(t, acc.delete(cpptk)).1;
+    function isEListTypeKey(tk: BSQAssembly::TypeKey): Bool {
+        return tk.value.startsWithString('(|') && tk.value.endsWithString('|)');
+    }
+
+    function getFields(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): List<BSQAssembly::TypeSignature> {
+        if(isEListTypeKey(tk)) {
+            let elist = tic.elists.get(tk);
+            return elist.entries;
+        }
+        else {
+            let e = tic.transformer.bsqasm.lookupNominalTypeDeclaration(tk);
+            return convertSaturatedFields(e.saturatedBFieldInfo);
+        }
+    }
+
+    recursive function regeneratePreMatureTypeInfoHelper(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): TypeInfoContext {
+        let fields = getFields(tk, tic);
+        return fields.reduce<TypeInfoContext>(fn(acc, f) => {
+            let currentTic = acc;
+
+            let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
+            if(tic.get(cpptk).tag === CPPAssembly::Tag#InProgress) {
+                let regenFieldsTic = regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic);
+                let _, ntic = generateTypeInfo(f.tkeystr, regenFieldsTic);
+
+                return ntic;
             }
             else {
-                return acc;
+                return currentTic;
+            }
+        }, tic);
+    }
+
+    %% 
+    %% In complex cases this will fail (e.g., we have a previously inprogress type deeply nested as a
+    %% field in one of these subtypes) so we will need some manner to recursively regenerate types starting 
+    %% deepest possible primitives
+    %%
+    function regeneratePreMatureTypeInfo(subtypes: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
+        return subtypes.reduce<TypeInfoContext>(fn(acc, t) => {
+            let cpptk = CPPTransformNameManager::convertTypeKey(t);
+            let currentTic = acc;
+
+            let tinfo = acc.get(cpptk);
+            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
+                return regeneratePreMatureTypeInfoHelper(t, currentTic);
+            }
+            else {
+                return currentTic;
             }
         }, tic);
     }
@@ -651,7 +691,7 @@ namespace TypeInfoGenerator {
         if(tic.has(cpptk)) {
             return tic.get(cpptk), tic;
         }
-        if(bsqtk.value.startsWithString('(|') && bsqtk.value.endsWithString('|)')) {
+        if(isEListTypeKey(bsqtk)) {
             return generateEListTypeInfo(bsqtk, tic);
         }
 
