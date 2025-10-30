@@ -647,12 +647,13 @@ namespace TypeInfoGenerator {
     }
 
     %%
-    %% This idea is promising, the problem is elists are not correctly regenerated here 
-    %% for some special cases (List<(|x,y,z|))
+    %% TODO: We should come back to this function as there is def some extra work going on
+    %% (perhaps see if we can get things to one pass?)
     %%
     function generateCompleteTypeInfo(tic: TypeInfoContext): Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> {
         let topo = tic.transformer.bsqasm.typetopo;
         
+        %% Process strongly connected components first
         let cyclicTic = topo.sccs.reduce<TypeInfoContext>(fn(acc, cycle) => {
             return cycle.reduce<TypeInfoContext>(fn(cycleAcc, bsqtk) => {
                 let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
@@ -661,7 +662,7 @@ namespace TypeInfoGenerator {
             }, acc);
         }, tic);
 
-        let dagTic = topo.ctopo.reduce<TypeInfoContext>(fn(acc, bsqtk) => {
+        let topoTic = topo.ctopo.reduce<TypeInfoContext>(fn(acc, bsqtk) => {
             let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
             if(acc.has(cpptk) && acc.get(cpptk).tag === CPPAssembly::Tag#InProgress) {
                 let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, acc.delete(cpptk));
@@ -673,7 +674,8 @@ namespace TypeInfoGenerator {
             }
         }, cyclicTic);
 
-        let finalTic = dagTic.cache.reduce<TypeInfoContext>(fn(acc, cpptk, tinfo) => {
+        %% Final pass to clean things up (elists will get missed in the topo)
+        let finalTic = topoTic.cache.reduce<TypeInfoContext>(fn(acc, cpptk, tinfo) => {
             let bsqtk = CPPTransformNameManager::revertTypeKey(cpptk);
             if(tinfo.tag === CPPAssembly::Tag#InProgress) {
                 let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, acc.delete(cpptk));
@@ -682,7 +684,7 @@ namespace TypeInfoGenerator {
             else {
                 return acc;
             }
-        }, dagTic);
+        }, topoTic);
 
         return finalTic.cache;
     }
@@ -2217,28 +2219,12 @@ entity CPPTransformer {
             return CPPTransformNameManager::convertInvokeKey(ikey);
         }); 
 
-        let basetic =                 TypeInfoContext{ 
-                    Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
-                    Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
-                    transformer, 1n 
-                };
-
+        let basetic = TypeInfoContext{ 
+            Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
+            Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
+            transformer, 1n 
+        };
         let tinfos = TypeInfoGenerator::generateCompleteTypeInfo(basetic);
-
-      let anyInProgress = tinfos.reduce<List<CPPAssembly::TypeKey>>(fn(acc, k, v) => {
-            if(v.tag === CPPAssembly::Tag#InProgress) {
-                return acc.pushBack(k);
-            }
-            else {
-                return acc;
-            }
-        }, List<CPPAssembly::TypeKey>{});
-
-        if(anyInProgress.size() > 0n) {
-            abort;
-        }
-
-
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls_concepts,
