@@ -170,18 +170,11 @@ entity TypeInfoContext {
     }
 
     method updateCache(ntinfo: CPPAssembly::TypeInfo): TypeInfoContext {
-        if(this.has(ntinfo.typekey)) {
-            let existing = this.get(ntinfo.typekey);
-            if(existing.tag === CPPAssembly::Tag#InProgress) {
-                %% Overwrite the placeholder safely
-                return this[
-                    cache = $cache.delete(ntinfo.typekey).insert(ntinfo.typekey, ntinfo),
-                    tid = $tid + 1n
-                ];
-            }
-
-            return this;
-            %%abort; %% true duplicate
+        if(this.has(ntinfo.typekey)) {  
+            return this[
+                cache = $cache.delete(ntinfo.typekey).insert(ntinfo.typekey, ntinfo),
+                tid = $tid + 1n
+            ]; 
         }
         else {
             return this[
@@ -236,11 +229,6 @@ namespace TypeInfoGenerator {
     }
 
     recursive? function isSimpleType(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): Bool {
-        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
-        if(tic.get(cpptk).tag !== CPPAssembly::Tag#Value) {
-            return false;
-        }
-
         if(isEListTypeKey(tk)) {
             let elist = tic.elists.get(tk);
             return elist.entries.allOf(pred(e) => isSimpleType[recursive](e.tkeystr, tic));
@@ -256,7 +244,7 @@ namespace TypeInfoGenerator {
 
             %% If any fields are InProgress the whole type must also be 
             if(currentTag === CPPAssembly::Tag#InProgress) {
-                return currentTag, currentIdx + 1n;
+                return CPPAssembly::Tag#InProgress, currentIdx + 1n;
             }
 
             let cpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr); 
@@ -361,25 +349,39 @@ namespace TypeInfoGenerator {
         }
     }
 
-    recursive? function regeneratePreMatureTypeInfoHelper(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): TypeInfoContext {
-        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
+    %%
+    %% Wow... This whole hueristic of regenrating specific typeinfos at just the right time sucks!
+    %% Not sure how I did not realize this uet, but the easies and cleanest approach is to opt for a second
+    %% pass over all typeinfos once we finish our passes over abstract and concrete. This ensures all types
+    %% are complete and will allow me to delete a shit ton of logic. 
+    %%
+    %% Down in convertBsqAsmToCpp i did effectively what we need, lets make a method for it in this ns
+    %% and remove the code rendered unnecessary.
+    %%
 
-        let fields = getFields(tk, tic);
-        let roottinfo = tic.get(cpptk); 
-        
+    recursive? function regeneratePreMatureTypeInfoHelper(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): TypeInfoContext {
+        let fields = getFields(tk, tic);        
         let fieldsTic = fields.reduce<TypeInfoContext>(fn(acc, f) => {
             let currentTic = acc;
 
             let fcpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
             if(currentTic.get(fcpptk).tag === CPPAssembly::Tag#InProgress) {
-                return regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic);
+                return regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic.delete(fcpptk));
             }
             else {
                 return currentTic;
             }
         }, tic);
-    
+
+        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
+
         %% Now that all fields have been regenerated we can regen tk
+        if(!fieldsTic.has(cpptk)) {
+            let _, finalTic = generateTypeInfo(tk, fieldsTic);
+            return finalTic;
+        }
+
+        let roottinfo = fieldsTic.get(cpptk); 
         if(roottinfo.tag === CPPAssembly::Tag#InProgress) {
             let _, finalTic = generateTypeInfo(tk, fieldsTic.delete(cpptk));
             return finalTic;
@@ -658,29 +660,7 @@ namespace TypeInfoGenerator {
             | _ =>                           { abort; }
         }
     }
-
-    function determineEListTag(entries: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag, TypeInfoContext {
-        return entries.reduce<(|CPPAssembly::Tag, TypeInfoContext|)>(fn(acc, e) => {
-            let currentTag, currentTic = acc;
-            if(currentTag === CPPAssembly::Tag#Ref) {
-                return acc;
-            }
-            
-            let cpptk = CPPTransformNameManager::convertTypeKey(e.tkeystr);
-            let tinfo, ntic = generateTypeInfo(e.tkeystr, currentTic);
-            
-            let tag = if(tinfo.tag === CPPAssembly::Tag#Ref)
-                then CPPAssembly::Tag#Ref 
-                else CPPAssembly::Tag#Value;
-
-            return tag, ntic;
-        }, (|CPPAssembly::Tag#Value, tic|));
-    }
-
-    %%
-    %% The current bug has to do with types not being regenerated
-    %% if they are member of elist... :(
-    %%
+ 
     function generateEListTypeInfo(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         if(!tic.elists.has(tk)) {
             abort;
@@ -697,17 +677,7 @@ namespace TypeInfoGenerator {
         let ptrmask = entriesinfo.ptrmask;
 
         var tag: CPPAssembly::Tag;
-        tag, ntic = determineEListTag(elist.entries, ntic);
-
-        let hasInProgress = elist.entries.someOf(pred(e) => {
-            let entryCppTk = CPPTransformNameManager::convertTypeKey(e.tkeystr);
-            let entryInfo = ntic.get(entryCppTk);
-            return entryInfo.tag === CPPAssembly::Tag#InProgress;
-        });
-
-        if(hasInProgress) {
-            tag = CPPAssembly::Tag#InProgress;
-        }
+        tag = determineTag(elist.entries, ntic);
 
         %% TID does not matter here (these never are seen in runtime code)
         let cpptk = CPPTransformNameManager::convertTypeKey(tk);
@@ -2287,7 +2257,19 @@ entity CPPTransformer {
             generated_typeinfos_abstract
         );
 
-        let anyInProgress = generated_typeinfos_concrete.cache.reduce<List<CPPAssembly::TypeKey>>(fn(acc, k, v) => {
+        let finalizedTic = generated_typeinfos_concrete.cache.reduce<TypeInfoContext>(fn(acc, cpptk, tinfo) => {
+            let currentTic = acc;
+            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
+                let bsqtk = CPPTransformNameManager::revertTypeKey(cpptk);
+                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, currentTic.delete(cpptk));
+                return updatedTic;
+            }
+            else {
+                return currentTic;
+            }
+        }, generated_typeinfos_concrete);
+
+        let anyInProgress = finalizedTic.cache.reduce<List<CPPAssembly::TypeKey>>(fn(acc, k, v) => {
             if(v.tag === CPPAssembly::Tag#InProgress) {
                 return acc.pushBack(k);
             }
@@ -2323,7 +2305,7 @@ entity CPPTransformer {
             pconcepts = transformer_pconcepts,
             concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = generated_typeinfos_concrete.cache
+            typeinfos = finalizedTic.cache
         };
     }
 }
