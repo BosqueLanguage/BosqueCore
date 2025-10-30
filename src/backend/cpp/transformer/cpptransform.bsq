@@ -34,7 +34,7 @@ namespace CPPTransformNameManager {
     %% Necessary when generating typeinfos for containers
     function revertTypeKey(tk: CPPAssembly::TypeKey): BSQAssembly::TypeKey {
         switch(tk.value) {
-            | 'None' => { return BSQAssembly::TypeKey::from('None'); }
+            | '__CoreCpp::None' => { return BSQAssembly::TypeKey::from('None'); }
             | '__CoreCpp::Bool' => { return BSQAssembly::TypeKey::from('Bool'); }
             | '__CoreCpp::Nat' => { return BSQAssembly::TypeKey::from('Nat'); }
             | '__CoreCpp::Int' => { return BSQAssembly::TypeKey::from('Int'); }
@@ -197,7 +197,7 @@ entity TypeInfoContext {
         let selfRecursiveTypeInfo = CPPAssembly::TypeInfo{ 0n, 16n, 2n, '20', tkey, CPPAssembly::Tag#InProgress };
 
         if(this.has(tkey)) {
-            abort;
+            return this;
         }
 
         return this[cache = $cache.insert(tkey, selfRecursiveTypeInfo)];
@@ -347,62 +347,6 @@ namespace TypeInfoGenerator {
                 | _ =>                                    { return List<BSQAssembly::TypeSignature>{}; }
             }
         }
-    }
-
-    %%
-    %% Wow... This whole hueristic of regenrating specific typeinfos at just the right time sucks!
-    %% Not sure how I did not realize this uet, but the easies and cleanest approach is to opt for a second
-    %% pass over all typeinfos once we finish our passes over abstract and concrete. This ensures all types
-    %% are complete and will allow me to delete a shit ton of logic. 
-    %%
-    %% Down in convertBsqAsmToCpp i did effectively what we need, lets make a method for it in this ns
-    %% and remove the code rendered unnecessary.
-    %%
-
-    recursive? function regeneratePreMatureTypeInfoHelper(tk: BSQAssembly::TypeKey, tic: TypeInfoContext): TypeInfoContext {
-        let fields = getFields(tk, tic);        
-        let fieldsTic = fields.reduce<TypeInfoContext>(fn(acc, f) => {
-            let currentTic = acc;
-
-            let fcpptk = CPPTransformNameManager::convertTypeKey(f.tkeystr);
-            if(currentTic.get(fcpptk).tag === CPPAssembly::Tag#InProgress) {
-                return regeneratePreMatureTypeInfoHelper[recursive](f.tkeystr, currentTic.delete(fcpptk));
-            }
-            else {
-                return currentTic;
-            }
-        }, tic);
-
-        let cpptk = CPPTransformNameManager::convertTypeKey(tk);
-
-        %% Now that all fields have been regenerated we can regen tk
-        if(!fieldsTic.has(cpptk)) {
-            let _, finalTic = generateTypeInfo(tk, fieldsTic);
-            return finalTic;
-        }
-
-        let roottinfo = fieldsTic.get(cpptk); 
-        if(roottinfo.tag === CPPAssembly::Tag#InProgress) {
-            let _, finalTic = generateTypeInfo(tk, fieldsTic.delete(cpptk));
-            return finalTic;
-        }
-
-        return fieldsTic;
-    }
- 
-    function regeneratePreMatureTypeInfo(subtypes: List<BSQAssembly::TypeKey>, tic: TypeInfoContext): TypeInfoContext {
-        return subtypes.reduce<TypeInfoContext>(fn(acc, t) => {
-            let cpptk = CPPTransformNameManager::convertTypeKey(t);
-            let currentTic = acc;
-
-            let tinfo = currentTic.get(cpptk);
-            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
-                return regeneratePreMatureTypeInfoHelper(t, currentTic);
-            }
-            else {
-                return currentTic;
-            }
-        }, tic);
     }
 
     %% Alias of UnicodeRope
@@ -603,9 +547,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged
         };
 
-        ntic = ntic.updateCache(concepttinfo);
-        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
-        return concepttinfo, ntic;
+        return concepttinfo, ntic.updateCache(concepttinfo);
     }
     
     function generateDatatypeTypeInfo(e: BSQAssembly::DatatypeTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -626,9 +568,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged
         };
 
-        ntic = ntic.updateCache(datatypetinfo);
-        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
-        return datatypetinfo, ntic;
+        return datatypetinfo, ntic.updateCache(datatypetinfo);
     }
 
     function generateOptionTypeInfo(e: BSQAssembly::OptionTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -649,9 +589,7 @@ namespace TypeInfoGenerator {
             CPPAssembly::Tag#Tagged
         };
 
-        ntic = ntic.updateCache(pctinfo);
-        ntic = regeneratePreMatureTypeInfo(e.subtypes, ntic);
-        return pctinfo, ntic;
+        return pctinfo, ntic.updateCache(pctinfo);
     }
 
     function generatePrimitiveConceptTypeInfo(e: BSQAssembly::PrimitiveConceptTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
@@ -708,7 +646,48 @@ namespace TypeInfoGenerator {
         }
     }
 
-    recursive? function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
+    %%
+    %% This idea is promising, the problem is elists are not correctly regenerated here 
+    %% for some special cases (List<(|x,y,z|))
+    %%
+    function generateCompleteTypeInfo(tic: TypeInfoContext): Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> {
+        let topo = tic.transformer.bsqasm.typetopo;
+        
+        let cyclicTic = topo.sccs.reduce<TypeInfoContext>(fn(acc, cycle) => {
+            return cycle.reduce<TypeInfoContext>(fn(cycleAcc, bsqtk) => {
+                let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, cycleAcc);
+                return updatedTic;
+            }, acc);
+        }, tic);
+
+        let dagTic = topo.ctopo.reduce<TypeInfoContext>(fn(acc, bsqtk) => {
+            let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
+            if(acc.has(cpptk) && acc.get(cpptk).tag === CPPAssembly::Tag#InProgress) {
+                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, acc.delete(cpptk));
+                return updatedTic;
+            }
+            else {
+                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, acc);
+                return updatedTic;
+            }
+        }, cyclicTic);
+
+        let finalTic = dagTic.cache.reduce<TypeInfoContext>(fn(acc, cpptk, tinfo) => {
+            let bsqtk = CPPTransformNameManager::revertTypeKey(cpptk);
+            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
+                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, acc.delete(cpptk));
+                return updatedTic;
+            }
+            else {
+                return acc;
+            }
+        }, dagTic);
+
+        return finalTic.cache;
+    }
+
+    function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
         let cpptk = CPPTransformNameManager::convertTypeKey(bsqtk);
         if(tic.has(cpptk)) {
             return tic.get(cpptk), tic;
@@ -2236,40 +2215,17 @@ entity CPPTransformer {
 
         let transformer_allmethods = bsqasm.allmethods.map<CPPAssembly::InvokeKey>(fn(ikey) => {
             return CPPTransformNameManager::convertInvokeKey(ikey);
-        });
+        }); 
 
-        let generated_typeinfos_abstract = bsqasm.allabstracttypes
-            .reduce<TypeInfoContext>( 
-                fn(acc, tkey) => {
-                    return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
-                },
-                TypeInfoContext{ 
+        let basetic =                 TypeInfoContext{ 
                     Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo>{}, 
                     Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
                     transformer, 1n 
-                }
-            );
+                };
 
-        let generated_typeinfos_concrete = bsqasm.allconcretetypes
-            .reduce<TypeInfoContext>(fn(acc, tkey) => {
-                return TypeInfoGenerator::generateTypeInfo(tkey, acc).1;
-            },
-            generated_typeinfos_abstract
-        );
+        let tinfos = TypeInfoGenerator::generateCompleteTypeInfo(basetic);
 
-        let finalizedTic = generated_typeinfos_concrete.cache.reduce<TypeInfoContext>(fn(acc, cpptk, tinfo) => {
-            let currentTic = acc;
-            if(tinfo.tag === CPPAssembly::Tag#InProgress) {
-                let bsqtk = CPPTransformNameManager::revertTypeKey(cpptk);
-                let _, updatedTic = TypeInfoGenerator::generateTypeInfo(bsqtk, currentTic.delete(cpptk));
-                return updatedTic;
-            }
-            else {
-                return currentTic;
-            }
-        }, generated_typeinfos_concrete);
-
-        let anyInProgress = finalizedTic.cache.reduce<List<CPPAssembly::TypeKey>>(fn(acc, k, v) => {
+      let anyInProgress = tinfos.reduce<List<CPPAssembly::TypeKey>>(fn(acc, k, v) => {
             if(v.tag === CPPAssembly::Tag#InProgress) {
                 return acc.pushBack(k);
             }
@@ -2281,6 +2237,8 @@ entity CPPTransformer {
         if(anyInProgress.size() > 0n) {
             abort;
         }
+
+
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls_concepts,
@@ -2305,7 +2263,7 @@ entity CPPTransformer {
             pconcepts = transformer_pconcepts,
             concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = finalizedTic.cache
+            typeinfos = tinfos
         };
     }
 }
