@@ -72,6 +72,7 @@ const KW_of = "of";
 const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_task = "task";
+const KW_Task = "Task";
 const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
@@ -331,12 +332,33 @@ const ParenSymbols = [
     ...RightScanParens
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
+const SpecialStringFormatTypes = [
+    "FString",
+    "FCString"
+];
+
+const SpecialPathFormatTypes = [
+    "FPath",
+    "FPathItem",
+    "FPathGlob"
+];
+
+const SpecialDashResultType = "DashResult";
+
+const SpecialNominalTypes = [
+    ...SpecialStringFormatTypes,
+    ...SpecialPathFormatTypes,
+    SpecialDashResultType
+];
+
 export {
     KeywordStrings,
     GeneralAttributes, APIDeclAttributes, AgentDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     TermRestrictions,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
+
+    SpecialStringFormatTypes, SpecialPathFormatTypes, SpecialDashResultType, SpecialNominalTypes,
 
     KW_recursive_q,
     KW_recursive,
@@ -354,7 +376,7 @@ export {
     // KW_elif,
     // KW_else,
     // KW_enum,
-    // KW_env,
+    KW_env,
     // KW_entity,
     KW_ensures,
     KW_error,
@@ -372,7 +394,7 @@ export {
     KW_method,
     // KW_namespace,
     KW_none,
-    // KW_of,
+    KW_of,
     KW_ok,
     // KW_operator,
     // KW_option,
@@ -388,16 +410,17 @@ export {
     // KW_return,
     // KW_result,
     KW_requires,
-    // KW_self,
+    KW_self,
     KW_some,
     KW_safety,
     KW_spec,
     // KW_switch,
     KW_success,
     // KW_task,
+    KW_Task,
     KW_test,
     // KW_then,
-    // KW_this,
+    KW_this,
     KW_true,
     // KW_type,
     // KW_datatype,
@@ -439,15 +462,15 @@ export {
     SYM_colon,
     SYM_coloncolon,
     SYM_coma,
-    // SYM_dot,
+    SYM_dot,
     SYM_eq,
     SYM_semicolon,
     SYM_question,
     SYM_dotdotdot,
-    // SYM_HOLE,
+    SYM_HOLE,
     
-    // SYM_positive,
-    // SYM_negate,
+    SYM_positive,
+    SYM_negate,
 
     SYM_ampamp,
     // SYM_bangeq,

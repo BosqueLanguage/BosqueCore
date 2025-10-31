@@ -350,13 +350,11 @@ enum ExpressionTag {
     LiteralTypedPathExpression = "LiteralTypedPathExpression",
     LiteralTypedPathFormatExpression = "LiteralTypedPathFragmentExpression",
     
-    HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
 
     TaskAccessIDExpression = "TaskAccessIDExpression",
     TaskAccessParentIDExpression = "TaskAccessParentIDExpression",
     TaskCheckStatusExpression = "TaskCheckStatusExpression",
-    TaskCheckTerminateCaseExpression = "TaskCheckTerminateCaseExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -772,8 +770,8 @@ class AccessEnvValueExpression extends Expression {
     readonly opname: "has" | "get" | "tryGet" | undefined;
     readonly keyname: string;
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, opname: "has" | "get" | "tryGet" | undefined, keyname: string) {
-        super(tag, sinfo);
+    constructor(sinfo: SourceInfo, opname: "has" | "get" | "tryGet" | undefined, keyname: string) {
+        super(ExpressionTag.AccessEnvValueExpression, sinfo);
         this.opname = opname;
         this.keyname = keyname;
     }
@@ -802,22 +800,12 @@ class TaskAccessInfoExpression extends Expression {
 }
 
 class TaskCheckStatusExpression extends Expression {
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
+    constructor(sinfo: SourceInfo) {
         super(ExpressionTag.TaskCheckStatusExpression, sinfo);
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `Task::runstate()`;
-    }
-}
-
-class TaskCheckTerminateCaseExpression extends Expression {
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, name: string) {
-        super(ExpressionTag.TaskCheckTerminateCaseExpression, sinfo);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::terminate()`;
     }
 }
 
@@ -1180,15 +1168,17 @@ class CreateDirectExpression extends Expression {
     }
 }
 
-class InterpolateFormatStringExpression extends Expression {
+class InterpolateFormatExpression extends Expression {
+    readonly kind: "string" | "cstring" | "path" | "fragment" | "glob";
     readonly decloftype: TypeSignature | undefined;
     readonly fmtString: Expression;
-    readonly args: Expression[];
+    readonly args: ArgumentValue[];
     
     actualoftype: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, decloftype: TypeSignature | undefined, fmtString: Expression, args: Expression[]) {
+    constructor(sinfo: SourceInfo, kind: "string" | "cstring" | "path" | "fragment" | "glob", decloftype: TypeSignature | undefined, fmtString: Expression, args: ArgumentValue[]) {
         super(ExpressionTag.InterpolateFormatStringExpression, sinfo);
+        this.kind = kind;
         this.decloftype = decloftype;
         this.fmtString = fmtString;
         this.args = args;
@@ -1196,8 +1186,8 @@ class InterpolateFormatStringExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const fmtStr = this.fmtString.emit(true, fmt);
-        const argsStr = this.args.map((a) => a.emit(true, fmt)).join(", ");
-        return `interpolate${this.decloftype !== undefined ? `<${this.decloftype.emit()}>` : ""}(${fmtStr}, ${argsStr})`;
+        const argsStr = this.args.map((a) => a.emit(fmt)).join(", ");
+        return `Interpolate::${this.kind}${this.decloftype !== undefined ? `<${this.decloftype.emit()}>` : ""}(${fmtStr}, ${argsStr})`;
     }
 }
 
@@ -1716,12 +1706,12 @@ class LogicOrExpression extends LogicExpression {
 
 class HoleExpression extends Expression {
     readonly hname: string | undefined;
-    readonly captures: TypeSignature[];
+    readonly captures: string[];
     readonly explicittype: TypeSignature | undefined;
     readonly doccomment: string | undefined;
-    readonly samplesfile: string | undefined = undefined;
+    readonly samplesfile: Expression | undefined = undefined;
     
-    constructor(sinfo: SourceInfo, hname: string | undefined, captures: TypeSignature[], explicittype: TypeSignature | undefined, doccomment: string | undefined) {
+    constructor(sinfo: SourceInfo, hname: string | undefined, captures: string[], explicittype: TypeSignature | undefined, doccomment: string | undefined) {
         super(ExpressionTag.HoleExpression, sinfo);
         this.hname = hname;
         this.captures = captures;
@@ -1731,17 +1721,15 @@ class HoleExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const etype = this.explicittype ? ` : ${this.explicittype.emit()}` : "";
+        const etype = this.explicittype ? ` -> ${this.explicittype.emit()}` : "";
         let ebody = "";
         if(this.doccomment !== undefined || this.samplesfile !== undefined) {
             const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
-            const samplstr = this.samplesfile !== undefined ? `${this.samplesfile}` : "";
-            ebody = `(${dcom}$${samplstr})`;
+            const samplstr = this.samplesfile !== undefined ? `{${this.samplesfile.emit(false, fmt)}}` : "";
+            ebody = `(${dcom})${samplstr}`;
         }
 
-        const captures = this.captures.length !== 0 ? `[${this.captures.map((c) => c.emit()).join(", ")}]` : "";
-
-        return `?_${captures}${etype}${ebody}`;
+        return `?_${this.hname || ""}${this.captures.length !== 0 ? ("[" + this.captures.join(", ") + "]") : ""}${ebody}${etype}`;
     }
 }
 
@@ -2710,6 +2698,8 @@ class TaskStatusStatement extends Statement {
     }
 }
 
+xxxx; //Add Task::terminate -- for canceled/timout or aborted tasks -- also make the below "yield RHS" which just ends the task and results in RHS
+
 class TaskYieldStatement extends Statement {
     readonly name: string;
     readonly terms: TypeSignature[];
@@ -2897,7 +2887,7 @@ export {
     LiteralTypeDeclValueExpression,
     LiteralTypedCStringExpression, LiteralTypedStringExpression, LiteralTypedFormatStringExpression, LiteralTypedFormatCStringExpression,
     LiteralTypedPathExpression, LiteralTypedPathFormatExpression,
-    AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression, TaskCheckTerminateCaseExpression,
+    AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression,
@@ -2906,7 +2896,7 @@ export {
     CallRefInvokeExpression, CallRefVariableExpression, CallRefThisExpression, CallRefSelfExpression, 
     CallTaskActionExpression,
     ParseAsTypeExpression, SafeConvertExpression, CreateDirectExpression,
-    InterpolateFormatStringExpression,
+    InterpolateFormatExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromName, PostfixAccessFromIndex, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,

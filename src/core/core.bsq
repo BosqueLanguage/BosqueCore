@@ -462,8 +462,17 @@ namespace Interpolate {
     %** Special declaration of string interpolation function. **%
     function string(): String = special_method;
 
-    %** Special declaration of string interpolation function. **%
+    %** Special declaration of cstring interpolation function. **%
     function cstring(): CString = special_method;
+
+    %** Special declaration of path interpolation function. **%
+    function path(): Path = special_method;
+
+    %** Special declaration of fragment interpolation function. **%
+    function fragment(): PathFragment = special_method;
+
+    %** Special declaration of glob interpolation function. **%
+    function glob(): Glob = special_method;
 }
 
 namespace XCore {
