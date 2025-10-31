@@ -119,7 +119,7 @@ function buildFieldAccess(base: CPPAssembly::TypeKey, subtype: Option<CPPAssembl
 function generateBoxedAccessor(tk: CPPAssembly::TypeKey, fieldAccess: String, ctx: Context): String {
     let etk = emitTypeKey(tk, true, ctx);
 
-    return String::concat(".access<", etk, ">()", fieldAccess);
+    return String::concat(".template access<", etk, ">()", fieldAccess);
 }
 
 %% Subtype is irrelevant here as all agree on this fields pos
@@ -363,12 +363,24 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
     return String::fromCString(nsk.value);
 }
 
+%% If we construct abstract from another abstract we need to first extract data 
+%% (as the type pointer gets copied over to the type we are constructing typeinfo field)
+function emitValueInConstructorExpression(value: String, valuetype: CPPAssembly::TypeKey, ctx: Context): String {
+    if(ctx.asm.isNominalTypeConcept(valuetype)) {
+        return String::concat(value, ".data");
+    }
+    else {
+        return value;
+    }
+}
+
 %% For constructing concepts
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
         let econstype = emitTypeSignature(constype, false, ctx);
         let etypename = removeCppPrefix(emitTypeSignature(ttype, false, ctx));
         let ettype = emitTypeInfoName(etypename);
+        let eexpval = emitValueInConstructorExpression(eexp, ttype.tkeystr, ctx);
         
         %% Since our collections are just alias for underlying data structure we dont need to emit explicit constructors 
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
@@ -385,7 +397,7 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         }
         
         return if(eexp === "") then String::concat(econstype, "( &", ettype, " )")
-            else String::concat(econstype, "( &", ettype, ", ", eexp, " )");
+            else String::concat(econstype, "( &", ettype, ", ", eexpval, " )");
         
 }
 
@@ -613,17 +625,11 @@ function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpressi
     return String::concat(name, "(", args, ")");
 }
 
+%% We have all regex accepting for now so we just need the expression
 function emitCallTypeFunctionSpecialExpression(e: CPPAssembly::CallTypeFunctionSpecialExpression, ctx: Context): String {
-%*
-    let typefunc = ctx.asm.typefuncs.get(e.ikey);
-    let name = emitInvokeKey(typefunc.ikey, ctx);
-    let args = emitArguments(e.args, ctx); 
-*%
-    %%
-    %% TODO: name and exp and how to properly emit
-    %%
+    let exp = emitExpression(e.exp, ctx);
 
-    return "";
+    return exp;
 }
 
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): String {
@@ -1194,11 +1200,11 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
 }
 
 function emitLiteralCRegexExpression(exp: CPPAssembly::LiteralCRegexExpression): String {
-    return "";
+    return "0ULL";
 }
 
 function emitLiteralRegexExpression(exp: CPPAssembly::LiteralRegexExpression): String {
-    return "";
+    return "0ULL";
 }
 
 %% Just a typedef of CString
@@ -2146,13 +2152,13 @@ function emitCollectionTypeDeclDef(ctd: CPPAssembly::CollectionTypeDecl, ctx: Co
 function emitPrimitiveEntityTypeDecl(petd: CPPAssembly::PrimitiveEntityTypeDecl, ctx: Context, indent: String): String {
     %%
     %% Currently the cpp emitter has no proper support for regex 
-    %% so we will emit as void
+    %% so we will emit as integer
     %%
     if(petd.tkey.value === 'CRegex') {
-        return String::concat(indent, "typedef void CRegex;%n;");
+        return String::concat(indent, "typedef uint64_t CRegex;%n;");
     }
     elif(petd.tkey.value === 'Regex') {
-        return String::concat(indent, "typedef void Regex;%n;");
+        return String::concat(indent, "typedef uint64_t Regex;%n;");
     }
     else {
         %% Only Regex needs explicit representation right now, others exist in runtime files

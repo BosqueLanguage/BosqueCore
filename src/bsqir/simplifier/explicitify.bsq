@@ -678,7 +678,6 @@ entity ExplicitifyTransform {
     recursive method processIfBinderStatement(s: IfBinderStatement, vmap: VarMapping): Statement {
         let ntexp = this.processExpression[recursive](s.texp, vmap);
 
-        let nvmap = vmap.extendMapping(s.binder.srcname);
         let nname = vmap.resolveVariableAsNeeded(s.binder.srcname);
         let nbinder = BinderInfo{nname, s.binder.refineonfollow};
 
@@ -716,7 +715,6 @@ entity ExplicitifyTransform {
     recursive method processIfElseBinderStatement(s: IfElseBinderStatement, vmap: VarMapping): Statement {
         let ntexp = this.processExpression[recursive](s.texp, vmap);
 
-        let nvmap = vmap.extendMapping(s.binder.srcname);
         let nname = vmap.resolveVariableAsNeeded(s.binder.srcname);
         let nbinder = BinderInfo{nname, s.binder.refineonfollow};
 

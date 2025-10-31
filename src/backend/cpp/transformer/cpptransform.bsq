@@ -275,13 +275,6 @@ namespace TypeInfoGenerator {
         return determineTagHelper(fields, 0n, tic).0;
     }
 
-    %% Some<T>, MapEntry<K, V> need to be value types, but also allowed to be tmp in progress
-    function determineTagForSpecialValueTypes(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): CPPAssembly::Tag {
-        return if(determineTag(fields, tic) === CPPAssembly::Tag#InProgress)
-            then CPPAssembly::Tag#InProgress
-            else CPPAssembly::Tag#Value;
-    }
-
     function generateObjectSize(fields: List<BSQAssembly::TypeSignature>, tic: TypeInfoContext): FieldsInfo, TypeInfoContext {
         return fields.reduce<(|FieldsInfo, TypeInfoContext|)>(fn(acc, ts) => {
             var ntic = acc.1;
@@ -421,7 +414,7 @@ namespace TypeInfoGenerator {
 
         let fields = getFields(e.tkey, tic);
         let finfo, ntic = generateObjectSize(fields, tic);
-        let tag = determineTagForSpecialValueTypes(fields, ntic);
+        let tag = CPPAssembly::Tag#Value;
         let sometinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, tag }; 
 
         return sometinfo, ntic.updateCache(sometinfo);
@@ -432,7 +425,7 @@ namespace TypeInfoGenerator {
 
         let fields = getFields(e.tkey, tic);
         let finfo, ntic = generateObjectSize(fields, tic);
-        let tag = determineTagForSpecialValueTypes(fields, ntic);
+        let tag = CPPAssembly::Tag#Value;
         let metinfo = CPPAssembly::TypeInfo{ ntic.tid, finfo.typesize, finfo.slotsize, finfo.ptrmask, cpptk, tag }; 
 
         return metinfo, ntic.updateCache(metinfo);
