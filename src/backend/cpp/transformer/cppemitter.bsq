@@ -625,17 +625,11 @@ function emitCallTypeFunctionExpression(e: CPPAssembly::CallTypeFunctionExpressi
     return String::concat(name, "(", args, ")");
 }
 
+%% We have all regex accepting for now so we just need the expression
 function emitCallTypeFunctionSpecialExpression(e: CPPAssembly::CallTypeFunctionSpecialExpression, ctx: Context): String {
-%*
-    let typefunc = ctx.asm.typefuncs.get(e.ikey);
-    let name = emitInvokeKey(typefunc.ikey, ctx);
-    let args = emitArguments(e.args, ctx); 
-*%
-    %%
-    %% TODO: name and exp and how to properly emit
-    %%
+    let exp = emitExpression(e.exp, ctx);
 
-    return "";
+    return exp;
 }
 
 function emitPostfixAccessFromName(op: CPPAssembly::PostfixAccessFromName, ctx: Context): String {
