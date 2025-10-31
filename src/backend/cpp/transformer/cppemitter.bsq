@@ -1200,11 +1200,11 @@ function emitLiteralUnicodeCharExpression(exp: CPPAssembly::LiteralUnicodeCharEx
 }
 
 function emitLiteralCRegexExpression(exp: CPPAssembly::LiteralCRegexExpression): String {
-    return "0";
+    return "0ULL";
 }
 
 function emitLiteralRegexExpression(exp: CPPAssembly::LiteralRegexExpression): String {
-    return "0";
+    return "0ULL";
 }
 
 %% Just a typedef of CString
