@@ -388,7 +388,6 @@ struct PackedBits {
     bool get(uint64_t index) const noexcept {
         uint64_t word = index / 64;
         uint64_t bit = index % 64;
-
         return (this->data[word] >> bit) & 1;
     }
 };
@@ -403,22 +402,20 @@ private:
     }
 
 public:
-    template<uint64_t sub, uint64_t super>
+    template<uint64_t sub, uint64_t... supers>
     constexpr void set() noexcept {
-        static_assert(sub <= NTypes, "Subtype Type ID out of bounds");
-        static_assert(super <= NTypes, "Subtype Type ID out of bounds");
-
-        this->bits.set(getTypeOffset(sub, super));
+        assert(sub <= NTypes);
+        ((assert(supers <= NTypes)), ...);
+        
+        (this->bits.set(getTypeOffset(sub, supers)), ...);
     }
     
     inline bool get(uint64_t sub, uint64_t super) const noexcept {
-        assert(sub <= NTypes);
-        assert(super <= NTypes);
-
+        assert(sub < NTypes);
+        assert(super < NTypes);
         return this->bits.get(getTypeOffset(sub, super));
     }
 };
-
 //
 // Converts string into corresponding integer representation. Used when
 // converting our literals to 128 bit values.
