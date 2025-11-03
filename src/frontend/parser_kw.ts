@@ -222,6 +222,12 @@ const TermRestrictions = [
     "mergeable"
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
+const TaskConfigs: string[] = [
+    "timeout",
+    "retry",
+    "priority"
+];
+
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
 
@@ -345,6 +351,12 @@ const SpecialPathFormatTypes = [
 
 const SpecialDashResultType = "DashResult";
 
+const SpecialTaskActionNames = [
+    "onTerm", //Cancel, timout, or not needed (while still running -- see "termcheck")
+    "onError", //Hard error during Task execution and immediate termination
+    "onDrop" //Task result is being dropped / ignored
+];
+
 const SpecialNominalTypes = [
     ...SpecialStringFormatTypes,
     ...SpecialPathFormatTypes,
@@ -359,6 +371,9 @@ export {
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 
     SpecialStringFormatTypes, SpecialPathFormatTypes, SpecialDashResultType, SpecialNominalTypes,
+
+    SpecialTaskActionNames,
+    TaskConfigs,
 
     KW_recursive_q,
     KW_recursive,
@@ -473,20 +488,20 @@ export {
     SYM_negate,
 
     SYM_ampamp,
-    // SYM_bangeq,
-    // SYM_bangeqeq,
-    // SYM_eqeq,
-    // SYM_eqeqeq,
+    SYM_bangeq,
+    SYM_bangeqeq,
+    SYM_eqeq,
+    SYM_eqeqeq,
     SYM_bigarrow,
     // SYM_implies,
     SYM_arrow,
-    // SYM_barbar,
-    // SYM_plus,
-    // SYM_lt,
-    // SYM_lteq,
-    // SYM_gt,
-    // SYM_gteq,
-    // SYM_minus,
-    // SYM_times,
-    // SYM_div
+    SYM_barbar,
+    SYM_plus,
+    SYM_lt,
+    SYM_lteq,
+    SYM_gt,
+    SYM_gteq,
+    SYM_minus,
+    SYM_times,
+    SYM_div
 };

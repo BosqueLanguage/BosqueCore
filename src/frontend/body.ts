@@ -354,7 +354,6 @@ enum ExpressionTag {
 
     TaskAccessIDExpression = "TaskAccessIDExpression",
     TaskAccessParentIDExpression = "TaskAccessParentIDExpression",
-    TaskCheckStatusExpression = "TaskCheckStatusExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -796,16 +795,6 @@ class TaskAccessInfoExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `Task::${this.name}()`;
-    }
-}
-
-class TaskCheckStatusExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.TaskCheckStatusExpression, sinfo);
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::runstate()`;
     }
 }
 
@@ -1709,15 +1698,15 @@ class HoleExpression extends Expression {
     readonly captures: string[];
     readonly explicittype: TypeSignature | undefined;
     readonly doccomment: string | undefined;
-    readonly samplesfile: Expression | undefined = undefined;
+    readonly samplesfile: Expression | undefined;
     
-    constructor(sinfo: SourceInfo, hname: string | undefined, captures: string[], explicittype: TypeSignature | undefined, doccomment: string | undefined) {
+    constructor(sinfo: SourceInfo, hname: string | undefined, captures: string[], explicittype: TypeSignature | undefined, doccomment: string | undefined, samplesfile: Expression | undefined) {
         super(ExpressionTag.HoleExpression, sinfo);
         this.hname = hname;
         this.captures = captures;
         this.explicittype = explicittype;
         this.doccomment = doccomment;
-        this.samplesfile = undefined;
+        this.samplesfile = samplesfile;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -1725,11 +1714,12 @@ class HoleExpression extends Expression {
         let ebody = "";
         if(this.doccomment !== undefined || this.samplesfile !== undefined) {
             const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
-            const samplstr = this.samplesfile !== undefined ? `{${this.samplesfile.emit(false, fmt)}}` : "";
+            const samplstr = this.samplesfile !== undefined ? ` of ${this.samplesfile.emit(false, fmt)}` : "";
             ebody = `(${dcom})${samplstr}`;
         }
 
-        return `?_${this.hname || ""}${this.captures.length !== 0 ? ("[" + this.captures.join(", ") + "]") : ""}${ebody}${etype}`;
+        const hb = `?_${this.hname || ""}${this.captures.length !== 0 ? ("[" + this.captures.join(", ") + "]") : ""}${ebody}${etype}`;
+        return toplevel ? hb : `(${hb})`;
     }
 }
 
@@ -1790,7 +1780,7 @@ class EmptyEnvironmentExpression extends EnvironmentGenerationExpression {
 }
 
 class InitializeEnvironmentExpression extends EnvironmentGenerationExpression {
-    readonly args: {envkey: string, value: Expression}[]; //literal is a cstring
+    readonly args: {envkey: string, value: Expression}[];
 
     constructor(sinfo: SourceInfo, args: {envkey: string, value: Expression}[]) {
         super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
@@ -2207,6 +2197,7 @@ enum StatementTag {
     SelfUpdateStatement = "SelfUpdateStatement",
 
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
+    TaskCheckAndHandleTerminationStatement = "TaskCheckAndHandleTerminationStatement", //check for termination signal and handle it appropriately
     TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do)
 
     HoleStatement = "HoleStatement",
@@ -2698,27 +2689,26 @@ class TaskStatusStatement extends Statement {
     }
 }
 
-xxxx; //Add Task::terminate -- for canceled/timout or aborted tasks -- also make the below "yield RHS" which just ends the task and results in RHS
-
-class TaskYieldStatement extends Statement {
-    readonly name: string;
-    readonly terms: TypeSignature[];
-    readonly args: ArgumentList;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
-        super(StatementTag.TaskYieldStatement, sinfo);
-        this.name = name;
-        this.terms = terms;
-        this.args = args;
+class TaskCheckAndHandleTerminationStatement extends Statement {
+    constructor(sinfo: SourceInfo) {
+        super(StatementTag.TaskCheckAndHandleTerminationStatement, sinfo);
     }
 
     emit(fmt: CodeFormatter): string {
-        let terms = "";
-        if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-        }
+        return `Task::chkterm();`;
+    }
+}
 
-        return `yield self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
+class TaskYieldStatement extends Statement {
+    readonly res: Expression;
+
+    constructor(sinfo: SourceInfo, res: Expression) {
+        super(StatementTag.TaskYieldStatement, sinfo);
+        this.res = res;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `yield ${this.res.emit(true, fmt)};`;
     }
 }
 
@@ -2887,7 +2877,7 @@ export {
     LiteralTypeDeclValueExpression,
     LiteralTypedCStringExpression, LiteralTypedStringExpression, LiteralTypedFormatStringExpression, LiteralTypedFormatCStringExpression,
     LiteralTypedPathExpression, LiteralTypedPathFormatExpression,
-    AccessEnvValueExpression, TaskAccessInfoExpression, TaskCheckStatusExpression,
+    AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression,
@@ -2923,7 +2913,7 @@ export {
     AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     VoidRefCallStatement, UpdateStatement, VarUpdateStatement, ThisUpdateStatement, SelfUpdateStatement,
     HoleStatement,
-    TaskStatusStatement,
+    TaskStatusStatement, TaskCheckAndHandleTerminationStatement,
     TaskYieldStatement,
     BlockStatement, 
     BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, HoleBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation

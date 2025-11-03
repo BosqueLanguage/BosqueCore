@@ -1354,8 +1354,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    mainaction: TaskActionDecl | undefined = undefined;
-
     configs: {key: string, value: Expression | undefined}[] = [];
     statusupdates: TypeSignature[] = [];
     envreqs: EnvironmentVariableInformation[] = [];
