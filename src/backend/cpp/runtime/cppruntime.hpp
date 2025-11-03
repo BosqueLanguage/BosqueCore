@@ -385,7 +385,7 @@ struct PackedBits {
         this->data[word] |= (1ULL << bit);
      }
     
-    bool get(uint64_t index) const noexcept {
+    Bool get(uint64_t index) const noexcept {
         uint64_t word = index / 64;
         uint64_t bit = index % 64;
         return (this->data[word] >> bit) & 1;
@@ -402,6 +402,8 @@ private:
     }
 
 public:
+    constexpr SupertypeTable() noexcept : bits() {};
+
     template<uint64_t sub, uint64_t... supers>
     constexpr void set() noexcept {
         assert(sub <= NTypes);
@@ -410,7 +412,7 @@ public:
         (this->bits.set(getTypeOffset(sub, supers)), ...);
     }
     
-    inline bool get(uint64_t sub, uint64_t super) const noexcept {
+    inline Bool get(uint64_t sub, uint64_t super) const noexcept {
         assert(sub < NTypes);
         assert(super < NTypes);
         return this->bits.get(getTypeOffset(sub, super));
@@ -694,10 +696,6 @@ public:
     friend constexpr bool operator<=(const Float& lhs, const Float& rhs) noexcept { return !(lhs > rhs); }
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
-
-inline Bool isSubtype(uint64_t parent, uint64_t sub) noexcept {
-    
-}
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufferSize = 8;
