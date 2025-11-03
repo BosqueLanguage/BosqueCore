@@ -374,6 +374,51 @@ public:
     friend constexpr bool operator>=(const Int& lhs, const Int& rhs) noexcept { return !(lhs < rhs); }
 };
 
+template<uint64_t NBits>
+struct PackedBits {
+    static constexpr uint64_t WORDS_NEEDED = (NBits + 63) / 64;
+    uint64_t data[WORDS_NEEDED] = { 0 };
+    
+    void set(uint64_t index) noexcept {
+        uint64_t word = index / 64;
+        uint64_t bit = index % 64;
+        this->data[word] |= (1ULL << bit);
+     }
+    
+    bool get(uint64_t index) const noexcept {
+        uint64_t word = index / 64;
+        uint64_t bit = index % 64;
+
+        return (this->data[word] >> bit) & 1;
+    }
+};
+
+template<uint64_t NTypes>
+class SupertypeTable {
+private:
+    PackedBits<NTypes * NTypes> bits;
+    
+    static inline uint64_t getTypeOffset(uint64_t sub, uint64_t super) noexcept {
+        return sub * NTypes + super;
+    }
+
+public:
+    template<uint64_t sub, uint64_t super>
+    constexpr void set() noexcept {
+        static_assert(sub <= NTypes, "Subtype Type ID out of bounds");
+        static_assert(super <= NTypes, "Subtype Type ID out of bounds");
+
+        this->bits.set(getTypeOffset(sub, super));
+    }
+    
+    inline bool get(uint64_t sub, uint64_t super) const noexcept {
+        assert(sub <= NTypes);
+        assert(super <= NTypes);
+
+        return this->bits.get(getTypeOffset(sub, super));
+    }
+};
+
 //
 // Converts string into corresponding integer representation. Used when
 // converting our literals to 128 bit values.
@@ -652,6 +697,10 @@ public:
     friend constexpr bool operator<=(const Float& lhs, const Float& rhs) noexcept { return !(lhs > rhs); }
     friend constexpr bool operator>=(const Float& lhs, const Float& rhs) noexcept { return !(lhs < rhs); }
 };
+
+inline Bool isSubtype(uint64_t parent, uint64_t sub) noexcept {
+    
+}
 
 // We say for now no more than 8 chars, may want to make this dynamically pick 8 or 16 max
 const int maxCCharBufferSize = 8;
