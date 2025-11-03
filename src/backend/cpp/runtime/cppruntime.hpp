@@ -379,7 +379,7 @@ struct PackedBits {
     static constexpr uint64_t WORDS_NEEDED = (NBits + 63) / 64;
     uint64_t data[WORDS_NEEDED] = { 0 };
     
-    void set(uint64_t index) noexcept {
+    constexpr void set(uint64_t index) noexcept {
         uint64_t word = index / 64;
         uint64_t bit = index % 64;
         this->data[word] |= (1ULL << bit);
@@ -393,16 +393,16 @@ struct PackedBits {
 };
 
 template<uint64_t NTypes>
-class SupertypeTable {
+class SubtypeTable {
 private:
     PackedBits<NTypes * NTypes> bits;
     
-    static inline uint64_t getTypeOffset(uint64_t sub, uint64_t super) noexcept {
+    static constexpr uint64_t getTypeOffset(uint64_t sub, uint64_t super) noexcept {
         return sub * NTypes + super;
     }
 
 public:
-    constexpr SupertypeTable() noexcept : bits() {};
+    constexpr SubtypeTable() noexcept : bits() {};
 
     template<uint64_t sub, uint64_t... supers>
     constexpr void set() noexcept {
@@ -418,6 +418,7 @@ public:
         return this->bits.get(getTypeOffset(sub, super));
     }
 };
+
 //
 // Converts string into corresponding integer representation. Used when
 // converting our literals to 128 bit values.
