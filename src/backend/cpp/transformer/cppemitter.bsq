@@ -1498,20 +1498,17 @@ function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, i
 
 function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
-    if(bind?none) {
+    if(bind)@@none {
         return "";
     }
-    elif(ctx.asm.isNominalTypeConcept(totype)) {
-        %% Not sure if this case is totally right
-        let bbind = bind@some;
-        let bname = emitVarIdentifier(bbind.srcname);     
+
+    let bname = emitVarIdentifier(bind.srcname);     
+    if(ctx.asm.isNominalTypeConcept(totype)) {
         let etotype = emitTypeKey(totype, true, ctx);
         let bindtype = String::concat("[[maybe_unused]] ", etotype, " ");
         return String::concat(full_indent, bindtype, bname, " = ", expr, ";%n;");
     }
     else {
-        let bbind = bind@some;
-        let bname = emitVarIdentifier(bbind.srcname);     
         let convert = emitITestAsConvertType(false, fromtype, totype, ctx); 
         let bindtype = String::concat("[[maybe_unused]] ", convert.1, " ");
         let reassign = String::concat(bindtype, bname, " = ", expr, convert.0, ";%n;");
