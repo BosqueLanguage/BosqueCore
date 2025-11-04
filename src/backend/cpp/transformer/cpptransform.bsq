@@ -643,7 +643,7 @@ namespace TypeInfoGenerator {
     %% TODO: We should come back to this function as there is def some extra work going on
     %% (perhaps see if we can get things to one pass?)
     %%
-    function generateCompleteTypeInfo(tic: TypeInfoContext): Map<CPPAssembly::TypeKey, CPPAssembly::TypeInfo> {
+    function generateCompleteTypeInfo(tic: TypeInfoContext): TypeInfoContext {
         let topo = tic.transformer.bsqasm.typetopo;
         
         %% Process strongly connected components first
@@ -679,7 +679,7 @@ namespace TypeInfoGenerator {
             }
         }, topoTic);
 
-        return finalTic.cache;
+        return finalTic;
     }
 
     function generateTypeInfo(bsqtk: BSQAssembly::TypeKey, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext { 
@@ -2217,7 +2217,10 @@ entity CPPTransformer {
             Map<BSQAssembly::TypeKey, BSQAssembly::EListTypeSignature>{}, 
             transformer, 1n 
         };
+
+        %% Contexts tid is always the next elements tid so we subtract 1
         let tinfos = TypeInfoGenerator::generateCompleteTypeInfo(basetic);
+        let largest = tinfos.tid - 1n;
 
         return CPPAssembly::Assembly {
             nsdecls = transformer_nsdecls_concepts,
@@ -2242,7 +2245,8 @@ entity CPPTransformer {
             pconcepts = transformer_pconcepts,
             concepts = transformer_concepts,
             allmethods = transformer_allmethods, %% Might need to do someting like the funcs, being able to get the ns is nice
-            typeinfos = tinfos
+            typeinfos = tinfos.cache,
+            largest_tid = largest
         };
     }
 }

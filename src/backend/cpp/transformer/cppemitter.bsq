@@ -735,14 +735,25 @@ function emitBooleanBasedOnCondition(cond: Bool): String {
         else "false";
 }
 
-function emitBooleanWithMaybeUnusedVariable(cond: Bool, arg: String): String {
-    return if(cond)
-        then String::concat("__CoreCpp::True(", arg, ")")
-        else String::concat("__CoreCpp::False(", arg, ")");
-}
-
 function generateBoxedTypeInfoAccess(base: CPPAssembly::TypeKey, ctx: Context): String {
     return access(base, none, none, some("typeinfo"), ctx);
+}
+
+function emitSubtypeCheckExpression(sup: CPPAssembly::TypeKey, subtinfoAccess: String,  ctx: Context): String {
+    let supertid = natToString(ctx.asm.typeinfos.get(sup).id);
+    let subtid = String::concat(subtinfoAccess, "->type_id");
+
+    return String::concat(generateSubtypeTableName(), ".get(", supertid, ", ", subtid, ")");
+}
+
+function generateTypeTestCondition(sup: CPPAssembly::TypeKey, sub: CPPAssembly::TypeKey, subtinfoAccess: String, ctx: Context): String {
+    if(ctx.asm.isNominalTypeConcept(sup) && ctx.asm.isNominalTypeConcept(sub)) {
+        return emitSubtypeCheckExpression(sup, subtinfoAccess, ctx);
+    }
+    else {
+        let ettype = emitTypeKey(sup, false, ctx);
+        return String::concat(subtinfoAccess, " == &", emitTypeInfoName(removeCppPrefix(ettype)));
+    }
 }
 
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
@@ -762,13 +773,8 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
                 else String::concat(acc, accessor, " == &", ttypeinfo);
         }
         else {
-            let lhs = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
-            if(conceptProvidesConcept(lhs, it.ttype, ctx)) {
-                return emitBooleanWithMaybeUnusedVariable(!it.isnot, acc);
-            }
-            else {
-                return emitBooleanWithMaybeUnusedVariable(it.isnot, acc);
-            }
+            let subtinfoAccess = String::concat(acc, accessor);
+            return generateTypeTestCondition(it.ttype.tkeystr, baseType.tkeystr, subtinfoAccess, ctx);
         }
     }
 }
@@ -1492,11 +1498,17 @@ function emitAssertStatement(stmt: CPPAssembly::AssertStatement, ctx: Context, i
 
 function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String, fromtype: CPPAssembly::TypeKey, totype: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let full_indent = String::concat("    ", indent);
-    if(bind)@none {
+    if(bind)@@none {
         return "";
     }
+
+    let bname = emitVarIdentifier(bind.srcname);     
+    if(ctx.asm.isNominalTypeConcept(totype)) {
+        let etotype = emitTypeKey(totype, true, ctx);
+        let bindtype = String::concat("[[maybe_unused]] ", etotype, " ");
+        return String::concat(full_indent, bindtype, bname, " = ", expr, ";%n;");
+    }
     else {
-        let bname = emitVarIdentifier($bind.srcname);
         let convert = emitITestAsConvertType(false, fromtype, totype, ctx); 
         let bindtype = String::concat("[[maybe_unused]] ", convert.1, " ");
         let reassign = String::concat(bindtype, bname, " = ", expr, convert.0, ";%n;");
@@ -1510,25 +1522,26 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
     let fullfull_indent = String::concat("    ", full_indent);
 
     let expr = emitExpression(stmt.sval, ctx);
-    let accessor = generateBoxedTypeInfoAccess(stmt.sval.etype.tkeystr, ctx);
-    let sval = String::concat(expr, accessor, " == &");
+    let testingtype = stmt.sval.etype.tkeystr;
+    let accessor = generateBoxedTypeInfoAccess(testingtype, ctx);
+    let sval = String::concat(expr, accessor);
 
     let matchflow = stmt.matchflow.mapIdx<String>(fn(mf, ii) => {
-        let bind = tryGenerateBindType(stmt.bindInfo, expr, stmt.sval.etype.tkeystr, mf.0.tkeystr, ctx, full_indent);
+        let casetype = mf.0.tkeystr;
+        let bind = tryGenerateBindType(stmt.bindInfo, expr, testingtype, casetype, ctx, full_indent);
         let block = String::concat(bind, emitBlockStatement(mf.1, ctx, full_indent), full_indent, "}%n;");
-        let ts = removeCppPrefix(emitTypeSignature(mf.0, false, ctx));
-        let matchtypeinfo = emitTypeInfoName(ts);
+        let typetest = generateTypeTestCondition(casetype, testingtype, sval, ctx);
 
         if(ii == 0n) {
-            return String::concat(full_indent, "if(", sval, matchtypeinfo, ") {%n;", block);
+            return String::concat(full_indent, "if(", typetest, ") {%n;", block);
         }
         else {
             %% Match everything case
-            if(mf.0.tkeystr === stmt.sval.etype.tkeystr) {
+            if(casetype === testingtype) {
                 return String::concat(full_indent, "else if(true) {%n;", block);               
             }
             else {
-                return String::concat(full_indent, "else if(", sval, matchtypeinfo, ") {%n;", block);
+                return String::concat(full_indent, "else if(", typetest, ") {%n;", block);
             }
         }
     });
@@ -2053,7 +2066,8 @@ function emitTypeInfo(info: CPPAssembly::TypeInfo, ant: Option<CPPAssembly::Abst
     let tag = String::concat(slotsize, full_indent, ".tag = __CoreGC::Tag::", convertTagEnumEntries(info.tag), ",%n;");
     let ptrmask = String::concat(tag, full_indent, ".ptr_mask = ", emitEnclosedParen(info.ptrmask), ",%n;");
     let typekey = String::concat(ptrmask, full_indent, ".typekey = ", emitEnclosedParen(info.typekey.value), ",%n;");
-    let vtable = if(needsvtable) then String::concat(typekey, full_indent, ".vtable = ", String::concat(name, "_vtable"), "%n;")
+    let vtable = if(needsvtable) 
+        then String::concat(typekey, full_indent, ".vtable = ", String::concat(name, "_vtable"), "%n;")
         else String::concat(typekey, full_indent, ".vtable = nullptr%n;");
 
     return String::concat(vtable, indent, "};%n;");
@@ -2393,6 +2407,47 @@ function emitDependantOnDependantNamespaceDeclFwdDecls(nsdecl: CPPAssembly::Name
     return String::concat(ns, stds, indent, "}%n;");
 }
 
+function generateSubtypeTableName(): String {
+    return "subtypes";
+}
+
+function getConcept(tk: CPPAssembly::TypeKey, ctx: Context): Option<CPPAssembly::AbstractConceptTypeDecl> {
+    if(tk.value.startsWithString('(|')) {
+        return none;
+    }
+    elif(!ctx.asm.isNominalTypeConcept(tk)) {
+        return none;
+    }
+    else {
+        return some(ctx.asm.lookupNominalTypeDeclaration(tk)@<CPPAssembly::AbstractConceptTypeDecl>);
+    }
+}
+
+function generateSubtypeTableEntries(tinfo: CPPAssembly::TypeInfo, ctx: Context): String {
+    let e = getConcept(tinfo.typekey, ctx);
+    if(e)@@none {
+        return "";
+    }
+    
+    let ids = e.subtypes.map<String>(fn(sub) => natToString(ctx.asm.typeinfos.get(sub).id));
+    let eids = String::joinAll(", ", ids);
+
+    let baseid = tinfo.id;
+    let ebaseid = natToString(baseid);
+    let name = "     s";
+    return String::concat(name, ".set<", ebaseid, ", ", eids, ">();%n;");
+}
+
+function generateSubtypeTable(ctx: Context): String {
+    let base = String::concat("[[maybe_unused]] constexpr auto ", generateSubtypeTableName(), 
+        " = []() constexpr { __CoreCpp::SubtypeTable<", natToString(ctx.asm.largest_tid), "> s{};%n;");
+    let subtypes = ctx.asm.typeinfos
+        .reduce<List<String>>(fn(acc, tk, tinfo) => acc.pushBack(generateSubtypeTableEntries(tinfo, ctx)), List<String>{});
+
+    let esubtypes = String::joinAll("", subtypes);
+    return String::concat(base, esubtypes, "return s;}();%n;");
+}
+
 %%
 %% Emits all necessary types given nsdecl (their concrete definitions)
 %%
@@ -2520,6 +2575,8 @@ function emitAssembly(asm: CPPAssembly::Assembly): String {
         %%overloads = String::concat(overloads, "__CoreCpp::Bool operator<(const Core::String& lhs, const Core::String& rhs) { return Core::UnicodeRopeOps::s_unicoderope_less(lhs, rhs); };%n;");   
     }
 
+    let subtypeTable = generateSubtypeTable(ctx);
+
     %% We use this bold src so we can split our header and src files into two strings in analyzecpp
-    return String::concat(funcfwddecls, overloads, "𝐬𝐫𝐜", gcinfo, ns_emission);
+    return String::concat(subtypeTable, funcfwddecls, overloads, "𝐬𝐫𝐜", gcinfo, ns_emission);
 }

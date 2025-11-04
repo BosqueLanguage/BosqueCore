@@ -9,7 +9,7 @@
 #include <variant> // TODO: Need to remove dependency!
 
 #define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
-#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
+#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) (void)((E) || (𝐚𝐛𝐨𝐫𝐭, 0))
 #define 𝐫𝐞𝐪𝐮𝐢𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 #define 𝐞𝐧𝐬𝐮𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 
@@ -37,15 +37,6 @@ public:
     ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
 };
 extern ThreadLocalInfo& info;
-
-// When conditions are simplified some variables may be left unused
-constexpr Bool False(...) noexcept {
-    return false;
-}
-
-constexpr Bool True(...) noexcept {
-    return true;
-}
 
 template <size_t N>
 inline void __attribute__((no_sanitize_address)) 
@@ -372,6 +363,54 @@ public:
     friend constexpr bool operator!=(const Int& lhs, const Int& rhs) noexcept { return !(lhs == rhs); }
     friend constexpr bool operator<=(const Int& lhs, const Int& rhs) noexcept { return !(lhs > rhs); }
     friend constexpr bool operator>=(const Int& lhs, const Int& rhs) noexcept { return !(lhs < rhs); }
+};
+
+template<uint64_t NBits>
+struct PackedBits {
+    static constexpr uint64_t WORDS_NEEDED = (NBits + 63) / 64;
+    uint64_t data[WORDS_NEEDED] = { 0 };
+    
+    constexpr void set(uint64_t index) noexcept {
+        uint64_t word = index / 64;
+        uint64_t bit = index % 64;
+        this->data[word] |= (1ULL << bit);
+     }
+    
+    Bool get(uint64_t index) const noexcept {
+        uint64_t word = index / 64;
+        uint64_t bit = index % 64;
+        return (this->data[word] >> bit) & 1;
+    }
+};
+
+template<uint64_t NTypes>
+class SubtypeTable {
+private:
+    PackedBits<NTypes * NTypes> bits;
+    
+    // type id of 0 is reserved
+    static constexpr uint64_t getTypeOffset(uint64_t super, uint64_t sub) noexcept {
+        return (super - 1) * NTypes + (sub - 1);
+    }
+
+public:
+    constexpr SubtypeTable() noexcept : bits() {};
+
+    template<uint64_t super, uint64_t... subs>
+    constexpr void set() noexcept {
+        𝐚𝐬𝐬𝐞𝐫𝐭(super >= 1 && super <= NTypes);
+        ((𝐚𝐬𝐬𝐞𝐫𝐭(subs >= 1 && subs <= NTypes)), ...);
+        
+        this->bits.set(getTypeOffset(super, super));
+        (this->bits.set(getTypeOffset(super, subs)), ...);
+    }
+    
+    inline Bool get(uint64_t super, uint64_t sub) const noexcept {
+        𝐚𝐬𝐬𝐞𝐫𝐭(sub >= 1 && sub <= NTypes);
+        𝐚𝐬𝐬𝐞𝐫𝐭(super >= 1 && super <= NTypes);
+       
+        return this->bits.get(getTypeOffset(super, sub));
+    }
 };
 
 //
