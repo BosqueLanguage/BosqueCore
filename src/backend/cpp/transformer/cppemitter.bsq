@@ -363,25 +363,25 @@ function emitNamespaceKey(nsk: CPPAssembly::NamespaceKey): String {
     return String::fromCString(nsk.value);
 }
 
-%% If we construct abstract from another abstract we need to first extract data 
-%% (as the type pointer gets copied over to the type we are constructing typeinfo field)
-function emitValueInConstructorExpression(value: String, valuetype: CPPAssembly::TypeKey, ctx: Context): String {
+function emitBoxedConstructorArgs(value: String, valuetype: CPPAssembly::TypeKey, ctx: Context): String {
     if(ctx.asm.isNominalTypeConcept(valuetype)) {
-        return String::concat(value, ".data");
+        return value;
     }
     else {
-        return value;
+        let evaluetype = emitTypeInfoName(removeCppPrefix(emitTypeKey(valuetype, false, ctx)));
+        let typeinfoArg = String::concat("&", evaluetype);
+        if(value === "") {
+            return typeinfoArg;
+        }
+        else {
+            return String::concat(typeinfoArg, ", ", value);
+        }
     }
 }
 
 %% For constructing concepts
 function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSignature, ttype: CPPAssembly::TypeSignature, 
     eexp: String, ctx: Context): String {
-        let econstype = emitTypeSignature(constype, false, ctx);
-        let etypename = removeCppPrefix(emitTypeSignature(ttype, false, ctx));
-        let ettype = emitTypeInfoName(etypename);
-        let eexpval = emitValueInConstructorExpression(eexp, ttype.tkeystr, ctx);
-        
         %% Since our collections are just alias for underlying data structure we dont need to emit explicit constructors 
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::ListTypeDecl> {
             return eexp;
@@ -395,10 +395,11 @@ function generateAccessorForSpecialTypeConstructor(constype: CPPAssembly::TypeSi
         if(ctx.asm.lookupNominalTypeDeclaration(constype.tkeystr))<CPPAssembly::UnicodeRopeTypeDecl> {
             return eexp;
         }
+
+        let econstype = emitTypeSignature(constype, false, ctx);
+        let args = emitBoxedConstructorArgs(eexp, ttype.tkeystr, ctx);
         
-        return if(eexp === "") then String::concat(econstype, "( &", ettype, " )")
-            else String::concat(econstype, "( &", ettype, ", ", eexpval, " )");
-        
+        return String::concat(econstype, "( ", args, " )");
 }
 
 %% Given a namespace key (like Main::Foo::Bar), remove all matching prefix strings
