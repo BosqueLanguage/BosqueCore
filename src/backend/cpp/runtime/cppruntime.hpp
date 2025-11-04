@@ -9,7 +9,7 @@
 #include <variant> // TODO: Need to remove dependency!
 
 #define 𝐚𝐛𝐨𝐫𝐭 (std::longjmp(__CoreCpp::info.error_handler, true))
-#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) if(!(E)) { 𝐚𝐛𝐨𝐫𝐭; }
+#define 𝐚𝐬𝐬𝐞𝐫𝐭(E) (void)((E) || (𝐚𝐛𝐨𝐫𝐭, 0))
 #define 𝐫𝐞𝐪𝐮𝐢𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 #define 𝐞𝐧𝐬𝐮𝐫𝐞𝐬(𝐄) 𝐚𝐬𝐬𝐞𝐫𝐭(𝐄)
 
@@ -37,15 +37,6 @@ public:
     ThreadLocalInfo& operator=(const ThreadLocalInfo&) = delete;
 };
 extern ThreadLocalInfo& info;
-
-// When conditions are simplified some variables may be left unused
-constexpr Bool False(...) noexcept {
-    return false;
-}
-
-constexpr Bool True(...) noexcept {
-    return true;
-}
 
 template <size_t N>
 inline void __attribute__((no_sanitize_address)) 
@@ -397,8 +388,9 @@ class SubtypeTable {
 private:
     PackedBits<NTypes * NTypes> bits;
     
+    // type id of 0 is reserved
     static constexpr uint64_t getTypeOffset(uint64_t super, uint64_t sub) noexcept {
-        return super * NTypes + sub;
+        return (super - 1) * NTypes + (sub - 1);
     }
 
 public:
@@ -406,16 +398,17 @@ public:
 
     template<uint64_t super, uint64_t... subs>
     constexpr void set() noexcept {
-        assert(super <= NTypes);
-        ((assert(subs <= NTypes)), ...);
+        𝐚𝐬𝐬𝐞𝐫𝐭(super >= 1 && super <= NTypes);
+        ((𝐚𝐬𝐬𝐞𝐫𝐭(subs >= 1 && subs <= NTypes)), ...);
         
         this->bits.set(getTypeOffset(super, super));
         (this->bits.set(getTypeOffset(super, subs)), ...);
     }
     
     inline Bool get(uint64_t super, uint64_t sub) const noexcept {
-        assert(sub < NTypes);
-        assert(super < NTypes);
+        𝐚𝐬𝐬𝐞𝐫𝐭(sub >= 1 && sub <= NTypes);
+        𝐚𝐬𝐬𝐞𝐫𝐭(super >= 1 && super <= NTypes);
+       
         return this->bits.get(getTypeOffset(super, sub));
     }
 };

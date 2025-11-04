@@ -735,14 +735,25 @@ function emitBooleanBasedOnCondition(cond: Bool): String {
         else "false";
 }
 
-function emitBooleanWithMaybeUnusedVariable(cond: Bool, arg: String): String {
-    return if(cond)
-        then String::concat("__CoreCpp::True(", arg, ")")
-        else String::concat("__CoreCpp::False(", arg, ")");
-}
-
 function generateBoxedTypeInfoAccess(base: CPPAssembly::TypeKey, ctx: Context): String {
     return access(base, none, none, some("typeinfo"), ctx);
+}
+
+function emitSubtypeCheckExpression(supertinfoAccess: String, sup: CPPAssembly::TypeKey, ctx: Context): String {
+    let supertid = natToString(ctx.asm.typeinfos.get(sup).id);
+    let subtid = String::concat(supertinfoAccess, "->type_id");
+
+    return String::concat(generateSubtypeTableName(), ".get(", supertid, ", ", subtid, ")");
+}
+
+function generateTypeTestCondition(basetype: CPPAssembly::TypeKey, ttype: CPPAssembly::TypeKey, supertinfoAccess: String, ctx: Context): String {
+    if(ctx.asm.isNominalTypeConcept(basetype) && ctx.asm.isNominalTypeConcept(ttype)) {
+        return emitSubtypeCheckExpression(supertinfoAccess, ttype, ctx);
+    }
+    else {
+        let ettype = emitTypeKey(ttype, false, ctx);
+        return String::concat(supertinfoAccess, " == &", emitTypeInfoName(removeCppPrefix(ettype)));
+    }
 }
 
 function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSignature, acc: String, ctx: Context): String {
@@ -762,13 +773,8 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
                 else String::concat(acc, accessor, " == &", ttypeinfo);
         }
         else {
-            let lhs = ctx.asm.lookupNominalTypeDeclaration(baseType.tkeystr)@<CPPAssembly::AbstractConceptTypeDecl>;
-            if(conceptProvidesConcept(lhs, it.ttype, ctx)) {
-                return emitBooleanWithMaybeUnusedVariable(!it.isnot, acc);
-            }
-            else {
-                return emitBooleanWithMaybeUnusedVariable(it.isnot, acc);
-            }
+            let supertypetinfoAccess = String::concat(acc, accessor);
+            return generateTypeTestCondition(baseType.tkeystr, it.ttype.tkeystr, supertypetinfoAccess, ctx);
         }
     }
 }
@@ -1511,26 +1517,6 @@ function tryGenerateBindType(bind: Option<CPPAssembly::BinderInfo>, expr: String
         let reassign = String::concat(bindtype, bname, " = ", expr, convert.0, ";%n;");
 
         return String::concat(full_indent, reassign);
-    }
-}
-
-%% This architecture is not very good, we should do some reworking and squeeze it 
-%% into our ITest logic perhaps
-%% also i think these names got a bit nasty lol
-function emitSubtypeCheckExpression(supertinfoAccess: String, sup: CPPAssembly::TypeKey, ctx: Context): String {
-    let supertid = natToString(ctx.asm.typeinfos.get(sup).id);
-    let subtid = String::concat(supertinfoAccess, "->type_id");
-
-    return String::concat(generateSubtypeTableName(), ".get(", supertid, ", ", subtid, ")");
-}
-
-function generateTypeTestCondition(basetype: CPPAssembly::TypeKey, ttype: CPPAssembly::TypeKey, supertinfoAccess: String, ctx: Context): String {
-    if(ctx.asm.isNominalTypeConcept(basetype) && ctx.asm.isNominalTypeConcept(ttype)) {
-        return emitSubtypeCheckExpression(supertinfoAccess, ttype, ctx);
-    }
-    else {
-        let ettype = emitTypeKey(ttype, false, ctx);
-        return String::concat(supertinfoAccess, " == &", emitTypeInfoName(ettype));
     }
 }
 
