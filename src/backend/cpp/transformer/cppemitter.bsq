@@ -739,20 +739,20 @@ function generateBoxedTypeInfoAccess(base: CPPAssembly::TypeKey, ctx: Context): 
     return access(base, none, none, some("typeinfo"), ctx);
 }
 
-function emitSubtypeCheckExpression(supertinfoAccess: String, sup: CPPAssembly::TypeKey, ctx: Context): String {
+function emitSubtypeCheckExpression(sup: CPPAssembly::TypeKey, subtinfoAccess: String,  ctx: Context): String {
     let supertid = natToString(ctx.asm.typeinfos.get(sup).id);
-    let subtid = String::concat(supertinfoAccess, "->type_id");
+    let subtid = String::concat(subtinfoAccess, "->type_id");
 
     return String::concat(generateSubtypeTableName(), ".get(", supertid, ", ", subtid, ")");
 }
 
-function generateTypeTestCondition(basetype: CPPAssembly::TypeKey, ttype: CPPAssembly::TypeKey, supertinfoAccess: String, ctx: Context): String {
-    if(ctx.asm.isNominalTypeConcept(basetype) && ctx.asm.isNominalTypeConcept(ttype)) {
-        return emitSubtypeCheckExpression(supertinfoAccess, ttype, ctx);
+function generateTypeTestCondition(sup: CPPAssembly::TypeKey, sub: CPPAssembly::TypeKey, subtinfoAccess: String, ctx: Context): String {
+    if(ctx.asm.isNominalTypeConcept(sup) && ctx.asm.isNominalTypeConcept(sub)) {
+        return emitSubtypeCheckExpression(sup, subtinfoAccess, ctx);
     }
     else {
-        let ettype = emitTypeKey(ttype, false, ctx);
-        return String::concat(supertinfoAccess, " == &", emitTypeInfoName(removeCppPrefix(ettype)));
+        let ettype = emitTypeKey(sup, false, ctx);
+        return String::concat(subtinfoAccess, " == &", emitTypeInfoName(removeCppPrefix(ettype)));
     }
 }
 
@@ -773,8 +773,8 @@ function emitITestType(it: CPPAssembly::ITestType, baseType: CPPAssembly::TypeSi
                 else String::concat(acc, accessor, " == &", ttypeinfo);
         }
         else {
-            let supertypetinfoAccess = String::concat(acc, accessor);
-            return generateTypeTestCondition(baseType.tkeystr, it.ttype.tkeystr, supertypetinfoAccess, ctx);
+            let subtinfoAccess = String::concat(acc, accessor);
+            return generateTypeTestCondition(it.ttype.tkeystr, baseType.tkeystr, subtinfoAccess, ctx);
         }
     }
 }
@@ -1533,7 +1533,7 @@ function emitMatchStatement(stmt: CPPAssembly::MatchStatement, ctx: Context, ind
         let casetype = mf.0.tkeystr;
         let bind = tryGenerateBindType(stmt.bindInfo, expr, testingtype, casetype, ctx, full_indent);
         let block = String::concat(bind, emitBlockStatement(mf.1, ctx, full_indent), full_indent, "}%n;");
-        let typetest = generateTypeTestCondition(testingtype, casetype, sval, ctx);
+        let typetest = generateTypeTestCondition(casetype, testingtype, sval, ctx);
 
         if(ii == 0n) {
             return String::concat(full_indent, "if(", typetest, ") {%n;", block);
