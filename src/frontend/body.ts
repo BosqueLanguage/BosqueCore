@@ -1822,10 +1822,10 @@ abstract class TaskInvokeExpression extends Expression {
 class TaskRunExpression extends TaskInvokeExpression {
     readonly task: TypeSignature;
     readonly configs: {key: string, value: Expression}[];
-    readonly args: ArgumentList;
+    readonly args: Expression[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.TaskRunExpression, sinfo);
         this.task = task;
         this.configs = configs;
@@ -1835,17 +1835,21 @@ class TaskRunExpression extends TaskInvokeExpression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
-        const argl = this.args.emit(fmt, "", "");
-        return `Task::run<${this.task.emit()}${configs}>(${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
+
+        return `Task::run<${this.task.emit()}${configs}>(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 
 class TaskMultiExpression extends TaskInvokeExpression {
+    readonly isparallel: boolean;
     readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskMultiExpression, sinfo);
+        this.isparallel = isparallel;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1856,19 +1860,27 @@ class TaskMultiExpression extends TaskInvokeExpression {
             return `${tt[0].emit()}${configs}`;
         });
 
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
-        return `Task::multi<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        const argl = this.args.map((arg) => {
+            const envexp = arg[1].emit(fmt);
+            const argexp = arg[0].map((a) => a.emit(true, fmt)).join(", ");
+
+            return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
+        });
+
+        return `${this.isparallel ? "parallel " : ""}Task::multi<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskAllExpression extends TaskInvokeExpression {
+    readonly isparallel: boolean;
     readonly task: TypeSignature;
     readonly configs: {key: string, value: Expression}[];
-    readonly args: ArgumentList;
+    readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.TaskAllExpression, sinfo);
+        this.isparallel = isparallel;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -1876,17 +1888,22 @@ class TaskAllExpression extends TaskInvokeExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.emit(fmt, "", "");
-        return `Task::all<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>${argl !== undefined ? (argl + ", ") : ""}${this.envexp.emit(fmt)})`;
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.emit(true, fmt);
+
+        return `${this.isparallel ? "parallel " : ""}Task::all<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
 class TaskDashExpression extends TaskInvokeExpression {
+    readonly isparallel: boolean;
     readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashExpression, sinfo);
+        this.isparallel = isparallel;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1897,17 +1914,25 @@ class TaskDashExpression extends TaskInvokeExpression {
             return `${tt[0].emit()}${configs}`;
         });
 
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
-        return `Task::dash<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        const argl = this.args.map((arg) => {
+            const envexp = arg[1].emit(fmt);
+            const argexp = arg[0].map((a) => a.emit(true, fmt)).join(", ");
+
+            return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
+        });
+
+        return `${this.isparallel ? "parallel " : ""}Task::dash<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskDashAnyExpression extends TaskInvokeExpression {
+    readonly isparallel: boolean;
     readonly tasks: [TypeSignature, {key: string, value: Expression}[]][];
-    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly args: [Expression[], EnvironmentGenerationExpression][];
 
-    constructor(sinfo: SourceInfo, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [ArgumentList, EnvironmentGenerationExpression][]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, tasks: [TypeSignature, {key: string, value: Expression}[]][], args: [Expression[], EnvironmentGenerationExpression][]) {
         super(ExpressionTag.TaskDashAnyExpression, sinfo);
+        this.isparallel = isparallel;
         this.tasks = tasks;
         this.args = args;
     }
@@ -1918,19 +1943,27 @@ class TaskDashAnyExpression extends TaskInvokeExpression {
             return `${tt[0].emit()}${configs}`;
         });
 
-        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}}${arg[0].args.length !== 0 ? ", " : ""}${arg[1].emit(fmt)}`);
-        return `Task::dashAny<${taskstrs.join(", ")}>(${argl.join("; ")})`;
+        const argl = this.args.map((arg) => {
+            const envexp = arg[1].emit(fmt);
+            const argexp = arg[0].map((a) => a.emit(true, fmt)).join(", ");
+
+            return `${envexp}${argexp !== "" ? (", " + argexp) : ""}`;
+        });
+
+        return `${this.isparallel ? "parallel " : ""}Task::dashAny<${taskstrs.join(", ")}>(${argl.join("; ")})`;
     }
 }
 
 class TaskRaceExpression extends TaskInvokeExpression {
-   readonly task: TypeSignature;
+    readonly isparallel: boolean;
+    readonly task: TypeSignature;
     readonly configs: {key: string, value: Expression}[];
-    readonly args: ArgumentList;
+    readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.TaskRaceExpression, sinfo);
+        this.isparallel = isparallel;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -1938,19 +1971,24 @@ class TaskRaceExpression extends TaskInvokeExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.emit(fmt, "", "");
-        return `Task::race<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>(${argl}, ${this.envexp.emit(fmt)})`;
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.emit(true, fmt);
+
+        return `${this.isparallel ? "parallel " : ""}Task::race<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
 class TaskRaceAnyExpression extends TaskInvokeExpression {
+    readonly isparallel: boolean;
     readonly task: TypeSignature;
     readonly configs: {key: string, value: Expression}[];
-    readonly args: ArgumentList;
+    readonly args: Expression;
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, isparallel: boolean, task: TypeSignature, args: Expression, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.TaskRaceAnyExpression, sinfo);
+        this.isparallel = isparallel;
         this.task = task;
         this.configs = configs;
         this.args = args;
@@ -1958,19 +1996,22 @@ class TaskRaceAnyExpression extends TaskInvokeExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const argl = this.args.emit(fmt, "", "");
-        return `Task::raceAny<${this.task.emit()}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}>(${argl}, ${this.envexp.emit(fmt)})`;
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.emit(true, fmt);
+
+        return `${this.isparallel ? "parallel " : ""}Task::raceAny<${this.task.emit()}${configs}>(${envexp}, ${argl})`;
     }
 }
 
 class APIInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly api: string;
-    readonly args: ArgumentList;
+    readonly args: Expression[];
     readonly configs: {key: string, value: Expression}[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, api: string, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.APIInvokeExpression, sinfo);
         this.ns = ns;
         this.api = api;
@@ -1981,8 +2022,11 @@ class APIInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
-        const argl = this.args.emit(fmt, "", "");
-        return `api ${nsstr !== "" ? (nsstr + "::") : ""}${this.api}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}(${argl}, ${this.envexp.emit(fmt)})`;
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
+
+        return `api ${nsstr}${this.api}${configs}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 
@@ -1990,15 +2034,17 @@ class AgentInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly agent: string;
     readonly optrestype: TypeSignature | undefined;
-    readonly args: ArgumentList;
+    readonly opterrtype: TypeSignature | undefined;
+    readonly args: Expression[];
     readonly configs: {key: string, value: Expression}[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: ArgumentList, envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, opterrtype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
         this.ns = ns;
         this.agent = agent;
         this.optrestype = optrestype;
+        this.opterrtype = opterrtype;
         this.args = args;
         this.envexp = envexp;
         this.configs = configs;
@@ -2006,9 +2052,12 @@ class AgentInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
-        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
-        const argl = this.args.emit(fmt, "", "");
-        return `agent ${nsstr !== "" ? (nsstr + "::") : ""}${this.agent}${TaskInvokeExpression.emitconfigs(this.configs, fmt)}${restypeStr}(${argl}, ${this.envexp.emit(fmt)})`;
+        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}${this.opterrtype ? `, ${this.opterrtype.emit()}` : ""}>` : "";
+        const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
+        const envexp = this.envexp.emit(fmt);
+        const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
+
+        return `agent ${nsstr}${this.agent}${configs}${restypeStr}(${envexp}${argl !== "" ? (", " + argl) : ""})`;
     }
 }
 

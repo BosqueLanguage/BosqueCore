@@ -56,6 +56,7 @@ const KW_test = "test";
 ////
 //Declaration keywords
 const KW_api = "api";
+const KW_agent = "agent";
 const KW_as = "as";
 const KW_concept = "concept";
 const KW_const = "const";
@@ -95,6 +96,7 @@ const KeywordStrings = [
     KW_recursive,
     
     KW_api,
+    KW_agent,
     KW_as,
     KW_action,
     KW__debug,
@@ -378,7 +380,8 @@ export {
     KW_recursive_q,
     KW_recursive,
     
-    // KW_api,
+    KW_api,
+    KW_agent,
     // KW_as,
     KW_action,
     // KW__debug,
@@ -493,7 +496,7 @@ export {
     SYM_eqeq,
     SYM_eqeqeq,
     SYM_bigarrow,
-    // SYM_implies,
+    SYM_implies,
     SYM_arrow,
     SYM_barbar,
     SYM_plus,
