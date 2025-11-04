@@ -397,25 +397,26 @@ class SubtypeTable {
 private:
     PackedBits<NTypes * NTypes> bits;
     
-    static constexpr uint64_t getTypeOffset(uint64_t sub, uint64_t super) noexcept {
-        return sub * NTypes + super;
+    static constexpr uint64_t getTypeOffset(uint64_t super, uint64_t sub) noexcept {
+        return super * NTypes + sub;
     }
 
 public:
     constexpr SubtypeTable() noexcept : bits() {};
 
-    template<uint64_t sub, uint64_t... supers>
+    template<uint64_t super, uint64_t... subs>
     constexpr void set() noexcept {
-        assert(sub <= NTypes);
-        ((assert(supers <= NTypes)), ...);
+        assert(super <= NTypes);
+        ((assert(subs <= NTypes)), ...);
         
-        (this->bits.set(getTypeOffset(sub, supers)), ...);
+        this->bits.set(getTypeOffset(super, super));
+        (this->bits.set(getTypeOffset(super, subs)), ...);
     }
     
-    inline Bool get(uint64_t sub, uint64_t super) const noexcept {
+    inline Bool get(uint64_t super, uint64_t sub) const noexcept {
         assert(sub < NTypes);
         assert(super < NTypes);
-        return this->bits.get(getTypeOffset(sub, super));
+        return this->bits.get(getTypeOffset(super, sub));
     }
 };
 
