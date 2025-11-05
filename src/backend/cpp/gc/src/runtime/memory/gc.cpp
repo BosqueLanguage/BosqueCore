@@ -252,7 +252,6 @@ static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInf
             break;
         }
         case __CoreGC::Tag::Value: {
-            // Need to scan for inline tagged types!
             updatePointers(slots + 1, tagged_typeinfo, tinfo);
             break;
         }
@@ -295,7 +294,7 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
         
-        // Skip already forwarded objects (those that may have multiple refers)
+        // Skip already forwarded objects (those that may have multiple referers)
         if(GC_FWD_INDEX(obj) > NON_FORWARDED) {
             continue;
         }
