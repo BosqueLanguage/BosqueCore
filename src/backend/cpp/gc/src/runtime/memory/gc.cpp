@@ -291,8 +291,9 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
+        
         // Skip already forwarded objects (those that may have multiple refers)
-        if(GC_FWD_INDEX(obj) >= FWD_TABLE_START) {
+        if(GC_FWD_INDEX(obj) > NON_FORWARDED) {
             continue;
         }
 
