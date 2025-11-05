@@ -414,7 +414,7 @@ static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slo
             break;
         }
         case __CoreGC::Tag::Value: { 
-            // Need to scan for inline tagged objects!
+            // Need to scan for inline objects!
             walkPointerMaskForMarking(tinfo, tagged_typeinfo, slots + 1);
             break;
         }
