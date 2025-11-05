@@ -613,8 +613,10 @@ entity ExplicitifyTransform {
     }
 
     recursive method processMapEntryConstructorExpression(e: MapEntryConstructorExpression, vmap: VarMapping): Expression {
-        let nkexp = this.processExpression[recursive](e.kexp, vmap);
-        let nvexp = this.processExpression[recursive](e.vexp, vmap);
+        let mpetd = this.assembly.lookupNominalTypeDeclaration(e.etype.tkeystr)@<BSQAssembly::MapEntryTypeDecl>;
+
+        let nkexp = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.kexp, vmap), mpetd.ktype);
+        let nvexp = this.processCoerceTypeAsNeeded(this.processExpression[recursive](e.vexp, vmap), mpetd.vtype);
 
         return e[kexp=nkexp, vexp=nvexp];
     }

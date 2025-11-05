@@ -17,7 +17,7 @@
 #endif
 
 static void walkPointerMaskForDecrements(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept;
-static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept;
+static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept;
 static void walkPointerMaskForMarking(BSQMemoryTheadLocalInfo& tinfo, __CoreGC::TypeInfoBase* typeinfo, void** slots) noexcept; 
 
 static void reprocessPageInfo(PageInfo* page, BSQMemoryTheadLocalInfo& tinfo) noexcept
@@ -97,7 +97,8 @@ static inline void handleTaggedObjectDecrement(BSQMemoryTheadLocalInfo& tinfo, v
             break;
         }
         case __CoreGC::Tag::Value: {
-            return ;
+            walkPointerMaskForDecrements(tinfo, tagged_typeinfo, slots + 1);
+            break;
         }
     }
 }
@@ -147,6 +148,7 @@ static inline void decrementObject(void* obj, BSQMemoryTheadLocalInfo& tinfo) no
 static inline void updateDecrementedObject(void* obj, BSQMemoryTheadLocalInfo& tinfo)
 {
     __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
+    
     if(typeinfo->ptr_mask != PTR_MASK_LEAF && GC_REF_COUNT(obj) == 0) {
         walkPointerMaskForDecrements(tinfo, typeinfo, static_cast<void**>(obj));
 
@@ -246,19 +248,19 @@ static inline void handleTaggedObjectUpdate(void** slots, BSQMemoryTheadLocalInf
             break;
         }
         case __CoreGC::Tag::Tagged: {
-            updatePointers(slots + 1, tinfo); 
+            updatePointers(slots + 1, tagged_typeinfo, tinfo); 
             break;
         }
         case __CoreGC::Tag::Value: {
-            return ;
+            updatePointers(slots + 1, tagged_typeinfo, tinfo);
+            break;
         }
     }
 }
 
-static void updatePointers(void** slots, BSQMemoryTheadLocalInfo& tinfo) noexcept
+static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    __CoreGC::TypeInfoBase* type_info = GC_TYPE(slots);
-    const char* ptr_mask = type_info->ptr_mask;
+    const char* ptr_mask = typeinfo->ptr_mask;
     if(ptr_mask == PTR_MASK_LEAF) {
         return;
     }
@@ -291,9 +293,14 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
-        GC_INVARIANT_CHECK(GC_IS_YOUNG(obj) && GC_IS_MARKED(obj));
+        
+        // Skip already forwarded objects (those that may have multiple referers)
+        if(GC_FWD_INDEX(obj) > NON_FORWARDED) {
+            continue;
+        }
 
-        updatePointers((void**)obj, tinfo);
+        __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);
+        updatePointers((void**)obj, typeinfo, tinfo);
 
         if(GC_IS_ROOT(obj)) {
             MetaData* m = GC_GET_META_DATA_ADDR(obj);
@@ -407,7 +414,9 @@ static void handleMarkingTaggedObject(BSQMemoryTheadLocalInfo& tinfo, void** slo
             break;
         }
         case __CoreGC::Tag::Value: { 
-            return ;
+            // Need to scan for inline objects!
+            walkPointerMaskForMarking(tinfo, tagged_typeinfo, slots + 1);
+            break;
         }
     }
 }
