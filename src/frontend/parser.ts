@@ -3,10 +3,10 @@ import assert from "node:assert";
 
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW_action, KW_agent, KW_api, KW_chktest, KW_debug, KW_ensures, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_inout, KW_let, KW_method, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_Task, KW_test, KW_this, KW_true, KW_under, KW_var, KW_when, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_assert, KW_chktest, KW_debug, KW_do, KW_elif, KW_else, KW_ensures, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_if, KW_inout, KW_let, KW_match, KW_method, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_Task, KW_test, KW_this, KW_true, KW_under, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -4357,7 +4357,7 @@ class Parser {
                 llexps.push(ng);
             }
 
-            return new ChkLogicBaseExpression(new LogicOrExpression(sinfo, llexps));
+            return new ChkLogicBaseExpression(llexps.length === 1 ? llexps[0] : new LogicOrExpression(sinfo, llexps));
 
         }
     }
@@ -4372,15 +4372,36 @@ class Parser {
         return exp;
     }
 
-    private parseRValueExpression(): RValueExpression {
-        xxxx;
+    private parseConditionalExpressionTail(sinfo: SourceInfo, exp: ITestGuardSet): RValueExpression {
+        this.ensureAndConsumeTokenAlways(SYM_question, "conditional expression");
+
+        const thenexp = this.parseExpression();
+        this.ensureAndConsumeTokenAlways(SYM_colon, "conditional expression");
+        const elseexp = this.parseExpression();
+
+        return new ConditionalValueExpression(sinfo, exp, thenexp, elseexp);
     }
 
-    private parseRHSExpressionXXX(): Expression {
-        //TODO: later we need to parse trailing early returns/checks
+    private parseShortCircuitOptions(exp: Expression): RValueExpression {
+        if(this.testToken(SYM_atat)) {
+            this.consumeToken();
 
-        if(this.testToken(KW_ref)) {
-            const sinfo = this.peekToken().getSourceInfo();
+            const itest = this.parseITest() as ITest;
+            return new ShortCircuitAssignRHSExpressionFail(exp, itest);
+        } 
+        else {
+            this.ensureAndConsumeTokenAlways(SYM_questionat, "short-circuit options");
+
+            const itest = this.parseITest() as ITest;
+            this.ensureAndConsumeTokenAlways(SYM_colon, "short-circuit options");
+            const rexp = this.parseExpression();
+
+            return new ShortCircuitAssignRHSExpressionReturn(exp, itest, rexp);
+        }
+    }
+
+    private parseRefRValueExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
             this.consumeToken();
 
             if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
@@ -4405,8 +4426,6 @@ class Parser {
             const targs = this.parseInvokeTemplateArguments();
             const args = this.parseArgumentsCallStd(false);
 
-            xxxx; //TODO task action too
-
             if(rcvr.srcname === "this") {
                 return new CallRefThisExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
             }
@@ -4416,9 +4435,143 @@ class Parser {
             else {
                 return new CallRefVariableExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
             }
+    }
+
+    private parseTaskActionRValueExpression(): Expression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_do, "Task action expression");
+        this.ensureAndConsumeTokenAlways(KW_self, "Task action expression");
+        this.ensureAndConsumeTokenAlways(SYM_dot, "Task action expression");
+
+        this.ensureToken(TokenStrings.IdentifierName, "Task action expression");
+        const name = this.parseIdentifierAsStdVariable();
+
+        const terms = this.parseInvokeTemplateArguments();
+        const args = this.parseArgumentsCallStd(false);
+
+        return new CallTaskActionExpression(sinfo, name, terms, args);
+    }
+
+    private parseTaskRunRValueExpression(isparallel: boolean): Expression {
+        this.ensureAndConsumeTokenAlways(KW_Task, "Task run expression");
+        this.ensureAndConsumeTokenAlways(SYM_coloncolon, "Task run expression");
+
+        this.ensureToken(TokenStrings.IdentifierName, "Task run expression");
+        const taskname = this.consumeTokenAndGetValue();
+
+        if(taskname === "run") {
+            return this.parseTaskRunExpression(this.peekToken().getSourceInfo(), isparallel);
+        }
+        else if(taskname === "multi") {
+            return this.parseTaskMultiExpression(this.peekToken().getSourceInfo(), isparallel);
+        }
+        else if(taskname === "all") {
+            return this.parseTaskAllExpression(this.peekToken().getSourceInfo(), isparallel);
+        }
+        else if(taskname === "dash") {
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), isparallel, false);
+        }
+        else if(taskname === "dashAny") {
+            return this.parseTaskDashStyleExpression(this.peekToken().getSourceInfo(), isparallel, true);
+        }
+        else if(taskname ===  "race") {
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), isparallel, false);
+        }
+        else if(taskname ===  "raceAny") {
+            return this.parseTaskRaceStyleExpression(this.peekToken().getSourceInfo(), isparallel, true);
         }
         else {
-            return this.parseExpression();
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Unknown Task function '${taskname}'`);
+            return new ErrorExpression(this.peekToken().getSourceInfo(), undefined, undefined);
+        }
+    }
+
+    private parseRValueOfLHSExpression(sinfo: SourceInfo): RValueExpression {
+        const eexpr = this.parseITestGuardSet();
+
+        if(this.testToken(SYM_question)) {
+            return this.parseConditionalExpressionTail(sinfo, eexpr);
+        }
+        else {
+            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof BaseRValueExpression)) {
+                this.recordErrorGeneral(sinfo, "Guard set found where simple expression expected");
+            }
+
+            const lexp = eexpr.guards[0].exp;
+            if(this.testToken(SYM_atat) || this.testToken(SYM_questionat)) {
+                return this.parseShortCircuitOptions(lexp);
+            }
+            else {
+                return new BaseRValueExpression(lexp);
+            }
+        }
+    }
+
+    private parseRValueOfLHSExpressionSimple(sinfo: SourceInfo, expr: Expression): RValueExpression {
+        if(this.testToken(SYM_question)) {
+            return this.parseConditionalExpressionTail(sinfo, new ITestGuardSet([new ITestSimpleGuard(expr)]));
+        }
+        else {
+            if(this.testToken(SYM_atat) || this.testToken(SYM_questionat)) {
+                return this.parseShortCircuitOptions(expr);
+            }
+            else {
+                return new BaseRValueExpression(expr);
+            }
+        }
+    }
+
+    private parseRValueExpression(): RValueExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        if(this.testToken(KW_ref)) {
+            const expr = this.parseRefRValueExpression();
+            return this.parseRValueOfLHSExpressionSimple(sinfo, expr);
+        }
+        else if(this.testToken(KW_do)) {
+            const expr = this.parseTaskActionRValueExpression(); 
+            return this.parseRValueOfLHSExpressionSimple(sinfo, expr);
+        }
+        else if(this.testToken(KW_parallel) || this.testToken(KW_Task)) {
+            const isparallel = this.testAndConsumeTokenIf(KW_parallel);
+            const oop = this.peekToken(2);
+            if(oop.kind === TokenStrings.IdentifierName && (oop.data === "currentID" || oop.data === "parentID")) {
+                return this.parseRValueOfLHSExpression(sinfo); //Task::currentID() or Task::parentID() -- followed maybe by some more stuff
+            }
+            else {
+                const expr = this.parseTaskRunRValueExpression(isparallel);
+                return new BaseRValueExpression(expr);
+            }
+        }
+        else if(this.testToken(KW_api)) {
+            const apiexpr = this.parseAPIInvokeExpression();
+            return new BaseRValueExpression(apiexpr);
+        }
+        else if(this.testToken(KW_agent)) {
+            const expr = this.parseAgentInvokeExpression();
+            return new BaseRValueExpression(expr);
+        }
+        else {
+            return this.parseRValueOfLHSExpression(sinfo);
+        }
+    }
+
+    parseTestRValueExpression(): RValueExpression {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        const eexpr = this.parseITestGuardSet();
+
+        if(this.testToken(SYM_question)) {
+            return this.parseConditionalExpressionTail(sinfo, eexpr);
+        }
+        else {
+            if(eexpr.guards.length !== 1 || !(eexpr.guards[0] instanceof BaseRValueExpression)) {
+                this.recordErrorGeneral(sinfo, "Guard set found where simple expression expected");
+            }
+
+            const lexp = eexpr.guards[0].exp;
+            return new BaseRValueExpression(lexp);
         }
     }
 
@@ -4440,15 +4593,6 @@ class Parser {
 
             return new ThisUpdateStatement(sinfo, vexp, updates);
         }
-        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
-            this.consumeToken(); //consume ref
-
-            this.consumeToken(); //consume self
-            this.parseVarUpdates();
-
-            this.recordErrorGeneral(sinfo, `NOT IMPLEMENTED -- update self fields`);
-            return new ErrorStatement(sinfo);
-        }
         else if(this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_lbrack)) {
             this.consumeToken(); //consume ref
 
@@ -4462,8 +4606,23 @@ class Parser {
 
             return new VarUpdateStatement(sinfo, vexp, updates);
         }
+        else if(this.testFollows(KW_ref, KW_self, SYM_lbrack)) {
+            this.consumeToken(); //consume self
+            const updates = this.parseVarUpdates();
+
+            if(updates.length === 0) {
+                this.recordErrorGeneral(sinfo, "Empty update list is not allowed");
+                return new ErrorStatement(sinfo);
+            }
+
+            return new SelfUpdateStatement(sinfo, updates);
+        }
+        else if(this.testToken(KW_do)) {
+            const rhs = this.parseTaskActionRValueExpression();
+            return new VoidRefCallStatement(sinfo, rhs);  
+        }
         else {
-            const rhs = this.parseRHSExpression(); //must be a call (with a ref/out param)
+            const rhs = this.parseExpression(); //must be a call (with a ref/out param)
             if(!(rhs instanceof CallNamespaceFunctionExpression) && !(rhs instanceof CallTypeFunctionExpression) && !(rhs instanceof PostfixOp) && !(rhs instanceof CallRefInvokeExpression)) {
                 this.recordErrorGeneral(sinfo, "Expected a call expression");
                 return new ErrorStatement(sinfo);
@@ -4481,7 +4640,7 @@ class Parser {
     ////
     //Statement parsing
 
-    parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
+    private parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
@@ -4499,7 +4658,7 @@ class Parser {
         return { name: name, vtype: itype };
     }
 
-    parseMultiDeclarationVarInfo(isfirst: boolean): {name: string, vtype: TypeSignature}[] {
+    private parseMultiDeclarationVarInfo(isfirst: boolean): {name: string, vtype: TypeSignature}[] {
         let decls: {name: string, vtype: TypeSignature}[] = [];
 
         if(isfirst && this.testToken(SYM_coma)) {
@@ -4516,7 +4675,7 @@ class Parser {
         return decls;
     }
 
-    parseSingleAssignmentVarInfo(): string {
+    private parseSingleAssignmentVarInfo(): string {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
@@ -4529,7 +4688,7 @@ class Parser {
         return name;
     }
 
-    parseMultiAssignmentVarInfo(isfirst: boolean): string[] {
+    private parseMultiAssignmentVarInfo(isfirst: boolean): string[] {
         let assigns: string[] = [];
 
         if(isfirst && this.testToken(SYM_coma)) {
@@ -4546,7 +4705,7 @@ class Parser {
         return assigns;
     }
 
-    parseVarUpdates(): [string, Expression][] {
+    private parseVarUpdates(): [string, Expression][] {
         return this.parseListOf<[string, Expression]>("variable update list", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "variable update list");
             const name = this.consumeTokenAndGetValue();
@@ -4558,142 +4717,34 @@ class Parser {
         });
     }
 
-    /*
-    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature} | undefined): Statement {
-        this.ensureTaskOpOk();
-        
-        //TODO: need to cleanup so that SC return and assign work with this as well 
-
-        let allvvs: {name: string, vtype: TypeSignature}[] = [];
-        if (vv !== undefined) {
-            allvvs.push(vv);
-            while (!this.testToken(SYM_eq)) {
-                this.ensureAndConsumeToken(SYM_coma, "Expected , in task result assignment list");
-
-                const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isconst ? KW_let : KW_var);
-                const vvar = { name: assign.name, vtype: assign.vtype };
-
-                if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                    this.raiseError(this.getCurrentLine(), "Variable name is already defined");
-                }
-                this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name, assign.name, false);
-
-                allvvs.push(vvar);
-            }
+    private isVarDeclPrefix(): boolean {
+        if(!this.testToken(KW_var) && !this.testToken(KW_ref) && !this.testToken(KW_let)) {
+            return false;
         }
 
-        this.consumeToken();
-        this.ensureAndConsumeToken(SYM_coloncolon, "Task statement");
-        this.ensureToken(TokenStrings.Identifier, "Task statement");
-
-        const name = this.consumeTokenAndGetValue();
-
-        if(name === "getTaskID" || name === "isCanceled") {
-            this.ensureAndConsumeToken(SYM_lparen, `Task expression ${name}`);
-            this.ensureAndConsumeToken(SYM_rparen, `Task expression ${name}`);
-            this.ensureAndConsumeToken(SYM_semicolon, `Task expression ${name}`);
-
-            if(name === "getTaskID") {
-                if(vv === undefined) {
-                    return new ReturnStatement(sinfo, new TaskGetIDExpression(sinfo));
-                }
-                else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskGetIDExpression(sinfo), undefined);
-                }
-                else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskGetIDExpression(sinfo), undefined);
-                }
-            }
-            else {
-                if(vv === undefined) {
-                    return new ReturnStatement(sinfo, new TaskCancelRequestedExpression(sinfo))
-                }
-                else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskCancelRequestedExpression(sinfo), undefined);
-                }
-                else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskCancelRequestedExpression(sinfo), undefined);
-                }
-            }
+        if(this.testToken(KW_var) || this.testToken(KW_let)) {
+            return true;
         }
         else {
-            let argpack: { argn: string, argv: Expression }[] = [];
-            if (this.testToken(SYM_lbrace)) {
-                this.parseListOf("Task Run arguments", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
-                    this.ensureAndConsumeToken("=", "Task run argument");
-                    const argv = this.parseExpression();
+            const wtype = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_colon); //ref x: T ... case
+            const wtypeu = this.testFollows(KW_ref, KW_under, SYM_colon); //ref _: T ... case
+            const wassign = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_eq); //ref x = ... case
+            const wassignu = this.testFollows(KW_ref, KW_under, SYM_eq); //ref _ = ... case
+            const wmulti = this.testFollows(KW_ref, TokenStrings.IdentifierName, SYM_coma); //ref x, y = ... case
+            const wmultiu = this.testFollows(KW_ref, KW_under, SYM_coma); //ref _, y = ... case
 
-                    return { argn: argn, argv: argv };
-                });
-            }
-
-            const terms = this.parseTemplateArguments();
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-            if (terms.length !== 0) {
-                this.raiseError(sinfo.line, "Must supply at least 1 task to run");
-            }
-
-            this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
-            if (name === "run") {
-                if (terms.length !== allvvs.length) {
-                    this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
-                }
-
-                if (terms.length === 1) {
-                    //x = Task::run<T>(args)
-                    return new TaskRunStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args);
-                }
-                else {
-                    //y, z = Task::run<T, U>(argv, ...)
-                    return new TaskMultiStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
-                }
-            }
-            else if (name === "dash") {
-                if (terms.length === 1) {
-                    this.raiseError(sinfo.line, "dashing to a result on a single task is redundant -- use \"run\" instead");
-                }
-
-                if (terms.length !== allvvs.length) {
-                    this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
-                }
-
-                //x, y, z = Task::dash<T, U>(argv, ...)
-                return new TaskDashStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
-            }
-            else if (name === "all") {
-                if (terms.length !== 1 || args.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
-                }
-
-                if (allvvs.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all produces a single result List");
-                }
-
-                //x: List<V> = Task::all<T>(List<U>) <-- result list all done
-                return new TaskAllStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
-            }
-            else if (name === "race") {
-                if (terms.length !== 1 || args.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
-                }
-
-                if (allvvs.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::all produces a single Result");
-                }
-
-                //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
-                return new TaskRaceStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
-            }
-            else {
-                this.raiseError(sinfo.line, "Unknown \"Task\" operation");
-                return new InvalidStatement(sinfo);
-            }
+            return wtype || wtypeu || wassign || wassignu || wmulti || wmultiu;
         }
     }
-    */
+
+    private isTaskStatementPrefix(): boolean {
+        if(!this.testFollows(KW_Task, SYM_coloncolon, TokenStrings.IdentifierName)) {
+            return false;
+        }
+
+        const taskname = this.peekTokenData(2);
+        return taskname === "emitStatusUpdate" || taskname === "checkAndHandleTermination";
+    }
 
     private parseLineStatement(): Statement {
         const sinfo = this.peekToken().getSourceInfo();
@@ -4701,15 +4752,15 @@ class Parser {
         if (this.testToken(SYM_semicolon)) {
             return new EmptyStatement(sinfo);
         }
-        else if (this.testToken(KW_var) || this.testToken(KW_let)) {
-            const isConst = this.testToken(KW_let);
+        else if (this.isVarDeclPrefix()) {
+            const vtype = this.parseVarDeclKind();
             
             this.consumeToken();
             const assigns = this.parseMultiDeclarationVarInfo(true);
 
             if(this.testToken(SYM_semicolon)) {
-                if(isConst) {
-                    this.recordErrorGeneral(sinfo, "Cannot declare as const without an assignment");
+                if(vtype !== "var") {
+                    this.recordErrorGeneral(sinfo, "Cannot declare as let/ref without an assignment");
                 }
 
                 if(assigns.some((vv) => vv.vtype instanceof AutoTypeSignature)) {
@@ -4717,7 +4768,7 @@ class Parser {
                 }
 
                 assigns.forEach((vv) => {
-                    const okadd = this.env.addVariable(vv.name, isConst, false);
+                    const okadd = this.env.addVariable(vv.name, vtype, false);
                     if(!okadd) {
                         this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                     }
@@ -4728,38 +4779,51 @@ class Parser {
             else if(this.testToken(SYM_eq)) {
                 this.consumeToken();
 
-                const exp = this.parseRHSExpression();
+                const exp = this.parseRValueExpression();
                 if(this.testToken(SYM_semicolon)) {
                     //could be elist type expression but we need to wait for type checking
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst, assigns.length > 1);
+                        const okadd = this.env.addVariable(vv.name, vtype, assigns.length > 1);
                         if(!okadd) {
                             this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                         }
                     });
 
-                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exp);
+                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, vtype, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, vtype, assigns, exp);
                 }
                 else {
                     //we need as many expressions as there are variables
-                    let exps = [exp];
+                    let exps: Expression[] = [];
                     while(this.testToken(SYM_coma) && exps.length < assigns.length) {
                         this.consumeToken();
-                        exps.push(this.parseRHSExpression());
+                        exps.push(this.parseExpression());
                     }
 
-                    if(exps.length !== assigns.length) {
+                    if(exps.length + 1 !== assigns.length) {
                         this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                     }
 
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst, true);
+                        const okadd = this.env.addVariable(vv.name, vtype, true);
                         if(!okadd) {
                             this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
                         }
                     });
 
-                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exps[0]) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exps);
+                    if(assigns.length === 1) {
+                        return new VariableInitializationStatement(sinfo, vtype, assigns[0].name, assigns[0].vtype, exp);
+                    }
+                    else {
+                        let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                        if(exp instanceof BaseRValueExpression) {
+                            bexp = exp.exp;
+                        }
+                        else {
+                            this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-initialization");
+                        }
+
+                        return new VariableMultiInitializationStatement(sinfo, vtype, assigns, [bexp, ...exps]);
+                    }
                 }
             }
             else {
@@ -4776,7 +4840,7 @@ class Parser {
             }
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
-            const exp = this.parseRHSExpression();
+            const exp = this.parseRValueExpression();
 
             return new VariableAssignmentStatement(sinfo, vname, exp);
         }
@@ -4784,7 +4848,7 @@ class Parser {
             const vnames = this.parseMultiAssignmentVarInfo(true);
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
-            const exp = this.parseRHSExpression();
+            const exp = this.parseRValueExpression();
 
             if(this.testToken(SYM_semicolon)) {
                 //could be elist type expression but we need to wait for type checking
@@ -4799,13 +4863,13 @@ class Parser {
             }
             else {
                 //we need as many expressions as there are variables
-                let exps = [exp];
+                let exps: Expression[] = [];
                 while(this.testToken(SYM_coma) && exps.length < vnames.length) {
                     this.consumeToken();
-                    exps.push(this.parseRHSExpression());
+                    exps.push(this.parseExpression());
                 }
 
-                if(exps.length !== vnames.length) {
+                if(exps.length + 1 !== vnames.length) {
                     this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                 }
 
@@ -4813,7 +4877,20 @@ class Parser {
                     this.env.assignVariable(vv);
                 });
 
-                return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exps[0]) : new VariableMultiAssignmentStatement(sinfo, vnames, exps);
+                if(vnames.length === 1) {
+                    return new VariableAssignmentStatement(sinfo, vnames[0], exp);
+                }
+                else {
+                    let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                    if(exp instanceof BaseRValueExpression) {
+                        bexp = exp.exp;
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-assignment");
+                    }
+
+                    return new VariableMultiAssignmentStatement(sinfo, vnames, [bexp, ...exps]);
+                }
             }
         }
         else if (this.testToken(KW_return)) {
@@ -4823,18 +4900,27 @@ class Parser {
                 return new ReturnVoidStatement(sinfo);
             }
             else {
-                const rexp = this.parseRHSExpression();
+                const rexp = this.parseRValueExpression();
                 if(this.testToken(SYM_semicolon)) {
                     return new ReturnSingleStatement(sinfo, rexp);
                 }
                 else {
-                    let rexps = [rexp];
+                    let rexps: Expression[] = [];
                     while(this.testToken(SYM_coma)) {
                         this.consumeToken();
-                        rexps.push(this.parseRHSExpression());
+                        rexps.push(this.parseExpression());
                     }
 
-                    return new ReturnMultiStatement(sinfo, rexps);
+
+                    let bexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+                    if(rexp instanceof BaseRValueExpression) {
+                        bexp = rexp.exp;
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, "Cannot use complex RHS expression in multi-return");
+                    }
+
+                    return new ReturnMultiStatement(sinfo, [bexp, ...rexps]);
                 }
             }
         }
@@ -4893,7 +4979,7 @@ class Parser {
             this.consumeToken();
 
             const level = this.parseBuildInfo(KW_release);
-            const exp = this.parseExpression();
+            const exp = this.parseChkLogicExpression();
 
             return new AssertStatement(sinfo, exp, level);
         }
@@ -4908,8 +4994,7 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_rbrack, "validate statement tag");
             }
 
-            const exp = this.parseExpression();
-
+            const exp = this.parseChkLogicExpression();
             return new ValidateStatement(sinfo, exp, diagnosticTag);
         }
         else if (this.testToken(KW__debug)) {
@@ -4919,33 +5004,27 @@ class Parser {
             
             return new DebugStatement(sinfo, value);
         }
-        /*
-        else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Task") {
-            this.ensureTaskOpOk();
+        else if(this.isTaskStatementPrefix()) {
+            this.consumeToken(); //Task
+            this.consumeToken(); //::
 
-            this.consumeToken();
-            this.ensureAndConsumeToken(SYM_coloncolon, "Task operation");
-            this.ensureToken(TokenStrings.Identifier, "Task operation");
             const op = this.consumeTokenAndGetValue();
-            if(op !== "status" && op !== "event") {
-                this.raiseError(sinfo.line, `unknown call ${op} on Task`);
-            }
-
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-            if(args.length !== 1) {
-                this.raiseError(sinfo.line, `Task::${op} takes a single argument`);
-            }
-
-            this.ensureAndConsumeToken(SYM_semicolon, `Task::${op} operation`);
-                    
-            if(op === "status") {
-                return new TaskSetStatusStatement(sinfo, args[0]);
+            if(op === "checkAndHandleTermination") {
+                return new TaskCheckAndHandleTerminationStatement(sinfo);
             }
             else {
-                return new TaskEventEmitStatement(sinfo, args[0]);
+                this.ensureAndConsumeTokenAlways(SYM_lparen, `Task::${op} operation`);
+                const exp = this.parseExpression();
+                this.ensureAndConsumeTokenAlways(SYM_rparen, `Task::${op} operation`);
+
+                return new TaskStatusStatement(sinfo, exp);
             }
         }
-        */
+        else if(this.testToken(KW_yield)) {
+            this.consumeToken();
+            const exp = this.parseRValueExpression();
+            return new TaskYieldStatement(sinfo, exp);
+        }
         else {
             return this.parseStatementExpression();
         }
@@ -5011,43 +5090,40 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
-        const [iexp, bindername, implicitdef, ispostflow, itest] = this.parseIfTest(false);
 
+        const itest = this.parseITestGuardSet();
         const ifbody = this.parseScopedBlockStatement();
-        let binder: BinderInfo | undefined = undefined;
-        if(bindername !== undefined) {
-            binder = new BinderInfo(bindername, implicitdef, ispostflow);
-        }
 
-        let conds: {cond: IfTest, block: BlockStatement}[] = [];
+        let conds: {cond: Expression, block: BlockStatement}[] = [];
         while (this.testAndConsumeTokenIf(KW_elif)) {
-            const [kiexp, kbinder, _k2, _k3, kitest] = this.parseIfTest(false);
-            if(kbinder !== undefined) {
-                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
-            }
+            const kiexp = this.parseExpression();
             const elifbody = this.parseScopedBlockStatement();
-           
-            conds.push({cond: new IfTest(kiexp, kitest), block: elifbody});
+
+            conds.push({cond: kiexp, block: elifbody});
         }
 
         if(conds.length === 0) {
             if(!this.testAndConsumeTokenIf(KW_else)) {
-                return new IfStatement(sinfo, new IfTest(iexp, itest), binder, ifbody);
+                return new IfStatement(sinfo, itest, ifbody);
             }
             else {
                 const elsebody = this.parseScopedBlockStatement();
-                return new IfElseStatement(sinfo, new IfTest(iexp, itest), binder, ifbody, elsebody);
+                return new IfElseStatement(sinfo, itest, ifbody, elsebody);
             }
         }
         else {
             this.ensureAndConsumeTokenIf(KW_else, "if-elif-else statement");
 
-            if(binder !== undefined) {
+            let itexp: Expression = new ErrorExpression(sinfo, undefined, undefined);
+            if(itest.guards.length === 1 && itest.guards[0] instanceof ITestSimpleGuard) {
+                itexp = itest.guards[0].exp;
+            }
+            else {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
 
             const elssebody = this.parseScopedBlockStatement();
-            return new IfElifElseStatement(sinfo, [{cond: iexp, block: ifbody}, ...conds.map((cc) => { return {cond: cc.cond.exp, block: cc.block}; })], elssebody);
+            return new IfElifElseStatement(sinfo, [{cond: itexp, block: ifbody}, ...conds], elssebody);
         }
     }
 

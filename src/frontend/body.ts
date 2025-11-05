@@ -2126,7 +2126,7 @@ abstract class RValueExpression {
     abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
 }
 
-abstract class ConditionalValueExpression extends RValueExpression {
+class ConditionalValueExpression extends RValueExpression {
     readonly sinfo: SourceInfo;
 
     readonly guardset: ITestGuardSet;
@@ -2172,7 +2172,7 @@ class ShortCircuitAssignRHSExpressionFail extends ShortCircuitAssignRHSITestExpr
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.exp.emit(true, fmt)} @@${this.itest.emit(fmt)}`;
+        return `${this.exp.emit(true, fmt)} @@ ${this.itest.emit(fmt)}`;
     }
 }
 
@@ -2186,10 +2186,10 @@ class ShortCircuitAssignRHSExpressionReturn extends ShortCircuitAssignRHSITestEx
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         if(this.failexp === undefined) {
-            return `${this.exp.emit(true, fmt)} ?@${this.itest.emit(fmt)}`;
+            return `${this.exp.emit(true, fmt)} ?@ ${this.itest.emit(fmt)}`;
         }
         else {
-            return `${this.exp.emit(true, fmt)} ?@${this.itest.emit(fmt)} : ${this.failexp.emit(true, fmt)}`;
+            return `${this.exp.emit(true, fmt)} ?@ ${this.itest.emit(fmt)} : ${this.failexp.emit(true, fmt)}`;
         }
     }
 }
@@ -2247,7 +2247,7 @@ enum StatementTag {
 
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
     TaskCheckAndHandleTerminationStatement = "TaskCheckAndHandleTerminationStatement", //check for termination signal and handle it appropriately
-    TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do)
+    TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do but a regular expression returning APIResult is okay too)
 
     HoleStatement = "HoleStatement",
 
@@ -2734,7 +2734,7 @@ class TaskStatusStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `Task::status(${this.exp.emit(true, fmt)});`;
+        return `Task::emitStatusUpdate(${this.exp.emit(true, fmt)});`;
     }
 }
 
@@ -2744,14 +2744,14 @@ class TaskCheckAndHandleTerminationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `Task::chkterm();`;
+        return `Task::checkAndHandleTermination();`;
     }
 }
 
 class TaskYieldStatement extends Statement {
-    readonly res: Expression;
+    readonly res: RValueExpression;
 
-    constructor(sinfo: SourceInfo, res: Expression) {
+    constructor(sinfo: SourceInfo, res: RValueExpression) {
         super(StatementTag.TaskYieldStatement, sinfo);
         this.res = res;
     }

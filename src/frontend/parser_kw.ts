@@ -11,6 +11,7 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
@@ -25,7 +26,7 @@ const KW_let = "let";
 const KW_match = "match";
 const KW_none = "none";
 const KW_ok = "ok";
-const KW_option = "option";
+const KW_parallel = "parallel";
 const KW_pred = "pred";
 const KW_ref = "ref";
 const KW_out = "out";
@@ -33,13 +34,11 @@ const KW_out_q = "out?";
 const KW_inout = "inout";
 const KW_rejected = "rejected";
 const KW_return = "return";
-const KW_result = "result";
 const KW_some = "some";
 const KW_this = "this";
 const KW_self = "self";
 const KW_switch = "switch";
 const KW_success = "success";
-const KW_then = "then";
 const KW_true = "true";
 const KW_type = "type";
 const KW_var = "var";
@@ -100,6 +99,7 @@ const KeywordStrings = [
     KW_as,
     KW_action,
     KW__debug,
+    KW_do,
     KW_abort,
     KW_assert,
     KW_concept,
@@ -130,7 +130,7 @@ const KeywordStrings = [
     KW_of,
     KW_ok,
     KW_operator,
-    KW_option,
+    KW_parallel,
     KW_pred,
     KW_predicate,
     KW_provides,
@@ -141,7 +141,6 @@ const KeywordStrings = [
     KW_inout,
     KW_release,
     KW_return,
-    KW_result,
     KW_requires,
     KW_self,
     KW_some,
@@ -151,7 +150,6 @@ const KeywordStrings = [
     KW_success,
     KW_task,
     KW_test,
-    KW_then,
     KW_this,
     KW_true,
     KW_type,
@@ -384,15 +382,16 @@ export {
     KW_agent,
     // KW_as,
     KW_action,
-    // KW__debug,
-    // KW_abort,
-    // KW_assert,
+    KW__debug,
+    KW_do,
+    KW_abort,
+    KW_assert,
     // KW_concept,
     // KW_const,
     // KW_declare,
     KW_debug,
-    // KW_elif,
-    // KW_else,
+    KW_elif,
+    KW_else,
     // KW_enum,
     KW_env,
     // KW_entity,
@@ -404,18 +403,18 @@ export {
     // KW_field,
     KW_fn,
     KW_function,
-    // KW_if,
+    KW_if,
     // KW_implements,
     // KW_invariant,
     KW_let,
-    // KW_match,
+    KW_match,
     KW_method,
     // KW_namespace,
     KW_none,
     KW_of,
     KW_ok,
     // KW_operator,
-    // KW_option,
+    KW_parallel,
     KW_pred,
     KW_predicate,
     // KW_provides,
@@ -425,28 +424,26 @@ export {
     KW_inout,
     KW_rejected,
     KW_release,
-    // KW_return,
-    // KW_result,
+    KW_return,
     KW_requires,
     KW_self,
     KW_some,
     KW_safety,
     KW_spec,
-    // KW_switch,
+    KW_switch,
     KW_success,
     // KW_task,
     KW_Task,
     KW_test,
-    // KW_then,
     KW_this,
     KW_true,
     // KW_type,
     // KW_datatype,
     // KW_using,
-    // KW_validate,
+    KW_validate,
     KW_var,
     KW_when,
-    // KW_yield,
+    KW_yield,
     // KW_continue,
     KW_under,
     KW_event,
@@ -471,10 +468,10 @@ export {
     SYM_rbracebar,
 
     // SYM_amp,
-    // SYM_bar,
+    SYM_bar,
     SYM_at,
-    // SYM_atat,
-    // SYM_questionat,
+    SYM_atat,
+    SYM_questionat,
     SYM_hash,
     SYM_bang,
     SYM_colon,
