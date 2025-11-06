@@ -1254,14 +1254,14 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
     let baseargs = String::concat("0, ", natToString(strsize), ", str");
     let base = String::concat("Core::UnicodeRopeOps::s_unicoderope_create(__CoreCpp::ubufferFromStringLiteral(", baseargs, "))");
 
-    let maxCCharBufferSize = 8n;
+    let maxUnicodeCharBufferSize = 8n;
 
-    let constructor = Algorithm::while<(|Nat, String|)>((|maxCCharBufferSize, base|), 
+    let constructor = Algorithm::while<(|Nat, String|)>((|maxUnicodeCharBufferSize, base|), 
         pred(cons) => cons.0 < strsize, 
         fn(cons) => {
             let append_base = String::concat("Core::UnicodeRopeOps::s_unicoderope_append(", cons.1, ", __CoreCpp::ubufferFromStringLiteral(");
             let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
-            return cons.0 + maxCCharBufferSize, String::concat(append_base, args, "))");
+            return cons.0 + maxUnicodeCharBufferSize, String::concat(append_base, args, "))");
     }).1;
 
     return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(", 
