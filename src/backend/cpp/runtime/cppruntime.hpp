@@ -884,13 +884,9 @@ class UnicodeRopeIterator {
     __UnicodeRope inlineString;
     bool isInline;
 
-    //
-    // These are wrong for unicode characters! 
-    //
-
     // We will eventually want to compute these via ptr mask in constructor
     static const size_t LEFT_CHILD_OFFSET = 2;
-    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 7;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 6;
 
     void initializeTraversal(__UnicodeRope& root) noexcept;
 
