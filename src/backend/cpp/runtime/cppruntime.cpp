@@ -257,6 +257,21 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
+// For the sake of preventing raw pointer arithmetic
+struct __CRopeNode {
+    uint64_t color;
+    uint64_t weight;
+    __CRope left;
+    __CRope right;
+};
+
+struct __UnicodeRopeNode {
+    uint64_t color;
+    uint64_t weight;
+    __UnicodeRope left;
+    __UnicodeRope right;
+};
+
 void CRopeIterator::traverseLeft() noexcept {
     __CRope& currentNode = this->traversalStack.top();
     uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
