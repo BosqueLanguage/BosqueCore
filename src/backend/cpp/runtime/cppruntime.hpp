@@ -800,7 +800,7 @@ public:
 
 template<typename Rope>
 class PathStack {
-    Rope* stack[64];
+    Rope stack[64];
     size_t index;
 
     Path path;
@@ -820,31 +820,31 @@ public:
         return this->wasLeftDirection;
     }
 
-    inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = &r;
+    inline void push(Rope r) noexcept {
+        this->stack[this->index++] = r;
     }
 
-    inline void left(Rope& r) noexcept {
+    inline void left(Rope r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.left();
     }
 
-    inline void right(Rope& r) noexcept {
+    inline void right(Rope r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.right();
     }
 
-    inline Rope& pop() noexcept {
+    inline Rope pop() noexcept {
         this->storeLastDirection();
         this->path.up();
             
-        return *this->stack[--this->index];
+        return this->stack[--this->index];
     }
 
-    inline Rope& top() const noexcept {
-        return *this->stack[this->index - 1];
+    inline Rope top() const noexcept {
+        return this->stack[this->index - 1];
     }
 };
 
@@ -858,7 +858,7 @@ class CRopeIterator {
     static const size_t LEFT_CHILD_OFFSET = 2;
     static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 3;
 
-    void initializeTraversal(__CRope& root) noexcept;
+    void initializeTraversal(__CRope root) noexcept;
 
     inline bool isAtLeaf() const noexcept {
         return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
@@ -867,7 +867,7 @@ class CRopeIterator {
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
+    CRopeIterator(__CRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
@@ -894,7 +894,7 @@ class UnicodeRopeIterator {
     static const size_t LEFT_CHILD_OFFSET = 2;
     static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 6;
 
-    void initializeTraversal(__UnicodeRope& root) noexcept;
+    void initializeTraversal(__UnicodeRope root) noexcept;
 
     inline bool isAtLeaf() const noexcept {
         return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
@@ -903,7 +903,7 @@ class UnicodeRopeIterator {
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    UnicodeRopeIterator(__UnicodeRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
+    UnicodeRopeIterator(__UnicodeRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
