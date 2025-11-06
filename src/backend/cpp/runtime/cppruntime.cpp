@@ -257,44 +257,30 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
     return ub;
 }
 
-// For the sake of preventing raw pointer arithmetic
-struct __CRopeNode {
-    uint64_t color;
-    uint64_t weight;
-    __CRope left;
-    __CRope right;
-};
-
-struct __UnicodeRopeNode {
-    uint64_t color;
-    uint64_t weight;
-    __UnicodeRope left;
-    __UnicodeRope right;
-};
-
 void CRopeIterator::traverseLeft() noexcept {
-    __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __CRope& leftChild = *reinterpret_cast<__CRope*>(&nodePtr[LEFT_CHILD_OFFSET]);
-    this->traversalStack.left(leftChild);
+    __CRopeNode* node = this->traversalStack.top();
+    __CRopeNode* left = node->left.access<__CRopeNode*>();
+
+    this->traversalStack.left(left);
 }
 
 void CRopeIterator::traverseRight() noexcept {
-    __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __CRope& rightChild = *reinterpret_cast<__CRope*>(&nodePtr[RIGHT_CHILD_OFFSET]);
-    this->traversalStack.right(rightChild);
+    __CRopeNode* node = this->traversalStack.top();
+    __CRopeNode* right = node->right.access<__CRopeNode*>();
+    
+    this->traversalStack.right(right);
 }
 
-void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
+void CRopeIterator::initializeTraversal(__CRope root) noexcept {
     if(root.typeinfo->tag == __CoreGC::Tag::Value) {
-        this->inlineString = root;
+        this->inlineString = root.access<CCharBuffer>();
         this->isInline = true;
         
         return ;
     }
 
-    this->traversalStack.push(root);
+    __CRopeNode* rootNode = root.access<__CRopeNode*>();
+    this->traversalStack.push(rootNode);
 
     while(!this->isAtLeaf()) {
         this->traverseLeft();
@@ -304,12 +290,19 @@ void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
 CCharBuffer CRopeIterator::next() noexcept {
     if(this->isInline) {
         this->isInline = false;
-        return this->inlineString.access<CCharBuffer>();
+        return this->inlineString;
     }
 
-    __CRope& leaf = this->traversalStack.pop(); 
-    CCharBuffer result = leaf.access<CCharBuffer>();
+    __CRopeNode* leaf = this->traversalStack.pop(); 
 
+    CCharBuffer result;
+    if(leaf->left.typeinfo->tag == __CoreGC::Tag::Value) {
+        result = leaf->left.access<CCharBuffer>();
+    } 
+    else {
+        result = leaf->right.access<CCharBuffer>();
+    }
+    
     // Pop all fully visited nodes (nodes where we've visited both children)
     while(!this->traversalStack.wasLeft()) {
         if(this->traversalStack.empty()) {
@@ -330,28 +323,29 @@ CCharBuffer CRopeIterator::next() noexcept {
 }
 
 void UnicodeRopeIterator::traverseLeft() noexcept {
-    __UnicodeRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __UnicodeRope& leftChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->LEFT_CHILD_OFFSET]);
-    this->traversalStack.left(leftChild);
+    __UnicodeRopeNode* node = this->traversalStack.top();
+    __UnicodeRopeNode* left = node->left.access<__UnicodeRopeNode*>();
+
+    this->traversalStack.right(left);
 }
 
 void UnicodeRopeIterator::traverseRight() noexcept {
-    __UnicodeRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __UnicodeRope& rightChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->RIGHT_CHILD_OFFSET]);
-    this->traversalStack.right(rightChild);
+    __UnicodeRopeNode* node = this->traversalStack.top();
+    __UnicodeRopeNode* right = node->right.access<__UnicodeRopeNode*>();
+
+    this->traversalStack.right(right);
 }
 
-void UnicodeRopeIterator::initializeTraversal(__UnicodeRope& root) noexcept {
+void UnicodeRopeIterator::initializeTraversal(__UnicodeRope root) noexcept {
     if(root.typeinfo->tag == __CoreGC::Tag::Value) {
-        this->inlineString = root;
+        this->inlineString = root.access<UnicodeCharBuffer>();
         this->isInline = true;
         
         return ;
     }
 
-    this->traversalStack.push(root);
+    __UnicodeRopeNode* rootNode = root.access<__UnicodeRopeNode*>();
+    this->traversalStack.push(rootNode);
 
     while(!this->isAtLeaf()) {
         this->traverseLeft();
@@ -361,11 +355,19 @@ void UnicodeRopeIterator::initializeTraversal(__UnicodeRope& root) noexcept {
 UnicodeCharBuffer UnicodeRopeIterator::next() noexcept {
     if(this->isInline) {
         this->isInline = false;
-        return this->inlineString.access<UnicodeCharBuffer>();
+        return this->inlineString;
     }
 
-    __UnicodeRope& leaf = this->traversalStack.pop(); 
-    UnicodeCharBuffer result = leaf.access<UnicodeCharBuffer>();
+    __UnicodeRopeNode* leaf = this->traversalStack.pop(); 
+
+    // If our strings get unbanalanced this is hairy
+    UnicodeCharBuffer result;
+    if(leaf->left.typeinfo->tag == __CoreGC::Tag::Value) {
+        result = leaf->left.access<UnicodeCharBuffer>();
+    } 
+    else {
+        result = leaf->right.access<UnicodeCharBuffer>();
+    }
 
     // Pop all fully visited nodes (nodes where we've visited both children)
     while(!this->traversalStack.wasLeft()) {
