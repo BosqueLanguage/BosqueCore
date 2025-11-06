@@ -1249,12 +1249,6 @@ function emitLiteralCStringExpression(exp: CPPAssembly::LiteralCStringExpression
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
-%%
-%% Here we are forcing a pointer to a char to be a pointer to a 32 bit integer. This causes
-%% an extra 3 bytes of data to be tacked onto each pointer leaving a shit ton of garbagee.
-%% This would also prove problematic for comparisons as whatever values are stored just 
-%% after the end of the string are compared leading to nondeterministic behaviour.
-%%
 function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression): String {
     let strsize = exp.value.size();
     let baseargs = String::concat("0, ", natToString(strsize), ", str");
@@ -1270,7 +1264,7 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
             return cons.0 + maxUnicodeCharBufferSize, String::concat(append_base, args, "))");
     }).1;
 
-    return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(", 
+    return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(U", 
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
@@ -1682,6 +1676,15 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "nat_to_ccharbuffer" => { return String::concat(indent, "    return __CoreCpp::cbufferFromNat(v);%n;"); }
         | "ccharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::cbufferMerge(cb1, cb2);%n;"); }
         | "ccharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::cbufferRemainder(cb, split);%n;"); }
+        | "unicodecharbuffer_create_empty" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_empty();%n;"); }
+        | "unicodecharbuffer_create_1" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1);%n;"); }
+        | "unicodecharbuffer_create_2" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2);%n;"); }
+        | "unicodecharbuffer_create_3" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3);%n;"); }
+        | "unicodecharbuffer_create_4" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4);%n;"); }
+        | "unicodecharbuffer_create_5" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5);%n;"); }
+        | "unicodecharbuffer_create_6" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6);%n;"); }
+        | "unicodecharbuffer_create_7" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7);%n;"); }
+        | "unicodecharbuffer_create_8" => { return String::concat(indent, "    return __CoreCpp::UnicodeCharBuffer::create_3(c1, c2, c3, c4, c5, c6, c7, c8);%n;"); }
         | "unicodecharbuffer_size" => { return String::concat(indent, "    return ub.size;%n;"); }
         | "unicodecharbuffer_maxsize" => { return String::concat(indent, "    return __CoreCpp::Nat(__CoreCpp::maxUnicodeCharBufferSize);%n;"); }
         | "unicodecharbuffer_equal" => { return String::concat(indent, "    return __CoreCpp::ubufferEqual(ub1, ub2);%n;"); }

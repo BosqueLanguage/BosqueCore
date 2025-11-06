@@ -722,7 +722,18 @@ const int maxUnicodeCharBufferSize = 8;
 struct UnicodeCharBuffer {
     UnicodeChar chars[8] {};
     Nat size {0};
+
+    static UnicodeCharBuffer create_empty();
+    static UnicodeCharBuffer create_1(UnicodeChar c1);
+    static UnicodeCharBuffer create_2(UnicodeChar c1, UnicodeChar c2);
+    static UnicodeCharBuffer create_3(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3);
+    static UnicodeCharBuffer create_4(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4);
+    static UnicodeCharBuffer create_5(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5);
+    static UnicodeCharBuffer create_6(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6);
+    static UnicodeCharBuffer create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7);
+    static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
+
 UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept;
 UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept;
 UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept;
