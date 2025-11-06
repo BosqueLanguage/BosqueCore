@@ -879,6 +879,17 @@ class UnicodeRopeTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
+class UnicodeRopeIteratorTypeDecl extends InternalEntityTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    // Internal to the cpp runtime so no need to emit anything
+    emit(fmt: CodeFormatter): string {
+        return "";
+    }
+}
+
 class StackTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1680,7 +1691,7 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, PrimitiveEntityTypeDecl,
-    InternalEntityTypeDecl, CRopeIteratorTypeDecl,
+    InternalEntityTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeIteratorTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, FailTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomeTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, CRopeTypeDecl, UnicodeRopeTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,

@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, CRopeIteratorTypeDecl, CRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, UnicodeRopeTypeDecl, ValidateDecl } from "./assembly.js";
+import { AbstractCollectionTypeDecl, AbstractConceptTypeDecl, AbstractCoreDecl, AbstractDecl, AbstractEntityTypeDecl, AbstractInvokeDecl, AbstractNominalTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, Assembly, ConceptTypeDecl, ConditionDecl, ConstMemberDecl, ConstructableTypeDecl, CRopeIteratorTypeDecl, CRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EventListTypeDecl, ExplicitInvokeDecl, FailTypeDecl, FunctionInvokeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeParameterDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, SomeTypeDecl, StackTypeDecl, TestAssociation, TypedeclTypeDecl, UnicodeRopeTypeDecl, UnicodeRopeIteratorTypeDecl, ValidateDecl } from "./assembly.js";
 import { FunctionInstantiationInfo, MethodInstantiationInfo, NamespaceInstantiationInfo, TypeInstantiationInfo } from "./instantiation_map.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, RecursiveAnnotation, TemplateNameMapper, TemplateTypeSignature, TypeSignature, VoidTypeSignature } from "./type.js";
@@ -2049,6 +2049,15 @@ class BSQIREmitter {
         return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::CRopeIteratorTypeDecl{ ${ibase} }`];
     }
 
+    private emitUnicodeRopeIteratorTypeDecl(ns: FullyQualifiedNamespace, tdecl: PrimitiveEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
+        const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
+        const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
+
+        this.typegraph.set(EmitNameManager.generateTypeKey(tsig), []);
+
+        return [`'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey>`, `'${EmitNameManager.generateTypeKey(tsig)}'<BSQAssembly::TypeKey> => BSQAssembly::UnicodeRopeIteratorTypeDecl{ ${ibase} }`];
+    }
+
     private emitPrimitiveEntityTypeDecl(ns: FullyQualifiedNamespace, tdecl: PrimitiveEntityTypeDecl, instantiation: TypeInstantiationInfo, fmt: BsqonCodeFormatter): [string, string] {
         const tsig = new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         const ibase = this.emitInternalEntityTypeDeclBase(ns, tsig, tdecl, instantiation, fmt);
@@ -2328,6 +2337,11 @@ class BSQIREmitter {
                     this.allconcretetypes.push(tkey);
                     this.constructables.push(decl);
                 }
+                else if(tt instanceof UnicodeRopeIteratorTypeDecl) {
+                    const [tkey, decl] = this.emitUnicodeRopeIteratorTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
+                    this.allconcretetypes.push(tkey);
+                    this.constructables.push(decl);
+                }
                 else if(tt instanceof OkTypeDecl) {
                     const [tkey, decl] = this.emitOkTypeDecl(ns.fullnamespace, tt, instantiation, fmt);
                     this.allconcretetypes.push(tkey);
@@ -2485,6 +2499,9 @@ class BSQIREmitter {
             return new NominalTypeSignature(tdecl.sinfo, undefined, tdecl, []);
         }
         else if(tdecl instanceof CRopeIteratorTypeDecl) {
+            return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, []);
+        }
+        else if(tdecl instanceof UnicodeRopeIteratorTypeDecl) {
             return BSQIREmitter.generateRcvrForNominalAndBinds(tdecl, instantiation.binds, []);
         }
         else if(tdecl instanceof OkTypeDecl) {
