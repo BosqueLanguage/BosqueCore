@@ -21,16 +21,6 @@ namespace UnicodeCharBufferOps {
 
         return (|nub1, nub2|);
     }
-
-    function s_create_empty(): UnicodeCharBuffer = unicodecharbuffer_create_empty;
-    function s_create_1(c1: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_1;
-    function s_create_2(c1: UnicodeChar, c2: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_2;
-    function s_create_3(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_3;
-    function s_create_4(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_4;
-    function s_create_5(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_5;
-    function s_create_6(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_6;
-    function s_create_7(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_7;
-    function s_create_8(c1: UnicodeChar, c2: UnicodeChar, c3: UnicodeChar, c4: UnicodeChar, c5: UnicodeChar, c6: UnicodeChar, c7: UnicodeChar, c8: UnicodeChar): UnicodeCharBuffer = unicodecharbuffer_create_8;
 }
 
 #if CPP_CORE

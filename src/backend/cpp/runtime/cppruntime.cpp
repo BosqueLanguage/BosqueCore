@@ -172,47 +172,21 @@ CCharBuffer& cbufferRemove(CCharBuffer& cb, CCharBuffer& pre) noexcept {
     return cb;
 }
 
-UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
-    return {{}, 0_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_1(UnicodeChar c1) {
-    return {{c1}, 1_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_2(UnicodeChar c1, UnicodeChar c2) {
-    return {{c1, c2}, 2_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_3(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3) {
-    return {{c1, c2, c3}, 3_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_4(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4) {
-    return {{c1, c2, c3, c4}, 4_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_5(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5) {
-    return {{c1, c2, c3, c4, c5}, 5_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_6(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6) {
-    return {{c1, c2, c3, c4, c5, c6}, 6_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7) {
-    return {{c1, c2, c3, c4, c5, c6, c7}, 7_n};
-}
-UnicodeCharBuffer UnicodeCharBuffer::create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8) {
-    return {{c1, c2, c3, c4, c5, c6, c7, c8}, 8_n};
-}
-
-UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept {
-    const UnicodeChar* buf = basestr + ptr;
-    switch(size) {
-        case 0: return UnicodeCharBuffer::create_empty();
-        case 1: return UnicodeCharBuffer::create_1(buf[0]);
-        case 2: return UnicodeCharBuffer::create_2(buf[0], buf[1]);
-        case 3: return UnicodeCharBuffer::create_3(buf[0], buf[1], buf[2]);
-        case 4: return UnicodeCharBuffer::create_4(buf[0], buf[1], buf[2], buf[3]);
-        case 5: return UnicodeCharBuffer::create_5(buf[0], buf[1], buf[2], buf[3], buf[4]);
-        case 6: return UnicodeCharBuffer::create_6(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5]);
-        case 7: return UnicodeCharBuffer::create_7(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6]);
-        default: return UnicodeCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+template<typename... Chars>
+UnicodeCharBuffer ubufferFromChars(Chars... chars) {
+    constexpr size_t size = sizeof...(Chars);
+    static_assert(size <= 8, "UnicodeCharBuffer supports max 8 characters");
+    
+    UnicodeCharBuffer result;
+    result.size = size;
+    
+    UnicodeChar buffer[] = {static_cast<UnicodeChar>(chars)...};
+    
+    for (size_t i = 0; i < size; i++) {
+        result.chars[i] = buffer[i];
     }
+    
+    return result;
 }
 
 // Moves chars from ub2 to ub1 until ub1 is full
