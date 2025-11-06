@@ -1772,9 +1772,13 @@ function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: C
 }
 
 function emitThisForType(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
-    return if(ctx.asm.lookupNominalTypeDeclaration(declaredIn))<CPPAssembly::CRopeIteratorTypeDecl>
-        then emitThisReference()
-        else emitSpecialThis();
+    let intype = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
+    if(intype?<CPPAssembly::CRopeIteratorTypeDecl> || intype?<CPPAssembly::UnicodeRopeIteratorTypeDecl>) {
+        return emitThisReference();
+    }
+    else {
+        return emitSpecialThis();
+    }
 }
 
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1924,8 +1928,8 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
         return String::concat(indent, "typedef __CoreCpp::Boxed<", k, "> ", emitTypeKey($e.tkey, false, nctx), ";%n;");
     }
 
-    %% CRope Iterators only exist in cpp runtime files
-    if(e)<CPPAssembly::CRopeIteratorTypeDecl> {
+    %% Rope Iterators only exist in cpp runtime files
+    if(e?<CPPAssembly::CRopeIteratorTypeDecl> || e?<CPPAssembly::UnicodeRopeIteratorTypeDecl>) {
         return "";
     }
 
@@ -2117,11 +2121,19 @@ function emitCRopeIteratorTypeDecl(crittd: CPPAssembly::CRopeIteratorTypeDecl, c
     return String::concat(indent, "typedef __CoreCpp::CRopeIterator ", tk, ";%n;");
 }
 
+function emitUnicodeRopeIteratorTypeDecl(urittd: CPPAssembly::UnicodeRopeIteratorTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(urittd.declaredInNS, urittd.fullns);
+    let tk = emitTypeKey(urittd.tkey, false, nctx);
+
+    return String::concat(indent, "typedef __CoreCpp::UnicodeRopeIterator ", tk, ";%n;");
+}
+
 function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
     match(ctd)@ {
-        | CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::CRopeIteratorTypeDecl => { return emitCRopeIteratorTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::SomeTypeDecl                => { return emitSomeTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::MapEntryTypeDecl            => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::CRopeIteratorTypeDecl       => { return emitCRopeIteratorTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::UnicodeRopeIteratorTypeDecl => { return emitUnicodeRopeIteratorTypeDecl($ctd, ctx, indent); }
     }
 }
 

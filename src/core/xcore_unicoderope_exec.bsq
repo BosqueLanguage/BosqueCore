@@ -35,8 +35,8 @@ namespace UnicodeCharBufferOps {
 
 #if CPP_CORE
 __internal entity UnicodeRopeIterator {
-    function initialize(r: CRopeOps::Rope): UnicodeRopeIterator = unicoderope_iterator_initialize;
-    method next(): CCharBuffer = unicoderope_iterator_next;
+    function initialize(r: UnicodeRopeOps::Rope): UnicodeRopeIterator = unicoderope_iterator_initialize;
+    method next(): UnicodeCharBuffer = unicoderope_iterator_next;
     method hasNext(): Bool = unicoderope_iterator_hasnext;
 }
 
