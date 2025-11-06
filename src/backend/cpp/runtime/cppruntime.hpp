@@ -878,6 +878,12 @@ public:
     }
 };
 
+//
+// When we turn on optimizations we are subject to objects being
+// moved around freely by the optimizer as we take references only
+// So we need a better approach likely
+//
+
 class UnicodeRopeIterator {
     PathStack<__UnicodeRope> traversalStack;
     
