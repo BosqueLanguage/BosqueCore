@@ -188,6 +188,7 @@ of
 | SomeTypeDecl { field oftype: TypeSignature; }
 | MapEntryTypeDecl { field ktype: NominalTypeSignature; field vtype: TypeSignature; }
 | CRopeIteratorTypeDecl { }
+| UnicodeRopeIteratorTypeDecl { }
 ;
 
 datatype CollectionTypeDecl provides InternalEntityTypeDecl using {

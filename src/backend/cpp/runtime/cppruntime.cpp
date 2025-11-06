@@ -172,6 +172,7 @@ CCharBuffer& cbufferRemove(CCharBuffer& cb, CCharBuffer& pre) noexcept {
     return cb;
 }
 
+
 UnicodeCharBuffer UnicodeCharBuffer::create_empty() {
     return {{}, 0_n};
 }
@@ -214,7 +215,6 @@ UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const Unicod
         default: return UnicodeCharBuffer::create_8(buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
     }
 }
-
 // Moves chars from ub2 to ub1 until ub1 is full
 UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept {
     uint64_t ub1size = ub1.size.get();
@@ -294,6 +294,63 @@ CCharBuffer CRopeIterator::next() noexcept {
 
     __CRope& leaf = this->traversalStack.pop(); 
     CCharBuffer result = leaf.access<CCharBuffer>();
+
+    // Pop all fully visited nodes (nodes where we've visited both children)
+    while(!this->traversalStack.wasLeft()) {
+        if(this->traversalStack.empty()) {
+            return result;
+        }
+        this->traversalStack.pop();
+    }
+
+    // We've finished the left subtree, now traverse right
+    this->traverseRight();
+
+    // Find first leaf in the new subtree (leftmost leaf)
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
+    }
+
+    return result;
+}
+
+void UnicodeRopeIterator::traverseLeft() noexcept {
+    __UnicodeRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
+    __UnicodeRope& leftChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->LEFT_CHILD_OFFSET]);
+    this->traversalStack.left(leftChild);
+}
+
+void UnicodeRopeIterator::traverseRight() noexcept {
+    __UnicodeRope& currentNode = this->traversalStack.top();
+    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
+    __UnicodeRope& rightChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->RIGHT_CHILD_OFFSET]);
+    this->traversalStack.right(rightChild);
+}
+
+void UnicodeRopeIterator::initializeTraversal(__UnicodeRope& root) noexcept {
+    if(root.typeinfo->tag == __CoreGC::Tag::Value) {
+        this->inlineString = root;
+        this->isInline = true;
+        
+        return ;
+    }
+
+    this->traversalStack.push(root);
+
+    while(!this->isAtLeaf()) {
+        this->traverseLeft();
+    }
+}
+
+UnicodeCharBuffer UnicodeRopeIterator::next() noexcept {
+    if(this->isInline) {
+        this->isInline = false;
+        return this->inlineString.access<UnicodeCharBuffer>();
+    }
+
+    __UnicodeRope& leaf = this->traversalStack.pop(); 
+    UnicodeCharBuffer result = leaf.access<UnicodeCharBuffer>();
 
     // Pop all fully visited nodes (nodes where we've visited both children)
     while(!this->traversalStack.wasLeft()) {

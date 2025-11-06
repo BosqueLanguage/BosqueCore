@@ -1254,17 +1254,17 @@ function emitLiteralStringExpression(exp: CPPAssembly::LiteralStringExpression):
     let baseargs = String::concat("0, ", natToString(strsize), ", str");
     let base = String::concat("Core::UnicodeRopeOps::s_unicoderope_create(__CoreCpp::ubufferFromStringLiteral(", baseargs, "))");
 
-    let maxCCharBufferSize = 8n;
+    let maxUnicodeCharBufferSize = 8n;
 
-    let constructor = Algorithm::while<(|Nat, String|)>((|maxCCharBufferSize, base|), 
+    let constructor = Algorithm::while<(|Nat, String|)>((|maxUnicodeCharBufferSize, base|), 
         pred(cons) => cons.0 < strsize, 
         fn(cons) => {
             let append_base = String::concat("Core::UnicodeRopeOps::s_unicoderope_append(", cons.1, ", __CoreCpp::ubufferFromStringLiteral(");
             let args = String::concat(natToString(cons.0), ", ", natToString(strsize - cons.0), ", str");
-            return cons.0 + maxCCharBufferSize, String::concat(append_base, args, "))");
+            return cons.0 + maxUnicodeCharBufferSize, String::concat(append_base, args, "))");
     }).1;
 
-    return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(", 
+    return String::concat("[]() -> Core::UnicodeRope { const __CoreCpp::UnicodeChar* str = reinterpret_cast<const __CoreCpp::UnicodeChar*>(U", 
         emitCStringAsLiteral(exp.value), "); return ", constructor, "; }()");
 }
 
@@ -1691,6 +1691,9 @@ function emitBuiltinBodyImplementation(body: CPPAssembly::BuiltinBodyImplementat
         | "nat_to_unicodecharbuffer" => { return String::concat(indent, "    return __CoreCpp::ubufferFromNat(v);%n;"); }
         | "unicodecharbuffer_merge" => { return String::concat(indent, "    return __CoreCpp::ubufferMerge(ub1, ub2);%n;"); }
         | "unicodecharbuffer_remainder" => { return String::concat(indent, "    return __CoreCpp::ubufferRemainder(ub, split);%n;"); }        
+        | "unicoderope_iterator_initialize" => { return String::concat(indent, "    return __CoreCpp::UnicodeRopeIterator{ r };%n;"); }
+        | "unicoderope_iterator_next" => { return String::concat(indent, "    return ", emitSpecialThis(), ".next();%n;"); }
+        | "unicoderope_iterator_hasnext" => { return String::concat(indent, "    return ", emitSpecialThis(), ".hasNext();%n;"); }
         | "cstring_concat2" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_concat2(s1, s2);%n;"); }
         | "cstring_empty" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_empty(s);%n;"); }
         | "cstring_remove_prefix_string" => { return String::concat(indent, "    return Core::CRopeOps::s_crope_remove_prefix_crope(s, prefix);%n;"); }
@@ -1769,9 +1772,13 @@ function emitPreConditions(preconds: List<CPPAssembly::PreConditionDecl>, ctx: C
 }
 
 function emitThisForType(declaredIn: CPPAssembly::TypeKey, ctx: Context): String {
-    return if(ctx.asm.lookupNominalTypeDeclaration(declaredIn))<CPPAssembly::CRopeIteratorTypeDecl>
-        then emitThisReference()
-        else emitSpecialThis();
+    let intype = ctx.asm.lookupNominalTypeDeclaration(declaredIn);
+    if(intype?<CPPAssembly::CRopeIteratorTypeDecl> || intype?<CPPAssembly::UnicodeRopeIteratorTypeDecl>) {
+        return emitThisReference();
+    }
+    else {
+        return emitSpecialThis();
+    }
 }
 
 function emitMethodDecl(m: CPPAssembly::MethodDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1921,8 +1928,8 @@ function emitAbstractNominalForwardDeclaration(e: CPPAssembly::AbstractNominalTy
         return String::concat(indent, "typedef __CoreCpp::Boxed<", k, "> ", emitTypeKey($e.tkey, false, nctx), ";%n;");
     }
 
-    %% CRope Iterators only exist in cpp runtime files
-    if(e)<CPPAssembly::CRopeIteratorTypeDecl> {
+    %% Rope Iterators only exist in cpp runtime files
+    if(e?<CPPAssembly::CRopeIteratorTypeDecl> || e?<CPPAssembly::UnicodeRopeIteratorTypeDecl>) {
         return "";
     }
 
@@ -2114,11 +2121,19 @@ function emitCRopeIteratorTypeDecl(crittd: CPPAssembly::CRopeIteratorTypeDecl, c
     return String::concat(indent, "typedef __CoreCpp::CRopeIterator ", tk, ";%n;");
 }
 
+function emitUnicodeRopeIteratorTypeDecl(urittd: CPPAssembly::UnicodeRopeIteratorTypeDecl, ctx: Context, indent: String): String {
+    let nctx = ctx.updateCurrentNamespace(urittd.declaredInNS, urittd.fullns);
+    let tk = emitTypeKey(urittd.tkey, false, nctx);
+
+    return String::concat(indent, "typedef __CoreCpp::UnicodeRopeIterator ", tk, ";%n;");
+}
+
 function emitConstructableTypeDecl(ctd: CPPAssembly::ConstructableTypeDecl, ctx: Context, indent: String): String {
     match(ctd)@ {
-        | CPPAssembly::SomeTypeDecl => { return emitSomeTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::MapEntryTypeDecl => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
-        | CPPAssembly::CRopeIteratorTypeDecl => { return emitCRopeIteratorTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::SomeTypeDecl                => { return emitSomeTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::MapEntryTypeDecl            => { return emitMapEntryTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::CRopeIteratorTypeDecl       => { return emitCRopeIteratorTypeDecl($ctd, ctx, indent); }
+        | CPPAssembly::UnicodeRopeIteratorTypeDecl => { return emitUnicodeRopeIteratorTypeDecl($ctd, ctx, indent); }
     }
 }
 

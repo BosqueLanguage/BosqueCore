@@ -438,13 +438,21 @@ namespace TypeInfoGenerator {
         let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value };
         return crittinfo, tic.updateCache(crittinfo);
     }
-    
+
+    function generateUnicodeRopeIteratorTypeInfo(e: BSQAssembly::UnicodeRopeIteratorTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
+        let cpptk = CPPTransformNameManager::convertTypeKey(e.tkey);
+
+        let crittinfo = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value };
+        return crittinfo, tic.updateCache(crittinfo);
+    }
+
     function generateConstructableTypeInfo(e: BSQAssembly::ConstructableTypeDecl, tic: TypeInfoContext): CPPAssembly::TypeInfo, TypeInfoContext {
         match(e)@ {
-            | BSQAssembly::SomeTypeDecl          => { return generateSomeTypeInfo($e, tic); }
-            | BSQAssembly::MapEntryTypeDecl      => { return generateMapEntryTypeInfo($e, tic); }
-            | BSQAssembly::CRopeIteratorTypeDecl => { return generateCRopeIteratorTypeInfo($e, tic); }
-            | _ =>                                  { abort; }
+            | BSQAssembly::SomeTypeDecl                => { return generateSomeTypeInfo($e, tic); }
+            | BSQAssembly::MapEntryTypeDecl            => { return generateMapEntryTypeInfo($e, tic); }
+            | BSQAssembly::CRopeIteratorTypeDecl       => { return generateCRopeIteratorTypeInfo($e, tic); }
+            | BSQAssembly::UnicodeRopeIteratorTypeDecl => { return generateUnicodeRopeIteratorTypeInfo($e, tic); }
+            | _                                        => { abort; }
         }
     }
 
@@ -1722,11 +1730,18 @@ entity CPPTransformer {
         return CPPAssembly::CRopeIteratorTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9 };
     }   
 
+    method transformUnicodeRopeIteratorTypeDecl(crittd: BSQAssembly::UnicodeRopeIteratorTypeDecl): CPPAssembly::UnicodeRopeIteratorTypeDecl {
+        let base = this.transformAbstractNominalTypeDeclBase(crittd@<BSQAssembly::AbstractNominalTypeDecl>);       
+
+        return CPPAssembly::UnicodeRopeIteratorTypeDecl{ base.0, base.1, base.2, base.3, base.4, base.5, base.6, base.7, base.8, base.9 };
+    }   
+
     method transformConstructableTypeDecl(ctd: BSQAssembly::ConstructableTypeDecl): CPPAssembly::ConstructableTypeDecl {
         match(ctd)@ {
-            | BSQAssembly::SomeTypeDecl => { return this.transformSomeTypeDecl($ctd); }
-            | BSQAssembly::MapEntryTypeDecl => { return this.transformMapEntryTypeDecl($ctd); }
-            | BSQAssembly::CRopeIteratorTypeDecl => { return this.transformCRopeIteratorTypeDecl($ctd); }
+            | BSQAssembly::SomeTypeDecl                => { return this.transformSomeTypeDecl($ctd); }
+            | BSQAssembly::MapEntryTypeDecl            => { return this.transformMapEntryTypeDecl($ctd); }
+            | BSQAssembly::CRopeIteratorTypeDecl       => { return this.transformCRopeIteratorTypeDecl($ctd); }
+            | BSQAssembly::UnicodeRopeIteratorTypeDecl => { return this.transformUnicodeRopeIteratorTypeDecl($ctd); }
             | _ => { abort; }
         }
     }

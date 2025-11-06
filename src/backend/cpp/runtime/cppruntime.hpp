@@ -733,6 +733,7 @@ struct UnicodeCharBuffer {
     static UnicodeCharBuffer create_7(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7);
     static UnicodeCharBuffer create_8(UnicodeChar c1, UnicodeChar c2, UnicodeChar c3, UnicodeChar c4, UnicodeChar c5, UnicodeChar c6, UnicodeChar c7, UnicodeChar c8);
 };
+
 UnicodeCharBuffer ubufferFromStringLiteral(size_t ptr, size_t size, const UnicodeChar* &basestr) noexcept;
 UnicodeCharBuffer& ubufferMerge(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcept;
 UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept;
@@ -877,15 +878,35 @@ public:
     }
 };
 
-/*
 class UnicodeRopeIterator {
-    PathStack<__UnicodeRope> stack;
-public:
-    UnicodeRopeIterator(__UnicodeRope& r) : stack() {};
+    PathStack<__UnicodeRope> traversalStack;
+    
+    __UnicodeRope inlineString;
+    bool isInline;
 
-    UnicodeCharBuffer pop() noexcept;
+    // We will eventually want to compute these via ptr mask in constructor
+    static const size_t LEFT_CHILD_OFFSET = 2;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 6;
+
+    void initializeTraversal(__UnicodeRope& root) noexcept;
+
+    inline bool isAtLeaf() const noexcept {
+        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    }
+
+    void traverseLeft() noexcept;
+    void traverseRight() noexcept;
+public:    
+    UnicodeRopeIterator(__UnicodeRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
+        this->initializeTraversal(root);
+    };
+
+    UnicodeCharBuffer next() noexcept;
+
+    inline bool hasNext() noexcept {
+        return !this->traversalStack.empty() || this->isInline;
+    }
 };
-*/
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
