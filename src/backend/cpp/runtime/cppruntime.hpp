@@ -768,6 +768,20 @@ inline Bool ubufferEqual(UnicodeCharBuffer& ub1, UnicodeCharBuffer& ub2) noexcep
 typedef Boxed<sizeof(CCharBuffer) / 8> __CRope;
 typedef Boxed<sizeof(UnicodeCharBuffer) / 8> __UnicodeRope;
 
+struct __CRopeNode {
+    uint64_t color;
+    uint64_t weight;
+    __CRope left;
+    __CRope right;
+};
+
+struct __UnicodeRopeNode {
+    uint64_t color;
+    uint64_t weight;
+    __UnicodeRope left;
+    __UnicodeRope right;
+};
+
 // Path we have taken during tree walking
 class Path {
     uint64_t pathBits;
@@ -798,9 +812,9 @@ public:
     }
 };
 
-template<typename Node>
+template<typename Rope>
 class PathStack {
-    Node* stack[64];
+    Rope* stack[64];
     size_t index;
 
     Path path;
@@ -820,55 +834,48 @@ public:
         return this->wasLeftDirection;
     }
 
-    inline void push(Node* r) noexcept {
-        this->stack[this->index++] = r;
+    inline void push(Rope& r) noexcept {
+        this->stack[this->index++] = &r;
     }
 
-    inline void left(Node* r) noexcept {
+    inline void left(Rope& r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.left();
     }
 
-    inline void right(Node* r) noexcept {
+    inline void right(Rope& r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.right();
     }
 
-    inline Node* pop() noexcept {
+    inline Rope& pop() noexcept {
         this->storeLastDirection();
         this->path.up();
             
-        return this->stack[--this->index];
+        return *this->stack[--this->index];
     }
 
-    inline Node* top() const noexcept {
-        return this->stack[this->index - 1];
+    inline Rope& top() const noexcept {
+        return *this->stack[this->index - 1];
     }
-};
-
-struct __CRopeNode {
-    uint64_t color;
-    uint64_t weight;
-    __CRope left;
-    __CRope right;
 };
 
 class CRopeIterator {
-    PathStack<__CRopeNode> traversalStack;
+    PathStack<__CRope> traversalStack;
     
-    CCharBuffer inlineString;
+    __CRope inlineString;
     bool isInline;
 
-    void initializeTraversal(__CRope root) noexcept;
+    // We will eventually want to compute these via ptr mask in constructor
+    static const size_t LEFT_CHILD_OFFSET = 2;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 3;
+
+    void initializeTraversal(__CRope& root) noexcept;
 
     inline bool isAtLeaf() const noexcept {
-        __CRopeNode* node = this->traversalStack.top();
-        
-        // A node is a "leaf" in our traversal if either child is an actual value leaf
-        return node->left.typeinfo->tag == __CoreGC::Tag::Value || 
-           node->right.typeinfo->tag == __CoreGC::Tag::Value;    
+        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
     void traverseLeft() noexcept;
@@ -885,27 +892,20 @@ public:
     }
 };
 
-struct __UnicodeRopeNode {
-    uint64_t color;
-    uint64_t weight;
-    __UnicodeRope left;
-    __UnicodeRope right;
-};
-
 class UnicodeRopeIterator {
-    PathStack<__UnicodeRopeNode> traversalStack;
+    PathStack<__UnicodeRope> traversalStack;
     
-    UnicodeCharBuffer inlineString;
+    __UnicodeRope inlineString;
     bool isInline;
 
-    void initializeTraversal(__UnicodeRope root) noexcept;
+    // We will eventually want to compute these via ptr mask in constructor
+    static const size_t LEFT_CHILD_OFFSET = 2;
+    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 6;
+
+    void initializeTraversal(__UnicodeRope& root) noexcept;
 
     inline bool isAtLeaf() const noexcept {
-         __UnicodeRopeNode* node = this->traversalStack.top();
-        
-        // A node is a "leaf" in our traversal if either child is an actual value leaf
-        return node->left.typeinfo->tag == __CoreGC::Tag::Value || 
-           node->right.typeinfo->tag == __CoreGC::Tag::Value;           
+        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
     }
 
     void traverseLeft() noexcept;
