@@ -293,11 +293,10 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
-       
-        int32_t fwdidx = GC_FWD_INDEX(obj);
-        if(fwdidx > NON_FORWARDED) {
-            GC_INVARIANT_CHECK(fwdidx < gtl_info.forward_table_index);
-            obj = gtl_info.forward_table[fwdidx];
+        
+        // Skip already forwarded objects (those that may have multiple referers)
+        if(GC_FWD_INDEX(obj) > NON_FORWARDED) {
+            continue;
         }
 
         __CoreGC::TypeInfoBase* typeinfo = GC_TYPE(obj);

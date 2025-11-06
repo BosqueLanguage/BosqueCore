@@ -85,7 +85,7 @@ struct BSQMemoryTheadLocalInfo
     int32_t old_roots_count;
     void** old_roots;
 
-    int32_t forward_table_index;
+    int forward_table_index;
     void** forward_table;
 
     uint64_t typeptr_high32; // high 32 bits taken from a typeinfo pointer
