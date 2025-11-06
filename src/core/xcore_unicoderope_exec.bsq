@@ -34,6 +34,12 @@ namespace UnicodeCharBufferOps {
 }
 
 #if CPP_CORE
+__internal entity CRopeIterator {
+    function initialize(r: CRopeOps::Rope): CRopeIterator = unicoderope_iterator_initialize;
+    method next(): CCharBuffer = unicoderope_iterator_next;
+    method hasNext(): Bool = unicoderope_iterator_hasnext;
+}
+
 namespace UnicodeRopeOps {
     function s_unicoderope_create(buf: UnicodeCharBuffer): UnicodeRope {        
         return XCore::s_createDirect<Rope, UnicodeRope>(Rope::createLeaf(buf));       
@@ -327,96 +333,70 @@ namespace UnicodeRopeOps {
         return Rope::createNode(c, tleft, tright);
     }
 
+    function length(r: Rope): Nat {
+        return Rope::getCharacterCount(r);
+    }
+
     %% We keep track of the closest buffer (current nodes parents left child) for merging
-    recursive function append_helper(t: Rope, l: Rope, v: UnicodeCharBuffer): Rope {
-        match(t)@ {
+    recursive function append_helper(r: Rope, v: UnicodeCharBuffer): Rope {
+        match(r)@ {
             | Leaf => { 
-                %% Merge all of v into t.buf
-                if($t.buf.size() + v.size() <= UnicodeCharBufferOps::getMaxSize()) {
-                    let merge = UnicodeCharBufferOps::mergeUnicodeBuffers($t.buf, v);
+                %% Try to merge buffers
+                if($r.buf.size() + v.size() <= UnicodeCharBufferOps::getMaxSize()) {
+                    let merge = UnicodeCharBufferOps::mergeUnicodeBuffers($r.buf, v);
                     return Rope::createLeaf(merge);
                 }
 
                 %% Merge chars from v into t.buf until t.buf is full
-                if($t.buf.size() < UnicodeCharBufferOps::getMaxSize()) {
-
-                    %%
-                    %% TODO: once multi assignment is supported for emission lets one line this
-                    %%
-
-                    let tmp = UnicodeCharBufferOps::mergeUnicodeBuffers2($t.buf, v);
-                    let cb1 = tmp.0;
-                    let cb2 = tmp.1;
+                if($r.buf.size() < UnicodeCharBufferOps::getMaxSize()) {
+                    let cb1, cb2 = UnicodeCharBufferOps::mergeUnicodeBuffers2($r.buf, v);
                     return balance(Color#Red, Rope::createLeaf(cb1), Rope::createLeaf(cb2)); 
                 }
 
-                return balance(Color#Red, $t, Rope::createLeaf(v)); 
+                return balance(Color#Red, $r, Rope::createLeaf(v)); 
             }
             | Node => { 
-                let nr = append_helper[recursive]($t.r, $t.l, v);
-                return balance($t.c, $t.l, nr); 
+                let nr = append_helper[recursive]($r.r, v);
+                return balance($r.c, $r.l, nr); 
             }
         }
     }
 
-    function append(t: Rope, v: UnicodeCharBuffer): Rope {
-        var tt: Rope;
-        match(t)@ {
-            | BBLeaf => { 
-                tt = Rope::createLeaf(v); 
-            }
-            | Leaf => {
-                tt = append_helper(t, t, v);
-            }
-            | Node => {
-                tt = append_helper(t, $t.l, v);
-            }
+    function append(r: Rope, v: UnicodeCharBuffer): Rope {
+        if(r)<BBLeaf> {
+            return Rope::createLeaf(v);
         }
-        
-        let nt = tt@<Node>;    
-        let ntt = if(nt.c === Color#Red) 
-            then Rope::createNode(Color#Black, nt.l, nt.r) 
-            else nt;
-    
-        return ntt;
-        
-    }
 
-    function concat(l: Rope, r: Rope): Rope {
-        let nn = Rope::createNode(Color#Red, l, r);
-        let tt = balance(nn.c, nn.l, nn.r);
-
-        if(tt)@<Node> {
-            let nt = if($tt.c === Color#Red) 
-                then Rope::createNode(Color#Black, $tt.l, $tt.r) 
-                else $tt;
-            return nt;
+        let nr = append_helper(r, v);
+        if(nr)@!<Node> {
+            return nr;
         }
         else {
-            return tt;
-        }
+            return if($nr.c === Color#Red)
+                then Rope::createNode(Color#Black, $nr.l, $nr.r)
+                else $nr;
+        } 
+    }
+
+    function concat(r1: Rope, r2: Rope): Rope {
+        var rit = UnicodeRopeIterator::initialize(r2);
+        return Algorithm::while<Rope>(r1, 
+            pred(r) => rit.hasNext(),
+            fn(r) => append(r, rit.next())
+        );
     }    
 
     function equal(r1: Rope, r2: Rope): Bool {
-        if(r1?<Leaf> && r2?<Leaf>) {
-            let nr1 = r1@<Leaf>;
-            let nr2 = r2@<Leaf>;
+        if(length(r1) != length(r2)) {
+            return false;
+        } 
 
-            return UnicodeCharBufferOps::equal(nr1.buf, nr2.buf);
-        }
-
-        if(r1?<Node> && r2?<Node>) {
-            let nr1 = r1@<Node>;
-            let nr2 = r2@<Node>;
-
-            if(nr1.w != nr2.w) {
-                return false;
-            }
-
-            return equal(nr1.l, nr2.l) && equal(nr1.r, nr2.r);
-        }
-    
-        return false;
+        var r1_it = UnicodeRopeIterator::initialize(r1);
+        var r2_it = UnicodeRopeIterator::initialize(r2);
+        return Algorithm::while<Bool>(true,
+            pred(cond) => r1_it.hasNext(),
+            fn(acc) => acc && UnicodeCharBufferOps::equal(r1_it.next(), r2_it.next())
+        );
     }
 
     %%
@@ -428,9 +408,7 @@ namespace UnicodeRopeOps {
         | Leaf { buf: UnicodeCharBuffer }
         | Node { c: Color, w: Nat, l: Rope, r: Rope }
     & {
-        function createEmpty(): BBLeaf {
-            return BBLeaf{ };
-        }
+        const emptyRope: Rope = BBLeaf{};
 
         function createLeaf(buf: UnicodeCharBuffer): Leaf {
             return Leaf{ buf };
