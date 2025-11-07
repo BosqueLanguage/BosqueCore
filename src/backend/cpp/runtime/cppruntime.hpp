@@ -782,225 +782,189 @@ struct __UnicodeRopeNode {
     __UnicodeRope right;
 };
 
-// Path we have taken during tree walking
-class Path {
-    uint64_t pathBits;
-
-    static const uint64_t PATH_LEFT = 1ull;
-    static const uint64_t LSB_MASK  = 0x1ull; 
-    
-public:
-    Path() : pathBits(0) {}
-
-    inline bool isleft() const noexcept {
-        return (pathBits & LSB_MASK) == PATH_LEFT;
-    }
-
-    // Going left pushes a 1
-    inline void left() noexcept {
-        this->pathBits <<= 1;
-        this->pathBits |= PATH_LEFT;
-    }
-
-    // Going right pushes a 0
-    inline void right() noexcept {
-        this->pathBits <<= 1;
-    }
-
-    inline void up() noexcept {
-        this->pathBits >>= 1;
-    }
-};
-
-template<typename Rope>
-class PathStack {
-    Rope* stack[64];
-    size_t index;
-
-    Path path;
-    bool wasLeftDirection;
-
-    inline void storeLastDirection() noexcept {
-        this->wasLeftDirection = this->path.isleft();
-    }
-public:
-    PathStack() : stack(), index(0), path(), wasLeftDirection(false) {};
-
-    inline bool empty() const noexcept {
-        return index == 0;
-    }
-    
-    inline bool wasLeft() noexcept {
-        return this->wasLeftDirection;
-    }
-
-    inline void push(Rope* r) noexcept {
-        this->stack[this->index++] = r;
-    }
-
-    inline void left(Rope* r) noexcept {
-        this->storeLastDirection();
-        this->push(r);
-        this->path.left();
-    }
-
-    inline void right(Rope* r) noexcept {
-        this->storeLastDirection();
-        this->push(r);
-        this->path.right();
-    }
-
-    // Right/left node is a buffer, so we must simply update the path
-    inline void forceLeft() noexcept {
-        this->wasLeftDirection = true;
-        this->path.left();
-    }
-
-    inline void forceRight() noexcept {
-        this->wasLeftDirection = false;
-        this->path.right();
-    }
-
-    inline void forcePop() noexcept {
-        this->storeLastDirection();
-        this->path.up();
-    }
-
-    inline Rope* pop() noexcept {
-        this->storeLastDirection();
-        this->path.up();
-            
-        return this->stack[--this->index];
-    }
-
-    inline Rope* top() const noexcept {
-        return this->stack[this->index - 1];
-    }
-};
-
 class CRopeIterator {
-    PathStack<__CRopeNode> traversalStack;
+    struct Frame {
+        __CRopeNode* node;
+        bool leftVisited;
+        bool rightVisited;
+    };
     
-    CCharBuffer inlineString;
-    bool isInline;
+    Frame stack[64];
+    size_t stackSize;
+    CCharBuffer nextBuffer;
 
-    void initializeTraversal(__CRope& root) noexcept;
-
-    static inline __CRopeNode* getNode(__CRope& r) noexcept {
-        return r.access<__CRopeNode*>();
+    inline void resetNextBuffer() noexcept {
+        this->nextBuffer = CCharBuffer{};
     }
 
-    static inline CCharBuffer getBuffer(__CRope& r) noexcept {
-        return r.access<CCharBuffer>();
-    }
-
-    inline bool isAtRightBuffer() noexcept {
-         __CRopeNode* cur = this->traversalStack.top(); 
-         return this->traversalStack.wasLeft() && isBuffer(cur->right);
-    }
-
-    static inline bool isBuffer(__CRope& r) noexcept {
+    static bool isBuffer(__CRope& r) noexcept {
         return r.typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    // Need leaf containing buffer to appear in path stack, hence extra call
-    inline void traverseToLeftMostBuffer() noexcept {
-        if(this->isAtRightBuffer()) {
-            return ;
+    static CCharBuffer getBuffer(__CRope& r) noexcept {
+        return r.access<CCharBuffer>();
+    }
+
+    static __CRopeNode* getNode(__CRope& r) noexcept {
+        return r.access<__CRopeNode*>();
+    }
+
+    // Need to be thoughtful with using reference semantics here
+    inline Frame& top() noexcept {
+        return stack[stackSize - 1];
+    }
+
+    inline void pop() noexcept {
+        this->stackSize--;
+    }
+
+    void pushNode(__CRopeNode* node) noexcept {
+        stack[stackSize++] = {node, false, false};
+    }
+
+    void findNextBuffer() noexcept {
+        while (stackSize > 0) {
+            Frame& top = this->top();
+            
+            if (!top.leftVisited) {
+                top.leftVisited = true;
+                if (isBuffer(top.node->left)) {
+                    nextBuffer = getBuffer(top.node->left);
+                    return;
+                }
+                pushNode(getNode(top.node->left));
+            } 
+            else if(!top.rightVisited) {
+                top.rightVisited = true;
+                if (isBuffer(top.node->right)) {
+                    nextBuffer = getBuffer(top.node->right);
+                    return;
+                }
+
+                pushNode(getNode(top.node->right));
+            }
+            else { 
+                this->pop();
+            }
         }
-        
-        while(this->canTraverseLeft()) {
-            this->traverseLeft();
-        }
-        this->traverseLeft();
     }
 
-    inline bool canTraverseLeft() const noexcept {
-        __CRopeNode* cur = this->traversalStack.top();
-        return isBuffer(cur->left) == false;
-    }
-
-    inline bool containsBuffer() const noexcept {
-        __CRopeNode* cur = this->traversalStack.top();
-
-        return isBuffer(cur->left) || isBuffer(cur->right);
-    }
-
-    void traverseLeft() noexcept;
-    void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
-        this->initializeTraversal(root);
-    };
+    CRopeIterator(__CRope root) noexcept : stackSize(0), nextBuffer() {
+        if(isBuffer(root)) {
+            nextBuffer = getBuffer(root);
+            return;
+        }
 
-    CCharBuffer next() noexcept;
+        pushNode(getNode(root));
+        findNextBuffer();
+    }
 
-    inline bool hasNext() noexcept {
-        return !this->traversalStack.empty() || this->isInline;
+    bool hasNext() const noexcept {
+        return this->stackSize > 0;
+    }
+
+    CCharBuffer next() noexcept {
+        CCharBuffer result = nextBuffer;
+        
+        this->resetNextBuffer();
+        findNextBuffer();
+        
+        return result;
     }
 };
 
 class UnicodeRopeIterator {
-    PathStack<__UnicodeRopeNode> traversalStack;
+    struct Frame {
+        __UnicodeRopeNode* node;
+        bool leftVisited;
+        bool rightVisited;
+    };
     
-    UnicodeCharBuffer inlineString;
-    bool isInline;
+    Frame stack[64];
+    size_t stackSize;
+    UnicodeCharBuffer nextBuffer;
 
-    void initializeTraversal(__UnicodeRope& root) noexcept;
-
-    static inline __UnicodeRopeNode* getNode(__UnicodeRope& r) noexcept {
-        return r.access<__UnicodeRopeNode*>();
+    inline void resetNextBuffer() noexcept {
+        this->nextBuffer = UnicodeCharBuffer{};
     }
 
-    static inline UnicodeCharBuffer getBuffer(__UnicodeRope& r) noexcept {
-        return r.access<UnicodeCharBuffer>();
-    }
-
-    inline bool isAtRightBuffer() noexcept {
-         __UnicodeRopeNode* cur = this->traversalStack.top(); 
-         return this->traversalStack.wasLeft() && isBuffer(cur->right);
-    }
-
-    static inline bool isBuffer(__UnicodeRope& r) noexcept {
+    static bool isBuffer(__UnicodeRope& r) noexcept {
         return r.typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    // Need leaf containing buffer to appear in path stack, hence extra call
-    inline void traverseToLeftMostBuffer() noexcept {
-         if(this->isAtRightBuffer()) {
-            return ;
-         }
-        
-        while(this->canTraverseLeft()) {
-            this->traverseLeft();
+    static UnicodeCharBuffer getBuffer(__UnicodeRope& r) noexcept {
+        return r.access<UnicodeCharBuffer>();
+    }
+
+    static __UnicodeRopeNode* getNode(__UnicodeRope& r) noexcept {
+        return r.access<__UnicodeRopeNode*>();
+    }
+
+    inline Frame& top() noexcept {
+        return stack[stackSize - 1];
+    }
+
+    inline void pop() noexcept {
+        this->stackSize--;
+    }
+
+    void pushNode(__UnicodeRopeNode* node) noexcept {
+        stack[stackSize++] = {node, false, false};
+    }
+
+    void findNextBuffer() noexcept {
+        while (stackSize > 0) {
+            Frame& top = this->top();
+            
+            if (!top.leftVisited) {
+                top.leftVisited = true;
+                if (isBuffer(top.node->left)) {
+                    nextBuffer = getBuffer(top.node->left);
+                    return;
+                }
+                pushNode(getNode(top.node->left));
+            } 
+            else if(!top.rightVisited) {
+                top.rightVisited = true;
+                if (isBuffer(top.node->right)) {
+                    nextBuffer = getBuffer(top.node->right);
+                    return;
+                }
+
+                pushNode(getNode(top.node->right));
+            }
+            else { 
+                this->pop();
+            }
         }
-        this->traverseLeft();
     }
 
-    inline bool canTraverseLeft() const noexcept {
-        __UnicodeRopeNode* cur = this->traversalStack.top();
-        return isBuffer(cur->left) == false;
-    }
-
-    inline bool containsBuffer() const noexcept {
-        __UnicodeRopeNode* cur = this->traversalStack.top();
-
-        return isBuffer(cur->left) || isBuffer(cur->right);
-    }
-
-    void traverseLeft() noexcept;
-    void traverseRight() noexcept;
 public:    
-    UnicodeRopeIterator(__UnicodeRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
-        this->initializeTraversal(root);
-    };
+    UnicodeRopeIterator(__UnicodeRope root) noexcept : stackSize(0), nextBuffer() {
+        if(isBuffer(root)) {
+            nextBuffer = getBuffer(root);
+            return;
+        }
 
-    UnicodeCharBuffer next() noexcept;
+        pushNode(getNode(root));
+        findNextBuffer();
+    }
 
-    inline bool hasNext() noexcept {
-        return !this->traversalStack.empty() || this->isInline;
+    bool hasNext() const noexcept {
+        return this->stackSize > 0;
+    }
+
+    UnicodeCharBuffer next() noexcept {
+        UnicodeCharBuffer result = nextBuffer;
+        
+        this->resetNextBuffer();
+        findNextBuffer();
+     
+        return result;
     }
 };
+
 
 // Will need to support Bosque CString and String eventually
 typedef std::variant<Int, Nat, BigInt, BigNat, Float, Bool> MainType; 
