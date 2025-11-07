@@ -258,117 +258,128 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
 }
 
 void CRopeIterator::traverseLeft() noexcept {
-    __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __CRope& leftChild = *reinterpret_cast<__CRope*>(&nodePtr[LEFT_CHILD_OFFSET]);
-    this->traversalStack.left(leftChild);
+    __CRopeNode* cur = this->traversalStack.top();
+    if(CRopeIterator::isBuffer(cur->left)) {
+        this->traversalStack.forceLeft();
+    }
+    else {
+        __CRopeNode* left = CRopeIterator::getNode(cur->left);
+        this->traversalStack.left(left);
+    }
 }
 
 void CRopeIterator::traverseRight() noexcept {
-    __CRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __CRope& rightChild = *reinterpret_cast<__CRope*>(&nodePtr[RIGHT_CHILD_OFFSET]);
-    this->traversalStack.right(rightChild);
+    __CRopeNode* cur = this->traversalStack.top();
+    if(CRopeIterator::isBuffer(cur->right)) {
+        this->traversalStack.forceRight();
+    }
+    else {
+        __CRopeNode* right = CRopeIterator::getNode(cur->right);
+        this->traversalStack.right(right);
+    }
 }
 
 void CRopeIterator::initializeTraversal(__CRope& root) noexcept {
-    if(root.typeinfo->tag == __CoreGC::Tag::Value) {
-        this->inlineString = root;
+    if(CRopeIterator::isBuffer(root)) {
+        this->inlineString = CRopeIterator::getBuffer(root);
         this->isInline = true;
         
         return ;
     }
 
-    this->traversalStack.push(root);
+    __CRopeNode* rootNode = CRopeIterator::getNode(root);
+    this->traversalStack.push(rootNode);
 
-    while(!this->isAtLeaf()) {
-        this->traverseLeft();
-    }
+    this->traverseToLeftMostBuffer();
 }
 
 CCharBuffer CRopeIterator::next() noexcept {
     if(this->isInline) {
         this->isInline = false;
-        return this->inlineString.access<CCharBuffer>();
+        return this->inlineString;
     }
 
-    __CRope& leaf = this->traversalStack.pop(); 
-    CCharBuffer result = leaf.access<CCharBuffer>();
+    __CRopeNode* cur = this->traversalStack.top(); 
+    𝐚𝐬𝐬𝐞𝐫𝐭(CRopeIterator::isBuffer(cur->left));
 
-    // Pop all fully visited nodes (nodes where we've visited both children)
+    // Pop fully visited nodes
     while(!this->traversalStack.wasLeft()) {
         if(this->traversalStack.empty()) {
-            return result;
+            return CRopeIterator::getBuffer(cur->right);
         }
         this->traversalStack.pop();
     }
 
-    // We've finished the left subtree, now traverse right
-    this->traverseRight();
-
-    // Find first leaf in the new subtree (leftmost leaf)
-    while(!this->isAtLeaf()) {
-        this->traverseLeft();
+    if(this->traversalStack.wasLeft()) {
+        this->traverseRight();
     }
 
-    return result;
+    this->traverseToLeftMostBuffer();
+
+    return CRopeIterator::getBuffer(cur->left);
 }
 
 void UnicodeRopeIterator::traverseLeft() noexcept {
-    __UnicodeRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __UnicodeRope& leftChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->LEFT_CHILD_OFFSET]);
-    this->traversalStack.left(leftChild);
+    __UnicodeRopeNode* cur = this->traversalStack.top();
+    if(UnicodeRopeIterator::isBuffer(cur->left)) {
+        this->traversalStack.forceLeft();
+    }
+    else {
+        __UnicodeRopeNode* left = UnicodeRopeIterator::getNode(cur->left);
+        this->traversalStack.left(left);
+    }
 }
 
 void UnicodeRopeIterator::traverseRight() noexcept {
-    __UnicodeRope& currentNode = this->traversalStack.top();
-    uintptr_t* nodePtr = currentNode.access<uintptr_t*>();
-    __UnicodeRope& rightChild = *reinterpret_cast<__UnicodeRope*>(&nodePtr[this->RIGHT_CHILD_OFFSET]);
-    this->traversalStack.right(rightChild);
+    __UnicodeRopeNode* cur = this->traversalStack.top();
+    if(UnicodeRopeIterator::isBuffer(cur->right)) {
+        this->traversalStack.forceRight();
+    }
+    else {
+        __UnicodeRopeNode* right = UnicodeRopeIterator::getNode(cur->right);
+        this->traversalStack.right(right);
+    }
 }
 
 void UnicodeRopeIterator::initializeTraversal(__UnicodeRope& root) noexcept {
-    if(root.typeinfo->tag == __CoreGC::Tag::Value) {
-        this->inlineString = root;
+    if(isBuffer(root)) {
+        this->inlineString = UnicodeRopeIterator::getBuffer(root);
         this->isInline = true;
         
         return ;
     }
 
-    this->traversalStack.push(root);
+    __UnicodeRopeNode* rootNode = UnicodeRopeIterator::getNode(root);
+    this->traversalStack.push(rootNode);
 
-    while(!this->isAtLeaf()) {
-        this->traverseLeft();
-    }
+    this->traverseToLeftMostBuffer();
 }
 
 UnicodeCharBuffer UnicodeRopeIterator::next() noexcept {
     if(this->isInline) {
         this->isInline = false;
-        return this->inlineString.access<UnicodeCharBuffer>();
+        return this->inlineString;
     }
 
-    __UnicodeRope& leaf = this->traversalStack.pop(); 
-    UnicodeCharBuffer result = leaf.access<UnicodeCharBuffer>();
+    __UnicodeRopeNode* cur = this->traversalStack.top(); 
+    𝐚𝐬𝐬𝐞𝐫𝐭(!UnicodeRopeIterator::isBuffer(cur->left));
 
-    // Pop all fully visited nodes (nodes where we've visited both children)
+    // Pop fully visited nodes
     while(!this->traversalStack.wasLeft()) {
         if(this->traversalStack.empty()) {
-            return result;
+            return UnicodeRopeIterator::getBuffer(cur->right);
         }
         this->traversalStack.pop();
     }
 
-    // We've finished the left subtree, now traverse right
-    this->traverseRight();
-
-    // Find first leaf in the new subtree (leftmost leaf)
-    while(!this->isAtLeaf()) {
-        this->traverseLeft();
+    if(this->traversalStack.wasLeft()) {
+        this->traversalStack.pop();
+        this->traverseRight();
     }
 
-    return result;
+    this->traverseToLeftMostBuffer();
+
+    return UnicodeRopeIterator::getBuffer(cur->left);
 }
 
 std::string to_string(MainType v) noexcept {

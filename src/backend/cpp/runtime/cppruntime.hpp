@@ -834,54 +834,88 @@ public:
         return this->wasLeftDirection;
     }
 
-    inline void push(Rope& r) noexcept {
-        this->stack[this->index++] = &r;
+    inline void push(Rope* r) noexcept {
+        this->stack[this->index++] = r;
     }
 
-    inline void left(Rope& r) noexcept {
+    inline void left(Rope* r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.left();
     }
 
-    inline void right(Rope& r) noexcept {
+    inline void right(Rope* r) noexcept {
         this->storeLastDirection();
         this->push(r);
         this->path.right();
     }
 
-    inline Rope& pop() noexcept {
+    // Right/left node is a buffer, so we must simply update the path
+    inline void forceLeft() noexcept {
+        this->wasLeftDirection = true;
+        this->path.left();
+    }
+
+    inline void forceRight() noexcept {
+        this->wasLeftDirection = false;
+        this->path.right();
+    }
+
+    inline Rope* pop() noexcept {
         this->storeLastDirection();
         this->path.up();
             
-        return *this->stack[--this->index];
+        return this->stack[--this->index];
     }
 
-    inline Rope& top() const noexcept {
-        return *this->stack[this->index - 1];
+    inline Rope* top() const noexcept {
+        return this->stack[this->index - 1];
     }
 };
 
 class CRopeIterator {
-    PathStack<__CRope> traversalStack;
+    PathStack<__CRopeNode> traversalStack;
     
-    __CRope inlineString;
+    CCharBuffer inlineString;
     bool isInline;
-
-    // We will eventually want to compute these via ptr mask in constructor
-    static const size_t LEFT_CHILD_OFFSET = 2;
-    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 3;
 
     void initializeTraversal(__CRope& root) noexcept;
 
-    inline bool isAtLeaf() const noexcept {
-        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    static inline __CRopeNode* getNode(__CRope& r) noexcept {
+        return r.access<__CRopeNode*>();
+    }
+
+    static inline CCharBuffer getBuffer(__CRope& r) noexcept {
+        return r.access<CCharBuffer>();
+    }
+
+    static inline bool isBuffer(__CRope& r) noexcept {
+        return r.typeinfo->tag == __CoreGC::Tag::Value;
+    }
+
+    // Need leaf containing buffer to appear in path stack, hence extra call
+    inline void traverseToLeftMostBuffer() noexcept {
+        while(this->canTraverseLeft()) {
+            this->traverseLeft();
+        }
+        this->traverseLeft();
+    }
+
+    inline bool canTraverseLeft() const noexcept {
+        __CRopeNode* cur = this->traversalStack.top();
+        return isBuffer(cur->left) == false;
+    }
+
+    inline bool containsBuffer() const noexcept {
+        __CRopeNode* cur = this->traversalStack.top();
+
+        return isBuffer(cur->left) || isBuffer(cur->right);
     }
 
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    CRopeIterator(__CRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
+    CRopeIterator(__CRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
@@ -893,25 +927,50 @@ public:
 };
 
 class UnicodeRopeIterator {
-    PathStack<__UnicodeRope> traversalStack;
+    PathStack<__UnicodeRopeNode> traversalStack;
     
-    __UnicodeRope inlineString;
+    UnicodeCharBuffer inlineString;
     bool isInline;
-
-    // We will eventually want to compute these via ptr mask in constructor
-    static const size_t LEFT_CHILD_OFFSET = 2;
-    static const size_t RIGHT_CHILD_OFFSET = LEFT_CHILD_OFFSET + 6;
 
     void initializeTraversal(__UnicodeRope& root) noexcept;
 
-    inline bool isAtLeaf() const noexcept {
-        return this->traversalStack.top().typeinfo->tag == __CoreGC::Tag::Value;
+    static inline __UnicodeRopeNode* getNode(__UnicodeRope& r) noexcept {
+        return r.access<__UnicodeRopeNode*>();
+    }
+
+    static inline UnicodeCharBuffer getBuffer(__UnicodeRope& r) noexcept {
+        return r.access<UnicodeCharBuffer>();
+    }
+
+    static inline bool isBuffer(__UnicodeRope& r) noexcept {
+        return r.typeinfo->tag == __CoreGC::Tag::Value;
+    }
+
+    // Need leaf containing buffer to appear in path stack, hence extra call
+    inline void traverseToLeftMostBuffer() noexcept {
+        while(this->canTraverseLeft()) {
+            this->traverseLeft();
+        }
+        if(this->traversalStack.wasLeft()) {
+            this->traverseLeft();
+        }    
+    }
+
+    inline bool canTraverseLeft() const noexcept {
+        __UnicodeRopeNode* cur = this->traversalStack.top();
+        return isBuffer(cur->left) == false;
+    }
+
+    inline bool containsBuffer() const noexcept {
+        __UnicodeRopeNode* cur = this->traversalStack.top();
+
+        return isBuffer(cur->left) || isBuffer(cur->right);
     }
 
     void traverseLeft() noexcept;
     void traverseRight() noexcept;
 public:    
-    UnicodeRopeIterator(__UnicodeRope& root) noexcept : traversalStack(), inlineString(), isInline(false) {
+    UnicodeRopeIterator(__UnicodeRope root) noexcept : traversalStack(), inlineString(), isInline(false) {
         this->initializeTraversal(root);
     };
 
