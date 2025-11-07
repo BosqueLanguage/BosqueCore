@@ -11,6 +11,7 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_dispatch = "dispatch";
 const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -103,6 +104,7 @@ const KeywordStrings = [
     KW_abort,
     KW_assert,
     KW_concept,
+    KW_dispatch,
     KW_const,
     KW_declare,
     KW_debug,
@@ -390,6 +392,7 @@ export {
     // KW_const,
     // KW_declare,
     KW_debug,
+    KW_dispatch,
     KW_elif,
     KW_else,
     // KW_enum,

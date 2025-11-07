@@ -2034,17 +2034,15 @@ class AgentInvokeExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly agent: string;
     readonly optrestype: TypeSignature | undefined;
-    readonly opterrtype: TypeSignature | undefined;
     readonly args: Expression[];
     readonly configs: {key: string, value: Expression}[];
     readonly envexp: EnvironmentGenerationExpression;
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, opterrtype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, agent: string, optrestype: TypeSignature | undefined, args: Expression[], envexp: EnvironmentGenerationExpression, configs: {key: string, value: Expression}[]) {
         super(ExpressionTag.AgentInvokeExpression, sinfo);
         this.ns = ns;
         this.agent = agent;
         this.optrestype = optrestype;
-        this.opterrtype = opterrtype;
         this.args = args;
         this.envexp = envexp;
         this.configs = configs;
@@ -2052,7 +2050,7 @@ class AgentInvokeExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const nsstr = this.ns.emit() + "::";
-        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}${this.opterrtype ? `, ${this.opterrtype.emit()}` : ""}>` : "";
+        const restypeStr = this.optrestype ? `<${this.optrestype.emit()}>` : "";
         const configs = TaskInvokeExpression.emitconfigs(this.configs, fmt);
         const envexp = this.envexp.emit(fmt);
         const argl = this.args.map((arg) => arg.emit(true, fmt)).join(", ");
@@ -2517,22 +2515,20 @@ class SwitchStatement extends Statement {
 }
 
 class MatchStatement extends Statement {
-    readonly sval: [Expression, BinderInfo | undefined];
+    readonly sval: ITestGuard;
     readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement}[];
 
     mustExhaustive: boolean = false;
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: ITestGuard, flow: {mtype: TypeSignature | undefined, value: BlockStatement}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
         this.matchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const binfo = this.sval[1];
-
-        const mheader = `match(${binfo !== undefined ? binfo.emitoptdef() : ""}${this.sval[0].emit(true, fmt)})${binfo !== undefined ? "@" : ""}`;
+        const mheader = `match${this.sval.emit(true, fmt)}`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2543,20 +2539,20 @@ class MatchStatement extends Statement {
 }
 
 class DispatchPatternStatement extends Statement {
-    readonly sval: Expression;
+    readonly sval: ITestGuard;
     readonly dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: Expression, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: Expression | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchPatternStatement, sinfo);
         this.sval = sval;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
+        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx.emit(true, fmt) : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2567,20 +2563,20 @@ class DispatchPatternStatement extends Statement {
 }
 
 class DispatchTaskStatement extends Statement {
-    readonly sval: Expression;
+    readonly sval: ITestGuard;
     readonly dispatchflow: {kidx: string | undefined, value: BlockStatement}[];
     //always must exhaustive
 
     implicitFinalType: TypeSignature | undefined = undefined;
 
-    constructor(sinfo: SourceInfo, sval: Expression, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: ITestGuard, dispatchflow: {kidx: string | undefined, value: BlockStatement}[]) {
         super(StatementTag.DispatchTaskStatement, sinfo);
         this.sval = sval;
         this.dispatchflow = dispatchflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const dheader = `dispatch(${this.sval.emit(true, fmt)})`;
+        const dheader = `dispatch${this.sval.emit(true, fmt)}`;
         fmt.indentPush();
         const ttdf = this.dispatchflow.map((df) => `${df.kidx ? df.kidx : "_"} => ${df.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2707,21 +2703,42 @@ class SelfUpdateStatement extends Statement {
 }
 
 class HoleStatement extends Statement {
+    readonly hname: string | undefined;
+    readonly captures: string[];
+    readonly doccomment: string | undefined;
+    readonly samplesfile: Expression | undefined;
+    
     readonly nvars: {name: string, tsig: TypeSignature}[];
-    readonly holeexp: HoleExpression;
     readonly ensures: ChkLogicExpression[];
-
-    constructor(sinfo: SourceInfo, nvars: {name: string, tsig: TypeSignature}[], holeexp: HoleExpression, ensures: ChkLogicExpression[]) {
+    
+    constructor(sinfo: SourceInfo, hname: string | undefined, captures: string[], doccomment: string | undefined, samplesfile: Expression | undefined, nvars: {name: string, tsig: TypeSignature}[], ensures: ChkLogicExpression[]) {
         super(StatementTag.HoleStatement, sinfo);
+        this.hname = hname;
+        this.captures = captures;
+        this.doccomment = doccomment;
+        this.samplesfile = samplesfile;
+
         this.nvars = nvars;
-        this.holeexp = holeexp;
         this.ensures = ensures;
     }
 
     emit(fmt: CodeFormatter): string {
-        const nvars = this.nvars.map((nv) => `${nv.name}: ${nv.tsig.emit()}`).join(", ");
-        const ensures = this.ensures.map((e) => `ensures ${e.emit(fmt)};`).join(" ");
-        return `hole ${nvars} ${this.holeexp.emit(true, fmt)}{${ensures}};`;
+        let ebody = "";
+        if(this.doccomment !== undefined || this.samplesfile !== undefined) {
+            const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
+            const samplstr = this.samplesfile !== undefined ? ` of ${this.samplesfile.emit(false, fmt)}` : "";
+            ebody = `(${dcom})${samplstr}`;
+        }
+
+        let rbody = "";
+        if(this.nvars.length === 0 || this.ensures.length === 0) {
+            const nvars = this.nvars.map((nv) => `${nv.name}: ${nv.tsig.emit()}`).join(", ");
+            const ensures = this.ensures.map((e) => `ensures ${e.emit(fmt)};`).join(" ");
+
+            rbody = " ->" + (nvars !== "" ? (` [${nvars}]`) : "[]") + (ensures !== "" ? (` { ${ensures} }`) : "");
+        }
+
+        return `?_${this.hname || ""}${this.captures.length !== 0 ? ("[" + this.captures.join(", ") + "]") : ""}${ebody}${rbody}`;
     }
 }
 
@@ -2842,11 +2859,15 @@ class BuiltinBodyImplementation extends BodyImplementation {
 }
 
 class HoleBodyImplementation extends BodyImplementation {
-    readonly holeexp: HoleExpression;
-
-    constructor(sinfo: SourceInfo, file: string, holeexp: HoleExpression) {
+    readonly hname: string | undefined;
+    readonly doccomment: string | undefined;
+    readonly samplesfile: Expression | undefined;
+    
+    constructor(sinfo: SourceInfo, file: string, hname: string | undefined, doccomment: string | undefined, samplesfile: Expression | undefined) {
         super(sinfo, file);
-        this.holeexp = holeexp;
+        this.hname = hname;
+        this.doccomment = doccomment;
+        this.samplesfile = samplesfile;
     }
 
     emit(fmt: CodeFormatter, headerstr: string | undefined): string {
@@ -2855,7 +2876,14 @@ class HoleBodyImplementation extends BodyImplementation {
             hstr = " " + headerstr;
         }
 
-        return `${hstr} { return ${this.holeexp.emit(true, fmt)}; }`;
+        let ebody = "";
+        if(this.doccomment !== undefined || this.samplesfile !== undefined) {
+            const dcom = this.doccomment !== undefined ? `%** ${this.doccomment} **%` : "";
+            const samplstr = this.samplesfile !== undefined ? ` of ${this.samplesfile.emit(false, fmt)}` : "";
+            ebody = `(${dcom})${samplstr}`;
+        }
+
+        return hstr + `?_${this.hname || ""}${ebody}`;
     }
 }
 

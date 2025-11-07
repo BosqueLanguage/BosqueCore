@@ -3,10 +3,10 @@ import assert from "node:assert";
 
 import { VariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
 import { AutoTypeSignature, DashResultTypeSignature, EListTypeSignature, ErrorTypeSignature, FormatPathTypeSignature, FormatStringTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "./type.js";
-import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement } from "./body.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnumExpression, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestFail, ITestNone, ITestOk, ITestSome, ITestType, IfElifElseStatement, IfElseStatement, IfStatement, LiteralRegexExpression, LiteralSimpleExpression, LiteralNoneExpression, LiteralTypeDeclValueExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, SpecialConstructorExpression, ConstructorPrimaryExpression, PostfixAccessFromName, ReturnVoidStatement, ReturnSingleStatement, PostfixInvoke, KeyCompareEqExpression, KeyCompareLessExpression, ReturnMultiStatement, SafeConvertExpression, PostfixAccessFromIndex, AccessStaticFieldExpression, CallTypeFunctionExpression, CreateDirectExpression, LambdaInvokeExpression, ThisUpdateStatement, VarUpdateStatement, CallRefThisExpression, VoidRefCallStatement, CallRefSelfExpression, CallRefVariableExpression, CallRefInvokeExpression, PostfixAssignFields, ChkLogicExpression, RValueExpression, ITestGuard, ITestGuardSet, ITestRejected, ITestFailed, ITestError, ITestSuccess, ITestBinderGuard, ITestSimpleGuard, ITestTypeGuard, PassingArgumentValue, LiteralStringExpression, LiteralCStringExpression, LiteralFormatStringExpression, LiteralFormatCStringExpression, LiteralFormatPathItemExpression, LiteralPathItemExpression, LiteralTypedFormatStringExpression, LiteralTypedStringExpression, LiteralTypedCStringExpression, LiteralTypedPathExpression, FormatStringComponent, FormatStringTextComponent, FormatStringArgComponent, LiteralTypedFormatCStringExpression, LiteralTypedPathFormatExpression, AccessEnvValueExpression, TaskAccessInfoExpression, InterpolateFormatExpression, PostfixOfOperator, HoleExpression, LogicAndExpression, LogicOrExpression, TaskRunExpression, EnvironmentGenerationExpression, EmptyEnvironmentExpression, CurrentEnvironmentExpression, InitializeEnvironmentExpression, TaskMultiExpression, TaskAllExpression, TaskDashExpression, TaskDashAnyExpression, TaskRaceExpression, TaskRaceAnyExpression, APIInvokeExpression, AgentInvokeExpression, ChkLogicImpliesExpression, ChkLogicBaseExpression, BaseRValueExpression, ConditionalValueExpression, ShortCircuitAssignRHSExpressionFail, ShortCircuitAssignRHSExpressionReturn, CallTaskActionExpression, SelfUpdateStatement, TaskCheckAndHandleTerminationStatement, TaskStatusStatement, TaskYieldStatement, DispatchTaskStatement, DispatchPatternStatement, HoleStatement, HoleBodyImplementation } from "./body.js";
 import { APIDecl, APIResultTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, CRopeTypeDecl, CRopeIteratorTypeDecl, UnicodeRopeTypeDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, SomeTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl, OkTypeDecl, FailTypeDecl, APIRejectedTypeDecl, APIFailedTypeDecl, APIErrorTypeDecl, APISuccessTypeDecl, InternalEntityTypeDecl, AbstractCollectionTypeDecl, TestAssociation } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
-import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_assert, KW_chktest, KW_debug, KW_do, KW_elif, KW_else, KW_ensures, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_if, KW_inout, KW_let, KW_match, KW_method, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_Task, KW_test, KW_this, KW_true, KW_under, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
+import { AllAttributes, CoreOnlyAttributes, KeywordStrings, KW__debug, KW_abort, KW_action, KW_agent, KW_api, KW_assert, KW_chktest, KW_debug, KW_dispatch, KW_do, KW_elif, KW_else, KW_ensures, KW_env, KW_error, KW_errtest, KW_event, KW_example, KW_fail, KW_failed, KW_false, KW_fn, KW_function, KW_if, KW_inout, KW_let, KW_match, KW_method, KW_none, KW_of, KW_ok, KW_out, KW_out_q, KW_parallel, KW_pred, KW_predicate, KW_recursive, KW_recursive_q, KW_ref, KW_rejected, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_spec, KW_status, KW_success, KW_switch, KW_Task, KW_test, KW_this, KW_true, KW_under, KW_validate, KW_var, KW_when, KW_yield, LeftScanParens, ParenSymbols, RightScanParens, SpaceFrontSymbols, SpaceRequiredSymbols, SpecialNominalTypes, SpecialPathFormatTypes, SpecialStringFormatTypes, StandardSymbols, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_hash, SYM_HOLE, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lparenbar, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_questionat, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_rparenbar, SYM_semicolon, SYM_times, TaskConfigs, TermRestrictions } from "./parser_kw.js";
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -26,6 +26,8 @@ const TokenStrings = {
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
     NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
     NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
+
+    AtDexNumber: "[LITERAL_ATDEX_NUMBER]",
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
@@ -341,6 +343,8 @@ class Lexer {
     private static readonly _s_floatSimpleValueNoSign = '[0-9]+[.][0-9]+';
     private static readonly _s_floatSimpleValue = `[+-]?${Lexer._s_floatSimpleValueNoSign}`;
 
+    private static readonly _s_idexValue = new RegExp(`@(${Lexer._s_intValue})`, "y");
+
     private static readonly _s_intNumberinoRe = new RegExp(`${Lexer._s_intValue}`, "y");
     private static readonly _s_floatNumberinoRe = new RegExp(`${Lexer._s_floatValue}`, "y");
     private static readonly _s_rationalNumberinoRe = new RegExp(`(${Lexer._s_intValue})/(${Lexer._s_nonzeroIntValNoSign})`, "y");
@@ -376,6 +380,15 @@ class Lexer {
                 this.advancePosition(Math.min(this.jsStrEnd, this.jsStrPos + mm.length - 1));
             }
         }
+    }
+
+    private tryLexIdexToken(): boolean {
+        const midex = this.trylex(Lexer._s_idexValue);
+        if(midex !== null) {
+            this.recordLexTokenWData(this.jsStrPos + midex.length, TokenStrings.AtDexNumber, midex);
+            return true;
+        }
+        return false;
     }
 
     private tryLexFloatCompositeLikeToken(): boolean {
@@ -506,6 +519,11 @@ class Lexer {
 
     private tryLexNumberLikeToken(): boolean {
         this.checkRedundantSigns();
+
+        const idex = this.tryLexIdexToken();
+        if(idex) {
+            return true;
+        }
 
         const cft = this.tryLexFloatCompositeLikeToken();
         if(cft) {
@@ -2741,19 +2759,18 @@ class Parser {
         }
     }
 
-    private parseDispatchGuard(): Expression | string | undefined {
+    private parseDispatchGuard(): Expression | string[] | undefined {
         if (this.testAndConsumeTokenIf(KW_under)) {
             return undefined;
         }
         else {
-            if(this.testAndConsumeTokenIf(SYM_at)) {
-                this.ensureToken(TokenStrings.NumberinoInt, "Expected index after @ in DashType dispatch guard");
-                return "@" + this.consumeTokenAndGetValue();
+            if(this.testAndConsumeTokenIf(TokenStrings.AtDexNumber)) {
+                return [this.consumeTokenAndGetValue()];
             }
             else {
                 const exp = this.parseExpression();
         
-                if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression) && !(exp instanceof AccessEnumExpression)) {
+                if(!exp.isLiteralExpression() && !(exp instanceof AccessNamespaceConstantExpression) && !(exp instanceof AccessStaticFieldExpression)) {
                     this.recordErrorGeneral(exp.sinfo, "Expected literal expression or binder variable")
                 }
 
@@ -2820,12 +2837,25 @@ class Parser {
         return this.testToken(SYM_bang) || this.testToken(SYM_langle) || this.testToken(KW_none) || this.testToken(KW_some) || this.testToken(KW_ok) || this.testToken(KW_fail) || this.testToken(KW_rejected) || this.testToken(KW_failed) || this.testToken(KW_error) || this.testToken(KW_success);
     }
 
+
+    private parseRValueInTopTestExpression(): Expression {
+        if(this.testToken(KW_ref)) {
+            return this.parseRefRValueExpression();
+        }
+        else if(this.testToken(KW_do)) {
+            return this.parseTaskActionRValueExpression();
+        }
+        else {
+            return this.parseExpression();
+        }
+    }
+
     private parseITestGuard(): ITestGuard {
         if(this.testFollows(SYM_lparen, TokenStrings.IdentifierName, SYM_eq)) {
             this.consumeToken();
             const binfo = this.parseBinderInfo();
             this.ensureAndConsumeTokenAlways(SYM_eq, "binder in ITest guard");
-            const bexp = this.parseExpression();
+            const bexp = this.parseRValueInTopTestExpression();
             this.ensureAndConsumeTokenAlways(SYM_rparen, "binder in ITest guard");
 
             this.ensureAndConsumeTokenAlways(SYM_at, "binder in ITest guard");
@@ -2834,7 +2864,7 @@ class Parser {
         }
         else {
             const isparened = this.testToken(SYM_lparen);
-            const bexp = this.parseExpression();
+            const bexp = this.parseRValueInTopTestExpression();
             
             if((this.testToken(SYM_at) || this.checkITestFirstToken()) && !isparened) {
                 this.recordErrorGeneral(bexp.sinfo, "ITest guard expression is missing parentheses");
@@ -4309,19 +4339,15 @@ class Parser {
         const api = this.parseIdentifierAsStdVariable();
         const configs = this.parseTaskConfigs();
         let explicittype: TypeSignature | undefined = undefined;
-        let expliciterr: TypeSignature | undefined = undefined;
         if(this.testToken(SYM_langle)) {
             this.consumeToken(); //<
             explicittype = this.parseStdTypeSignature();
-            if(this.testAndConsumeTokenIf(SYM_coma)) {
-                expliciterr = this.parseStdTypeSignature();
-            }
             this.ensureAndConsumeTokenAlways(SYM_rangle, "agent invoke explicit type");
         }
 
         const [args, envexp] = this.parseTaskArguments();
 
-        return new AgentInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, explicittype, expliciterr, args, envexp, configs);
+        return new AgentInvokeExpression(sinfo, access!.nsScope.fullnamespace, api, explicittype, args, envexp, configs);
     }
 
     private parseChkLogicExpression(): ChkLogicExpression {
@@ -4402,39 +4428,39 @@ class Parser {
 
     private parseRefRValueExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
-            this.consumeToken();
+        this.consumeToken();
 
-            if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
-                this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
+        if(!this.testToken(TokenStrings.IdentifierName) && !this.testToken(KW_this) && !this.testToken(KW_self)) {
+            this.recordErrorGeneral(sinfo, "Expected a variable name after ref");
+            return new ErrorExpression(sinfo, undefined, undefined);
+        }
 
-            const rcvr = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
-            this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
+        const rcvr = new AccessVariableExpression(this.peekToken().getSourceInfo(), this.consumeTokenAndGetValue());
+        this.ensureAndConsumeTokenAlways(SYM_dot, "ref invoke");
 
-            this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
+        this.ensureToken(TokenStrings.IdentifierName, "ref invoke");
                     
-            let resolvedScope: TypeSignature | undefined = undefined;
-            if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
-                resolvedScope = this.parseNominalType();
-                this.ensureToken(SYM_coloncolon, "postfix access");
-            }
+        let resolvedScope: TypeSignature | undefined = undefined;
+        if(this.peekTokenKind(1) === SYM_coloncolon) { //it is either T::f or N::T...::f
+            resolvedScope = this.parseNominalType();
+            this.ensureToken(SYM_coloncolon, "postfix access");
+        }
 
-            const name = this.parseIdentifierAsStdVariable();
+        const name = this.parseIdentifierAsStdVariable();
 
-            const rec = this.parseInvokeRecursiveArgs();
-            const targs = this.parseInvokeTemplateArguments();
-            const args = this.parseArgumentsCallStd(false);
+        const rec = this.parseInvokeRecursiveArgs();
+        const targs = this.parseInvokeTemplateArguments();
+        const args = this.parseArgumentsCallStd(false);
 
-            if(rcvr.srcname === "this") {
-                return new CallRefThisExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
-            }
-            if(rcvr.srcname === "self") {
-                return new CallRefSelfExpression(sinfo, rcvr, name, targs, rec, args);                
-            }
-            else {
-                return new CallRefVariableExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
-            }
+        if(rcvr.srcname === "this") {
+            return new CallRefThisExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
+        }
+        if(rcvr.srcname === "self") {
+            return new CallRefSelfExpression(sinfo, rcvr, name, targs, rec, args);                
+        }
+        else {
+            return new CallRefVariableExpression(sinfo, rcvr, resolvedScope, name, targs, rec, args);
+        }
     }
 
     private parseTaskActionRValueExpression(): Expression {
@@ -4715,6 +4741,64 @@ class Parser {
 
             return [name, exp];
         });
+    }
+
+    private parseHoleStatement(): Statement {
+        const sinfo = this.peekToken().getSourceInfo();
+        this.consumeToken();
+
+        let hname: string | undefined = undefined;
+        if(this.testToken(TokenStrings.IdentifierName)) {
+            hname = this.consumeTokenAndGetValue();
+        }
+
+        let captures: string[] = [];
+        if(this.testToken(SYM_lbrack)) {
+            captures = this.parseListOf<string>("hole captures", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                this.ensureToken(TokenStrings.IdentifierName, "hole capture list");
+                return this.consumeTokenAndGetValue();
+            });
+        }        
+
+        let doccomment: string | undefined = undefined;
+        if(this.testToken(SYM_lparen)) {
+            this.consumeToken();
+            this.ensureToken(TokenStrings.DocComment, "hole expression");
+            doccomment = this.consumeTokenAndGetValue();
+            this.ensureAndConsumeTokenAlways(SYM_rparen, "hole expression");
+        }
+
+        let samplesfile: Expression | undefined = undefined;
+        if(this.testToken(KW_of)) {
+            this.consumeToken();
+            samplesfile = this.parseExpression();
+        }
+
+        let nvars: {name: string, tsig: TypeSignature}[] = [];
+        let ensures: ChkLogicExpression[] = [];
+        if(this.testToken(SYM_arrow)) {
+            this.consumeToken();
+            
+            if(this.testToken(SYM_lbrack)) {
+                nvars = this.parseListOf<{name: string, tsig: TypeSignature}>("hole named variables", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                    this.ensureToken(TokenStrings.IdentifierName, "hole named variable");
+                    const name = this.consumeTokenAndGetValue();
+                    this.ensureAndConsumeTokenAlways(SYM_colon, "hole named variable");
+                    const tsig = this.parseStdTypeSignature();
+
+                    return { name: name, tsig: tsig };
+                });
+            }
+
+            if(this.testToken(SYM_lbrace)) {
+                ensures = this.parseListOf<ChkLogicExpression>("hole ensures expressions", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+                    this.ensureAndConsumeTokenAlways(KW_ensures, "hole ensures expression");
+                    return this.parseChkLogicExpression();
+                });
+            }
+        }
+
+        return new HoleStatement(sinfo, hname, captures, doccomment, samplesfile, nvars, ensures);
     }
 
     private isVarDeclPrefix(): boolean {
@@ -5025,6 +5109,9 @@ class Parser {
             const exp = this.parseRValueExpression();
             return new TaskYieldStatement(sinfo, exp);
         }
+        else if (this.testToken(SYM_HOLE)) {
+            return this.parseHoleStatement();
+        }
         else {
             return this.parseStatementExpression();
         }
@@ -5136,7 +5223,7 @@ class Parser {
         const sexp = this.parseExpression();
         this.ensureAndConsumeTokenAlways(SYM_rparen, "switch statement dispatch value");
 
-        let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement }[] = [];
+        let entries: { lval: Expression | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
         this.ensureAndConsumeTokenAlways(SYM_bar, "switch statement entry");
@@ -5164,7 +5251,7 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
 
-        const [mexp, binder, implicitdef] = this.parseMatchTest(true);
+        const sguard = this.parseITestGuard();
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
@@ -5186,12 +5273,82 @@ class Parser {
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
-        let bindinfo: BinderInfo | undefined = undefined;
-        if(binder !== undefined) {
-            bindinfo = new BinderInfo(binder, implicitdef, false);
-        }
 
-        return new MatchStatement(sinfo, [mexp, bindinfo], entries);
+        return new MatchStatement(sinfo, sguard, entries);
+    }
+
+    private parseDispatchStatement(): Statement {
+        const sinfo = this.peekToken().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_dispatch, "dispatch statement target");
+
+        const dguard = this.parseITestGuard();
+
+        this.ensureAndConsumeTokenAlways(SYM_lbrace, "dispatch statement options");
+
+        this.ensureAndConsumeTokenAlways(SYM_bar, "dispatch statement entry");
+        const dtype = this.parseDispatchGuard();
+        this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+        const dvalue = this.parseScopedBlockStatement();
+
+        if(dtype === undefined || Array.isArray(dtype)) {
+            let entries: { kidx: string | undefined, value: BlockStatement }[] = [];
+            entries.push({ kidx: dtype !== undefined ? dtype[0] : undefined, value: dvalue });
+
+            while (this.testToken(SYM_bar)) {
+                this.consumeToken();
+
+                const dtypex = this.parseDispatchGuard();
+                let dd: string | undefined;
+                if(dtypex === undefined) {
+                    dd = undefined;
+                }
+                else if(Array.isArray(dtypex)) {
+                    dd = dtypex[0];
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
+                    dd = undefined;
+                }
+
+                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+                const dvaluex = this.parseScopedBlockStatement();
+
+                entries.push({ kidx: dd, value: dvaluex });
+            }
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
+
+            return new DispatchTaskStatement(sinfo, dguard, entries);
+        }
+        else {
+            let entries: { kidx: Expression | undefined, value: BlockStatement }[] = [];
+            entries.push({ kidx: dtype, value: dvalue });
+
+            while (this.testToken(SYM_bar)) {
+                this.consumeToken();
+
+                const dtypex = this.parseDispatchGuard();
+                let dd: Expression | undefined;
+                if(dtypex === undefined) {
+                    dd = undefined;
+                }
+                else if(!Array.isArray(dtypex)) {
+                    dd = dtypex;
+                }
+                else {
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Mixed dispatch type guard styles in dispatch statement");
+                    dd = undefined;
+                }
+
+                this.ensureAndConsumeTokenIf(SYM_bigarrow, "dispatch statement entry");
+                const dvaluex = this.parseScopedBlockStatement();
+
+                entries.push({ kidx: dd, value: dvaluex });
+            }
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "dispatch statement options");
+
+            return new DispatchPatternStatement(sinfo, dguard, entries);
+        }
     }
 
     private parseStatement(): Statement {
@@ -5203,6 +5360,9 @@ class Parser {
         }
         else if (this.testToken(KW_match)) {
             return this.parseMatchStatement();
+        }
+        else if (this.testToken(KW_dispatch)) {
+            return this.parseDispatchStatement();
         }
         else if(this.testToken(SYM_lbrace)) {
             return this.parseScopedBlockStatement();
@@ -5254,13 +5414,32 @@ class Parser {
 
             return new BuiltinBodyImplementation(sinfo, this.env.currentFile, iname);
         }
-        else if(this.testFollows(SYM_lbrace, SYM_HOLE, SYM_semicolon, SYM_rbrace)) {
-            this.consumeToken();
-            this.consumeToken();
-            this.consumeToken();
-            this.consumeToken();
+        else if(this.testFollows(SYM_lbrace, SYM_HOLE)) {
+            this.consumeToken(); //{
+            this.consumeToken(); //HOLE
 
-            return new SynthesisBodyImplementation(sinfo, this.env.currentFile);
+            let hname: string | undefined = undefined;
+            if(this.testToken(TokenStrings.IdentifierName)) {
+                hname = this.consumeTokenAndGetValue();
+            }
+
+            let doccomment: string | undefined = undefined;
+            if(this.testToken(SYM_lparen)) {
+                this.consumeToken();
+                this.ensureToken(TokenStrings.DocComment, "hole expression");
+                doccomment = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeTokenAlways(SYM_rparen, "hole expression");
+            }
+
+            let samplesfile: Expression | undefined = undefined;
+            if(this.testToken(KW_of)) {
+                this.consumeToken();
+                samplesfile = this.parseExpression();
+            }
+
+            this.ensureAndConsumeTokenAlways(SYM_rbrace, "hole body");
+
+            return new HoleBodyImplementation(sinfo, this.env.currentFile, hname, doccomment, samplesfile);
         }
         else {
             if(this.testToken(SYM_lbrace)) {
