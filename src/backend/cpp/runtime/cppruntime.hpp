@@ -797,19 +797,18 @@ class CRopeIterator {
         this->nextBuffer = CCharBuffer{};
     }
 
-    static bool isBuffer(__CRope& r) noexcept {
+    static inline bool isBuffer(__CRope& r) noexcept {
         return r.typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    static CCharBuffer getBuffer(__CRope& r) noexcept {
+    static inline CCharBuffer getBuffer(__CRope& r) noexcept {
         return r.access<CCharBuffer>();
     }
 
-    static __CRopeNode* getNode(__CRope& r) noexcept {
+    static inline __CRopeNode* getNode(__CRope& r) noexcept {
         return r.access<__CRopeNode*>();
     }
 
-    // Need to be thoughtful with using reference semantics here
     inline Frame& top() noexcept {
         return stack[stackSize - 1];
     }
@@ -818,30 +817,31 @@ class CRopeIterator {
         this->stackSize--;
     }
 
-    void pushNode(__CRopeNode* node) noexcept {
+    inline void pushNode(__CRopeNode* node) noexcept {
         stack[stackSize++] = {node, false, false};
     }
 
     void findNextBuffer() noexcept {
-        while (stackSize > 0) {
+        while(stackSize > 0) {
             Frame& top = this->top();
             
-            if (!top.leftVisited) {
+            if(!top.leftVisited) {
                 top.leftVisited = true;
-                if (isBuffer(top.node->left)) {
-                    nextBuffer = getBuffer(top.node->left);
+                if(CRopeIterator::isBuffer(top.node->left)) {
+                    nextBuffer = CRopeIterator::getBuffer(top.node->left);
                     return;
                 }
-                pushNode(getNode(top.node->left));
+                
+                this-> pushNode(CRopeIterator::getNode(top.node->left));
             } 
             else if(!top.rightVisited) {
                 top.rightVisited = true;
-                if (isBuffer(top.node->right)) {
-                    nextBuffer = getBuffer(top.node->right);
+                if(CRopeIterator::isBuffer(top.node->right)) {
+                    nextBuffer = CRopeIterator::getBuffer(top.node->right);
                     return;
                 }
 
-                pushNode(getNode(top.node->right));
+                this->pushNode(CRopeIterator::getNode(top.node->right));
             }
             else { 
                 this->pop();
@@ -851,13 +851,13 @@ class CRopeIterator {
 
 public:    
     CRopeIterator(__CRope root) noexcept : stackSize(0), nextBuffer() {
-        if(isBuffer(root)) {
-            nextBuffer = getBuffer(root);
+        if(CRopeIterator::isBuffer(root)) {
+            nextBuffer = CRopeIterator::getBuffer(root);
             return;
         }
 
-        pushNode(getNode(root));
-        findNextBuffer();
+        this->pushNode(CRopeIterator::getNode(root));
+        this->findNextBuffer();
     }
 
     bool hasNext() const noexcept {
@@ -868,7 +868,7 @@ public:
         CCharBuffer result = nextBuffer;
         
         this->resetNextBuffer();
-        findNextBuffer();
+        this->findNextBuffer();
         
         return result;
     }
@@ -889,15 +889,15 @@ class UnicodeRopeIterator {
         this->nextBuffer = UnicodeCharBuffer{};
     }
 
-    static bool isBuffer(__UnicodeRope& r) noexcept {
+    static inline bool isBuffer(__UnicodeRope& r) noexcept {
         return r.typeinfo->tag == __CoreGC::Tag::Value;
     }
 
-    static UnicodeCharBuffer getBuffer(__UnicodeRope& r) noexcept {
+    static inline UnicodeCharBuffer getBuffer(__UnicodeRope& r) noexcept {
         return r.access<UnicodeCharBuffer>();
     }
 
-    static __UnicodeRopeNode* getNode(__UnicodeRope& r) noexcept {
+    static inline __UnicodeRopeNode* getNode(__UnicodeRope& r) noexcept {
         return r.access<__UnicodeRopeNode*>();
     }
 
@@ -909,30 +909,31 @@ class UnicodeRopeIterator {
         this->stackSize--;
     }
 
-    void pushNode(__UnicodeRopeNode* node) noexcept {
+    inline void pushNode(__UnicodeRopeNode* node) noexcept {
         stack[stackSize++] = {node, false, false};
     }
 
     void findNextBuffer() noexcept {
-        while (stackSize > 0) {
+        while(stackSize > 0) {
             Frame& top = this->top();
             
-            if (!top.leftVisited) {
+            if(!top.leftVisited) {
                 top.leftVisited = true;
-                if (isBuffer(top.node->left)) {
-                    nextBuffer = getBuffer(top.node->left);
-                    return;
-                }
-                pushNode(getNode(top.node->left));
-            } 
-            else if(!top.rightVisited) {
-                top.rightVisited = true;
-                if (isBuffer(top.node->right)) {
-                    nextBuffer = getBuffer(top.node->right);
+                if (UnicodeRopeIterator::isBuffer(top.node->left)) {
+                    nextBuffer = UnicodeRopeIterator::getBuffer(top.node->left);
                     return;
                 }
 
-                pushNode(getNode(top.node->right));
+                this->pushNode(UnicodeRopeIterator::getNode(top.node->left));
+            } 
+            else if(!top.rightVisited) {
+                top.rightVisited = true;
+                if(UnicodeRopeIterator::isBuffer(top.node->right)) {
+                    nextBuffer = UnicodeRopeIterator::getBuffer(top.node->right);
+                    return;
+                }
+
+                this->pushNode(UnicodeRopeIterator::getNode(top.node->right));
             }
             else { 
                 this->pop();
@@ -942,13 +943,13 @@ class UnicodeRopeIterator {
 
 public:    
     UnicodeRopeIterator(__UnicodeRope root) noexcept : stackSize(0), nextBuffer() {
-        if(isBuffer(root)) {
-            nextBuffer = getBuffer(root);
+        if(UnicodeRopeIterator::isBuffer(root)) {
+            nextBuffer = UnicodeRopeIterator::getBuffer(root);
             return;
         }
 
-        pushNode(getNode(root));
-        findNextBuffer();
+        this->pushNode(UnicodeRopeIterator::getNode(root));
+        this->findNextBuffer();
     }
 
     bool hasNext() const noexcept {
@@ -959,7 +960,7 @@ public:
         UnicodeCharBuffer result = nextBuffer;
         
         this->resetNextBuffer();
-        findNextBuffer();
+        this->findNextBuffer();
      
         return result;
     }
