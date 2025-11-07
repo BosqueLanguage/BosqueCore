@@ -379,8 +379,8 @@ namespace TypeInfoGenerator {
             | 'UnicodeCharBuffer'<BSQAssembly::TypeKey> => { matchedType = CPPAssembly::TypeInfo{tic.tid, 40n, 5n, '00000', cpptk, CPPAssembly::Tag#Value }; }
             | 'CString'<BSQAssembly::TypeKey> =>           { return generateCStringTypeInfo(e, tic); }
             | 'String'<BSQAssembly::TypeKey> =>            { return generateStringTypeInfo(e, tic); }
-            | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
-            | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 0n, 0n, '', cpptk, CPPAssembly::Tag#Value }; }
+            | 'CRegex'<BSQAssembly::TypeKey> =>            { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
+            | 'Regex'<BSQAssembly::TypeKey> =>             { matchedType = CPPAssembly::TypeInfo{ tic.tid, 8n, 1n, '0', cpptk, CPPAssembly::Tag#Value }; }
             | _ =>                                         { abort; }
         }
 
