@@ -861,7 +861,7 @@ public:
     }
 
     bool hasNext() const noexcept {
-        return this->stackSize > 0;
+        return this->stackSize > 0 || nextBuffer.size.get() > 0;
     }
 
     CCharBuffer next() noexcept {
@@ -952,7 +952,7 @@ public:
     }
 
     bool hasNext() const noexcept {
-        return this->stackSize > 0;
+        return this->stackSize > 0 || nextBuffer.size.get() > 0;
     }
 
     UnicodeCharBuffer next() noexcept {
