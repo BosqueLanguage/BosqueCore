@@ -302,6 +302,8 @@ CCharBuffer CRopeIterator::next() noexcept {
     __CRopeNode* cur = this->traversalStack.top(); 
     𝐚𝐬𝐬𝐞𝐫𝐭(CRopeIterator::isBuffer(cur->left));
 
+    this->traversalStack.forcePop();
+
     // Pop fully visited nodes
     while(!this->traversalStack.wasLeft()) {
         if(this->traversalStack.empty()) {
@@ -364,6 +366,8 @@ UnicodeCharBuffer UnicodeRopeIterator::next() noexcept {
     __UnicodeRopeNode* cur = this->traversalStack.top(); 
     𝐚𝐬𝐬𝐞𝐫𝐭(!UnicodeRopeIterator::isBuffer(cur->left));
 
+    this->traversalStack.forcePop();
+    
     // Pop fully visited nodes
     while(!this->traversalStack.wasLeft()) {
         if(this->traversalStack.empty()) {
@@ -373,7 +377,6 @@ UnicodeCharBuffer UnicodeRopeIterator::next() noexcept {
     }
 
     if(this->traversalStack.wasLeft()) {
-        this->traversalStack.pop();
         this->traverseRight();
     }
 
