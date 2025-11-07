@@ -1857,6 +1857,17 @@ function emitSaturatedFieldInfo(sfi: CPPAssembly::SaturatedFieldInfo, ctx: Conte
     return String::concat(indent, ftype, " ", fname, ";%n;");
 }
 
+function emitSizeStaticAssert(tk: CPPAssembly::TypeKey, indent: String, ctx: Context): String {
+    let name = emitTypeKey(tk, false, ctx);
+    let tinfo = ctx.asm.typeinfos.get(tk);
+
+    let typesize = if(tinfo.typesize == 0n)
+        then natToString(1n)
+        else natToString(tinfo.typesize);
+
+    return String::concat(indent, "static_assert(sizeof(", name, ") == ", typesize, ");%n;");
+}
+
 function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
     let nctx = ctx.updateCurrentNamespace(e.declaredInNS, e.fullns);
     let tkey = emitTypeKey(declaredIn, false, nctx);
@@ -1871,7 +1882,9 @@ function emitEntityTypeDecl(e: CPPAssembly::EntityTypeDecl, declaredIn: CPPAssem
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
     }, String::concat(base, indent, "struct ", tkey, " { %n;"));
 
-    return String::concat(entries, indent, "};%n;");
+    let sassert = emitSizeStaticAssert(declaredIn, indent, nctx);
+
+    return String::concat(entries, indent, "};%n;", sassert);
 }
 
 function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeDecl, declaredIn: CPPAssembly::TypeKey, ctx: Context, indent: String): String {
@@ -1887,8 +1900,10 @@ function emitDatatypeMemberEntityDecl(dm: CPPAssembly::DatatypeMemberEntityTypeD
     let fields = dm.saturatedBFieldInfo.reduce<String>(fn(acc, entry) => {
             return String::concat(acc, emitSaturatedFieldInfo(entry, nctx, String::concat("    ", indent)));
     }, String::concat(base, indent, "struct ", tkey, "{ %n;"));
-
-    return String::concat(fields, indent, "};%n;");
+    
+    let sassert = emitSizeStaticAssert(dm.tkey, indent, nctx);
+    
+    return String::concat(fields, indent, "};%n;", sassert);
 }
 
 function emitDatatypeTypeDecl(dt: CPPAssembly::DatatypeTypeDecl, ctx: Context, indent: String): String {
@@ -1912,7 +1927,7 @@ function emitEnumTypeDecl(etd: CPPAssembly::EnumTypeDecl, ctx: Context, indent: 
 
     let etd_tinfo = emitTypeInfo(ctx.asm.typeinfos.get(etd.tkey), some(etd), ctx, indent);
 
-    let base = String::concat(indent, "enum class ", String::fromCString(etd.name), " {%n;");
+    let base = String::concat(indent, "enum class ", String::fromCString(etd.name), " : uint64_t {%n;");
     let entries = etd.members.map<String>(fn(e) => String::concat(full_indent, String::fromCString(e)));
     let wentries = String::concat(base, String::joinAll(",%n;", entries), "%n;", indent, "};%n;");
 

@@ -258,8 +258,8 @@ UnicodeCharBuffer& ubufferRemainder(UnicodeCharBuffer& ub, Nat split) noexcept {
 }
 
 std::string to_string(MainType v) noexcept {
-    if(std::holds_alternative<bool>(v)) {
-        bool res = std::get<bool>(v);
+    if(std::holds_alternative<Bool>(v)) {
+        Bool res = std::get<Bool>(v);
         if(!res) {
             return "false";
         }
