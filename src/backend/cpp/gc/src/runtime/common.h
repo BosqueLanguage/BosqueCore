@@ -35,6 +35,8 @@
 
 #define BSQ_MEM_ALIGNMENT 8
 
+// If BITS_IN_ADDR_FOR_PAGE < 12 mmap fails unless compiled in 
+// non-deterministic mode (as it is not a multiple of default page size, 4kb)
 #define BITS_IN_ADDR_FOR_PAGE 12ul
 #define BSQ_BLOCK_ALLOCATION_SIZE (1ul << BITS_IN_ADDR_FOR_PAGE)
 
