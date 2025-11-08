@@ -2,89 +2,93 @@
 
 #include "xalloc.h"
 
-#define PAGETABLE_LEVELS 4
-#define BITS_PER_LEVEL   9 
-
-#define LEVEL1_SHIFT 39 
-#define LEVEL2_SHIFT 30 
-#define LEVEL3_SHIFT 21 
-#define LEVEL4_SHIFT 12 
-
-#define LEVEL_MASK 0x1FFUL 
-#define PAGE_MASK  0xFFFUL
-
-#define PAGE_PRESENT 1
+#define NUM_VADDR_BITS 48
 
 //A class that keeps track of which pages are in use in the GC
-class PageTableInUseInfo
-{
-private:
-    void** pagetable_root;
+class PageTable {
+    void** root;
+
+    size_t entriesPerPage; // e.g., 512, 1024, ...
+    size_t numAddrBitsForLevel; // e.g. 8, 9, 10...
+    size_t numLevels;
+    size_t numLastLevelBits; // Special case for handling varried page sizes
+
+    inline size_t determineAddrBits() const noexcept {
+        size_t v = this->entriesPerPage - 1; // Always power of two so invert
+        size_t c;
+        for (c = 0; v; c++) {
+            v &= v - 1; // Clear the least significant bit set
+        }
+
+        return c;
+    }
+
+    inline size_t determineNumLevels() const noexcept {
+        size_t addrbits = NUM_VADDR_BITS;
+        size_t nlevels = 0;
+        while(addrbits > BITS_IN_ADDR_FOR_PAGE) {
+            addrbits -= this->numAddrBitsForLevel;
+            nlevels++;
+        }
+
+        return nlevels;
+    }
+
+    inline size_t determineNumLastLevelBits() const noexcept {
+        size_t levelbits = this->numAddrBitsForLevel * this->numLevels;
+        size_t allbits = levelbits + BITS_IN_ADDR_FOR_PAGE;
+        size_t remainder = allbits - NUM_VADDR_BITS;
+
+        return this->numAddrBitsForLevel - remainder;
+    }
+
 public:
-    PageTableInUseInfo() noexcept : pagetable_root(nullptr) {}
+    PageTable(): root(nullptr), entriesPerPage(0), numAddrBitsForLevel(0), numLevels(0), numLastLevelBits(0)
+    {
+        this->root = static_cast<void**>(XAllocPageManager::g_page_manager.allocatePage());
+        xmem_zerofillpage(this->root);
 
-    void pagetable_insert(void* addr) noexcept {
-        if(this->pagetable_root == nullptr) {
-            this->pagetable_root = (void**)XAllocPageManager::g_page_manager.allocatePage();
-            xmem_zerofillpage(this->pagetable_root);
-        }
-
-        uintptr_t address = (uintptr_t)addr;
-        uintptr_t index1 = (address >> LEVEL1_SHIFT) & LEVEL_MASK; // Bits 47-39
-        uintptr_t index2 = (address >> LEVEL2_SHIFT) & LEVEL_MASK; // Bits 38-30
-        uintptr_t index3 = (address >> LEVEL3_SHIFT) & LEVEL_MASK; // Bits 29-21
-        uintptr_t index4 = (address >> LEVEL4_SHIFT) & LEVEL_MASK; // Bits 20-12
-
-        void** level1 = pagetable_root;
-        if(!level1[index1]) {
-            level1[index1] = (void**)XAllocPageManager::g_page_manager.allocatePage();
-            xmem_zerofillpage(level1[index1]);
-        }
-
-        void** level2 = (void**)level1[index1];
-        if(!level2[index2]) {
-            level2[index2] = (void**)XAllocPageManager::g_page_manager.allocatePage();
-            xmem_zerofillpage(level2[index2]);
-        }
-
-        void** level3 = (void**)level2[index2];
-        if(!level3[index3]) {
-            level3[index3] = (void**)XAllocPageManager::g_page_manager.allocatePage();
-            xmem_zerofillpage(level3[index3]);
-        }
-
-        void** level4 = (void**)level3[index3];
-        level4[index4] = (void*)PAGE_PRESENT;  
+        this->entriesPerPage = BSQ_BLOCK_ALLOCATION_SIZE / 8ul;
+        this->numAddrBitsForLevel = determineAddrBits();
+        this->numLevels = determineNumLevels();
+        this->numLastLevelBits = determineNumLastLevelBits();
     }
 
-    bool pagetable_query(void* addr) const noexcept {
-        if(this->pagetable_root == nullptr) {
-            return false;
-        }
-        
-        uintptr_t address = (uintptr_t)addr;
-        uintptr_t index1 = (address >> LEVEL1_SHIFT) & LEVEL_MASK; // Bits 47-39
-        uintptr_t index2 = (address >> LEVEL2_SHIFT) & LEVEL_MASK; // Bits 38-30
-        uintptr_t index3 = (address >> LEVEL3_SHIFT) & LEVEL_MASK; // Bits 29-21
-        uintptr_t index4 = (address >> LEVEL4_SHIFT) & LEVEL_MASK; // Bits 20-12
+    void insert(void* addr) noexcept 
+    {
+        uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
+        void** level = this->root;
+        for(size_t i = numLevels; i >= 1; i--) {
+            size_t pageidx = (naddr >> (this->numAddrBitsForLevel * i));
+            if(level[pageidx] == nullptr) {
+                level[pageidx] = static_cast<void**>(XAllocPageManager::g_page_manager.allocatePage());
+                xmem_zerofillpage(level[pageidx]);
+            }
 
-        void** level1 = pagetable_root;
-        if(!level1[index1]) {
-            return false;
+            level = static_cast<void**>(level[pageidx]);
         }
 
-        void** level2 = (void**)level1[index1];
-        if(!level2[index2]) {
-            return false;
-        }
-
-        void** level3 = (void**)level2[index2];
-        if(!level3[index3]) {
-            return false;
-        }
-
-        void** level4 = (void**)level3[index3];
-        return level4[index4] == (void*)PAGE_PRESENT;
+        size_t pageidx = naddr >> this->numLastLevelBits;
+        void* e = level[pageidx];
+        DSA_INVARIANT_CHECK(e == nullptr);
+    
+        level[pageidx] = addr;
     }
+
+    bool query(void* addr) noexcept
+    {
+        uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
+        void** level = this->root;
+        for(size_t i = numLevels; i >= 1; i--) {
+            size_t pageidx = (naddr >> (this->numAddrBitsForLevel * i));
+            if(level[pageidx] == nullptr) {
+                return false;
+            }
+
+            level = static_cast<void**>(level[pageidx]);
+        }
+
+        size_t pageidx = naddr >> this->numLastLevelBits;
+        return level[pageidx] != nullptr;
+    } 
 };
-

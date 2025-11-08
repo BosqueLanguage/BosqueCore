@@ -35,8 +35,11 @@
 #define MAX_ALLOCATED_ADDRESS ((void*)(281474976710656ul))
 
 #define BSQ_MEM_ALIGNMENT 8
-#define BSQ_BLOCK_ALLOCATION_SIZE 4096ul
 
+#define BITS_IN_ADDR_FOR_PAGE 12ul
+#define BSQ_BLOCK_ALLOCATION_SIZE (1ul << BITS_IN_ADDR_FOR_PAGE)
+
+#define PAGE_MASK ((1ul << BITS_IN_ADDR_FOR_PAGE) - 1ul)
 
 //
 //worst possible case where every entry has to be inserted into fwd table:

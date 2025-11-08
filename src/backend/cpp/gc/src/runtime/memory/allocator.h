@@ -172,7 +172,12 @@ class GlobalPageGCManager
 {
 private:
     PageInfo* empty_pages;
-    PageTableInUseInfo pagetable;
+    PageTable pagetable;
+
+    inline void pagetableInsert(void* addr) noexcept
+    {
+        return this->pagetable.insert(addr);
+    }
 
 public:
     static GlobalPageGCManager g_gc_page_manager;
@@ -181,9 +186,9 @@ public:
 
     PageInfo* allocateFreshPage(uint16_t entrysize, uint16_t realsize) noexcept;
 
-    bool pagetable_query(void* addr) const noexcept
+    bool pagetableQuery(void* addr) noexcept
     {
-        return this->pagetable.pagetable_query(addr);
+        return this->pagetable.query(addr);
     }
 
     void addNewPage(PageInfo* newPage) noexcept

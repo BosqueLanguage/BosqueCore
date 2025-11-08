@@ -89,7 +89,7 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
 #endif
 
         assert(page != MAP_FAILED);
-        this->pagetable.pagetable_insert(page);
+        this->pagetableInsert(page);
 
         pp = PageInfo::initialize(page, entrysize, realsize);
     }
