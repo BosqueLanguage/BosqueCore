@@ -26,7 +26,7 @@ class PageTable {
 
     inline size_t determineNumLevels() const noexcept {
         size_t bitsForPages = NUM_VADDR_BITS - BITS_IN_ADDR_FOR_PAGE;
-        return (bitsForPages + numAddrBitsForLevel - 1) / numAddrBitsForLevel;
+        return (bitsForPages + this->numAddrBitsForLevel - 1) / this->numAddrBitsForLevel;
     }
 
 public:
@@ -47,7 +47,7 @@ public:
         uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
         void** level = this->root;
         
-        for(size_t i = numLevels; i > 0; i--) {
+        for(size_t i = this->numLevels; i > 0; i--) {
             size_t shift = BITS_IN_ADDR_FOR_PAGE + (i - 1) * this->numAddrBitsForLevel;
             size_t pageidx = (naddr >> shift) & this->levelMask;
             
@@ -73,7 +73,7 @@ public:
         uintptr_t naddr = reinterpret_cast<uintptr_t>(addr);
         void** level = this->root;
         
-        for(size_t i = numLevels; i > 0; i--) {
+        for(size_t i = this->numLevels; i > 0; i--) {
             size_t shift = BITS_IN_ADDR_FOR_PAGE + (i - 1) * this->numAddrBitsForLevel;
             size_t pageidx = (naddr >> shift) & this->levelMask;
             
