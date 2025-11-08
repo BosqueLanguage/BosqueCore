@@ -29,14 +29,19 @@
 #define ALLOC_ADDRESS_SPAN 2147483648ul
 #endif
 
-#define PAGE_ADDR_MASK 0xFFFFFFFFFFFFF000ul
 //Make sure any allocated page is addressable by us -- larger than 2^31 and less than 2^42
 #define MIN_ALLOCATED_ADDRESS ((void*)(2147483648ul))
 #define MAX_ALLOCATED_ADDRESS ((void*)(281474976710656ul))
 
 #define BSQ_MEM_ALIGNMENT 8
-#define BSQ_BLOCK_ALLOCATION_SIZE 4096ul
 
+// If BITS_IN_ADDR_FOR_PAGE < 12 mmap fails unless compiled in 
+// non-deterministic mode (as it is not a multiple of default page size, 4kb)
+#define BITS_IN_ADDR_FOR_PAGE 12ul
+#define BSQ_BLOCK_ALLOCATION_SIZE (1ul << BITS_IN_ADDR_FOR_PAGE)
+
+#define PAGE_MASK ((1ul << BITS_IN_ADDR_FOR_PAGE) - 1ul)
+#define PAGE_ADDR_MASK (~PAGE_MASK)
 
 //
 //worst possible case where every entry has to be inserted into fwd table:

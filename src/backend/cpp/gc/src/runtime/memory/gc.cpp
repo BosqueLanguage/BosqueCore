@@ -329,7 +329,7 @@ static inline bool pointsToObjectStart(void* addr) noexcept
 
 static void checkPotentialPtr(void* addr, BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
-    if(!GlobalPageGCManager::g_gc_page_manager.pagetable_query(addr) 
+    if(!GlobalPageGCManager::g_gc_page_manager.pagetableQuery(addr) 
         || !pointsToObjectStart(addr)) {
             return ;
     }
