@@ -79,6 +79,7 @@ PageInfo* GlobalPageGCManager::allocateFreshPage(uint16_t entrysize, uint16_t re
     else {
 #ifndef ALLOC_DEBUG_MEM_DETERMINISTIC
         void* page = mmap(NULL, BSQ_BLOCK_ALLOCATION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+        assert(((uintptr_t)page & PAGE_MASK) == 0 && "Address is not aligned to page boundary!");
 #else
         ALLOC_LOCK_ACQUIRE();
 
