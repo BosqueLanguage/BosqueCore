@@ -25,9 +25,11 @@
         auto end = std::chrono::high_resolution_clock::now();                              \
         double duration_ms = std::chrono::                                                 \
             duration_cast<std::chrono::duration<double, std::milli>>(end - start).count(); \
+        gtl_info.mstats.total_collection_time += duration_ms;                              \
+        gtl_info.mstats.total_time = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end.time_since_epoch()).count(); \
         update_collection_extrema(gtl_info.mstats, duration_ms);                           \
         update_bucket(gtl_info.mstats. BUCKETS, duration_ms);                              \
-    }while(0)
+    } while(0)
 #define UPDATE_MEMSTATS()                                 \
     do {                                                  \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \

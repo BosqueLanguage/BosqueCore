@@ -52,8 +52,7 @@ public:
             size_t pageidx = (naddr >> shift) & this->levelMask;
             
             if(i == LAST_LEVEL) {
-                void* e = level[pageidx];
-                DSA_INVARIANT_CHECK(e == nullptr);
+                DSA_INVARIANT_CHECK(level[pageidx] == nullptr);
                 
                 level[pageidx] = PAGE_PRESENT;
             } 
@@ -78,6 +77,8 @@ public:
             size_t pageidx = (naddr >> shift) & this->levelMask;
             
             if(i == LAST_LEVEL) {
+                DSA_INVARIANT_CHECK(level[pageidx] == PAGE_PRESENT || level[pageidx] == nullptr);
+
                 return level[pageidx] == PAGE_PRESENT;
             } 
             else {

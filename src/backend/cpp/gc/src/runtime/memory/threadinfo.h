@@ -2,6 +2,10 @@
 
 #include "allocator.h"
 
+#ifdef MEM_STATS
+#include <chrono>
+#endif
+
 #define InitBSQMemoryTheadLocalInfo() { ALLOC_LOCK_ACQUIRE(); register void** rbp asm("rbp"); gtl_info.initialize(GlobalThreadAllocInfo::s_thread_counter++, rbp); ALLOC_LOCK_RELEASE(); }
 
 #define MAX_ALLOC_LOOKUP_TABLE_SIZE 1024
@@ -50,8 +54,13 @@ struct MemStats {
     size_t total_collections  = 0;
     size_t total_promotions   = 0;
 
+    double total_collection_time = 0.0;
     double min_collection_time = 0;
     double max_collection_time = 0;    
+
+    double start_time = 0.0;
+    double total_time = 0.0;
+    double percentage_collecting = 0.0;
 
     size_t max_live_heap = 0;
 
@@ -142,6 +151,12 @@ struct BSQMemoryTheadLocalInfo
             uint8_t idx = generateAllocLookupIndex(alloc);
             this->g_gcallocs[idx] = alloc;
         }
+
+#ifdef MEM_STATS
+        auto start = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
+        this->mstats.start_time = dur.count();
+#endif
     }
 
     void initialize(size_t ntl_id, void** caller_rbp) noexcept;
@@ -182,6 +197,7 @@ std::string generate_formatted_memstats(MemStats& ms) noexcept;
 
 #define PRINT_COLLECTION_TIME(E)                                                                                 \
     do{                                                                                                          \
+        std::cout << "Total Collection Time: " << (E).mstats.total_collection_time << "ms\n"; \
         std::cout << "Average Collection Time: " << compute_average_time((E).mstats.collection_times) << "ms\n"; \
         std::cout << "Min Collection Time: " << (E).mstats.min_collection_time << "ms\n";                        \
         std::cout << "Max Collection Time: " << (E).mstats.max_collection_time << "ms\n";                        \
@@ -199,6 +215,14 @@ std::string generate_formatted_memstats(MemStats& ms) noexcept;
 #define PRINT_TOTAL_COLLECTIONS(E) \
     (std::cout << "Total Collections: " << (E).mstats.total_collections << "\n")
 
+#define PRINT_TOTAL_TIME(E) \
+    do {\
+        (E).mstats.total_time -= (E).mstats.start_time; \
+        std::cout << "Total Time: " << (E).mstats.total_time << "ms\n"; \
+        std::cout << "Percentage of Time Collecting: " << ((E).mstats.total_collection_time / (E).mstats.total_time) * 100 << "%\n";\
+    } while(0)
+
+
 #define PRINT_ALLOC_INFO(E)                                                                     \
     do {                                                                                        \
         std::cout << "Total Alloc Count: " << (E).mstats.total_alloc_count << "\n";             \
@@ -214,6 +238,7 @@ std::string generate_formatted_memstats(MemStats& ms) noexcept;
 #define MEM_STATS_DUMP(E)           \
     do {                            \
         PRINT_COLLECTION_TIME(E);   \
+        PRINT_TOTAL_TIME(E);        \
         PRINT_MARKING_TIME(E);      \
         PRINT_EVACUATION_TIME(E);   \
         PRINT_DECREMENT_TIME(E);    \
