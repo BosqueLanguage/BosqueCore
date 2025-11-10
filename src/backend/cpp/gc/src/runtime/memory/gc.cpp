@@ -164,7 +164,6 @@ static inline void tryReprocessDecrementedPages(BSQMemoryTheadLocalInfo& tinfo)
 static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
 {
     GC_REFCT_LOCK_ACQUIRE();
-    MEM_STATS_START();
 
     size_t deccount = 0;
     while(!tinfo.pending_decs.isEmpty() && (deccount < tinfo.max_decrement_count)) {
@@ -185,7 +184,6 @@ static void processDecrements(BSQMemoryTheadLocalInfo& tinfo) noexcept
     }
     tryReprocessDecrementedPages(tinfo);
 
-    MEM_STATS_END(decrement_times);
     GC_REFCT_LOCK_RELEASE();
 
     //
@@ -285,7 +283,6 @@ static void updatePointers(void** slots, __CoreGC::TypeInfoBase* typeinfo, BSQMe
 static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept 
 {
     GC_REFCT_LOCK_ACQUIRE();
-    MEM_STATS_START();
 
     while(!tinfo.pending_young.isEmpty()) {
         void* obj = tinfo.pending_young.pop_front(); //ensures non-roots visited first
@@ -306,7 +303,6 @@ static void processMarkedYoungObjects(BSQMemoryTheadLocalInfo& tinfo) noexcept
         }
     }
 
-    MEM_STATS_END(evacuation_times);
     GC_REFCT_LOCK_RELEASE();
 }
 
@@ -464,9 +460,7 @@ static void walkSingleRoot(void* root, BSQMemoryTheadLocalInfo& tinfo) noexcept
 }
 
 static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
-{
-    MEM_STATS_START();
-    
+{   
     gtl_info.pending_roots.initialize();
     gtl_info.visit_stack.initialize();
 
@@ -486,19 +480,23 @@ static void markingWalk(BSQMemoryTheadLocalInfo& tinfo) noexcept
 
     gtl_info.visit_stack.clear();
     gtl_info.pending_roots.clear();
-
-    MEM_STATS_END(marking_times);
 }
 
 void collect() noexcept
 {
-    UPDATE_TOTAL_COLLECTIONS(gtl_info, +=, 1);
-    MEM_STATS_START();
+    COLLECTION_STATS_START();
 
     static bool should_reset_pending_decs = true;
     gtl_info.pending_young.initialize();
+
+    NURSERY_STATS_START();
+
     markingWalk(gtl_info);
     processMarkedYoungObjects(gtl_info);
+
+    NURSERY_STATS_END(gtl_info, nursery_times);
+    UPDATE_NURSERY_TIMES(gtl_info);
+
     gtl_info.pending_young.clear();
 
     xmem_zerofill(gtl_info.forward_table, gtl_info.forward_table_index);
@@ -508,8 +506,14 @@ void collect() noexcept
         gtl_info.pending_decs.initialize();
         should_reset_pending_decs = false;
     }
+
+    RC_STATS_START();
+
     computeDeadRootsForDecrement(gtl_info);
     processDecrements(gtl_info);
+
+    RC_STATS_END(gtl_info, rc_times);
+    UPDATE_RC_TIMES(gtl_info); 
 
     if(gtl_info.pending_decs.isEmpty()) {
         gtl_info.pending_decs.clear();
@@ -538,6 +542,7 @@ void collect() noexcept
     gtl_info.roots_count = 0;
     gtl_info.newly_filled_pages_count = 0;
 
-    MEM_STATS_END(collection_times);
-    UPDATE_MEMSTATS();
+    COLLECTION_STATS_END(gtl_info, collection_times);
+    UPDATE_COLLECTION_TIMES(gtl_info);
+    UPDATE_MEMSTATS_TOTALS(gtl_info);
 }

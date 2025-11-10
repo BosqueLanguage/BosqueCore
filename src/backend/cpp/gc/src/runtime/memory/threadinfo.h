@@ -46,28 +46,31 @@ struct RegisterContents
 #ifdef MEM_STATS
 
 // Buckets store BUCKET_VARIANCE ms variance, final entry is for outliers (hopefully never any values present there)
-#define MAX_MEMSTATS_BUCKETS 100 + 1
+#define MAX_MEMSTATS_BUCKETS 1000 + 1
+struct Stats {
+    size_t count = 0;
+    double mean = 0.0;
+    double M2   = 0.0;
+};
 struct MemStats {
     size_t total_alloc_count  = 0;
     size_t total_alloc_memory = 0;
     size_t total_live_bytes   = 0;
-    size_t total_collections  = 0;
     size_t total_promotions   = 0;
+    size_t total_pages        = 0;
 
-    double total_collection_time = 0.0;
+    Stats collection_stats { 0 };
+    Stats nursery_stats    { 0 };
+    Stats rc_stats         { 0 };
+
     double min_collection_time = 0;
-    double max_collection_time = 0;    
-
-    double start_time = 0.0;
-    double total_time = 0.0;
-    double percentage_collecting = 0.0;
+    double max_collection_time = 0;
 
     size_t max_live_heap = 0;
 
     size_t collection_times[MAX_MEMSTATS_BUCKETS] { 0 };
-    size_t marking_times[MAX_MEMSTATS_BUCKETS]    { 0 };
-    size_t evacuation_times[MAX_MEMSTATS_BUCKETS] { 0 };
-    size_t decrement_times[MAX_MEMSTATS_BUCKETS]  { 0 };
+    size_t nursery_times[MAX_MEMSTATS_BUCKETS]    { 0 };
+    size_t rc_times[MAX_MEMSTATS_BUCKETS]         { 0 };
 };
 #else
 struct MemStats {};
@@ -152,11 +155,13 @@ struct BSQMemoryTheadLocalInfo
             this->g_gcallocs[idx] = alloc;
         }
 
+/*
 #ifdef MEM_STATS
         auto start = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> dur = start.time_since_epoch();
         this->mstats.start_time = dur.count();
 #endif
+*/
     }
 
     void initialize(size_t ntl_id, void** caller_rbp) noexcept;
@@ -168,7 +173,7 @@ struct BSQMemoryTheadLocalInfo
 #ifdef MEM_STATS
 #include <iostream>
 
-#define BUCKET_VARIANCE 0.05
+#define BUCKET_VARIANCE 0.01
 #define BUCKET_AVERAGE ((BUCKET_VARIANCE) / 2)
 
 inline void update_bucket(size_t* bucket, double time) noexcept 
@@ -182,6 +187,36 @@ inline void update_bucket(size_t* bucket, double time) noexcept
     }
 }
 
+void update_stats(Stats& stats, double time) noexcept;
+double get_mean_pause(Stats& stats) noexcept;
+double get_stddev(const Stats& stats) noexcept;
+
+std::string generate_formatted_memstats(MemStats& ms) noexcept;
+
+inline double calculate_percentile_from_buckets(const size_t* buckets, double percentile) noexcept 
+{
+    size_t total = 0;
+    for (int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+        total += buckets[i];
+    }
+    
+    if (total == 0) {
+        return 0.0;
+    }
+    
+    size_t target_count = static_cast<size_t>(total * percentile);
+    size_t cumulative = 0;
+    
+    for (int i = 0; i < MAX_MEMSTATS_BUCKETS; i++) {
+        cumulative += buckets[i];
+        if (cumulative >= target_count) {
+            return i * BUCKET_VARIANCE;
+        }
+    }
+    
+    return (MAX_MEMSTATS_BUCKETS - 1) * BUCKET_VARIANCE;
+}
+
 inline void update_collection_extrema(MemStats& ms, double time) noexcept 
 {
     if(time > ms.max_collection_time) { 
@@ -190,38 +225,57 @@ inline void update_collection_extrema(MemStats& ms, double time) noexcept
     if(time < ms.min_collection_time || ms.min_collection_time < 1e-10) { 
         ms.min_collection_time = time;
     }
-} 
+}
 
-double compute_average_time(size_t buckets[MAX_MEMSTATS_BUCKETS]) noexcept;
-std::string generate_formatted_memstats(MemStats& ms) noexcept;
+inline void update_collection_stats(MemStats& ms, double time) noexcept 
+{
+    update_collection_extrema(ms, time);
+    update_stats(ms.collection_stats, time);
+}
 
-#define PRINT_COLLECTION_TIME(E)                                                                                 \
-    do{                                                                                                          \
-        std::cout << "Total Collection Time: " << (E).mstats.total_collection_time << "ms\n"; \
-        std::cout << "Average Collection Time: " << compute_average_time((E).mstats.collection_times) << "ms\n"; \
-        std::cout << "Min Collection Time: " << (E).mstats.min_collection_time << "ms\n";                        \
-        std::cout << "Max Collection Time: " << (E).mstats.max_collection_time << "ms\n";                        \
+inline void update_nursery_stats(MemStats& ms, double time) noexcept 
+{
+    update_stats(ms.nursery_stats, time);
+}
+
+inline void update_rc_stats(MemStats& ms, double time) noexcept 
+{
+    update_stats(ms.rc_stats, time);
+}
+
+
+#define PRINT_COLLECTION_TIME(E) \
+    do{ \
+        double mean = get_mean_pause((E).mstats.collection_stats); \
+        double stddev = get_stddev((E).mstats.collection_stats); \
+        std::cout << "Collection - Average: " << mean << "ms\n"; \
+        std::cout << "Collection - Std Dev: " << stddev << "ms\n"; \
+        std::cout << "Collection - 1σ: " << stddev << "ms\n"; \
+        std::cout << "Collection - 2σ: " << (2 * stddev) << "ms\n"; \
+        std::cout << "Collection - Min: " << (E).mstats.min_collection_time << "ms\n"; \
+        std::cout << "Collection - Max: " << (E).mstats.max_collection_time << "ms\n"; \
+        std::cout << "Collection - 50th: " << calculate_percentile_from_buckets((E).mstats.collection_times, 0.50) << "ms\n"; \
+        std::cout << "Collection - 95th: " << calculate_percentile_from_buckets((E).mstats.collection_times, 0.95) << "ms\n"; \
+        std::cout << "Collection - 99th: " << calculate_percentile_from_buckets((E).mstats.collection_times, 0.99) << "ms\n"; \
     } while(0)
 
-#define PRINT_MARKING_TIME(E) \
-    (std::cout << "Average Marking Time: " << compute_average_time((E).mstats.marking_times) << "ms\n")
+#define PRINT_NURSERY_TIME(E) \
+        std::cout << "Nursery - Average: " << get_mean_pause((E).mstats.nursery_stats) << "ms\n";
 
-#define PRINT_EVACUATION_TIME(E) \
-    (std::cout << "Average Evacuation Time: " << compute_average_time((E).mstats.evacuation_times) << "ms\n")
-
-#define PRINT_DECREMENT_TIME(E) \
-    (std::cout << "Average Decrement Time: " << compute_average_time((E).mstats.decrement_times) << "ms\n")
+        #define PRINT_RC_TIME(E) \
+        std::cout << "RC - Average: " << get_mean_pause((E).mstats.rc_stats) << "ms\n";
 
 #define PRINT_TOTAL_COLLECTIONS(E) \
-    (std::cout << "Total Collections: " << (E).mstats.total_collections << "\n")
+    (std::cout << "Total Collections: " << (E).mstats.collection_stats.count << "\n")
 
-#define PRINT_TOTAL_TIME(E) \
-    do {\
-        (E).mstats.total_time -= (E).mstats.start_time; \
-        std::cout << "Total Time: " << (E).mstats.total_time << "ms\n"; \
-        std::cout << "Percentage of Time Collecting: " << ((E).mstats.total_collection_time / (E).mstats.total_time) * 100 << "%\n";\
-    } while(0)
+#define PRINT_TOTAL_PAGES(E) \
+    (std::cout << "Total Pages: " << (E).mstats.total_pages << "\n")
 
+//
+// We are updating total pages wrong!
+//
+#define PRINT_HEAP_SIZE(E) \
+    (std::cout << "Heap Size: " << (E).mstats.total_pages * BSQ_BLOCK_ALLOCATION_SIZE << " bytes\n")
 
 #define PRINT_ALLOC_INFO(E)                                                                     \
     do {                                                                                        \
@@ -235,17 +289,17 @@ std::string generate_formatted_memstats(MemStats& ms) noexcept;
 #define PRINT_MAX_HEAP(E) \
     (std::cout << "Max Live Heap Size: " << (E).mstats.max_live_heap << " bytes\n")
 
-#define MEM_STATS_DUMP(E)           \
-    do {                            \
-        PRINT_COLLECTION_TIME(E);   \
-        PRINT_TOTAL_TIME(E);        \
-        PRINT_MARKING_TIME(E);      \
-        PRINT_EVACUATION_TIME(E);   \
-        PRINT_DECREMENT_TIME(E);    \
+#define MEM_STATS_DUMP(E) \
+    do { \
+        PRINT_COLLECTION_TIME(E); \
+        PRINT_NURSERY_TIME(E); \
+        PRINT_RC_TIME(E); \
         PRINT_TOTAL_COLLECTIONS(E); \
-        PRINT_TOTAL_PROMOTIONS(E);  \
-        PRINT_ALLOC_INFO(E);        \
-        PRINT_MAX_HEAP(E);          \
+        PRINT_TOTAL_PROMOTIONS(E); \
+        PRINT_ALLOC_INFO(E); \
+        PRINT_TOTAL_PAGES(E); \
+        PRINT_MAX_HEAP(E); \
+        PRINT_HEAP_SIZE(E); \
     } while(0)
 
 #else
