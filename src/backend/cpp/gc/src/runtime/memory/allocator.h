@@ -72,6 +72,10 @@
 #endif
 
 #define UPDATE_MEMSTATS_TOTALS(INFO) \
+    auto now = std::chrono::high_resolution_clock::now(); \
+    gtl_info.mstats.total_time = std::chrono:: \
+        duration_cast<std::chrono::duration<double, std::milli>> \
+        (now.time_since_epoch()).count(); \
     do { \
         for(size_t i = 0; i < BSQ_MAX_ALLOC_SLOTS; i++) { \
             GCAllocator* alloc = (INFO).g_gcallocs[i]; \
