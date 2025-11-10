@@ -25,7 +25,6 @@
     double NAME##_ms = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(end_##NAME - start_##NAME).count(); \
     update_bucket((INFO).mstats. BUCKETS, NAME##_ms);
 
-// More explicit names for the different timing modes
 #ifdef COLLECTION_STATS_MODE
 
 #define COLLECTION_STATS_START() \

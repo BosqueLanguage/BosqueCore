@@ -277,8 +277,8 @@ inline double calculate_total_collection_time(const size_t* buckets) noexcept
 #define PRINT_NURSERY_TIME(E) \
         std::cout << "Nursery - Average: " << get_mean_pause((E).mstats.nursery_stats) << "ms\n";
 
-        #define PRINT_RC_TIME(E) \
-        std::cout << "RC - Average: " << get_mean_pause((E).mstats.rc_stats) << "ms\n";
+#define PRINT_RC_TIME(E) \
+    std::cout << "RC - Average: " << get_mean_pause((E).mstats.rc_stats) << "ms\n";
 
 #define PRINT_TOTAL_PAGES(E) \
     (std::cout << "Total Pages: " << (E).mstats.total_pages << "\n")
